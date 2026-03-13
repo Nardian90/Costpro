@@ -245,12 +245,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {hasImage && (
           <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
             {!product.is_active && (
-              <div className="bg-danger text-white text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
+              <div className="bg-danger text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
                 Inactivo
               </div>
             )}
             {product.price < (product.cost_price || 0) && (
-              <div className="bg-danger text-white text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
+              <div className="bg-danger text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
                 ALERTA: Margen Negativo
               </div>
             )}
@@ -280,7 +280,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {!hasImage && (
               <button
                 onClick={() => onEdit?.(product)}
-                className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all active:scale-90 shadow-sm"
+                className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-foreground transition-all active:scale-90 shadow-sm"
                 title="Adjuntar Imagen"
               >
                 <Camera className="w-4 h-4" />

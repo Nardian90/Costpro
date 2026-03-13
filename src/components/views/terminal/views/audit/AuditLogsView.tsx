@@ -167,14 +167,14 @@ export default function AuditLogsView() {
           <TabsList className="bg-background border border-border p-1 h-12 rounded-xl shadow-sm">
             <TabsTrigger
               value="timeline"
-              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white"
+              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-foreground"
             >
               <List className="w-4 h-4 mr-2" />
               Línea de Tiempo
             </TabsTrigger>
             <TabsTrigger
               value="table"
-              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white"
+              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-foreground"
             >
               <TableIcon className="w-4 h-4 mr-2" />
               Tabla

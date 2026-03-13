@@ -585,7 +585,7 @@ const CostSheetView = () => {
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
               <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
-                  <div className="bg-destructive text-white p-2 rounded-xl">
+                  <div className="bg-destructive text-foreground p-2 rounded-xl">
                       <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
@@ -606,7 +606,7 @@ const CostSheetView = () => {
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
                   <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-primary/10 rounded-xl">
                           {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}

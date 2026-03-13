@@ -39,7 +39,7 @@ export default function ScrollToTop() {
           className={cn(
             "fixed bottom-8 right-8 z-50",
             "neu-raised-sm w-12 h-12 flex items-center justify-center",
-            "bg-primary text-white rounded-2xl shadow-2xl",
+            "bg-primary text-foreground rounded-2xl shadow-2xl",
             "hover:scale-110 active:scale-95 transition-transform"
           )}
           aria-label="Volver arriba"

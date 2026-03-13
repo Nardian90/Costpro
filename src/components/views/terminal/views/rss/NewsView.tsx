@@ -95,7 +95,7 @@ export default function NewsView() {
                   href={exchangeRateNews.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2"
+                  className="px-6 py-3 bg-primary text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2"
                 >
                   Ver Detalles <ExternalLink className="w-4 h-4" />
                 </a>
@@ -184,7 +184,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
     >
       {item.isPriority && (
         <div className="absolute top-0 right-0">
-          <div className="bg-amber-500 text-white text-xs font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
+          <div className="bg-amber-500 text-foreground text-xs font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
             Prioritario
           </div>
         </div>
@@ -229,7 +229,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
           Leer noticia completa <ExternalLink className="w-3 h-3" />
         </a>
         <div className="p-2 rounded-full border border-border group-hover:bg-primary group-hover:border-primary transition-all">
-          <ChevronRight className="w-3 h-3 group-hover:text-white" />
+          <ChevronRight className="w-3 h-3 group-hover:text-foreground" />
         </div>
       </div>
     </motion.div>

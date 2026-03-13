@@ -20,7 +20,7 @@ interface IncomeReceiptPreviewProps {
 
 export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewProps) {
   return (
-    <div className={cn("bg-white text-black p-8 shadow-2xl border border-gray-200 font-sans max-w-[800px] mx-auto", className)}>
+    <div className={cn("bg-background text-foreground p-8 shadow-2xl border border-border font-sans max-w-[800px] mx-auto", className)}>
       {/* Header Box */}
       <div className="border-2 border-black p-4 mb-6">
         <div className="flex justify-between items-start">
@@ -80,8 +80,8 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       <table className="w-full border-collapse mb-6 text-sm">
         <thead>
           <tr>
-            <th className="border border-black bg-black text-white p-2 text-left uppercase text-xs tracking-widest">Concepto</th>
-            <th className="border border-black bg-black text-white p-2 text-right uppercase text-xs w-32 tracking-widest">Importe ($)</th>
+            <th className="border border-black bg-background text-foreground p-2 text-left uppercase text-xs tracking-widest">Concepto</th>
+            <th className="border border-black bg-background text-foreground p-2 text-right uppercase text-xs w-32 tracking-widest">Importe ($)</th>
           </tr>
         </thead>
         <tbody>
@@ -96,7 +96,7 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
             ))
           ) : (
             <tr>
-              <td className="border border-black p-2 text-center text-gray-400 italic" colSpan={2}>Sin conceptos registrados</td>
+              <td className="border border-black p-2 text-center text-muted-foreground italic" colSpan={2}>Sin conceptos registrados</td>
             </tr>
           )}
         </tbody>
@@ -105,13 +105,13 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       {/* Total */}
       <div className="flex justify-end gap-4 mb-6 items-center">
         <span className="font-bold text-lg tracking-tighter">TOTAL:</span>
-        <span className="font-black text-xl border-b-2 border-black min-w-[140px] text-right bg-gray-50 px-2">
+        <span className="font-black text-xl border-b-2 border-black min-w-[140px] text-right bg-muted/50 px-2">
           {data.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
 
       {/* Amount in words */}
-      <div className="mb-12 bg-gray-50 p-3 border-l-4 border-black">
+      <div className="mb-12 bg-muted/50 p-3 border-l-4 border-black">
         <div className="text-[10px] font-black uppercase mb-1 text-muted-foreground tracking-widest">Cantidad en letras:</div>
         <div className="text-sm font-bold border-b border-black/20 pb-1 uppercase italic tracking-tight">{data.cantidad_letras}</div>
       </div>
@@ -129,7 +129,7 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       </div>
 
       {/* Footer info - CLEANED */}
-      <div className="text-[9px] text-gray-400 mt-12 flex justify-between border-t border-gray-100 pt-2 font-medium">
+      <div className="text-[9px] text-muted-foreground mt-12 flex justify-between border-t border-gray-100 pt-2 font-medium">
         <span className="uppercase tracking-widest">Modelo Oficial SC-3-01</span>
         <span className="uppercase tracking-widest">Previsualización del Sistema</span>
       </div>

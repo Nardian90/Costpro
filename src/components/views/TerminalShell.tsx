@@ -206,7 +206,7 @@ export default function TerminalShell() {
           </div>
           <button
             onClick={handleLogout}
-            className="px-8 py-3 bg-destructive text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+            className="px-8 py-3 bg-destructive text-foreground font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
           >
             Cerrar Sesión
           </button>

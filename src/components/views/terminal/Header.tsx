@@ -78,12 +78,12 @@ export const Header = ({
                       className={cn(
                         "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-[130px] sm:max-w-none",
                         storesToShow.length > 1
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:opacity-90"
+                          ? "bg-primary text-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
                           : "bg-muted/50 border-border/50 text-primary cursor-default"
                       )}
                       disabled={storesToShow.length <= 1}
                     >
-                      <BuildingIcon className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-white" : "text-primary")} />
+                      <BuildingIcon className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
 
                       <span className="text-[10px] sm:text-xs font-black uppercase truncate tracking-tight">
                         {activeStoreName}
@@ -147,7 +147,7 @@ export const Header = ({
             onClick={() => onViewChange('help')}
             className={cn(
               "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
-              currentView === 'help' && "bg-primary text-white shadow-lg shadow-primary/20"
+              currentView === 'help' && "bg-primary text-foreground shadow-lg shadow-primary/20"
             )}
             aria-label="Ayuda"
           >

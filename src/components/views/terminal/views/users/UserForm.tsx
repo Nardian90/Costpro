@@ -325,7 +325,7 @@ export default function UserForm({
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all mb-0.5"
                 title="Eliminar tienda"
               >
                 <Trash2 className="w-4 h-4" />
@@ -360,7 +360,7 @@ export default function UserForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-3 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'}

@@ -239,7 +239,7 @@ export default function InventoryAdjustmentModal({
                     onClick={() => setReason(r)}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-xs font-bold uppercase border transition-all active:scale-95",
-                      reason === r ? "bg-primary text-white border-primary" : "bg-muted text-muted-foreground border-border"
+                      reason === r ? "bg-primary text-foreground border-primary" : "bg-muted text-muted-foreground border-border"
                     )}
                   >
                     {r}

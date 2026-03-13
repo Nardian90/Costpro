@@ -74,7 +74,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20">
       {/* Executive Header */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 text-white p-8 md:p-12 shadow-2xl">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 text-foreground p-8 md:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 p-8 opacity-10">
             <FileText className="w-64 h-64 -mr-20 -mt-20" />
         </div>
@@ -91,7 +91,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                 {header?.name || 'Ficha de Costo'}
             </h1>
             <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
-                Análisis técnico-económico detallado de la estructura de costos, margen de rentabilidad y proyecciones de venta para el producto <span className="text-white underline decoration-primary decoration-4 underline-offset-4">{header?.product_code || ''}</span>.
+                Análisis técnico-económico detallado de la estructura de costos, margen de rentabilidad y proyecciones de venta para el producto <span className="text-foreground underline decoration-primary decoration-4 underline-offset-4">{header?.product_code || ''}</span>.
             </p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12 border-t border-white/10 pt-8">
@@ -118,7 +118,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
       {/* Intelligent Insights Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-background dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <h3 className="text-xl font-black mb-6 flex items-center gap-3">
                     <div className="w-2 h-8 bg-primary rounded-full" />
                     Análisis Inteligente de Partidas
@@ -154,7 +154,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-background dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <h3 className="text-xl font-black mb-6 flex items-center gap-3">
                     <div className="w-2 h-8 bg-amber-500 rounded-full" />
                     Punto de Equilibrio y Venta
@@ -181,7 +181,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
         </div>
 
         <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <div className="bg-background dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-8 text-center">Estructura de Costos</h3>
                 <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">

@@ -102,7 +102,7 @@ export default function UsersManagementView() {
                 <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="p-4">
                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-black text-xs">
+                        <div className="w-8 h-8 rounded-lg bg-primary text-foreground flex items-center justify-center font-black text-xs">
                           {u.full_name?.charAt(0)}
                         </div>
                         <div className="font-bold text-sm uppercase">{u.full_name}</div>
@@ -185,14 +185,14 @@ export default function UsersManagementView() {
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() => handleEditUser(u)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleResetPassword(u.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
                       >
@@ -201,7 +201,7 @@ export default function UsersManagementView() {
                       <button
                         onClick={() => handleDeleteUser(u.id)}
                         disabled={u.id === user?.id}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Eliminar usuario"
                       >
                         <Trash2 className="w-4 h-4" />

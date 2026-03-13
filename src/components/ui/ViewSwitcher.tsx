@@ -20,7 +20,7 @@ export default function ViewSwitcher({ currentView, onViewChange, className }: V
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-black uppercase tracking-widest active:scale-95 min-h-[44px]",
           currentView === 'grid'
-            ? "bg-primary text-white shadow-lg shadow-primary/20"
+            ? "bg-primary text-foreground shadow-lg shadow-primary/20"
             : "text-muted-foreground hover:text-foreground"
         )}
         aria-label="Vista de Tarjeta"
@@ -33,7 +33,7 @@ export default function ViewSwitcher({ currentView, onViewChange, className }: V
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-black uppercase tracking-widest active:scale-95 min-h-[44px]",
           currentView === 'table'
-            ? "bg-primary text-white shadow-lg shadow-primary/20"
+            ? "bg-primary text-foreground shadow-lg shadow-primary/20"
             : "text-muted-foreground hover:text-foreground"
         )}
         aria-label="Vista de Tabla"

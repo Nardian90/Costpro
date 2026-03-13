@@ -41,7 +41,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
 
         <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 shrink-0">
-              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
             </div>
             <div className="min-w-0">
               <h1 className="text-[clamp(1.25rem,6vw,1.875rem)] font-black text-foreground tracking-tight leading-tight truncate">

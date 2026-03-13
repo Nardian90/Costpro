@@ -270,7 +270,7 @@ export default function ExecutiveDemoView() {
           >
              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="space-y-2 text-center md:text-left">
-                  <Badge className="bg-primary text-white font-black px-4 py-1 rounded-full uppercase tracking-widest text-xs">Informe de Resultado</Badge>
+                  <Badge className="bg-primary text-foreground font-black px-4 py-1 rounded-full uppercase tracking-widest text-xs">Informe de Resultado</Badge>
                   <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Impacto al <span className="text-primary italic">Negocio</span></h2>
                 </div>
                 <div className="flex gap-4">
@@ -363,7 +363,7 @@ export default function ExecutiveDemoView() {
                        <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight">¿Listo para modernizar su MiPyME?</h3>
                        <p className="text-sm font-medium opacity-70 leading-relaxed">Pase de la teoría a la práctica hoy mismo con sus datos reales.</p>
                        <Link href="/login">
-                        <Button className="w-full h-14 rounded-2xl bg-primary text-white font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                        <Button className="w-full h-14 rounded-2xl bg-primary text-foreground font-black uppercase tracking-widest hover:scale-105 transition-transform">
                           Comenzar Gratis
                           <ChevronRight className="w-5 h-5 ml-2" />
                         </Button>

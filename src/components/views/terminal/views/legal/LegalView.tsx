@@ -68,7 +68,7 @@ export default function LegalView() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
         <div className="flex items-center gap-6">
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Scale className="w-8 h-8 text-white" />
+            <Scale className="w-8 h-8 text-foreground" />
           </div>
           <div>
             <h1 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black uppercase tracking-tight leading-none">Consultor Legal</h1>

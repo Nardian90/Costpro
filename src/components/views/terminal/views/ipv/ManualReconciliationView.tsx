@@ -322,7 +322,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-xs font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
+                                className="h-7 text-xs font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-foreground transition-all"
                                 onClick={applyRebate}
                             >
                                 Ajustar Todo
@@ -385,7 +385,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                             <span className="text-xs font-bold text-muted-foreground uppercase">Precio</span>
                                             <span className="font-black text-xs text-primary">{p.precio_cents}</span>
                                         </div>
-                                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+                                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-foreground transition-all">
                                             <Plus className="w-3.5 h-3.5" />
                                         </div>
                                     </div>

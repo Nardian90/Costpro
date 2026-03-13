@@ -123,7 +123,7 @@ export default function RSSManagementView() {
               <button
                 type="submit"
                 disabled={addFeedMutation.isPending}
-                className="bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="bg-primary text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Añadir
@@ -225,7 +225,7 @@ export default function RSSManagementView() {
                   />
                   <button
                     onClick={handleAddKeyword}
-                    className="p-2.5 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
+                    className="p-2.5 bg-primary text-foreground rounded-xl hover:opacity-90 transition-opacity"
                   >
                     <Plus className="w-5 h-5" />
                   </button>

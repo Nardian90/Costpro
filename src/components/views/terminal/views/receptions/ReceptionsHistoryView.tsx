@@ -161,7 +161,7 @@ export default function ReceptionsHistoryView() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(rec)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                             title="Ver productos"
                           >
                             <Eye className="w-4 h-4" />
@@ -171,7 +171,7 @@ export default function ReceptionsHistoryView() {
                                 handleViewDetails(rec);
                                 setTimeout(() => handleInvert(rec), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                             title="Invertir Recepción (Disminución)"
                             disabled={rec.status === 'voided' || isInverting}
                           >
@@ -182,14 +182,14 @@ export default function ReceptionsHistoryView() {
                                 handleViewDetails(rec);
                                 setTimeout(() => handleDuplicate(rec), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
                             title="Duplicar Recepción"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(rec.id)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95 priority-low"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95 priority-low"
                             title="Editar"
                           >
                             <Pencil className="w-4 h-4" />

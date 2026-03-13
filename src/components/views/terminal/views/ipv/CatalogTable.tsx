@@ -689,7 +689,7 @@ const handleExportCatalog = () => {
                                         <TooltipTrigger asChild>
                                           <div className="p-0.5 rounded-full bg-blue-100 text-blue-600 cursor-help"><CornerDownRight className="w-3 h-3" /></div>
                                         </TooltipTrigger>
-                                        <TooltipContent side="right" className="text-[10px] font-bold uppercase p-2 bg-blue-600 text-white border-none shadow-lg">
+                                        <TooltipContent side="right" className="text-[10px] font-bold uppercase p-2 bg-blue-600 text-foreground border-none shadow-lg">
                                           Se descompone en: {p.cod_hijo}
                                         </TooltipContent>
                                       </Tooltip>

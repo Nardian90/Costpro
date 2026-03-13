@@ -12,7 +12,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
     <div className="space-y-6">
       {/* Formal Government Headers */}
       <div className="text-center space-y-1 mb-8">
-        <h2 className="text-sm font-black tracking-[0.25em] text-slate-900 dark:text-white uppercase">
+        <h2 className="text-sm font-black tracking-[0.25em] text-slate-900 dark:text-foreground uppercase">
           MINISTERIO DE FINANZAS Y PRECIOS
         </h2>
         <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
@@ -29,7 +29,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
             <span className="text-[clamp(0.6rem,2vw,0.75rem)] font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
               Datos generales de la Ficha de Costo (FC)
             </span>
-            <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+            <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-black text-slate-900 dark:text-foreground leading-tight uppercase tracking-tight">
               {header.name || 'Sin nombre'}
             </h1>
           </div>
