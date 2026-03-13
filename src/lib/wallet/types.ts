@@ -16,6 +16,7 @@ export interface ConsolidatedTransaction {
   bank: string;
   counterparty?: string;
   isAdjustment?: boolean;
+  isStatement?: boolean;
   balanceAfter?: number;
 }
 
@@ -32,6 +33,7 @@ export interface AnalyticalTransaction {
   transactionId: string;
   channel: string;
   note: string;
+  isStatement?: boolean;
 }
 
 export interface WalletSummary {
