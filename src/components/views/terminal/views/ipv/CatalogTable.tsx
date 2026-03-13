@@ -32,6 +32,7 @@ import {
     checkWildcardCandidate,
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
+import { importProducts } from '@/lib/ipv/importUtils';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import ActionMenu, { Action } from "@/components/ui/ActionMenu";
 import * as XLSX from 'xlsx';
@@ -488,74 +489,26 @@ const handleExportCatalog = () => {
     toast.success(products && products.length > 0 ? 'Catálogo exportado (Excel)' : 'Plantilla de catálogo exportada (Excel)');
   };
 
-  const handleImportCatalog = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportCatalog = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
 
-            if (!jsonData || jsonData.length === 0) {
-                toast.error('El archivo está vacío');
-                return;
-            }
-
-            const validProducts: Product[] = [];
-            const now = new Date().toISOString();
-
-            for (const row of jsonData) {
-                // Map from Spanish headers or generic headers
-                const cod = row['Código'] || row['cod'] || row['CODIGO'];
-                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || '';
-                const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || '';
-                const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
-                const um = row['UM'] || row['um'] || 'UNIDADES';
-                const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
-                const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
-                const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
-                const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
-                const activo_val = row['activo'] || row['Activo'] || 'VERDADERO';
-                const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
-
-                if (!cod || !descripcion) continue;
-
-                validProducts.push({
-                    cod: String(cod).toUpperCase(),
-                    id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
-                    cod_hijo: cod_hijo ? String(cod_hijo).toUpperCase() : '',
-                    descripcion: String(descripcion),
-                    um: String(um).toUpperCase(),
-                    precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
-                    prioridad_algoritmo: parseInt(String(prioridad)),
-                    stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
-                    es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
-                    contenido_paquete: parseInt(String(cont_pqt)),
-                    activo: true,
-                    created_at: now,
-                    priorityMode: 'manual',
-                    isWildcardCandidate: false
-                });
-            }
-
-            if (validProducts.length > 0) {
-                db.products.bulkPut(validProducts).then(() => {
-                    toast.success(`Se importaron ${validProducts.length} productos correctamente`);
-                    event.target.value = '';
-                }).catch(err => {
-                    toast.error('Error al guardar los productos');
-                    console.error(err);
-                });
+            const importedCount = await importProducts(jsonData, 'CATALOG_EXCEL');
+            if (importedCount > 0) {
+                toast.success(`Se importaron ${importedCount} productos correctamente`);
+                event.target.value = '';
             } else {
-                toast.error('No se encontraron productos válidos. Verifique las columnas Código y Descripción.');
+                toast.error('No se encontraron productos válidos.');
             }
         } catch (error) {
-            toast.error('Error al procesar el archivo Excel');
+            toast.error('Error al procesar el archivo');
             console.error(error);
         }
     };
@@ -611,6 +564,7 @@ const handleExportCatalog = () => {
                 id_grupo: "BIGBON",
                 um: "UNIDADES",
                 precio_cents: 45,
+                variacion_permisible_percent: 5,
                 prioridad_algoritmo: 1,
                 activo: true,
                 es_paquete: false,
@@ -625,7 +579,8 @@ const handleExportCatalog = () => {
 
         // 3. Seed Matching Rules
         await db.matching_rules.bulkPut([
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
+            { id: 'rule-flex', tipo: 'PRICE_FLEX', prioridad: 1, activo: true },
             { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
         ]);
 
@@ -660,7 +615,8 @@ const handleExportCatalog = () => {
 
         // 5. Run Matching Engine
         const engine = new MatchingEngine(products as any, [
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
+            { id: 'rule-flex', tipo: 'PRICE_FLEX', prioridad: 1, activo: true },
             { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
         ] as any);
 
@@ -857,7 +813,7 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
             </div>
             <div className="flex justify-between items-center"><div className="flex flex-col gap-2">{isEditing ? (<div className="flex items-center gap-2"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">Paquete</Label>{editForm.es_paquete && (<Input type="number" value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 w-12 text-xs text-center" />)}</div>) : (product.es_paquete && (<div className="flex items-center gap-1"><Badge className="bg-primary/10 text-primary text-xs font-black uppercase">Pack X{product.contenido_paquete}</Badge></div>))}</div></div>
             <div className="flex justify-between items-center">
-                <div><p className="text-xs font-bold text-muted-foreground uppercase">Precio</p>{isEditing ? (<div className="flex items-center gap-1"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-7 text-xs w-24 font-black" /></div>) : (<div className="flex flex-col items-end"><p className={`font-black text-base ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>{product.precio_base_cents && (<p className="text-xs text-muted-foreground line-through">Base: {product.precio_base_cents}</p>)}</div>)}</div>
+                <div><p className="text-xs font-bold text-muted-foreground uppercase">Precio</p>{isEditing ? (<><div className="flex items-center gap-1"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-7 text-xs w-24 font-black" /></div> <div className="flex flex-col gap-0.5 ml-2"><Label className="text-[8px] uppercase opacity-50">Var %</Label><Input type="number" step="0.1" value={editForm.variacion_permisible_percent || 0} onChange={e => setEditForm({...editForm, variacion_permisible_percent: parseFloat(e.target.value) || 0})} className="h-6 text-[10px] w-12 text-center" /></div></>) : (<div className="flex flex-col items-end"><p className={`font-black text-base ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>{product.precio_base_cents && (<p className="text-xs text-muted-foreground line-through">Base: {product.precio_base_cents}</p>)}</div>)}</div>
                 <div className="flex gap-2">{isEditing ? (<Button size="sm" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn-primary" onClick={onSave}><Check className="w-4 h-4" /></Button>) : (<Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn" onClick={onEdit}><Edit2 className="w-4 h-4" /></Button>)}<Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div>
             </div>
         </Card>
@@ -869,7 +825,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
         <Card className="p-4 space-y-4 border-2 border-dashed border-primary/50 bg-primary/5 relative">
             <div className="grid grid-cols-3 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Código</Label><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="SKU-123" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">ID Grupo</Label><Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="OPCIONAL" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Cód. Hijo</Label><Input value={editForm.cod_hijo || ""} onChange={e => setEditForm({...editForm, cod_hijo: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="AUTO" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">UM</Label><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 text-xs uppercase" placeholder="UNIDADES" /></div></div>
             <div className="space-y-1"><Label className="text-xs uppercase font-black">Descripción</Label><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs" placeholder="Nombre del producto..." /></div>
-            <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Precio de Venta</Label><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Prioridad</Label><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}</select></div></div>
+            <div className="grid grid-cols-3 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Precio de Venta</Label><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Variación %</Label><Input type="number" step="0.1" value={editForm.variacion_permisible_percent || 0} onChange={e => setEditForm({...editForm, variacion_permisible_percent: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" placeholder="5.0" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Prioridad</Label><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}</select></div></div>
             <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Stock Inicial</Label><Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 text-xs" /></div><div className="space-y-1 flex flex-col justify-end"><div className="flex items-center gap-2 pb-1"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">¿Es Paquete?</Label></div>{editForm.es_paquete && (<Input type="number" placeholder="Contenido..." value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 text-xs" />)}</div></div>
             <div className="flex gap-2 pt-2"><Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-xs uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button><Button variant="ghost" className="h-12 sm:h-10 text-xs uppercase font-bold" onClick={onCancel}>Cancelar</Button></div>
         </Card>
