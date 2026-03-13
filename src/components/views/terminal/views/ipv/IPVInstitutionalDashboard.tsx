@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCompactCurrency } from '@/lib/utils';
 import {
     calculateIPVMetrics,
     getDailySalesHistory,
@@ -268,7 +268,7 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
     );
 }
 
-function MetricCard({ title, amount, icon, subtitle, color }: { title: string, amount: number, icon: React.ReactNode, subtitle?: string, color: string }) {
+function MetricCard({ title, amount, value, icon, subtitle, color }: { title: string, amount?: number, value?: string, icon: React.ReactNode, subtitle?: string, color: string }) {
     const colorClasses: Record<string, string> = {
         emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
         rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
@@ -285,7 +285,7 @@ function MetricCard({ title, amount, icon, subtitle, color }: { title: string, a
             <div className="space-y-2 relative z-10">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{title}</p>
                 <div className="flex items-baseline gap-2">
-                    <h3 className="text-[clamp(1.1rem,2vw,1.5rem)] font-black text-foreground truncate" title={formatCurrency(amount)}>{formatCompactCurrency(amount)}</h3>
+                    <h3 className="text-[clamp(1.1rem,2vw,1.5rem)] font-black text-foreground truncate" title={amount !== undefined ? formatCurrency(amount) : value}>{value ?? (amount !== undefined ? formatCompactCurrency(amount) : "—")}</h3>
                 </div>
                 {subtitle && <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">{subtitle}</p>}
             </div>
