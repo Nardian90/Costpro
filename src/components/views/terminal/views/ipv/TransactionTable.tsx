@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 interface TransactionTableProps {
     transactions: BankTransaction[];
     kpiFilter: 'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES';
-    txReconciliationTotals: Record<string, number>;
+    txReconciliationTotals: Map<string, number>;
     onReconcile: (tx: BankTransaction) => void;
     onForceMatch?: (tx: BankTransaction) => void;
 }
@@ -68,7 +68,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         if (!showExcluded && t.excluido) return false;
         const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) || t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
-        const matched = txReconciliationTotals[t.referencia_origen] || 0;
+        const matched = txReconciliationTotals.get(t.referencia_origen) || 0;
         const target = t.importe_venta_cents || t.importe_cents;
         const diff = target - matched;
         let matchesKpi = true;
@@ -178,7 +178,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   <TableRow><TableCell colSpan={11} className="h-24 text-center text-muted-foreground font-medium">No se encontraron transacciones.</TableCell></TableRow>
                 ) : (
                   filtered.map((tx) => (
-                      <TransactionRow key={tx.referencia_origen} tx={tx} matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0} onView={() => onReconcile(tx)} onForceMatch={() => onForceMatch?.(tx)} onReset={() => handleResetReconciliation(tx)} onDelete={() => handleDelete(tx.referencia_origen)} onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)} getStatusBadge={getStatusBadge} diff={(tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0)} />
+                      <TransactionRow key={tx.referencia_origen} tx={tx} matchedTotal={txReconciliationTotals.get(tx.referencia_origen) || 0} onView={() => onReconcile(tx)} onForceMatch={() => onForceMatch?.(tx)} onReset={() => handleResetReconciliation(tx)} onDelete={() => handleDelete(tx.referencia_origen)} onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)} getStatusBadge={getStatusBadge} diff={(tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals.get(tx.referencia_origen) || 0)} />
                   ))
                 )}
               </TableBody>
@@ -190,7 +190,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   <div className="h-24 flex items-center justify-center text-muted-foreground">No se encontraron transacciones.</div>
               ) : (
                   filtered.map((tx) => {
-                      const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
+                      const matchedTotal = txReconciliationTotals.get(tx.referencia_origen) || 0;
                       const targetAmount = tx.importe_venta_cents || tx.importe_cents;
                       const diff = targetAmount - matchedTotal;
                       const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
