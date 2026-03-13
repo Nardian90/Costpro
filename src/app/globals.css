@@ -901,6 +901,35 @@
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
     }
+
+    /* Media Section (SECCION_05_MEDIA) Maintenance */
+
+    /* Ensure diagram containers are scrollable and don't overflow parent */
+    .min-w-\[600px\] {
+      max-width: none !important; /* Allow it to be larger than parent to trigger scroll */
+    }
+
+    /* Container for diagrams must allow scroll */
+    .w-full.overflow-x-auto.no-scrollbar {
+      display: block !important;
+      width: 100% !important;
+      overflow-x: auto !important;
+    }
+
+    /* Reinforce 44px touch targets for media/slider controls */
+    .h-11.w-11,
+    [data-slot="carousel-previous"],
+    [data-slot="carousel-next"] {
+      min-height: 44px !important;
+      min-width: 44px !important;
+    }
+
+    /* Adaptive typography for media titles/captions */
+    .font-display.text-\[clamp\(2rem\,10vw\,3\.75rem\)\],
+    .font-display.text-3xl,
+    .text-3xl.font-bold.tracking-tighter {
+      font-size: clamp(18px, 4vw, 24px) !important;
+    }
   }
 
   /* Reduced motion */
