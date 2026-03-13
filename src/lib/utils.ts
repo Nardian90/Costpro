@@ -53,6 +53,32 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Utility to format currency in a compact way (e.g., 162000 -> 162 MP).
+ * MP = Miles de Pesos, MMP = Millones de Pesos.
+ */
+export const formatCompactCurrency = (amount: number): string => {
+  const absAmount = Math.abs(amount);
+
+  if (absAmount >= 1000000) {
+    const formatted = (amount / 1000000).toLocaleString("es-AR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
+    return `$ ${formatted} MMP`;
+  }
+
+  if (absAmount >= 1000) {
+    const formatted = (amount / 1000).toLocaleString("es-AR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1
+    });
+    return `$ ${formatted} MP`;
+  }
+
+  return formatCurrency(amount);
+};
+
+/**
  * Utility to format numbers with accounting format (US style):
  * Thousands: comma (,)
  * Decimal: dot (.)
