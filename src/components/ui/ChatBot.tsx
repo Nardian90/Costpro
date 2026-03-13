@@ -51,12 +51,17 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/bot/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           messages: [...messages, userMessage],
           aiProvider: user?.aiProvider,
@@ -64,16 +69,21 @@ const ChatBot = () => {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ details: 'Error desconocido' }));
-        throw new Error(error.details || error.error || 'Error en la comunicación con la IA');
+        if (response.status === 401) {
+            setIsSettingsOpen(true);
+            throw new Error(data.details || 'Por favor, configura tu API Key.');
+        }
+        throw new Error(data.details || data.error || 'Error en la comunicación con la IA');
       }
 
-      const data = await response.json();
       setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
     } catch (err: any) {
       toast.error(err.message);
       console.error(err);
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${err.message}`, error: true }]);
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +92,8 @@ const ChatBot = () => {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      // Aquí se llamaría a un servicio para guardar en DB si fuera necesario
+      // Nota: Aquí se debería llamar a un endpoint para actualizar el perfil en Supabase
+      // Por ahora simulamos éxito y cerramos
       toast.success('Configuración de IA actualizada');
       setIsSettingsOpen(false);
     } catch (error) {
@@ -237,7 +248,7 @@ const ChatBot = () => {
                           "p-4 rounded-2xl max-w-[80%] text-xs font-medium shadow-sm leading-relaxed",
                           msg.role === 'user'
                           ? "bg-primary text-primary-foreground rounded-tr-none"
-                          : "bg-card border border-border rounded-tl-none prose prose-xs dark:prose-invert"
+                          : cn("bg-card border border-border rounded-tl-none prose prose-xs dark:prose-invert", msg.error && "border-destructive/30 bg-destructive/5 text-destructive")
                         )}>
                           {msg.role === 'assistant' ? (
                             <ReactMarkdown>{msg.content}</ReactMarkdown>

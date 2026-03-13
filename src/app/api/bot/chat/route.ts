@@ -8,9 +8,8 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const userId = session?.user?.id;
+    const token = session?.token;
 
     let body;
     try {
@@ -26,13 +25,8 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      // Usar el orquestador central que maneja:
-      // 1. Clave proporcionada por el usuario (aiApiKey)
-      // 2. Claves del usuario en Supabase (ai_api_keys)
-      // 3. Claves del sistema globales en DB
-      // 4. Claves de variables de entorno (GOOGLE_API_KEY, etc)
-      // Tambien maneja el fallback automático entre ellas.
-      const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
+      // Orquestador central con prioridad y paso de token
+      const provider = await getLLMProviderWithUserKey(userId, aiProvider, aiApiKey, token);
 
       const response = await provider.getResponse(messages, {
         temperature: 0.7,
@@ -50,7 +44,15 @@ export async function POST(req: NextRequest) {
       });
 
     } catch (error: any) {
-      console.error('[ChatBot API] Error del proveedor:', error.message);
+      console.error('[ChatBot API] Error:', error.message);
+
+      if (error.message.includes('No se ha configurado la API Key')) {
+          return NextResponse.json({
+            error: 'Configuración requerida',
+            details: 'No se encontraron claves de API. Por favor, configura tu propia API Key en los ajustes del chat.'
+          }, { status: 401 });
+      }
+
       return NextResponse.json({
         error: 'Error de comunicación con la IA',
         details: error.message

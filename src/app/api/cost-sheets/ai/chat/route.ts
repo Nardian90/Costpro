@@ -7,7 +7,8 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const userId = session?.user?.id;
+    const token = session?.token;
 
     let body;
     try {
@@ -22,7 +23,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mensajes inválidos' }, { status: 400 });
     }
 
-    // Sanitize sheetData to avoid sending too much data to the LLM
     const sanitizedSheetData = sheetData ? {
       header: sheetData.header,
       sectionsCount: sheetData.sections?.length || 0,
@@ -57,8 +57,7 @@ export async function POST(req: NextRequest) {
     };
 
     try {
-      // Use user-specific key if available
-      const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
+      const provider = await getLLMProviderWithUserKey(userId, aiProvider, aiApiKey, token);
       const response = await provider.getResponse([systemPrompt, ...messages], { temperature: 0.1 });
 
       if (!response || !response.text) {
@@ -67,7 +66,15 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ text: response.text });
     } catch (aiError: any) {
-      console.error('[AIChat] LLM Error:', aiError);
+      console.error('[AIChat] Error:', aiError.message);
+
+      if (aiError.message.includes('No se ha configurado la API Key')) {
+          return NextResponse.json({
+            error: 'Configuración requerida',
+            details: 'No se encontraron claves de API configuradas.'
+          }, { status: 401 });
+      }
+
       return NextResponse.json({
         error: `Error de comunicación con la IA: ${aiError.message}`,
         details: aiError.stack
@@ -75,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('[AIChat] Global Error:', error);
+    console.error('[AIChat] GLOBAL ERROR:', error);
     return NextResponse.json({
       error: 'Error interno en Darian AI',
       message: error.message
