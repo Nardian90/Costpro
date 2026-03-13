@@ -4,51 +4,100 @@ const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now(
 
 export function parseRawSms(text: string): RawSms[] {
   if (!text) return [];
+
   const lines = text.split('\n');
-  const rawSms: RawSms[] = [];
 
-  let startIdx = 0;
-  if (lines.length > 0 && lines[0].toLowerCase().includes('type') && lines[0].toLowerCase().includes('content')) {
-    startIdx = 1;
-  }
+  // Compatibility check: if it looks like a TSV or has double spaces, use the simple line-by-line parser
+  if (lines.some(l => l.includes('\t') || /\s{2,}/.test(l))) {
+    const rawSms: RawSms[] = [];
+    let startIdx = 0;
+    if (lines.length > 0 && lines[0].toLowerCase().includes('type') && lines[0].toLowerCase().includes('content')) {
+      startIdx = 1;
+    }
 
-  for (let i = startIdx; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const parts = line.split(/\t|\s{2,}/);
-
-    if (parts.length >= 4) {
-      rawSms.push({
-        id: generateId(),
-        type: parts[0].trim(),
-        date: parts[1].trim(),
-        nameNumber: parts[2].trim(),
-        content: parts.slice(3).join(' ').trim()
-      });
-    } else {
-      const dateRegex = /(\d{1,2}\s+[a-z]{3}\.?\s+\d{4})/;
-      const match = line.match(dateRegex);
-      if (match) {
-        const dateStr = match[1];
-        const dateIdx = line.indexOf(dateStr);
-        const type = line.substring(0, dateIdx).trim() || 'Recibido';
-        const rest = line.substring(dateIdx + dateStr.length).trim();
-        const restParts = rest.split(/\s+/);
-        const nameNumber = restParts[0] || 'PAGOxMOVIL';
-        const content = restParts.slice(1).join(' ');
-
+    for (let i = startIdx; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split(/\t|\s{2,}/);
+      if (parts.length >= 4) {
         rawSms.push({
           id: generateId(),
-          type,
-          date: dateStr,
-          nameNumber,
-          content
+          type: parts[0].trim(),
+          date: parts[1].trim(),
+          nameNumber: parts[2].trim(),
+          content: parts.slice(3).join(' ').trim()
         });
       }
     }
+    if (rawSms.length > 0) return deduplicateRawSms(rawSms);
   }
 
+  // Robust multi-line parser for fragmented input (like user's copy-paste)
+  const messages: RawSms[] = [];
+  let currentBlock: string[] = [];
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // A new message record typically starts with "Recibido" or "Enviado" at the beginning of a line
+    if (/^(Recibido|Enviado)/i.test(trimmed)) {
+      if (currentBlock.length > 0) {
+        messages.push(processBlock(currentBlock));
+      }
+      currentBlock = [trimmed];
+    } else {
+      if (currentBlock.length > 0) {
+        currentBlock.push(trimmed);
+      } else {
+        currentBlock = [trimmed];
+      }
+    }
+  });
+  if (currentBlock.length > 0) messages.push(processBlock(currentBlock));
+
+  return deduplicateRawSms(messages);
+}
+
+function processBlock(block: string[]): RawSms {
+    const fullText = block.join(' ');
+    let type = 'Recibido';
+    const typeMatch = fullText.match(/^(Recibido|Enviado)/i);
+    if (typeMatch) type = typeMatch[1];
+
+    let date = '';
+    const dateRegex = /(\d{1,2}\s+[a-z]{3}\.?\s+\d{4})|(\d{1,2}\/\d{1,2}\/\d{2,4})/;
+    const dateMatch = fullText.match(dateRegex);
+    if (dateMatch) date = dateMatch[0];
+
+    let nameNumber = 'PAGOxMOVIL';
+    if (fullText.includes('PAGOxMOVIL')) nameNumber = 'PAGOxMOVIL';
+
+    let content = fullText;
+    // Try to remove metadata from content
+    const timeMatch = fullText.match(/\d{1,2}:\d{2}:\d{2}\s+(p\.\s*m\.|a\.\s*m\.)/i);
+    if (timeMatch) {
+        const timeEndIdx = fullText.indexOf(timeMatch[0]) + timeMatch[0].length;
+        content = fullText.substring(timeEndIdx).trim();
+    } else if (date) {
+        const dateEndIdx = fullText.indexOf(date) + date.length;
+        content = fullText.substring(dateEndIdx).trim();
+    }
+
+    if (content.startsWith('PAGOxMOVIL')) {
+        content = content.substring('PAGOxMOVIL'.length).trim();
+    }
+
+    return {
+        id: generateId(),
+        type,
+        date: date || new Date().toISOString().split('T')[0],
+        nameNumber,
+        content
+    };
+}
+
+function deduplicateRawSms(rawSms: RawSms[]): RawSms[] {
   const unique = new Map<string, RawSms>();
   rawSms.forEach(sms => {
     const key = `${sms.type}|${sms.date}|${sms.content}`;
@@ -56,7 +105,6 @@ export function parseRawSms(text: string): RawSms[] {
       unique.set(key, sms);
     }
   });
-
   return Array.from(unique.values());
 }
 
@@ -76,38 +124,47 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
     const bank = normalizeBank(sms.content);
 
     if (sms.content.includes('Ultimas operaciones')) {
-      const lines = sms.content.split(/[.;\n]/);
+      // Split by newline or pipe, then look for date patterns to handle joined headers
+      const lines = sms.content.split(/[|\n\r]+/);
       lines.forEach(line => {
-        if (line.includes(';')) {
-          const parts = line.split(';');
-          if (parts.length >= 6) {
-            const date = parts[0].trim();
-            const service = parts[1].trim();
-            const operation = parts[2].trim().toUpperCase();
-            const amountStr = parts[3].replace(',', '.').trim();
-            const amount = parseFloat(amountStr);
-            const currency = parts[4].trim();
-            const transactionId = parts[5].trim();
+        const subLines = line.split(/(?=\d{1,2}\/\d{1,2}\/\d{2,4};)/);
+        subLines.forEach(sl => {
+            if (sl.includes(';')) {
+                const parts = sl.split(';');
+                if (parts.length >= 6) {
+                    const rawDate = parts[0].trim();
+                    const dateMatch = rawDate.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/);
+                    if (!dateMatch) return;
 
-            if (!isNaN(amount) && transactionId) {
-              const op: 'CR' | 'DB' = (operation === 'CR' || operation.includes('CR')) ? 'CR' : 'DB';
-              const key = `${date}|${amount}|${transactionId}|${bank}`;
-              if (!seen.has(key)) {
-                consolidated.push({
-                  date: formatDate(date),
-                  service,
-                  operation: op,
-                  amount,
-                  currency,
-                  transactionId,
-                  bank,
-                  counterparty: service // In statement lines, service often contains counterparty info
-                });
-                seen.add(key);
-              }
+                    const date = dateMatch[0];
+                    const service = parts[1].trim();
+                    const operation = parts[2].trim().toUpperCase();
+                    const amountStr = parts[3].replace(',', '.').trim();
+                    const amount = parseFloat(amountStr);
+                    const currency = parts[4].trim();
+                    const transactionId = parts[5].trim();
+
+                    if (!isNaN(amount) && transactionId) {
+                        const op: 'CR' | 'DB' = (operation === 'CR' || operation.includes('CR')) ? 'CR' : 'DB';
+                        const key = `${date}|${amount}|${transactionId}|${bank}`;
+                        if (!seen.has(key)) {
+                            consolidated.push({
+                                date: formatDate(date),
+                                service,
+                                operation: op,
+                                amount,
+                                currency,
+                                transactionId,
+                                bank,
+                                counterparty: service,
+                                isStatement: true
+                            });
+                            seen.add(key);
+                        }
+                    }
+                }
             }
-          }
-        }
+        });
       });
     }
 
@@ -132,12 +189,16 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
         }
       },
       {
-        regex: /Recarga de cupon.*?Monto Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
+        regex: /Recarga se realizo con exito.*?Monto Pagado:\s*([\d,.]+)\s*(\w+).*?Id transaccion:\s+([A-Z0-9]+)/i,
+        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
       },
       {
-        regex: /Pago factura.*?Monto Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
+        regex: /Pago de la factura.*?fue completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion:\s+([A-Z0-9]+)/i,
+        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
+      },
+      {
+        regex: /pago del impuesto.*?completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion Banco:\s+([A-Z0-9]+)/i,
+        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Impuesto', counterparty: 'ONAT' })
       }
     ];
 
@@ -184,7 +245,10 @@ export function deriveAnalyticalData(consolidated: ConsolidatedTransaction[]): A
       category = 'Telecom';
     } else if (serviceLow.includes('pago') || serviceLow.includes('factura')) {
       typeOperation = 'Pago';
-      category = 'Impuesto';
+      category = 'Servicios';
+    } else if (serviceLow.includes('impuesto') || serviceLow.includes('sello')) {
+      typeOperation = 'Impuesto';
+      category = 'Impuestos';
     } else if (tx.isAdjustment) {
       typeOperation = 'Ajuste';
       category = 'Ajuste';
@@ -203,7 +267,8 @@ export function deriveAnalyticalData(consolidated: ConsolidatedTransaction[]): A
       category,
       transactionId: tx.transactionId,
       channel: 'Transfermovil',
-      note
+      note,
+      isStatement: tx.isStatement
     };
   });
 }
@@ -218,7 +283,7 @@ export function calculateLedger(raw: RawSms[], consolidated: ConsolidatedTransac
 
     raw.forEach(sms => {
       if (normalizeBank(sms.content) === bank) {
-        const match = sms.content.match(/(Saldo Disponible|Saldo restante):\s*(CR|DB)?\s*([\d,.]+)\s*CUP/i);
+        const match = sms.content.match(/(Saldo Disponible|Saldo restante|Saldo Restante):\s*(CR|DB)?\s*([\d,.]+)\s*(CUP|USD)?/i);
         if (match) {
           balances.push({
             date: formatDateFromSms(sms.date),
@@ -311,36 +376,41 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return new Date().toISOString().split('T')[0];
+
+  dateStr = dateStr.trim();
+
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const day = parts[0].padStart(2, '0');
     const month = parts[1].padStart(2, '0');
     const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-    return `${year}-\n${month}-\n${day}`.replace(/\n/g, ''); // Defensive
+    return `${year}-${month}-${day}`;
   }
-  // Handle DD/MM/YYYY with potentially different separators or spaces
-  const parts2 = dateStr.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
-  if (parts2) {
-      const day = parts2[1].padStart(2, '0');
-      const month = parts2[2].padStart(2, '0');
-      const year = parts2[3].length === 2 ? '20' + parts2[3] : parts2[3];
+
+  const partsHyphen = dateStr.split('-');
+  if (partsHyphen.length === 3) {
+      const day = partsHyphen[0].padStart(2, '0');
+      const month = partsHyphen[1].padStart(2, '0');
+      const year = partsHyphen[2].length === 2 ? '20' + partsHyphen[2] : partsHyphen[2];
       return `${year}-${month}-${day}`;
   }
-  return dateStr;
-}
 
-function formatDateFromSms(dateStr: string): string {
-  if (dateStr.includes('/')) return formatDate(dateStr);
   const months: Record<string, string> = {
     'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
     'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
   };
-  const parts = dateStr.toLowerCase().replace('.', '').split(/\s+/);
-  if (parts.length >= 3) {
-    const day = parts[0].padStart(2, '0');
-    const month = months[parts[1]] || '01';
-    const year = parts[2];
+  const partsSpace = dateStr.toLowerCase().replace('.', '').split(/\s+/);
+  if (partsSpace.length >= 3) {
+    const day = partsSpace[0].padStart(2, '0');
+    const monthStr = partsSpace[1];
+    const month = months[monthStr] || '01';
+    const year = partsSpace[2].length === 2 ? '20' + partsSpace[2] : partsSpace[2];
     return `${year}-${month}-${day}`;
   }
-  return new Date().toISOString().split('T')[0];
+
+  return dateStr;
+}
+
+function formatDateFromSms(dateStr: string): string {
+  return formatDate(dateStr);
 }
