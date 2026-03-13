@@ -1,7 +1,7 @@
 {
   "app": "CostPro",
   "version": "5.8.0",
-  "updated_at": "2026-03-12T09:08:50.677333Z",
+  "updated_at": "2026-03-13T09:39:52.920341Z",
   "modules": {
     "terminal": "Punto central para las operaciones diarias, incluyendo ventas, inventario y gestión.",
     "multitienda": "Control consolidado y navegación instantánea entre todas las sucursales del negocio.",
@@ -236,33 +236,33 @@
     },
     {
       "id": "quick_mode_flow",
-      "title": "Creación Express de Fichas (Modo Rápido)",
+      "title": "Creación Express y Generación Masiva",
       "role": "gerente",
       "story": {
-        "before": "Cuando llegaban muchos productos nuevos, registrarlos uno por uno tomaba horas de trabajo administrativo.",
-        "now": "Usas una tabla simplificada para ingresar los datos básicos de muchos productos a la vez y el sistema genera las fichas en masa.",
-        "why": "Optimiza tu tiempo drásticamente, permitiendo que los productos lleguen a la venta mucho más rápido."
+        "before": "Registrar productos nuevos tomaba horas de duplicidad.",
+        "now": "Usas una tabla express que transfiere automáticamente todo al motor de Generación Masiva.",
+        "why": "Elimina el re-trabajo y acelera la venta."
       },
       "steps": [
         {
           "step": 1,
-          "title": "Activar Modo Rápido",
-          "explanation": "Entra en 'Fichas de Costo' y toca el botón de 'Modo Rápido'."
+          "title": "Modo Rápido",
+          "explanation": "Abre la cuadrícula express en Fichas."
         },
         {
           "step": 2,
-          "title": "Entrada Masiva de Datos",
-          "explanation": "Ingresa el nombre, costo base y precio de venta en la cuadrícula express."
+          "title": "Ingreso Masivo",
+          "explanation": "Escribe datos básicos tipo Excel."
         },
         {
           "step": 3,
-          "title": "Generación Masiva Automatizada",
-          "explanation": "Haz clic en 'Generar Todo'. Los productos se enviarán directamente al motor de Generación Masiva para completar sus detalles sin entrada doble de datos."
+          "title": "Transferencia",
+          "explanation": "Los datos viajan solos a Generación Masiva."
         },
         {
           "step": 4,
-          "title": "Revisión Final",
-          "explanation": "El sistema te lleva a la vista de auditoría para confirmar que todas las fichas se crearon correctamente."
+          "title": "Auditoría",
+          "explanation": "Revisa el resultado final completado por IA."
         }
       ],
       "visuals": {
@@ -271,9 +271,9 @@
           "type": "workflow",
           "steps": [
             "Tabla Express",
-            "Carga Masiva",
-            "Generación AI",
-            "Listo para Venta"
+            "Auto-Transferencia",
+            "Generación Masiva",
+            "Auditoría Final"
           ]
         }
       }
@@ -436,13 +436,18 @@
         "version": "5.8.0",
         "date": "2026-03-09",
         "description": "Actualización mayor: Inclusión de flujos Multi-Sucursal, Modo Rápido de Fichas y refinamiento de TPV y conciliación IPV."
+      },
+      {
+        "version": "5.7.25",
+        "date": "2026-03-13",
+        "description": "Integración de Modo Rápido con Generación Masiva para fichas de costo."
       }
     ]
   },
   "metadata": {
-    "lastRun": "2026-03-12T09:08:50.677333Z",
-    "lastHash": "0af83fac7d2918b53200c79853f83d3e50ddff27ee333fb8fcb2a3c6abade61c",
-    "runCount": 7,
+    "lastRun": "2026-03-13T09:39:52.920341Z",
+    "lastHash": "89abd3a43d002b5b1987d7e8073fc7b5819df6dfc474621c85e3dac1e503f759",
+    "runCount": 11,
     "lastAgent": "Jules"
   }
 }
