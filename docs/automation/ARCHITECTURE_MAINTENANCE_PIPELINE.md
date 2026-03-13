@@ -1,7 +1,7 @@
 # ARCHITECTURE MAINTENANCE PIPELINE
 
 ## ESTADO DEL PIPELINE
-- **currentPhase**: 5
+- **currentPhase**: 6
 - **lastExecution**: 2026-03-12
 
 ## FASES DEL MANTENIMIENTO
