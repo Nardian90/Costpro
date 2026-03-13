@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
-import { DeepSeekAdapter } from '@/lib/ai/adapters/deepseek-adapter';
-import { GeminiAdapter } from '@/lib/ai/adapters/gemini-adapter';
-import { GPTAdapter } from '@/lib/ai/adapters/gpt-adapter';
+import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -10,9 +8,8 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const userId = session?.user?.id;
+    const token = session?.token;
 
     let body;
     try {
@@ -21,110 +18,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const { messages, history, aiProvider, aiApiKey } = body;
+    const { messages, aiProvider, aiApiKey } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
     }
 
-    const providers: Array<{ name: string; instance: any }> = [];
+    try {
+      // Orquestador central con prioridad y paso de token
+      const provider = await getLLMProviderWithUserKey(userId, aiProvider, aiApiKey, token);
 
-    // PRIMERO: Usuario
-    if (aiProvider && aiApiKey) {
-      const userProvider = getProviderInstance(aiProvider, aiApiKey);
-      if (userProvider) {
-        providers.push({ name: aiProvider, instance: userProvider });
+      const response = await provider.getResponse(messages, {
+        temperature: 0.7,
+        maxTokens: 1000
+      });
+
+      if (!response?.text || typeof response.text !== 'string') {
+        throw new Error('La IA devolvió una respuesta vacía');
       }
-    }
 
-    // SEGUNDO: DeepSeek
-    if (process.env.DEEPSEEK_API_KEY) {
-      providers.push({
-        name: 'deepseek',
-        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat')
-      });
-    }
-
-    // TERCERO: Gemini
-    if (process.env.GOOGLE_API_KEY) {
-      providers.push({
-        name: 'gemini',
-        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-2.5-flash-preview-09-2025')
-      });
-    }
-
-    // CUARTO: GPT
-    if (process.env.OPENAI_API_KEY) {
-      providers.push({
-        name: 'gpt',
-        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o')
-      });
-    }
-
-    if (providers.length === 0) {
       return NextResponse.json({
-        error: 'No hay proveedores configurados'
+        text: response.text,
+        metadata: response.metadata || { provider: aiProvider || 'default' },
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('[ChatBot API] Error:', error.message);
+
+      if (error.message.includes('No se ha configurado la API Key')) {
+          return NextResponse.json({
+            error: 'Configuración requerida',
+            details: 'No se encontraron claves de API. Por favor, configura tu propia API Key en los ajustes del chat.'
+          }, { status: 401 });
+      }
+
+      return NextResponse.json({
+        error: 'Error de comunicación con la IA',
+        details: error.message
       }, { status: 502 });
     }
 
-    let lastError: Error | null = null;
-
-    for (let i = 0; i < providers.length; i++) {
-      const { name, instance } = providers[i];
-
-      try {
-        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name}`);
-
-        const response = await instance.getResponse(messages, {
-          history,
-          temperature: 0.7,
-          maxTokens: 1000
-        });
-
-        if (!response?.text || typeof response.text !== 'string') {
-          throw new Error('Respuesta vacía');
-        }
-
-        console.log(`[Chat] ✅ Éxito con ${name}`);
-        return NextResponse.json({
-          text: response.text,
-          metadata: { provider: name },
-          timestamp: new Date().toISOString()
-        });
-
-      } catch (error: any) {
-        lastError = error;
-        console.log(`[Chat] ❌ ${name} falló: ${error.message.substring(0, 80)}`);
-        continue;
-      }
-    }
-
-    console.error('[Chat] ❌ Todos fallaron:', lastError?.message);
-    return NextResponse.json({
-      error: 'Todos los proveedores fallaron',
-      details: lastError?.message
-    }, { status: 502 });
-
   } catch (error: any) {
-    console.error('[Chat] ERROR:', error);
+    console.error('[ChatBot API] ERROR GLOBAL:', error);
     return NextResponse.json({
-      error: 'Error interno',
+      error: 'Error interno del servidor',
       details: error.message
     }, { status: 500 });
-  }
-}
-
-function getProviderInstance(type: string, apiKey: string): any | null {
-  if (!apiKey) return null;
-  const providerType = (type || '').toLowerCase();
-  switch (providerType) {
-    case 'deepseek':
-      return new DeepSeekAdapter(apiKey, 'deepseek-chat');
-    case 'gemini':
-      return new GeminiAdapter(apiKey, 'gemini-2.5-flash-preview-09-2025');
-    case 'gpt':
-      return new GPTAdapter(apiKey, 'gpt-4o');
-    default:
-      return null;
   }
 }
