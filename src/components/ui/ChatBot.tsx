@@ -172,10 +172,11 @@ export function ChatBot() {
     if (!user) return;
     setIsSaving(true);
     try {
-      await userService.updateProfile({
-        aiProvider: tempProvider,
-        aiApiKey: tempApiKey || undefined
-      });
+      await userService.updateAISettings(
+        user.id,
+        tempProvider,
+        tempApiKey || user.aiApiKey || ''
+      );
       updateUser({ aiProvider: tempProvider, aiApiKey: tempApiKey || user.aiApiKey });
       toast.success('Configuración de IA actualizada');
       setIsSettingsOpen(false);
