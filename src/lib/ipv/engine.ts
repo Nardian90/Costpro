@@ -33,12 +33,14 @@ export class MatchingEngine {
   private stockMap: Map<string, number> = new Map();
   private useStockLimit: boolean = false;
   private pendingMovements: any[] = [];
+  private dailyAdjustedPrices: Map<string, number> = new Map();
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
     this.pendingMovements = [];
+    this.dailyAdjustedPrices = new Map();
 
     // Inicializar mapa de inventario virtual para la sesión de matching
     for (const p of this.products) {
@@ -140,37 +142,54 @@ export class MatchingEngine {
         const maxAbs = priceFlexRule.meta?.maxAbs || 10;
         const maxPercent = priceFlexRule.meta?.maxPercent || 20;
 
-        // Intentamos encontrar un producto de categoría flexible que al añadirlo y ajustar su precio cierre el gap
+        // Intentamos encontrar un producto que permita variación y ajuste el gap
         const flexProduct = this.products.find(p => {
-            // Si hay límite de stock, ignorar productos sin existencia
             if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
 
-            return p.categoria?.toLowerCase().includes('flexible') ||
-                   p.categoria?.toLowerCase().includes('caramelo') ||
-                   p.isWildcardCandidate;
+            // Si ya tiene un precio bloqueado para hoy, comprobamos si ese precio soluciona el gap
+            const lockedPrice = this.dailyAdjustedPrices.get(p.cod);
+            if (lockedPrice !== undefined) {
+                return lockedPrice === remaining_cents;
+            }
+
+            const canVary = (p.variacion_permisible_percent || 0) > 0 || p.isWildcardCandidate;
+            return canVary;
         });
 
         if (flexProduct) {
             const basePrice = flexProduct.precio_cents;
-            // Necesitamos cubrir 'remaining_cents'.
-            // Si usamos 1 unidad de flexProduct, el nuevo precio sería remaining_cents.
-            // Pero Price Flex suele actuar sobre un mismatch PEQUEÑO después de un match parcial.
-            // Si remaining_cents es pequeño, podemos "vender" el producto flexible a ese precio.
+            const lockedPrice = this.dailyAdjustedPrices.get(flexProduct.cod);
+            const targetPrice = lockedPrice !== undefined ? lockedPrice : remaining_cents;
 
-            const adjustment = remaining_cents - basePrice;
-            const maxPercentAbs = basePrice * (maxPercent / 100);
+            const adjustment = Math.abs(targetPrice - basePrice);
+            const allowedPercent = flexProduct.variacion_permisible_percent || maxPercent;
+            const maxPercentAbs = basePrice * (allowedPercent / 100);
 
-            if (adjustment > 0 && adjustment <= maxAbs && adjustment <= maxPercentAbs) {
-                // El ajuste es válido
+            if (adjustment <= maxAbs || adjustment <= maxPercentAbs) {
+                // Bloquear precio para coherencia diaria si no lo estaba
+                if (lockedPrice === undefined) {
+                    this.dailyAdjustedPrices.set(flexProduct.cod, targetPrice);
+                    this.pendingMovements.push({
+                        id: crypto.randomUUID(),
+                        fecha: new Date().toISOString(),
+                        producto_origen_cod: flexProduct.cod,
+                        producto_destino_cod: flexProduct.cod,
+                        cantidad_origen: 1,
+                        cantidad_destino: 1,
+                        tipo: 'PRICE_ADJUSTMENT',
+                        valor_anterior: basePrice.toString(),
+                        valor_nuevo: targetPrice.toString(),
+                        motivo: 'Coherencia diaria en matching',
+                        created_at: new Date().toISOString()
+                    });
+                }
+
                 const line = await this.createLine(transaction, flexProduct, 1, 'AUTO_MATCH', 'Transferencia');
-                line.precio_unitario_cents = remaining_cents;
-                line.importe_linea_cents = remaining_cents;
-                    line.cuadre_cents = 0;
-                    line.origen_dato = 'AUTO_MATCH';
-                    // Nota: createLine usa el precio base del producto, aquí sobreescribimos
-                    lines.push(line);
-                    remaining_cents = 0;
-                    logs.push(`PASS 3 (PRICE_FLEX): Ajustado precio de ${flexProduct.descripcion} de ${basePrice} a ${line.precio_unitario_cents}`);
+                line.precio_unitario_cents = targetPrice;
+                line.importe_linea_cents = targetPrice;
+                lines.push(line);
+                remaining_cents -= targetPrice;
+                logs.push(`PASS 3 (PRICE_FLEX): ${lockedPrice !== undefined ? 'Reutilizado' : 'Bloqueado'} precio de ${flexProduct.descripcion} a ${targetPrice}`);
             }
         }
     }

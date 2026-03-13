@@ -1,0 +1,7 @@
+I have completed the audit and redesign of the IPV Matching Pro module.
+Key changes:
+- Created AUDITORIA_IPV_MATCHING_PRO.md with full technical audit.
+- Updated dexie.ts with new fields for price variation and traceability.
+- Improved MatchingEngine.ts to support "Session-wide Price Coherence" and smarter price flex rules.
+- Created importUtils.ts for robust, hierarchy-aware catalog imports.
+- Enhanced CatalogTable.tsx to support the new import fields and logic.

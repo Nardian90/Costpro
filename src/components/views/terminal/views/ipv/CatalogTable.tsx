@@ -33,6 +33,7 @@ import {
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import { importCatalogProducts } from '@/lib/ipv/importUtils';
 import ActionMenu, { Action } from "@/components/ui/ActionMenu";
 import * as XLSX from 'xlsx';
 import {
@@ -512,11 +513,12 @@ const handleExportCatalog = () => {
             for (const row of jsonData) {
                 // Map from Spanish headers or generic headers
                 const cod = row['Código'] || row['cod'] || row['CODIGO'];
-                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || '';
-                const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || '';
+                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || row['grupo'] || '';
+                const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || row['hijo'] || '';
                 const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
                 const um = row['UM'] || row['um'] || 'UNIDADES';
                 const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
+                const var_perm = row['variacion_permisible_percent'] || row['VARIACION_PERMISIBLE'] || row['Variación %'] || 0;
                 const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
                 const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
                 const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
@@ -532,6 +534,7 @@ const handleExportCatalog = () => {
                     descripcion: String(descripcion),
                     um: String(um).toUpperCase(),
                     precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
+                    variacion_permisible_percent: typeof var_perm === 'number' ? var_perm : parseFloat(String(var_perm).replace(',', '.')),
                     prioridad_algoritmo: parseInt(String(prioridad)),
                     stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
                     es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
@@ -544,7 +547,7 @@ const handleExportCatalog = () => {
             }
 
             if (validProducts.length > 0) {
-                db.products.bulkPut(validProducts).then(() => {
+                importCatalogProducts(validProducts).then(() => {
                     toast.success(`Se importaron ${validProducts.length} productos correctamente`);
                     event.target.value = '';
                 }).catch(err => {
