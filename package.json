@@ -6,7 +6,7 @@
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
     "prebuild": "prisma generate",
-    "build": "next build && cpx \".next/static/**/*\" .next/standalone/.next/static && cpx \"public/**/*\" .next/standalone/public",
+    "build": "next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
@@ -15,8 +15,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^5.1.2",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
     "prisma": "4.16.2",
-    "cpx": "^1.5.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -105,27 +107,24 @@
     "xlsx": "^0.18.5",
     "z-ai-web-dev-sdk": "^0.0.15",
     "zod": "^4.0.2",
-    "zustand": "^5.0.6"
+    "zustand": "^5.0.6",
+    "tw-animate-css": "^1.3.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.15.5",
     "@playwright/test": "^1.58.2",
-    "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "25.2.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "4.0.17",
     "bun-types": "^1.3.4",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "jsdom": "^27.4.0",
-    "tailwindcss": "^4",
-    "tw-animate-css": "^1.3.5",
     "typescript": "^5",
     "vitest": "^4.0.17"
   }
