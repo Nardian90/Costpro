@@ -42,6 +42,10 @@
     "old proyect",
     "skills",
     "mini-services",
-    "verify_build.ts"
+    "verify_build.ts",
+    "src/test",
+    "vitest.config.ts",
+    "scripts",
+    "playwright.config.ts"
   ]
 }
