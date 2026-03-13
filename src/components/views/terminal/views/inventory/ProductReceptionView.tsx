@@ -49,7 +49,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 </div>
                 <button
                     onClick={onCancel}
-                    className="px-8 py-3 min-h-[44px] flex items-center justify-center bg-amber-500 text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+                    className="px-8 py-3 min-h-[44px] flex items-center justify-center bg-amber-500 text-foreground font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
                 >
                     Volver al Inventario
                 </button>
@@ -435,7 +435,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                                     <span className="font-bold text-sm group-hover:text-primary transition-colors">{p.name}</span>
                                                     <span className="text-xs font-mono text-muted-foreground uppercase">{p.sku || 'S/N'}</span>
                                                 </div>
-                                                <div className="neu-raised-sm p-2 group-hover:bg-primary group-hover:text-white transition-all">
+                                                <div className="neu-raised-sm p-2 group-hover:bg-primary group-hover:text-foreground transition-all">
                                                     <Plus className="w-4 h-4" />
                                                 </div>
                                             </div>

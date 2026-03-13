@@ -65,7 +65,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <button
                     onClick={onOpenActions || (() => {})}
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-white hover:bg-primary/10"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-foreground hover:bg-primary/10"
                     title="Panel de Control"
                 >
                     <Menu className="w-5 h-5" />

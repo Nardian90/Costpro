@@ -292,7 +292,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
          )}>
             <Table className={cn(layoutMode === "grid" && "sm:data-table")}>
                 <TableHeader className={cn(
-                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
+                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-foreground font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">

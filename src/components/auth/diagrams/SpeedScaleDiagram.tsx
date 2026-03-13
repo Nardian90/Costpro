@@ -18,7 +18,7 @@ export default function SpeedScaleDiagram() {
         {/* Speed Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-violet-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/30 shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-violet-600 flex items-center justify-center text-foreground shadow-lg shadow-violet-500/30 shrink-0">
               <Timer className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
@@ -31,7 +31,7 @@ export default function SpeedScaleDiagram() {
           <motion.div
             animate={{ scale: [1, 1.05, 1], boxShadow: ['0 0 0px rgba(16,185,129,0)', '0 0 20px rgba(16,185,129,0.3)', '0 0 0px rgba(16,185,129,0)'] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
+            className="flex items-center gap-1 bg-emerald-500 text-foreground px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
           >
             <Zap className="w-3 h-3" />
             95% Ahorro

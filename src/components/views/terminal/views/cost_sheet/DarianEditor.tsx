@@ -245,7 +245,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             className={cn(
                                 "w-full border-none text-sm py-4 pl-6 pr-12 rounded-2xl focus:ring-2 focus:ring-primary/50 shadow-xl transition-all",
-                                isDark ? "bg-[#0D141C] text-white placeholder:text-white/20" : "bg-white text-slate-900 border border-slate-200 shadow-slate-200/50"
+                                isDark ? "bg-[#0D141C] text-foreground placeholder:text-white/20" : "bg-background text-slate-900 border border-slate-200 shadow-slate-200/50"
                             )}
                             placeholder="Ej: Generar ficha para 1kg de azúcar blanca..."
                         />

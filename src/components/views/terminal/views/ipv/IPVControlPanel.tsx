@@ -60,7 +60,7 @@ const ActionCard = ({ title, description, icon, onClick, id, variant = 'dark' }:
                 {description}
             </p>
         </div>
-        <ChevronRight className={`ml-auto w-6 h-6 transition-all group-hover:translate-x-1 ${variant === 'primary' ? 'text-white' : 'text-primary opacity-50 group-hover:opacity-100'}`} />
+        <ChevronRight className={`ml-auto w-6 h-6 transition-all group-hover:translate-x-1 ${variant === 'primary' ? 'text-foreground' : 'text-primary opacity-50 group-hover:opacity-100'}`} />
     </Card>
 );
 
@@ -269,7 +269,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                         <Button
                             variant="outline"
                             onClick={onExportBackup}
-                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-2 rounded-2xl"
+                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-foreground transition-all border-2 rounded-2xl"
                         >
                             <Download className="w-4 h-4" />
                             Respaldar
@@ -278,7 +278,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                         <Button
                             variant="outline"
                             onClick={() => fileInputRef.current?.click()}
-                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-2 border-emerald-500/20 rounded-2xl"
+                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-foreground transition-all border-2 border-emerald-500/20 rounded-2xl"
                         >
                             <Upload className="w-4 h-4" />
                             Importar

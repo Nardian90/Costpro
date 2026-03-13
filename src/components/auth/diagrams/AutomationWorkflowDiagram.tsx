@@ -22,7 +22,7 @@ export default function AutomationWorkflowDiagram() {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
             <FileSpreadsheet className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600 relative z-10" />
             <motion.div
-              className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg border-2 border-background z-20"
+              className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 text-foreground flex items-center justify-center shadow-lg border-2 border-background z-20"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >

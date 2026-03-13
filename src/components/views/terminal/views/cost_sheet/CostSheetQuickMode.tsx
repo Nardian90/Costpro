@@ -71,7 +71,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 max-w-5xl mx-auto">
       {/* Configuration Header */}
       <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm">
-        <div className="p-4 bg-amber-500 rounded-2xl text-white shadow-lg shadow-amber-500/20">
+        <div className="p-4 bg-amber-500 rounded-2xl text-foreground shadow-lg shadow-amber-500/20">
             <Zap className="w-6 h-6" />
         </div>
         <div className="flex-1">
@@ -108,7 +108,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
         </div>
         <Button
             onClick={handleGenerate}
-            className="rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest px-8 py-6 h-auto shadow-xl shadow-amber-500/20 active:scale-95 transition-all mt-4 md:mt-0"
+            className="rounded-2xl bg-amber-500 hover:bg-amber-600 text-foreground font-black uppercase tracking-widest px-8 py-6 h-auto shadow-xl shadow-amber-500/20 active:scale-95 transition-all mt-4 md:mt-0"
         >
             Generar Ahora
             <ChevronRight className="ml-2 w-5 h-5" />

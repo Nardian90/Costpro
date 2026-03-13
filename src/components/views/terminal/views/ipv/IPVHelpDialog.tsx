@@ -62,7 +62,7 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
             {/* Business Rule Banner */}
             <div className="bg-red-50 border-2 border-red-100 p-4 rounded-2xl flex gap-4 items-start">
               <div className="bg-red-500 p-2 rounded-lg shrink-0 shadow-lg shadow-red-200">
-                <AlertTriangle className="w-5 h-5 text-white" />
+                <AlertTriangle className="w-5 h-5 text-foreground" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-black text-red-900 uppercase">Regla de Oro (No Negativos)</p>
@@ -151,7 +151,7 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
 function StepItem({ number, title, desc }: { number: string; title: string; desc: string }) {
   return (
     <div className="flex gap-4 group">
-      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+      <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0 group-hover:bg-primary group-hover:text-foreground transition-colors">
         {number}
       </div>
       <div className="space-y-1">

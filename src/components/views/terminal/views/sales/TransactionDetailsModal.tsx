@@ -161,7 +161,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                           "w-4 h-4 rounded border flex items-center justify-center",
                           appliedTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
                         )}>
-                          {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                          {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-foreground" />}
                         </div>
                       </button>
                     ))}
