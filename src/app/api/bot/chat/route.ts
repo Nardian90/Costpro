@@ -11,8 +11,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      console.error('[Chat API] No session found');
+      return NextResponse.json({ error: 'No autorizado - Sesión no encontrada' }, { status: 401 });
     }
+    console.log('[Chat API] User authenticated:', session.user.id, session.user.email);
 
     let body;
     try {
@@ -27,13 +29,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
     }
 
-    const providers: Array<{ name: string; instance: any }> = [];
+    const providers: Array<{ name: string; instance: any; source: string }> = [];
 
     // PRIMERO: Usuario
     if (aiProvider && aiApiKey) {
       const userProvider = getProviderInstance(aiProvider, aiApiKey);
       if (userProvider) {
-        providers.push({ name: aiProvider, instance: userProvider });
+        providers.push({ name: aiProvider, instance: userProvider, source: 'Configuración de Usuario' });
       }
     }
 
@@ -41,7 +43,8 @@ export async function POST(req: NextRequest) {
     if (process.env.DEEPSEEK_API_KEY) {
       providers.push({
         name: 'deepseek',
-        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat')
+        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat'),
+        source: 'Sistema (Env)'
       });
     }
 
@@ -49,7 +52,8 @@ export async function POST(req: NextRequest) {
     if (process.env.GOOGLE_API_KEY) {
       providers.push({
         name: 'gemini',
-        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-1.5-flash')
+        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-1.5-flash'),
+        source: 'Sistema (Env)'
       });
     }
 
@@ -57,7 +61,8 @@ export async function POST(req: NextRequest) {
     if (process.env.OPENAI_API_KEY) {
       providers.push({
         name: 'gpt',
-        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o')
+        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o'),
+        source: 'Sistema (Env)'
       });
     }
 
@@ -70,10 +75,10 @@ export async function POST(req: NextRequest) {
     let lastError: Error | null = null;
 
     for (let i = 0; i < providers.length; i++) {
-      const { name, instance } = providers[i];
+      const { name, instance, source } = providers[i];
 
       try {
-        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name}`);
+        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name} (${source})`);
 
         const response = await instance.getResponse(messages, {
           temperature: 0.7,
@@ -87,7 +92,11 @@ export async function POST(req: NextRequest) {
         console.log(`[Chat] ✅ Éxito con ${name}`);
         return NextResponse.json({
           text: response.text,
-          metadata: { provider: name },
+          metadata: {
+            ...response.metadata,
+            provider: name,
+            keySource: source
+          },
           timestamp: new Date().toISOString()
         });
 
