@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
-import { formatCurrency, formatCompactCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import {
     calculateIPVMetrics,
     getDailySalesHistory,
@@ -104,14 +104,14 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <MetricCard
                     title="Ventas Totales"
-                    amount={metrics.totalSales}
+                    value={formatCurrency(metrics.totalSales)}
                     icon={<DollarSign className="w-4 h-4" />}
                     subtitle="Desglose Declarado"
                     color="blue"
                 />
                 <MetricCard
                     title="Ingresos Banco"
-                    amount={metrics.bankCredits}
+                    value={formatCurrency(metrics.bankCredits)}
                     icon={<ArrowUpRight className="w-4 h-4" />}
                     subtitle="Realidad Bancaria"
                     color="emerald"
@@ -125,21 +125,21 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
                 />
                 <MetricCard
                     title="Débitos/Gastos"
-                    amount={metrics.bankDebits}
+                    value={formatCurrency(metrics.bankDebits)}
                     icon={<ArrowDownRight className="w-4 h-4" />}
                     subtitle="Egresos Bancarios"
                     color="rose"
                 />
                 <MetricCard
                     title="Impuestos Est."
-                    amount={metrics.totalTaxes}
+                    value={formatCurrency(metrics.totalTaxes)}
                     icon={<Percent className="w-4 h-4" />}
                     subtitle="Retenciones/Tasas"
                     color="purple"
                 />
                 <MetricCard
                     title="Comisiones"
-                    amount={metrics.totalCommissions}
+                    value={formatCurrency(metrics.totalCommissions)}
                     icon={<TrendingUp className="w-4 h-4" />}
                     subtitle="Costos Bancarios"
                     color="amber"
@@ -268,7 +268,7 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
     );
 }
 
-function MetricCard({ title, amount, value, icon, subtitle, color }: { title: string, amount?: number, value?: string, icon: React.ReactNode, subtitle?: string, color: string }) {
+function MetricCard({ title, value, icon, subtitle, color }: { title: string, value: string, icon: React.ReactNode, subtitle?: string, color: string }) {
     const colorClasses: Record<string, string> = {
         emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
         rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
@@ -285,7 +285,7 @@ function MetricCard({ title, amount, value, icon, subtitle, color }: { title: st
             <div className="space-y-2 relative z-10">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{title}</p>
                 <div className="flex items-baseline gap-2">
-                    <h3 className="text-[clamp(1.1rem,2vw,1.5rem)] font-black text-foreground truncate" title={amount !== undefined ? formatCurrency(amount) : value}>{value ?? (amount !== undefined ? formatCompactCurrency(amount) : "—")}</h3>
+                    <h3 className="text-2xl font-black text-foreground">{value}</h3>
                 </div>
                 {subtitle && <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">{subtitle}</p>}
             </div>

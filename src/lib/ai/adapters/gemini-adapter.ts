@@ -104,8 +104,6 @@ export class GeminiAdapter implements LLMProvider {
       const response = await result.response;
       if (!response) throw new Error("Respuesta vacía del servidor de Google.");
 
-      const usageMetadata = (response as any).usageMetadata;
-
       const parts = response.candidates?.[0]?.content?.parts || [];
       let text = '';
       const tool_calls: ToolCall[] = [];
@@ -129,14 +127,7 @@ export class GeminiAdapter implements LLMProvider {
       return {
         text,
         tool_calls: tool_calls.length > 0 ? tool_calls : undefined,
-        metadata: {
-          model: this.modelName,
-          usage: usageMetadata ? {
-            prompt_tokens: usageMetadata.promptTokenCount,
-            completion_tokens: usageMetadata.candidatesTokenCount,
-            total_tokens: usageMetadata.totalTokenCount
-          } : undefined
-        }
+        metadata: { model: this.modelName }
       };
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);
