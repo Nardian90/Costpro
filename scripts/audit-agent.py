@@ -366,6 +366,62 @@ Se requiere atención en los componentes con puntuación inferior a 7.0 para ase
         f.write(report)
     print(f"Phase 4 complete. Updated {DOCS_QUALITY_REPORT}.")
 
+def run_phase_5():
+    print("Executing Phase 5: ADR Generation...")
+    adr_dir = "docs/architecture/ADR"
+    os.makedirs(adr_dir, exist_ok=True)
+
+    adrs = [
+        {
+            "id": "ADR-001",
+            "title": "Uso de Variables Semánticas para Temas",
+            "status": "Accepted",
+            "date": "2026-03-12",
+            "context": "El sistema soporta múltiples temas (fast-light, fast-dark, neumo). Los colores hardcodeados rompen la consistencia visual.",
+            "decision": "Se prohíbe el uso de colores hardcodeados (hex, Tailwind colors como bg-white). Se deben usar variables semánticas como bg-background, text-foreground.",
+            "consequences": "Mayor facilidad para el mantenimiento de temas y consistencia visual garantizada."
+        },
+        {
+            "id": "ADR-002",
+            "title": "Seguridad de API Keys de AI",
+            "status": "Accepted",
+            "date": "2026-03-12",
+            "context": "El sistema utiliza múltiples proveedores de AI (Gemini, GPT, DeepSeek).",
+            "decision": "Las llaves de API nunca deben estar en el código. Se deben obtener de variables de entorno o de la base de datos (Supabase ai_api_keys).",
+            "consequences": "Mejora la seguridad y permite la rotación de llaves sin desplegar nuevo código."
+        },
+        {
+            "id": "ADR-003",
+            "title": "Estandarización de Generación de IDs",
+            "status": "Accepted",
+            "date": "2026-03-12",
+            "context": "El uso del paquete 'uuid' ha causado conflictos de resolución en entornos Next.js/Turbopack.",
+            "decision": "Se estandariza el uso de crypto.randomUUID() o generadores internos basados en Date.now() y Math.random() para evitar dependencias externas problemáticas.",
+            "consequences": "Eliminación de errores de compilación relacionados con ESM/CJS en la generación de IDs."
+        }
+    ]
+
+    for adr in adrs:
+        filepath = os.path.join(adr_dir, f"{adr['id']}-{adr['title'].replace(' ', '_')}.md")
+        content = f"""# {adr['id']}: {adr['title']}
+
+**Estado:** {adr['status']}
+**Fecha:** {adr['date']}
+
+## Contexto
+{adr['context']}
+
+## Decisión
+{adr['decision']}
+
+## Consecuencias
+{adr['consequences']}
+"""
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+    print(f"Phase 5 complete. Generated {len(adrs)} ADRs in {adr_dir}.")
+
 def run_phase_9():
     print("Executing Phase 9: System Health Evaluation...")
     items, _, _ = scan_project()
@@ -472,6 +528,8 @@ def main():
         run_phase_3()
     elif args.phase == 4:
         run_phase_4()
+    elif args.phase == 5:
+        run_phase_5()
     elif args.phase == 9:
         run_phase_9()
     elif args.phase == 10:
