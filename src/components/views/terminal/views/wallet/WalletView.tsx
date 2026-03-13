@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
     Wallet, ArrowUpRight, ArrowDownRight,
-    Search, Filter, Plus, List, PieChart, Database, Table
+    Search, Filter, Plus, List, PieChart, Database, Table, FileText
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { parseRawSms, calculateAnalytics } from "@/lib/wallet/parser";
@@ -33,7 +33,7 @@ export default function WalletView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [importText, setImportText] = useState('');
-    const [viewMode, setViewMode] = useState<'bd' | 'list' | 'analytics'>('list');
+    const [viewMode, setViewMode] = useState<'bd' | 'list' | 'analytics' | 'extracto'>('list');
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -83,6 +83,7 @@ export default function WalletView() {
                 </div>
                 <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-xl">
                     <Button variant={viewMode === 'bd' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('bd')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><Database className="w-4 h-4 mr-2" /> BD</Button>
+                    <Button variant={viewMode === 'extracto' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('extracto')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><FileText className="w-4 h-4 mr-2" /> Extracto</Button>
                     <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><List className="w-4 h-4 mr-2" /> Lista</Button>
                     <Button variant={viewMode === 'analytics' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('analytics')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><PieChart className="w-4 h-4 mr-2" /> Análisis</Button>
                 </div>
@@ -103,7 +104,9 @@ export default function WalletView() {
                         <div className="bg-card rounded-[2.5rem] border border-secondary/20 overflow-hidden">
                             <div className="p-6 border-b border-secondary/10 flex justify-between items-center">
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">
-                                    {viewMode === 'bd' ? 'Fuente de Verdad (SMS Crudos)' : 'Tabla Analítica Detallada'}
+                                    {viewMode === 'bd' ? 'Fuente de Verdad (SMS Crudos)' :
+                                     viewMode === 'extracto' ? 'Extracto de Operaciones' :
+                                     'Tabla Analítica Detallada'}
                                 </h2>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50" />
@@ -152,7 +155,14 @@ export default function WalletView() {
                                                 ))
                                         ) : (
                                             analytics.transactions
-                                                .filter(tx => tx.note.toLowerCase().includes(searchQuery.toLowerCase()) || tx.category.toLowerCase().includes(searchQuery.toLowerCase()) || tx.bank.toLowerCase().includes(searchQuery.toLowerCase()))
+                                                .filter(tx => {
+                                                    const matchesSearch = tx.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                                         tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                                         tx.bank.toLowerCase().includes(searchQuery.toLowerCase());
+                                                    if (viewMode === 'extracto') return matchesSearch && tx.isStatement;
+                                                    if (viewMode === 'list') return matchesSearch && !tx.isStatement;
+                                                    return matchesSearch;
+                                                })
                                                 .map(tx => (
                                                     <tr key={tx.id} className="hover:bg-primary/5 transition-colors">
                                                         <td className="px-6 py-4 text-[10px] font-medium">{tx.date}</td>
@@ -186,12 +196,12 @@ export default function WalletView() {
                             <Button variant="ghost" onClick={() => setIsImporting(false)}>×</Button>
                         </div>
                         <p className="text-[9px] font-black uppercase tracking-widest opacity-50 mb-4">
-                            Pega los mensajes en formato: Type | Date | Nombre/Número | Content
+                            Pega los mensajes en formato libre o tabla
                         </p>
                         <textarea
                             value={importText}
                             onChange={e => setImportText(e.target.value)}
-                            placeholder="Ejemplo: Recibido	9 mar. 2026	PAGOxMOVIL	Banco Popular de Ahorro..."
+                            placeholder="Pega aquí tus mensajes de Transfermóvil..."
                             className="w-full h-40 p-4 bg-secondary/20 rounded-2xl text-xs focus:outline-none resize-none mb-4"
                         />
                         <div className="flex justify-end gap-3">
