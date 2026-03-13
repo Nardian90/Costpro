@@ -14,11 +14,13 @@ interface Message {
     hasSaved?: boolean;
 }
 
-interface DarianEditorProps {
+export interface DarianEditorProps {
     sheetData: any;
-    setSheet: (data: any) => void;
+    setSheet?: (data: any) => void;
     onSectionChange?: (sectionId: string) => void;
     isDark?: boolean;
+    isFullView?: boolean;
+    onToggleFullView?: () => void;
 }
 
 const extractUpdateData = (text: string) => {
@@ -54,7 +56,7 @@ const AnnexPreview = ({ data, isDark }: { data: any, isDark?: boolean }) => {
     );
 };
 
-export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark }: DarianEditorProps) => {
+export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark, isFullView, onToggleFullView }: DarianEditorProps) => {
     const { token } = useAuthStore();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -77,12 +79,14 @@ export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark }: D
         setIsLoading(true);
 
         try {
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json'
+            };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const response = await fetch('/api/cost-sheets/ai/chat', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify({
                     messages: newMessages.map(m => ({ role: m.role, content: m.content })),
                     sheetData
@@ -120,6 +124,10 @@ export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark }: D
     };
 
     const handleApplyUpdate = async (updateData: any, messageIndex: number) => {
+        if (!setSheet) {
+            toast.error("Error: No se puede actualizar la ficha en este modo");
+            return;
+        }
         setIsSaving(true);
         try {
             const response = await fetch('/api/cost-sheets/save', {
