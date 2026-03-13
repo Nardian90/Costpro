@@ -2,9 +2,9 @@
   "systemHealth": 9.7,
   "status": "healthy",
   "trend": "stable",
-  "viewsAudited": 44,
+  "viewsAudited": 45,
   "newViews": 0,
   "criticalIssues": 0,
-  "warnings": 3,
-  "lastAudit": "2026-03-10"
+  "warnings": 2,
+  "lastAudit": "2026-03-13"
 }
