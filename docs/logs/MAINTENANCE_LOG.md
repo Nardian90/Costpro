@@ -2,8 +2,8 @@
 
 ## ESTADO DEL PIPELINE
 
-Última ejecución: 2026-03-11
-Siguiente objetivo: SECCION_05_MEDIA
+Última ejecución: 2026-03-12
+Siguiente objetivo: SECCION_06_FORMS
 Modo: AUTOMATICO
 Ciclo actual: 1
 Agente responsable: Jules Mobile UI Scheduler
@@ -53,7 +53,7 @@ Artículos
 Texto largo
 Tablas
 
-[ ] SECCION_05_MEDIA
+[x] SECCION_05_MEDIA
 Galerías
 Videos
 Sliders
