@@ -23,7 +23,7 @@ import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 
 const ChatBot = () => {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { isChatBotOpen, setIsChatBotOpen } = useUIStore();
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -53,7 +53,10 @@ const ChatBot = () => {
     try {
       const response = await fetch('/api/bot/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           aiProvider: user?.aiProvider,
@@ -62,8 +65,8 @@ const ChatBot = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || 'Error en la comunicación con la IA');
+        const error = await response.json().catch(() => ({ details: 'Error desconocido' }));
+        throw new Error(error.details || error.error || 'Error en la comunicación con la IA');
       }
 
       const data = await response.json();
