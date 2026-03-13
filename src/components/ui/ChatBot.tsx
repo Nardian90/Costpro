@@ -390,9 +390,11 @@ export function ChatBot() {
                           : 'bg-background border border-border rounded-tl-none'
                         }`}>
                           {msg.role === 'assistant' ? (
-                            <ReactMarkdown className="prose prose-xs dark:prose-invert max-w-none">
-                              {msg.content}
-                            </ReactMarkdown>
+                            <div className="prose prose-xs dark:prose-invert max-w-none">
+                              <ReactMarkdown>
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
                           ) : (
                             <p className="whitespace-pre-wrap">{msg.content}</p>
                           )}
