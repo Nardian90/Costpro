@@ -45,7 +45,7 @@ export default function BankIngestion() {
 
         if (file.name.endsWith('.txt')) {
             const data = parseBandecTxt(content as string);
-            await processBankData(data);
+            await processBankData(await data);
         } else if (file.name.endsWith('.csv')) {
             Papa.parse(content as string, {
               header: true,

@@ -61,19 +61,16 @@ export class MatchingEngine {
       return { lines: [], status: 'COMPLETO', logs, movements: [] };
     }
 
-    // PASS 1: HARD_REF
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
       const matchedProduct = this.products.find(p => {
         if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
         return (transaction.observaciones && (transaction.observaciones.includes(p.cod) || transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase())));
       });
-
       if (matchedProduct) {
         const precio = this.getAdjustedPrice(matchedProduct, fecha);
         let qty = Math.floor(remaining_cents / precio);
         if (this.useStockLimit) qty = Math.min(qty, this.stockMap.get(matchedProduct.cod) || 0);
-
         if (qty > 0) {
           const line = await this.createLine(transaction, matchedProduct, qty, 'AUTO_MATCH', 'Transferencia', precio);
           lines.push(line);
@@ -82,7 +79,6 @@ export class MatchingEngine {
       }
     }
 
-    // PASS 2: EXACT_SUM
     const exactSumRule = this.rules.find(r => r.tipo === 'EXACT_SUM');
     if (exactSumRule && remaining_cents > 0) {
       const combination = this.findExactCombination(remaining_cents, { fecha, allowFlex: false });
@@ -95,7 +91,6 @@ export class MatchingEngine {
       }
     }
 
-    // PASS 3: PRICE_FLEX
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
         const combination = this.findExactCombination(remaining_cents, { fecha, allowFlex: true });
@@ -149,32 +144,23 @@ export class MatchingEngine {
       if (depth >= 8 || idx >= sorted.length || (Date.now() - startTime) > 3000) return null;
       const p = sorted[idx];
       const base = this.getAdjustedPrice(p, options.fecha);
-
       const priceOptions = [base];
       if (options.allowFlex && p.variacion_permisible_percent) {
           const v = base * (p.variacion_permisible_percent / 100);
           const dMap = this.dailyPriceAdjustments.get(options.fecha);
           if (!dMap || !dMap.has(p.cod)) {
-              for (let i = 1; i <= 10; i++) {
-                priceOptions.push(base + (v * i / 10));
-                priceOptions.push(base - (v * i / 10));
-              }
+              for (let i = 1; i <= 10; i++) { priceOptions.push(base + (v * i / 10)); priceOptions.push(base - (v * i / 10)); }
           }
       }
-
       for (const pr of priceOptions) {
           if (pr <= 0) continue;
-
           const maxQ = Math.floor((rem + 0.1) / pr);
           if (maxQ <= 0) continue;
-
           const amq = this.useStockLimit ? Math.min(maxQ, this.getVirtualStock(p.cod)) : maxQ;
-
           for (let q = amq; q >= 1; q--) {
             if (this.useStockLimit) this.stockMap.set(p.cod, (this.stockMap.get(p.cod) || 0) - q);
             const s = solve(rem - q * pr, idx + 1, depth + 1);
             if (this.useStockLimit) this.stockMap.set(p.cod, (this.stockMap.get(p.cod) || 0) + q);
-
             if (s) {
               if (Math.abs(pr - p.precio_cents) > 0.01) {
                   if (!this.dailyPriceAdjustments.has(options.fecha)) this.dailyPriceAdjustments.set(options.fecha, new Map());
@@ -201,7 +187,8 @@ export class MatchingEngine {
     return total;
   }
 
-  async reconcileAll(transactions: any[], onProgress?: (p: number) => void): Promise<any[]> {
+  async reconcileAll(transactions: any[], onProgress?: (p: number) => void, customStockMap?: Map<string, number>): Promise<any[]> {
+    if (customStockMap) this.stockMap = new Map(customStockMap);
     const res = [];
     for (let i = 0; i < transactions.length; i++) {
         const r = await this.matchTransaction(transactions[i]);
@@ -209,5 +196,23 @@ export class MatchingEngine {
         if (onProgress) onProgress(Math.round(((i + 1) / transactions.length) * 100));
     }
     return res;
+  }
+
+  async matchSimulation(target: number): Promise<MatchingResult> {
+      const dummyTx = { referencia_origen: 'SIMULATION', fecha: new Date().toISOString().split('T')[0], importe_venta_cents: target, tipo: 'Cr', observaciones: '' };
+      return this.matchTransaction(dummyTx as any);
+  }
+
+  async distributeGlobalGoal(target: number, current: number, dates: string[]): Promise<ReconciliationLine[]> {
+      const remaining = target - current;
+      if (remaining <= 0) return [];
+      const res = await this.matchTransaction({
+          referencia_origen: 'GLOBAL_ADJUSTMENT',
+          fecha: dates[0] || new Date().toISOString().split('T')[0],
+          importe_venta_cents: remaining,
+          tipo: 'Cr',
+          observaciones: 'AJUSTE GLOBAL'
+      } as any);
+      return res.lines;
   }
 }

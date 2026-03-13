@@ -152,7 +152,7 @@ export default function IPVView() {
         </div>
 
         <div className="flex items-center gap-3">
-            <IPVReportsDropdown />
+            <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />
             <Button variant="outline" size="icon" className="rounded-xl h-12 w-12" onClick={() => setActiveTab('rules')}>
                 <Settings className="w-5 h-5" />
             </Button>
