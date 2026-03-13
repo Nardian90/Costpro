@@ -43,7 +43,11 @@ export class OpenAICompatibleAdapter implements LLMProvider {
         text,
         metadata: {
           model: this.model,
-          usage: data.usage,
+          usage: data.usage ? {
+            prompt_tokens: data.usage.prompt_tokens,
+            completion_tokens: data.usage.completion_tokens,
+            total_tokens: data.usage.total_tokens
+          } : undefined,
           provider: this.baseUrl,
         }
       };
