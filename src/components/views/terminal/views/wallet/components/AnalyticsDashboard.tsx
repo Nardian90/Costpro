@@ -1,65 +1,61 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WalletAnalytics } from "@/lib/wallet/types";
 import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar, Cell, PieChart, Pie
-} from 'recharts';
-import {
-  TrendingUp, Wallet, Smartphone,
-  ShieldCheck, User, Banknote,
-  ArrowUpRight, ArrowDownRight, ZapOff, Zap, History, Clock, Landmark
+    TrendingUp, User, Zap, ZapOff, ArrowUpRight, ArrowDownRight,
+    Wallet, ShieldCheck, Landmark, Banknote, History
 } from 'lucide-react';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, Cell, PieChart, Pie
+} from 'recharts';
+import { WalletAnalytics } from "@/lib/wallet/types";
 
-const COLORS = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+const COLORS = ['#16a34a', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
 
-interface AnalyticsDashboardProps {
+interface Props {
   analytics: WalletAnalytics;
 }
 
-export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ analytics }: Props) {
+  const { summary, banks, monthly, categories, transactions } = analytics;
   const [isMounted, setIsMounted] = useState(false);
-  const { summary, banks, categories, transactions } = analytics;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   const balanceData = useMemo(() => {
-    return transactions
-      .filter(tx => tx.balance_after !== undefined)
-      .map(tx => ({
-        date: tx.date,
-        balance: tx.balance_after
-      }));
+    let current = 0;
+    return transactions.map(tx => {
+      if (tx.nature === 'CR') current += tx.amount;
+      else current -= tx.amount;
+      return { date: tx.date, balance: current };
+    });
   }, [transactions]);
 
   const transferStats = useMemo(() => {
-    const beneficiaries: Record<string, { total: number, count: number, last: string }> = {};
-    transactions.filter(tx => tx.type === 'TRANSFER_OUT').forEach(tx => {
-      if (!beneficiaries[tx.counterparty]) {
-        beneficiaries[tx.counterparty] = { total: 0, count: 0, last: tx.date };
-      }
-      beneficiaries[tx.counterparty].total += tx.amount;
-      beneficiaries[tx.counterparty].count += 1;
-      if (new Date(tx.date) > new Date(beneficiaries[tx.counterparty].last)) {
-          beneficiaries[tx.counterparty].last = tx.date;
-      }
-    });
-    return Object.entries(beneficiaries)
+    const map: Record<string, { total: number, count: number, last: string }> = {};
+    transactions
+      .filter(tx => tx.typeOperation === 'Transferencia')
+      .forEach(tx => {
+        if (!map[tx.counterparty]) map[tx.counterparty] = { total: 0, count: 0, last: tx.date };
+        map[tx.counterparty].total += tx.amount;
+        map[tx.counterparty].count += 1;
+        map[tx.counterparty].last = tx.date;
+      });
+    return Object.entries(map)
       .map(([id, stats]) => ({ id, ...stats }))
-      .sort((a, b) => b.total - a.total).slice(0, 10);
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
   }, [transactions]);
 
   const failedOpsData = useMemo(() => {
     const reasons: Record<string, number> = {};
-    transactions.filter(tx => tx.type === 'FAILED_OPERATION').forEach(tx => {
-      const reason = tx.extra_data?.reason || 'Desconocido';
-      reasons[reason] = (reasons[reason] || 0) + 1;
-    });
-    return Object.entries(reasons).map(([name, value]) => ({ name, value }));
+    // Note: in the new schema, we don't have FAILED_OPERATION explicitly in typeOperation for all cases yet,
+    // but we can filter by note or category if we want. For now, let's keep it simple.
+    return [];
   }, [transactions]);
 
   const formatCurrency = (val: number) =>
@@ -69,7 +65,7 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
 
   return (
     <div className="space-y-8 p-4 md:p-8 animate-in fade-in duration-700">
-      {/* 14. Indicadores Principales */}
+      {/* Indicadores Principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="rounded-3xl border-none shadow-lg bg-green-500/10">
           <CardContent className="p-6 flex justify-between items-center">
@@ -98,11 +94,11 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 1. Evolución de Saldo */}
+        {/* Evolución de Saldo */}
         <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden">
           <CardHeader className="p-8 pb-0">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                <TrendingUp className="w-4 h-4" /> 1. Evolución de Saldo
+                <TrendingUp className="w-4 h-4" /> Evolución de Saldo
               </CardTitle>
           </CardHeader>
           <CardContent className="p-8 h-[250px]">
@@ -119,11 +115,11 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* 2. Top Receptores */}
+        {/* Top Receptores */}
         <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden">
           <CardHeader className="p-8 pb-4">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                <User className="w-4 h-4" /> 2. Top 10 Receptores
+                <User className="w-4 h-4" /> Top 10 Contrapartes
               </CardTitle>
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-4">
@@ -139,20 +135,20 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
                 </div>
               </div>
             ))}
-            {transferStats.length === 0 && <p className="text-xs italic opacity-50 text-center py-10">Sin transferencias</p>}
+            {transferStats.length === 0 && <p className="text-xs italic opacity-50 text-center py-10">Sin datos suficientes</p>}
           </CardContent>
         </Card>
 
-        {/* 3. Gastos por Categoría */}
+        {/* Gastos por Categoría */}
         <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden">
            <CardHeader className="p-8 pb-0">
               <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                <Zap className="w-4 h-4" /> 3. Servicios y Categorías
+                <Zap className="w-4 h-4" /> Servicios y Categorías
               </CardTitle>
           </CardHeader>
           <CardContent className="p-8 h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={Object.entries(categories).map(([name, value]) => ({ name: name.replace('_', ' '), value }))}>
+              <BarChart data={Object.entries(categories).map(([name, value]) => ({ name, value }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                 <XAxis dataKey="name" fontSize={8} tickLine={false} axisLine={false} />
                 <YAxis hide />
@@ -166,52 +162,23 @@ export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        {/* 6. Análisis de Fallos */}
-        <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden">
-           <CardHeader className="p-8 pb-0">
-              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                <ZapOff className="w-4 h-4 text-red-500" /> 6. Análisis de Fallos
-              </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 h-[250px] flex items-center">
-            <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                    <Pie data={failedOpsData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5}>
-                        {failedOpsData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{borderRadius: '20px', border: 'none'}} />
-                </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-2 ml-4">
-                {failedOpsData.map((op, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}} />
-                        <span className="text-[8px] font-black uppercase truncate max-w-[80px]">{op.name}</span>
-                        <span className="text-[8px] font-black">{op.value}</span>
-                    </div>
-                ))}
-                {failedOpsData.length === 0 && <p className="text-[10px] italic opacity-40 uppercase">Sin fallos</p>}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="rounded-3xl border-none shadow-xl bg-secondary/20 p-8">
-            <h5 className="text-[9px] font-black uppercase opacity-50 mb-3 tracking-widest text-primary flex items-center gap-2"><Landmark className="w-3 h-3"/> 5. Bancos</h5>
+            <h5 className="text-[9px] font-black uppercase opacity-50 mb-3 tracking-widest text-primary flex items-center gap-2"><Landmark className="w-3 h-3"/> Bancos</h5>
             <p className="text-2xl font-black">{Object.keys(banks).length}</p>
             <p className="text-[8px] font-bold opacity-40 uppercase">Entidades Detectadas</p>
           </Card>
-          <Card className="rounded-3xl border-none shadow-xl bg-secondary/20 p-8 text-red-500">
-            <h5 className="text-[9px] font-black uppercase opacity-50 mb-3 tracking-widest flex items-center gap-2"><Banknote className="w-3 h-3"/> 11. Efectivo</h5>
-            <p className="text-2xl font-black">{formatCurrency(transactions.filter(tx => ['CASH_ATM', 'CASH_EXTRA'].includes(tx.type)).reduce((acc, tx) => acc + tx.amount, 0))}</p>
-            <p className="text-[8px] font-bold opacity-40 uppercase">Salidas Totales</p>
+          <Card className="rounded-3xl border-none shadow-xl bg-secondary/20 p-8">
+            <h5 className="text-[9px] font-black uppercase opacity-50 mb-3 tracking-widest flex items-center gap-2"><Banknote className="w-3 h-3"/> Mensajes</h5>
+            <p className="text-2xl font-black">{analytics.rawSms.length}</p>
+            <p className="text-[8px] font-bold opacity-40 uppercase">Total en BD</p>
           </Card>
           <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground p-8">
-            <h5 className="text-[9px] font-black uppercase opacity-60 mb-3 tracking-widest flex items-center gap-2"><History className="w-3 h-3"/> 9. Actividad</h5>
+            <h5 className="text-[9px] font-black uppercase opacity-60 mb-3 tracking-widest flex items-center gap-2"><History className="w-3 h-3"/> Actividad</h5>
             <p className="text-2xl font-black">{transactions.length}</p>
-            <p className="text-[8px] font-black uppercase opacity-60">Ops Procesadas</p>
+            <p className="text-[8px] font-black uppercase opacity-60">Ops Consolidadas</p>
           </Card>
       </div>
     </div>
