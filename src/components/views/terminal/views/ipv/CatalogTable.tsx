@@ -43,14 +43,14 @@ import {
 } from '@/components/ui/tooltip';
 
 export function CatalogTable() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('catalog_searchTerm') || '' : ''));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
-  const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
+  const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_layoutMode') as 'table' | 'cards') || 'table' : 'table'));
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-  const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>('all');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_sortConfig') || 'null') : null));
+  const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_stockFilter') as any) || 'all' : 'all'));
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -69,6 +69,14 @@ export function CatalogTable() {
     setConfirmation({ open: true, title, message, onConfirm, variant });
   };
 
+    // Persistencia de estados
+  React.useEffect(() => {
+    localStorage.setItem('catalog_searchTerm', searchTerm);
+    localStorage.setItem('catalog_layoutMode', layoutMode);
+    localStorage.setItem('catalog_sortConfig', JSON.stringify(sortConfig));
+    localStorage.setItem('catalog_stockFilter', stockFilter);
+  }, [searchTerm, layoutMode, sortConfig, stockFilter]);
+
   const user = useAuthStore(state => state.user);
   const isAdmin = hasRole(user, 'admin');
   const isEncargado = hasRole(user, 'encargado');
@@ -84,10 +92,11 @@ export function CatalogTable() {
 
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+  const productMovements = useLiveQuery(() => db.product_movements.toArray());
 
-  const inventoryStats = React.useMemo(() => {
-    if (!products || !reports || !reconciliationLines) return {};
-    const stats: Record<string, { initial: number; sales: number; final: number }> = {};
+    const inventoryStats = React.useMemo(() => {
+    if (!products || !reports || !reconciliationLines || !productMovements) return {};
+    const stats: Record<string, { initial: number; entradas: number; salidas: number; sales: number; final: number }> = {};
 
     // 1. Encontrar el primer reporte IPV para el saldo inicial global
     const firstReport = reports.length > 0 ? reports[reports.length - 1] : null;
@@ -101,16 +110,31 @@ export function CatalogTable() {
             if (firstRow) initial = firstRow.saldo_inicial_qty;
         }
 
+        // Entradas y Salidas de trazabilidad (descomposiciones)
+        const entradas = productMovements
+            .filter(m => m.producto_destino_cod === p.cod && m.tipo === 'DECOMPOSITION')
+            .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
+
+        const salidas = productMovements
+            .filter(m => m.producto_origen_cod === p.cod && m.tipo === 'DECOMPOSITION')
+            .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
+
         // Ventas: Todas las líneas de reconciliación desde el inicio
         const sales = reconciliationLines
             .filter(l => l.product_cod === p.cod)
             .reduce((sum, l) => sum + (l.cantidad || 0), 0);
 
-        // Saldo Final: Inicial - Ventas
-        stats[p.cod] = { initial, sales, final: initial - sales };
+        // Saldo Final: Inicial + Entradas - Salidas - Ventas
+        stats[p.cod] = {
+            initial,
+            entradas,
+            salidas,
+            sales,
+            final: initial + entradas - salidas - sales
+        };
     });
     return stats;
-  }, [products, reports, reconciliationLines]);
+  }, [products, reports, reconciliationLines, productMovements]);
 
   const sortedAndFiltered = React.useMemo(() => {
     let result = products?.filter(p =>
@@ -129,7 +153,7 @@ export function CatalogTable() {
         result.sort((a, b) => {
             let aValue: any;
             let bValue: any;
-            if (sortConfig.key === 'final_stock') {
+                        if (sortConfig.key === 'final_stock') {
                 aValue = inventoryStats[a.cod]?.final || 0;
                 bValue = inventoryStats[b.cod]?.final || 0;
             } else if (sortConfig.key === 'sales') {
@@ -138,6 +162,12 @@ export function CatalogTable() {
             } else if (sortConfig.key === 'initial') {
                 aValue = inventoryStats[a.cod]?.initial || 0;
                 bValue = inventoryStats[b.cod]?.initial || 0;
+            } else if (sortConfig.key === 'entradas') {
+                aValue = inventoryStats[a.cod]?.entradas || 0;
+                bValue = inventoryStats[b.cod]?.entradas || 0;
+            } else if (sortConfig.key === 'salidas') {
+                aValue = inventoryStats[a.cod]?.salidas || 0;
+                bValue = inventoryStats[b.cod]?.salidas || 0;
             } else {
                 aValue = (a as any)[sortConfig.key];
                 bValue = (b as any)[sortConfig.key];
@@ -368,7 +398,7 @@ export function CatalogTable() {
             const score = calculatePriceEffectiveness(p, reconciliationLines);
             const suggestion = suggestAlternativePrice(p);
             const isWildcard = checkWildcardCandidate(p);
-            const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
+            const stats = inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
             const autoPriority = calculateDynamicPriority(p, { stock: stats.final, salesQty: stats.sales, salesValue: stats.sales * p.precio_cents });
             await db.products.update(p.cod, {
                 priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
@@ -742,6 +772,8 @@ const handleExportCatalog = () => {
                   <TableHead>Sugerencia</TableHead>
                   <TableHead className="text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
                   <TableHead className="text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
+                  <TableHead className="text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
+                  <TableHead className="text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
                   <TableHead className="text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
                   <TableHead className="text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
                   <TableHead className="text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
@@ -771,7 +803,7 @@ const handleExportCatalog = () => {
                   )}
                   {sortedAndFiltered.map((p) => {
                       const isEditing = editingId === p.cod;
-                      const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
+                      const stats = inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
                       const isSelected = selectedProductIds.includes(p.cod);
                       return (
                       <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
@@ -799,6 +831,8 @@ const handleExportCatalog = () => {
                           <TableCell>{!isEditing && p.suggestedPrice && (<Tooltip><TooltipTrigger asChild><Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help"><Sparkles className="w-3 h-3" />{p.suggestedPrice}</Badge></TooltipTrigger><TooltipContent className="bg-popover text-popover-foreground border shadow-xl"><p className="text-xs max-w-xs">{p.suggestionReason}</p></TooltipContent></Tooltip>)}</TableCell>
                           <TableCell className="text-right">{isEditing ? (<Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" />) : (<div className="flex flex-col items-end"><span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>{p.precio_base_cents && (<span className="text-xs text-muted-foreground line-through">Base: {p.precio_base_cents}</span>)}</div>)}</TableCell>
                           <TableCell className="text-right text-xs font-bold text-muted-foreground">{isEditing ? (<Input type="number" min="0" value={editForm.stock_inicial_manual || 0} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 w-16 text-right text-xs ml-auto" />) : stats.initial}</TableCell>
+                          <TableCell className="text-right text-xs font-bold text-green-600">{stats.entradas}</TableCell>
+                          <TableCell className="text-right text-xs font-bold text-blue-600">{stats.salidas}</TableCell>
                           <TableCell className="text-right text-xs font-bold text-orange-500">{stats.sales}</TableCell>
                           <TableCell className={`text-right text-xs font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}><div className="flex items-center justify-end gap-1">{stats.final < 0 && <AlertTriangle className="w-3 h-3" />}{stats.final}</div></TableCell>
                           <TableCell className="text-center">{isEditing ? (<div className="flex flex-col gap-1 items-center"><select value={editForm.priorityMode || 'manual'} onChange={e => setEditForm({...editForm, priorityMode: e.target.value as any})} className="h-7 rounded border bg-background px-1 text-xs uppercase font-bold"><option value="manual">Manual</option><option value="auto">Auto</option><option value="hybrid">Híbrido</option></select><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-7 rounded-md border border-input bg-background px-2 text-xs" disabled={editForm.priorityMode === 'auto'}>{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}</select></div>) : (<div className="flex flex-col items-center gap-1"><span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${p.priorityMode === 'auto' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-primary'} text-xs font-black shadow-sm`}>{p.prioridad_algoritmo}</span>{p.priorityMode && p.priorityMode !== 'manual' && (<span className="text-xs font-bold text-muted-foreground uppercase opacity-50">{p.priorityMode}</span>)}</div>)}</TableCell>
@@ -821,7 +855,7 @@ const handleExportCatalog = () => {
                   <>
                   {editingId === 'NEW' && <NewProductCard editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} />}
                   {sortedAndFiltered.map(p => (
-                      <ProductCard key={p.cod} product={p} stats={inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 }} isEditing={editingId === p.cod} editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} onEdit={() => startEditing(p)} onDelete={() => handleDelete(p.cod)} />
+                      <ProductCard key={p.cod} product={p} stats={inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 }} isEditing={editingId === p.cod} editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} onEdit={() => startEditing(p)} onDelete={() => handleDelete(p.cod)} />
                   ))}
                   </>
               )}
@@ -853,10 +887,12 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                 <div><div className="flex items-center gap-2"><p className="text-xs font-black text-primary uppercase tracking-widest">{product.cod}</p>{product.id_grupo && <div className="flex items-center gap-1"><Badge variant="secondary" className="text-[10px] h-4 px-1 opacity-70">G: {product.id_grupo}</Badge>{product.cod_hijo && <Badge variant="outline" className="text-[8px] h-3 px-1 border-blue-200 text-blue-500 font-black"><CornerDownRight className="w-2 h-2 mr-1" /> {product.cod_hijo}</Badge>}</div>}{product.priceEffectivenessScore !== undefined && (<Badge variant="outline" className="text-xs h-3 px-1 border-primary/20 bg-primary/5">Eff: {product.priceEffectivenessScore}%</Badge>)}</div>{isEditing ? (<Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 mt-1 text-xs font-bold" />) : (<h4 className="font-bold text-sm leading-tight">{product.descripcion}</h4>)}</div>
                 <div className="flex flex-col items-end gap-1">{isEditing ? (<div className="flex flex-col items-end gap-1"><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-7 w-20 text-xs uppercase text-right" placeholder="UM" /><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-7 rounded-md border border-input bg-background px-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prio {v}</option>)}</select></div>) : (<><Badge variant="outline" className="text-xs uppercase font-black">{product.um}</Badge><span className="text-xs font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span></>)}</div>
             </div>
-            <div className="grid grid-cols-3 gap-2 py-3 border-y border-border/50">
-                <div className="text-center"><p className="text-xs font-black text-muted-foreground uppercase mb-1">Inicial</p>{isEditing ? (<Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-7 text-xs text-center" />) : (<p className="font-black text-lg">{stats.initial}</p>)}</div>
-                <div className="text-center border-x border-border/50"><p className="text-xs font-black text-muted-foreground uppercase mb-1">Ventas</p><p className="font-black text-lg text-orange-500">{stats.sales}</p></div>
-                <div className="text-center"><p className="text-xs font-black text-muted-foreground uppercase mb-1">Final</p><p className={`font-black text-lg ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>{stats.final}</p></div>
+                        <div className="grid grid-cols-5 gap-1 py-3 border-y border-border/50">
+                <div className="text-center"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Inicial</p>{isEditing ? (<Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-7 text-[10px] text-center px-1" />) : (<p className="font-black text-sm">{stats.initial}</p>)}</div>
+                <div className="text-center border-l border-border/50"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Entrada</p><p className="font-black text-sm text-green-600">{stats.entradas}</p></div>
+                <div className="text-center border-l border-border/50"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Salida</p><p className="font-black text-sm text-blue-600">{stats.salidas}</p></div>
+                <div className="text-center border-l border-border/50"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ventas</p><p className="font-black text-sm text-orange-500">{stats.sales}</p></div>
+                <div className="text-center border-l border-border/50"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Final</p><p className={`font-black text-sm ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>{stats.final}</p></div>
             </div>
             <div className="flex justify-between items-center"><div className="flex flex-col gap-2">{isEditing ? (<div className="flex items-center gap-2"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">Paquete</Label>{editForm.es_paquete && (<Input type="number" value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 w-12 text-xs text-center" />)}</div>) : (product.es_paquete && (<div className="flex items-center gap-1"><Badge className="bg-primary/10 text-primary text-xs font-black uppercase">Pack X{product.contenido_paquete}</Badge></div>))}</div></div>
             <div className="flex justify-between items-center">
