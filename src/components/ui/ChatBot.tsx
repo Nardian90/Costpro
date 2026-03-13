@@ -1,57 +1,45 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Bot,
+  Send,
+  X,
+  Loader2,
+  Settings,
+  Check,
+  Key,
+  RefreshCw,
+  Trash2,
+  Sparkles
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Info } from 'lucide-react';
-import { useAuthStore, useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 import { cn } from '@/lib/utils';
-import { userService } from '@/services/user-service';
+import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 
 interface Message {
-  role: 'user' | 'assistant' | 'system' | 'tool';
+  role: 'user' | 'assistant';
   content: string;
-  metadata?: any;
-  tool_calls?: any[];
 }
 
-export function ChatBot() {
-  const router = useRouter();
-  const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [input, setInput] = useState('');
+export const ChatBot = () => {
+  const { isChatBotOpen, setIsChatBotOpen } = useUIStore();
+  const { user, updateUser } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [lastMetadata, setLastMetadata] = useState<any>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Settings state
-  const { user, token, updateUser } = useAuthStore();
   const [tempProvider, setTempProvider] = useState(user?.aiProvider || 'gemini');
   const [tempApiKey, setTempApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Cargar mensajes locales al iniciar
-  useEffect(() => {
-    const savedMessages = localStorage.getItem('darian_chat_history');
-    if (savedMessages) {
-      try {
-        setMessages(JSON.parse(savedMessages));
-      } catch (e) {
-        console.error('Error al cargar historial de chat:', e);
-      }
-    }
-  }, []);
-
-  // Guardar mensajes locales cuando cambian
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('darian_chat_history', JSON.stringify(messages.slice(-10)));
-    }
-  }, [messages]);
+  const isConfigured = !!user?.aiApiKey || !!process.env.NEXT_PUBLIC_HAS_GLOBAL_AI;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -59,205 +47,142 @@ export function ChatBot() {
     }
   }, [messages, isLoading]);
 
-  // ESC KEY HANDLER
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, setIsOpen]);
-
-  const handleAction = (action: any) => {
-    console.log('[AI Controller] Action received:', action);
-
-    switch (action.type) {
-      case 'navigation':
-        toast.info(`Navegando a ${action.payload.viewId}...`);
-        router.push(action.payload.route);
-        break;
-
-      case 'form_fill':
-        toast.success(`Formulario ${action.payload.formName} completado por Darian`);
-        window.dispatchEvent(new CustomEvent('ai:fill-form', { detail: action.payload }));
-        break;
-
-      case 'export':
-        toast.success(`Archivo ${action.payload.type.toUpperCase()} listo para descargar`);
-        break;
-
-      case 'ui_mode':
-        toast.info(`Cambiando a modo ${action.payload.mode}`);
-        break;
-
-      default:
-        console.warn('Acción AI desconocida:', action.type);
-    }
-  };
+    if (user?.aiProvider) setTempProvider(user.aiProvider);
+  }, [user?.aiProvider]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !user) return;
+    if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage].slice(-10);
-    setMessages(newMessages);
+    const userMessage = input.trim();
     setInput('');
-    setIsLoading(true);
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    const controller = new AbortController();
-    setAbortController(controller);
+    const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/bot/chat', {
         method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: newMessages,
-          storeId: user.activeStoreId,
-          aiProvider: user.aiProvider,
-          aiApiKey: user.aiApiKey,
-          botContext: {
-            currentView,
-            uiMode: 'standard'
-          }
+          history: newMessages.map(m => ({
+            role: m.role,
+            text: m.content
+          })),
+          aiProvider: user?.aiProvider,
+          aiApiKey: user?.aiApiKey
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al conectar con Darian');
-      }
-
       const data = await response.json();
-      setMessages([...newMessages, { role: 'assistant', content: data.text, metadata: data.metadata }]);
-      setLastMetadata(data.metadata);
 
-      if (data.metadata?.actions) {
-        data.metadata.actions.forEach(handleAction);
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en la comunicación con la IA');
       }
 
+      setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('[Chat] Request cancelled by user');
-        return;
-      }
-
-      const errorMsg = error.message || '';
-      const isFallbackError = errorMsg.includes('Todos los proveedores fallaron') ||
-                             errorMsg.includes('No hay proveedores configurados');
-
-      if (isFallbackError) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: '⚠️ La cuota global de la Inteligencia Artificial está agotada o los proveedores no responden. Por favor, ingresa tu clave API personal en los ajustes (icono de engranaje arriba) para continuar chateando sin límites.'
-        }]);
-      } else {
-        toast.error(errorMsg);
-      }
+      console.error('Chat Error:', error);
+      toast.error(error.message);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `⚠️ Error: ${error.message}. Por favor, verifica tu configuración.`
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSaveSettings = async () => {
-    if (!user) return;
     setIsSaving(true);
     try {
-      await userService.updateAISettings(
-        user.id,
-        tempProvider,
-        tempApiKey || user.aiApiKey || ''
-      );
-      updateUser({ aiProvider: tempProvider, aiApiKey: tempApiKey || user.aiApiKey });
-      toast.success('Configuración de IA actualizada');
+      updateUser({
+        aiProvider: tempProvider,
+        ...(tempApiKey ? { aiApiKey: tempApiKey } : {})
+      } as any);
+      toast.success('Configuración actualizada');
       setIsSettingsOpen(false);
       setTempApiKey('');
     } catch (error: any) {
-      toast.error('Error al guardar configuración: ' + error.message);
+      toast.error('Error al guardar: ' + error.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleCloseChat = () => setIsOpen(false);
+  const clearHistory = () => {
+    setMessages([]);
+    toast.success('Historial borrado');
+  };
 
-  const isConfigured = !!(user?.aiApiKey || true); // Allow always for system fallback
+  if (!isChatBotOpen) {
+    return (
+      <button
+        onClick={() => setIsChatBotOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group pointer-events-auto"
+        type="button"
+      >
+        <Bot className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
+      </button>
+    );
+  }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+    <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[600px] z-50 flex flex-col pointer-events-none">
       <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            onClick={() => setIsOpen(true)}
-            className="w-16 h-16 bg-primary text-primary-foreground rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all pointer-events-auto group relative"
-            aria-label="Abrir asistente AI"
-          >
-            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping pointer-events-none" />
-            <MessageSquare className="w-8 h-8 relative z-10" />
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-background flex items-center justify-center">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isOpen && (
+        {isChatBotOpen && (
           <motion.div
-            initial={{ y: 20, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            className="w-[400px] h-[600px] max-h-[85vh] bg-background border border-border shadow-2xl rounded-3xl flex flex-col overflow-hidden pointer-events-auto"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="w-full h-full bg-background border border-border sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden pointer-events-auto"
           >
             {/* Header */}
-            <div className="p-4 bg-primary text-primary-foreground flex items-center justify-between shrink-0 relative overflow-hidden">
-               <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground/10" />
-
-              <button
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors relative z-10"
-              >
-                <Settings className={`w-4 h-4 ${isSettingsOpen ? 'animate-spin-slow' : ''}`} />
-              </button>
-
-              <div className="flex items-center gap-3 relative z-10">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
+            <div className="p-4 border-b border-border bg-card flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary border border-primary/20">
                   <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs uppercase tracking-tighter">Darian</h3>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Controller Activo</p>
-                  </div>
+                  <h2 className="text-sm font-black uppercase tracking-widest leading-none">Darian AI</h2>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Controller Activo</span>
                 </div>
               </div>
-
-              <button
-                onClick={handleCloseChat}
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-10"
-                title="Cerrar chat (ESC)"
-                type="button"
-                aria-label="Cerrar chat"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={clearHistory}
+                  className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground hover:text-destructive"
+                  title="Limpiar historial"
+                  type="button"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className={cn(
+                    "p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground",
+                    isSettingsOpen && "bg-primary/10 text-primary"
+                  )}
+                  type="button"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsChatBotOpen(false)}
+                  className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
+                  type="button"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Messages or Settings */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20 relative">
+            {/* Chat Area / Settings Area */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 bg-muted/5 relative no-scrollbar">
               <AnimatePresence mode="wait">
                 {isSettingsOpen ? (
                   <motion.div
@@ -265,21 +190,22 @@ export function ChatBot() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="h-full flex flex-col space-y-6 pt-4"
+                    className="space-y-6 pt-2"
                   >
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Proveedor de IA</label>
                         <div className="grid grid-cols-3 gap-2">
                           {['gemini', 'gpt', 'deepseek'].map((p) => (
                             <button
                               key={p}
                               onClick={() => setTempProvider(p)}
-                              className={`h-11 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all ${
+                              className={cn(
+                                "h-11 rounded-xl border-2 text-[10px] font-black uppercase tracking-tight transition-all",
                                 tempProvider === p
-                                ? 'border-primary bg-primary/5 text-primary'
-                                : 'border-border bg-background text-muted-foreground'
-                              }`}
+                                ? "border-primary bg-primary/5 text-primary"
+                                : "border-border bg-background text-muted-foreground hover:border-primary/30"
+                              )}
                               type="button"
                             >
                               {p}
@@ -289,119 +215,127 @@ export function ChatBot() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">API KEY Personal</label>
                         <div className="relative">
                           <input
                             type="password"
                             value={tempApiKey}
                             onChange={(e) => setTempApiKey(e.target.value)}
-                            onCopy={(e) => e.preventDefault()}
-                            onCut={(e) => e.preventDefault()}
                             placeholder={user?.aiApiKey ? '••••••••••••••••' : 'Pega tu clave aquí...'}
-                            className="w-full h-12 bg-background border border-border rounded-xl px-4 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-10"
+                            className="w-full h-12 bg-background border border-border rounded-xl px-4 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-10 font-medium"
                           />
                           <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
                         </div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed px-1">
+                          Tu clave se guarda de forma segura. Por seguridad, no se puede visualizar una vez guardada.
+                        </p>
                       </div>
                     </div>
 
-                    <div className="pt-4 mt-auto">
-                      <button
-                        onClick={handleSaveSettings}
-                        disabled={isSaving}
-                        className="w-full h-14 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                        type="button"
-                      >
-                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        {isSaving ? 'Guardando...' : 'Actualizar Configuración'}
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleSaveSettings}
+                      disabled={isSaving}
+                      className="w-full h-14 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                      type="button"
+                    >
+                      {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      Actualizar Configuración
+                    </button>
                   </motion.div>
                 ) : (
-                  <motion.div
-                    key="chat"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
+                  <div className="space-y-6">
                     {messages.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 py-20">
+                      <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
                         <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center border-2 border-dashed border-primary/20">
-                          <Sparkles className="w-8 h-8 text-primary opacity-30" />
+                          <Sparkles className="w-8 h-8 text-primary/40" />
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-black uppercase text-primary tracking-widest">Hola, {user?.fullName?.split(' ')[0]}</p>
-                          <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                            Soy Darian, tu Controller AI. Mantendré los últimos 10 mensajes de nuestra conversación de forma local.
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-black uppercase tracking-tight">¡Hola! Soy Darian</h3>
+                          <p className="text-xs text-muted-foreground font-medium max-w-[200px] leading-relaxed">
+                            Tu asistente inteligente experto en el sistema. ¿En qué puedo ayudarte hoy?
                           </p>
                         </div>
                       </div>
                     )}
+
                     {messages.map((msg, i) => (
-                      <div key={i} className={`flex flex-col w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium shadow-sm break-words ${
-                          msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-tr-none'
-                          : 'bg-background border border-border rounded-tl-none'
-                        }`}>
-                          {msg.content}
+                      <div key={i} className={cn("flex gap-3", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm",
+                          msg.role === 'user' ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary border border-primary/20"
+                        )}>
+                          {msg.role === 'user' ? 'YO' : 'AI'}
                         </div>
-                        {msg.metadata && msg.role === 'assistant' && (
-                          <div className="mt-1 flex items-center gap-2 px-1 text-[10px] text-muted-foreground font-bold uppercase tracking-tighter opacity-60">
-                            <span>Key: {msg.metadata.keySource}</span>
-                            {msg.metadata.usage && (
-                              <>
-                                <span>•</span>
-                                <span>Tokens: {msg.metadata.usage.total_tokens}</span>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className={cn(
+                          "p-4 rounded-2xl max-w-[80%] text-xs font-medium shadow-sm leading-relaxed",
+                          msg.role === 'user'
+                          ? "bg-primary text-primary-foreground rounded-tr-none"
+                          : "bg-card border border-border rounded-tl-none prose prose-xs dark:prose-invert"
+                        )}>
+                          {msg.role === 'assistant' ? (
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
+                        </div>
                       </div>
                     ))}
+
                     {isLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-background border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
-                          <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Ejecutando...</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-[10px] font-black shrink-0">
+                          AI
+                        </div>
+                        <div className="bg-card border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-3 shadow-sm">
+                          <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Darian está pensando...</span>
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Footer with last usage info */}
-            {!isSettingsOpen && lastMetadata && (
-              <div className="px-4 py-1.5 bg-muted/10 border-t border-border/50 flex items-center gap-2">
-                <Info className="w-3 h-3 text-primary opacity-50" />
-                <span className="text-[10px] font-black uppercase text-muted-foreground/70">
-                  {lastMetadata.provider} | {lastMetadata.keySource}
-                </span>
-              </div>
-            )}
-
-            {/* Input */}
+            {/* Input Area */}
             {!isSettingsOpen && (
               <div className="p-4 bg-background border-t border-border">
-                <div className={`flex gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border`}>
-                  <input
+                <div className="relative group">
+                  <textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Navega, crea, busca..."
-                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 h-11"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
+                    }}
+                    placeholder="Escribe tu mensaje aquí..."
+                    rows={1}
+                    className="w-full bg-muted/30 border border-border rounded-2xl py-4 pl-4 pr-14 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all text-xs font-medium resize-none min-h-[56px] no-scrollbar"
                   />
                   <button
-                    disabled={!input.trim() || isLoading}
                     onClick={handleSend}
-                    className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
+                    disabled={!input.trim() || isLoading}
+                    className="absolute right-2 top-2 bottom-2 bg-primary hover:opacity-90 text-primary-foreground px-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg active:scale-95"
                     type="button"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
+                <p className="text-[8px] text-center text-muted-foreground/40 mt-3 uppercase tracking-[0.2em] font-black">
+                  Desarrollado con la API de Gemini 2.5 Flash
+                </p>
               </div>
             )}
           </motion.div>
@@ -409,4 +343,6 @@ export function ChatBot() {
       </AnimatePresence>
     </div>
   );
-}
+};
+
+export default ChatBot;

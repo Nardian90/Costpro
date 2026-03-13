@@ -1,24 +1,25 @@
+'use client';
+
 import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type MatchingRule } from '../../../../../lib/dexie';
-import { Card } from '../../../../ui/card';
-import { Badge } from '../../../../ui/badge';
-import { Button } from '../../../../ui/button';
-import { Switch } from '../../../../ui/switch';
-import { Label } from '../../../../ui/label';
-import { Input } from '../../../../ui/input';
+import { db, type MatchingRule } from '@/lib/dexie';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   GripVertical,
-  Target,
-  Search,
+  Info,
+  ShieldCheck,
   Zap,
-  ShieldAlert,
-  Wallet,
-  Settings2,
   Percent,
-  TrendingUp
+  Coins,
+  Box
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Dnd Kit Imports
 import {
   DndContext,
   closestCenter,
@@ -37,7 +38,15 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, totalRules }: any) {
+interface SortableRuleItemProps {
+    rule: MatchingRule;
+    toggleRule: (id: string, active: boolean) => Promise<void>;
+    updateTolerance: (id: string, value: string) => Promise<void>;
+    updatePriority: (id: string, priority: number) => Promise<void>;
+    totalRules: number;
+}
+
+function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, totalRules }: SortableRuleItemProps) {
     const {
         attributes,
         listeners,
@@ -50,29 +59,28 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 10 : 1,
+        zIndex: isDragging ? 50 : 'auto',
+        opacity: isDragging ? 0.5 : 1,
     };
 
     const getIcon = (tipo: string) => {
         switch (tipo) {
-            case 'HARD_REF': return <Search className="w-5 h-5 text-blue-500" />;
-            case 'EXACT_SUM': return <Target className="w-5 h-5 text-emerald-500" />;
-            case 'TOLERANCE': return <ShieldAlert className="w-5 h-5 text-orange-500" />;
-            case 'CASH_FILL': return <Wallet className="w-5 h-5 text-gray-500" />;
-            case 'STOCK_LIMIT': return <Zap className="w-5 h-5 text-yellow-600" />;
-            case 'PRICE_FLEX': return <Percent className="w-5 h-5 text-purple-600" />;
-            default: return <Settings2 className="w-5 h-5 text-muted-foreground" />;
+            case 'HARD_REF': return <ShieldCheck className="text-blue-500" />;
+            case 'EXACT_SUM': return <Zap className="text-yellow-500" />;
+            case 'TOLERANCE': return <Percent className="text-green-500" />;
+            case 'CASH_FILL': return <Coins className="text-orange-500" />;
+            case 'STOCK_LIMIT': return <Box className="text-purple-500" />;
+            default: return <Info />;
         }
     };
 
     const getLabel = (tipo: string) => {
         switch (tipo) {
             case 'HARD_REF': return 'Referencia Directa';
-            case 'EXACT_SUM': return 'Suma Exacta';
+            case 'EXACT_SUM': return 'Suma Exacta (Greedy)';
             case 'TOLERANCE': return 'Margen de Tolerancia';
-            case 'CASH_FILL': return 'Venta en Efectivo (Ajuste)';
-            case 'STOCK_LIMIT': return 'Límite de Stock Real';
-            case 'PRICE_FLEX': return 'Variación Pro (R1/R2)';
+            case 'CASH_FILL': return 'Ajuste Automático Efectivo';
+            case 'STOCK_LIMIT': return 'Control de Inventario';
             default: return tipo;
         }
     };
@@ -84,7 +92,6 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'TOLERANCE': return 'Permite un descuadre controlado si la suma se acerca al importe.';
             case 'CASH_FILL': return 'Cubre cualquier faltante restante marcándolo como venta en efectivo.';
             case 'STOCK_LIMIT': return 'Impide que el algoritmo asigne productos que no tengan existencia física disponible.';
-            case 'PRICE_FLEX': return 'Permite variar el precio del producto dentro del rango definido para lograr el matching perfecto.';
             default: return '';
         }
     };
@@ -126,6 +133,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                             onCheckedChange={(checked) => toggleRule(rule.id, checked)}
                         />
                     </div>
+                    {/* Reordering handle for mobile */}
                     <div
                         className="sm:hidden text-muted-foreground cursor-grab active:cursor-grabbing p-2"
                         {...attributes}
@@ -154,13 +162,17 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                     <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
                 </div>
 
+                <p className="sm:hidden text-xs text-muted-foreground">
+                    {getDescription(rule.tipo)}
+                </p>
+
                 <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                     {rule.tipo === 'TOLERANCE' && (
                         <div className="flex items-center gap-2 mr-auto sm:mr-4">
                             <Label className="text-xs sm:text-xs font-bold uppercase">Max ($):</Label>
                             <Input
                                 type="number"
-                                className="w-16 sm:w-20 h-8 text-xs font-black"
+                                className="w-16 sm:w-20 h-8 text-xs"
                                 defaultValue={(rule.tolerancia_cents || 0)}
                                 onBlur={(e) => updateTolerance(rule.id, e.target.value)}
                             />
@@ -198,9 +210,8 @@ export function MatchingRulesEditor() {
       { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
       { id: '2', tipo: 'HARD_REF', prioridad: 2, activo: true },
       { id: '3', tipo: 'EXACT_SUM', prioridad: 3, activo: true },
-      { id: '4', tipo: 'PRICE_FLEX', prioridad: 4, activo: true },
-      { id: '5', tipo: 'TOLERANCE', prioridad: 5, activo: true, tolerancia_cents: 1 },
-      { id: '6', tipo: 'CASH_FILL', prioridad: 6, activo: false }
+      { id: '4', tipo: 'TOLERANCE', prioridad: 4, activo: true, tolerancia_cents: 1 }, // $1.00
+      { id: '5', tipo: 'CASH_FILL', prioridad: 5, activo: false }
     ];
     await db.matching_rules.bulkPut(defaults);
     toast.success('Reglas inicializadas');
@@ -222,6 +233,7 @@ export function MatchingRulesEditor() {
     const rule = rules.find(r => r.id === id);
     if (!rule || rule.prioridad === newPriority) return;
 
+    // Logic: move item to new position and shift others
     const otherRules = rules.filter(r => r.id !== id);
     const updatedRules = [...otherRules];
     updatedRules.splice(newPriority - 1, 0, rule);
@@ -236,14 +248,20 @@ export function MatchingRulesEditor() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+
     if (over && active.id !== over.id) {
       if (!rules) return;
+
       const oldIndex = rules.findIndex((r) => r.id === active.id);
       const newIndex = rules.findIndex((r) => r.id === over.id);
+
       const newRulesOrder = arrayMove(rules, oldIndex, newIndex);
+
+      // Actualizar prioridades en la base de datos
       const updates = newRulesOrder.map((rule, index) => {
         return db.matching_rules.update(rule.id, { prioridad: index + 1 });
       });
+
       await Promise.all(updates);
       toast.success('Orden de reglas actualizado');
     }
@@ -251,19 +269,14 @@ export function MatchingRulesEditor() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-card p-6 rounded-3xl border shadow-sm">
-        <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-2xl">
-                <TrendingUp className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-xl font-black uppercase tracking-tight italic">Motor de Decisiones PRO</h3>
-              <p className="text-xs text-muted-foreground font-bold opacity-70">Define la inteligencia del algoritmo para alcanzar el 90/100 de éxito.</p>
-            </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-black uppercase tracking-tight">Motor de Decisiones</h3>
+          <p className="text-sm text-muted-foreground">Define el orden y comportamiento del algoritmo de matching.</p>
         </div>
         {!rules || rules.length === 0 ? (
-          <Button onClick={initializeDefaultRules} className="neu-btn-primary h-12 px-8">
-            RESTAURAR ALGORITMO
+          <Button onClick={initializeDefaultRules} className="neu-btn-primary">
+            Inicializar Reglas
           </Button>
         ) : null}
       </div>
@@ -273,7 +286,7 @@ export function MatchingRulesEditor() {
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <div className="space-y-4 pb-20">
+        <div className="space-y-4">
           <SortableContext
             items={rules?.map(r => r.id) || []}
             strategy={verticalListSortingStrategy}
