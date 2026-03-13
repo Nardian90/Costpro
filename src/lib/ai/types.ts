@@ -31,16 +31,7 @@ export interface ToolDefinition {
 export interface LLMResponse {
   text: string;
   tool_calls?: ToolCall[];
-  metadata?: {
-    model?: string;
-    usage?: {
-      prompt_tokens: number;
-      completion_tokens: number;
-      total_tokens: number;
-    };
-    keySource?: string;
-    [key: string]: any;
-  };
+  metadata?: any;
 }
 
 export interface LLMProvider {
@@ -55,16 +46,7 @@ export interface LLMProvider {
 export interface AIAction {
   type: 'navigation' | 'form_fill' | 'form_submit' | 'system_action' | 'export' | 'ui_mode';
   payload: any;
-  metadata?: {
-    model?: string;
-    usage?: {
-      prompt_tokens: number;
-      completion_tokens: number;
-      total_tokens: number;
-    };
-    keySource?: string;
-    [key: string]: any;
-  };
+  metadata?: any;
 }
 
 export interface BotContext {

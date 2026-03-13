@@ -49,7 +49,6 @@ export interface Product {
   ventas_valor_historico?: number;
   id_grupo?: string;           // Agrupador de variantes (ej: "BIG_BON")
   cod_hijo?: string;           // Código del producto inferior en la jerarquía
-  variacion_permisible_percent?: number;
 }
 
 export interface ProductMovement {
@@ -59,9 +58,8 @@ export interface ProductMovement {
   producto_destino_cod: string;
   cantidad_origen: number;
   cantidad_destino: number;
-  tipo: 'DECOMPOSITION' | 'MANUAL' | 'IMPORT' | 'PRICE_ADJUSTMENT';
+  tipo: 'DECOMPOSITION' | 'MANUAL';
   referencia_transaccion?: string; // Si viene de un matching automático
-  provenance?: string;
   created_at: string;
 }
 
@@ -200,7 +198,7 @@ export class IPVDatabase extends Dexie {
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion, clasificacion, origen_dato',
-      product_movements: '&id, fecha, producto_origen_cod, producto_destino_cod, tipo, referencia_transaccion, provenance',
+      product_movements: '&id, fecha, producto_origen_cod, producto_destino_cod, tipo, referencia_transaccion',
       ipv_reports: '&id, fecha_reporte, estado',
       cash_adjustments: '&id, fecha',
       daily_aggregates: '&fecha',
