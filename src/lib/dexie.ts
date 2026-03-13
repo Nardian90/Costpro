@@ -33,6 +33,7 @@ export interface Product {
   contenido_paquete: number;
   precio_cents: number;        // En Pesos (decimal) - PRECIO ACTUAL/AJUSTADO
   precio_base_cents?: number;  // Precio original de catálogo
+  variacion_permisible_percent?: number; // ±% permitido para ajuste automático
   prioridad_algoritmo: number; // 1..5
   activo: boolean;
   stock_inicial_manual: number;
@@ -58,8 +59,12 @@ export interface ProductMovement {
   producto_destino_cod: string;
   cantidad_origen: number;
   cantidad_destino: number;
-  tipo: 'DECOMPOSITION' | 'MANUAL';
+  tipo: 'DECOMPOSITION' | 'MANUAL' | 'IMPORT' | 'PRICE_ADJUSTMENT';
   referencia_transaccion?: string; // Si viene de un matching automático
+  valor_anterior?: string;
+  valor_nuevo?: string;
+  motivo?: string;
+  usuario?: string;
   created_at: string;
 }
 
@@ -193,7 +198,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(11).stores({
+    this.version(12).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad',
