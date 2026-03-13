@@ -80,21 +80,21 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       title="Escanear Código de Barras"
     >
       <div className="space-y-4">
-        <div className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-primary/20 shadow-inner">
+        <div className="relative aspect-video w-full bg-background rounded-2xl overflow-hidden flex items-center justify-center border-2 border-primary/20 shadow-inner">
           <div id="reader" className="w-full h-full"></div>
 
           {isInitializing && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white gap-3 z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-foreground gap-3 z-10">
               <RefreshCw className="w-8 h-8 animate-spin text-primary" />
               <p className="text-xs font-black uppercase tracking-widest">Iniciando Cámara...</p>
             </div>
           )}
 
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/90 text-white p-6 text-center gap-4 z-20">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/90 text-foreground p-6 text-center gap-4 z-20">
               <X className="w-12 h-12" />
               <p className="font-bold">{error}</p>
-              <SecondaryButton label="Reintentar" onClick={() => window.location.reload()} className="bg-white text-destructive border-none" />
+              <SecondaryButton label="Reintentar" onClick={() => window.location.reload()} className="bg-background text-destructive border-none" />
             </div>
           )}
 

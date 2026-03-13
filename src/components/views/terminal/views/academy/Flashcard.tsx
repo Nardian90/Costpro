@@ -84,9 +84,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({ card, onScore }) => {
                     size="icon"
                     className={cn(
                       "size-11 sm:size-12 rounded-xl font-black transition-all text-lg",
-                      s <= 2 ? "hover:bg-red-500 hover:text-white border-red-500/30" :
-                      s === 3 ? "hover:bg-amber-500 hover:text-white border-amber-500/30" :
-                      "hover:bg-green-500 hover:text-white border-green-500/30"
+                      s <= 2 ? "hover:bg-red-500 hover:text-foreground border-red-500/30" :
+                      s === 3 ? "hover:bg-amber-500 hover:text-foreground border-amber-500/30" :
+                      "hover:bg-green-500 hover:text-foreground border-green-500/30"
                     )}
                     onClick={(e) => {
                       e.stopPropagation();

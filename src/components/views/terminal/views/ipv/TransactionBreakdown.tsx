@@ -224,7 +224,7 @@ export function TransactionBreakdown() {
                     variant="outline"
                     size="sm"
                     onClick={handleRandomizeDates}
-                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-xs gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-xs gap-2 hover:bg-primary hover:text-foreground transition-all shadow-sm active:scale-95"
                 >
                     <RotateCcw className="w-4 h-4" />
                     Reacomodar Fechas
@@ -233,7 +233,7 @@ export function TransactionBreakdown() {
                     variant="outline"
                     size="sm"
                     onClick={handleResetCash}
-                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-xs gap-2 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
+                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-xs gap-2 hover:bg-red-500 hover:text-foreground transition-all shadow-sm active:scale-95"
                 >
                     <Trash2 className="w-4 h-4" />
                     Reset Efectivo

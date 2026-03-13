@@ -53,7 +53,7 @@ export default function SalesHistoryView() {
           {selectedIds.size > 0 && (
             <button
               onClick={() => setIsTaxModalOpen(true)}
-              className="flex items-center gap-2 px-4 h-11 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 h-11 bg-primary text-foreground rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
             >
               <Calculator className="w-4 h-4" />
               Calcular Impuestos ({selectedIds.size})
@@ -157,7 +157,7 @@ export default function SalesHistoryView() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(txn)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                             title="Ver detalles"
                           >
                             <Eye className="w-4 h-4" />
@@ -167,7 +167,7 @@ export default function SalesHistoryView() {
                                 handleViewDetails(txn); // Para cargar los items
                                 setTimeout(() => handleInvert(txn), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                             title="Invertir Venta (Devolución)"
                             disabled={txn.status === 'voided' || isInverting}
                           >
@@ -178,7 +178,7 @@ export default function SalesHistoryView() {
                                 handleViewDetails(txn); // Para cargar los items
                                 setTimeout(() => handleDuplicate(txn), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
                             title="Duplicar Venta"
                           >
                             <Copy className="w-4 h-4" />

@@ -158,7 +158,7 @@ function ContextIsolationDiagram() {
 
            <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 }}>
              <circle cx="150" cy="150" r="40" className="fill-primary" />
-             <Package className="text-white w-10 h-10" x="130" y="130" />
+             <Package className="text-foreground w-10 h-10" x="130" y="130" />
              <text x="150" y="210" textAnchor="middle" className="fill-primary font-bold text-xs">Stock: 100</text>
            </motion.g>
 

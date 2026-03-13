@@ -196,7 +196,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         {tokens.length > 0 && (
           <div className="bg-primary/10 bg-primary/5 border border-primary/20 border-primary/20 p-2 sm:p-3 rounded-xl sm:rounded-xl flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2">
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-white" />
+              <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-foreground" />
             </div>
             <span className="text-xs sm:text-xs font-bold text-primary uppercase tracking-wider leading-tight">
               Fórmula válida • Resultado: (Evaluando...)
@@ -236,10 +236,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       <Sigma className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-[12px] font-black text-foreground dark:text-white uppercase tracking-wider">{func}</div>
+                      <div className="text-xs sm:text-[12px] font-black text-foreground dark:text-foreground uppercase tracking-wider">{func}</div>
                       <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
                     </div>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                   </button>
@@ -260,10 +260,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         {s.label.includes(' ') ? s.label.split(' ')[1] : s.label}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
+                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-foreground uppercase truncate">{s.label}</div>
                         <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground truncate">{s.description}</div>
                       </div>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </button>
@@ -285,10 +285,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         {s.label.split(' ')[1] || 'AX'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
+                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-foreground uppercase truncate">{s.label}</div>
                         <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground truncate">{s.description}</div>
                       </div>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </button>
@@ -326,7 +326,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     <div className="flex gap-2 sm:gap-3">
                       <input
                         type="number"
-                        className="flex-1 h-11 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
+                        className="flex-1 h-11 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-foreground text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
                         placeholder="Ej: 1500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -343,7 +343,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                           if (val) addToken('literal', val, val);
                           input.value = '';
                         }}
-                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary text-primary-foreground dark:text-black flex items-center justify-center  transition-all shrink-0"
+                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary text-primary-foreground dark:text-foreground flex items-center justify-center  transition-all shrink-0"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>

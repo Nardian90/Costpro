@@ -129,7 +129,7 @@ export const TaxCalculationModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="bg-primary p-8 text-white relative">
+        <DialogHeader className="bg-primary p-8 text-foreground relative">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <Calculator className="w-24 h-24 rotate-12" />
           </div>
@@ -200,7 +200,7 @@ export const TaxCalculationModal = ({
                   "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",
                   includeAnnex ? "bg-primary border-primary" : "border-muted-foreground/30"
                 )}>
-                  {includeAnnex && <CheckCircle2 className="w-3 h-3 text-white" />}
+                  {includeAnnex && <CheckCircle2 className="w-3 h-3 text-foreground" />}
                 </div>
                 <div>
                   <div className="text-xs font-black uppercase tracking-tight">Incluir Anexo de Facturas</div>
@@ -233,7 +233,7 @@ export const TaxCalculationModal = ({
 
           <button
             onClick={handleExportPDF}
-            className="w-full py-4 bg-primary text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95"
+            className="w-full py-4 bg-primary text-foreground rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95"
           >
             <FileDown className="w-5 h-5" />
             Exportar Reporte PDF

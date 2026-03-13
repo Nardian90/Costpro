@@ -51,7 +51,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 px-2">Vista Previa (Borrador)</h3>
 
       <Card className={`
-        bg-white text-slate-900 shadow-2xl mx-auto overflow-hidden transition-all duration-500
+        bg-background text-slate-900 shadow-2xl mx-auto overflow-hidden transition-all duration-500
         ${orientation === 'portrait' ? 'aspect-[1/1.414] w-full max-w-[600px]' : 'aspect-[1.414/1] w-full'}
       `}>
         <div className="p-12 h-full flex flex-col">

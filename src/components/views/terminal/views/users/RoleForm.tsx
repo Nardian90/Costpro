@@ -170,7 +170,7 @@ export default function RoleForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-3 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {initialData ? 'Guardar Cambios' : 'Crear Rol'}

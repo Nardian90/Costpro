@@ -291,7 +291,7 @@ export default function CatalogView() {
                                 className={cn(
                                     "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0 min-h-[44px]",
                                     isAuditMode
-                                        ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
+                                        ? "bg-amber-500 text-foreground border-amber-500 shadow-lg shadow-amber-500/20"
                                         : "bg-background text-muted-foreground border-border hover:bg-muted"
                                 )}
                             >

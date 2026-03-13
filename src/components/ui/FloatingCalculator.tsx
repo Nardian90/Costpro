@@ -137,7 +137,7 @@ export const FloatingCalculator: React.FC = () => {
             className={cn(
               "absolute top-24 right-12 w-[320px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
               isDark
-                ? "bg-[#010203]/95 border-[#39FF14]/30 text-white"
+                ? "bg-[#010203]/95 border-[#39FF14]/30 text-foreground"
                 : "bg-white/95 border-primary/30 text-foreground"
             )}
           >
@@ -250,14 +250,14 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
 
   const variantStyles = {
     number: isDark
-      ? "bg-white/5 hover:bg-white/10 text-white border-white/5"
+      ? "bg-white/5 hover:bg-white/10 text-foreground border-white/5"
       : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40",
     operator: isDark
       ? "bg-[#39FF14]/5 hover:bg-[#39FF14]/20 text-[#39FF14] border-[#39FF14]/10"
       : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
     primary: isDark
-      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-black border-[#39FF14]"
-      : "bg-primary hover:bg-primary/90 text-white border-primary",
+      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-foreground border-[#39FF14]"
+      : "bg-primary hover:bg-primary/90 text-foreground border-primary",
     danger: isDark
       ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
       : "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",

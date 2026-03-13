@@ -111,7 +111,7 @@ export default function HelpView() {
             {previousView && (
               <Button
                 onClick={() => setCurrentView(previousView)}
-                variant="default" size="sm" className="h-11 bg-primary text-white font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                variant="default" size="sm" className="h-11 bg-primary text-foreground font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Volver
@@ -131,7 +131,7 @@ export default function HelpView() {
               className={cn(
                 "flex-shrink-0 flex items-center gap-2 px-4 h-11 rounded-xl transition-all whitespace-nowrap font-black text-[10px] uppercase tracking-widest",
                 selectedSection === section.id
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-foreground"
                   : "bg-background border border-border text-muted-foreground hover:bg-muted"
               )}
             >
@@ -150,11 +150,11 @@ export default function HelpView() {
               className={cn(
                 "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left",
                 selectedSection === section.id
-                  ? "bg-primary text-white shadow-xl shadow-primary/20"
+                  ? "bg-primary text-foreground shadow-xl shadow-primary/20"
                   : "hover:bg-primary/5 text-muted-foreground"
               )}
             >
-              <section.icon className={cn("w-5 h-5", selectedSection === section.id ? "text-white" : section.color)} />
+              <section.icon className={cn("w-5 h-5", selectedSection === section.id ? "text-foreground" : section.color)} />
               <span className="text-xs font-black uppercase tracking-widest">{section.label}</span>
               {selectedSection === section.id && <ChevronRight className="w-4 h-4 ml-auto" />}
             </button>
@@ -223,7 +223,7 @@ function IntroSection() {
             { t: '4. Operativa de Venta', d: 'Registre transacciones y observe la actualización automática de stock.' }
           ].map((step, i) => (
             <div key={i} className="flex gap-4 p-6 rounded-2xl bg-card border border-border">
-              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-black shrink-0 text-xs">{i+1}</div>
+              <div className="w-8 h-8 rounded-full bg-primary text-foreground flex items-center justify-center font-black shrink-0 text-xs">{i+1}</div>
               <div>
                 <h4 className="font-black text-xs uppercase tracking-tight">{step.t}</h4>
                 <p className="text-xs text-muted-foreground mt-1">{step.d}</p>
@@ -395,7 +395,7 @@ function HelpSystemVisor({ data }: { data: HelpSystemData | null }) {
               <div className="grid sm:grid-cols-2 gap-4">
                 {flow.steps.map((step) => (
                   <div key={step.step} className="p-6 rounded-3xl bg-card border border-border group hover:border-primary/30 transition-all flex gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-muted group-hover:bg-primary group-hover:text-white flex items-center justify-center font-black text-sm transition-colors shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-muted group-hover:bg-primary group-hover:text-foreground flex items-center justify-center font-black text-sm transition-colors shrink-0">
                       {step.step}
                     </div>
                     <div>
@@ -447,7 +447,7 @@ function InnovationSection() {
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-emerald-500 text-white border-none rounded-md px-2 py-0.5 text-[10px] font-black uppercase">Online / Offline</Badge>
+                  <Badge className="bg-emerald-500 text-foreground border-none rounded-md px-2 py-0.5 text-[10px] font-black uppercase">Online / Offline</Badge>
                   <p className="text-primary font-bold text-xs uppercase tracking-[0.2em] mt-2">Orquestador de Decisiones CostPro</p>
                 </div>
                 <p className="text-lg font-medium leading-relaxed opacity-80 max-w-2xl">
@@ -557,7 +557,7 @@ function ResolutionsSection() {
             </div>
             <Button
               onClick={() => window.open(`/manuals/${res.file}`, "_blank")}
-              variant="ghost" size="icon" className="rounded-full group-hover:bg-primary group-hover:text-white transition-all"
+              variant="ghost" size="icon" className="rounded-full group-hover:bg-primary group-hover:text-foreground transition-all"
             >
               <Download className="w-5 h-5" />
             </Button>

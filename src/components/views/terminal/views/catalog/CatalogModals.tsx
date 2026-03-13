@@ -203,7 +203,7 @@ export const CatalogModals = ({
         footer={
           <>
             <SecondaryButton onClick={() => modals.setIsDeleteConfirmOpen(false)} label="Cancelar" className="flex-1" />
-            <PrimaryButton onClick={handleDeleteProduct} label="Eliminar Definitivamente" className="flex-1 bg-danger text-white hover:bg-danger/90 shadow-danger/20 h-11" />
+            <PrimaryButton onClick={handleDeleteProduct} label="Eliminar Definitivamente" className="flex-1 bg-danger text-foreground hover:bg-danger/90 shadow-danger/20 h-11" />
           </>
         }
       >
@@ -235,7 +235,7 @@ export const CatalogModals = ({
             <PrimaryButton
                 onClick={handleToggleActive}
                 label={modals.productToAction?.is_active ? 'Desactivar Producto' : 'Reactivar Producto'}
-                className={cn("flex-1", !modals.productToAction?.is_active && "bg-success hover:bg-success/90 shadow-success/20 text-white")}
+                className={cn("flex-1", !modals.productToAction?.is_active && "bg-success hover:bg-success/90 shadow-success/20 text-foreground")}
             />
           </>
         }

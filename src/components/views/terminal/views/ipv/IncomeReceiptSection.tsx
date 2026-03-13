@@ -310,7 +310,7 @@ export function IncomeReceiptSection() {
             <Button
                 disabled={!currentReceipt}
                 onClick={handleExportPdf}
-                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-primary text-white hover:bg-primary/90"
+                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-primary text-foreground hover:bg-primary/90"
             >
                 <Download className="w-4 h-4" />
                 Exportar Original PDF

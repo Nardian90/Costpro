@@ -41,7 +41,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
         <div className="flex justify-between items-center w-full">
           <button
             onClick={onExport}
-            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
           >
             <Download className="w-4 h-4" />
             Exportar CSV

@@ -68,7 +68,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
             className={cn(
               "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
               isAllActive
-                ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
+                ? "bg-primary text-foreground shadow-xl shadow-primary/20 scale-[1.02]"
                 : "hover:bg-primary/5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:border-primary/10"
             )}
           >
@@ -104,7 +104,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                 className={cn(
                   "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
                   isActive
-                    ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
+                    ? "bg-primary text-foreground shadow-xl shadow-primary/20 scale-[1.02]"
                     : "hover:bg-primary/5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:border-primary/10"
                 )}
               >
@@ -141,7 +141,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                           addMainSection();
                           onClose();
                       }}
-                      className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 px-2"
+                      className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 px-2"
                   >
                       <Plus className="w-4 h-4" />
                       Nueva Sección

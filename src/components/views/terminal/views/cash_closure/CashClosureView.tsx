@@ -216,8 +216,8 @@ export default function CashClosureView() {
               difference === 0 ? "bg-green-600 shadow-green-500/20" :
               difference < 0 ? "bg-destructive shadow-destructive/20" : "bg-amber-600 shadow-amber-500/20"
             )}>
-              <span className="text-xs font-black uppercase tracking-widest text-white">Diferencia de Arqueo</span>
-              <span className="text-3xl font-black font-mono text-white">{formatCurrency(difference)}</span>
+              <span className="text-xs font-black uppercase tracking-widest text-foreground">Diferencia de Arqueo</span>
+              <span className="text-3xl font-black font-mono text-foreground">{formatCurrency(difference)}</span>
             </div>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function CashClosureView() {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center">
-                      <button className="w-11 h-11 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95 text-foreground">
+                      <button className="w-11 h-11 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
