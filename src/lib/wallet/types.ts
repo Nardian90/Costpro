@@ -1,39 +1,37 @@
-export type WalletTransactionType =
-  | 'TRANSFER_IN'
-  | 'TRANSFER_OUT'
-  | 'PAYMENT_SERVICE'
-  | 'PHONE_RECHARGE'
-  | 'BALANCE_QUERY'
-  | 'AUTH_EVENT'
-  | 'FAILED_OPERATION'
-  | 'BANK_STATEMENT'
-  | 'LIMIT_CHANGE'
-  | 'CASH_ATM'
-  | 'CASH_EXTRA'
-  | 'MITURNO'
-  | 'SECURITY_EVENT'
-  | 'OTHER';
+export interface RawSms {
+  id: string;
+  type: string; // "Recibido" | "Enviado"
+  date: string;
+  nameNumber: string;
+  content: string;
+}
 
-export interface WalletTransaction {
+export interface ConsolidatedTransaction {
+  date: string;
+  service: string;
+  operation: 'CR' | 'DB';
+  amount: number;
+  currency: string;
+  transactionId: string;
+  bank: string;
+  counterparty?: string;
+  isAdjustment?: boolean;
+  balanceAfter?: number;
+}
+
+export interface AnalyticalTransaction {
   id: string;
   date: string;
   bank: string;
-  type: WalletTransactionType;
-  direction: 'IN' | 'OUT';
+  typeOperation: string;
+  nature: 'CR' | 'DB';
   amount: number;
   currency: string;
   counterparty: string;
-  transaction_id: string;
-  description: string;
-  source: 'SMS' | 'BANK_LOG' | 'MANUAL';
-
-  // New fields for advanced analysis
-  status?: 'SUCCESS' | 'FAILED' | 'PENDING';
-  service_category?: 'ELECTRICITY' | 'ONAT' | 'MERCHANT' | 'RECHARGE' | 'WATER' | 'TELEPHONE';
-  balance_after?: number;
-  discount_amount?: number;
-  merchant_name?: string;
-  extra_data?: Record<string, any>;
+  category: string;
+  transactionId: string;
+  channel: string;
+  note: string;
 }
 
 export interface WalletSummary {
@@ -47,5 +45,7 @@ export interface WalletAnalytics {
   banks: Record<string, { income: number; expenses: number; current_balance: number }>;
   monthly: Record<string, { income: number; expenses: number }>;
   categories: Record<string, number>;
-  transactions: WalletTransaction[];
+  transactions: AnalyticalTransaction[];
+  rawSms: RawSms[];
+  consolidated: ConsolidatedTransaction[];
 }
