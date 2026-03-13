@@ -1,9 +1,9 @@
 # Auditoría de Calidad de Documentación - Ejecución Automática
 
 ## 1. Resumen Ejecutivo
-**Fecha:** 2026-03-12
-**Promedio Global de Calidad:** **5.57**
-**Cobertura de Documentación:** 192 / 326 (58.9%)
+**Fecha:** 2026-03-13
+**Promedio Global de Calidad:** **5.56**
+**Cobertura de Documentación:** 192 / 327 (58.7%)
 
 ---
 
@@ -23,7 +23,7 @@
 | **Gpt-adapter.ts** | **8.0** | 7.0-8.0 | Alcanzado |
 | **Index.tsx** | **3.0** | 7.0-8.0 | En progreso |
 | **Kimi-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Lib** | **3.52** | 7.0-8.0 | En progreso |
+| **Lib** | **3.51** | 7.0-8.0 | En progreso |
 | **Openai-compatible-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
 | **Qwen-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
 | **Registry.ts** | **8.0** | 7.0-8.0 | Alcanzado |
@@ -32,7 +32,7 @@
 ---
 
 ## 3. Conclusión
-El sistema mantiene un nivel de documentación de 5.57/10.
+El sistema mantiene un nivel de documentación de 5.56/10.
 Se requiere atención en los componentes con puntuación inferior a 7.0 para asegurar la transferencia de conocimiento y sostenibilidad del software.
 
 ---
