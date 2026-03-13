@@ -11,10 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
-      console.error('[Chat API] No session found');
-      return NextResponse.json({ error: 'No autorizado - Sesión no encontrada' }, { status: 401 });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
-    console.log('[Chat API] User authenticated:', session.user.id, session.user.email);
 
     let body;
     try {
@@ -23,19 +21,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const { messages, aiProvider, aiApiKey } = body;
+    const { messages, history, aiProvider, aiApiKey } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
     }
 
-    const providers: Array<{ name: string; instance: any; source: string }> = [];
+    const providers: Array<{ name: string; instance: any }> = [];
 
     // PRIMERO: Usuario
     if (aiProvider && aiApiKey) {
       const userProvider = getProviderInstance(aiProvider, aiApiKey);
       if (userProvider) {
-        providers.push({ name: aiProvider, instance: userProvider, source: 'Configuración de Usuario' });
+        providers.push({ name: aiProvider, instance: userProvider });
       }
     }
 
@@ -43,8 +41,7 @@ export async function POST(req: NextRequest) {
     if (process.env.DEEPSEEK_API_KEY) {
       providers.push({
         name: 'deepseek',
-        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat'),
-        source: 'Sistema (Env)'
+        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat')
       });
     }
 
@@ -52,8 +49,7 @@ export async function POST(req: NextRequest) {
     if (process.env.GOOGLE_API_KEY) {
       providers.push({
         name: 'gemini',
-        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-1.5-flash'),
-        source: 'Sistema (Env)'
+        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-2.5-flash-preview-09-2025')
       });
     }
 
@@ -61,8 +57,7 @@ export async function POST(req: NextRequest) {
     if (process.env.OPENAI_API_KEY) {
       providers.push({
         name: 'gpt',
-        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o'),
-        source: 'Sistema (Env)'
+        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o')
       });
     }
 
@@ -75,12 +70,13 @@ export async function POST(req: NextRequest) {
     let lastError: Error | null = null;
 
     for (let i = 0; i < providers.length; i++) {
-      const { name, instance, source } = providers[i];
+      const { name, instance } = providers[i];
 
       try {
-        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name} (${source})`);
+        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name}`);
 
         const response = await instance.getResponse(messages, {
+          history,
           temperature: 0.7,
           maxTokens: 1000
         });
@@ -92,11 +88,7 @@ export async function POST(req: NextRequest) {
         console.log(`[Chat] ✅ Éxito con ${name}`);
         return NextResponse.json({
           text: response.text,
-          metadata: {
-            ...response.metadata,
-            provider: name,
-            keySource: source
-          },
+          metadata: { provider: name },
           timestamp: new Date().toISOString()
         });
 
@@ -129,7 +121,7 @@ function getProviderInstance(type: string, apiKey: string): any | null {
     case 'deepseek':
       return new DeepSeekAdapter(apiKey, 'deepseek-chat');
     case 'gemini':
-      return new GeminiAdapter(apiKey, 'gemini-1.5-flash');
+      return new GeminiAdapter(apiKey, 'gemini-2.5-flash-preview-09-2025');
     case 'gpt':
       return new GPTAdapter(apiKey, 'gpt-4o');
     default:
