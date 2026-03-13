@@ -32,6 +32,7 @@ import {
     checkWildcardCandidate,
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
+import { importProducts } from '@/lib/ipv/importUtils';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import ActionMenu, { Action } from "@/components/ui/ActionMenu";
 import * as XLSX from 'xlsx';
@@ -488,74 +489,26 @@ const handleExportCatalog = () => {
     toast.success(products && products.length > 0 ? 'Catálogo exportado (Excel)' : 'Plantilla de catálogo exportada (Excel)');
   };
 
-  const handleImportCatalog = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportCatalog = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
 
-            if (!jsonData || jsonData.length === 0) {
-                toast.error('El archivo está vacío');
-                return;
-            }
-
-            const validProducts: Product[] = [];
-            const now = new Date().toISOString();
-
-            for (const row of jsonData) {
-                // Map from Spanish headers or generic headers
-                const cod = row['Código'] || row['cod'] || row['CODIGO'];
-                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || '';
-                const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || '';
-                const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
-                const um = row['UM'] || row['um'] || 'UNIDADES';
-                const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
-                const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
-                const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
-                const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
-                const activo_val = row['activo'] || row['Activo'] || 'VERDADERO';
-                const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
-
-                if (!cod || !descripcion) continue;
-
-                validProducts.push({
-                    cod: String(cod).toUpperCase(),
-                    id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
-                    cod_hijo: cod_hijo ? String(cod_hijo).toUpperCase() : '',
-                    descripcion: String(descripcion),
-                    um: String(um).toUpperCase(),
-                    precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
-                    prioridad_algoritmo: parseInt(String(prioridad)),
-                    stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
-                    es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
-                    contenido_paquete: parseInt(String(cont_pqt)),
-                    activo: true,
-                    created_at: now,
-                    priorityMode: 'manual',
-                    isWildcardCandidate: false
-                });
-            }
-
-            if (validProducts.length > 0) {
-                db.products.bulkPut(validProducts).then(() => {
-                    toast.success(`Se importaron ${validProducts.length} productos correctamente`);
-                    event.target.value = '';
-                }).catch(err => {
-                    toast.error('Error al guardar los productos');
-                    console.error(err);
-                });
+            const importedCount = await importProducts(jsonData, 'CATALOG_EXCEL');
+            if (importedCount > 0) {
+                toast.success(`Se importaron ${importedCount} productos correctamente`);
+                event.target.value = '';
             } else {
-                toast.error('No se encontraron productos válidos. Verifique las columnas Código y Descripción.');
+                toast.error('No se encontraron productos válidos.');
             }
         } catch (error) {
-            toast.error('Error al procesar el archivo Excel');
+            toast.error('Error al procesar el archivo');
             console.error(error);
         }
     };
@@ -611,6 +564,7 @@ const handleExportCatalog = () => {
                 id_grupo: "BIGBON",
                 um: "UNIDADES",
                 precio_cents: 45,
+                variacion_permisible_percent: 5,
                 prioridad_algoritmo: 1,
                 activo: true,
                 es_paquete: false,
@@ -625,7 +579,8 @@ const handleExportCatalog = () => {
 
         // 3. Seed Matching Rules
         await db.matching_rules.bulkPut([
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
+            { id: 'rule-flex', tipo: 'PRICE_FLEX', prioridad: 1, activo: true },
             { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
         ]);
 
@@ -660,7 +615,8 @@ const handleExportCatalog = () => {
 
         // 5. Run Matching Engine
         const engine = new MatchingEngine(products as any, [
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
+            { id: 'rule-flex', tipo: 'PRICE_FLEX', prioridad: 1, activo: true },
             { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
         ] as any);
 
