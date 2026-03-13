@@ -134,7 +134,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                 isMobile ? "top-[70%] -translate-y-1/2" : "top-1/2 -translate-y-1/2",
                 isDark
                     ? "bg-[var(--background)] border-[hsl(var(--primary))]/30 shadow-[hsl(var(--primary))]/10"
-                    : "bg-white border-primary/20 backdrop-blur-xl shadow-primary/5"
+                    : "bg-background border-primary/20 backdrop-blur-xl shadow-primary/5"
             )}
           >
             <div className={cn("flex flex-col gap-4", isMobile ? "py-4 px-2" : "py-6 px-3")}>
@@ -230,7 +230,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
               exit="closed"
               className={cn(
                 "fixed z-[100] flex flex-col overflow-hidden transition-all duration-500 rounded-[2.5rem] border shadow-2xl",
-                isDark ? "bg-[var(--background)] border-[hsl(var(--primary))]/30 shadow-[hsl(var(--primary))]/10" : "bg-white border-primary/20",
+                isDark ? "bg-[var(--background)] border-[hsl(var(--primary))]/30 shadow-[hsl(var(--primary))]/10" : "bg-background border-primary/20",
                 isMobile
                     ? "inset-x-4 bottom-4 h-[85vh] rounded-t-[3rem] rounded-b-[2rem]"
                     : (mode === 'both' ? "w-[850px] max-w-[95vw] left-4 top-1/2" : (isFullView ? "w-[85vw] h-[85vh] left-[7.5vw] top-[7.5vh]" : "w-[400px] left-4 top-1/2")),

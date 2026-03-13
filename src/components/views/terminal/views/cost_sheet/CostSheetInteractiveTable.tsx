@@ -596,7 +596,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute -top-2 -right-2 h-7 w-7 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-destructive/90 z-10"
+                                className="absolute -top-2 -right-2 h-7 w-7 bg-destructive text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-destructive/90 z-10"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     removeMainSection(idx);

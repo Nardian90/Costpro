@@ -126,14 +126,14 @@ export default function RolesManagementView() {
                   <div className="flex justify-center gap-2">
                     <button
                       onClick={() => handleEdit(role)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                       aria-label="Editar rol"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(role.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-white transition-all active:scale-95"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
                       aria-label="Eliminar rol"
                     >
                       <Trash2 className="w-4 h-4" />

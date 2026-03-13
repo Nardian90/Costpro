@@ -17,7 +17,7 @@ export const CostSheetFormulaGuide = () => {
           <BookOpen className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+          <h2 className="text-xl font-black text-slate-900 dark:text-foreground uppercase tracking-tight">
             ¿Cómo se calculan estos costos?
           </h2>
           <p className="text-sm text-slate-500 font-medium">Guía educativa paso a paso para entender tu ficha de costo</p>
@@ -26,7 +26,7 @@ export const CostSheetFormulaGuide = () => {
 
       <Accordion type="single" collapsible className="w-full space-y-4">
         {/* 1. Gasto Material */}
-        <AccordionItem value="item-1" className="border rounded-2xl px-6 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-1" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
@@ -34,7 +34,7 @@ export const CostSheetFormulaGuide = () => {
               </div>
               <div>
                 <span className="text-sm font-black uppercase text-slate-400 block">Fórmula #1</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Gasto Material (Anexo I)</span>
+                <span className="text-base font-bold text-slate-900 dark:text-foreground">Gasto Material (Anexo I)</span>
               </div>
             </div>
           </AccordionTrigger>
@@ -61,9 +61,9 @@ export const CostSheetFormulaGuide = () => {
                   <span className="text-xs font-black uppercase tracking-wider">Ejemplo Práctico</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Si para hacer un lote de pan usas <span className="font-bold text-slate-900 dark:text-white">10kg de harina</span> y cada kilo cuesta <span className="font-bold text-slate-900 dark:text-white">$50.00</span>:
+                  Si para hacer un lote de pan usas <span className="font-bold text-slate-900 dark:text-foreground">10kg de harina</span> y cada kilo cuesta <span className="font-bold text-slate-900 dark:text-foreground">$50.00</span>:
                   <br />
-                  <span className="inline-block mt-2 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-2 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     10 (Cantidad) × 50 (Precio) = <span className="text-green-600 font-bold">$500.00</span>
                   </span>
                 </p>
@@ -73,7 +73,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 2. Salario Directo */}
-        <AccordionItem value="item-2" className="border rounded-2xl px-6 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-2" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
@@ -81,7 +81,7 @@ export const CostSheetFormulaGuide = () => {
               </div>
               <div>
                 <span className="text-sm font-black uppercase text-slate-400 block">Fórmula #2</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Salario Directo (Anexo II)</span>
+                <span className="text-base font-bold text-slate-900 dark:text-foreground">Salario Directo (Anexo II)</span>
               </div>
             </div>
           </AccordionTrigger>
@@ -108,13 +108,13 @@ export const CostSheetFormulaGuide = () => {
                   <span className="text-xs font-black uppercase tracking-wider">Ejemplo Práctico</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Un panadero trabaja <span className="font-bold text-slate-900 dark:text-white">8 horas</span> a <span className="font-bold text-slate-900 dark:text-white">$100/hora</span>:
+                  Un panadero trabaja <span className="font-bold text-slate-900 dark:text-foreground">8 horas</span> a <span className="font-bold text-slate-900 dark:text-foreground">$100/hora</span>:
                   <br />
-                  <span className="inline-block mt-2 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-2 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     8h × $100 = $800.00 base.
                   </span>
                   <br />
-                  <span className="inline-block mt-1 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-1 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     $800 × 1.0909 (con vacaciones) = <span className="text-amber-600 font-bold">$872.72</span>
                   </span>
                 </p>
@@ -124,7 +124,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 3. Costo Total */}
-        <AccordionItem value="item-3" className="border rounded-2xl px-6 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-3" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
@@ -132,7 +132,7 @@ export const CostSheetFormulaGuide = () => {
               </div>
               <div>
                 <span className="text-sm font-black uppercase text-slate-400 block">Fórmula #3</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Costo Total de Producción</span>
+                <span className="text-base font-bold text-slate-900 dark:text-foreground">Costo Total de Producción</span>
               </div>
             </div>
           </AccordionTrigger>
@@ -159,9 +159,9 @@ export const CostSheetFormulaGuide = () => {
                   <span className="text-xs font-black uppercase tracking-wider">Ejemplo Práctico</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Si tus materiales son <span className="font-bold text-slate-900 dark:text-white">$500</span>, salarios <span className="font-bold text-slate-900 dark:text-white">$872</span> y otros gastos <span className="font-bold text-slate-900 dark:text-white">$128</span>:
+                  Si tus materiales son <span className="font-bold text-slate-900 dark:text-foreground">$500</span>, salarios <span className="font-bold text-slate-900 dark:text-foreground">$872</span> y otros gastos <span className="font-bold text-slate-900 dark:text-foreground">$128</span>:
                   <br />
-                  <span className="inline-block mt-2 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-2 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     500 + 872 + 128 = <span className="text-purple-600 font-bold">$1,500.00</span>
                   </span>
                 </p>
@@ -171,7 +171,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 4. Utilidad */}
-        <AccordionItem value="item-4" className="border rounded-2xl px-6 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-4" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg">
@@ -179,7 +179,7 @@ export const CostSheetFormulaGuide = () => {
               </div>
               <div>
                 <span className="text-sm font-black uppercase text-slate-400 block">Fórmula #4</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Utilidad (Tu Ganancia)</span>
+                <span className="text-base font-bold text-slate-900 dark:text-foreground">Utilidad (Tu Ganancia)</span>
               </div>
             </div>
           </AccordionTrigger>
@@ -206,9 +206,9 @@ export const CostSheetFormulaGuide = () => {
                   <span className="text-xs font-black uppercase tracking-wider">Ejemplo Práctico</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Si tu costo total es <span className="font-bold text-slate-900 dark:text-white">$1,500</span> y quieres ganar un <span className="font-bold text-slate-900 dark:text-white">30%</span>:
+                  Si tu costo total es <span className="font-bold text-slate-900 dark:text-foreground">$1,500</span> y quieres ganar un <span className="font-bold text-slate-900 dark:text-foreground">30%</span>:
                   <br />
-                  <span className="inline-block mt-2 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-2 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     1,500 × 0.30 = <span className="text-emerald-600 font-bold">$450.00</span>
                   </span>
                 </p>
@@ -218,7 +218,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 5. Precio Final */}
-        <AccordionItem value="item-5" className="border rounded-2xl px-6 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-5" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
@@ -226,7 +226,7 @@ export const CostSheetFormulaGuide = () => {
               </div>
               <div>
                 <span className="text-sm font-black uppercase text-slate-400 block">Fórmula #5</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Precio Final de Venta</span>
+                <span className="text-base font-bold text-slate-900 dark:text-foreground">Precio Final de Venta</span>
               </div>
             </div>
           </AccordionTrigger>
@@ -253,9 +253,9 @@ export const CostSheetFormulaGuide = () => {
                   <span className="text-xs font-black uppercase tracking-wider">Ejemplo Práctico</span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Costo ($1,500) + Utilidad ($450) = <span className="font-bold text-slate-900 dark:text-white">$1,950</span>.
+                  Costo ($1,500) + Utilidad ($450) = <span className="font-bold text-slate-900 dark:text-foreground">$1,950</span>.
                   <br />
-                  <span className="inline-block mt-2 font-mono bg-white dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
+                  <span className="inline-block mt-2 font-mono bg-background dark:bg-slate-800 px-2 py-1 rounded border shadow-sm">
                     1,950 / 0.90 = <span className="text-blue-600 font-bold">$2,166.67</span>
                   </span>
                 </p>

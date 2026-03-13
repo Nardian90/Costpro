@@ -29,7 +29,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
       const parts = p.split(/([A-Z\s]+:)/g);
 
       return (
-        <p key={idx} className="mb-4 text-justify text-black dark:text-white font-medium leading-relaxed">
+        <p key={idx} className="mb-4 text-justify text-foreground dark:text-foreground font-medium leading-relaxed">
           {parts.map((part, pIdx) => {
             if (/^[A-Z\s]+:$/.test(part)) {
               return <strong key={pIdx} className="font-black text-foreground">{part}</strong>;
@@ -64,7 +64,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
               className={cn(
                 "w-full text-left p-6 rounded-2xl transition-all border-2 group",
                 activeResId === res.id
-                  ? "bg-primary border-primary text-white shadow-xl shadow-primary/20"
+                  ? "bg-primary border-primary text-foreground shadow-xl shadow-primary/20"
                   : "bg-background border-primary/10 hover:border-primary/30 text-foreground"
               )}
             >
@@ -82,7 +82,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                 </div>
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-                  activeResId === res.id ? "bg-white/20" : "bg-primary/10 group-hover:bg-primary group-hover:text-white"
+                  activeResId === res.id ? "bg-white/20" : "bg-primary/10 group-hover:bg-primary group-hover:text-foreground"
                 )}>
                   {res.sub_system === 'Nóminas' ? <Briefcase className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                 </div>
@@ -111,7 +111,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
               exit={{ opacity: 0, x: -20 }}
               className="space-y-8"
             >
-              <div className="bg-white dark:bg-zinc-900 border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
+              <div className="bg-background dark:bg-zinc-900 border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
                 <div className="p-8 border-b border-primary/5 bg-primary/5">
                   <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-2">
                     <BookOpen className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                         <div className="text-[10px] text-muted-foreground font-medium uppercase line-clamp-1">{model.objective}</div>
                       </div>
                       <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary transition-colors">
-                        <ChevronRight className="w-4 h-4 group-hover:text-white transition-colors" />
+                        <ChevronRight className="w-4 h-4 group-hover:text-foreground transition-colors" />
                       </div>
                     </button>
                   ))}

@@ -224,7 +224,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
       <div className="p-6 md:p-8 border-b border-primary/5 bg-primary/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <FileText className="w-6 h-6 text-white" />
+            <FileText className="w-6 h-6 text-foreground" />
           </div>
           <div>
             <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{model.code}</div>
@@ -269,7 +269,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto px-8 h-14 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3"
+            className="w-full sm:w-auto px-8 h-14 bg-primary text-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

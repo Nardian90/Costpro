@@ -195,7 +195,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                         className="text-lg font-black"
                     />
                 </div>
-                <Button onClick={handleGlobalGoal} disabled={isDistributing} className="w-full bg-purple-600 hover:bg-purple-700 text-white uppercase font-black text-xs gap-2">
+                <Button onClick={handleGlobalGoal} disabled={isDistributing} className="w-full bg-purple-600 hover:bg-purple-700 text-foreground uppercase font-black text-xs gap-2">
                     <Save className="w-4 h-4" />
                     Distribuir y Aplicar
                 </Button>
@@ -243,7 +243,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                                   <ArrowRight className="w-3 h-3 text-orange-400" />
                                   <span className="text-xs font-bold text-muted-foreground uppercase">-{m.cantidad_origen}</span>
                                   <ArrowRight className="w-4 h-4 text-orange-500" />
-                                  <Badge className="bg-orange-500 text-white font-black">{m.producto_destino_cod}</Badge>
+                                  <Badge className="bg-orange-500 text-foreground font-black">{m.producto_destino_cod}</Badge>
                                   <span className="text-xs font-bold text-orange-600 uppercase">+{m.cantidad_destino}</span>
                               </div>
                           ))}

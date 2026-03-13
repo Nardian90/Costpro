@@ -83,7 +83,7 @@ export default function AuditFilters({
                     className={cn(
                       "px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all border",
                       selectedCategory === cat.id
-                        ? `${cat.color} text-white border-transparent shadow-lg scale-105`
+                        ? `${cat.color} text-foreground border-transparent shadow-lg scale-105`
                         : "bg-muted/50 text-muted-foreground border-border hover:border-muted-foreground/30"
                     )}
                   >

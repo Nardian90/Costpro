@@ -117,9 +117,9 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
     if (status === 'NO_PROCESAR') return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-xs font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
-    if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
+    if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) return <Badge className="bg-green-500 text-foreground border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
     if (matchedTotal > 0 && Math.abs(diffCents) >= 0.001) return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs font-black uppercase tracking-tighter">EN PROCESO</Badge>;
-    return <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20 text-xs font-black uppercase tracking-tighter">PENDIENTE</Badge>;
+    return <Badge className="bg-muted/500/10 text-muted-foreground border-gray-500/20 text-xs font-black uppercase tracking-tighter">PENDIENTE</Badge>;
   };
 
   return (

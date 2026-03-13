@@ -105,7 +105,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       case 'primary': return 'neu-btn-primary';
       case 'success': return 'neu-btn-success';
       case 'danger': return 'neu-btn-danger';
-      case 'warning': return 'bg-warning text-white shadow-lg';
+      case 'warning': return 'bg-warning text-foreground shadow-lg';
       case 'outline': return 'neu-raised-sm border-primary/20 text-foreground';
       default: return 'neu-btn text-foreground';
     }
@@ -153,7 +153,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 
         <div
           ref={scrollRef}
-          className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-1 pb-2 [scrollbar-width:none] sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 sm:[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500/80 [&::-webkit-scrollbar-thumb]:rounded-full"
+          className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-1 pb-2 [scrollbar-width:none] sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 sm:[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted/500/80 [&::-webkit-scrollbar-thumb]:rounded-full"
           onScroll={handleScroll}
           onClickCapture={handleClickCapture}
         >

@@ -146,7 +146,7 @@ export function StoreModals({
                             variant={mode === 'delete' ? 'destructive' : 'default'}
                             onClick={() => onSubmit(mode, {})}
                             disabled={isSubmitting}
-                            className={`flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs ${mode === 'reset' ? 'bg-orange-600 hover:bg-orange-700 text-white border-none' : ''}`}
+                            className={`flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs ${mode === 'reset' ? 'bg-orange-600 hover:bg-orange-700 text-foreground border-none' : ''}`}
                         >
                             {isSubmitting ? (mode === 'delete' ? 'Eliminando...' : 'Reiniciando...') : (mode === 'delete' ? 'Eliminar' : 'Reiniciar')}
                         </Button>
@@ -226,7 +226,7 @@ export function StoreModals({
                                         <button
                                             type="button"
                                             onClick={() => setLogoUrl('')}
-                                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-foreground"
                                         >
                                             <X className="w-5 h-5" />
                                         </button>

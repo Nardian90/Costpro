@@ -225,7 +225,7 @@ export default function SystemHealthView() {
         <div className="w-full md:w-80 grid grid-cols-2 gap-4">
           <button
             onClick={() => ReleaseGatePdfExporter.exportHealthReport(data)}
-            className="flex flex-col items-center justify-center p-6 rounded-[28px] bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all group min-h-[140px]"
+            className="flex flex-col items-center justify-center p-6 rounded-[28px] bg-primary text-foreground shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all group min-h-[140px]"
           >
             <FileText className="w-7 h-7 mb-3 group-hover:rotate-6 transition-transform" />
             <span className="text-[10px] font-black uppercase tracking-widest">Exportar PDF</span>

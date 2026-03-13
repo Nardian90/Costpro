@@ -46,7 +46,7 @@ export const SecurityMetrics: React.FC<SecurityMetricsProps> = ({ metrics }) => 
             </div>
           </div>
           {metrics.rls_violations > 0 && (
-            <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-md">{metrics.rls_violations}</span>
+            <span className="bg-rose-500 text-foreground text-[10px] font-black px-2 py-1 rounded-md">{metrics.rls_violations}</span>
           )}
         </div>
 

@@ -342,7 +342,7 @@ export function BankIngestion() {
                     <Button
                         variant="outline"
                         onClick={() => exportFullBackup(db)}
-                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-2 rounded-2xl"
+                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-foreground transition-all border-2 rounded-2xl"
                     >
                         <Download className="w-4 h-4" />
                         Respaldar
@@ -351,7 +351,7 @@ export function BankIngestion() {
                     <Button
                         variant="outline"
                         onClick={() => fileBackupRef.current?.click()}
-                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-2 border-emerald-500/20 rounded-2xl"
+                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-foreground transition-all border-2 border-emerald-500/20 rounded-2xl"
                     >
                         <Upload className="w-4 h-4" />
                         Importar
@@ -368,7 +368,7 @@ export function BankIngestion() {
         </Card>
 
         <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4">
-            <Button variant="destructive" className="w-full text-white font-black bg-red-600 hover:bg-red-700 shadow-lg" onClick={resetEverything}>REINICIO TOTAL</Button>
+            <Button variant="destructive" className="w-full text-foreground font-black bg-red-600 hover:bg-red-700 shadow-lg" onClick={resetEverything}>REINICIO TOTAL</Button>
             <Button variant="outline" className="w-full text-destructive" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
         </div>
       </div>

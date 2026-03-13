@@ -58,7 +58,7 @@ export function SystemDependencyGraph() {
             <motion.g variants={item}>
               <circle r="45" className="fill-primary/10 stroke-primary/30 shadow-2xl" strokeWidth="2" />
               <circle r="35" className="fill-primary shadow-xl shadow-primary/40" />
-              <Cpu className="w-8 h-8 text-white -translate-x-4 -translate-y-4" />
+              <Cpu className="w-8 h-8 text-foreground -translate-x-4 -translate-y-4" />
               <text y="55" textAnchor="middle" className="fill-foreground font-black text-[9px] uppercase tracking-widest">Orquestador AI</text>
             </motion.g>
           </g>

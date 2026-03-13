@@ -161,13 +161,13 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
         className={cn(
           "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 text-left mb-1",
           isActive
-            ? "bg-primary text-white shadow-lg shadow-primary/20 font-black"
+            ? "bg-primary text-foreground shadow-lg shadow-primary/20 font-black"
             : "hover:bg-primary/5 text-sidebar-foreground/70 font-bold",
           finalVariant === 'danger' && "hover:bg-danger/10 text-danger",
           finalVariant === 'success' && "hover:bg-success/10 text-success"
         )}
       >
-        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-sidebar-foreground transition-colors")} />
+        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-foreground" : "group-hover:text-sidebar-foreground transition-colors")} />
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </button>
     );

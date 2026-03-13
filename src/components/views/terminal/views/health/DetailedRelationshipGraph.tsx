@@ -114,7 +114,7 @@ export function DetailedRelationshipGraph() {
                 className={cn(
                   "p-3 rounded-2xl border transition-all text-left group relative overflow-hidden",
                   selectedNode === node.id
-                    ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                    ? "bg-primary text-foreground border-primary shadow-lg shadow-primary/20"
                     : "bg-background/40 border-border/50 hover:border-primary/40 hover:bg-card/50"
                 )}
               >

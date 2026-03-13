@@ -68,7 +68,7 @@ export default function StoresManagementView() {
                 {activeStoreId !== store.id ? (
                   <button
                     onClick={() => handleSetActiveStore(store.id)}
-                    className="w-full py-2.5 rounded-xl bg-primary text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    className="w-full py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
                   >
                     <Target className="w-3.5 h-3.5" />
                     Seleccionar Tienda

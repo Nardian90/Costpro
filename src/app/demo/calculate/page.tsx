@@ -291,9 +291,9 @@ function SummaryBox({ label, value, decimals, primary = false }: any) {
 function StatusBadge({ type }: any) {
     switch (type) {
         case 'ERROR': return <Badge variant="destructive">ERROR</Badge>;
-        case 'WARNING': return <Badge className="bg-amber-500 text-white">WARN</Badge>;
-        case 'RULE_APPLIED': return <Badge className="bg-green-600 text-white">RULE</Badge>;
-        case 'CYCLE_DETECTED': return <Badge className="bg-purple-500 text-white">CYCLE</Badge>;
+        case 'WARNING': return <Badge className="bg-amber-500 text-foreground">WARN</Badge>;
+        case 'RULE_APPLIED': return <Badge className="bg-green-600 text-foreground">RULE</Badge>;
+        case 'CYCLE_DETECTED': return <Badge className="bg-purple-500 text-foreground">CYCLE</Badge>;
         default: return <Badge variant="secondary">INFO</Badge>;
     }
 }

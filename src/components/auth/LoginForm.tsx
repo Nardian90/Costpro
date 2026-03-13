@@ -218,7 +218,7 @@ export default function LoginForm() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full h-12 flex items-center justify-center gap-3 bg-white text-black rounded-xl hover:bg-gray-100 transition-all active:scale-95 border border-gray-200 font-bold text-sm shadow-sm"
+        className="w-full h-12 flex items-center justify-center gap-3 bg-background text-foreground rounded-xl hover:bg-muted transition-all active:scale-95 border border-border font-bold text-sm shadow-sm"
       >
         <Chrome className="w-5 h-5 text-[#4285F4]" />
         Google

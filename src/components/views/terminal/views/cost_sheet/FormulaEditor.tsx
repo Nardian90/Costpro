@@ -204,7 +204,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 onClick={() => setMode('assisted')}
                 className={cn(
                   "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-xs font-black uppercase tracking-widest transition-all",
-                  mode === 'assisted' ? "bg-primary text-primary-foreground dark:text-black shadow-md dark:shadow-md"
+                  mode === 'assisted' ? "bg-primary text-primary-foreground dark:text-foreground shadow-md dark:shadow-md"
                     : "bg-muted dark:bg-muted/50 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
                 )}
               >
@@ -280,13 +280,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-muted/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="px-4 sm:px-8 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white transition-all border border-border dark:border-border hover:border-muted-foreground/30 dark:hover:border-border"
+              className="px-4 sm:px-8 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all border border-border dark:border-border hover:border-muted-foreground/30 dark:hover:border-border"
             >
               Cancelar
             </button>
             <button
               onClick={() => { onSave(value); setIsModalOpen(false); }}
-              className="px-6 sm:px-10 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary text-primary-foreground dark:text-black shadow-lg dark:shadow-lg  transition-all "
+              className="px-6 sm:px-10 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary text-primary-foreground dark:text-foreground shadow-lg dark:shadow-lg  transition-all "
             >
               Guardar Cambios
             </button>

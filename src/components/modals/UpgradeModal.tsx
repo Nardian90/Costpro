@@ -52,7 +52,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, act
 
         <div className="flex flex-col gap-2 pt-2">
           <Button
-            className="w-full h-12 text-sm font-black uppercase tracking-widest bg-green-600 hover:bg-green-700 text-white"
+            className="w-full h-12 text-sm font-black uppercase tracking-widest bg-green-600 hover:bg-green-700 text-foreground"
             onClick={() => window.open(whatsappUrl, '_blank')}
           >
             <MessageCircle className="w-4 h-4 mr-2" />

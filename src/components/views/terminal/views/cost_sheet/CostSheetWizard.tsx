@@ -76,7 +76,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
             <Button variant="outline" size="sm" onClick={handlePrev} disabled={currentStep === 0} className="neu-button">
               <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
             </Button>
-            <Button size="sm" onClick={handleNext} disabled={currentStep === steps.length - 1} className="neu-button bg-primary text-white">
+            <Button size="sm" onClick={handleNext} disabled={currentStep === steps.length - 1} className="neu-button bg-primary text-foreground">
               {currentStep === steps.length - 1 ? 'Finalizar' : 'Siguiente'} <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
@@ -122,7 +122,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
          <Button variant="ghost" onClick={handlePrev} disabled={currentStep === 0} className="text-slate-500">
             Regresar a {currentStep > 0 ? steps[currentStep-1].label : '...'}
          </Button>
-         <Button onClick={handleNext} disabled={currentStep === steps.length - 1} className="bg-primary text-white px-8">
+         <Button onClick={handleNext} disabled={currentStep === steps.length - 1} className="bg-primary text-foreground px-8">
             Continuar a {currentStep < steps.length - 1 ? steps[currentStep+1].label : 'Finalizar'}
          </Button>
       </div>

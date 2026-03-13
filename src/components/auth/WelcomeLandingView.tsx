@@ -109,7 +109,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               className={cn(
                 "flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-6 h-11 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shrink-0",
                 isInstallable
-                  ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  ? "bg-primary text-foreground shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-muted text-muted-foreground border border-border"
               )}
             >
@@ -273,7 +273,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
 
               <div className="grid gap-6">
                 <div className="flex gap-4 p-6 rounded-3xl bg-muted/50 border border-border">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500 text-foreground flex items-center justify-center">
                     <Check className="w-5 h-5" />
                   </div>
                   <div>
@@ -282,7 +282,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   </div>
                 </div>
                 <div className="flex gap-4 p-6 rounded-3xl bg-muted/50 border border-border">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-primary text-foreground flex items-center justify-center">
                     <Check className="w-5 h-5" />
                   </div>
                   <div>
@@ -295,7 +295,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <div className="flex flex-wrap gap-4">
                  <Link href="/demo/executive">
                   <button
-                    className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
+                    className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-foreground transition-all flex items-center gap-2"
                   >
                     Ver esta funcionalidad
                     <ArrowRight className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={onLoginClick}
-              className="w-full sm:w-auto px-12 py-5 bg-primary text-white rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
+              className="w-full sm:w-auto px-12 py-5 bg-primary text-foreground rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
             >
               Acceso Inmediato
             </button>
@@ -407,7 +407,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             href="https://wa.me/5353183215"
             target="_blank"
             rel="noopener noreferrer"
-            className="fixed bottom-6 right-6 z-[60] bg-[#25D366] text-white p-5 rounded-full shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:shadow-[0_0_40px_rgba(37,211,102,0.6)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+            className="fixed bottom-6 right-6 z-[60] bg-[#25D366] text-foreground p-5 rounded-full shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:shadow-[0_0_40px_rgba(37,211,102,0.6)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
             aria-label="Contactar por WhatsApp"
           >
             <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
