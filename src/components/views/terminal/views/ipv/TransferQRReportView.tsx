@@ -94,7 +94,7 @@ export function TransferQRReportView({ type }: Props) {
     }, [searchTerm, dateFrom, dateTo, type]);
 
     const handleUpdateRow = async (ref: string, field: string, value: string) => {
-        await db.bank_statements.update(ref, { [field]: value });
+        await db.bank_statements.update(ref, { [field]: value } as any);
     };
 
     const getYear = () => {
