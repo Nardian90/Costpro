@@ -1,7 +1,7 @@
 {
   "app": "CostPro",
   "version": "5.8.0",
-  "updated_at": "2026-03-14T09:10:00.000000Z",
+  "updated_at": "2026-03-14T10:00:00.000000Z",
   "modules": {
     "terminal": "Punto central para las operaciones diarias, incluyendo ventas, inventario y gestión.",
     "multitienda": "Control consolidado y navegación instantánea entre todas las sucursales del negocio.",
@@ -539,8 +539,8 @@
     ]
   },
   "metadata": {
-    "lastRun": "2026-03-14T09:10:00.000000Z",
-    "lastHash": "dd7b20aff4a33de3265686e142d1a6f61b2d488ff45939b25c3e2cb2e840a6fb",
+    "lastRun": "2026-03-14T10:00:00.000000Z",
+    "lastHash": "851f3497f465629ddd5c2ee2b3410770809255d1e0f9fe6c130254371960171f",
     "runCount": 12,
     "lastAgent": "Jules"
   }
