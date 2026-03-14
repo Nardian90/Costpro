@@ -102,5 +102,23 @@
     ],
     "status": "updated",
     "summary": "Sincronización v5.8.0: quick_mode_flow"
+  },
+  {
+    "date": "2026-03-14T09:10:00.000000Z",
+    "runs_since": 11,
+    "updated_flows": [
+      "academy_flow",
+      "ai_assistant_flow"
+    ],
+    "svg_created": [
+      "academy_flow.svg",
+      "ai_assistant_flow.svg"
+    ],
+    "screenshots_created": [
+      "academy_flow_placeholder",
+      "ai_assistant_flow_placeholder"
+    ],
+    "status": "updated",
+    "summary": "Sincronización diaria v5.8.0: Añadida documentación para Jules y Academia CostPro."
   }
 ]
