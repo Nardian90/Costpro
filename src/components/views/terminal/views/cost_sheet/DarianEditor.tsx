@@ -1,54 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, SendHorizontal, RefreshCw, Loader2, Sparkles, ExternalLink } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { Bot, SendHorizontal, Loader2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn, isDarkTheme } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { useCostSheetStore, useAuthStore } from '@/store';
+import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/store';
 
 interface Message {
     role: 'user' | 'assistant';
     content: string;
     updateData?: any;
-    error?: boolean;
     hasSaved?: boolean;
+    error?: boolean;
 }
 
-export interface DarianEditorProps {
-    sheetData: any;
-    setSheet?: (data: any) => void;
-    onSectionChange?: (sectionId: string) => void;
-    isDark?: boolean;
+interface DarianEditorProps {
+    sheetData?: any;
     isFullView?: boolean;
     onToggleFullView?: () => void;
+    onSectionChange?: (section: string) => void;
 }
 
-const extractUpdateData = (text: string) => {
-    try {
-        const match = text.match(/(```json_annex_update|```json)([\s\S]*?)(```|$)/);
-        if (match) {
-            const jsonStr = match[2].trim();
-            return JSON.parse(jsonStr);
-        }
-    } catch (e) {
-        console.error("JSON Parse Error:", e);
-    }
-    return null;
-};
-
-const AnnexPreview = ({ data, isDark }: { data: any, isDark?: boolean }) => {
-    if (!data) return null;
+const AnnexPreview = ({ data, isDark }: { data: any, isDark: boolean }) => {
+    if (!data || !data.annexes) return null;
     return (
-        <div className={cn("mt-4 p-4 rounded-xl border space-y-3 bg-card", isDark ? "border-white/5" : "border-slate-200")}>
-            <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Resumen de Propuesta</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase">v1.0</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                {Object.entries(data).map(([key, items]: [string, any]) => (
-                    <div key={key} className="p-2 rounded-lg bg-primary/5 border border-primary/10">
-                        <p className="text-[8px] font-black uppercase text-primary mb-1">Anexo {key}</p>
-                        <p className="text-xs font-bold">{items.length} Items</p>
+        <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+                {data.annexes.map((annex: any, idx: number) => (
+                    <div key={idx} className={cn("p-3 rounded-xl border flex flex-col gap-2", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
+                        <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 bg-primary/20 rounded-md flex items-center justify-center text-[10px] font-bold text-primary">
+                                {annex.id}
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-tight opacity-80 truncate">
+                                {annex.title || 'Desglose'}
+                            </p>
+                        </div>
+                        <p className="text-[10px] font-bold text-primary">
+                            {annex.data?.length || 0} ítems propuestos
+                        </p>
                     </div>
                 ))}
             </div>
@@ -56,37 +47,53 @@ const AnnexPreview = ({ data, isDark }: { data: any, isDark?: boolean }) => {
     );
 };
 
-export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark, isFullView, onToggleFullView }: DarianEditorProps) => {
-    const { token } = useAuthStore();
+export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullView, onSectionChange }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const { resolvedTheme } = useTheme();
+    const isDark = isDarkTheme(resolvedTheme);
+    const { setSheet } = useCostSheetStore();
+    const { token } = useAuthStore();
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, [messages, isLoading]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const repairJson = (text: string) => {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("Failed to repair JSON", text);
+            return null;
+        }
+    };
 
-        const newMessages: Message[] = [...messages, { role: 'user', content: input }];
-        setMessages(newMessages);
+    const extractUpdateData = (text: string) => {
+        const match = text.match(/(\`\`\`json_annex_update|\`\`\`json)\s*([\s\S]*?)(\`\`\`|$)/);
+        if (match && match[2]) {
+            try { return JSON.parse(match[2].trim()); } catch (e) { return repairJson(match[2].trim()); }
+        }
+        const jsonMatch = text.match(/\{[\s\S]*/);
+        if (jsonMatch) return repairJson(jsonMatch[0]);
+        return null;
+    };
+
+    const handleSend = async (text?: string) => {
+        const messageToSend = typeof text === 'string' ? text : input.trim();
+        if (!messageToSend || isLoading) return;
+
         setInput('');
+        const newMessages: Message[] = [...messages, { role: 'user', content: messageToSend }];
+        setMessages(newMessages);
         setIsLoading(true);
 
         try {
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json'
-            };
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-
             const response = await fetch('/api/cost-sheets/ai/chat', {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     messages: newMessages.map(m => ({ role: m.role, content: m.content })),
                     sheetData
@@ -102,7 +109,7 @@ export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark, isF
             const content = data.text || data.content || '';
             const updateData = extractUpdateData(content);
 
-            let clean = content.replace(/(```json_annex_update|```json)[\s\S]*?(```|$)/g, '').trim();
+            let clean = content.replace(/(\`\`\`json_annex_update|\`\`\`json)[\s\S]*?(\`\`\`|$)/g, '').trim();
             if (clean.includes('{')) clean = clean.split('{')[0].trim();
 
             setMessages([...newMessages, {
@@ -124,10 +131,6 @@ export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark, isF
     };
 
     const handleApplyUpdate = async (updateData: any, messageIndex: number) => {
-        if (!setSheet) {
-            toast.error("Error: No se puede actualizar la ficha en este modo");
-            return;
-        }
         setIsSaving(true);
         try {
             const response = await fetch('/api/cost-sheets/save', {
@@ -242,7 +245,7 @@ export const DarianEditor = ({ sheetData, setSheet, onSectionChange, isDark, isF
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             className={cn(
                                 "w-full border-none text-sm py-4 pl-6 pr-12 rounded-2xl focus:ring-2 focus:ring-primary/50 shadow-xl transition-all",
-                                isDark ? "bg-[#0D141C] text-foreground placeholder:text-white/20" : "bg-background text-slate-900 border border-slate-200 shadow-slate-200/50"
+                                isDark ? "bg-[#0D141C] text-white placeholder:text-white/20" : "bg-white text-slate-900 border border-slate-200 shadow-slate-200/50"
                             )}
                             placeholder="Ej: Generar ficha para 1kg de azúcar blanca..."
                         />

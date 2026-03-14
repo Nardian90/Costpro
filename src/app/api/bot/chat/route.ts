@@ -3,13 +3,14 @@ import { getServerSession } from '@/lib/auth';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
-    const userId = session?.user?.id;
-    const token = session?.token;
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
     let body;
     try {
@@ -18,51 +19,53 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const { messages, aiProvider, aiApiKey } = body;
+    const { messages, aiProvider, aiApiKey, storeId } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
     }
 
     try {
-      // Orquestador central con prioridad y paso de token
-      const provider = await getLLMProviderWithUserKey(userId, aiProvider, aiApiKey, token);
+      // Usar la lógica centralizada de orquestación (maneja fallbacks y claves de usuario)
+      const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
 
       const response = await provider.getResponse(messages, {
         temperature: 0.7,
-        maxTokens: 1000
+        maxTokens: 1500
       });
 
-      if (!response?.text || typeof response.text !== 'string') {
-        throw new Error('La IA devolvió una respuesta vacía');
+      if (!response?.text) {
+        throw new Error('La IA no devolvió ninguna respuesta');
       }
 
       return NextResponse.json({
         text: response.text,
-        metadata: response.metadata || { provider: aiProvider || 'default' },
+        metadata: {
+          provider: response.metadata?.model || aiProvider || 'gemini',
+          actions: response.tool_calls ? [] : undefined // BotContext actions handling is done in botService usually
+        },
         timestamp: new Date().toISOString()
       });
 
-    } catch (error: any) {
-      console.error('[ChatBot API] Error:', error.message);
+    } catch (aiError: any) {
+      console.error('[BotChat] AI Error:', aiError.message);
 
-      if (error.message.includes('No se ha configurado la API Key')) {
-          return NextResponse.json({
-            error: 'Configuración requerida',
-            details: 'No se encontraron claves de API. Por favor, configura tu propia API Key en los ajustes del chat.'
-          }, { status: 401 });
-      }
+      // Mapear errores específicos para el frontend
+      const errorMsg = aiError.message;
+      const isQuota = errorMsg.includes('Límite de IA alcanzado') ||
+                      errorMsg.includes('cuota') ||
+                      errorMsg.includes('quota');
 
       return NextResponse.json({
-        error: 'Error de comunicación con la IA',
-        details: error.message
+        error: isQuota ? 'Límite de IA alcanzado' : 'Error de comunicación con la IA',
+        details: errorMsg
       }, { status: 502 });
     }
 
   } catch (error: any) {
-    console.error('[ChatBot API] ERROR GLOBAL:', error);
+    console.error('[BotChat] Global Error:', error);
     return NextResponse.json({
-      error: 'Error interno del servidor',
+      error: 'Error interno',
       details: error.message
     }, { status: 500 });
   }
