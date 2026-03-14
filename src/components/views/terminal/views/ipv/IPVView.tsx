@@ -271,7 +271,10 @@ export default function IPVView() {
           // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
           await db.bank_statements.update(res.transactionId, {
             estado_conciliacion: res.status,
-            fail_reason: res.failReason
+            fail_reason: res.failReason,
+            matching_trace: res.trace,
+            applied_rules: res.appliedRules,
+            matching_confidence: res.matchingConfidence
           });
         }
 
@@ -314,7 +317,10 @@ export default function IPVView() {
 
         await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: result.status,
-            fail_reason: result.failReason
+            fail_reason: result.failReason,
+            matching_trace: result.trace,
+            applied_rules: result.appliedRules,
+            matching_confidence: result.matchingConfidence
         });
 
         if (result.status === 'COMPLETO') {

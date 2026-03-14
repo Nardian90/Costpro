@@ -381,7 +381,7 @@ export class MatchingEngine {
                 cuadre_cents: 0,
                 clasificacion: 'Efectivo',
                 origen_dato: 'CASH_FILLER',
-                reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-\remaining_cents}`),
+                reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
                 created_at: new Date().toISOString()
             };
             lines.push(line);
