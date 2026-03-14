@@ -930,6 +930,48 @@
     .text-3xl.font-bold.tracking-tighter {
       font-size: clamp(18px, 4vw, 24px) !important;
     }
+
+    /* Form Section (SECCION_06_FORMS) Maintenance */
+
+    /* Body safety reinforcement */
+    html, body {
+      overflow-x: hidden !important;
+    }
+
+    /* Touch target reinforcement for form elements */
+    [data-slot="input"],
+    [data-slot="select-trigger"],
+    [data-slot="textarea"],
+    .neu-input,
+    .neu-btn,
+    .neu-btn-primary {
+      min-height: 44px !important;
+    }
+
+    /* Adaptive Typography for Form Headers > 24px */
+    form h2,
+    .text-center h2 {
+      font-size: clamp(20px, 5vw, 24px) !important;
+    }
+
+    /* Surgical grid adjustment for non-responsive forms in narrow viewports */
+    form .grid-cols-2,
+    form .grid-cols-3 {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+
+    /* Ensure select triggers in forms expand to fill space if they would overflow */
+    form [data-slot="select-trigger"] {
+      width: 100% !important;
+    }
+
+    /* Modal form container adjustment for 320px-380px */
+    .sm\:max-w-\[425px\] {
+      max-width: 92vw !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
   }
 
   /* Reduced motion */
