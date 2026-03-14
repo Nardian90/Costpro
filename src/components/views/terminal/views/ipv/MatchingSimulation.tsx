@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { db, type Product, type MatchingRule, type ReconciliationLine } from '@/lib/dexie';
+import { db, type Product, type MatchingRule } from '@/lib/dexie';
 import { MatchingEngine, type MatchingResult } from '@/lib/ipv/engine';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -11,32 +15,30 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
-  Target,
   Play,
   RotateCcw,
-  TrendingUp,
   Sparkles,
-  Calendar,
-  Save,
-  Workflow,
+  TrendingUp,
+  Package,
   ArrowRight,
-  AlertTriangle
+  Workflow,
+  AlertTriangle,
+  Calendar,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/utils';
 import { useLiveQuery } from 'dexie-react-hooks';
 
-export function MatchingSimulation({ products, rules }: { products: Product[], rules: MatchingRule[] }) {
-  const [target, setTarget] = useState<number>(0);
-  const [result, setResult] = useState<MatchingResult | null>(null);
-  const [isSimulating, setIsSimulating] = useState(false);
+interface MatchingSimulationProps {
+  products: Product[];
+  rules: MatchingRule[];
+}
 
-  // Objetivo Global (Mes)
+export function MatchingSimulation({ products, rules }: MatchingSimulationProps) {
+  const [target, setTarget] = useState<number>(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [result, setResult] = useState<MatchingResult | null>(null);
   const [globalTarget, setGlobalTarget] = useState<number>(0);
   const [isDistributing, setIsDistributing] = useState(false);
 
@@ -69,46 +71,32 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
 
   const handleGlobalGoal = async () => {
     if (globalTarget <= 0) {
-        toast.error('Monto objetivo inválido');
+        toast.error('Meta global inválida');
         return;
     }
 
     setIsDistributing(true);
     try {
-        const engine = new MatchingEngine(products, rules);
-
-        // Calcular total actual reconciliado (en pesos)
-        const currentKpiTotal = reconciliationLines?.reduce((sum, l) => sum + (l.importe_linea_cents || 0), 0) || 0;
-
-        if (currentKpiTotal >= globalTarget) {
-            toast.info('El objetivo ya se ha alcanzado');
-            return;
-        }
-
-        // Obtener todas las fechas con transacciones
-        const allTransactions = await db.bank_statements.toArray();
-        const dates = Array.from(new Set(allTransactions.map(tx => tx.fecha))).sort();
+        const currentKpiTotal = reconciliationLines?.reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
+        const dates = Array.from(new Set(reconciliationLines?.map(l => l.fecha_operacion) || []));
 
         if (dates.length === 0) {
-            toast.error('No hay transacciones cargadas para definir el rango de fechas');
+            toast.error('No hay fechas en el desglose actual para distribuir');
+            setIsDistributing(false);
             return;
         }
 
+        const engine = new MatchingEngine(products, rules);
         const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates);
 
         if (extraLines.length === 0) {
             toast.warning('No se generaron nuevas líneas de ajuste o el objetivo ya se alcanzó');
-            return;
-        }
-
-        const diff = globalTarget - currentKpiTotal;
-        if (confirm(`Se han generado ${extraLines.length} líneas de ajuste (CASH) para cubrir el faltante de ${formatCurrency(diff)} entre ${dates.length} días. ¿Deseas aplicarlas?`)) {
+        } else {
             await db.reconciliation_lines.bulkAdd(extraLines);
-            toast.success('Ajuste global aplicado correctamente');
+            toast.success(`¡Éxito! Se han inyectado ${extraLines.length} líneas para alcanzar la meta.`);
         }
     } catch (error) {
-        console.error('Error Global Goal:', error);
-        toast.error('Error al distribuir objetivo global');
+        toast.error('Error distribuyendo meta global');
     } finally {
         setIsDistributing(false);
     }
@@ -119,34 +107,27 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
     setResult(null);
   };
 
-  const handleResetGlobalGoal = async () => {
-    if (!confirm('¿Estás seguro de que deseas reiniciar el objetivo global? Se eliminarán todas las líneas autogeneradas por el sistema (Efectivo/CASH_FILLER).')) {
-      return;
-    }
-
-    try {
-      await db.reconciliation_lines.where('origen_dato').equals('CASH_FILLER').delete();
-      toast.success('Líneas de objetivo global eliminadas');
-    } catch (error) {
-      toast.error('Error al reiniciar objetivo global');
-    }
+  const handleResetGlobalGoal = () => {
+      setGlobalTarget(0);
   };
 
   return (
-    <div className="p-6 space-y-8">
-      {/* Sección 1: Simulación Unitaria */}
+    <div className="p-6 space-y-8 max-w-6xl mx-auto">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            Simulador de Coincidencias
+          </h2>
+          <p className="text-muted-foreground text-sm font-medium">Prueba cómo responde el motor de matching ante diferentes montos.</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="space-y-4">
-            <Card className="p-6 space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                Simulación Unitaria
-            </h3>
-            <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
-                Prueba el motor de matching contra un monto específico sin afectar los datos reales.
-            </p>
+        <div className="space-y-6">
+            <Card className="p-6 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm">
             <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Monto Objetivo ($)</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground">Monto a Simular ($)</label>
                 <Input
                 type="number"
                 value={target}
