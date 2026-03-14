@@ -1,7 +1,10 @@
-I have completed the audit and redesign of the IPV Matching Pro module.
-Key changes:
-- Created AUDITORIA_IPV_MATCHING_PRO.md with full technical audit.
-- Updated dexie.ts with new fields for price variation and traceability.
-- Improved MatchingEngine.ts to support "Session-wide Price Coherence" and smarter price flex rules.
-- Created importUtils.ts for robust, hierarchy-aware catalog imports.
-- Enhanced CatalogTable.tsx to support the new import fields and logic.
+He actualizado el bot de IA en la rama main con las mejoras de la rama de hardening.
+Cambios principales:
+1. Implementación de jerarquía de API Keys en el orquestador (Forzada > DB Usuario > DB Fallbacks > DB Sistema > Env Vars).
+2. Lógica de seguridad de "normalización por reversión" de llaves.
+3. Actualización del modelo a gemini-2.5-flash.
+4. Mejoras en el GeminiAdapter para manejo de errores en español y soporte de tool_calls.
+5. Documentación detallada en docs/ai/AI_BOT_FLOW.md.
+6. Verificación de la tabla ai_api_keys en Supabase.
+
+Los tests unitarios de GeminiAdapter pasan correctamente.
