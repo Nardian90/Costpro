@@ -3,12 +3,12 @@ import {
   type Product,
   type MatchingRule,
   type ReconciliationLine,
+  type MatchingTrace,
   db
 } from '../dexie';
-// uuid replaced by crypto.randomUUID
 
 /**
- * Genera un hash simple para idempotencia (SHA-256 es preferible, pero esto es síncrono y portable)
+ * Genera un hash simple para idempotencia
  */
 export async function generateHash(input: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -25,7 +25,20 @@ export interface MatchingResult {
   logs: string[];
   failReason?: string;
   movements: any[];
+  trace: MatchingTrace[];
+  appliedRules: string[];
+  matchingConfidence: number;
 }
+
+const RULE_CONFIDENCE: Record<string, number> = {
+    'AUTO_COMPLETE': 1.0,
+    'HARD_REF': 0.95,
+    'EXACT_SUM': 1.0,
+    'PRICE_FLEX': 0.85,
+    'WILDCARDS': 0.80,
+    'TOLERANCE': 0.70,
+    'CASH_FILL': 0.50
+};
 
 export class MatchingEngine {
   private products: Product[];
@@ -42,7 +55,6 @@ export class MatchingEngine {
     this.pendingMovements = [];
     this.dailyAdjustedPrices = new Map();
 
-    // Inicializar mapa de inventario virtual para la sesión de matching
     for (const p of this.products) {
         this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
     }
@@ -50,24 +62,48 @@ export class MatchingEngine {
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
     const logs: string[] = [];
+    const trace: MatchingTrace[] = [];
+    const appliedRules: string[] = [];
+    let matchingConfidence = 1.0;
+
     const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
+    const addTrace = (pass: number, rule: string, status: "SUCCESS" | "FAIL" | "SKIPPED", reason?: string, details?: any) => {
+        trace.push({
+            pass,
+            rule,
+            status,
+            reason,
+            details,
+            timestamp: Date.now()
+        });
+        if (status === 'SUCCESS') {
+            appliedRules.push(rule);
+            matchingConfidence = Math.min(matchingConfidence, RULE_CONFIDENCE[rule] || 1.0);
+        }
+    };
+
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
-    // PASS 0: AUTO-COMPLETE DEBITS OR EXCLUDED (Commissions/Expenses/Excluded)
     if (transaction.tipo === 'Db' || transaction.estado_conciliacion === 'NO_PROCESAR') {
-      logs.push(`PASS 0: Transacción ${transaction.tipo === 'Db' ? 'Débito' : 'Excluida'} auto-finalizada sin productos.`);
+      const reason = transaction.tipo === 'Db' ? 'Débito auto-finalizado' : 'Excluida del matching';
+      logs.push(`PASS 0: ${reason}`);
+      addTrace(0, 'AUTO_COMPLETE', 'SUCCESS', reason);
       return {
           lines: [],
           status: 'COMPLETO',
           logs,
-          movements: []
+          movements: [],
+          trace,
+          appliedRules,
+          matchingConfidence
       };
+    } else {
+        addTrace(0, 'AUTO_COMPLETE', 'SKIPPED', 'No aplica a créditos activos');
     }
 
-    // Intentar recuperación desde caché (sólo para PASS 2 EXACT_SUM)
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
     const cached = await db.matching_cache.get(targetAmount);
     if (cached && cached.catalog_hash === catalogHash) {
@@ -81,27 +117,31 @@ export class MatchingEngine {
         }
       }
       if (Math.abs(remaining_cents) < 0.001) {
-        return { lines, status: 'COMPLETO', logs, movements: [] };
+        addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Recuperado de caché');
+        return {
+            lines,
+            status: 'COMPLETO',
+            logs,
+            movements: [],
+            trace,
+            appliedRules,
+            matchingConfidence
+        };
       }
     }
 
-    // PASS 1: HARD_REF
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
       const matchedProduct = this.products.find(p => {
-        // Si hay límite de stock, ignorar productos sin existencia
-        if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
-
+        if (this.useStockLimit && this.getVirtualStock(p.cod) <= 0) return false;
         return transaction.observaciones.includes(p.cod) ||
                transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase());
       });
 
       if (matchedProduct) {
         let qty = Math.floor(remaining_cents / matchedProduct.precio_cents);
-
-        // Ajustar cantidad al stock disponible si aplica
         if (this.useStockLimit) {
-            const available = this.stockMap.get(matchedProduct.cod) || 0;
+            const available = this.getVirtualStock(matchedProduct.cod);
             qty = Math.min(qty, available);
         }
 
@@ -110,16 +150,21 @@ export class MatchingEngine {
           lines.push(line);
           remaining_cents -= line.importe_linea_cents;
           logs.push(`PASS 1 (HARD_REF): Matched ${qty}x ${matchedProduct.descripcion}`);
+          addTrace(1, 'HARD_REF', 'SUCCESS', `Detectado ${matchedProduct.descripcion}`, { product: matchedProduct.cod, qty });
+        } else {
+            addTrace(1, 'HARD_REF', 'FAIL', `Sin stock para ${matchedProduct.descripcion}`);
         }
+      } else {
+          addTrace(1, 'HARD_REF', 'FAIL', 'No se detectaron códigos o descripciones');
       }
+    } else if (!hardRefRule) {
+        addTrace(1, 'HARD_REF', 'SKIPPED', 'Regla inactiva');
     }
 
-    // PASS 2: EXACT_SUM / EXACT_MATCH
     const exactSumRule = this.rules.find(r => r.tipo === 'EXACT_SUM');
     if (exactSumRule && remaining_cents > 0) {
       const combination = this.findExactCombination(remaining_cents);
       if (combination.length > 0) {
-        // Guardar en caché
         await db.matching_cache.put({
           importe_cents: remaining_cents,
           catalog_hash: catalogHash,
@@ -133,25 +178,25 @@ export class MatchingEngine {
           remaining_cents -= line.importe_linea_cents;
         }
         logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación exacta`);
+        addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Combinación exacta encontrada', { items: combination.length });
+      } else {
+          addTrace(2, 'EXACT_SUM', 'FAIL', 'No se encontró combinación exacta con stock disponible');
       }
+    } else if (!exactSumRule) {
+        addTrace(2, 'EXACT_SUM', 'SKIPPED', 'Regla inactiva');
     }
 
-    // PASS 3: PRICE_FLEX (Ajuste táctico de precio)
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
-        const maxAbs = priceFlexRule.meta?.maxAbs || 10;
-        const maxPercent = priceFlexRule.meta?.maxPercent || 20;
+        const maxAbs = priceFlexRule.meta?.max_variation_cents || 10;
+        const maxPercent = priceFlexRule.meta?.max_variation_percent || 20;
 
-        // Intentamos encontrar un producto que permita variación y ajuste el gap
         const flexProduct = this.products.find(p => {
-            if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
-
-            // Si ya tiene un precio bloqueado para hoy, comprobamos si ese precio soluciona el gap
+            if (this.useStockLimit && this.getVirtualStock(p.cod) <= 0) return false;
             const lockedPrice = this.dailyAdjustedPrices.get(p.cod);
             if (lockedPrice !== undefined) {
                 return lockedPrice === remaining_cents;
             }
-
             const canVary = (p.variacion_permisible_percent || 0) > 0 || p.isWildcardCandidate;
             return canVary;
         });
@@ -166,7 +211,6 @@ export class MatchingEngine {
             const maxPercentAbs = basePrice * (allowedPercent / 100);
 
             if (adjustment <= maxAbs || adjustment <= maxPercentAbs) {
-                // Bloquear precio para coherencia diaria si no lo estaba
                 if (lockedPrice === undefined) {
                     this.dailyAdjustedPrices.set(flexProduct.cod, targetPrice);
                     this.pendingMovements.push({
@@ -190,22 +234,28 @@ export class MatchingEngine {
                 lines.push(line);
                 remaining_cents -= targetPrice;
                 logs.push(`PASS 3 (PRICE_FLEX): ${lockedPrice !== undefined ? 'Reutilizado' : 'Bloqueado'} precio de ${flexProduct.descripcion} a ${targetPrice}`);
+                addTrace(3, 'PRICE_FLEX', 'SUCCESS', `Ajuste de precio en ${flexProduct.descripcion}`, { adjustment: targetPrice - basePrice });
+            } else {
+                addTrace(3, 'PRICE_FLEX', 'FAIL', `Ajuste de ${adjustment} cts excede límites`);
             }
+        } else {
+            addTrace(3, 'PRICE_FLEX', 'FAIL', 'No hay productos aptos para ajuste de precio');
         }
+    } else if (!priceFlexRule) {
+        addTrace(3, 'PRICE_FLEX', 'SKIPPED', 'Regla inactiva');
     }
 
-    // PASS 4: WILDCARDS (Productos estratégicos)
     const wildcardsRule = this.rules.find(r => r.tipo === 'WILDCARDS');
     if (wildcardsRule && remaining_cents > 0) {
         const wildcards = this.products
             .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
             .sort((a,b) => b.precio_cents - a.precio_cents);
 
+        let addedCount = 0;
         for (const p of wildcards) {
             if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
                 let qty = Math.floor(remaining_cents / p.precio_cents);
-
                 if (this.useStockLimit) {
                     const available = this.getVirtualStock(p.cod);
                     qty = Math.min(qty, available);
@@ -216,54 +266,65 @@ export class MatchingEngine {
                     lines.push(line);
                     remaining_cents -= line.importe_linea_cents;
                     logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
+                    addedCount += qty;
                 }
             }
         }
+        if (addedCount > 0) {
+            addTrace(4, 'WILDCARDS', 'SUCCESS', `Añadidos ${addedCount} productos comodín`);
+        } else {
+            addTrace(4, 'WILDCARDS', 'FAIL', 'No se pudieron asignar productos comodín');
+        }
+    } else if (!wildcardsRule) {
+        addTrace(4, 'WILDCARDS', 'SKIPPED', 'Regla inactiva');
     }
 
-    // PASS 5: TOLERANCE
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
-    if (toleranceRule && remaining_cents > 0 && toleranceRule.tolerancia_cents) {
-      const candidateProducts = this.products
-        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
-        .sort((a,b) => b.precio_cents - a.precio_cents);
+    if (toleranceRule && remaining_cents > 0) {
+      const toleranceCents = toleranceRule.meta?.tolerance_cents || toleranceRule.tolerancia_cents || 0;
 
-      for (const product of candidateProducts) {
-        if (product.precio_cents <= 0) continue;
+      if (toleranceCents > 0) {
+          const candidateProducts = this.products
+            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
+            .sort((a,b) => b.precio_cents - a.precio_cents);
 
-        // Buscamos la cantidad que más se acerque al importe restante
-        let qty = Math.round(remaining_cents / product.precio_cents);
-        if (qty <= 0) qty = 1;
+          let found = false;
+          for (const product of candidateProducts) {
+            if (product.precio_cents <= 0) continue;
+            let qty = Math.round(remaining_cents / product.precio_cents);
+            if (qty <= 0) qty = 1;
+            if (this.useStockLimit) {
+                const available = this.getVirtualStock(product.cod);
+                qty = Math.min(qty, available);
+            }
+            if (qty <= 0) continue;
 
-        // Ajustar cantidad al stock disponible si aplica
-        if (this.useStockLimit) {
-            const available = this.stockMap.get(product.cod) || 0;
-            qty = Math.min(qty, available);
-        }
-
-        if (qty <= 0) continue;
-
-        const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
-        if (diff <= toleranceRule.tolerancia_cents) {
-          const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
-          line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
-          // IMPORTANTE: El importe de la línea debe ser el total incluyendo el descuadre
-          // para que el UI y los totales cuadren a 0.
-          line.importe_linea_cents = remaining_cents;
-          lines.push(line);
-          remaining_cents = 0;
-          logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
-          break;
-        }
+            const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
+            if (diff <= toleranceCents) {
+              const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
+              line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
+              line.importe_linea_cents = remaining_cents;
+              lines.push(line);
+              remaining_cents = 0;
+              logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
+              addTrace(5, 'TOLERANCE', 'SUCCESS', `Cuadre de ${line.cuadre_cents} cts aplicado`, { product: product.cod, diff: line.cuadre_cents });
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+              addTrace(5, 'TOLERANCE', 'FAIL', `No hay productos que cuadren dentro de ${toleranceCents} cts`);
+          }
+      } else {
+          addTrace(5, 'TOLERANCE', 'SKIPPED', 'Tolerancia no configurada');
       }
+    } else if (!toleranceRule) {
+        addTrace(5, 'TOLERANCE', 'SKIPPED', 'Regla inactiva');
     }
 
-    // PASS 6: CASH_FILL (Justified with real products if possible)
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
-      const dailyLimit = cashFillRule.meta?.dailyLimitCents || Infinity;
-
-      // Consultar cuánto se ha usado hoy en CASH_FILLER
+      const dailyLimit = cashFillRule.meta?.daily_limit || Infinity;
       const usedToday = await db.reconciliation_lines
         .where('fecha_operacion').equals(transaction.fecha)
         .and(l => l.origen_dato === 'CASH_FILLER')
@@ -272,65 +333,77 @@ export class MatchingEngine {
 
       if (usedToday + remaining_cents > dailyLimit) {
         logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
+        addTrace(6, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
       } else {
-        // Justificación: Intentamos usar productos comodín primero para "disfrazar" el cash fill
         const wildcards = this.products
             .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
             .sort((a,b) => b.precio_cents - a.precio_cents);
 
+        let cashMatched = 0;
         for (const p of wildcards) {
           if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
             let qty = Math.floor(remaining_cents / p.precio_cents);
-
             if (this.useStockLimit) {
                 const available = this.getVirtualStock(p.cod);
                 qty = Math.min(qty, available);
             }
-
             if (qty > 0) {
                 const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
                 lines.push(line);
                 remaining_cents -= line.importe_linea_cents;
                 logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
-
-                // Si después de esto queda un residuo pequeño, lo ajustamos con Price Flex automático sobre esta misma línea
+                cashMatched += line.importe_linea_cents;
                 if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
-                    line.precio_unitario_cents += Math.floor(remaining_cents / qty);
-                    line.importe_linea_cents += remaining_cents;
+                    const adj = remaining_cents;
+                    line.precio_unitario_cents += Math.floor(adj / qty);
+                    line.importe_linea_cents += adj;
                     remaining_cents = 0;
-                    logs.push(`PASS 6 (CASH_FILL): Residuo ajustado en la línea de ${p.descripcion}`);
+                    logs.push(`PASS 6 (CASH_FILL): Micro-ajuste final de ${adj} cts aplicado`);
                 }
             }
           }
         }
 
         if (remaining_cents > 0) {
-            // REBAJA LOGIC: Usar un comodín y ajustar su precio (rebaja/ajuste) para cubrir el faltante exacto
-            const fillerProduct = wildcards.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
-                               || this.products.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0);
-
-            if (fillerProduct) {
-                const line = await this.createLine(transaction, fillerProduct, 1, 'CASH_FILLER', 'Efectivo');
-                const diff = remaining_cents - fillerProduct.precio_cents;
-                line.importe_linea_cents = remaining_cents;
-                line.cuadre_cents = diff;
-                lines.push(line);
-                logs.push(`PASS 6 (CASH_FILL): Cubierto gap residual de ${remaining_cents} cts con ${fillerProduct.descripcion} (Ajuste: ${diff})`);
-                remaining_cents = 0;
-            }
+            const line: ReconciliationLine = {
+                id: crypto.randomUUID(),
+                transaction_ref: transaction.referencia_origen,
+                fecha_operacion: transaction.fecha,
+                ingreso_banco_cents: 0,
+                venta_real_calculada_cents: remaining_cents,
+                comision_banco_cents: 0,
+                product_cod: 'CASH',
+                product_um: 'UD',
+                cantidad: 1,
+                precio_unitario_cents: remaining_cents,
+                importe_linea_cents: remaining_cents,
+                cuadre_cents: 0,
+                clasificacion: 'Efectivo',
+                origen_dato: 'CASH_FILLER',
+                reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
+                created_at: new Date().toISOString()
+            };
+            lines.push(line);
+            cashMatched += remaining_cents;
+            remaining_cents = 0;
+            logs.push(`PASS 6 (CASH_FILL): Saldo final cubierto con ajuste de efectivo directo`);
         }
+        addTrace(6, 'CASH_FILL', 'SUCCESS', `Cubiertos ${cashMatched} cts como efectivo`);
       }
+    } else if (!cashFillRule) {
+        addTrace(6, 'CASH_FILL', 'SKIPPED', 'Regla inactiva');
     }
 
-    const status = Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
+    const isComplete = Math.abs(remaining_cents) < 0.001;
     let failReason = undefined;
-
-    if (status !== 'COMPLETO') {
+    if (!isComplete) {
         if (this.useStockLimit) {
-            failReason = 'FALTA STOCK VIRTUAL: No se encontró combinación con stock disponible o descomposiciones.';
+            const topProducts = this.products.slice(0, 3);
+            const stockInfo = topProducts.map(p => `${p.descripcion} (Stock: ${this.getVirtualStock(p.cod)})`).join(', ');
+            failReason = `FALTA STOCK VIRTUAL. Disponibilidad cercana: ${stockInfo}`;
         } else {
-            failReason = 'SIN COINCIDENCIA: No hay productos o combinaciones que sumen el importe exacto.';
+            failReason = 'No se encontró una combinación de productos válida para el importe restante.';
         }
     }
 
@@ -339,16 +412,16 @@ export class MatchingEngine {
 
     return {
       lines,
-      status,
+      status: isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
       logs,
       failReason,
-      movements: resultMovements
+      movements: resultMovements,
+      trace,
+      appliedRules,
+      matchingConfidence: isComplete ? matchingConfidence : 0
     };
   }
 
-  /**
-   * Realiza una simulación de matching para un objetivo monetario arbitrario.
-   */
   async matchSimulation(targetAmount: number): Promise<MatchingResult> {
     const mockTx: BankTransaction = {
       id: 'sim',
@@ -365,13 +438,6 @@ export class MatchingEngine {
     return this.matchTransaction(mockTx);
   }
 
-  /**
-   * Distribuye una diferencia de objetivo global entre varios días.
-   * Prioriza productos con stock bajo y evita el uso de ajustes (propina/descuento).
-   *
-   * Nota: El proceso es puramente aditivo basado en (Precio * Cantidad) para
-   * garantizar que no existan "valores irracionales" de cuadre.
-   */
   async distributeGlobalGoal(
     targetTotal: number,
     currentTotal: number,
@@ -382,98 +448,56 @@ export class MatchingEngine {
     if (remainingDiff <= 0 || dates.length === 0) return [];
 
     const lines: ReconciliationLine[] = [];
-
-    // Si tenemos volúmenes por día, priorizamos los días con menos transferencias
-    // para que la inyección de efectivo parezca más lógica/natural.
     const sortedDates = [...dates].sort((a, b) => {
       if (options?.dayVolumes) {
         const volA = options.dayVolumes[a] || 0;
         const volB = options.dayVolumes[b] || 0;
         if (volA !== volB) return volA - volB;
       }
-      return Math.random() - 0.5; // Empate o sin volúmenes: aleatorio
+      return Math.random() - 0.5;
     });
 
-    // Greedy distribution across dates
     for (const date of sortedDates) {
       if (remainingDiff <= 0) break;
-
-      // Refrescamos y ordenamos candidatos por stock (menos stock primero)
       const candidates = [...this.products]
         .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
         .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
         .sort((a, b) => {
           const sA = this.stockMap.get(a.cod) || 0;
           const sB = this.stockMap.get(b.cod) || 0;
-          // Prioridad 1: Menos stock (pero > 0)
           if (sA !== sB) return sA - sB;
-          // Prioridad 2: Precio mayor para minimizar número de líneas
           return b.precio_cents - a.precio_cents;
         });
 
       for (const p of candidates) {
         if (remainingDiff <= 0) break;
-
         let availableStock = this.stockMap.get(p.cod) || 0;
         if (!this.useStockLimit) availableStock = 999999;
         if (availableStock <= 0) continue;
-
         const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
         if (maxQtyPossible <= 0) continue;
-
-        // Intentamos no saturar un día con un solo producto, repartiendo entre fechas
         const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
         const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
-
         if (qtyToPick > 0) {
-          const line = await this.createLine(
-            { fecha: date, referencia_origen: `GOAL-${date}` } as any,
-            p,
-            qtyToPick,
-            'CASH_FILLER',
-            'Efectivo'
-          );
+          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo');
           line.id = crypto.randomUUID();
-          line.cuadre_cents = 0; // Obligatorio: Sin propinas ni descuentos
+          line.cuadre_cents = 0;
           line.importe_linea_cents = p.precio_cents * qtyToPick;
-
           lines.push(line);
           remainingDiff -= line.importe_linea_cents;
         }
       }
     }
-
     return lines;
   }
 
-
-  /**
-   * Intenta descomponer un producto de mayor valor en uno de menor valor dentro del mismo id_grupo.
-   * Retorna true si logró obtener stock mediante descomposición.
-   */
-
-
-
-  /**
-   * Intenta descomponer un producto de mayor valor en uno de menor valor dentro del mismo id_grupo.
-   * Retorna true si logró obtener stock mediante descomposición.
-   */
-  private async attemptDecomposition(targetProductCod: string): Promise<boolean> {
-    const targetProduct = this.products.find(p => p.cod === targetProductCod);
+  private async attemptDecomposition(productCod: string): Promise<boolean> {
+    const targetProduct = this.products.find(p => p.cod === productCod);
     if (!targetProduct || !targetProduct.id_grupo) return false;
-
-    // 1. Buscar si hay algún ancestro que tenga explícitamente este producto como hijo
-    let explicitAncestor = this.products.find(p => p.id_grupo === targetProduct.id_grupo && p.cod_hijo === targetProduct.cod);
-
-    // 2. Si no hay explícito, buscar el ancestro por jerarquía de precios (el inmediatamente superior)
-    const ancestors = explicitAncestor ? [explicitAncestor] : this.products
-      .filter(p => p.id_grupo === targetProduct.id_grupo && p.precio_cents > targetProduct.precio_cents && (!p.cod_hijo || p.cod_hijo === targetProduct.cod))
-      .sort((a, b) => a.precio_cents - b.precio_cents); // Del más cercano hacia arriba (más barato a más caro)
+    const ancestors = this.products.filter(p => p.cod_hijo === productCod);
 
     for (const ancestor of ancestors) {
       let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
-
-      // RECURSION: Si el ancestro no tiene stock, intentamos descomponerlo a él primero
       if (availableAncestorStock <= 0) {
           const success = await this.attemptDecomposition(ancestor.cod);
           if (success) {
@@ -482,14 +506,10 @@ export class MatchingEngine {
       }
 
       if (availableAncestorStock > 0) {
-        // Descomponer 1 unidad del ancestro
         const conversionFactor = ancestor.contenido_paquete || 1;
-
         this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
         const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
         this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
-
-        // Registrar movimiento pendiente
         this.pendingMovements.push({
           id: crypto.randomUUID(),
           fecha: new Date().toISOString(),
@@ -500,11 +520,9 @@ export class MatchingEngine {
           tipo: 'DECOMPOSITION',
           created_at: new Date().toISOString()
         });
-
         return true;
       }
     }
-
     return false;
   }
 
@@ -515,8 +533,7 @@ export class MatchingEngine {
     origen: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER',
     clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
   ): Promise<ReconciliationLine> {
-    if (this.useStockLimit && (this.stockMap.get(product.cod) || 0) < qty) {
-        // Intentar descomponer para obtener el stock faltante
+    if (this.useStockLimit && this.getVirtualStock(product.cod) < qty) {
         let currentStock = this.stockMap.get(product.cod) || 0;
         while (currentStock < qty) {
             const decomposed = await this.attemptDecomposition(product.cod);
@@ -526,8 +543,6 @@ export class MatchingEngine {
     }
 
     const importe = product.precio_cents * qty;
-
-    // Descontar del inventario virtual de la sesión si aplica.
     if (this.useStockLimit) {
         const current = this.stockMap.get(product.cod) || 0;
         this.stockMap.set(product.cod, Math.max(0, current - qty));
@@ -553,68 +568,38 @@ export class MatchingEngine {
     };
   }
 
-  /**
-   * Busca una combinación exacta de productos que sumen el monto.
-   * Considera la prioridad dinámica/manual de los productos.
-   */
-
-  /**
-   * Calcula el stock virtual disponible incluyendo posibles descomposiciones.
-   */
   private getVirtualStock(productCod: string): number {
     const product = this.products.find(p => p.cod === productCod);
     if (!product || !product.id_grupo) return this.stockMap.get(productCod) || 0;
-
-    // Obtenemos todos los productos del grupo
     const groupProducts = this.products.filter(p => p.id_grupo === product.id_grupo);
-
-    // Mapeamos el stock actual a un objeto de trabajo
     const currentStock = new Map<string, number>();
     groupProducts.forEach(p => currentStock.set(p.cod, this.stockMap.get(p.cod) || 0));
 
-    // Función recursiva para calcular stock virtual acumulado desde ancestros
     const calculateRecursiveStock = (targetCod: string): number => {
         let total = currentStock.get(targetCod) || 0;
-
-        // Buscar todos los posibles padres (que tengan a este como cod_hijo)
         const parents = groupProducts.filter(p => p.cod_hijo === targetCod);
-
         for (const parent of parents) {
             const parentVirtualStock = calculateRecursiveStock(parent.cod);
             total += parentVirtualStock * (parent.contenido_paquete || 1);
         }
-
         return total;
     };
-
     return calculateRecursiveStock(productCod);
   }
 
   private findExactCombination(target: number, options?: { prioritizeLowStock?: boolean }): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
-        // Si se pide priorizar poco stock, este criterio va primero (pero solo si tienen stock > 0)
         if (options?.prioritizeLowStock) {
-            const sA = this.stockMap.get(a.cod) || 0;
-            const sB = this.stockMap.get(b.cod) || 0;
-
-            // Si uno no tiene stock y el otro sí, el que tiene stock va primero
+            const sA = this.getVirtualStock(a.cod);
+            const sB = this.getVirtualStock(b.cod);
             if (sA > 0 && sB <= 0) return -1;
             if (sB > 0 && sA <= 0) return 1;
-
-            // Si ambos tienen stock, el de menor stock va primero
             if (sA > 0 && sB > 0 && sA !== sB) return sA - sB;
         }
-
-        // Modo híbrido/automático: Priorizar según prioridad_algoritmo (1 mejor)
         const pA = a.prioridad_algoritmo || 3;
         const pB = b.prioridad_algoritmo || 3;
-
         if (pA !== pB) return pA - pB;
-
-        // Desempate por precio (mayor primero)
-        if (b.precio_cents !== a.precio_cents) {
-            return b.precio_cents - a.precio_cents;
-        }
+        if (b.precio_cents !== a.precio_cents) return b.precio_cents - a.precio_cents;
         return a.cod.localeCompare(b.cod);
     });
 
@@ -623,52 +608,28 @@ export class MatchingEngine {
     const startTime = Date.now();
 
     const solve = (remaining: number, index: number, depth: number): { product: Product, qty: number }[] | null => {
-      // Base case: target reached (using epsilon for float precision)
       if (Math.abs(remaining) < 0.001) return [];
-
-      // Constraints: depth limit, exhausted products, or timeout
-      if (depth >= MAX_DEPTH || index >= sortedProducts.length || (Date.now() - startTime) > TIMEOUT_MS) {
-        return null;
-      }
-
+      if (depth >= MAX_DEPTH || index >= sortedProducts.length || (Date.now() - startTime) > TIMEOUT_MS) return null;
       const p = sortedProducts[index];
       if (p.precio_cents <= 0) return solve(remaining, index + 1, depth);
-
-      // Try using this product (from max possible quantity down to 1)
       const maxQty = Math.floor((remaining + 0.001) / p.precio_cents);
-
-      // Ajuste por Stock Limit
       let actualMaxQty = maxQty;
-      if (this.useStockLimit) {
-          const available = this.getVirtualStock(p.cod);
-          actualMaxQty = Math.min(maxQty, available);
-      }
+      if (this.useStockLimit) actualMaxQty = Math.min(maxQty, this.getVirtualStock(p.cod));
 
       for (let qty = actualMaxQty; qty >= 1; qty--) {
-        // Al usar una cantidad en la recursión, debemos descontarla temporalmente del stockMap
-        // si queremos ser estrictos en la combinación.
         if (this.useStockLimit) {
             const current = this.stockMap.get(p.cod) || 0;
             this.stockMap.set(p.cod, current - qty);
         }
-
         const sub = solve(remaining - qty * p.precio_cents, index + 1, depth + 1);
-
-        // Restaurar stock tras la prueba (backtracking)
         if (this.useStockLimit) {
             const current = this.stockMap.get(p.cod) || 0;
             this.stockMap.set(p.cod, current + qty);
         }
-
-        if (sub) {
-          return [{ product: p, qty }, ...sub];
-        }
+        if (sub) return [{ product: p, qty }, ...sub];
       }
-
-      // Try skipping this product
       return solve(remaining, index + 1, depth);
     };
-
     return solve(target, 0, 0) || [];
   }
 
@@ -678,13 +639,8 @@ export class MatchingEngine {
     customStockMap?: Map<string, number>
   ): Promise<any[]> {
     const results: any[] = [];
-    const total = transactions.length;
-
-    if (customStockMap) {
-        this.stockMap = new Map(customStockMap);
-    }
-
-    for (let i = 0; i < total; i++) {
+    if (customStockMap) this.stockMap = new Map(customStockMap);
+    for (let i = 0; i < transactions.length; i++) {
         const tx = transactions[i];
         try {
             const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
@@ -693,44 +649,37 @@ export class MatchingEngine {
                 status: res.status,
                 lines: res.lines,
                 failReason: res.failReason,
-                movements: res.movements
+                movements: res.movements,
+                trace: res.trace,
+                appliedRules: res.appliedRules,
+                matchingConfidence: res.matchingConfidence
             });
         } catch (error) {
-            console.error(`[MatchingEngine] Error processing transaction ${tx.referencia_origen}:`, error);
             results.push({
                 transactionId: tx.referencia_origen,
                 status: 'PENDIENTE',
                 lines: [],
-                movements: []
+                movements: [],
+                trace: [],
+                appliedRules: [],
+                matchingConfidence: 0
             });
         }
-
-
         if (onProgress) {
-            // Optimización: Solo notificar progreso cada 5% o cada 20 transacciones para no saturar el hilo principal
-            const percentage = Math.round(((i + 1) / total) * 100);
-            if (i % 20 === 0 || percentage % 5 === 0 || i === total - 1) {
-                onProgress(percentage);
-            }
+            const percentage = Math.round(((i + 1) / transactions.length) * 100);
+            if (i % 20 === 0 || percentage % 5 === 0 || i === transactions.length - 1) onProgress(percentage);
         }
     }
     return results;
   }
 
-  /**
-   * Genera agregados diarios para un reporte de IPV
-   */
   async generateDailyAggregate(fecha: string): Promise<void> {
     const lines = await db.reconciliation_lines.where('fecha_operacion').equals(fecha).toArray();
-
     let total_cents = 0;
     const by_product_map = new Map<string, { cod: string, descripcion: string, cantidad: number, importe_cents: number }>();
-
     for (const line of lines) {
       if (line.product_cod === 'CASH') continue;
-
       total_cents += line.importe_linea_cents;
-
       const existing = by_product_map.get(line.product_cod);
       if (existing) {
         existing.cantidad += line.cantidad;
@@ -745,11 +694,6 @@ export class MatchingEngine {
         });
       }
     }
-
-    await db.daily_aggregates.put({
-      fecha,
-      total_cents,
-      by_product: Array.from(by_product_map.values())
-    });
+    await db.daily_aggregates.put({ fecha, total_cents, by_product: Array.from(by_product_map.values()) });
   }
 }
