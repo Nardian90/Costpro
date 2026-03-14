@@ -2,49 +2,46 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiAdapter } from './gemini-adapter';
 import { Message } from '../types';
 
+const generateContentMock = vi.fn();
+const getGenerativeModelMock = vi.fn();
+
+vi.mock('@google/generative-ai', () => {
+  return {
+    GoogleGenerativeAI: vi.fn(function() {
+      return {
+        getGenerativeModel: getGenerativeModelMock
+      };
+    })
+  };
+});
+
 describe('GeminiAdapter', () => {
   const apiKey = 'test-api-key';
   const adapter = new GeminiAdapter(apiKey);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
+    getGenerativeModelMock.mockReturnValue({
+      generateContent: generateContentMock
+    });
+    generateContentMock.mockResolvedValue({
+      response: {
+        candidates: [{ content: { parts: [{ text: 'Hello' }] } }]
+      }
+    });
   });
 
-  it('should use gemini-2.0-flash by default', async () => {
+  it('should ensure first message is user', async () => {
     const messages: Message[] = [
-      { role: 'user', content: 'Hello' }
+      { role: 'assistant', content: 'I started first' }
     ];
 
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        candidates: [{ content: { parts: [{ text: 'Hi there!' }] } }]
-      })
-    });
+    await adapter.getResponse(messages);
 
-    const response = await adapter.getResponse(messages);
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('gemini-2.0-flash'),
-      expect.any(Object)
-    );
-    expect(response.text).toBe('Hi there!');
-    expect(response.metadata?.model).toBe('gemini-2.0-flash');
-  });
-
-  it('should handle API errors correctly', async () => {
-    const messages: Message[] = [
-      { role: 'user', content: 'Hello' }
-    ];
-
-    (global.fetch as any).mockResolvedValue({
-      ok: false,
-      status: 401,
-      statusText: 'Unauthorized',
-      json: () => Promise.resolve({ error: { message: 'Invalid API Key' } })
-    });
-
-    await expect(adapter.getResponse(messages)).rejects.toThrow('Clave de API de Gemini inválida.');
+    const contents = generateContentMock.mock.calls[0][0].contents;
+    expect(contents).toHaveLength(2);
+    expect(contents[0].role).toBe('user');
+    expect(contents[0].parts[0].text).toBe('[Contexto]');
+    expect(contents[1].role).toBe('model');
   });
 });

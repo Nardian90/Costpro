@@ -9,82 +9,124 @@ import { createClient } from '@supabase/supabase-js';
 
 export type ProviderType = 'gemini' | 'gpt' | 'qwen' | 'deepseek' | 'kimi';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0aGtkZGVsZXlsaWptb25jbHhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzUxMzIsImV4cCI6MjA4MzA1MTEzMn0.ooFYAgZtOh4PXRAKsEWDrXaNpWy3aikmX_Grl4kQavU';
+/**
+ * Normaliza una API Key. Si no empieza con prefijos estándar, intenta revertirla.
+ * Esto implementa la lógica de "protección por reversión" solicitada.
+ */
+function normalizeApiKey(key: string | undefined): string {
+  if (!key) return '';
+  const trimmed = key.trim();
 
-const getSupabaseClient = (token?: string) => {
-  if (supabaseServiceKey) {
-    return createClient(supabaseUrl, supabaseServiceKey);
+  // Prefijos conocidos
+  if (trimmed.startsWith('AIza') || trimmed.startsWith('sk-')) {
+    return trimmed;
   }
-  if (token) {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
+
+  // Intentar reversión
+  const reversed = trimmed.split('').reverse().join('');
+  if (reversed.startsWith('AIza') || reversed.startsWith('sk-')) {
+    return reversed;
   }
-  return null;
+
+  return trimmed;
+}
+
+// Create a minimal client to fetch keys if needed
+// This should only be used on the server side
+const getSupabaseServer = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 };
 
-export async function getLLMProviderWithUserKey(
-  userId?: string,
-  type?: string,
-  forcedApiKey?: string,
-  token?: string
-): Promise<LLMProvider> {
+export async function getLLMProviderWithUserKey(userId: string, type?: string, forcedApiKey?: string): Promise<LLMProvider> {
   const providerType = (type || process.env.LLM_PROVIDER || 'gemini').toLowerCase();
   const providers: LLMProvider[] = [];
 
-  // 1. HIGH PRIORITY: User-defined forced key
-  if (forcedApiKey) {
-    providers.push(getLLMProvider(providerType, forcedApiKey));
-  }
-
-  // 2. USER PROFILE PRIORITY: Key stored in user's profile
-  if (userId) {
-    const supabase = getSupabaseClient(token);
+  // 1. Add requested provider (forced key or DB key)
+  let initialKey = normalizeApiKey(forcedApiKey);
+  if (!initialKey && userId) {
+    const supabase = getSupabaseServer();
     if (supabase) {
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('ai_provider, ai_api_key')
-          .eq('id', userId)
-          .single();
+      const { data } = await supabase
+        .from('ai_api_keys')
+        .select('api_key')
+        .eq('user_id', userId)
+        .eq('provider', providerType)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
 
-        if (profile?.ai_api_key) {
-           providers.push(getLLMProvider(profile.ai_provider || 'gemini', profile.ai_api_key));
-        }
-      } catch (err) {
-        console.error('[Orchestrator] Profile key fetch error:', err);
+      if (data?.api_key) {
+        initialKey = normalizeApiKey(data.api_key);
       }
     }
   }
 
-  // 3. INFRASTRUCTURE PRIORITY: Environment Variables
-  if (process.env.GOOGLE_API_KEY) providers.push(getLLMProvider('gemini', process.env.GOOGLE_API_KEY));
-  if (process.env.OPENAI_API_KEY) providers.push(getLLMProvider('gpt', process.env.OPENAI_API_KEY));
-  if (process.env.DEEPSEEK_API_KEY) providers.push(getLLMProvider('deepseek', process.env.DEEPSEEK_API_KEY));
-  if (process.env.EMERGENCY_GOOGLE_API_KEY) providers.push(getLLMProvider('gemini', process.env.EMERGENCY_GOOGLE_API_KEY));
+  const mainProvider = getLLMProvider(providerType, initialKey);
+  if (initialKey) {
+    providers.push(mainProvider);
+  }
 
-  // 4. SYSTEM FALLBACK: ai_api_keys table
-  const supabase = getSupabaseClient(token);
-  if (supabase) {
-    try {
+  // 2. Add fallbacks from active user keys
+  if (userId) {
+    const supabase = getSupabaseServer();
+    if (supabase) {
+      const { data } = await supabase
+        .from('ai_api_keys')
+        .select('provider, api_key')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .neq('provider', providerType); // Avoid duplicates
+
+      if (data) {
+        data.forEach(k => {
+          providers.push(getLLMProvider(k.provider, normalizeApiKey(k.api_key)));
+        });
+      }
+    }
+  }
+
+  // 3. If no user keys, try fallback options
+  if (providers.length === 0) {
+    // A. System Fallback: Global system key in DB
+    const supabase = getSupabaseServer();
+    if (supabase) {
       const { data } = await supabase
         .from('ai_api_keys')
         .select('provider, api_key')
         .is('user_id', null)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .limit(2); // Try to get at least 2 if available
 
-      if (data && data.length > 0) {
-        data.forEach(k => providers.push(getLLMProvider(k.provider, k.api_key)));
+      if (data) {
+        data.forEach(d => {
+           providers.push(getLLMProvider(d.provider, normalizeApiKey(d.api_key)));
+        });
       }
-    } catch (err) {
-      // Ignore if table doesn't exist or RLS prevents access
+    }
+
+    // B. Infrastructure Fallback: Environment Variables (Vercel/Hosting)
+    if (process.env.DEEPSEEK_API_KEY) {
+      providers.push(getLLMProvider('deepseek', normalizeApiKey(process.env.DEEPSEEK_API_KEY)));
+    }
+    if (process.env.GOOGLE_API_KEY) {
+      providers.push(getLLMProvider('gemini', normalizeApiKey(process.env.GOOGLE_API_KEY)));
+    }
+    if (process.env.OPENAI_API_KEY) {
+      providers.push(getLLMProvider('gpt', normalizeApiKey(process.env.OPENAI_API_KEY)));
+    }
+
+    // C. Emergency Last Resort: Emergency Environment Variable
+    if (process.env.EMERGENCY_GOOGLE_API_KEY) {
+      providers.push(getLLMProvider('gemini', normalizeApiKey(process.env.EMERGENCY_GOOGLE_API_KEY)));
     }
   }
 
+  // If still no keys, return the main provider (will use env defaults or throw)
   if (providers.length === 0) {
-    return getLLMProvider(providerType);
+    return mainProvider;
   }
 
   return new FallbackAdapter(providers);
@@ -92,18 +134,34 @@ export async function getLLMProviderWithUserKey(
 
 export function getLLMProvider(type?: string, apiKey?: string): LLMProvider {
   const providerType = (type || process.env.LLM_PROVIDER || 'gemini').toLowerCase();
+  const normalizedKey = normalizeApiKey(apiKey);
 
   switch (providerType) {
     case 'gpt':
-      return new GPTAdapter(apiKey || '', process.env.OPENAI_MODEL || 'gpt-4o');
+      return new GPTAdapter(
+        normalizedKey,
+        process.env.OPENAI_MODEL || 'gpt-4o'
+      );
     case 'qwen':
-      return new QwenAdapter(apiKey || '', process.env.QWEN_MODEL || 'qwen-turbo');
+      return new QwenAdapter(
+        normalizedKey,
+        process.env.QWEN_MODEL || 'qwen-turbo'
+      );
     case 'deepseek':
-      return new DeepSeekAdapter(apiKey || '', process.env.DEEPSEEK_MODEL || 'deepseek-chat');
+      return new DeepSeekAdapter(
+        normalizedKey,
+        process.env.DEEPSEEK_MODEL || 'deepseek-chat'
+      );
     case 'kimi':
-      return new KimiAdapter(apiKey || '', process.env.KIMI_MODEL || 'moonshot-v1-8k');
+      return new KimiAdapter(
+        normalizedKey,
+        process.env.KIMI_MODEL || 'moonshot-v1-8k'
+      );
     case 'gemini':
     default:
-      return new GeminiAdapter(apiKey || '', process.env.GEMINI_MODEL || 'gemini-2.0-flash');
+      return new GeminiAdapter(
+        normalizedKey,
+        process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+      );
   }
 }
