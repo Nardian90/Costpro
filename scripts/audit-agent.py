@@ -422,6 +422,92 @@ def run_phase_5():
 
     print(f"Phase 5 complete. Generated {len(adrs)} ADRs in {adr_dir}.")
 
+def run_phase_6():
+    print("Executing Phase 6: C4 Architecture Diagrams...")
+    diag_dir = "docs/architecture/diagrams"
+    os.makedirs(diag_dir, exist_ok=True)
+
+    # 1. System Context Diagram
+    context_md = """# C4 System Context Diagram
+
+```mermaid
+graph TD
+    User((Usuario Final))
+    System[CostPro: Sistema de Gestión]
+    Supabase[Supabase: Auth & Data]
+    BankAPIs[APIs Bancarias]
+
+    User -- "Gestiona costos, ventas e inventario" --> System
+    System -- "Almacena datos y autentica" --> Supabase
+    System -- "Consulta estados de cuenta" --> BankAPIs
+```
+"""
+    with open(os.path.join(diag_dir, "system-context.md"), 'w', encoding='utf-8') as f:
+        f.write(context_md)
+
+    # 2. Container Diagram
+    container_md = """# C4 Container Diagram
+
+```mermaid
+graph TB
+    subgraph Client [Cliente - Navegador/PWA]
+        Frontend[Frontend: Next.js + React]
+        IDB[(Local Storage: IndexedDB)]
+        SW[Service Worker: Offline Sync]
+    end
+
+    subgraph Backend [Backend - Supabase]
+        Auth[Auth Service]
+        Database[(PostgreSQL Database)]
+        Functions[Edge Functions]
+        Storage[Object Storage]
+    end
+
+    Frontend -- "CRUD / Realtime" --> Database
+    Frontend -- "Persistencia Local" --> IDB
+    Frontend -- "Gestión de Sesión" --> Auth
+    Frontend -- "Lógica Pesada / IA" --> Functions
+    SW -- "Sincronización" --> Frontend
+    SW -- "Caché Offline" --> IDB
+```
+"""
+    with open(os.path.join(diag_dir, "container-architecture.md"), 'w', encoding='utf-8') as f:
+        f.write(container_md)
+
+    # 3. Component Diagram (Core Modules)
+    component_md = """# C4 Component Diagram (Frontend Core)
+
+```mermaid
+graph LR
+    subgraph UI_Shell [Shell de la Terminal]
+        TerminalShell[TerminalShell.tsx]
+        Sidebar[Sidebar.tsx]
+        Header[Header.tsx]
+    end
+
+    subgraph Engines [Motores de Lógica]
+        IPVEngine[IPV Engine: engine.ts]
+        CostEngine[Cost Engine: cost-engine/]
+        AIOrch[AI Orchestrator: orchestrator.ts]
+    end
+
+    subgraph State_Management [Gestión de Estado]
+        Zustand[Zustand Stores]
+        Dexie[Dexie.js: Local DB]
+        ReactQuery[TanStack Query: Cache]
+    end
+
+    TerminalShell -- "Orquesta" --> Engines
+    Engines -- "Persistencia" --> Dexie
+    Engines -- "Estado Global" --> Zustand
+    TerminalShell -- "Datos Remotos" --> ReactQuery
+```
+"""
+    with open(os.path.join(diag_dir, "component-architecture.md"), 'w', encoding='utf-8') as f:
+        f.write(component_md)
+
+    print(f"Phase 6 complete. Updated C4 diagrams in {diag_dir}.")
+
 def run_phase_9():
     print("Executing Phase 9: System Health Evaluation...")
     items, _, _ = scan_project()
@@ -530,6 +616,8 @@ def main():
         run_phase_4()
     elif args.phase == 5:
         run_phase_5()
+    elif args.phase == 6:
+        run_phase_6()
     elif args.phase == 9:
         run_phase_9()
     elif args.phase == 10:
