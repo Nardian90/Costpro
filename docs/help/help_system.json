@@ -1,13 +1,102 @@
 {
   "app": "CostPro",
   "version": "5.8.0",
-  "updated_at": "2026-03-13T09:39:52.920341Z",
+  "updated_at": "2026-03-14T09:10:00.000000Z",
   "modules": {
     "terminal": "Punto central para las operaciones diarias, incluyendo ventas, inventario y gestión.",
     "multitienda": "Control consolidado y navegación instantánea entre todas las sucursales del negocio.",
-    "ipv": "Módulo avanzado para conciliación bancaria y reportes automatizados de índices de precios."
+    "ipv": "Módulo avanzado para conciliación bancaria y reportes automatizados de índices de precios.",
+    "academy": "Plataforma de capacitación con manuales inteligentes y flashcards para el dominio del sistema."
   },
   "flows": [
+    {
+      "id": "academy_flow",
+      "title": "Academia CostPro y Capacitación",
+      "role": "todos",
+      "story": {
+        "before": "Aprender a usar el sistema requería leer manuales aburridos y largos sin saber si realmente habías entendido los conceptos.",
+        "now": "Tienes una biblioteca interactiva que convierte manuales PDF en flashcards y cuestionarios personalizados usando inteligencia artificial.",
+        "why": "Acelera el aprendizaje del personal nuevo y garantiza que todos dominen las mejores prácticas contables del negocio."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Abrir la Academia",
+          "explanation": "Selecciona 'Academia' en el menú lateral para acceder a tus materiales de estudio."
+        },
+        {
+          "step": 2,
+          "title": "Elegir un Manual",
+          "explanation": "Busca el tema que deseas aprender (ej. Normativas Contables o Uso del TPV) y abre el documento digital."
+        },
+        {
+          "step": 3,
+          "title": "Generar Flashcards",
+          "explanation": "Toca el botón de 'Práctica Inteligente'. El sistema extraerá los puntos más importantes para que los repases."
+        },
+        {
+          "step": 4,
+          "title": "Medir tu Progreso",
+          "explanation": "Revisa tu tablero de dominio para ver qué temas has superado y cuáles necesitan más atención."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Abrir Academia",
+            "Seleccionar Tema",
+            "Práctica IA",
+            "Panel de Domino"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ai_assistant_flow",
+      "title": "Asistente Inteligente (Jules)",
+      "role": "todos",
+      "story": {
+        "before": "Cuando tenías una duda sobre un reporte o un descuadre, debías llamar a soporte técnico o buscar en un manual físico.",
+        "now": "Jules, tu asistente IA, está disponible 24/7 para responder preguntas sobre tus ventas, stock o cualquier función del sistema.",
+        "why": "Reduce el tiempo de resolución de dudas y te ayuda a interpretar tus datos financieros sin ser un experto."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Activar a Jules",
+          "explanation": "Haz clic en el icono del robot en la esquina inferior derecha de cualquier pantalla."
+        },
+        {
+          "step": 2,
+          "title": "Hacer una Pregunta",
+          "explanation": "Escribe tu duda en lenguaje natural, por ejemplo: '¿Cuál fue el producto más vendido hoy?' o '¿Cómo hago un cierre?'."
+        },
+        {
+          "step": 3,
+          "title": "Recibir Respuesta",
+          "explanation": "Jules analizará tu contexto y te dará una respuesta directa, clara y accionable en segundos."
+        },
+        {
+          "step": 4,
+          "title": "Limpiar Contexto",
+          "explanation": "Si deseas cambiar de tema, usa el botón 'Limpiar' para iniciar una nueva conversación desde cero."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Abrir Chat",
+            "Pregunta Natural",
+            "Análisis IA",
+            "Guía Directa"
+          ]
+        }
+      }
+    },
     {
       "id": "cash_closure_flow",
       "title": "Cierre de Caja Diario",
@@ -441,13 +530,18 @@
         "version": "5.7.25",
         "date": "2026-03-13",
         "description": "Integración de Modo Rápido con Generación Masiva para fichas de costo."
+      },
+      {
+        "version": "5.8.0",
+        "date": "2026-03-14",
+        "description": "Sincronización diaria: Añadida documentación para Jules (Asistente IA) y Academia CostPro."
       }
     ]
   },
   "metadata": {
-    "lastRun": "2026-03-13T09:39:52.920341Z",
-    "lastHash": "89abd3a43d002b5b1987d7e8073fc7b5819df6dfc474621c85e3dac1e503f759",
-    "runCount": 11,
+    "lastRun": "2026-03-14T09:10:00.000000Z",
+    "lastHash": "dd7b20aff4a33de3265686e142d1a6f61b2d488ff45939b25c3e2cb2e840a6fb",
+    "runCount": 12,
     "lastAgent": "Jules"
   }
 }
