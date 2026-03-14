@@ -2,6 +2,15 @@ import Dexie, { type Table } from 'dexie';
 
 // --- Interfaces ---
 
+export type MatchingTrace = {
+  pass: number
+  rule: string
+  status: "SUCCESS" | "FAIL" | "SKIPPED"
+  reason?: string
+  details?: any
+  timestamp: number
+}
+
 export interface BankTransaction {
   id: string;                  // UUID o hash fila
   fecha: string;               // YYYY-MM-DD
@@ -23,6 +32,10 @@ export interface BankTransaction {
   carnet?: string;
   nombre_cliente?: string;
   telefono_cliente?: string;
+  // Matching Engine traceability
+  matching_trace?: MatchingTrace[];
+  applied_rules?: string[];
+  matching_confidence?: number;
 }
 
 export interface Product {
@@ -198,7 +211,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(12).stores({
+    this.version(13).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad',

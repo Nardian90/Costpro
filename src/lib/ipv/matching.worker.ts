@@ -1,5 +1,4 @@
-
-import { MatchingEngine } from '../ipv/engine';
+import { MatchingEngine } from './engine';
 
 self.onmessage = async (e) => {
   const { type, transactions, products, rules, stockMap } = e.data;
