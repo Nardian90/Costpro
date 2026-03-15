@@ -217,6 +217,7 @@ export interface IPVSettings {
   desglose_modo: 'DIA' | 'TRANSACCION';
   logo_url?: string;
   paper_size?: 'LETTER' | 'A4';
+  copiloto_activo: boolean;
   updated_at: string;
 }
 
