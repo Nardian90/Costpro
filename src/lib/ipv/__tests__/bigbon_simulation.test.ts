@@ -1,5 +1,5 @@
 import { it, expect, describe, beforeEach } from 'vitest';
-import { processTransactions } from '../engine';
+import { MatchingEngine } from '../engine';
 import { db } from '../../dexie';
 
 describe('BIG BON Simulation', () => {
@@ -7,7 +7,7 @@ describe('BIG BON Simulation', () => {
         await db.products.clear();
         await db.reconciliation_lines.clear();
         await db.product_movements.clear();
-        await db.bank_transactions.clear();
+        await db.bank_statements.clear();
     });
 
     it('should decompose BIG BON CAJA -> PQT -> UNIDADES to fulfill a sale', async () => {
@@ -68,15 +68,15 @@ describe('BIG BON Simulation', () => {
             moneda: 'CUP',
             estado: 'PENDIENTE'
         };
-        await db.bank_transactions.add(tx as any);
+        await db.bank_statements.add(tx as any);
 
         // 3. Run Engine
-        await processTransactions();
+        await MatchingEngine.reconcileAll();
 
         // 4. Verify results
         const reconLines = await db.reconciliation_lines.where('transaction_id').equals('tx_bigbon_sale').toArray();
         expect(reconLines.length).toBe(1);
-        expect(reconLines[0].product_code).toBe('4');
+        expect(reconLines[0].product_cod).toBe('4');
         expect(reconLines[0].qty).toBe(10);
 
         // 5. Verify movements (Decompositions)

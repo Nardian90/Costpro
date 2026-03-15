@@ -208,7 +208,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             </Table>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
               {filtered.length === 0 ? (
                   <div className="h-24 flex items-center justify-center text-muted-foreground">No se encontraron transacciones.</div>
               ) : (
@@ -226,7 +226,19 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                     <ActionBadges appliedRules={tx.applied_rules} />
                                   </div>
                               </div>
-                              <p className="text-xs text-muted-foreground line-clamp-2">{tx.observaciones}</p>
+                              <div className="space-y-2">
+                                  <p className="text-xs text-muted-foreground line-clamp-2" title={tx.observaciones}>{tx.observaciones}</p>
+                                  {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
+                                      <div className="text-[10px] text-red-500 font-bold uppercase leading-tight animate-pulse whitespace-normal break-words">
+                                          ⚠️ {tx.fail_reason}
+                                      </div>
+                                  )}
+                                  {tx.estado_conciliacion !== "COMPLETO" && onForceMatch && (
+                                      <Button variant="link" className="h-4 p-0 text-[10px] text-primary font-black uppercase tracking-tighter" onClick={() => onForceMatch(tx)}>
+                                          Analizar fallo
+                                      </Button>
+                                  )}
+                              </div>
                               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                   <div><p className="text-xs font-bold text-muted-foreground uppercase">Neto</p><p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p></div>
                                   <div><p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p><p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p></div>
@@ -284,7 +296,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="text-xs max-w-[150px]">
     <div className="truncate font-medium" title={tx.observaciones}>{tx.observaciones}</div>
     {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
-        <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight animate-pulse">
+        <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight animate-pulse whitespace-normal break-words">
             ⚠️ {tx.fail_reason}
         </div>
     )}
