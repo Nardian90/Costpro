@@ -1,0 +1,3551 @@
+{
+  "nodes": [
+    {
+      "id": "src/components/IntelligentThemeHandler.tsx",
+      "label": "IntelligentThemeHandler.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/GlobalSessionManager.tsx",
+      "label": "GlobalSessionManager.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/theme-provider.tsx",
+      "label": "theme-provider.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/SplashScreen.tsx",
+      "label": "SplashScreen.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ThemeToggle.tsx",
+      "label": "ThemeToggle.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/CostProLogo.tsx",
+      "label": "CostProLogo.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ServiceWorkerRegister.tsx",
+      "label": "ServiceWorkerRegister.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/modals/SyncConflictModal.tsx",
+      "label": "SyncConflictModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/modals/CreateProductModal.tsx",
+      "label": "CreateProductModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/modals/BarcodeScanner.tsx",
+      "label": "BarcodeScanner.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/modals/UpgradeModal.tsx",
+      "label": "UpgradeModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/modals/PriceSelectorModal.tsx",
+      "label": "PriceSelectorModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/providers/SyncProvider.tsx",
+      "label": "SyncProvider.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/providers/QueryProvider.tsx",
+      "label": "QueryProvider.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/TerminalShell.tsx",
+      "label": "TerminalShell.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "label": "ExecutiveDemoView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/Sidebar.tsx",
+      "label": "Sidebar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/Header.tsx",
+      "label": "Header.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
+      "label": "SystemDependencyGraph.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/AuditSummary.tsx",
+      "label": "AuditSummary.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
+      "label": "SecurityMetrics.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
+      "label": "HealthStatusHeader.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "label": "SystemHealthView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
+      "label": "ArchitectureAuditTable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
+      "label": "ReleaseGateStatus.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+      "label": "ViewNavigator.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
+      "label": "HealthAgentLogs.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
+      "label": "DetailedRelationshipGraph.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
+      "label": "InfrastructureMetrics.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
+      "label": "ApplicationMetrics.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "label": "WalletView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
+      "label": "AnalyticsDashboard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
+      "label": "CatalogModals.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "label": "CatalogView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
+      "label": "SettingsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "label": "DashboardView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+      "label": "useDashboardView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+      "label": "ConcentricDashboardRing.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+      "label": "ExecutiveKpiCards.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
+      "label": "RecentCostSheets.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
+      "label": "ReportConfigPanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
+      "label": "ReportPreview.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "label": "ReportsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
+      "label": "AuditLogsModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "label": "StoresManagementView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
+      "label": "useStoresView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/StoreModals.tsx",
+      "label": "StoreModals.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
+      "label": "MasteryDashboard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "label": "AcademyView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/academy/Flashcard.tsx",
+      "label": "Flashcard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+      "label": "CreateTransferModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "label": "TransferenciasView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+      "label": "TransferDetailsModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/HelpView.tsx",
+      "label": "HelpView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
+      "label": "KidsOnboarding.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+      "label": "StickyCartFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.test.tsx",
+      "label": "StoreSkuDiagram.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
+      "label": "MobilePosDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+      "label": "IpvFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
+      "label": "SecurityFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+      "label": "UserFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
+      "label": "QuickModeMassiveDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx",
+      "label": "OfflineSyncDiagram.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/DarianDiagram.test.tsx",
+      "label": "DarianDiagram.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+      "label": "CostFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
+      "label": "RolesDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
+      "label": "OfflineSyncDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+      "label": "InventoryFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
+      "label": "MobileFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
+      "label": "CashFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
+      "label": "InventoryAdjustmentFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
+      "label": "StoreSkuDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
+      "label": "DarianDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
+      "label": "SalesFlowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "label": "InventoryCardView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "label": "InventoryAdjustmentsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+      "label": "InventoryAdjustmentModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "label": "ProductReceptionView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "label": "InventoryTableView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "label": "InventoryView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "label": "CashClosureView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
+      "label": "TaxCalculationModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "label": "SalesHistoryView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
+      "label": "TransactionDetailsModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+      "label": "useSalesHistoryView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+      "label": "ReceptionDetailsModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "label": "ReceptionsHistoryView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+      "label": "useReceptionsHistoryView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "label": "StockHistoryView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "label": "IPVView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
+      "label": "IPVRightSidebar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
+      "label": "TransactionBreakdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
+      "label": "ActionBadges.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
+      "label": "TransactionTable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
+      "label": "AddTransactionModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
+      "label": "IncomeReceiptPreview.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
+      "label": "MovementsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
+      "label": "IncomeReceiptSection.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
+      "label": "IPVPreviewModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
+      "label": "MatchingTracePopover.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "label": "IPVReportView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "label": "MatchingAuditView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
+      "label": "IngestionErrorsTable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "label": "TransferQRReportView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "label": "ManualReconciliationView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
+      "label": "MatchingRulesEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
+      "label": "MatchingSimulation.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
+      "label": "RuleMetaEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
+      "label": "IPVReportsDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "label": "PivotStatementView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
+      "label": "BankIngestion.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
+      "label": "IPVInstitutionalDashboard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
+      "label": "CatalogTable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
+      "label": "IPVHelpDialog.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
+      "label": "IPVControlPanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+      "label": "InventoryCountTableView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+      "label": "InventoryCountCardView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "label": "InventoryCountView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/data-loader.ts",
+      "label": "data-loader.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
+      "label": "CuentasModule.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
+      "label": "AsientosModule.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
+      "label": "WikiBreadcrumbs.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
+      "label": "WikiSearch.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/types.ts",
+      "label": "types.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "label": "WikiView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
+      "label": "WikiSidebar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
+      "label": "ClasificadorModule.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "label": "POSTableView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
+      "label": "usePOSView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSView.tsx",
+      "label": "POSView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSCart.tsx",
+      "label": "POSCart.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
+      "label": "StickyCartSummary.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
+      "label": "AuditEventIcon.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/audit.test.ts",
+      "label": "audit.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditFilters.tsx",
+      "label": "AuditFilters.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditEventMeta.test.tsx",
+      "label": "AuditEventMeta.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+      "label": "AuditTableView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
+      "label": "AuditTableView.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
+      "label": "AuditTimeline.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
+      "label": "AuditLogsView.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
+      "label": "useAuditLogsView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
+      "label": "AuditEventCard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
+      "label": "AuditEventMeta.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "label": "AuditLogsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "label": "CostSheetAuditView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
+      "label": "CostSheetSidebarNav.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
+      "label": "CostSheetFormulaGuide.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
+      "label": "CostSheetGenerateDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
+      "label": "FormulaEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
+      "label": "CircularProgress.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
+      "label": "CostSheetCalculator.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
+      "label": "ProductInventoryPicker.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
+      "label": "CostSheetBanner.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
+      "label": "CostSheetAuditLog.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
+      "label": "CostSheetMasterRing.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
+      "label": "CostSheetActionsPanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "label": "CostSheetView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
+      "label": "CostSheetAnnexes.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
+      "label": "CostSheetHelpDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
+      "label": "CostSheetSummary.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
+      "label": "CostSheetNav.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
+      "label": "CostSheetOptionsDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
+      "label": "CostSheetHeader.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
+      "label": "CostSheetQuickMode.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
+      "label": "CostSheetBottomNav.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
+      "label": "CostSheetNarrative.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
+      "label": "CostSheetSignature.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
+      "label": "CostSheetExportModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
+      "label": "HealthBattery.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
+      "label": "CostSheetTemplateExplorer.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
+      "label": "CostSheetForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
+      "label": "FormulaBuilder.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "label": "CostSheetCardView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
+      "label": "CostSheetMassiveGenerator.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
+      "label": "CostSheetSidePanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
+      "label": "CostSheetBody.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
+      "label": "DarianEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
+      "label": "CostSheetHeaderEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
+      "label": "CostSheetFCDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
+      "label": "CostSheetWizard.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
+      "label": "CostSheetInteractiveTable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
+      "label": "CostSheetAnnexEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
+      "label": "CostSheetSectionActionsPanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
+      "label": "CostSheetPreview.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
+      "label": "CostSheetSignatureEditor.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
+      "label": "CostSheetModeDropdown.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
+      "label": "CostSheetHelpPanel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx",
+      "label": "CostSheetTemplateExplorer.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/UserFormModal.tsx",
+      "label": "UserFormModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/useUsersView.ts",
+      "label": "useUsersView.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "label": "UsersManagementView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/RoleForm.tsx",
+      "label": "RoleForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "label": "RolesManagementView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/UserForm.tsx",
+      "label": "UserForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "label": "RSSManagementView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "label": "NewsView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
+      "label": "LegalView.test.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
+      "label": "LegalPdfExporter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
+      "label": "LegalModelForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
+      "label": "LegalConsultant.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
+      "label": "LegalView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/skeleton.tsx",
+      "label": "skeleton.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/DataDecryption.tsx",
+      "label": "DataDecryption.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/accordion.tsx",
+      "label": "accordion.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/ViewSwitcher.tsx",
+      "label": "ViewSwitcher.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/hover-card.tsx",
+      "label": "hover-card.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/LazyRender.tsx",
+      "label": "LazyRender.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/command.tsx",
+      "label": "command.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/resizable.tsx",
+      "label": "resizable.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/QueryInspector.tsx",
+      "label": "QueryInspector.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/SearchBar.tsx",
+      "label": "SearchBar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/dropdown-menu.tsx",
+      "label": "dropdown-menu.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/separator.tsx",
+      "label": "separator.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/MobileSafeContainer.tsx",
+      "label": "MobileSafeContainer.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/pagination.tsx",
+      "label": "pagination.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/alert-dialog.tsx",
+      "label": "alert-dialog.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/input-otp.tsx",
+      "label": "input-otp.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/alert.tsx",
+      "label": "alert.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/CyberShell.tsx",
+      "label": "CyberShell.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/popover.tsx",
+      "label": "popover.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/table.tsx",
+      "label": "table.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/progress.tsx",
+      "label": "progress.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/select.tsx",
+      "label": "select.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/sonner.tsx",
+      "label": "sonner.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/LoadingOverlay.tsx",
+      "label": "LoadingOverlay.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/textarea.tsx",
+      "label": "textarea.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/PWAInstallModal.tsx",
+      "label": "PWAInstallModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/toggle.tsx",
+      "label": "toggle.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/StateRenderer.tsx",
+      "label": "StateRenderer.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/Portal.tsx",
+      "label": "Portal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/toggle-group.tsx",
+      "label": "toggle-group.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/scroll-area.tsx",
+      "label": "scroll-area.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/label.tsx",
+      "label": "label.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/chart.tsx",
+      "label": "chart.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/sidebar.tsx",
+      "label": "sidebar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/tabs.tsx",
+      "label": "tabs.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/BaseModal.tsx",
+      "label": "BaseModal.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/switch.tsx",
+      "label": "switch.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/checkbox.tsx",
+      "label": "checkbox.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/context-menu.tsx",
+      "label": "context-menu.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/badge.tsx",
+      "label": "badge.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/CostProLoader.tsx",
+      "label": "CostProLoader.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/calendar.tsx",
+      "label": "calendar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/toaster.tsx",
+      "label": "toaster.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/navigation-menu.tsx",
+      "label": "navigation-menu.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/ActionMenu.tsx",
+      "label": "ActionMenu.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/ProductImage.tsx",
+      "label": "ProductImage.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/toast.tsx",
+      "label": "toast.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/FloatingCalculator.tsx",
+      "label": "FloatingCalculator.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/ScrollToTop.tsx",
+      "label": "ScrollToTop.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/button.tsx",
+      "label": "button.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/avatar.tsx",
+      "label": "avatar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/dialog.tsx",
+      "label": "dialog.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/SecurityScrollContainer.tsx",
+      "label": "SecurityScrollContainer.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/breadcrumb.tsx",
+      "label": "breadcrumb.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/form.tsx",
+      "label": "form.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/slider.tsx",
+      "label": "slider.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/menubar.tsx",
+      "label": "menubar.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/tooltip.tsx",
+      "label": "tooltip.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/SpeedDial.tsx",
+      "label": "SpeedDial.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/ChatBot.tsx",
+      "label": "ChatBot.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/aspect-ratio.tsx",
+      "label": "aspect-ratio.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/carousel.tsx",
+      "label": "carousel.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/card.tsx",
+      "label": "card.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/sheet.tsx",
+      "label": "sheet.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/drawer.tsx",
+      "label": "drawer.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/input.tsx",
+      "label": "input.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/HorizontalScroll.tsx",
+      "label": "HorizontalScroll.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/collapsible.tsx",
+      "label": "collapsible.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/SyncStatusBadge.tsx",
+      "label": "SyncStatusBadge.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/radio-group.tsx",
+      "label": "radio-group.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/ui/atomic/index.tsx",
+      "label": "index.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/auth/RegisterForm.tsx",
+      "label": "RegisterForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/auth/LoginForm.tsx",
+      "label": "LoginForm.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/auth/WelcomeLandingView.tsx",
+      "label": "WelcomeLandingView.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
+      "label": "SpeedScaleDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
+      "label": "AutomationWorkflowDiagram.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/layout.tsx",
+      "label": "layout.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/cost-sheets/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/save/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-json/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/cost-sheets/calculate/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/system-health/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/reports/generate/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/academy/review/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/academy/review/[cardId]/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/academy/generate/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/inventory/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/inventory/adjust/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/inventory/[productId]/history/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/inventory/products/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/inventory/adjustments/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/bot/chat/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/users/reset-password/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/users/toggle-status/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/users/delete/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/users/managed-create/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/sync/batch/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/rss/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/api/logs/route.ts",
+      "label": "route.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/app/verify-dashboard/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/wiki/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/cashier/close-session/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/demo/executive/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/demo/calculate/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/app/login/page.tsx",
+      "label": "page.tsx",
+      "group": "component"
+    },
+    {
+      "id": "src/services/bot-service.test.ts",
+      "label": "bot-service.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/store-service.ts",
+      "label": "store-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/export-service.ts",
+      "label": "export-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/usage-service.ts",
+      "label": "usage-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/cash-service.ts",
+      "label": "cash-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/transfer-service.ts",
+      "label": "transfer-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/excel-service.ts",
+      "label": "excel-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/bot-service.ts",
+      "label": "bot-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/report-service.ts",
+      "label": "report-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/import-service.ts",
+      "label": "import-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/matching-log-service.ts",
+      "label": "matching-log-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/rss-service.ts",
+      "label": "rss-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/user-service.ts",
+      "label": "user-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/audit-service.ts",
+      "label": "audit-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/catalog-service.ts",
+      "label": "catalog-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/services/__mocks__/matching-log-service.ts",
+      "label": "matching-log-service.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/useSync.ts",
+      "label": "useSync.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/logic/useCostSheetCalculator.ts",
+      "label": "useCostSheetCalculator.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/logic/usePOSProducts.ts",
+      "label": "usePOSProducts.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/logic/useSessionManager.ts",
+      "label": "useSessionManager.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/logic/useCostEngine.ts",
+      "label": "useCostEngine.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useTransfers.ts",
+      "label": "useTransfers.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useDocumentActions.ts",
+      "label": "useDocumentActions.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useCostSheets.ts",
+      "label": "useCostSheets.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useTaxes.ts",
+      "label": "useTaxes.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useProducts.ts",
+      "label": "useProducts.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useTransactions.ts",
+      "label": "useTransactions.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useStockMovements.ts",
+      "label": "useStockMovements.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useCashClosures.ts",
+      "label": "useCashClosures.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useStores.ts",
+      "label": "useStores.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useDashboard.ts",
+      "label": "useDashboard.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useUsers.ts",
+      "label": "useUsers.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useInventory.ts",
+      "label": "useInventory.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useRoles.ts",
+      "label": "useRoles.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/hooks.test.ts",
+      "label": "hooks.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useAuditLogs.ts",
+      "label": "useAuditLogs.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/base.ts",
+      "label": "base.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useReceptions.ts",
+      "label": "useReceptions.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/api/useRSS.ts",
+      "label": "useRSS.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/usePWA.ts",
+      "label": "usePWA.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/useTerminalNavigation.ts",
+      "label": "useTerminalNavigation.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/useCatalogModals.ts",
+      "label": "useCatalogModals.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/useMobile.ts",
+      "label": "useMobile.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/useDebounce.ts",
+      "label": "useDebounce.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/useToast.ts",
+      "label": "useToast.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/ui/__tests__/usePWA.test.ts",
+      "label": "usePWA.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/__tests__/useCostSheetCalculator.test.ts",
+      "label": "useCostSheetCalculator.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/hooks/__tests__/templates_verification.test.ts",
+      "label": "templates_verification.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/cart.ts",
+      "label": "cart.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/session-store.ts",
+      "label": "session-store.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/cost-sheet-store.ts",
+      "label": "cost-sheet-store.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/index.ts",
+      "label": "index.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/useAcademyStore.ts",
+      "label": "useAcademyStore.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/__tests__/session-store.test.ts",
+      "label": "session-store.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/__tests__/cart.test.ts",
+      "label": "cart.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/__tests__/auth.test.ts",
+      "label": "auth.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/__tests__/cart_advanced.test.ts",
+      "label": "cart_advanced.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/store/__tests__/cost-sheet-store.test.ts",
+      "label": "cost-sheet-store.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/db.ts",
+      "label": "db.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/dexie.ts",
+      "label": "dexie.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/inventory-logic.ts",
+      "label": "inventory-logic.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/supabaseClient.ts",
+      "label": "supabaseClient.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/rpc-validator.ts",
+      "label": "rpc-validator.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/auth.ts",
+      "label": "auth.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/query-inspector-utils.ts",
+      "label": "query-inspector-utils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/plan-utils.ts",
+      "label": "plan-utils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/logger.ts",
+      "label": "logger.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/theme.test.ts",
+      "label": "theme.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/utils.ts",
+      "label": "utils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/errorHandler.ts",
+      "label": "errorHandler.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/navigation.ts",
+      "label": "navigation.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/roles.ts",
+      "label": "roles.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/wallet/parser.ts",
+      "label": "parser.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/wallet/types.ts",
+      "label": "types.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/wallet/__tests__/parser.test.ts",
+      "label": "parser.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/user-json.test.ts",
+      "label": "user-json.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/heuristic.test.ts",
+      "label": "heuristic.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/bidirectional.test.ts",
+      "label": "bidirectional.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/formula-utils.ts",
+      "label": "formula-utils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/index.ts",
+      "label": "index.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/accuracy.test.ts",
+      "label": "accuracy.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/types.ts",
+      "label": "types.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/validations.ts",
+      "label": "validations.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/smart-annex.test.ts",
+      "label": "smart-annex.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/topo-sort.test.ts",
+      "label": "topo-sort.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/index.test.ts",
+      "label": "index.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/cost-engine/schemas.ts",
+      "label": "schemas.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/utils/pdf-export.ts",
+      "label": "pdf-export.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/utils/number-to-words-es.ts",
+      "label": "number-to-words-es.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/observability/health-engine.ts",
+      "label": "health-engine.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/observability/health-alerts.ts",
+      "label": "health-alerts.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/observability/system-health.ts",
+      "label": "system-health.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/observability/__tests__/system-health.test.ts",
+      "label": "system-health.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/observability/__tests__/health-engine.test.ts",
+      "label": "health-engine.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/academy/sm2.ts",
+      "label": "sm2.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/academy/__tests__/sm2.test.ts",
+      "label": "sm2.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
+      "label": "ReleaseGatePdfExporter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/release_gate/mri-engine.ts",
+      "label": "mri-engine.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/release_gate/__tests__/mri-engine.test.ts",
+      "label": "mri-engine.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-repair.ts",
+      "label": "template-repair.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/demo-products.ts",
+      "label": "demo-products.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/costpro-ejemplo.ts",
+      "label": "costpro-ejemplo.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-industrial.ts",
+      "label": "template-industrial.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/costpro-reinicio.ts",
+      "label": "costpro-reinicio.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-consultancy.ts",
+      "label": "template-consultancy.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-logistics.ts",
+      "label": "template-logistics.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-lavar.ts",
+      "label": "template-lavar.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-pastry.ts",
+      "label": "template-pastry.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-icecream.ts",
+      "label": "template-icecream.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-juice.ts",
+      "label": "template-juice.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-shoes.ts",
+      "label": "template-shoes.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-pizza.ts",
+      "label": "template-pizza.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/data/template-furniture.ts",
+      "label": "template-furniture.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/intelligence.ts",
+      "label": "intelligence.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/calculations.ts",
+      "label": "calculations.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/importUtils.ts",
+      "label": "importUtils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/backup.ts",
+      "label": "backup.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/matching.worker.ts",
+      "label": "matching.worker.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/bandecParser.ts",
+      "label": "bandecParser.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/engine.ts",
+      "label": "engine.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/parser.ts",
+      "label": "parser.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/utils.ts",
+      "label": "utils.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
+      "label": "global_goal_priority.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/calculations.test.ts",
+      "label": "calculations.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/bandecParser.test.ts",
+      "label": "bandecParser.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/repro_issue.test.ts",
+      "label": "repro_issue.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/advanced_engine.test.ts",
+      "label": "advanced_engine.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
+      "label": "bigbon_simulation.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ipv/__tests__/engine.test.ts",
+      "label": "engine.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/orchestrator.ts",
+      "label": "orchestrator.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/types.ts",
+      "label": "types.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/qwen-adapter.ts",
+      "label": "qwen-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/openai-compatible-adapter.ts",
+      "label": "openai-compatible-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/fallback-adapter.ts",
+      "label": "fallback-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/deepseek-adapter.ts",
+      "label": "deepseek-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/gemini-adapter.test.ts",
+      "label": "gemini-adapter.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/gemini-adapter.ts",
+      "label": "gemini-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/kimi-adapter.ts",
+      "label": "kimi-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/adapters/gpt-adapter.ts",
+      "label": "gpt-adapter.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/tools/definitions.ts",
+      "label": "definitions.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/tools/registry.ts",
+      "label": "registry.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/ai/tools/registry.test.ts",
+      "label": "registry.test.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/lib/sync/offline-storage.ts",
+      "label": "offline-storage.ts",
+      "group": "component"
+    },
+    {
+      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "label": "ExecutiveDemoView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "label": "SystemHealthView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+      "label": "ViewNavigator.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "label": "WalletView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "label": "CatalogView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
+      "label": "SettingsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "label": "DashboardView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+      "label": "useDashboardView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "label": "ReportsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "label": "StoresManagementView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
+      "label": "useStoresView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "label": "AcademyView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "label": "TransferenciasView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/help/HelpView.tsx",
+      "label": "HelpView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "label": "InventoryCardView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "label": "InventoryAdjustmentsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "label": "ProductReceptionView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "label": "InventoryTableView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "label": "InventoryView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "label": "CashClosureView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "label": "SalesHistoryView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+      "label": "useSalesHistoryView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "label": "ReceptionsHistoryView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+      "label": "useReceptionsHistoryView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "label": "StockHistoryView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "label": "IPVView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
+      "label": "MovementsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "label": "IPVReportView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "label": "MatchingAuditView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "label": "TransferQRReportView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "label": "ManualReconciliationView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "label": "PivotStatementView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+      "label": "InventoryCountTableView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+      "label": "InventoryCountCardView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "label": "InventoryCountView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "label": "WikiView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "label": "POSTableView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
+      "label": "usePOSView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSView.tsx",
+      "label": "POSView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+      "label": "AuditTableView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
+      "label": "AuditTableView.test.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
+      "label": "AuditLogsView.test.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
+      "label": "useAuditLogsView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "label": "AuditLogsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "label": "CostSheetAuditView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "label": "CostSheetView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "label": "CostSheetCardView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/useUsersView.ts",
+      "label": "useUsersView.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "label": "UsersManagementView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "label": "RolesManagementView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "label": "RSSManagementView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "label": "NewsView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
+      "label": "LegalView.test.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
+      "label": "LegalView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/ui/ViewSwitcher.tsx",
+      "label": "ViewSwitcher.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/components/auth/WelcomeLandingView.tsx",
+      "label": "WelcomeLandingView.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/layout.tsx",
+      "label": "layout.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/cost-sheets/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/save/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-json/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/cost-sheets/calculate/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/system-health/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/reports/generate/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/academy/review/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/academy/review/[cardId]/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/academy/generate/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/inventory/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/inventory/adjust/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/inventory/[productId]/history/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/inventory/products/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/inventory/adjustments/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/bot/chat/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/users/reset-password/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/users/toggle-status/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/users/delete/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/users/managed-create/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/sync/batch/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/rss/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/api/logs/route.ts",
+      "label": "route.ts",
+      "group": "view"
+    },
+    {
+      "id": "src/app/verify-dashboard/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/wiki/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/cashier/close-session/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/demo/executive/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/demo/calculate/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "src/app/login/page.tsx",
+      "label": "page.tsx",
+      "group": "view"
+    },
+    {
+      "id": "reconciliacion_ipv",
+      "label": "Conciliación de Inventario (IPV)",
+      "group": "workflow"
+    },
+    {
+      "id": "gestion_productos",
+      "label": "Gestión de Productos y Precios",
+      "group": "workflow"
+    }
+  ],
+  "links": [
+    {
+      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "target": "src/components/ui/progress.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "target": "src/components/ui/ProductImage.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "target": "src/components/ui/ViewSwitcher.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "target": "src/components/ui/toggle-group.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "target": "src/components/ui/popover.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "target": "src/components/ui/calendar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/help/HelpView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/help/HelpView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/help/HelpView.tsx",
+      "target": "src/components/ThemeToggle.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "target": "src/components/ui/SecurityScrollContainer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "target": "src/components/ui/CostProLoader.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "target": "src/components/ui/ProductImage.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/tabs.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/LoadingOverlay.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/HorizontalScroll.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "target": "src/components/ui/tooltip.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "target": "src/components/ui/LoadingOverlay.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "target": "src/components/ui/label.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "target": "src/components/ui/scroll-area.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "target": "src/components/ui/SecurityScrollContainer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "target": "src/components/ui/scroll-area.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "target": "src/components/ui/ProductImage.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/ViewSwitcher.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/Portal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/QueryInspector.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/modals/PriceSelectorModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/modals/BarcodeScanner.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/pos/POSView.tsx",
+      "target": "src/components/ui/SpeedDial.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "target": "src/components/ui/tabs.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "target": "src/components/ui/scroll-area.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/LazyRender.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/ViewSwitcher.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/modals/UpgradeModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "target": "src/components/ui/SpeedDial.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "target": "src/components/ui/LazyRender.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "target": "src/components/ui/popover.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "target": "src/components/ui/switch.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "target": "src/components/ui/select.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "target": "src/components/ui/SearchBar.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "target": "src/components/ui/ActionMenu.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "target": "src/components/ui/StateRenderer.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/auth/WelcomeLandingView.tsx",
+      "target": "src/components/CostProLogo.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/auth/WelcomeLandingView.tsx",
+      "target": "src/components/ThemeToggle.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/auth/WelcomeLandingView.tsx",
+      "target": "src/components/ui/PWAInstallModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/page.tsx",
+      "target": "src/components/ui/CyberShell.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/page.tsx",
+      "target": "src/components/views/TerminalShell.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/page.tsx",
+      "target": "src/components/ui/DataDecryption.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/theme-provider.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/GlobalSessionManager.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/ServiceWorkerRegister.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/providers/QueryProvider.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/providers/SyncProvider.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "target": "src/components/IntelligentThemeHandler.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/cost-sheets/page.tsx",
+      "target": "src/components/ui/skeleton.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/verify-dashboard/page.tsx",
+      "target": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/verify-dashboard/page.tsx",
+      "target": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/cashier/close-session/page.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/cashier/close-session/page.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/cashier/close-session/page.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/cashier/close-session/page.tsx",
+      "target": "src/components/ui/BaseModal.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/executive/page.tsx",
+      "target": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/card.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/button.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/table.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/badge.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/input.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/demo/calculate/page.tsx",
+      "target": "src/components/ui/select.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/login/page.tsx",
+      "target": "src/components/SplashScreen.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/login/page.tsx",
+      "target": "src/components/auth/WelcomeLandingView.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/login/page.tsx",
+      "target": "src/components/auth/LoginForm.tsx",
+      "type": "contains"
+    },
+    {
+      "source": "src/app/login/page.tsx",
+      "target": "src/components/CostProLogo.tsx",
+      "type": "contains"
+    }
+  ]
+}

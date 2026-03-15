@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-03-15T19:37:42.513139",
+  "version": "1.0.0",
+  "system": "CostPro AI",
+  "health_endpoint": "/system/health",
+  "artifacts": {
+    "public": [
+      "system_health.json",
+      "system_architecture.json",
+      "icon-192.png",
+      "architecture_manifest.json",
+      "docs",
+      "manifest.json",
+      "manuals",
+      "sw.js",
+      "architecture_audit.json",
+      "health_timeline.json",
+      "architecture_graph.json",
+      "robots.txt",
+      "logo.svg",
+      "icon-512.png",
+      "icon.svg"
+    ],
+    "knowledge": [
+      "workflows.json",
+      "master_user_manual.json",
+      "views.json",
+      "ai_context_index.json",
+      "components.json",
+      "knowledge_graph.json",
+      "user_help.json"
+    ]
+  }
+}
