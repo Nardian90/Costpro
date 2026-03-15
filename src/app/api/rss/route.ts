@@ -5,6 +5,7 @@ import { RSSNewsItem } from '@/types';
 
 // Cache results for 60 minutes
 export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 const parser = new Parser();
 

@@ -435,7 +435,7 @@ def run_phase_2():
         "topCoupled": [i['name'] for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]],
         "communities": []
     }
-    graph_data = {"nodes": [{"id": i["id"], "type": i["type"]} for i in items], "edges": edges, "graphStats": graph_stats}
+    graph_data = {"nodes": items, "edges": edges, "graphStats": graph_stats}
     with open(GRAPH_JSON, 'w', encoding='utf-8') as f:
         json.dump(graph_data, f, indent=2, ensure_ascii=False)
     print(f"Phase 2 complete. Generated {GRAPH_JSON}.")

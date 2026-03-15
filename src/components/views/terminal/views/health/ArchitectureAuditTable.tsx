@@ -152,7 +152,7 @@ export function ArchitectureAuditTable() {
           </button>
 
           <div className="flex items-center gap-1.5 p-1 bg-background/50 rounded-xl border border-border/50">
-            {['all', 'component', 'view', 'hook'].map((type) => (
+            {['all', 'component', 'view', 'hook', 'knowledge', 'manifest'].map((type) => (
               <button
                 key={type}
                 onClick={() => setTypeFilter(type)}

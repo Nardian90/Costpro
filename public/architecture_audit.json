@@ -3794,7 +3794,7 @@
     {
       "component_id": "public/health_timeline.json",
       "health": 10.0,
-      "lines": 42,
+      "lines": 51,
       "cyclomaticComplexity": 1,
       "couplingScore": 0.1,
       "documentation_quality": 3.0,
