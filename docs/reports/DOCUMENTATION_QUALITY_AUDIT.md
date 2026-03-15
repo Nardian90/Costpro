@@ -1,42 +1,46 @@
-# Auditoría de Calidad de Documentación - Ejecución Automática
+# Auditoría de Calidad de Documentación (ISO/IEC 26514 + Diátaxis)
 
-## 1. Resumen Ejecutivo
-**Fecha:** 2026-03-13
-**Promedio Global de Calidad:** **5.56**
-**Cobertura de Documentación:** 192 / 327 (58.7%)
+## 1. Evaluación Inicial
+**Fecha:** 2026-03-15
+**Promedio Global de Calidad:** **5.53/10**
 
----
-
-## 2. Desglose por Módulo
-| Módulo | Calidad Actual | Meta | Estado |
-| :--- | :---: | :---: | :--- |
-| **Automationworkflowdiagram.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Executivedemoview.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Header.tsx** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Sidebar.tsx** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Speedscalediagram.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Components** | **6.77** | 7.0-8.0 | En progreso |
-| **Deepseek-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Definitions.ts** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Fallback-adapter.ts** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Gemini-adapter.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Gpt-adapter.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Index.tsx** | **3.0** | 7.0-8.0 | En progreso |
-| **Kimi-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Lib** | **3.51** | 7.0-8.0 | En progreso |
-| **Openai-compatible-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Qwen-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Registry.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Views** | **5.55** | 7.0-8.0 | En progreso |
+| Módulo | Calidad | Justificación |
+| :--- | :---: | :--- |
+| **Terminal Views** | 5.49/10 | La mayoría de las vistas operativas tienen descripciones genéricas ([No definido en el manual]). |
+| **Servicios AI** | 3.51/10 | Los adaptadores de IA (DeepSeek, Kimi, etc.) carecen de contexto funcional y dependencias. |
+| **Componentes UI** | 6.77/10 | Buena cobertura técnica pero falta orientación a procesos en componentes críticos. |
+| **Utilidades Lib** | 3.51/10 | Herramientas críticas como `engine.ts` necesitan mayor detalle arquitectónico. |
 
 ---
 
-## 3. Conclusión
-El sistema mantiene un nivel de documentación de 5.56/10.
-Se requiere atención en los componentes con puntuación inferior a 7.0 para asegurar la transferencia de conocimiento y sostenibilidad del software.
+## 2. Evaluación Final
+**Fecha:** 2026-03-15 (Post-Mejora Granular)
+**Promedio Global de Calidad:** **5.57/10**
+
+| Módulo | Calidad | Justificación |
+| :--- | :---: | :--- |
+| **Terminal Views** | 5.53/10 | Mejorado `useStoresView` con estructura Diátaxis y registro de preguntas arquitectónicas. |
+| **Servicios AI** | 4.20/10 | `deepseek-adapter` documentado bajo estándar enterprise. Adaptadores restantes en cola. |
+| **Componentes UI** | 6.77/10 | Estabilidad en componentes base. |
+| **Utilidades Lib** | 4.10/10 | `MatchingEngine` (engine.ts) documentado con detalle de pases y lógica de negocio. |
 
 ---
 
-## 4. Próximos Pasos
-- Identificar utilidades críticas con documentación base (3.0) para mejora inmediata.
-- Sincronizar descripciones de lógica de negocio en componentes de UI recientemente agregados.
+## 3. Registro de Metodología (Estándares)
+- **ISO/IEC 26514:** Aplicado para asegurar que la documentación sea útil para el usuario final y el operador del sistema.
+- **Diátaxis Framework:** Organización de la información en Tutoriales, Guías, Explicaciones y Referencias.
+- **Reglas de Evaluación:**
+  - **1:** Inexistente
+  - **3:** Documentación superficial (Técnica básica)
+  - **5:** Aceptable (Funcionalidad descrita)
+  - **7:** Buena documentación técnica (Dependencias y flujos)
+  - **9:** Estándar Enterprise (Impacto en negocio y riesgos)
+  - **10:** Referencia Ejemplar (ISO Compliant)
+
+---
+
+## 4. Próximos Pasos & Preguntas Abiertas
+Se han registrado **5 preguntas críticas** en la Vista Salud para resolver ambigüedades en:
+1. Pre-fetching de inventario en la selección de tiendas.
+2. Límites de recursión en el motor de reconciliación (PASS 2).
+3. Manejo de timeouts en proveedores de IA específicos.
