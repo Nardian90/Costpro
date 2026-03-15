@@ -88,6 +88,32 @@ export interface MatchingRule {
   prioridad: number;
   activo: boolean;
   meta?: Record<string, any>;
+  descripcion?: string;
+}
+
+export interface MatchingLog {
+  id: string; // UUID
+  transaction_ref: string; // FK -> BankTransaction.referencia_origen
+  fecha_ejecucion: string; // ISO date
+  resultado_estado: "COMPLETO" | "PARCIAL" | "PENDIENTE";
+
+  // Traceabilidad
+  trace: MatchingTrace[];
+  applied_rules: string[];
+  matching_confidence: number;
+
+  // Detalles del fallo (si aplica)
+  fail_reason?: string;
+
+  // Líneas generadas
+  reconciliation_lines_count: number;
+
+  // Metadatos
+  duration_ms: number;
+  engine_version: string;
+  reglas_activas: string[];
+
+  created_at: string;
 }
 
 export interface ReconciliationLine {
@@ -208,10 +234,11 @@ export class IPVDatabase extends Dexie {
   matching_cache!: Table<MatchingCache>;
   ingestion_errors!: Table<IngestionError>;
   ipv_settings!: Table<IPVSettings>;
+  matching_logs!: Table<MatchingLog>;
 
   constructor() {
     super('IPVDB');
-    this.version(13).stores({
+    this.version(14).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad',
@@ -222,7 +249,8 @@ export class IPVDatabase extends Dexie {
       daily_aggregates: '&fecha',
       matching_cache: '&importe_cents',
       ingestion_errors: 'id, fecha, referencia_origen',
-      ipv_settings: 'id'
+      ipv_settings: 'id',
+      matching_logs: '&id, transaction_ref, fecha_ejecucion, resultado_estado'
     });
   }
 }
