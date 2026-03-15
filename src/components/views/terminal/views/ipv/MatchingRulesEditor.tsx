@@ -1,8 +1,14 @@
 'use client';
 
 import React from 'react';
-import { db, type MatchingRule } from '@/lib/dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { db, MatchingRule } from '@/lib/dexie';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { GripVertical } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -20,31 +26,14 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import {
-  GripVertical,
-  Search,
-  Target,
-  TrendingUp,
-  Zap,
-  Info,
-  ChevronRight,
-  ShieldCheck,
-  Settings2
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { RuleMetaEditor } from "./RuleMetaEditor";
 
 interface SortableRuleItemProps {
-    rule: MatchingRule;
-    toggleRule: (id: string, active: boolean) => void;
-    updateRuleMeta: (id: string, meta: any) => void;
-    updatePriority: (id: string, newPriority: number) => void;
-    totalRules: number;
+  rule: MatchingRule;
+  toggleRule: (id: string, active: boolean) => Promise<void>;
+  updateRuleMeta: (id: string, meta: any) => Promise<void>;
+  updatePriority: (id: string, newPriority: number) => Promise<void>;
+  totalRules: number;
 }
 
 function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules }: SortableRuleItemProps) {
@@ -54,83 +43,62 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
         setNodeRef,
         transform,
         transition,
-        isDragging
     } = useSortable({ id: rule.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 50 : 0,
-    };
-
-    const getIcon = (tipo: string) => {
-        switch (tipo) {
-            case 'HARD_REF': return <Search className="w-5 h-5 text-blue-500" />;
-            case 'EXACT_SUM': return <Target className="w-5 h-5 text-green-500" />;
-            case 'PRICE_FLEX': return <TrendingUp className="w-5 h-5 text-orange-500" />;
-            case 'WILDCARDS': return <Zap className="w-5 h-5 text-purple-500" />;
-            case 'TOLERANCE': return <Info className="w-5 h-5 text-yellow-500" />;
-            case 'CASH_FILL': return <ChevronRight className="w-5 h-5 text-slate-500" />;
-            case 'STOCK_LIMIT': return <ShieldCheck className="w-5 h-5 text-red-500" />;
-            default: return <Settings2 className="w-5 h-5" />;
-        }
     };
 
     const getLabel = (tipo: string) => {
         switch (tipo) {
-            case 'HARD_REF': return 'Hard Reference';
-            case 'EXACT_SUM': return 'Exact Sum (Backtracking)';
-            case 'PRICE_FLEX': return 'Price Flexibility';
-            case 'WILDCARDS': return 'Wildcards Matching';
-            case 'TOLERANCE': return 'Tolerance Adjustment';
-            case 'CASH_FILL': return 'Cash Filling';
-            case 'STOCK_LIMIT': return 'Stock Limit Policy';
+            case 'STOCK_LIMIT': return 'Límite de Stock';
+            case 'HARD_REF': return 'Referencia Exacta';
+            case 'EXACT_SUM': return 'Suma Combinada';
+            case 'PRICE_FLEX': return 'Flexibilidad de Precio';
+            case 'WILDCARDS': return 'Comodines';
+            case 'TOLERANCE': return 'Tolerancia de Cuadre';
+            case 'CASH_FILL': return 'Inyección de Efectivo';
+            case 'GOAL_WITH_TOLERANCE': return 'Meta con Tolerancia';
             default: return tipo;
         }
     };
 
     const getDescription = (tipo: string) => {
         switch (tipo) {
-            case 'HARD_REF': return 'Busca códigos de producto o descripciones en las observaciones de la transacción.';
-            case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen exactamente el importe recibido.';
-            case 'PRICE_FLEX': return 'Permite variar ligeramente el precio de productos configurados para cuadrar el gap.';
-            case 'WILDCARDS': return 'Asigna productos estratégicos (comodines) para completar el importe.';
-            case 'TOLERANCE': return 'Permite un descuadre controlado si la suma se acerca al importe.';
-            case 'CASH_FILL': return 'Cubre cualquier faltante restante marcándolo como venta en efectivo.';
-            case 'STOCK_LIMIT': return 'Impide que el algoritmo asigne productos que no tengan existencia física disponible.';
+            case 'STOCK_LIMIT': return 'Prioriza productos con bajo stock o según su jerarquía virtual.';
+            case 'HARD_REF': return 'Busca referencias exactas entre el mensaje bancario y el catálogo.';
+            case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen el importe exacto de la transacción.';
+            case 'PRICE_FLEX': return 'Permite pequeñas variaciones de precio para lograr un cuadre exacto.';
+            case 'WILDCARDS': return 'Aplica productos comodín si no se encuentra un match específico.';
+            case 'TOLERANCE': return 'Acepta diferencias mínimas (centavos) para cerrar el cuadre.';
+            case 'CASH_FILL': return 'Completa el cuadre inyectando líneas de efectivo virtuales.';
+            case 'GOAL_WITH_TOLERANCE': return 'Distribuye metas de venta con márgenes de error permitidos.';
             default: return '';
         }
     };
 
-    const handleMetaChange = (key: string, value: any) => {
-        const newMeta = { ...(rule.meta || {}), [key]: value };
-        updateRuleMeta(rule.id, newMeta);
-    };
-
     return (
-        <div ref={setNodeRef} style={style}>
-            <Card className={`p-4 sm:p-6 border-none shadow-md bg-background/50 flex flex-col gap-4 ${isDragging ? 'shadow-2xl ring-2 ring-primary/20' : ''}`}>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+        <div ref={setNodeRef} style={style} className="group">
+            <Card className={`p-4 transition-all border-2 ${rule.activo ? 'border-primary/20 bg-card/50' : 'border-transparent bg-muted/30 opacity-60'}`}>
+                <div className="flex items-start gap-4">
                     <div
-                        className="hidden sm:block text-muted-foreground cursor-grab active:cursor-grabbing p-2 hover:bg-muted rounded-lg transition-colors"
+                        className="hidden sm:flex text-muted-foreground cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-muted rounded"
                         {...attributes}
                         {...listeners}
                     >
                         <GripVertical className="w-5 h-5" />
                     </div>
 
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <div className="p-3 bg-card rounded-2xl shadow-inner shrink-0">
-                            {getIcon(rule.tipo)}
-                        </div>
-                        <div className="flex-1 sm:hidden">
-                            <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Prio</span>
+                    <div className="flex-1 sm:hidden">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-bold text-sm uppercase">{getLabel(rule.tipo)}</h4>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black opacity-50 uppercase">PRIO:</span>
                                 <select
                                     value={rule.prioridad}
                                     onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                    className="h-6 text-xs font-bold border rounded bg-background px-1 focus:ring-1 focus:ring-primary outline-none"
+                                    className="h-6 text-[10px] border rounded bg-background px-1"
                                 >
                                     {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
                                         <option key={p} value={p}>{p}</option>
@@ -185,51 +153,11 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                 </div>
 
                 {rule.activo && (
-                    <div className="pt-4 border-t border-border/50 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {rule.tipo === 'TOLERANCE' && (
-                            <div className="space-y-1.5">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tolerancia Máx (cts)</Label>
-                                <Input
-                                    type="number"
-                                    className="h-8 text-xs font-bold"
-                                    value={rule.meta?.tolerance_cents || 0}
-                                    onChange={(e) => handleMetaChange('tolerance_cents', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                        )}
-                        {rule.tipo === 'PRICE_FLEX' && (
-                            <>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Var. Máx (%)</Label>
-                                    <Input
-                                        type="number"
-                                        className="h-8 text-xs font-bold"
-                                        value={rule.meta?.max_variation_percent || 20}
-                                        onChange={(e) => handleMetaChange('max_variation_percent', parseInt(e.target.value) || 0)}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Var. Máx (cts)</Label>
-                                    <Input
-                                        type="number"
-                                        className="h-8 text-xs font-bold"
-                                        value={rule.meta?.max_variation_cents || 10}
-                                        onChange={(e) => handleMetaChange('max_variation_cents', parseInt(e.target.value) || 0)}
-                                    />
-                                </div>
-                            </>
-                        )}
-                        {rule.tipo === 'CASH_FILL' && (
-                            <div className="space-y-1.5">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Límite Diario (cts)</Label>
-                                <Input
-                                    type="number"
-                                    className="h-8 text-xs font-bold"
-                                    value={rule.meta?.daily_limit || 500}
-                                    onChange={(e) => handleMetaChange('daily_limit', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                        )}
+                    <div className="pt-4 border-t border-border/50">
+                        <RuleMetaEditor
+                            rule={rule}
+                            onSave={updateRuleMeta}
+                        />
                     </div>
                 )}
             </Card>
