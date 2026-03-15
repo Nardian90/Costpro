@@ -3805,8 +3805,8 @@
     {
       "component_id": "public/architecture_graph.json",
       "health": 9.4,
-      "lines": 4998,
-      "cyclomaticComplexity": 1,
+      "lines": 11751,
+      "cyclomaticComplexity": 5,
       "couplingScore": 10,
       "documentation_quality": 3.0,
       "openQuestions": [],

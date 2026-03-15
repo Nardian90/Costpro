@@ -778,6 +778,8 @@ def run_phase_9():
         "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
         "trend": "stable",
         "viewsAudited": len([i for i in items if i["type"] == "view"]),
+        "knowledgeAudited": len([i for i in items if i["type"] == "knowledge"]),
+        "manifestsAudited": len([i for i in items if i["type"] == "manifest"]),
         "newViews": 0,
         "criticalIssues": len([i for i in items if i["health"] < 6.0]),
         "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
