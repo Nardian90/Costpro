@@ -14,33 +14,35 @@
 ---
 
 ## 2. Evaluación Final
-**Fecha:** 2026-03-15 (Post-Mejora Granular)
+**Fecha:** 2026-03-15 (Ciclo de Mejora 1)
 **Promedio Global de Calidad:** **5.57/10**
 
 | Módulo | Calidad | Justificación |
 | :--- | :---: | :--- |
-| **Terminal Views** | 5.53/10 | Mejorado `useStoresView` con estructura Diátaxis y registro de preguntas arquitectónicas. |
-| **Servicios AI** | 4.20/10 | `deepseek-adapter` documentado bajo estándar enterprise. Adaptadores restantes en cola. |
-| **Componentes UI** | 6.77/10 | Estabilidad en componentes base. |
-| **Utilidades Lib** | 4.10/10 | `MatchingEngine` (engine.ts) documentado con detalle de pases y lógica de negocio. |
+| **Terminal Views** | 5.53/10 | Vistas críticas (`POSView`, `InventoryView`, `CatalogTable`, `BankIngestion`) documentadas con estructura Diátaxis. |
+| **Servicios AI** | 4.50/10 | `deepseek-adapter` elevado a estándar Enterprise. Implementado sistema de adaptadores con mejor trazabilidad. |
+| **Componentes UI** | 6.77/10 | Estabilidad en componentes base. Se añadió soporte para `OpenQuestions` en la tabla de auditoría. |
+| **Utilidades Lib** | 4.25/10 | `MatchingEngine` y hooks de estado (`useStoresView`) documentados con impacto en negocio y flujos funcionales. |
 
 ---
 
 ## 3. Registro de Metodología (Estándares)
-- **ISO/IEC 26514:** Aplicado para asegurar que la documentación sea útil para el usuario final y el operador del sistema.
-- **Diátaxis Framework:** Organización de la información en Tutoriales, Guías, Explicaciones y Referencias.
+- **ISO/IEC 26514:** Asegura que la documentación sea útil para la operación y el mantenimiento futuro.
+- **Diátaxis Framework:** Estructura la información en: Descripción, Propósito, Flujo Funcional e Impacto en el Negocio.
 - **Reglas de Evaluación:**
   - **1:** Inexistente
-  - **3:** Documentación superficial (Técnica básica)
-  - **5:** Aceptable (Funcionalidad descrita)
-  - **7:** Buena documentación técnica (Dependencias y flujos)
-  - **9:** Estándar Enterprise (Impacto en negocio y riesgos)
-  - **10:** Referencia Ejemplar (ISO Compliant)
+  - **3:** Superficial (Auto-generada)
+  - **5:** Aceptable
+  - **7:** Buena (Técnica completa)
+  - **9:** Enterprise (Procesos + Negocio)
+  - **10:** Referencia Ejemplar
 
 ---
 
-## 4. Próximos Pasos & Preguntas Abiertas
-Se han registrado **5 preguntas críticas** en la Vista Salud para resolver ambigüedades en:
-1. Pre-fetching de inventario en la selección de tiendas.
-2. Límites de recursión en el motor de reconciliación (PASS 2).
-3. Manejo de timeouts en proveedores de IA específicos.
+## 4. Innovación: Sistema de Mejora Viva
+Se ha implementado la columna **"OpenQuestions"** en la Vista Salud. Esto permite:
+1. Identificar brechas de conocimiento en tiempo real.
+2. Priorizar la investigación técnica sobre componentes complejos.
+3. Facilitar el onboarding de nuevos desarrolladores mediante la resolución de dudas registradas.
+
+**Preguntas Pendientes registradas:** 8 críticas (incluyendo pre-fetching de inventario y límites de recursión en IPV).

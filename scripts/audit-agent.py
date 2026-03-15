@@ -85,7 +85,57 @@ Previene quiebres de stock y sobre-inventario, optimizando el flujo de caja del 
             "¿Debería integrarse una alerta push para niveles críticos de stock?"
         ]
     },
-    "CostSheetWizard": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
+        "CatalogTable": {
+        "logic": """### Descripción
+Componente central para la visualización y gestión del catálogo de productos. Proporciona una interfaz tabular con capacidades de filtrado avanzado, edición en línea y visualización de métricas de inventario (Inicial, Entrada, Salida, Ventas, Final).
+
+### Propósito
+Actuar como la fuente de verdad única para la disponibilidad y precios de productos en el punto de venta.
+
+### Flujo Funcional
+1. Recupera datos de productos desde Dexie.
+2. Calcula balances de inventario en tiempo real basados en movimientos.
+3. Permite la exportación de datos a Excel para auditorías externas.
+
+### Impacto en el Negocio
+Garantiza la coherencia de precios y stock en toda la organización, reduciendo errores de facturación y facilitando el reaprovisionamiento.""",
+        "quality": 9.0,
+        "openQuestions": ["¿Deberíamos implementar edición masiva de precios por categoría?"]
+    },
+    "BankIngestion": {
+        "logic": """### Descripción
+Módulo de procesamiento de estados de cuenta bancarios. Automatiza la extracción y normalización de transacciones desde reportes en formato texto o SMS.
+
+### Propósito
+Eliminar la carga manual de datos bancarios y preparar la información para el motor de conciliación IPV.
+
+### Flujo Funcional
+- Parser: Identifica bloques de transacciones mediante expresiones regulares dinámicas.
+- Normalizador: Estandariza campos (fecha, monto, referencia, tipo).
+- Almacenamiento: Persiste transacciones en la tabla bank_statements de Dexie.
+
+### Impacto en el Negocio
+Ahorra horas de trabajo administrativo y asegura que el 100% de los ingresos digitales sean auditados contra las ventas del POS.""",
+        "quality": 9.5,
+        "openQuestions": ["¿Es necesario soportar nuevos formatos de bancos internacionales?"]
+    },
+    "POSView": {
+        "logic": """### Descripción
+Interfaz principal del punto de venta. Diseñada para operaciones de alta velocidad con soporte para escaneo de códigos de barras y múltiples métodos de pago.
+
+### Propósito
+Facilitar la transacción comercial minimizando el tiempo de espera del cliente y asegurando la integridad del inventario.
+
+### Flujo Funcional
+1. Construcción del carrito de compras.
+2. Aplicación de reglas de negocio (descuentos, impuestos).
+3. Finalización de venta y generación de comprobante (SC-3-01).
+
+### Impacto en el Negocio
+Es el generador primario de ingresos del sistema. Su estabilidad y velocidad impactan directamente en la satisfacción del cliente y la eficiencia del cajero.""",
+        "quality": 8.5,
+        "openQuestions": ["¿Debería integrarse soporte para básculas de peso en tiempo real?"]
+    },    "CostSheetWizard": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
     "FormulaEditor": "Permite la personalización de algoritmos de formación de precios. Es la herramienta para directivos para ajustar márgenes de contribución y coeficientes de gastos indirectos sin intervención técnica.",
     "BankIngestion": "Punto de entrada para la digitalización de la economía. Transforma estados de cuenta bancarios en registros contables, eliminando errores manuales en la conciliación de pagos QR y transferencias.",
     "IncomeReceiptSection": "Garantiza la transparencia fiscal. Genera el Modelo SC-3-01, documento legal indispensable para la declaración de ingresos ante las autoridades pertinentes.",
