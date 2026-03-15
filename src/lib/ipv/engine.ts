@@ -426,7 +426,7 @@ export class MatchingEngine {
     // Persist log
     (async () => {
       try {
-        const { MatchingLogService } = await import('@/services/matching-log-service');
+        const { MatchingLogService } = await import('../../services/matching-log-service');
         await MatchingLogService.logMatchingResult(
           transaction.referencia_origen,
           isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
