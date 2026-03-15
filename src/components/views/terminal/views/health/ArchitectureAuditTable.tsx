@@ -351,7 +351,7 @@ export function ArchitectureAuditTable() {
                 <div className="space-y-6 relative z-10">
                   <div className="space-y-4">
                     {selectedComponent?.business_logic ? (
-                      selectedComponent.business_logic.split('\n').map((line, i) => {
+                      selectedComponent.business_logic.split('\n').map((line: string, i: number) => {
                         const isHeader = /^\d+\.\s/.test(line) || line.startsWith('###');
                         return (
                           <p key={i} className={cn(
