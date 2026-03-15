@@ -40,6 +40,16 @@ const RULE_CONFIDENCE: Record<string, number> = {
     'CASH_FILL': 0.50
 };
 
+export const DEFAULT_MATCHING_RULES: MatchingRule[] = [
+  { id: "1", tipo: "STOCK_LIMIT", prioridad: 1, activo: true },
+  { id: "2", tipo: "HARD_REF", prioridad: 2, activo: true },
+  { id: "3", tipo: "EXACT_SUM", prioridad: 3, activo: true },
+  { id: "4", tipo: "PRICE_FLEX", prioridad: 4, activo: true, meta: { max_variation_percent: 20, max_variation_cents: 10 } },
+  { id: "5", tipo: "WILDCARDS", prioridad: 5, activo: true },
+  { id: "6", tipo: "TOLERANCE", prioridad: 6, activo: true, meta: { tolerance_cents: 100 } },
+  { id: "7", tipo: "CASH_FILL", prioridad: 7, activo: false, meta: { daily_limit: 500 } }
+];
+
 export class MatchingEngine {
   private products: Product[];
   private rules: MatchingRule[];
@@ -416,7 +426,7 @@ export class MatchingEngine {
     // Persist log
     (async () => {
       try {
-        const { MatchingLogService } = await import('@/services/matching-log-service');
+        const { MatchingLogService } = await import('../../services/matching-log-service');
         await MatchingLogService.logMatchingResult(
           transaction.referencia_origen,
           isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
