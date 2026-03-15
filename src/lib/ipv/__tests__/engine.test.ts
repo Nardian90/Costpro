@@ -6,6 +6,13 @@ import { BankTransaction, Product, MatchingRule } from '../../dexie';
 // Mock Dexie
 vi.mock('../../dexie', () => ({
   db: {
+    matching_logs: {
+      add: vi.fn().mockResolvedValue("mock-id"),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      reverse: vi.fn().mockReturnThis(),
+      sortBy: vi.fn().mockResolvedValue([]),
+    },
     matching_cache: {
       get: vi.fn().mockResolvedValue(null),
       put: vi.fn(),
