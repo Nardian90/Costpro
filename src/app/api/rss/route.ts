@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { RSSNewsItem } from '@/types';
 
 // Cache results for 60 minutes
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 const parser = new Parser();
