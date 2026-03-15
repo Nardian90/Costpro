@@ -8,6 +8,7 @@ import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
+import { importCatalogProducts } from "@/lib/ipv/importUtils";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus, Database } from 'lucide-react';
@@ -129,34 +130,50 @@ export function BankIngestion() {
 
   const processCatalogData = async (data: any[]) => {
     try {
-        let imported = 0;
+        const validProducts: any[] = [];
         const now = new Date().toISOString();
+
         for (const row of data) {
-            const cod = String(row["Código"] || row.cod || row.COD || "").trim();
-            if (!cod) continue;
+            const cod = row['Código'] || row['cod'] || row['CODIGO'];
+            const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || row['grupo'] || '';
+            const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || row['hijo'] || '';
+            const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
+            const um = row['UM'] || row['um'] || 'UNIDADES';
+            const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
+            const var_perm = row['variacion_permisible_percent'] || row['VARIACION_PERMISIBLE'] || row['Variación %'] || 0;
+            const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
+            const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
+            const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
+            const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
 
-            const precio = parseFloat(String(row["Precio ($)"] || row.precio_cents || row.precio || 0).replace(",", "."));
-            const stock = parseFloat(String(row["Stock Inicial"] || row.stock_inicial_manual || row.stock || 0).replace(",", "."));
+            if (!cod || !descripcion) continue;
 
-            const product = {
-                cod: cod.toUpperCase(),
-                descripcion: String(row["Descripción"] || row.descripcion || row.desc || ""),
-                um: String(row["UM"] || row.um || "Unidades").toUpperCase(),
-                precio_cents: precio,
-                prioridad_algoritmo: Number(row["Prioridad"] || row.prioridad_algoritmo || row.prioridad || 1),
+            validProducts.push({
+                cod: String(cod).toUpperCase(),
+                id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
+                cod_hijo: cod_hijo ? String(cod_hijo).toUpperCase() : '',
+                descripcion: String(descripcion),
+                um: String(um).toUpperCase(),
+                precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
+                variacion_permisible_percent: typeof var_perm === 'number' ? var_perm : parseFloat(String(var_perm).replace(',', '.')),
+                prioridad_algoritmo: parseInt(String(prioridad)),
+                stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
+                es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
+                contenido_paquete: parseInt(String(cont_pqt)),
                 activo: true,
-                es_paquete: String(row["Es Paquete (S/N)"] || row.es_paquete || "").toUpperCase() === "S",
-                contenido_paquete: Number(row["Contenido Paquete"] || row.contenido_paquete || 1),
-                stock_inicial_manual: stock,
                 created_at: now,
                 updated_at: now,
                 priorityMode: "manual",
                 isWildcardCandidate: false
-            };
-            await db.products.put(product as any);
-            imported++;
+            });
         }
-        toast.success(`${imported} productos procesados`);
+
+        if (validProducts.length > 0) {
+            await importCatalogProducts(validProducts);
+            toast.success(`Se importaron ${validProducts.length} productos correctamente`);
+        } else {
+            toast.error('No se encontraron productos válidos');
+        }
     } catch (error) {
         console.error(error);
         toast.error("Error al procesar catálogo");
