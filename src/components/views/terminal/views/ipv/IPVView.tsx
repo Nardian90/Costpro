@@ -27,11 +27,11 @@ import {
   BarChart4,
   PackageSearch,
   FileSearch,
-import { MatchingAuditView } from "./MatchingAuditView";
   Receipt,
   ArrowRightLeft,
   QrCode
 } from 'lucide-react';
+import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
 import { CatalogTable } from './CatalogTable';
