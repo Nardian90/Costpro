@@ -25,7 +25,7 @@ def get_layer(path):
 
 
 # Configuration
-BASE_PATHS = ["src/app", "src/components", "src/lib"]
+BASE_PATHS = ["src/app", "src/components", "src/lib", "knowledge", "public"]
 DOCS_MAP = "docs/mapa_vistas.md"
 ARCH_JSON = "public/system_architecture.json"
 GRAPH_JSON = "public/architecture_graph.json"
@@ -171,6 +171,10 @@ Es el generador primario de ingresos del sistema. Su estabilidad y velocidad imp
 }
 
 def get_type(path):
+    if "knowledge/" in path and path.endswith(".json"):
+        return "knowledge"
+    if "public/" in path and path.endswith(".json"):
+        return "manifest"
     if "components/views/terminal/views" in path:
         if path.endswith("View.tsx") or path.endswith("ManagementView.tsx") or "dashboard" in path:
             return "view"
@@ -320,7 +324,7 @@ def scan_project():
         if not os.path.exists(base): continue
         for root, _, files in os.walk(base):
             for file in files:
-                if file.endswith((".tsx", ".ts", ".js", ".jsx")):
+                if file.endswith((".tsx", ".ts", ".js", ".jsx", ".json")):
                     if ".test." in file or "__tests__" in root or "node_modules" in root:
                         continue
                     full_path = os.path.join(root, file)
@@ -333,7 +337,7 @@ def scan_project():
                             content = f.read()
                     except: continue
 
-                    node_id = os.path.splitext(file)[0]
+                    node_id = rel_path if file.endswith('.json') else os.path.splitext(file)[0]
                     nodes[rel_path] = {
                         "id": node_id,
                         "name": node_id,

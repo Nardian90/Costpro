@@ -203,9 +203,15 @@ export default function SystemHealthPage() {
                 {[
                   { name: 'Architecture Manifest', path: '/architecture_manifest.json' },
                   { name: 'System Architecture', path: '/system_architecture.json' },
+                  { name: 'Architecture Graph', path: '/architecture_graph.json' },
+                  { name: 'Architecture Audit', path: '/architecture_audit.json' },
+                  { name: 'Components Knowledge', path: 'knowledge/components.json' },
+                  { name: 'Views Knowledge', path: 'knowledge/views.json' },
+                  { name: 'Workflows Knowledge', path: 'knowledge/workflows.json' },
+                  { name: 'Master User Manual', path: 'knowledge/master_user_manual.json' },
+                  { name: 'User Help', path: 'knowledge/user_help.json' },
                   { name: 'Knowledge Graph', path: 'knowledge/knowledge_graph.json' },
-                  { name: 'AI Context Index', path: 'knowledge/ai_context_index.json' },
-                  { name: 'Master Manual', path: 'knowledge/master_user_manual.json' }
+                  { name: 'AI Context Index', path: 'knowledge/ai_context_index.json' }
                 ].map((art) => (
                   <div key={art.path} className="flex items-center justify-between p-3 border border-border rounded-lg">
                     <div className="flex items-center gap-3">
