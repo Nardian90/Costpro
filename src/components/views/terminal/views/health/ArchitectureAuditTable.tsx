@@ -177,7 +177,7 @@ export function ArchitectureAuditTable() {
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Tipo</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Estado Salud</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Acoplamiento</TableHead>
-              <TableHead className="text-[9px] font-black uppercase tracking-widest">Pregunta Crítica</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">OpenQuestions</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Lógica</TableHead>
             </TableRow>
           </TableHeader>
@@ -229,12 +229,19 @@ export function ArchitectureAuditTable() {
                     </div>
                   </TableCell>
                   <TableCell className="max-w-[200px]">
-                    {criticalQuestion ? (
-                      <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                        <HelpCircle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                        <span className="text-[9px] font-bold text-foreground/70 leading-tight line-clamp-2 italic">
-                          {criticalQuestion}
-                        </span>
+                    {item.openQuestions && item.openQuestions.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                          <HelpCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                          <span className="text-[9px] font-bold text-foreground/70 leading-tight line-clamp-2 italic">
+                            {item.openQuestions[0]}
+                          </span>
+                        </div>
+                        {item.openQuestions.length > 1 && (
+                          <span className="text-[8px] font-black uppercase text-primary/60 ml-2">
+                            +{item.openQuestions.length - 1} más
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="text-[9px] font-medium opacity-20 uppercase tracking-widest ml-2">—</span>
@@ -250,7 +257,7 @@ export function ArchitectureAuditTable() {
               );
             }) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={7} className="h-32 text-center">
                    <div className="flex flex-col items-center justify-center opacity-40">
                       <Search className="w-8 h-8 mb-2" />
                       <p className="text-[10px] font-black uppercase tracking-widest">No se encontraron resultados para los filtros aplicados</p>
@@ -342,9 +349,25 @@ export function ArchitectureAuditTable() {
                    <FileCode className="w-12 h-12" />
                 </div>
                 <div className="space-y-6 relative z-10">
-                  <p className="text-sm font-bold leading-relaxed text-foreground/90">
-                    {selectedComponent?.business_logic || "No hay descripción de lógica de negocio disponible para este componente."}
-                  </p>
+                  <div className="space-y-4">
+                    {selectedComponent?.business_logic ? (
+                      selectedComponent.business_logic.split('\n').map((line: string, i: number) => {
+                        const isHeader = /^\d+\.\s/.test(line) || line.startsWith('###');
+                        return (
+                          <p key={i} className={cn(
+                            "text-sm leading-relaxed",
+                            isHeader ? "font-black text-primary uppercase tracking-tight mt-4 first:mt-0" : "font-bold text-foreground/90 pl-4 border-l border-primary/10"
+                          )}>
+                            {line.replace(/^\d+\.\s/, '').replace(/^###\s/, '')}
+                          </p>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm font-bold leading-relaxed text-foreground/90 italic opacity-50">
+                        No hay descripción de lógica de negocio disponible para este componente.
+                      </p>
+                    )}
+                  </div>
 
                   {selectedComponent?.openQuestions && selectedComponent.openQuestions.length > 0 && (
                     <div className="pt-6 border-t border-primary/10">
