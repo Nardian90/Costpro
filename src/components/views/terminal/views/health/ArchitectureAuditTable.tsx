@@ -177,7 +177,7 @@ export function ArchitectureAuditTable() {
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Tipo</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Estado Salud</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Acoplamiento</TableHead>
-              <TableHead className="text-[9px] font-black uppercase tracking-widest">Pregunta Crítica</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">OpenQuestions</TableHead>
               <TableHead className="text-[9px] font-black uppercase tracking-widest">Lógica</TableHead>
             </TableRow>
           </TableHeader>
@@ -229,12 +229,19 @@ export function ArchitectureAuditTable() {
                     </div>
                   </TableCell>
                   <TableCell className="max-w-[200px]">
-                    {criticalQuestion ? (
-                      <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                        <HelpCircle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                        <span className="text-[9px] font-bold text-foreground/70 leading-tight line-clamp-2 italic">
-                          {criticalQuestion}
-                        </span>
+                    {item.openQuestions && item.openQuestions.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                          <HelpCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                          <span className="text-[9px] font-bold text-foreground/70 leading-tight line-clamp-2 italic">
+                            {item.openQuestions[0]}
+                          </span>
+                        </div>
+                        {item.openQuestions.length > 1 && (
+                          <span className="text-[8px] font-black uppercase text-primary/60 ml-2">
+                            +{item.openQuestions.length - 1} más
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="text-[9px] font-medium opacity-20 uppercase tracking-widest ml-2">—</span>
