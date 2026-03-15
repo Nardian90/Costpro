@@ -46,6 +46,8 @@
     "src/test",
     "vitest.config.ts",
     "scripts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
   ]
 }
