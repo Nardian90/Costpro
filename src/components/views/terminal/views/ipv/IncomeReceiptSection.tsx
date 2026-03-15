@@ -46,7 +46,8 @@ export function IncomeReceiptSection() {
           persona_entrega: 'RESPONSABLE',
           consecutivo_inicio: 1,
           agrupacion_modo: 'GLOBAL',
-          desglose_modo: 'TRANSACCION'
+          desglose_modo: 'TRANSACCION',
+          copiloto_activo: true
         });
       }
     };

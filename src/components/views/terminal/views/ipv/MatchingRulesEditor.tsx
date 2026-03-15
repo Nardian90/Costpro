@@ -3,11 +3,13 @@
 import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, MatchingRule } from '@/lib/dexie';
+import { DEFAULT_MATCHING_RULES } from '@/lib/ipv/engine';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { GripVertical } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { GripVertical, Sparkles, Bot, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -26,14 +28,14 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { RuleMetaEditor } from "./RuleMetaEditor";
+import { RuleMetaEditor } from './RuleMetaEditor';
 
 interface SortableRuleItemProps {
-  rule: MatchingRule;
-  toggleRule: (id: string, active: boolean) => Promise<void>;
-  updateRuleMeta: (id: string, meta: any) => Promise<void>;
-  updatePriority: (id: string, newPriority: number) => Promise<void>;
-  totalRules: number;
+    rule: MatchingRule;
+    toggleRule: (id: string, active: boolean) => Promise<void>;
+    updateRuleMeta: (id: string, meta: any) => Promise<void>;
+    updatePriority: (id: string, newPriority: number) => Promise<void>;
+    totalRules: number;
 }
 
 function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules }: SortableRuleItemProps) {
@@ -52,9 +54,9 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
 
     const getLabel = (tipo: string) => {
         switch (tipo) {
-            case 'STOCK_LIMIT': return 'Límite de Stock';
+            case 'STOCK_LIMIT': return 'Límites de Stock';
             case 'HARD_REF': return 'Referencia Exacta';
-            case 'EXACT_SUM': return 'Suma Combinada';
+            case 'EXACT_SUM': return 'Suma Exacta (Combinatoria)';
             case 'PRICE_FLEX': return 'Flexibilidad de Precio';
             case 'WILDCARDS': return 'Comodines';
             case 'TOLERANCE': return 'Tolerancia de Cuadre';
@@ -167,6 +169,12 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
 
 export function MatchingRulesEditor() {
   const rules = useLiveQuery(() => db.matching_rules.orderBy('prioridad').toArray());
+  const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+
+  const toggleCopiloto = async (active: boolean) => {
+    await db.ipv_settings.update("current", { copiloto_activo: active });
+    toast.success(active ? "Copiloto activado: El sistema usará la lógica optimizada (>90% mismatch)." : "Copiloto desactivado: Se aplicará su configuración manual.");
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -176,15 +184,7 @@ export function MatchingRulesEditor() {
   );
 
   const initializeDefaultRules = async () => {
-    const defaults: MatchingRule[] = [
-      { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
-      { id: '2', tipo: 'HARD_REF', prioridad: 2, activo: true },
-      { id: '3', tipo: 'EXACT_SUM', prioridad: 3, activo: true },
-      { id: '4', tipo: 'PRICE_FLEX', prioridad: 4, activo: true, meta: { max_variation_percent: 20, max_variation_cents: 10 } },
-      { id: '5', tipo: 'WILDCARDS', prioridad: 5, activo: true },
-      { id: '6', tipo: 'TOLERANCE', prioridad: 6, activo: true, meta: { tolerance_cents: 100 } },
-      { id: '7', tipo: 'CASH_FILL', prioridad: 7, activo: false, meta: { daily_limit: 500 } }
-    ];
+    const defaults = DEFAULT_MATCHING_RULES;
     await db.matching_rules.bulkPut(defaults);
     toast.success('Reglas inicializadas');
   };
@@ -236,45 +236,94 @@ export function MatchingRulesEditor() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-black uppercase tracking-tight">Motor de Decisiones</h3>
-          <p className="text-sm text-muted-foreground">Define el orden y comportamiento del algoritmo de matching.</p>
-        </div>
-        {!rules || rules.length === 0 ? (
-          <Button onClick={initializeDefaultRules} className="neu-btn-primary">
-            Inicializar Reglas
-          </Button>
-        ) : (
-            <Button variant="outline" size="sm" onClick={initializeDefaultRules} className="neu-btn text-[10px] font-black uppercase">
-                Resetear a Valores x Defecto
-            </Button>
-        )}
-      </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="space-y-4">
-          <SortableContext
-            items={rules?.map(r => r.id) || []}
-            strategy={verticalListSortingStrategy}
-          >
-            {rules?.map((rule) => (
-              <SortableRuleItem
-                key={rule.id}
-                rule={rule}
-                toggleRule={toggleRule}
-                updateRuleMeta={updateRuleMeta}
-                updatePriority={updatePriorityManually}
-                totalRules={rules.length}
+      <Card className={`p-6 border-2 transition-all ${settings?.copiloto_activo ? "border-primary bg-primary/5 shadow-lg" : "border-border bg-card"}`}>
+        <div className="flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-2xl ${settings?.copiloto_activo ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-muted text-muted-foreground"}`}>
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-black uppercase tracking-tight">Copiloto Inteligente</h3>
+                {settings?.copiloto_activo && (
+                  <Badge className="bg-primary text-[10px] font-black uppercase animate-pulse">Optimizado</Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground max-w-md">
+                {settings?.copiloto_activo
+                  ? "El motor de matching está operando en modo automático de alta precisión (>90%). Sus reglas manuales están en pausa."
+                  : "Modo manual activado. El sistema utilizará estrictamente el orden y configuración de las reglas que usted defina debajo."}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="copiloto-mode" className="text-xs font-black uppercase cursor-pointer">
+                {settings?.copiloto_activo ? "Activo" : "Inactivo"}
+              </Label>
+              <Switch
+                id="copiloto-mode"
+                checked={settings?.copiloto_activo ?? true}
+                onCheckedChange={toggleCopiloto}
+                className="data-[state=checked]:bg-primary"
               />
-            ))}
-          </SortableContext>
+            </div>
+            {settings?.copiloto_activo && (
+               <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase bg-primary/10 px-2 py-0.5 rounded-full">
+                 <Sparkles className="w-3 h-3" />
+                 Pipeline Pro v2.5
+               </div>
+            )}
+          </div>
         </div>
-      </DndContext>
+      </Card>
+
+      <div className={`space-y-6 transition-all ${settings?.copiloto_activo ? "opacity-40 grayscale pointer-events-none" : "opacity-100"}`}>
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2">
+               <h3 className="text-lg font-black uppercase tracking-tight">Motor de Decisiones</h3>
+               {settings?.copiloto_activo && <ShieldCheck className="w-4 h-4 text-muted-foreground" />}
+            </div>
+            <p className="text-sm text-muted-foreground">Define el orden y comportamiento del algoritmo de matching.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!rules || rules.length === 0 ? (
+              <Button onClick={initializeDefaultRules} className="neu-btn-primary">
+                Inicializar Reglas
+              </Button>
+            ) : (
+                <Button variant="outline" size="sm" onClick={initializeDefaultRules} className="neu-btn text-[10px] font-black uppercase">
+                    Resetear a Valores x Defecto
+                </Button>
+            )}
+          </div>
+        </div>
+
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+        >
+            <div className="space-y-4">
+            <SortableContext
+                items={rules?.map(r => r.id) || []}
+                strategy={verticalListSortingStrategy}
+            >
+                {rules?.map((rule) => (
+                <SortableRuleItem
+                    key={rule.id}
+                    rule={rule}
+                    toggleRule={toggleRule}
+                    updateRuleMeta={updateRuleMeta}
+                    updatePriority={updatePriorityManually}
+                    totalRules={rules.length}
+                />
+                ))}
+            </SortableContext>
+            </div>
+        </DndContext>
+      </div>
     </div>
   );
 }
