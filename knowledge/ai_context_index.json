@@ -1,0 +1,726 @@
+{
+  "component_summaries": [
+    {
+      "id": "src/hooks/logic/useCostEngine.ts",
+      "summary": "useCostEngine.ts: Módulo técnico useCostEngine. Lógica de negocio para useCostEngine."
+    },
+    {
+      "id": "src/lib/db.ts",
+      "summary": "db.ts: Módulo técnico db. Lógica de negocio para db."
+    },
+    {
+      "id": "src/lib/dexie.ts",
+      "summary": "dexie.ts: Configuración de persistencia local con Dexie.js (IndexedDB). Define el esquema de datos local para productos, transacciones, reglas de matching y logs de auditoría, permitiendo funcionamiento offline."
+    },
+    {
+      "id": "src/lib/inventory-logic.ts",
+      "summary": "inventory-logic.ts: Módulo técnico inventory-logic. Lógica de negocio para inventory-logic."
+    },
+    {
+      "id": "src/lib/supabaseClient.ts",
+      "summary": "supabaseClient.ts: Módulo técnico supabaseClient. Lógica de negocio para supabaseClient."
+    },
+    {
+      "id": "src/lib/rpc-validator.ts",
+      "summary": "rpc-validator.ts: Módulo técnico rpc-validator. Lógica de negocio para rpc-validator."
+    },
+    {
+      "id": "src/lib/auth.ts",
+      "summary": "auth.ts: Módulo técnico auth. Lógica de negocio para auth."
+    },
+    {
+      "id": "src/lib/query-inspector-utils.ts",
+      "summary": "query-inspector-utils.ts: Módulo técnico query-inspector-utils. Lógica de negocio para query-inspector-utils."
+    },
+    {
+      "id": "src/lib/plan-utils.ts",
+      "summary": "plan-utils.ts: Módulo técnico plan-utils. Lógica de negocio para plan-utils."
+    },
+    {
+      "id": "src/lib/logger.ts",
+      "summary": "logger.ts: Módulo técnico logger. Lógica de negocio para logger."
+    },
+    {
+      "id": "src/lib/theme.test.ts",
+      "summary": "theme.test.ts: Módulo técnico theme.test. Lógica de negocio para theme.test."
+    },
+    {
+      "id": "src/lib/utils.ts",
+      "summary": "utils.ts: Módulo técnico utils. Lógica de negocio para utils."
+    },
+    {
+      "id": "src/lib/errorHandler.ts",
+      "summary": "errorHandler.ts: Módulo técnico errorHandler. Lógica de negocio para errorHandler."
+    },
+    {
+      "id": "src/lib/navigation.ts",
+      "summary": "navigation.ts: Módulo técnico navigation. Lógica de negocio para navigation."
+    },
+    {
+      "id": "src/lib/roles.ts",
+      "summary": "roles.ts: Módulo técnico roles. Lógica de negocio para roles."
+    },
+    {
+      "id": "src/lib/wallet/parser.ts",
+      "summary": "parser.ts: Módulo técnico parser. Lógica de negocio para parser."
+    },
+    {
+      "id": "src/lib/wallet/types.ts",
+      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+    },
+    {
+      "id": "src/lib/wallet/__tests__/parser.test.ts",
+      "summary": "parser.test.ts: Módulo técnico parser.test. Lógica de negocio para parser.test."
+    },
+    {
+      "id": "src/lib/cost-engine/user-json.test.ts",
+      "summary": "user-json.test.ts: Módulo técnico user-json.test. Lógica de negocio para user-json.test."
+    },
+    {
+      "id": "src/lib/cost-engine/heuristic.test.ts",
+      "summary": "heuristic.test.ts: Módulo técnico heuristic.test. Lógica de negocio para heuristic.test."
+    },
+    {
+      "id": "src/lib/cost-engine/bidirectional.test.ts",
+      "summary": "bidirectional.test.ts: Módulo técnico bidirectional.test. Lógica de negocio para bidirectional.test."
+    },
+    {
+      "id": "src/lib/cost-engine/formula-utils.ts",
+      "summary": "formula-utils.ts: Módulo técnico formula-utils. Lógica de negocio para formula-utils."
+    },
+    {
+      "id": "src/lib/cost-engine/index.ts",
+      "summary": "index.ts: Módulo técnico index. Lógica de negocio para index."
+    },
+    {
+      "id": "src/lib/cost-engine/accuracy.test.ts",
+      "summary": "accuracy.test.ts: Módulo técnico accuracy.test. Lógica de negocio para accuracy.test."
+    },
+    {
+      "id": "src/lib/cost-engine/types.ts",
+      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+    },
+    {
+      "id": "src/lib/cost-engine/validations.ts",
+      "summary": "validations.ts: Módulo técnico validations. Lógica de negocio para validations."
+    },
+    {
+      "id": "src/lib/cost-engine/smart-annex.test.ts",
+      "summary": "smart-annex.test.ts: Módulo técnico smart-annex.test. Lógica de negocio para smart-annex.test."
+    },
+    {
+      "id": "src/lib/cost-engine/topo-sort.test.ts",
+      "summary": "topo-sort.test.ts: Módulo técnico topo-sort.test. Lógica de negocio para topo-sort.test."
+    },
+    {
+      "id": "src/lib/cost-engine/index.test.ts",
+      "summary": "index.test.ts: Módulo técnico index.test. Lógica de negocio para index.test."
+    },
+    {
+      "id": "src/lib/cost-engine/schemas.ts",
+      "summary": "schemas.ts: Módulo técnico schemas. Lógica de negocio para schemas."
+    },
+    {
+      "id": "src/lib/utils/pdf-export.ts",
+      "summary": "pdf-export.ts: Módulo técnico pdf-export. Lógica de negocio para pdf-export."
+    },
+    {
+      "id": "src/lib/utils/number-to-words-es.ts",
+      "summary": "number-to-words-es.ts: Módulo técnico number-to-words-es. Lógica de negocio para number-to-words-es."
+    },
+    {
+      "id": "src/lib/observability/health-engine.ts",
+      "summary": "health-engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
+    },
+    {
+      "id": "src/lib/observability/health-alerts.ts",
+      "summary": "health-alerts.ts: Módulo técnico health-alerts. Lógica de negocio para health-alerts."
+    },
+    {
+      "id": "src/lib/observability/system-health.ts",
+      "summary": "system-health.ts: Módulo técnico system-health. Lógica de negocio para system-health."
+    },
+    {
+      "id": "src/lib/observability/__tests__/system-health.test.ts",
+      "summary": "system-health.test.ts: Módulo técnico system-health.test. Lógica de negocio para system-health.test."
+    },
+    {
+      "id": "src/lib/observability/__tests__/health-engine.test.ts",
+      "summary": "health-engine.test.ts: Módulo técnico health-engine.test. Lógica de negocio para health-engine.test."
+    },
+    {
+      "id": "src/lib/academy/sm2.ts",
+      "summary": "sm2.ts: Módulo técnico sm2. Lógica de negocio para sm2."
+    },
+    {
+      "id": "src/lib/academy/__tests__/sm2.test.ts",
+      "summary": "sm2.test.ts: Módulo técnico sm2.test. Lógica de negocio para sm2.test."
+    },
+    {
+      "id": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
+      "summary": "ReleaseGatePdfExporter.ts: Módulo técnico ReleaseGatePdfExporter. Lógica de negocio para ReleaseGatePdfExporter."
+    },
+    {
+      "id": "src/lib/release_gate/mri-engine.ts",
+      "summary": "mri-engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
+    },
+    {
+      "id": "src/lib/release_gate/__tests__/mri-engine.test.ts",
+      "summary": "mri-engine.test.ts: Módulo técnico mri-engine.test. Lógica de negocio para mri-engine.test."
+    },
+    {
+      "id": "src/lib/data/template-repair.ts",
+      "summary": "template-repair.ts: Módulo técnico template-repair. Lógica de negocio para template-repair."
+    },
+    {
+      "id": "src/lib/data/demo-products.ts",
+      "summary": "demo-products.ts: Módulo técnico demo-products. Lógica de negocio para demo-products."
+    },
+    {
+      "id": "src/lib/data/costpro-ejemplo.ts",
+      "summary": "costpro-ejemplo.ts: Módulo técnico costpro-ejemplo. Lógica de negocio para costpro-ejemplo."
+    },
+    {
+      "id": "src/lib/data/template-industrial.ts",
+      "summary": "template-industrial.ts: Módulo técnico template-industrial. Lógica de negocio para template-industrial."
+    },
+    {
+      "id": "src/lib/data/costpro-reinicio.ts",
+      "summary": "costpro-reinicio.ts: Módulo técnico costpro-reinicio. Lógica de negocio para costpro-reinicio."
+    },
+    {
+      "id": "src/lib/data/template-consultancy.ts",
+      "summary": "template-consultancy.ts: Módulo técnico template-consultancy. Lógica de negocio para template-consultancy."
+    },
+    {
+      "id": "src/lib/data/template-logistics.ts",
+      "summary": "template-logistics.ts: Módulo técnico template-logistics. Lógica de negocio para template-logistics."
+    },
+    {
+      "id": "src/lib/data/template-lavar.ts",
+      "summary": "template-lavar.ts: Módulo técnico template-lavar. Lógica de negocio para template-lavar."
+    },
+    {
+      "id": "src/lib/data/template-pastry.ts",
+      "summary": "template-pastry.ts: Módulo técnico template-pastry. Lógica de negocio para template-pastry."
+    },
+    {
+      "id": "src/lib/data/template-icecream.ts",
+      "summary": "template-icecream.ts: Módulo técnico template-icecream. Lógica de negocio para template-icecream."
+    },
+    {
+      "id": "src/lib/data/template-juice.ts",
+      "summary": "template-juice.ts: Módulo técnico template-juice. Lógica de negocio para template-juice."
+    },
+    {
+      "id": "src/lib/data/template-shoes.ts",
+      "summary": "template-shoes.ts: Módulo técnico template-shoes. Lógica de negocio para template-shoes."
+    },
+    {
+      "id": "src/lib/data/template-pizza.ts",
+      "summary": "template-pizza.ts: Módulo técnico template-pizza. Lógica de negocio para template-pizza."
+    },
+    {
+      "id": "src/lib/data/template-furniture.ts",
+      "summary": "template-furniture.ts: Módulo técnico template-furniture. Lógica de negocio para template-furniture."
+    },
+    {
+      "id": "src/lib/ipv/intelligence.ts",
+      "summary": "intelligence.ts: Módulo técnico intelligence. Lógica de negocio para intelligence."
+    },
+    {
+      "id": "src/lib/ipv/calculations.ts",
+      "summary": "calculations.ts: Módulo técnico calculations. Lógica de negocio para calculations."
+    },
+    {
+      "id": "src/lib/ipv/importUtils.ts",
+      "summary": "importUtils.ts: Módulo técnico importUtils. Lógica de negocio para importUtils."
+    },
+    {
+      "id": "src/lib/ipv/backup.ts",
+      "summary": "backup.ts: Módulo técnico backup. Lógica de negocio para backup."
+    },
+    {
+      "id": "src/lib/ipv/matching.worker.ts",
+      "summary": "matching.worker.ts: Módulo técnico matching.worker. Lógica de negocio para matching.worker."
+    },
+    {
+      "id": "src/lib/ipv/bandecParser.ts",
+      "summary": "bandecParser.ts: Módulo técnico bandecParser. Lógica de negocio para bandecParser."
+    },
+    {
+      "id": "src/lib/ipv/engine.ts",
+      "summary": "engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
+    },
+    {
+      "id": "src/lib/ipv/parser.ts",
+      "summary": "parser.ts: Módulo técnico parser. Lógica de negocio para parser."
+    },
+    {
+      "id": "src/lib/ipv/utils.ts",
+      "summary": "utils.ts: Módulo técnico utils. Lógica de negocio para utils."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
+      "summary": "global_goal_priority.test.ts: Módulo técnico global_goal_priority.test. Lógica de negocio para global_goal_priority.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/calculations.test.ts",
+      "summary": "calculations.test.ts: Módulo técnico calculations.test. Lógica de negocio para calculations.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/bandecParser.test.ts",
+      "summary": "bandecParser.test.ts: Módulo técnico bandecParser.test. Lógica de negocio para bandecParser.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/repro_issue.test.ts",
+      "summary": "repro_issue.test.ts: Módulo técnico repro_issue.test. Lógica de negocio para repro_issue.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/advanced_engine.test.ts",
+      "summary": "advanced_engine.test.ts: Módulo técnico advanced_engine.test. Lógica de negocio para advanced_engine.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
+      "summary": "bigbon_simulation.test.ts: Módulo técnico bigbon_simulation.test. Lógica de negocio para bigbon_simulation.test."
+    },
+    {
+      "id": "src/lib/ipv/__tests__/engine.test.ts",
+      "summary": "engine.test.ts: Módulo técnico engine.test. Lógica de negocio para engine.test."
+    },
+    {
+      "id": "src/lib/ai/orchestrator.ts",
+      "summary": "orchestrator.ts: Módulo técnico orchestrator. Lógica de negocio para orchestrator."
+    },
+    {
+      "id": "src/lib/ai/types.ts",
+      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+    },
+    {
+      "id": "src/lib/ai/adapters/qwen-adapter.ts",
+      "summary": "qwen-adapter.ts: Módulo técnico qwen-adapter. Lógica de negocio para qwen-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/openai-compatible-adapter.ts",
+      "summary": "openai-compatible-adapter.ts: Módulo técnico openai-compatible-adapter. Lógica de negocio para openai-compatible-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/fallback-adapter.ts",
+      "summary": "fallback-adapter.ts: Módulo técnico fallback-adapter. Lógica de negocio para fallback-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/deepseek-adapter.ts",
+      "summary": "deepseek-adapter.ts: Módulo técnico deepseek-adapter. Lógica de negocio para deepseek-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/gemini-adapter.test.ts",
+      "summary": "gemini-adapter.test.ts: Módulo técnico gemini-adapter.test. Lógica de negocio para gemini-adapter.test."
+    },
+    {
+      "id": "src/lib/ai/adapters/gemini-adapter.ts",
+      "summary": "gemini-adapter.ts: Módulo técnico gemini-adapter. Lógica de negocio para gemini-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/kimi-adapter.ts",
+      "summary": "kimi-adapter.ts: Módulo técnico kimi-adapter. Lógica de negocio para kimi-adapter."
+    },
+    {
+      "id": "src/lib/ai/adapters/gpt-adapter.ts",
+      "summary": "gpt-adapter.ts: Módulo técnico gpt-adapter. Lógica de negocio para gpt-adapter."
+    },
+    {
+      "id": "src/lib/ai/tools/definitions.ts",
+      "summary": "definitions.ts: Módulo técnico definitions. Lógica de negocio para definitions."
+    },
+    {
+      "id": "src/lib/ai/tools/registry.ts",
+      "summary": "registry.ts: Módulo técnico registry. Lógica de negocio para registry."
+    },
+    {
+      "id": "src/lib/ai/tools/registry.test.ts",
+      "summary": "registry.test.ts: Módulo técnico registry.test. Lógica de negocio para registry.test."
+    },
+    {
+      "id": "src/lib/sync/offline-storage.ts",
+      "summary": "offline-storage.ts: Módulo técnico offline-storage. Lógica de negocio para offline-storage."
+    }
+  ],
+  "workflow_summaries": [
+    {
+      "id": "reconciliacion_ipv",
+      "summary": "Workflow 'Conciliación de Inventario (IPV)': Asegurar que cada peso recibido en el banco corresponda a una salida de inventario válida. Steps: Importar extracto bancario en BankIngestion, Verificar catálogo en CatalogTable, Ejecutar MatchingEngine para cruzar datos, Revisar resultados en MatchingAuditView"
+    },
+    {
+      "id": "gestion_productos",
+      "summary": "Workflow 'Gestión de Productos y Precios': Mantener un catálogo actualizado para la automatización del matching. Steps: Crear o importar productos, Definir variaciones permitidas, Organizar por grupos y subgrupos"
+    }
+  ],
+  "view_summaries": [
+    {
+      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "summary": "Vista ExecutiveDemoView.tsx accesible en src/components/views/executive-demo/ExecutiveDemoView.tsx. Dependencias clave: 5 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "summary": "Vista SystemHealthView.tsx accesible en src/components/views/terminal/views/health/SystemHealthView.tsx. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+      "summary": "Vista ViewNavigator.tsx accesible en src/components/views/terminal/views/health/ViewNavigator.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "summary": "Vista WalletView.tsx accesible en src/components/views/terminal/views/wallet/WalletView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "summary": "Vista CatalogView.tsx accesible en src/components/views/terminal/views/catalog/CatalogView.tsx. Dependencias clave: 5 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
+      "summary": "Vista SettingsView.tsx accesible en src/components/views/terminal/views/settings/SettingsView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "summary": "Vista DashboardView.tsx accesible en src/components/views/terminal/views/dashboard/DashboardView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+      "summary": "Vista useDashboardView.ts accesible en src/components/views/terminal/views/dashboard/useDashboardView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "summary": "Vista ReportsView.tsx accesible en src/components/views/terminal/views/reports/ReportsView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "summary": "Vista StoresManagementView.tsx accesible en src/components/views/terminal/views/stores/StoresManagementView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
+      "summary": "Vista useStoresView.ts accesible en src/components/views/terminal/views/stores/useStoresView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "summary": "Vista AcademyView.tsx accesible en src/components/views/terminal/views/academy/AcademyView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "summary": "Vista TransferenciasView.tsx accesible en src/components/views/terminal/views/transfers/TransferenciasView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/help/HelpView.tsx",
+      "summary": "Vista HelpView.tsx accesible en src/components/views/terminal/views/help/HelpView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "summary": "Vista InventoryCardView.tsx accesible en src/components/views/terminal/views/inventory/InventoryCardView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "summary": "Vista InventoryAdjustmentsView.tsx accesible en src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "summary": "Vista ProductReceptionView.tsx accesible en src/components/views/terminal/views/inventory/ProductReceptionView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "summary": "Vista InventoryTableView.tsx accesible en src/components/views/terminal/views/inventory/InventoryTableView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "summary": "Vista InventoryView.tsx accesible en src/components/views/terminal/views/inventory/InventoryView.tsx. Dependencias clave: 6 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "summary": "Vista CashClosureView.tsx accesible en src/components/views/terminal/views/cash_closure/CashClosureView.tsx. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "summary": "Vista SalesHistoryView.tsx accesible en src/components/views/terminal/views/sales/SalesHistoryView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+      "summary": "Vista useSalesHistoryView.ts accesible en src/components/views/terminal/views/sales/useSalesHistoryView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "summary": "Vista ReceptionsHistoryView.tsx accesible en src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+      "summary": "Vista useReceptionsHistoryView.ts accesible en src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "summary": "Vista StockHistoryView.tsx accesible en src/components/views/terminal/views/stock_history/StockHistoryView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "summary": "Vista IPVView.tsx accesible en src/components/views/terminal/views/ipv/IPVView.tsx. Dependencias clave: 8 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
+      "summary": "Vista MovementsView.tsx accesible en src/components/views/terminal/views/ipv/MovementsView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "summary": "Vista IPVReportView.tsx accesible en src/components/views/terminal/views/ipv/IPVReportView.tsx. Dependencias clave: 5 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "summary": "Vista MatchingAuditView.tsx accesible en src/components/views/terminal/views/ipv/MatchingAuditView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "summary": "Vista TransferQRReportView.tsx accesible en src/components/views/terminal/views/ipv/TransferQRReportView.tsx. Dependencias clave: 5 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "summary": "Vista ManualReconciliationView.tsx accesible en src/components/views/terminal/views/ipv/ManualReconciliationView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "summary": "Vista PivotStatementView.tsx accesible en src/components/views/terminal/views/ipv/PivotStatementView.tsx. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+      "summary": "Vista InventoryCountTableView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+      "summary": "Vista InventoryCountCardView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "summary": "Vista InventoryCountView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "summary": "Vista WikiView.tsx accesible en src/components/views/terminal/views/wiki/WikiView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "summary": "Vista POSTableView.tsx accesible en src/components/views/terminal/views/pos/POSTableView.tsx. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
+      "summary": "Vista usePOSView.ts accesible en src/components/views/terminal/views/pos/usePOSView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/pos/POSView.tsx",
+      "summary": "Vista POSView.tsx accesible en src/components/views/terminal/views/pos/POSView.tsx. Dependencias clave: 13 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+      "summary": "Vista AuditTableView.tsx accesible en src/components/views/terminal/views/audit/AuditTableView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
+      "summary": "Vista AuditTableView.test.tsx accesible en src/components/views/terminal/views/audit/AuditTableView.test.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
+      "summary": "Vista AuditLogsView.test.tsx accesible en src/components/views/terminal/views/audit/AuditLogsView.test.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
+      "summary": "Vista useAuditLogsView.ts accesible en src/components/views/terminal/views/audit/useAuditLogsView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "summary": "Vista AuditLogsView.tsx accesible en src/components/views/terminal/views/audit/AuditLogsView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "summary": "Vista CostSheetAuditView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "summary": "Vista CostSheetView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetView.tsx. Dependencias clave: 8 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "summary": "Vista CostSheetCardView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/users/useUsersView.ts",
+      "summary": "Vista useUsersView.ts accesible en src/components/views/terminal/views/users/useUsersView.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "summary": "Vista UsersManagementView.tsx accesible en src/components/views/terminal/views/users/UsersManagementView.tsx. Dependencias clave: 5 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "summary": "Vista RolesManagementView.tsx accesible en src/components/views/terminal/views/users/RolesManagementView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "summary": "Vista RSSManagementView.tsx accesible en src/components/views/terminal/views/rss/RSSManagementView.tsx. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "summary": "Vista NewsView.tsx accesible en src/components/views/terminal/views/rss/NewsView.tsx. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
+      "summary": "Vista LegalView.test.tsx accesible en src/components/views/terminal/views/legal/LegalView.test.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
+      "summary": "Vista LegalView.tsx accesible en src/components/views/terminal/views/legal/LegalView.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/ui/ViewSwitcher.tsx",
+      "summary": "Vista ViewSwitcher.tsx accesible en src/components/ui/ViewSwitcher.tsx. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/components/auth/WelcomeLandingView.tsx",
+      "summary": "Vista WelcomeLandingView.tsx accesible en src/components/auth/WelcomeLandingView.tsx. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/app/page.tsx",
+      "summary": "Vista page.tsx accesible en /. Dependencias clave: 3 componentes."
+    },
+    {
+      "id": "src/app/layout.tsx",
+      "summary": "Vista layout.tsx accesible en /layout.tsx. Dependencias clave: 6 componentes."
+    },
+    {
+      "id": "src/app/cost-sheets/page.tsx",
+      "summary": "Vista page.tsx accesible en /cost-sheets. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/app/api/route.ts",
+      "summary": "Vista route.ts accesible en /api/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/import-anexo/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/save/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/save/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/export-pdf/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/import-json/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/import-json/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/ai/chat/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/cost-sheets/calculate/route.ts",
+      "summary": "Vista route.ts accesible en /api/cost-sheets/calculate/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/system-health/route.ts",
+      "summary": "Vista route.ts accesible en /api/system-health/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/reports/generate/route.ts",
+      "summary": "Vista route.ts accesible en /api/reports/generate/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/academy/review/route.ts",
+      "summary": "Vista route.ts accesible en /api/academy/review/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/academy/review/[cardId]/route.ts",
+      "summary": "Vista route.ts accesible en /api/academy/review/[cardId]/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/academy/generate/route.ts",
+      "summary": "Vista route.ts accesible en /api/academy/generate/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/inventory/route.ts",
+      "summary": "Vista route.ts accesible en /api/inventory/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/inventory/adjust/route.ts",
+      "summary": "Vista route.ts accesible en /api/inventory/adjust/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/inventory/[productId]/history/route.ts",
+      "summary": "Vista route.ts accesible en /api/inventory/[productId]/history/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/inventory/products/route.ts",
+      "summary": "Vista route.ts accesible en /api/inventory/products/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/inventory/adjustments/route.ts",
+      "summary": "Vista route.ts accesible en /api/inventory/adjustments/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/bot/chat/route.ts",
+      "summary": "Vista route.ts accesible en /api/bot/chat/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/users/reset-password/route.ts",
+      "summary": "Vista route.ts accesible en /api/users/reset-password/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/users/toggle-status/route.ts",
+      "summary": "Vista route.ts accesible en /api/users/toggle-status/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/users/delete/route.ts",
+      "summary": "Vista route.ts accesible en /api/users/delete/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/users/managed-create/route.ts",
+      "summary": "Vista route.ts accesible en /api/users/managed-create/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/sync/batch/route.ts",
+      "summary": "Vista route.ts accesible en /api/sync/batch/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/rss/route.ts",
+      "summary": "Vista route.ts accesible en /api/rss/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/api/logs/route.ts",
+      "summary": "Vista route.ts accesible en /api/logs/route.ts. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/verify-dashboard/page.tsx",
+      "summary": "Vista page.tsx accesible en /verify-dashboard. Dependencias clave: 2 componentes."
+    },
+    {
+      "id": "src/app/wiki/page.tsx",
+      "summary": "Vista page.tsx accesible en /wiki. Dependencias clave: 0 componentes."
+    },
+    {
+      "id": "src/app/cashier/close-session/page.tsx",
+      "summary": "Vista page.tsx accesible en /cashier/close-session. Dependencias clave: 4 componentes."
+    },
+    {
+      "id": "src/app/demo/executive/page.tsx",
+      "summary": "Vista page.tsx accesible en /demo/executive. Dependencias clave: 1 componentes."
+    },
+    {
+      "id": "src/app/demo/calculate/page.tsx",
+      "summary": "Vista page.tsx accesible en /demo/calculate. Dependencias clave: 6 componentes."
+    },
+    {
+      "id": "src/app/login/page.tsx",
+      "summary": "Vista page.tsx accesible en /login. Dependencias clave: 4 componentes."
+    }
+  ],
+  "business_rules": [
+    "R1: Coherencia táctica de precios - Los precios ajustados se bloquean por fecha.",
+    "R2: Combinaciones profundas - El matching engine busca sumas exactas de productos para igualar montos bancarios.",
+    "R3: Decomposición recursiva - Un paquete vendido se descompone en sus unidades para el cuadre de stock.",
+    "R4: Seguridad por reversión - Las API Keys se recuperan mediante normalización si están ofuscadas."
+  ]
+}

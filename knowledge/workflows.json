@@ -1,0 +1,23 @@
+[
+  {
+    "id": "reconciliacion_ipv",
+    "name": "Conciliación de Inventario (IPV)",
+    "steps": [
+      "Importar extracto bancario en BankIngestion",
+      "Verificar catálogo en CatalogTable",
+      "Ejecutar MatchingEngine para cruzar datos",
+      "Revisar resultados en MatchingAuditView"
+    ],
+    "business_goal": "Asegurar que cada peso recibido en el banco corresponda a una salida de inventario válida."
+  },
+  {
+    "id": "gestion_productos",
+    "name": "Gestión de Productos y Precios",
+    "steps": [
+      "Crear o importar productos",
+      "Definir variaciones permitidas",
+      "Organizar por grupos y subgrupos"
+    ],
+    "business_goal": "Mantener un catálogo actualizado para la automatización del matching."
+  }
+]
