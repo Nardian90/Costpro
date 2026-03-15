@@ -61,6 +61,7 @@ export class MatchingEngine {
   }
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
+    const startTime = Date.now();
     const logs: string[] = [];
     const trace: MatchingTrace[] = [];
     const appliedRules: string[] = [];
@@ -188,8 +189,8 @@ export class MatchingEngine {
 
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
-        const maxAbs = priceFlexRule.meta?.max_variation_cents || 10;
-        const maxPercent = priceFlexRule.meta?.max_variation_percent || 20;
+        const maxAbs = priceFlexRule.meta?.max_variation_cents ?? 10;
+        const maxPercent = priceFlexRule.meta?.max_variation_percent ?? 20;
 
         const flexProduct = this.products.find(p => {
             if (this.useStockLimit && this.getVirtualStock(p.cod) <= 0) return false;
@@ -281,7 +282,7 @@ export class MatchingEngine {
 
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
     if (toleranceRule && remaining_cents > 0) {
-      const toleranceCents = toleranceRule.meta?.tolerance_cents || toleranceRule.tolerancia_cents || 0;
+      const toleranceCents = toleranceRule.meta?.tolerance_cents ?? toleranceRule.tolerancia_cents ?? 0;
 
       if (toleranceCents > 0) {
           const candidateProducts = this.products
@@ -324,7 +325,7 @@ export class MatchingEngine {
 
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
-      const dailyLimit = cashFillRule.meta?.daily_limit || Infinity;
+      const dailyLimit = cashFillRule.meta?.daily_limit ?? Infinity;
       const usedToday = await db.reconciliation_lines
         .where('fecha_operacion').equals(transaction.fecha)
         .and(l => l.origen_dato === 'CASH_FILLER')
@@ -409,6 +410,28 @@ export class MatchingEngine {
 
     const resultMovements = [...this.pendingMovements];
     this.pendingMovements = [];
+
+    const durationMs = Date.now() - startTime;
+
+    // Persist log
+    (async () => {
+      try {
+        const { MatchingLogService } = await import('@/services/matching-log-service');
+        await MatchingLogService.logMatchingResult(
+          transaction.referencia_origen,
+          isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
+          trace,
+          appliedRules,
+          matchingConfidence,
+          failReason,
+          lines.length,
+          durationMs,
+          this.rules.filter(r => r.activo).map(r => r.tipo)
+        );
+      } catch (error) {
+        console.error('Error logging matching result:', error);
+      }
+    })();
 
     return {
       lines,
@@ -603,8 +626,9 @@ export class MatchingEngine {
         return a.cod.localeCompare(b.cod);
     });
 
-    const MAX_DEPTH = 12;
-    const TIMEOUT_MS = 2000;
+    const exactSumRule = this.rules.find(r => r.tipo === 'EXACT_SUM');
+    const MAX_DEPTH = exactSumRule?.meta?.max_depth ?? 12;
+    const TIMEOUT_MS = exactSumRule?.meta?.timeout_ms ?? 2000;
     const startTime = Date.now();
 
     const solve = (remaining: number, index: number, depth: number): { product: Product, qty: number }[] | null => {

@@ -31,6 +31,7 @@ import {
   ArrowRightLeft,
   QrCode
 } from 'lucide-react';
+import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
 import { CatalogTable } from './CatalogTable';
@@ -390,6 +391,7 @@ export default function IPVView() {
     { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
     { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
+    { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
     {
         id: 'reports-dropdown',
@@ -635,6 +637,11 @@ export default function IPVView() {
             </div>
           )}
 
+          {activeTab === 'audit' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <MatchingAuditView />
+            </div>
+          )}
           {activeTab === 'movements' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <MovementsView />
