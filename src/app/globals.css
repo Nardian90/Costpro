@@ -972,6 +972,47 @@
       margin-left: auto !important;
       margin-right: auto !important;
     }
+
+    /* Footer Section (SECCION_07_FOOTER) Maintenance */
+
+    footer {
+      width: 100% !important;
+    }
+
+    /* Reinforce touch targets for footer links and buttons */
+    footer a,
+    footer button {
+      min-height: 44px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+
+    /* Adaptive typography for footer headers */
+    footer h1, footer h2, footer h3 {
+      font-size: clamp(16px, 4vw, 24px) !important;
+    }
+
+    /* Ensure footer copyright and small text is legible but not oversized */
+    footer span, footer p {
+      font-size: clamp(12px, 3vw, 14px) !important;
+    }
+
+    /* Handle flex wrapping for footer links if they exceed viewport */
+    footer .flex-nowrap {
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      gap: 1rem !important;
+    }
+
+    /* Remove min-width restriction on footer link containers to allow wrapping */
+    footer .min-w-max {
+      min-width: 0 !important;
+    }
+
+    /* Ensure footer links are not too crowded */
+    footer .flex-nowrap a {
+      margin: 0.25rem 0;
+    }
   }
 
   /* Reduced motion */
