@@ -257,7 +257,7 @@ export function ArchitectureAuditTable() {
               );
             }) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={7} className="h-32 text-center">
                    <div className="flex flex-col items-center justify-center opacity-40">
                       <Search className="w-8 h-8 mb-2" />
                       <p className="text-[10px] font-black uppercase tracking-widest">No se encontraron resultados para los filtros aplicados</p>
@@ -349,9 +349,25 @@ export function ArchitectureAuditTable() {
                    <FileCode className="w-12 h-12" />
                 </div>
                 <div className="space-y-6 relative z-10">
-                  <p className="text-sm font-bold leading-relaxed text-foreground/90">
-                    {selectedComponent?.business_logic || "No hay descripción de lógica de negocio disponible para este componente."}
-                  </p>
+                  <div className="space-y-4">
+                    {selectedComponent?.business_logic ? (
+                      selectedComponent.business_logic.split('\n').map((line, i) => {
+                        const isHeader = /^\d+\.\s/.test(line) || line.startsWith('###');
+                        return (
+                          <p key={i} className={cn(
+                            "text-sm leading-relaxed",
+                            isHeader ? "font-black text-primary uppercase tracking-tight mt-4 first:mt-0" : "font-bold text-foreground/90 pl-4 border-l border-primary/10"
+                          )}>
+                            {line.replace(/^\d+\.\s/, '').replace(/^###\s/, '')}
+                          </p>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm font-bold leading-relaxed text-foreground/90 italic opacity-50">
+                        No hay descripción de lógica de negocio disponible para este componente.
+                      </p>
+                    )}
+                  </div>
 
                   {selectedComponent?.openQuestions && selectedComponent.openQuestions.length > 0 && (
                     <div className="pt-6 border-t border-primary/10">

@@ -472,9 +472,9 @@
       "health": 10.0,
       "status": "Óptimo",
       "lastAudit": "2026-03-15",
-      "business_logic": "[No definido en el manual] Componente técnico SystemDependencyGraph encargado de soportar la funcionalidad operativa del módulo views.",
-      "is_documented": false,
-      "documentation_quality": 3.0,
+      "business_logic": "1. Descripción: Generador de grafos de dependencias entre módulos del sistema.\n2. Propósito: Visualizar las relaciones de acoplamiento y la jerarquía de componentes en tiempo real.\n3. Flujo: Escanea el archivo architecture_graph.json -> Renderiza nodos y aristas mediante Framer Motion -> Permite navegación interactiva por la estructura.\n4. Dependencias: architecture_graph.json, framer-motion, lucide-react.\n5. Impacto en el negocio: Facilita la identificación de cuellos de botella arquitectónicos y el impacto de cambios técnicos.\n6. Riesgos / consideraciones: El rendimiento puede degradarse con grafos de más de 500 nodos en dispositivos móviles.\n7. Posibles mejoras: Implementar clustering por tipo de componente para mejorar la legibilidad del grafo.",
+      "is_documented": true,
+      "documentation_quality": 6.5,
       "metrics": {
         "inDegree": 0,
         "outDegree": 0,
@@ -482,7 +482,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": [
+        "¿Debería implementarse un worker para el cálculo de layouts en grafos muy densos?"
+      ]
     },
     {
       "id": "AuditSummary",
@@ -540,9 +543,9 @@
       "health": 10.0,
       "status": "Óptimo",
       "lastAudit": "2026-03-15",
-      "business_logic": "[No definido en el manual] Componente técnico HealthStatusHeader encargado de soportar la funcionalidad operativa del módulo views.",
-      "is_documented": false,
-      "documentation_quality": 3.0,
+      "business_logic": "1. Descripción: Cabecera informativa de la salud global del sistema.\n2. Propósito: Proporcionar una visión inmediata de los indicadores clave (SHI y MRI) al inicio de la vista Salud.\n3. Flujo: Recibe métricas agregadas del servicio de salud -> Aplica estilos visuales reactivos (colores/iconos) según los umbrales de seguridad.\n4. Dependencias: SystemHealthView, UI/Badge components.\n5. Impacto en el negocio: Permite a los administradores detectar incidentes críticos en segundos sin navegar por tablas detalladas.\n6. Riesgos / consideraciones: Dependencia directa de la disponibilidad del JSON de salud para su renderizado inicial.\n7. Posibles mejoras: Añadir micro-tendencias (flechas de subida/bajada) comparando con la última auditoría.",
+      "is_documented": true,
+      "documentation_quality": 6.0,
       "metrics": {
         "inDegree": 1,
         "outDegree": 1,
@@ -552,6 +555,9 @@
       },
       "dependencies": [
         "utils"
+      ],
+      "openQuestions": [
+        "¿Es necesario mostrar el histórico de los últimos 7 días directamente en el header?"
       ]
     },
     {
@@ -641,7 +647,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ViewNavigator",
@@ -716,7 +723,8 @@
       "dependencies": [
         "utils",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "InfrastructureMetrics",
@@ -795,7 +803,8 @@
         "types",
         "parser",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "AnalyticsDashboard",
@@ -818,7 +827,8 @@
       "dependencies": [
         "card",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CatalogModals",
@@ -1062,7 +1072,8 @@
         "button",
         "select",
         "label"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ReportPreview",
@@ -1085,7 +1096,8 @@
       "dependencies": [
         "card",
         "CostProLoader"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ReportsView",
@@ -1141,7 +1153,8 @@
         "AuditTimeline",
         "StateRenderer",
         "skeleton"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "StoresManagementView",
@@ -1331,7 +1344,8 @@
       "dependencies": [
         "BaseModal",
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "TransferenciasView",
@@ -1357,7 +1371,8 @@
         "StateRenderer",
         "utils",
         "ActionMenu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "TransferDetailsModal",
@@ -1381,7 +1396,8 @@
         "BaseModal",
         "StateRenderer",
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "HelpView",
@@ -1444,7 +1460,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "StickyCartFlowDiagram",
@@ -1533,7 +1550,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "UserFlowDiagram",
@@ -1576,7 +1594,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "CostFlowDiagram",
@@ -1596,7 +1615,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "RolesDiagram",
@@ -1639,7 +1659,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "InventoryFlowDiagram",
@@ -1659,7 +1680,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "MobileFlowDiagram",
@@ -1679,7 +1701,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "CashFlowDiagram",
@@ -1699,7 +1722,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "InventoryAdjustmentFlowDiagram",
@@ -1719,7 +1743,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "StoreSkuDiagram",
@@ -1762,7 +1787,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "SalesFlowDiagram",
@@ -1809,7 +1835,8 @@
         "index",
         "CostProLoader",
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "InventoryAdjustmentsView",
@@ -1861,7 +1888,8 @@
         "drawer",
         "utils",
         "inventory-logic"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ProductReceptionView",
@@ -1950,7 +1978,8 @@
         "ActionMenu",
         "SearchBar",
         "skeleton"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CashClosureView",
@@ -2109,7 +2138,8 @@
         "BaseModal",
         "utils",
         "skeleton"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ReceptionsHistoryView",
@@ -2137,7 +2167,8 @@
         "ReceptionDetailsModal",
         "SearchBar",
         "skeleton"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "useReceptionsHistoryView",
@@ -2157,7 +2188,8 @@
         "cyclomaticComplexity": 18,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "StockHistoryView",
@@ -2295,7 +2327,8 @@
         "button",
         "utils",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ActionBadges",
@@ -2319,7 +2352,8 @@
         "tooltip",
         "utils",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "TransactionTable",
@@ -2390,7 +2424,8 @@
         "engine",
         "select",
         "label"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IncomeReceiptPreview",
@@ -2412,7 +2447,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "MovementsView",
@@ -2439,7 +2475,8 @@
         "table",
         "button",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IncomeReceiptSection",
@@ -2467,7 +2504,8 @@
         "LegalPdfExporter",
         "IncomeReceiptPreview",
         "label"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IPVPreviewModal",
@@ -2497,7 +2535,8 @@
         "checkbox",
         "label",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "MatchingTracePopover",
@@ -2523,7 +2562,8 @@
         "utils",
         "popover",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IPVReportView",
@@ -2554,7 +2594,8 @@
         "utils",
         "IPVPreviewModal",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "MatchingAuditView",
@@ -2580,7 +2621,8 @@
         "table",
         "button",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IngestionErrorsTable",
@@ -2609,7 +2651,8 @@
         "utils",
         "engine",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "TransferQRReportView",
@@ -2639,7 +2682,8 @@
         "utils",
         "label",
         "supabaseClient"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ManualReconciliationView",
@@ -2698,7 +2742,8 @@
         "button",
         "switch",
         "label"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "MatchingSimulation",
@@ -2726,7 +2771,8 @@
         "button",
         "engine",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "RuleMetaEditor",
@@ -2752,7 +2798,8 @@
         "input",
         "button",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IPVReportsDropdown",
@@ -2776,7 +2823,8 @@
         "button",
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "PivotStatementView",
@@ -2907,7 +2955,8 @@
         "tooltip",
         "switch",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IPVHelpDialog",
@@ -2933,7 +2982,8 @@
         "tooltip",
         "button",
         "badge"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "IPVControlPanel",
@@ -2986,7 +3036,8 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "InventoryCountCardView",
@@ -3009,7 +3060,8 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "InventoryCountView",
@@ -3062,7 +3114,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CuentasModule",
@@ -3088,7 +3141,8 @@
         "button",
         "utils",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "AsientosModule",
@@ -3114,7 +3168,8 @@
         "button",
         "utils",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "WikiBreadcrumbs",
@@ -3136,7 +3191,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "WikiSearch",
@@ -3159,7 +3215,8 @@
       "dependencies": [
         "command",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "types",
@@ -3215,7 +3272,8 @@
         "data-loader",
         "WikiBreadcrumbs",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "WikiSidebar",
@@ -3238,7 +3296,8 @@
       "dependencies": [
         "utils",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ClasificadorModule",
@@ -3262,7 +3321,8 @@
         "utils",
         "types",
         "accordion"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "POSTableView",
@@ -3432,7 +3492,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "AuditFilters",
@@ -3530,7 +3591,8 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "AuditEventCard",
@@ -3554,7 +3616,8 @@
         "AuditEventIcon",
         "AuditEventMeta",
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "AuditEventMeta",
@@ -3576,7 +3639,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "AuditLogsView",
@@ -3689,7 +3753,8 @@
       },
       "dependencies": [
         "accordion"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetGenerateDropdown",
@@ -3711,7 +3776,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "FormulaEditor",
@@ -3762,7 +3828,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetCalculator",
@@ -3814,7 +3881,8 @@
         "utils",
         "SearchBar",
         "skeleton"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetBanner",
@@ -4026,7 +4094,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetSummary",
@@ -4082,7 +4151,8 @@
         "utils",
         "CostSheetHelpDropdown",
         "ActionMenu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetOptionsDropdown",
@@ -4104,7 +4174,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetHeader",
@@ -4179,7 +4250,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetNarrative",
@@ -4201,7 +4273,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetSignature",
@@ -4276,7 +4349,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetTemplateExplorer",
@@ -4314,7 +4388,8 @@
         "template-juice",
         "costpro-ejemplo",
         "supabaseClient"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetForm",
@@ -4464,7 +4539,8 @@
         "utils",
         "DarianEditor",
         "CostSheetCalculator"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetBody",
@@ -4511,7 +4587,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetHeaderEditor",
@@ -4536,7 +4613,8 @@
         "input",
         "utils",
         "label"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetFCDropdown",
@@ -4590,7 +4668,8 @@
         "CostSheetSidebarNav",
         "CostSheetHeaderEditor",
         "CostSheetSignatureEditor"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetInteractiveTable",
@@ -4678,7 +4757,8 @@
         "button",
         "utils",
         "sheet"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetPreview",
@@ -4704,7 +4784,8 @@
         "CostSheetBody",
         "CostSheetHeader",
         "SecurityScrollContainer"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetSignatureEditor",
@@ -4726,7 +4807,8 @@
       },
       "dependencies": [
         "input"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetModeDropdown",
@@ -4749,7 +4831,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CostSheetHelpPanel",
@@ -4772,7 +4855,8 @@
       "dependencies": [
         "utils",
         "CostSheetFormulaGuide"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "UserFormModal",
@@ -4795,7 +4879,8 @@
       "dependencies": [
         "UserForm",
         "BaseModal"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "useUsersView",
@@ -5232,7 +5317,8 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "command",
@@ -5507,7 +5593,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "CyberShell",
@@ -5799,7 +5886,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "toggle-group",
@@ -5822,7 +5910,8 @@
       "dependencies": [
         "utils",
         "toggle"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "scroll-area",
@@ -6051,7 +6140,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "badge",
@@ -6149,7 +6239,8 @@
       },
       "dependencies": [
         "toast"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "navigation-menu",
@@ -6171,7 +6262,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "ActionMenu",
@@ -6394,7 +6486,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "breadcrumb",
@@ -6742,7 +6835,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "collapsible",
@@ -6840,7 +6934,8 @@
         "utils",
         "ProductImage",
         "HorizontalScroll"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "RegisterForm",
@@ -6992,7 +7087,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "dexie",
@@ -7012,7 +7108,8 @@
         "cyclomaticComplexity": 41,
         "couplingScore": 8.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "inventory-logic",
@@ -7032,7 +7129,8 @@
         "cyclomaticComplexity": 10,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "supabaseClient",
@@ -7052,7 +7150,8 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 4.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "rpc-validator",
@@ -7072,7 +7171,8 @@
         "cyclomaticComplexity": 12,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "auth",
@@ -7094,7 +7194,8 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "query-inspector-utils",
@@ -7114,7 +7215,8 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.0
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "plan-utils",
@@ -7134,7 +7236,8 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "logger",
@@ -7154,7 +7257,8 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 1.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "utils",
@@ -7176,7 +7280,8 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "errorHandler",
@@ -7198,7 +7303,8 @@
       },
       "dependencies": [
         "logger"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "navigation",
@@ -7218,7 +7324,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "roles",
@@ -7238,7 +7345,8 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "parser",
@@ -7260,7 +7368,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "types",
@@ -7303,7 +7412,8 @@
         "cyclomaticComplexity": 8,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "index",
@@ -7326,7 +7436,8 @@
       "dependencies": [
         "formula-utils",
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "types",
@@ -7369,7 +7480,8 @@
         "cyclomaticComplexity": 101,
         "couplingScore": 5.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "schemas",
@@ -7389,7 +7501,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "pdf-export",
@@ -7409,7 +7522,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "number-to-words-es",
@@ -7429,7 +7543,8 @@
         "cyclomaticComplexity": 14,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "health-engine",
@@ -7449,7 +7564,8 @@
         "cyclomaticComplexity": 22,
         "couplingScore": 1.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "health-alerts",
@@ -7472,7 +7588,8 @@
       "dependencies": [
         "health-engine",
         "supabaseClient"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "system-health",
@@ -7492,7 +7609,8 @@
         "cyclomaticComplexity": 9,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "sm2",
@@ -7535,7 +7653,8 @@
         "cyclomaticComplexity": 36,
         "couplingScore": 1.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "mri-engine",
@@ -7555,7 +7674,8 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-repair",
@@ -7575,7 +7695,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "demo-products",
@@ -7595,7 +7716,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "costpro-ejemplo",
@@ -7615,7 +7737,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-industrial",
@@ -7635,7 +7758,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "costpro-reinicio",
@@ -7655,7 +7779,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-consultancy",
@@ -7675,7 +7800,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-logistics",
@@ -7695,7 +7821,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-lavar",
@@ -7715,7 +7842,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-pastry",
@@ -7735,7 +7863,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-icecream",
@@ -7755,7 +7884,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-juice",
@@ -7775,7 +7905,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-shoes",
@@ -7795,7 +7926,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-pizza",
@@ -7815,7 +7947,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "template-furniture",
@@ -7835,7 +7968,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "intelligence",
@@ -7857,7 +7991,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "calculations",
@@ -7905,7 +8040,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "backup",
@@ -7925,7 +8061,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "matching.worker",
@@ -7947,7 +8084,8 @@
       },
       "dependencies": [
         "engine"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "bandecParser",
@@ -7971,7 +8109,8 @@
         "dexie",
         "engine",
         "utils"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "engine",
@@ -7993,7 +8132,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "parser",
@@ -8013,7 +8153,8 @@
         "cyclomaticComplexity": 19,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": []
     },
     {
       "id": "utils",
@@ -8035,7 +8176,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "orchestrator",
@@ -8111,7 +8253,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "openai-compatible-adapter",
@@ -8133,7 +8276,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "openQuestions": []
     },
     {
       "id": "fallback-adapter",
@@ -8218,9 +8362,9 @@
       "health": 10.0,
       "status": "Óptimo",
       "lastAudit": "2026-03-15",
-      "business_logic": "[No definido en el manual] Componente técnico kimi-adapter encargado de soportar la funcionalidad operativa del módulo kimi-adapter.ts.",
-      "is_documented": false,
-      "documentation_quality": 3.0,
+      "business_logic": "1. Descripción: Adaptador especializado para el modelo Kimi de Moonshot AI.\n2. Propósito: Integrar las capacidades de procesamiento de contexto largo de Kimi en el ecosistema CostPro.\n3. Flujo: Implementa la interfaz LLMProvider -> Traduce peticiones al formato compatible con Moonshot -> Gestiona el streaming de respuestas.\n4. Dependencias: openai-compatible-adapter, useAIKeysStore.\n5. Impacto en el negocio: Habilita el análisis de documentos contables extremadamente largos que superan los límites de otros modelos.\n6. Riesgos / consideraciones: Latencia variable dependiendo de la carga en los servidores de Moonshot AI.\n7. Posibles mejoras: Optimizar el manejo de tokens mediante 'Caching' de sistema si el proveedor lo soporta.",
+      "is_documented": true,
+      "documentation_quality": 6.0,
       "metrics": {
         "inDegree": 1,
         "outDegree": 1,
@@ -8230,6 +8374,9 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
+      ],
+      "openQuestions": [
+        "¿Cómo se comporta el adaptador ante interrupciones de red durante el streaming largo?"
       ]
     },
     {
@@ -8316,9 +8463,9 @@
       "health": 10.0,
       "status": "Óptimo",
       "lastAudit": "2026-03-15",
-      "business_logic": "[No definido en el manual] Componente técnico offline-storage encargado de soportar la funcionalidad operativa del módulo lib.",
-      "is_documented": false,
-      "documentation_quality": 3.0,
+      "business_logic": "1. Descripción: Capa de persistencia local para el modo desconectado.\n2. Propósito: Garantizar que el terminal pueda operar (ventas, inventario) incluso sin conexión a Supabase.\n3. Flujo: Intercepta peticiones de escritura -> Persiste datos en Dexie DB -> Registra operaciones pendientes en la cola de sincronización.\n4. Dependencias: Dexie.js, sync-service.\n5. Impacto en el negocio: Continuidad operativa 100% en zonas con conectividad inestable, evitando pérdida de ventas.\n6. Riesgos / consideraciones: Conflictos de resolución de datos si el mismo registro se edita en múltiples terminales desconectados.\n7. Posibles mejoras: Implementar compresión de datos local para optimizar el uso de almacenamiento en el navegador.",
+      "is_documented": true,
+      "documentation_quality": 7.0,
       "metrics": {
         "inDegree": 1,
         "outDegree": 0,
@@ -8326,7 +8473,10 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "openQuestions": [
+        "¿Cuál es el límite máximo de almacenamiento recomendado antes de forzar una sincronización?"
+      ]
     }
   ],
   "stats": {
