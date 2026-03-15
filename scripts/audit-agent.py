@@ -5,11 +5,31 @@ import datetime
 import hashlib
 import argparse
 
+def extract_description(business_logic):
+    if not business_logic: return ""
+    match = re.search(r"(?:Descripción|1\.\s+Descripción):\s*(.*?)(?:\n|$)", business_logic, re.IGNORECASE)
+    if match: return match.group(1).strip()
+    return business_logic.split("\n")[0].strip()
+
+def get_layer(path):
+    if not path: return "unknown"
+    parts = path.split("/")
+    if "components" in parts: return "UI Components"
+    if "lib" in parts: return "Business Logic"
+    if "app" in parts: return "Application"
+    if "hooks" in parts: return "Hooks"
+    if "store" in parts: return "State Management"
+    if "services" in parts: return "Services"
+    if "types" in parts: return "Types"
+    return "Infrastructure"
+
+
 # Configuration
 BASE_PATHS = ["src/app", "src/components", "src/lib"]
 DOCS_MAP = "docs/mapa_vistas.md"
 ARCH_JSON = "public/system_architecture.json"
 GRAPH_JSON = "public/architecture_graph.json"
+AUDIT_JSON = "public/architecture_audit.json"
 AUDIT_LOG = "logs/audit_log.json"
 HEALTH_JSON = "public/system_health.json"
 TIMELINE_JSON = "public/health_timeline.json"
@@ -411,27 +431,51 @@ def run_phase_2():
         "topCoupled": [i['name'] for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]],
         "communities": []
     }
-    graph_data = {"nodes": items, "edges": edges, "graphStats": graph_stats}
+    graph_data = {"nodes": [{"id": i["id"], "type": i["type"]} for i in items], "edges": edges, "graphStats": graph_stats}
     with open(GRAPH_JSON, 'w', encoding='utf-8') as f:
         json.dump(graph_data, f, indent=2, ensure_ascii=False)
     print(f"Phase 2 complete. Generated {GRAPH_JSON}.")
 
 def run_phase_3():
-    print("Executing Phase 3: System Architecture Update...")
+    print("Executing Phase 3: System Architecture and Audit Update...")
     items, _, _ = scan_project()
     os.makedirs("public", exist_ok=True)
 
-    stats = {
-        "totalViews": len([i for i in items if i["type"] == "view"]),
-        "totalComponents": len([i for i in items if i["type"] == "component"]),
-        "totalServices": len([i for i in items if i["type"] == "service"]),
-        "totalHooks": len([i for i in items if i["type"] == "hook"]),
-        "totalUtilities": len([i for i in items if i["type"] == "utility"])
-    }
-    arch_data = {"architecture": items, "stats": stats}
+    # 1. system_architecture.json
+    arch_components = []
+    for i in items:
+        arch_components.append({
+            "component_id": i["id"],
+            "type": i["type"],
+            "path": i["path"],
+            "layer": get_layer(i["path"]),
+            "description": extract_description(i.get("business_logic", ""))
+        })
+
     with open(ARCH_JSON, 'w', encoding='utf-8') as f:
-        json.dump(arch_data, f, indent=2, ensure_ascii=False)
-    print(f"Phase 3 complete. Updated {ARCH_JSON}.")
+        json.dump({"components": arch_components}, f, indent=2, ensure_ascii=False)
+
+    # 2. architecture_audit.json
+    audit_data = []
+    for i in items:
+        m = i.get("metrics", {})
+        audit_data.append({
+            "component_id": i["id"],
+            "health": i["health"],
+            "lines": m.get("lines"),
+            "cyclomaticComplexity": m.get("cyclomaticComplexity"),
+            "couplingScore": m.get("couplingScore"),
+            "documentation_quality": i.get("documentation_quality"),
+            "openQuestions": i.get("openQuestions", []),
+            "technical_risk": "Low",
+            "complexity": "Medium"
+        })
+
+    with open(AUDIT_JSON, 'w', encoding='utf-8') as f:
+        json.dump({"audit": audit_data}, f, indent=2, ensure_ascii=False)
+
+    print(f"Phase 3 complete. Updated {ARCH_JSON} and {AUDIT_JSON}.")
+
 
 def run_phase_4():
     print("Executing Phase 4: Documentation Quality Audit...")
