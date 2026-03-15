@@ -1,5 +1,5 @@
 import { it, expect, describe, beforeEach } from 'vitest';
-import { processTransactions } from '../engine';
+import { MatchingEngine } from '../engine';
 import { db } from '../../dexie';
 
 describe('BIG BON Simulation', () => {
@@ -71,7 +71,7 @@ describe('BIG BON Simulation', () => {
         await db.bank_statements.add(tx as any);
 
         // 3. Run Engine
-        await processTransactions();
+        await MatchingEngine.reconcileAll();
 
         // 4. Verify results
         const reconLines = await db.reconciliation_lines.where('transaction_id').equals('tx_bigbon_sale').toArray();
