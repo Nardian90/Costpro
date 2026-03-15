@@ -28,15 +28,9 @@ export default function SystemHealthPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [arch, audit, knowledge, help, workflows] = await Promise.all([
-          fetch('/public/system_architecture.json').then(res => res.json()).catch(() => ({})),
-          fetch('/public/architecture_audit.json').then(res => res.json()).catch(() => ({})),
-          fetch('/knowledge/components.json').then(res => res.json()).catch(() => []),
-          fetch('/knowledge/user_help.json').then(res => res.json()).catch(() => []),
-          fetch('/knowledge/workflows.json').then(res => res.json()).catch(() => [])
-        ]);
-
-        setData({ arch, audit, knowledge, help, workflows });
+        const res = await fetch('/api/system-health/knowledge');
+        const json = await res.json();
+        setData(json);
       } catch (error) {
         console.error("Error fetching health data:", error);
       } finally {
@@ -58,7 +52,7 @@ export default function SystemHealthPage() {
   }
 
   const componentCoverage = data?.knowledge?.length ? Math.round((data.help.length / data.knowledge.length) * 100) : 0;
-  const workflowCoverage = data?.workflows?.length ? 100 : 0; // Simplified for now
+  const workflowCoverage = data?.workflows?.length ? 100 : 0;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 space-y-8">
@@ -207,11 +201,11 @@ export default function SystemHealthPage() {
             <CardContent>
               <div className="space-y-4">
                 {[
-                  { name: 'Architecture Manifest', path: '/public/architecture_manifest.json' },
-                  { name: 'System Architecture', path: '/public/system_architecture.json' },
-                  { name: 'Knowledge Graph', path: '/knowledge/knowledge_graph.json' },
-                  { name: 'AI Context Index', path: '/knowledge/ai_context_index.json' },
-                  { name: 'Master Manual', path: '/knowledge/master_user_manual.json' }
+                  { name: 'Architecture Manifest', path: '/architecture_manifest.json' },
+                  { name: 'System Architecture', path: '/system_architecture.json' },
+                  { name: 'Knowledge Graph', path: 'knowledge/knowledge_graph.json' },
+                  { name: 'AI Context Index', path: 'knowledge/ai_context_index.json' },
+                  { name: 'Master Manual', path: 'knowledge/master_user_manual.json' }
                 ].map((art) => (
                   <div key={art.path} className="flex items-center justify-between p-3 border border-border rounded-lg">
                     <div className="flex items-center gap-3">
