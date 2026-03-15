@@ -1,0 +1,1538 @@
+[
+  {
+    "component_id": "src/components/IntelligentThemeHandler.tsx",
+    "user_description": "Esta sección te permite gestionar IntelligentThemeHandler.",
+    "tooltip_help": "Usa esto para interactuar con IntelligentThemeHandler.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IntelligentThemeHandler.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/SplashScreen.tsx",
+    "user_description": "Esta sección te permite gestionar SplashScreen.",
+    "tooltip_help": "Usa esto para interactuar con SplashScreen.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SplashScreen.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ThemeToggle.tsx",
+    "user_description": "Esta sección te permite gestionar ThemeToggle.",
+    "tooltip_help": "Usa esto para interactuar con ThemeToggle.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ThemeToggle.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/CostProLogo.tsx",
+    "user_description": "Esta sección te permite gestionar CostProLogo.",
+    "tooltip_help": "Usa esto para interactuar con CostProLogo.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostProLogo.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/modals/SyncConflictModal.tsx",
+    "user_description": "Esta sección te permite gestionar SyncConflictModal.",
+    "tooltip_help": "Usa esto para interactuar con SyncConflictModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SyncConflictModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/modals/CreateProductModal.tsx",
+    "user_description": "Esta sección te permite gestionar CreateProductModal.",
+    "tooltip_help": "Usa esto para interactuar con CreateProductModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CreateProductModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/modals/BarcodeScanner.tsx",
+    "user_description": "Esta sección te permite gestionar BarcodeScanner.",
+    "tooltip_help": "Usa esto para interactuar con BarcodeScanner.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar BarcodeScanner.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/modals/UpgradeModal.tsx",
+    "user_description": "Esta sección te permite gestionar UpgradeModal.",
+    "tooltip_help": "Usa esto para interactuar con UpgradeModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar UpgradeModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/modals/PriceSelectorModal.tsx",
+    "user_description": "Esta sección te permite gestionar PriceSelectorModal.",
+    "tooltip_help": "Usa esto para interactuar con PriceSelectorModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar PriceSelectorModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/TerminalShell.tsx",
+    "user_description": "Esta sección te permite gestionar TerminalShell.",
+    "tooltip_help": "Usa esto para interactuar con TerminalShell.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TerminalShell.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+    "user_description": "Esta sección te permite gestionar ExecutiveDemoView.",
+    "tooltip_help": "Usa esto para interactuar con ExecutiveDemoView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ExecutiveDemoView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/Sidebar.tsx",
+    "user_description": "Esta sección te permite gestionar Sidebar.",
+    "tooltip_help": "Usa esto para interactuar con Sidebar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar Sidebar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/Header.tsx",
+    "user_description": "Esta sección te permite gestionar Header.",
+    "tooltip_help": "Usa esto para interactuar con Header.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar Header.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
+    "user_description": "Esta sección te permite gestionar SystemDependencyGraph.",
+    "tooltip_help": "Usa esto para interactuar con SystemDependencyGraph.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SystemDependencyGraph.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/AuditSummary.tsx",
+    "user_description": "Esta sección te permite gestionar AuditSummary.",
+    "tooltip_help": "Usa esto para interactuar con AuditSummary.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditSummary.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
+    "user_description": "Esta sección te permite gestionar SecurityMetrics.",
+    "tooltip_help": "Usa esto para interactuar con SecurityMetrics.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SecurityMetrics.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
+    "user_description": "Esta sección te permite gestionar HealthStatusHeader.",
+    "tooltip_help": "Usa esto para interactuar con HealthStatusHeader.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar HealthStatusHeader.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+    "user_description": "Esta sección te permite gestionar SystemHealthView.",
+    "tooltip_help": "Usa esto para interactuar con SystemHealthView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SystemHealthView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
+    "user_description": "Esta sección te permite gestionar ArchitectureAuditTable.",
+    "tooltip_help": "Usa esto para interactuar con ArchitectureAuditTable.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ArchitectureAuditTable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
+    "user_description": "Esta sección te permite gestionar ReleaseGateStatus.",
+    "tooltip_help": "Usa esto para interactuar con ReleaseGateStatus.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReleaseGateStatus.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+    "user_description": "Esta sección te permite gestionar ViewNavigator.",
+    "tooltip_help": "Usa esto para interactuar con ViewNavigator.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ViewNavigator.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
+    "user_description": "Esta sección te permite gestionar HealthAgentLogs.",
+    "tooltip_help": "Usa esto para interactuar con HealthAgentLogs.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar HealthAgentLogs.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
+    "user_description": "Esta sección te permite gestionar DetailedRelationshipGraph.",
+    "tooltip_help": "Usa esto para interactuar con DetailedRelationshipGraph.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar DetailedRelationshipGraph.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
+    "user_description": "Esta sección te permite gestionar InfrastructureMetrics.",
+    "tooltip_help": "Usa esto para interactuar con InfrastructureMetrics.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InfrastructureMetrics.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
+    "user_description": "Esta sección te permite gestionar ApplicationMetrics.",
+    "tooltip_help": "Usa esto para interactuar con ApplicationMetrics.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ApplicationMetrics.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wallet/WalletView.tsx",
+    "user_description": "Esta sección te permite gestionar WalletView.",
+    "tooltip_help": "Usa esto para interactuar con WalletView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar WalletView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
+    "user_description": "Esta sección te permite gestionar AnalyticsDashboard.",
+    "tooltip_help": "Usa esto para interactuar con AnalyticsDashboard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AnalyticsDashboard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
+    "user_description": "Esta sección te permite gestionar CatalogModals.",
+    "tooltip_help": "Usa esto para interactuar con CatalogModals.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CatalogModals.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+    "user_description": "Esta sección te permite gestionar CatalogView.",
+    "tooltip_help": "Usa esto para interactuar con CatalogView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CatalogView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/settings/SettingsView.tsx",
+    "user_description": "Esta sección te permite gestionar SettingsView.",
+    "tooltip_help": "Usa esto para interactuar con SettingsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SettingsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+    "user_description": "Esta sección te permite gestionar DashboardView.",
+    "tooltip_help": "Usa esto para interactuar con DashboardView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar DashboardView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+    "user_description": "Esta sección te permite gestionar useDashboardView.ts.",
+    "tooltip_help": "Usa esto para interactuar con useDashboardView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar useDashboardView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+    "user_description": "Esta sección te permite gestionar ConcentricDashboardRing.",
+    "tooltip_help": "Usa esto para interactuar con ConcentricDashboardRing.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ConcentricDashboardRing.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+    "user_description": "Esta sección te permite gestionar ExecutiveKpiCards.",
+    "tooltip_help": "Usa esto para interactuar con ExecutiveKpiCards.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ExecutiveKpiCards.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
+    "user_description": "Esta sección te permite gestionar RecentCostSheets.",
+    "tooltip_help": "Usa esto para interactuar con RecentCostSheets.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RecentCostSheets.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
+    "user_description": "Esta sección te permite gestionar ReportConfigPanel.",
+    "tooltip_help": "Usa esto para interactuar con ReportConfigPanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReportConfigPanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
+    "user_description": "Esta sección te permite gestionar ReportPreview.",
+    "tooltip_help": "Usa esto para interactuar con ReportPreview.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReportPreview.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/reports/ReportsView.tsx",
+    "user_description": "Esta sección te permite gestionar ReportsView.",
+    "tooltip_help": "Usa esto para interactuar con ReportsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReportsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
+    "user_description": "Esta sección te permite gestionar AuditLogsModal.",
+    "tooltip_help": "Usa esto para interactuar con AuditLogsModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditLogsModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+    "user_description": "Esta sección te permite gestionar StoresManagementView.",
+    "tooltip_help": "Usa esto para interactuar con StoresManagementView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StoresManagementView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/stores/useStoresView.ts",
+    "user_description": "Esta sección te permite gestionar useStoresView.ts.",
+    "tooltip_help": "Usa esto para interactuar con useStoresView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar useStoresView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/stores/StoreModals.tsx",
+    "user_description": "Esta sección te permite gestionar StoreModals.",
+    "tooltip_help": "Usa esto para interactuar con StoreModals.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StoreModals.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
+    "user_description": "Esta sección te permite gestionar MasteryDashboard.",
+    "tooltip_help": "Usa esto para interactuar con MasteryDashboard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MasteryDashboard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/academy/AcademyView.tsx",
+    "user_description": "Esta sección te permite gestionar AcademyView.",
+    "tooltip_help": "Usa esto para interactuar con AcademyView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AcademyView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/academy/Flashcard.tsx",
+    "user_description": "Esta sección te permite gestionar Flashcard.",
+    "tooltip_help": "Usa esto para interactuar con Flashcard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar Flashcard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+    "user_description": "Esta sección te permite gestionar CreateTransferModal.",
+    "tooltip_help": "Usa esto para interactuar con CreateTransferModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CreateTransferModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+    "user_description": "Esta sección te permite gestionar TransferenciasView.",
+    "tooltip_help": "Usa esto para interactuar con TransferenciasView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransferenciasView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+    "user_description": "Esta sección te permite gestionar TransferDetailsModal.",
+    "tooltip_help": "Usa esto para interactuar con TransferDetailsModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransferDetailsModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/HelpView.tsx",
+    "user_description": "Esta sección te permite gestionar HelpView.",
+    "tooltip_help": "Usa esto para interactuar con HelpView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar HelpView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
+    "user_description": "Esta sección te permite gestionar KidsOnboarding.",
+    "tooltip_help": "Usa esto para interactuar con KidsOnboarding.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar KidsOnboarding.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar StickyCartFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con StickyCartFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StickyCartFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar MobilePosDiagram.",
+    "tooltip_help": "Usa esto para interactuar con MobilePosDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MobilePosDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar IpvFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con IpvFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IpvFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar SecurityFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con SecurityFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SecurityFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar UserFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con UserFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar UserFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar QuickModeMassiveDiagram.",
+    "tooltip_help": "Usa esto para interactuar con QuickModeMassiveDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar QuickModeMassiveDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar CostFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con CostFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar RolesDiagram.",
+    "tooltip_help": "Usa esto para interactuar con RolesDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RolesDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar OfflineSyncDiagram.",
+    "tooltip_help": "Usa esto para interactuar con OfflineSyncDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar OfflineSyncDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con InventoryFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar MobileFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con MobileFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MobileFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar CashFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con CashFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CashFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryAdjustmentFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con InventoryAdjustmentFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryAdjustmentFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar StoreSkuDiagram.",
+    "tooltip_help": "Usa esto para interactuar con StoreSkuDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StoreSkuDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar DarianDiagram.",
+    "tooltip_help": "Usa esto para interactuar con DarianDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar DarianDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar SalesFlowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con SalesFlowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SalesFlowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryCardView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryCardView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryCardView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryAdjustmentsView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryAdjustmentsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryAdjustmentsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryAdjustmentModal.",
+    "tooltip_help": "Usa esto para interactuar con InventoryAdjustmentModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryAdjustmentModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+    "user_description": "Esta sección te permite gestionar ProductReceptionView.",
+    "tooltip_help": "Usa esto para interactuar con ProductReceptionView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ProductReceptionView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryTableView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryTableView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryTableView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+    "user_description": "Esta sección te permite gestionar CashClosureView.",
+    "tooltip_help": "Usa esto para interactuar con CashClosureView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CashClosureView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
+    "user_description": "Esta sección te permite gestionar TaxCalculationModal.",
+    "tooltip_help": "Usa esto para interactuar con TaxCalculationModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TaxCalculationModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+    "user_description": "Esta sección te permite gestionar SalesHistoryView.",
+    "tooltip_help": "Usa esto para interactuar con SalesHistoryView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SalesHistoryView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
+    "user_description": "Esta sección te permite gestionar TransactionDetailsModal.",
+    "tooltip_help": "Usa esto para interactuar con TransactionDetailsModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransactionDetailsModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+    "user_description": "Esta sección te permite gestionar useSalesHistoryView.ts.",
+    "tooltip_help": "Usa esto para interactuar con useSalesHistoryView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar useSalesHistoryView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+    "user_description": "Esta sección te permite gestionar ReceptionDetailsModal.",
+    "tooltip_help": "Usa esto para interactuar con ReceptionDetailsModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReceptionDetailsModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+    "user_description": "Esta sección te permite gestionar ReceptionsHistoryView.",
+    "tooltip_help": "Usa esto para interactuar con ReceptionsHistoryView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ReceptionsHistoryView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+    "user_description": "Esta sección te permite gestionar useReceptionsHistoryView.ts.",
+    "tooltip_help": "Usa esto para interactuar con useReceptionsHistoryView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar useReceptionsHistoryView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+    "user_description": "Esta sección te permite gestionar StockHistoryView.",
+    "tooltip_help": "Usa esto para interactuar con StockHistoryView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StockHistoryView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVView.tsx",
+    "user_description": "Vista principal de la Inteligencia de Producto y Ventas. Centraliza reportes y auditorías.",
+    "tooltip_help": "Resumen general del sistema IPV.",
+    "modal_help": "Guía detallada sobre cómo operar IPVView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
+    "user_description": "Esta sección te permite gestionar IPVRightSidebar.",
+    "tooltip_help": "Usa esto para interactuar con IPVRightSidebar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVRightSidebar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
+    "user_description": "Esta sección te permite gestionar TransactionBreakdown.",
+    "tooltip_help": "Usa esto para interactuar con TransactionBreakdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransactionBreakdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
+    "user_description": "Esta sección te permite gestionar TransactionTable.",
+    "tooltip_help": "Usa esto para interactuar con TransactionTable.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransactionTable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
+    "user_description": "Esta sección te permite gestionar AddTransactionModal.",
+    "tooltip_help": "Usa esto para interactuar con AddTransactionModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AddTransactionModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
+    "user_description": "Esta sección te permite gestionar IncomeReceiptPreview.",
+    "tooltip_help": "Usa esto para interactuar con IncomeReceiptPreview.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IncomeReceiptPreview.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
+    "user_description": "Esta sección te permite gestionar MovementsView.",
+    "tooltip_help": "Usa esto para interactuar con MovementsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MovementsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
+    "user_description": "Esta sección te permite gestionar IncomeReceiptSection.",
+    "tooltip_help": "Usa esto para interactuar con IncomeReceiptSection.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IncomeReceiptSection.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
+    "user_description": "Esta sección te permite gestionar IPVPreviewModal.",
+    "tooltip_help": "Usa esto para interactuar con IPVPreviewModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVPreviewModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
+    "user_description": "Esta sección te permite gestionar MatchingTracePopover.",
+    "tooltip_help": "Usa esto para interactuar con MatchingTracePopover.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MatchingTracePopover.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+    "user_description": "Esta sección te permite gestionar IPVReportView.",
+    "tooltip_help": "Usa esto para interactuar con IPVReportView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVReportView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+    "user_description": "Esta sección te permite gestionar MatchingAuditView.",
+    "tooltip_help": "Usa esto para interactuar con MatchingAuditView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MatchingAuditView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
+    "user_description": "Esta sección te permite gestionar IngestionErrorsTable.",
+    "tooltip_help": "Usa esto para interactuar con IngestionErrorsTable.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IngestionErrorsTable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+    "user_description": "Esta sección te permite gestionar TransferQRReportView.",
+    "tooltip_help": "Usa esto para interactuar con TransferQRReportView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar TransferQRReportView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+    "user_description": "Esta sección te permite gestionar ManualReconciliationView.",
+    "tooltip_help": "Usa esto para interactuar con ManualReconciliationView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ManualReconciliationView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
+    "user_description": "Configuración de las reglas que usa la IA para cruzar tus ventas con el inventario.",
+    "tooltip_help": "Ajusta la precisión del matching.",
+    "modal_help": "Guía detallada sobre cómo operar MatchingRulesEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
+    "user_description": "Esta sección te permite gestionar MatchingSimulation.",
+    "tooltip_help": "Usa esto para interactuar con MatchingSimulation.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar MatchingSimulation.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
+    "user_description": "Esta sección te permite gestionar RuleMetaEditor.",
+    "tooltip_help": "Usa esto para interactuar con RuleMetaEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RuleMetaEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar IPVReportsDropdown.",
+    "tooltip_help": "Usa esto para interactuar con IPVReportsDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVReportsDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+    "user_description": "Esta sección te permite gestionar PivotStatementView.",
+    "tooltip_help": "Usa esto para interactuar con PivotStatementView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar PivotStatementView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
+    "user_description": "Módulo para cargar tus movimientos bancarios. Soporta diversos formatos de extractos.",
+    "tooltip_help": "Sube tus archivos bancarios aquí.",
+    "modal_help": "Guía detallada sobre cómo operar BankIngestion.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
+    "user_description": "Esta sección te permite gestionar IPVInstitutionalDashboard.",
+    "tooltip_help": "Usa esto para interactuar con IPVInstitutionalDashboard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVInstitutionalDashboard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
+    "user_description": "Tabla maestra de productos donde puedes ver el inventario, precios y realizar ajustes manuales.",
+    "tooltip_help": "Gestiona tus productos y stock aquí.",
+    "modal_help": "Guía detallada sobre cómo operar CatalogTable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
+    "user_description": "Esta sección te permite gestionar IPVHelpDialog.",
+    "tooltip_help": "Usa esto para interactuar con IPVHelpDialog.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVHelpDialog.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
+    "user_description": "Esta sección te permite gestionar IPVControlPanel.",
+    "tooltip_help": "Usa esto para interactuar con IPVControlPanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar IPVControlPanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryCountTableView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryCountTableView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryCountTableView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryCountCardView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryCountCardView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryCountCardView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+    "user_description": "Esta sección te permite gestionar InventoryCountView.",
+    "tooltip_help": "Usa esto para interactuar con InventoryCountView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar InventoryCountView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
+    "user_description": "Esta sección te permite gestionar CuentasModule.",
+    "tooltip_help": "Usa esto para interactuar con CuentasModule.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CuentasModule.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
+    "user_description": "Esta sección te permite gestionar AsientosModule.",
+    "tooltip_help": "Usa esto para interactuar con AsientosModule.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AsientosModule.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
+    "user_description": "Esta sección te permite gestionar WikiSearch.",
+    "tooltip_help": "Usa esto para interactuar con WikiSearch.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar WikiSearch.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/types.ts",
+    "user_description": "Esta sección te permite gestionar types.ts.",
+    "tooltip_help": "Usa esto para interactuar con types.ts.",
+    "modal_help": "Guía detallada sobre cómo operar types.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/WikiView.tsx",
+    "user_description": "Esta sección te permite gestionar WikiView.",
+    "tooltip_help": "Usa esto para interactuar con WikiView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar WikiView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
+    "user_description": "Esta sección te permite gestionar ClasificadorModule.",
+    "tooltip_help": "Usa esto para interactuar con ClasificadorModule.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ClasificadorModule.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/pos/POSTableView.tsx",
+    "user_description": "Esta sección te permite gestionar POSTableView.",
+    "tooltip_help": "Usa esto para interactuar con POSTableView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar POSTableView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/pos/usePOSView.ts",
+    "user_description": "Esta sección te permite gestionar usePOSView.ts.",
+    "tooltip_help": "Usa esto para interactuar con usePOSView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar usePOSView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/pos/POSView.tsx",
+    "user_description": "Esta sección te permite gestionar POSView.",
+    "tooltip_help": "Usa esto para interactuar con POSView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar POSView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/pos/POSCart.tsx",
+    "user_description": "Esta sección te permite gestionar POSCart.",
+    "tooltip_help": "Usa esto para interactuar con POSCart.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar POSCart.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
+    "user_description": "Esta sección te permite gestionar StickyCartSummary.",
+    "tooltip_help": "Usa esto para interactuar con StickyCartSummary.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StickyCartSummary.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
+    "user_description": "Esta sección te permite gestionar AuditEventIcon.",
+    "tooltip_help": "Usa esto para interactuar con AuditEventIcon.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditEventIcon.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditFilters.tsx",
+    "user_description": "Esta sección te permite gestionar AuditFilters.",
+    "tooltip_help": "Usa esto para interactuar con AuditFilters.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditFilters.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+    "user_description": "Esta sección te permite gestionar AuditTableView.",
+    "tooltip_help": "Usa esto para interactuar con AuditTableView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditTableView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
+    "user_description": "Esta sección te permite gestionar AuditTimeline.",
+    "tooltip_help": "Usa esto para interactuar con AuditTimeline.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditTimeline.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
+    "user_description": "Esta sección te permite gestionar AuditLogsView.test.",
+    "tooltip_help": "Usa esto para interactuar con AuditLogsView.test.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditLogsView.test.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
+    "user_description": "Esta sección te permite gestionar AuditEventCard.",
+    "tooltip_help": "Usa esto para interactuar con AuditEventCard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditEventCard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
+    "user_description": "Esta sección te permite gestionar AuditEventMeta.",
+    "tooltip_help": "Usa esto para interactuar con AuditEventMeta.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditEventMeta.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+    "user_description": "Esta sección te permite gestionar AuditLogsView.",
+    "tooltip_help": "Usa esto para interactuar con AuditLogsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AuditLogsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetAuditView.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetAuditView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetAuditView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetSidebarNav.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetSidebarNav.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetSidebarNav.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetFormulaGuide.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetFormulaGuide.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetFormulaGuide.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetGenerateDropdown.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetGenerateDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetGenerateDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
+    "user_description": "Esta sección te permite gestionar FormulaEditor.",
+    "tooltip_help": "Usa esto para interactuar con FormulaEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar FormulaEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
+    "user_description": "Esta sección te permite gestionar CircularProgress.",
+    "tooltip_help": "Usa esto para interactuar con CircularProgress.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CircularProgress.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetCalculator.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetCalculator.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetCalculator.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
+    "user_description": "Esta sección te permite gestionar ProductInventoryPicker.",
+    "tooltip_help": "Usa esto para interactuar con ProductInventoryPicker.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ProductInventoryPicker.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetBanner.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetBanner.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetBanner.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetAuditLog.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetAuditLog.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetAuditLog.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetMasterRing.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetMasterRing.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetMasterRing.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetActionsPanel.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetActionsPanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetActionsPanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetView.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetAnnexes.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetAnnexes.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetAnnexes.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetHelpDropdown.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetHelpDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetHelpDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetSummary.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetSummary.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetSummary.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetNav.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetNav.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetNav.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetOptionsDropdown.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetOptionsDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetOptionsDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetHeader.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetHeader.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetHeader.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetQuickMode.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetQuickMode.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetQuickMode.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetBottomNav.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetBottomNav.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetBottomNav.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetNarrative.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetNarrative.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetNarrative.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetExportModal.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetExportModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetExportModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
+    "user_description": "Esta sección te permite gestionar HealthBattery.",
+    "tooltip_help": "Usa esto para interactuar con HealthBattery.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar HealthBattery.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetTemplateExplorer.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetTemplateExplorer.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetTemplateExplorer.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetForm.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
+    "user_description": "Esta sección te permite gestionar FormulaBuilder.",
+    "tooltip_help": "Usa esto para interactuar con FormulaBuilder.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar FormulaBuilder.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetCardView.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetCardView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetCardView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetMassiveGenerator.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetMassiveGenerator.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetMassiveGenerator.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetSidePanel.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetSidePanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetSidePanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetBody.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetBody.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetBody.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
+    "user_description": "Esta sección te permite gestionar DarianEditor.",
+    "tooltip_help": "Usa esto para interactuar con DarianEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar DarianEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetHeaderEditor.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetHeaderEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetHeaderEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetFCDropdown.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetFCDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetFCDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetWizard.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetWizard.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetWizard.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetInteractiveTable.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetInteractiveTable.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetInteractiveTable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetAnnexEditor.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetAnnexEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetAnnexEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetSectionActionsPanel.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetSectionActionsPanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetSectionActionsPanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetPreview.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetPreview.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetPreview.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetSignatureEditor.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetSignatureEditor.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetSignatureEditor.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetModeDropdown.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetModeDropdown.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetModeDropdown.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
+    "user_description": "Esta sección te permite gestionar CostSheetHelpPanel.",
+    "tooltip_help": "Usa esto para interactuar con CostSheetHelpPanel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostSheetHelpPanel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/UserFormModal.tsx",
+    "user_description": "Esta sección te permite gestionar UserFormModal.",
+    "tooltip_help": "Usa esto para interactuar con UserFormModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar UserFormModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/useUsersView.ts",
+    "user_description": "Esta sección te permite gestionar useUsersView.ts.",
+    "tooltip_help": "Usa esto para interactuar con useUsersView.ts.",
+    "modal_help": "Guía detallada sobre cómo operar useUsersView.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+    "user_description": "Esta sección te permite gestionar UsersManagementView.",
+    "tooltip_help": "Usa esto para interactuar con UsersManagementView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar UsersManagementView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/RoleForm.tsx",
+    "user_description": "Esta sección te permite gestionar RoleForm.",
+    "tooltip_help": "Usa esto para interactuar con RoleForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RoleForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+    "user_description": "Esta sección te permite gestionar RolesManagementView.",
+    "tooltip_help": "Usa esto para interactuar con RolesManagementView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RolesManagementView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/users/UserForm.tsx",
+    "user_description": "Esta sección te permite gestionar UserForm.",
+    "tooltip_help": "Usa esto para interactuar con UserForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar UserForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+    "user_description": "Esta sección te permite gestionar RSSManagementView.",
+    "tooltip_help": "Usa esto para interactuar con RSSManagementView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RSSManagementView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/rss/NewsView.tsx",
+    "user_description": "Esta sección te permite gestionar NewsView.",
+    "tooltip_help": "Usa esto para interactuar con NewsView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar NewsView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
+    "user_description": "Esta sección te permite gestionar LegalPdfExporter.ts.",
+    "tooltip_help": "Usa esto para interactuar con LegalPdfExporter.ts.",
+    "modal_help": "Guía detallada sobre cómo operar LegalPdfExporter.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
+    "user_description": "Esta sección te permite gestionar LegalModelForm.",
+    "tooltip_help": "Usa esto para interactuar con LegalModelForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar LegalModelForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
+    "user_description": "Esta sección te permite gestionar LegalConsultant.",
+    "tooltip_help": "Usa esto para interactuar con LegalConsultant.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar LegalConsultant.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/views/terminal/views/legal/LegalView.tsx",
+    "user_description": "Esta sección te permite gestionar LegalView.",
+    "tooltip_help": "Usa esto para interactuar con LegalView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar LegalView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/accordion.tsx",
+    "user_description": "Esta sección te permite gestionar accordion.",
+    "tooltip_help": "Usa esto para interactuar con accordion.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar accordion.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/command.tsx",
+    "user_description": "Esta sección te permite gestionar command.",
+    "tooltip_help": "Usa esto para interactuar con command.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar command.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/resizable.tsx",
+    "user_description": "Esta sección te permite gestionar resizable.",
+    "tooltip_help": "Usa esto para interactuar con resizable.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar resizable.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/QueryInspector.tsx",
+    "user_description": "Esta sección te permite gestionar QueryInspector.",
+    "tooltip_help": "Usa esto para interactuar con QueryInspector.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar QueryInspector.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/SearchBar.tsx",
+    "user_description": "Esta sección te permite gestionar SearchBar.",
+    "tooltip_help": "Usa esto para interactuar con SearchBar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SearchBar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/dropdown-menu.tsx",
+    "user_description": "Esta sección te permite gestionar dropdown-menu.",
+    "tooltip_help": "Usa esto para interactuar con dropdown-menu.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar dropdown-menu.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/pagination.tsx",
+    "user_description": "Esta sección te permite gestionar pagination.",
+    "tooltip_help": "Usa esto para interactuar con pagination.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar pagination.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/alert-dialog.tsx",
+    "user_description": "Esta sección te permite gestionar alert-dialog.",
+    "tooltip_help": "Usa esto para interactuar con alert-dialog.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar alert-dialog.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/input-otp.tsx",
+    "user_description": "Esta sección te permite gestionar input-otp.",
+    "tooltip_help": "Usa esto para interactuar con input-otp.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar input-otp.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/alert.tsx",
+    "user_description": "Esta sección te permite gestionar alert.",
+    "tooltip_help": "Usa esto para interactuar con alert.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar alert.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/table.tsx",
+    "user_description": "Esta sección te permite gestionar table.",
+    "tooltip_help": "Usa esto para interactuar con table.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar table.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/select.tsx",
+    "user_description": "Esta sección te permite gestionar select.",
+    "tooltip_help": "Usa esto para interactuar con select.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar select.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/PWAInstallModal.tsx",
+    "user_description": "Esta sección te permite gestionar PWAInstallModal.",
+    "tooltip_help": "Usa esto para interactuar con PWAInstallModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar PWAInstallModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/StateRenderer.tsx",
+    "user_description": "Esta sección te permite gestionar StateRenderer.",
+    "tooltip_help": "Usa esto para interactuar con StateRenderer.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar StateRenderer.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/toggle-group.tsx",
+    "user_description": "Esta sección te permite gestionar toggle-group.",
+    "tooltip_help": "Usa esto para interactuar con toggle-group.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar toggle-group.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/scroll-area.tsx",
+    "user_description": "Esta sección te permite gestionar scroll-area.",
+    "tooltip_help": "Usa esto para interactuar con scroll-area.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar scroll-area.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/chart.tsx",
+    "user_description": "Esta sección te permite gestionar chart.",
+    "tooltip_help": "Usa esto para interactuar con chart.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar chart.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/sidebar.tsx",
+    "user_description": "Esta sección te permite gestionar sidebar.",
+    "tooltip_help": "Usa esto para interactuar con sidebar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar sidebar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/tabs.tsx",
+    "user_description": "Esta sección te permite gestionar tabs.",
+    "tooltip_help": "Usa esto para interactuar con tabs.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar tabs.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/BaseModal.tsx",
+    "user_description": "Esta sección te permite gestionar BaseModal.",
+    "tooltip_help": "Usa esto para interactuar con BaseModal.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar BaseModal.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/context-menu.tsx",
+    "user_description": "Esta sección te permite gestionar context-menu.",
+    "tooltip_help": "Usa esto para interactuar con context-menu.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar context-menu.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/CostProLoader.tsx",
+    "user_description": "Esta sección te permite gestionar CostProLoader.",
+    "tooltip_help": "Usa esto para interactuar con CostProLoader.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar CostProLoader.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/calendar.tsx",
+    "user_description": "Esta sección te permite gestionar calendar.",
+    "tooltip_help": "Usa esto para interactuar con calendar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar calendar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/navigation-menu.tsx",
+    "user_description": "Esta sección te permite gestionar navigation-menu.",
+    "tooltip_help": "Usa esto para interactuar con navigation-menu.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar navigation-menu.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/ActionMenu.tsx",
+    "user_description": "Esta sección te permite gestionar ActionMenu.",
+    "tooltip_help": "Usa esto para interactuar con ActionMenu.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ActionMenu.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/ProductImage.tsx",
+    "user_description": "Esta sección te permite gestionar ProductImage.",
+    "tooltip_help": "Usa esto para interactuar con ProductImage.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ProductImage.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/toast.tsx",
+    "user_description": "Esta sección te permite gestionar toast.",
+    "tooltip_help": "Usa esto para interactuar con toast.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar toast.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/FloatingCalculator.tsx",
+    "user_description": "Esta sección te permite gestionar FloatingCalculator.",
+    "tooltip_help": "Usa esto para interactuar con FloatingCalculator.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar FloatingCalculator.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/ScrollToTop.tsx",
+    "user_description": "Esta sección te permite gestionar ScrollToTop.",
+    "tooltip_help": "Usa esto para interactuar con ScrollToTop.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar ScrollToTop.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/button.tsx",
+    "user_description": "Esta sección te permite gestionar button.",
+    "tooltip_help": "Usa esto para interactuar con button.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar button.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/avatar.tsx",
+    "user_description": "Esta sección te permite gestionar avatar.",
+    "tooltip_help": "Usa esto para interactuar con avatar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar avatar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/dialog.tsx",
+    "user_description": "Esta sección te permite gestionar dialog.",
+    "tooltip_help": "Usa esto para interactuar con dialog.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar dialog.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/breadcrumb.tsx",
+    "user_description": "Esta sección te permite gestionar breadcrumb.",
+    "tooltip_help": "Usa esto para interactuar con breadcrumb.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar breadcrumb.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/form.tsx",
+    "user_description": "Esta sección te permite gestionar form.",
+    "tooltip_help": "Usa esto para interactuar con form.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar form.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/slider.tsx",
+    "user_description": "Esta sección te permite gestionar slider.",
+    "tooltip_help": "Usa esto para interactuar con slider.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar slider.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/menubar.tsx",
+    "user_description": "Esta sección te permite gestionar menubar.",
+    "tooltip_help": "Usa esto para interactuar con menubar.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar menubar.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/tooltip.tsx",
+    "user_description": "Esta sección te permite gestionar tooltip.",
+    "tooltip_help": "Usa esto para interactuar con tooltip.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar tooltip.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/SpeedDial.tsx",
+    "user_description": "Esta sección te permite gestionar SpeedDial.",
+    "tooltip_help": "Usa esto para interactuar con SpeedDial.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SpeedDial.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/ChatBot.tsx",
+    "user_description": "Darian, tu asistente virtual para resolver dudas sobre el sistema y realizar consultas rápidas.",
+    "tooltip_help": "Pregúntale cualquier cosa a Darian.",
+    "modal_help": "Guía detallada sobre cómo operar ChatBot.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/carousel.tsx",
+    "user_description": "Esta sección te permite gestionar carousel.",
+    "tooltip_help": "Usa esto para interactuar con carousel.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar carousel.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/card.tsx",
+    "user_description": "Esta sección te permite gestionar card.",
+    "tooltip_help": "Usa esto para interactuar con card.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar card.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/sheet.tsx",
+    "user_description": "Esta sección te permite gestionar sheet.",
+    "tooltip_help": "Usa esto para interactuar con sheet.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar sheet.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/drawer.tsx",
+    "user_description": "Esta sección te permite gestionar drawer.",
+    "tooltip_help": "Usa esto para interactuar con drawer.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar drawer.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/SyncStatusBadge.tsx",
+    "user_description": "Esta sección te permite gestionar SyncStatusBadge.",
+    "tooltip_help": "Usa esto para interactuar con SyncStatusBadge.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SyncStatusBadge.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/ui/atomic/index.tsx",
+    "user_description": "Esta sección te permite gestionar index.",
+    "tooltip_help": "Usa esto para interactuar con index.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar index.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/auth/RegisterForm.tsx",
+    "user_description": "Esta sección te permite gestionar RegisterForm.",
+    "tooltip_help": "Usa esto para interactuar con RegisterForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar RegisterForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/auth/LoginForm.tsx",
+    "user_description": "Esta sección te permite gestionar LoginForm.",
+    "tooltip_help": "Usa esto para interactuar con LoginForm.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar LoginForm.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/auth/WelcomeLandingView.tsx",
+    "user_description": "Esta sección te permite gestionar WelcomeLandingView.",
+    "tooltip_help": "Usa esto para interactuar con WelcomeLandingView.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar WelcomeLandingView.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar SpeedScaleDiagram.",
+    "tooltip_help": "Usa esto para interactuar con SpeedScaleDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar SpeedScaleDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
+    "user_description": "Esta sección te permite gestionar AutomationWorkflowDiagram.",
+    "tooltip_help": "Usa esto para interactuar con AutomationWorkflowDiagram.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar AutomationWorkflowDiagram.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/app/layout.tsx",
+    "user_description": "Esta sección te permite gestionar layout.",
+    "tooltip_help": "Usa esto para interactuar con layout.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar layout.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/cost-sheets/import-anexo/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/cost-sheets/save/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/cost-sheets/export-pdf/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/cost-sheets/ai/chat/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/system-health/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/reports/generate/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/academy/review/[cardId]/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/academy/generate/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/inventory/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/inventory/adjust/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/inventory/[productId]/history/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/inventory/products/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/inventory/adjustments/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/bot/chat/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/users/reset-password/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/users/toggle-status/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/users/delete/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/users/managed-create/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/sync/batch/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/api/rss/route.ts",
+    "user_description": "Esta sección te permite gestionar route.ts.",
+    "tooltip_help": "Usa esto para interactuar con route.ts.",
+    "modal_help": "Guía detallada sobre cómo operar route.ts de forma eficiente."
+  },
+  {
+    "component_id": "src/app/cashier/close-session/page.tsx",
+    "user_description": "Esta sección te permite gestionar page.",
+    "tooltip_help": "Usa esto para interactuar con page.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar page.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/app/demo/calculate/page.tsx",
+    "user_description": "Esta sección te permite gestionar page.",
+    "tooltip_help": "Usa esto para interactuar con page.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar page.tsx de forma eficiente."
+  },
+  {
+    "component_id": "src/app/login/page.tsx",
+    "user_description": "Esta sección te permite gestionar page.",
+    "tooltip_help": "Usa esto para interactuar con page.tsx.",
+    "modal_help": "Guía detallada sobre cómo operar page.tsx de forma eficiente."
+  }
+]
