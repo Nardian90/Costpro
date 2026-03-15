@@ -1,7 +1,7 @@
 {
   "app": "CostPro",
   "version": "5.8.0",
-  "updated_at": "2026-03-14T10:00:00.000000Z",
+  "updated_at": "2026-03-15T09:30:00.000000Z",
   "modules": {
     "terminal": "Punto central para las operaciones diarias, incluyendo ventas, inventario y gestión.",
     "multitienda": "Control consolidado y navegación instantánea entre todas las sucursales del negocio.",
@@ -231,6 +231,50 @@
             "Lista de Items",
             "Costo de Entrada",
             "Stock Actualizado"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ipv_audit_flow",
+      "title": "Auditoría de Conciliación (Matching)",
+      "role": "contabilidad",
+      "story": {
+        "before": "Cuando una transacción no se conciliaba automáticamente, no sabías por qué el sistema la había rechazado o qué reglas fallaron.",
+        "now": "Tienes un panel de auditoría detallado que muestra cada paso que dio el motor de matching, qué reglas se aplicaron y por qué se tomó cada decisión.",
+        "why": "Proporciona transparencia total sobre el proceso automático, permitiéndote corregir datos maestros o stock de forma precisa."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Abrir Auditoría",
+          "explanation": "Ve a la pestaña 'Auditoría Matching' dentro del módulo IPV."
+        },
+        {
+          "step": 2,
+          "title": "Filtrar por Fecha",
+          "explanation": "Selecciona el día que deseas revisar para ver el resumen de ejecución."
+        },
+        {
+          "step": 3,
+          "title": "Revisar Estadísticas",
+          "explanation": "Observa la tasa de éxito y los niveles de confianza del proceso automático."
+        },
+        {
+          "step": 4,
+          "title": "Inspeccionar Trazabilidad",
+          "explanation": "Haz clic en una transacción para ver el 'Pipeline Trace', que detalla el éxito o fallo de cada regla."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Abrir Auditoría",
+            "Filtrar Fecha",
+            "Ver Estadísticas",
+            "Pipeline Trace"
           ]
         }
       }
@@ -535,13 +579,18 @@
         "version": "5.8.0",
         "date": "2026-03-14",
         "description": "Sincronización diaria: Añadida documentación para Jules (Asistente IA) y Academia CostPro."
+      },
+      {
+        "version": "5.8.0",
+        "date": "2026-03-15",
+        "description": "Sincronización diaria: Añadida documentación para el panel de Auditoría de Matching IPV."
       }
     ]
   },
   "metadata": {
-    "lastRun": "2026-03-14T10:00:00.000000Z",
-    "lastHash": "851f3497f465629ddd5c2ee2b3410770809255d1e0f9fe6c130254371960171f",
-    "runCount": 12,
+    "lastRun": "2026-03-15T09:30:00.000000Z",
+    "lastHash": "b128566a62e0e1a3e3050d8a873ea7b51dc2375c0a1563286d815bee8c5d1abf",
+    "runCount": 13,
     "lastAgent": "Jules"
   }
 }

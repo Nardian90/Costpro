@@ -120,5 +120,20 @@
     ],
     "status": "updated",
     "summary": "Sincronización diaria v5.8.0: Añadida documentación para Jules y Academia CostPro."
+  },
+  {
+    "date": "2026-03-15T09:30:00.000000Z",
+    "runs_since": 12,
+    "updated_flows": [
+      "ipv_audit_flow"
+    ],
+    "svg_created": [
+      "ipv_audit_flow.svg"
+    ],
+    "screenshots_created": [
+      "ipv_audit_flow_placeholder"
+    ],
+    "status": "updated",
+    "summary": "Sincronización diaria v5.8.0: Añadida documentación para el panel de Auditoría de Matching IPV."
   }
 ]
