@@ -1,3 +1,8 @@
+2 — PIPELINE DE ARQUITECTURA Y DOCUMENTACIÓN
+
+Archivo:
+
+/docs/automation/ARCHITECTURE_MAINTENANCE_PIPELINE.md
 PHASE 1 — COMPONENT DISCOVERY
 
 Escanear:
@@ -5,41 +10,59 @@ Escanear:
 src/components
 src/services
 src/hooks
+src/store
 src/views
 
 Actualizar:
 
 system_architecture.json
-PHASE 2 — DEPENDENCY MAPPING
+
+Registrar:
+
+componentes
+servicios
+dominios
+rutas
+PHASE 2 — DOMAIN MAPPING
+
+Agrupar componentes por dominio:
+
+POS
+Inventory
+Cost Engine
+Reports
+AI System
+
+Actualizar:
+
+system_architecture.json
+PHASE 3 — DEPENDENCY GRAPH
 
 Analizar:
 
 imports
 hooks
-stores
 providers
+stores
+engines
+
+Actualizar:
+
+architecture_graph.json
 
 Generar:
 
-architecture_graph.json
-PHASE 3 — METRICS COLLECTION
+nodes
+edges
+PHASE 4 — METRICS COLLECTION
 
 Calcular:
 
 lines_of_code
 cyclomatic_complexity
-coupling_score
-
-Actualizar:
-
-architecture_audit.json
-PHASE 4 — DOCUMENTATION QUALITY
-
-Evaluar:
-
-descriptions
-business_logic
-documentation_quality
+coupling
+fan_in
+fan_out
 
 Actualizar:
 
@@ -50,43 +73,104 @@ Calcular:
 
 health_score
 risk_score
-complexity_index
+maintainability
 
 Actualizar:
 
 architecture_audit.json
-PHASE 6 — OPEN QUESTIONS GENERATION
+PHASE 6 — BUSINESS LOGIC EXTRACTION
 
-Detectar áreas ambiguas del sistema.
+Extraer lógica funcional desde:
+
+componentes
+acciones
+eventos
+hooks
+
+Generar:
+
+technical_description
+business_logic
 
 Actualizar:
 
 architecture_audit.json
-PHASE 7 — C4 MODEL GENERATION
+PHASE 7 — USER LANGUAGE TRANSLATION
+
+Traducir lógica técnica a lenguaje de usuario.
+
+Generar:
+
+user_description
+tooltip_help
+modal_help
+
+Actualizar:
+
+user_knowledge_base.json
+PHASE 8 — VIEW FLOW ANALYSIS
+
+Detectar vistas:
+
+src/views
+src/pages
+
+Para cada vista generar:
+
+flujo completo
+acciones del usuario
+componentes involucrados
+
+Actualizar:
+
+master_user_manual.json
+PHASE 9 — MANUAL CONSOLIDATION
+
+Construir documento maestro.
+
+El manual debe explicar:
+
+inicio del sistema
+navegación
+uso de cada módulo
+flujo completo de operación
+
+Actualizar:
+
+master_user_manual.json
+PHASE 10 — HELP SYSTEM GENERATION
+
+Crear ayudas reutilizables:
+
+tooltips
+modales
+tips rápidos
+
+Actualizar:
+
+user_knowledge_base.json
+PHASE 11 — C4 ARCHITECTURE DOCUMENTATION
 
 Actualizar:
 
 docs/architecture/C4_MODEL.md
-PHASE 8 — ADR UPDATE
-
-Actualizar:
-
-docs/architecture/ADR/
-PHASE 9 — SYSTEM HEALTH REPORT
 
 Generar:
 
-docs/architecture/SYSTEM_HEALTH_REPORT.md
-PHASE 10 — CONSISTENCY VALIDATION
+C1 contexto
+C2 contenedores
+C3 componentes
+C4 código
+PHASE 12 — CONSISTENCY VALIDATION
 
 Verificar coherencia entre:
 
 system_architecture.json
 architecture_graph.json
 architecture_audit.json
+user_knowledge_base.json
+master_user_manual.json
 
-Si existen inconsistencias:
-
-registrar en:
+Registrar inconsistencias en:
 
 docs/architecture/INTEGRITY_REPORT.md
