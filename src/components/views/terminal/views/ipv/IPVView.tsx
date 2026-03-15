@@ -698,25 +698,33 @@ export default function IPVView() {
 
 
 function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean }) {
+  const formattedValue = React.useMemo(() => {
+    if (!isCurrency) return value.toString();
+    if (value > 9999) {
+        return `${(value / 1000).toFixed(1)} MP`;
+    }
+    return formatCurrency(value);
+  }, [value, isCurrency]);
+
   return (
     <Card
         onClick={onClick}
         className={`p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2 ${active ? 'border-primary bg-primary/5 shadow-lg scale-[1.02]' : 'border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20'}`}
     >
-      <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
-        <p className="text-xs sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
-        <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <h3 className="text-[clamp(1.5rem,6vw,2.5rem)] font-black">{isCurrency ? formatCurrency(value) : value}</h3>
+      <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1 overflow-hidden w-full">
+        <p className="text-xs sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate w-full text-center sm:text-left">{title}</p>
+        <div className="flex items-baseline justify-center sm:justify-start gap-1.5 sm:gap-2 w-full overflow-hidden">
+            <h3 className="text-[clamp(1.2rem,5vw,2.2rem)] font-black truncate">{formattedValue}</h3>
             {trend && (
-                <Badge variant="outline" className="text-xs h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
+                <Badge variant="outline" className="text-[9px] h-3.5 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20 flex-shrink-0">
                     {trend}
                 </Badge>
             )}
         </div>
-        {subtitle && <p className="text-xs sm:text-xs text-muted-foreground font-bold uppercase opacity-60">{subtitle}</p>}
+        {subtitle && <p className="text-[10px] sm:text-[9px] text-muted-foreground font-bold uppercase opacity-60 truncate w-full text-center sm:text-left tracking-tighter">{subtitle}</p>}
       </div>
-      <div className="p-2 sm:p-3 bg-background rounded-xl sm:rounded-2xl shadow-inner">
-        {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
+      <div className="p-2 sm:p-2.5 bg-background rounded-xl sm:rounded-2xl shadow-inner flex-shrink-0">
+        {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-3.5 h-3.5 sm:w-4 sm:h-4' })}
       </div>
     </Card>
   );

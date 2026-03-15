@@ -38,6 +38,7 @@
     ".next/dev/dev/types/**/*.ts"
   ],
   "exclude": [
+    "e2e",
     "node_modules",
     "examples",
     "old proyect",
