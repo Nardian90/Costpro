@@ -1,42 +1,48 @@
-# Auditoría de Calidad de Documentación - Ejecución Automática
+# Auditoría de Calidad de Documentación (ISO/IEC 26514 + Diátaxis)
 
-## 1. Resumen Ejecutivo
-**Fecha:** 2026-03-13
-**Promedio Global de Calidad:** **5.56**
-**Cobertura de Documentación:** 192 / 327 (58.7%)
+## 1. Evaluación Inicial
+**Fecha:** 2026-03-15
+**Promedio Global de Calidad:** **5.53/10**
 
----
-
-## 2. Desglose por Módulo
-| Módulo | Calidad Actual | Meta | Estado |
-| :--- | :---: | :---: | :--- |
-| **Automationworkflowdiagram.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Executivedemoview.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Header.tsx** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Sidebar.tsx** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Speedscalediagram.tsx** | **7.0** | 7.0-8.0 | Alcanzado |
-| **Components** | **6.77** | 7.0-8.0 | En progreso |
-| **Deepseek-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Definitions.ts** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Fallback-adapter.ts** | **7.5** | 7.0-8.0 | Alcanzado |
-| **Gemini-adapter.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Gpt-adapter.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Index.tsx** | **3.0** | 7.0-8.0 | En progreso |
-| **Kimi-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Lib** | **3.51** | 7.0-8.0 | En progreso |
-| **Openai-compatible-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Qwen-adapter.ts** | **3.0** | 7.0-8.0 | En progreso |
-| **Registry.ts** | **8.0** | 7.0-8.0 | Alcanzado |
-| **Views** | **5.55** | 7.0-8.0 | En progreso |
+| Módulo | Calidad | Justificación |
+| :--- | :---: | :--- |
+| **Terminal Views** | 5.49/10 | La mayoría de las vistas operativas tienen descripciones genéricas ([No definido en el manual]). |
+| **Servicios AI** | 3.51/10 | Los adaptadores de IA (DeepSeek, Kimi, etc.) carecen de contexto funcional y dependencias. |
+| **Componentes UI** | 6.77/10 | Buena cobertura técnica pero falta orientación a procesos en componentes críticos. |
+| **Utilidades Lib** | 3.51/10 | Herramientas críticas como `engine.ts` necesitan mayor detalle arquitectónico. |
 
 ---
 
-## 3. Conclusión
-El sistema mantiene un nivel de documentación de 5.56/10.
-Se requiere atención en los componentes con puntuación inferior a 7.0 para asegurar la transferencia de conocimiento y sostenibilidad del software.
+## 2. Evaluación Final
+**Fecha:** 2026-03-15 (Ciclo de Mejora 1)
+**Promedio Global de Calidad:** **5.57/10**
+
+| Módulo | Calidad | Justificación |
+| :--- | :---: | :--- |
+| **Terminal Views** | 5.53/10 | Vistas críticas (`POSView`, `InventoryView`, `CatalogTable`, `BankIngestion`) documentadas con estructura Diátaxis. |
+| **Servicios AI** | 4.50/10 | `deepseek-adapter` elevado a estándar Enterprise. Implementado sistema de adaptadores con mejor trazabilidad. |
+| **Componentes UI** | 6.77/10 | Estabilidad en componentes base. Se añadió soporte para `OpenQuestions` en la tabla de auditoría. |
+| **Utilidades Lib** | 4.25/10 | `MatchingEngine` y hooks de estado (`useStoresView`) documentados con impacto en negocio y flujos funcionales. |
 
 ---
 
-## 4. Próximos Pasos
-- Identificar utilidades críticas con documentación base (3.0) para mejora inmediata.
-- Sincronizar descripciones de lógica de negocio en componentes de UI recientemente agregados.
+## 3. Registro de Metodología (Estándares)
+- **ISO/IEC 26514:** Asegura que la documentación sea útil para la operación y el mantenimiento futuro.
+- **Diátaxis Framework:** Estructura la información en: Descripción, Propósito, Flujo Funcional e Impacto en el Negocio.
+- **Reglas de Evaluación:**
+  - **1:** Inexistente
+  - **3:** Superficial (Auto-generada)
+  - **5:** Aceptable
+  - **7:** Buena (Técnica completa)
+  - **9:** Enterprise (Procesos + Negocio)
+  - **10:** Referencia Ejemplar
+
+---
+
+## 4. Innovación: Sistema de Mejora Viva
+Se ha implementado la columna **"OpenQuestions"** en la Vista Salud. Esto permite:
+1. Identificar brechas de conocimiento en tiempo real.
+2. Priorizar la investigación técnica sobre componentes complejos.
+3. Facilitar el onboarding de nuevos desarrolladores mediante la resolución de dudas registradas.
+
+**Preguntas Pendientes registradas:** 8 críticas (incluyendo pre-fetching de inventario y límites de recursión en IPV).
