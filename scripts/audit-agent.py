@@ -508,6 +508,93 @@ graph LR
 
     print(f"Phase 6 complete. Updated C4 diagrams in {diag_dir}.")
 
+def run_phase_7():
+    print("Executing Phase 7: Data Model Documentation...")
+    dexie_path = "src/lib/dexie.ts"
+    prisma_path = "prisma/schema.prisma"
+    output_path = "docs/architecture/data-model.md"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    dexie_mapping = {
+        "bank_statements": "BankTransaction",
+        "products": "Product",
+        "matching_rules": "MatchingRule",
+        "reconciliation_lines": "ReconciliationLine",
+        "product_movements": "ProductMovement",
+        "ipv_reports": "DailyIPVReport",
+        "cash_adjustments": "CashAdjustment",
+        "daily_aggregates": "DailyAggregate",
+        "matching_cache": "MatchingCache",
+        "ingestion_errors": "IngestionError",
+        "ipv_settings": "IPVSettings",
+        "matching_logs": "MatchingLog"
+    }
+
+    dexie_tables = []
+    if os.path.exists(dexie_path):
+        with open(dexie_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            # More robust regex to handle nested braces in interfaces
+            interfaces = re.findall(r'export interface (\w+) \{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}', content, re.DOTALL)
+            interface_map = {name: body.strip() for name, body in interfaces}
+
+            stores_match = re.search(r'\.stores\(\{(.*?)\}\)', content, re.DOTALL)
+            if stores_match:
+                stores_raw = stores_match.group(1)
+                for line in stores_raw.split('\n'):
+                    line = line.strip()
+                    if not line or line.startswith('//'): continue
+                    if ':' in line:
+                        parts = line.split(':')
+                        table_name = parts[0].strip().strip("'\"")
+                        indexes = parts[1].strip().strip("'\",")
+
+                        interface_name = dexie_mapping.get(table_name)
+                        fields = interface_map.get(interface_name, "Fields not found")
+                        dexie_tables.append({
+                            "name": table_name,
+                            "indexes": indexes,
+                            "fields": fields,
+                            "interface": interface_name
+                        })
+
+    prisma_models = []
+    if os.path.exists(prisma_path):
+        with open(prisma_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            models = re.findall(r'model (\w+) \{(.*?)\}', content, re.DOTALL)
+            for name, body in models:
+                prisma_models.append({
+                    "name": name,
+                    "fields": body.strip()
+                })
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write("# Documentación del Modelo de Datos\n\n")
+        f.write("## 1. Persistencia Local (IndexedDB via Dexie.js)\n")
+        f.write("El sistema utiliza Dexie.js para la gestión de datos locales, permitiendo capacidades offline y alto rendimiento en el cliente.\n\n")
+        for table in dexie_tables:
+            f.write(f"### Tabla: `{table['name']}`\n")
+            f.write(f"**Índices:** `{table['indexes']}`\n\n")
+            f.write("```typescript\n")
+            f.write(f"// Interface: {table['interface']}\n")
+            f.write(f"interface {table['interface']} {{\n")
+            f.write(f"  {table['fields']}\n")
+            f.write("}\n")
+            f.write("```\n\n")
+
+        f.write("## 2. Persistencia Remota (PostgreSQL via Prisma/Supabase)\n")
+        f.write("La persistencia global y sincronizada se maneja a través de Supabase con Prisma ORM.\n\n")
+        for model in prisma_models:
+            f.write(f"### Modelo: `{model['name']}`\n\n")
+            f.write("```prisma\n")
+            f.write(f"model {model['name']} {{\n")
+            f.write(f"  {model['fields']}\n")
+            f.write("}\n")
+            f.write("```\n\n")
+
+    print(f"Phase 7 complete. Updated {output_path}.")
+
 def run_phase_9():
     print("Executing Phase 9: System Health Evaluation...")
     items, _, _ = scan_project()
@@ -618,6 +705,8 @@ def main():
         run_phase_5()
     elif args.phase == 6:
         run_phase_6()
+    elif args.phase == 7:
+        run_phase_7()
     elif args.phase == 9:
         run_phase_9()
     elif args.phase == 10:
