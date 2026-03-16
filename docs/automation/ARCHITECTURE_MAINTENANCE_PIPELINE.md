@@ -1,6 +1,12 @@
 # ARCHITECTURE_AI_PIPELINE.md
 Pipeline escalonado diario para Scheduler AI - Nivel 10/10
 
+---
+currentPhase: 9
+lastExecution: 2026-03-15
+pipelineVersion: 1.1.0
+---
+
 Fases (ejecutar 1 fase por día):
 
 1. architecture discovery
