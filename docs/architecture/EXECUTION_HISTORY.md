@@ -10,4 +10,4 @@
 | 2026-03-16 | 12 | Generación de grafo de conocimiento (Knowledge Graph) | knowledge/knowledge_graph.json |
 | 2026-03-16 | 13 | Generación de índice de contexto para IA (AI Context Index) | knowledge/ai_context_index.json |
 | 2026-03-17 | 14 | Validación de consistencia global de artefactos | docs/architecture/INTEGRITY_REPORT.md, docs/mapa_vistas.md |
-| 2026-03-17 | 1 | Descubrimiento de arquitectura (Scan) | docs/mapa_vistas.md, public/system_architecture.json, public/architecture_audit.json |
+| 2026-03-16 | 1 | Descubrimiento de arquitectura (Codebase Scan) | docs/mapa_vistas.md |
