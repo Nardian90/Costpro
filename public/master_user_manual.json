@@ -1,0 +1,76 @@
+{
+  "title": "Manual de Usuario de CostPro Terminal",
+  "version": "2.1.0",
+  "last_updated": "2026-03-16",
+  "sections": [
+    {
+      "id": "introduction",
+      "title": "Introducción",
+      "content": "Bienvenido a CostPro Terminal, su sistema integral para la gestión de costos, inventario y ventas. Este manual le guiará a través de las diferentes pantallas y funcionalidades de la plataforma."
+    },
+    {
+      "id": "dashboard",
+      "title": "Tablero (Dashboard)",
+      "content": "El Tablero es lo primero que verá al entrar. Proporciona una visión de 360 grados de su negocio.",
+      "subsections": [
+        {
+          "title": "Indicadores Clave",
+          "content": "Observe las tarjetas de KPI para monitorear ventas netas, cantidad de transacciones y rentabilidad del día."
+        },
+        {
+          "title": "Visualización Circular",
+          "content": "El anillo concéntrico muestra visualmente la distribución de sus categorías de productos más exitosas."
+        }
+      ]
+    },
+    {
+      "id": "cost-sheets",
+      "title": "Gestión de Fichas de Costo",
+      "content": "El núcleo del sistema para el cálculo preciso de precios basado en costos reales.",
+      "subsections": [
+        {
+          "title": "Creación de Fichas",
+          "content": "Use el botón 'Nueva Ficha' y elija una plantilla predefinida (Ej. Industrial, Gastronomía) para comenzar rápido."
+        },
+        {
+          "title": "Anexos de la Resolución 148",
+          "content": "El sistema genera automáticamente los anexos del I al V requeridos por la normativa legal cubana."
+        },
+        {
+          "title": "Modo Experto vs Modo Rápido",
+          "content": "Use el Modo Experto para ajustes finos de cada fila, o el Modo Rápido para ver solo los totales y el margen de utilidad."
+        }
+      ]
+    },
+    {
+      "id": "pos-inventory",
+      "title": "Ventas e Inventario",
+      "content": "Mantenga sus estantes llenos y sus clientes felices.",
+      "subsections": [
+        {
+          "title": "Realizar una Venta",
+          "content": "En el Punto de Venta (POS), seleccione productos, revise el carrito y elija el método de pago. El inventario se descontará automáticamente."
+        },
+        {
+          "title": "Control de Stock",
+          "content": "Use la vista de Inventario para verificar qué queda en almacén. Si detecta mermas, use la función 'Ajustar Stock'."
+        }
+      ]
+    },
+    {
+      "id": "ipv-reconciliation",
+      "title": "Conciliación e Ingresos (IPV)",
+      "content": "Asegúrese de que cada centavo en su banco esté justificado en sus ventas.",
+      "subsections": [
+        {
+          "title": "Importación Bancaria",
+          "content": "Suba sus reportes de PAGOxMOVIL o BANDEC. El sistema buscará automáticamente coincidencias con sus ventas registradas."
+        },
+        {
+          "title": "Reporte SC-3-01",
+          "content": "Genere el vale de ingresos oficial para su contabilidad una vez que las transacciones estén conciliadas."
+        }
+      ]
+    }
+  ]
+}
