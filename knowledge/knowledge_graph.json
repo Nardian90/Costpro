@@ -2272,22 +2272,22 @@
     },
     {
       "id": "reconciliacion_ipv",
-      "label": "Conciliaci\u00f3n de Inventario (IPV)",
+      "label": "Conciliación de Inventario (IPV)",
       "group": "workflow"
     },
     {
       "id": "gestion_productos",
-      "label": "Gesti\u00f3n de Productos y Precios",
+      "label": "Gestión de Productos y Precios",
       "group": "workflow"
     },
     {
       "id": "aprendizaje_conceptos",
-      "label": "Aprendizaje y Capacitaci\u00f3n (Academy)",
+      "label": "Aprendizaje y Capacitación (Academy)",
       "group": "workflow"
     },
     {
       "id": "gestion_billetera_digital",
-      "label": "Gesti\u00f3n de Billetera y Notificaciones (Wallet)",
+      "label": "Gestión de Billetera y Notificaciones (Wallet)",
       "group": "workflow"
     }
   ],
