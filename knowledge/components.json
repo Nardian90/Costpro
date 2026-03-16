@@ -9,7 +9,8 @@
       "next-themes",
       "@/store"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con IntelligentThemeHandler.tsx."
   },
   {
     "id": "src/components/GlobalSessionManager.tsx",
@@ -24,7 +25,8 @@
     ],
     "exports": [
       "GlobalSessionManager"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con GlobalSessionManager.tsx."
   },
   {
     "id": "src/components/theme-provider.tsx",
@@ -37,7 +39,8 @@
     ],
     "exports": [
       "ThemeProvider"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con theme-provider.tsx."
   },
   {
     "id": "src/components/SplashScreen.tsx",
@@ -49,7 +52,8 @@
       "framer-motion",
       "./CostProLogo"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SplashScreen.tsx."
   },
   {
     "id": "src/components/ThemeToggle.tsx",
@@ -66,7 +70,8 @@
     ],
     "exports": [
       "ThemeToggle"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ThemeToggle.tsx."
   },
   {
     "id": "src/components/CostProLogo.tsx",
@@ -77,7 +82,8 @@
       "react",
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/ServiceWorkerRegister.tsx",
@@ -88,7 +94,8 @@
       "react",
       "workbox-window"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ServiceWorkerRegister.tsx."
   },
   {
     "id": "src/components/modals/SyncConflictModal.tsx",
@@ -105,7 +112,8 @@
     ],
     "exports": [
       "SyncConflictModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SyncConflictModal.tsx."
   },
   {
     "id": "src/components/modals/CreateProductModal.tsx",
@@ -122,7 +130,8 @@
     ],
     "exports": [
       "CreateProductModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CreateProductModal.tsx."
   },
   {
     "id": "src/components/modals/BarcodeScanner.tsx",
@@ -138,7 +147,8 @@
     ],
     "exports": [
       "BarcodeScanner"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con BarcodeScanner.tsx."
   },
   {
     "id": "src/components/modals/UpgradeModal.tsx",
@@ -153,7 +163,8 @@
     ],
     "exports": [
       "UpgradeModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con UpgradeModal.tsx."
   },
   {
     "id": "src/components/modals/PriceSelectorModal.tsx",
@@ -170,7 +181,8 @@
     ],
     "exports": [
       "PriceSelectorModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con PriceSelectorModal.tsx."
   },
   {
     "id": "src/components/providers/SyncProvider.tsx",
@@ -184,7 +196,8 @@
     "exports": [
       "SyncProvider",
       "useSyncContext"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SyncProvider.tsx."
   },
   {
     "id": "src/components/providers/QueryProvider.tsx",
@@ -195,7 +208,8 @@
       "@tanstack/react-query",
       "react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con QueryProvider.tsx."
   },
   {
     "id": "src/components/views/TerminalShell.tsx",
@@ -228,7 +242,8 @@
       "@/components/ui/MobileSafeContainer",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TerminalShell.tsx."
   },
   {
     "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
@@ -247,7 +262,8 @@
       "@/lib/utils",
       "next/link"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ExecutiveDemoView.tsx."
   },
   {
     "id": "src/components/views/terminal/Sidebar.tsx",
@@ -266,7 +282,8 @@
     ],
     "exports": [
       "Sidebar"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con Sidebar.tsx."
   },
   {
     "id": "src/components/views/terminal/Header.tsx",
@@ -287,7 +304,8 @@
     ],
     "exports": [
       "Header"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con Header.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
@@ -301,7 +319,8 @@
     ],
     "exports": [
       "SystemDependencyGraph"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SystemDependencyGraph.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/AuditSummary.tsx",
@@ -318,7 +337,8 @@
     ],
     "exports": [
       "AuditSummary"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditSummary.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
@@ -332,7 +352,8 @@
     ],
     "exports": [
       "SecurityMetrics"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SecurityMetrics.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
@@ -347,7 +368,8 @@
     ],
     "exports": [
       "HealthStatusHeader"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con HealthStatusHeader.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
@@ -370,7 +392,8 @@
       "./ArchitectureAuditTable",
       "./HealthAgentLogs"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SystemHealthView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
@@ -387,7 +410,8 @@
     ],
     "exports": [
       "ArchitectureAuditTable"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ArchitectureAuditTable.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
@@ -401,7 +425,8 @@
     ],
     "exports": [
       "ReleaseGateStatus"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReleaseGateStatus.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
@@ -417,7 +442,8 @@
     ],
     "exports": [
       "ViewNavigator"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ViewNavigator.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
@@ -437,7 +463,8 @@
     ],
     "exports": [
       "HealthAgentLogs"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con HealthAgentLogs.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
@@ -453,7 +480,8 @@
     ],
     "exports": [
       "DetailedRelationshipGraph"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DetailedRelationshipGraph.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
@@ -469,7 +497,8 @@
     ],
     "exports": [
       "InfrastructureMetrics"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InfrastructureMetrics.tsx."
   },
   {
     "id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
@@ -484,7 +513,8 @@
     ],
     "exports": [
       "ApplicationMetrics"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ApplicationMetrics.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
@@ -503,7 +533,8 @@
       "@/lib/wallet/types",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WalletView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
@@ -517,7 +548,8 @@
     ],
     "exports": [
       "AnalyticsDashboard"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AnalyticsDashboard.tsx."
   },
   {
     "id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
@@ -535,7 +567,8 @@
     ],
     "exports": [
       "CatalogModals"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CatalogModals.tsx."
   },
   {
     "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
@@ -560,7 +593,8 @@
       "jsbarcode",
       "@/types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CatalogView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
@@ -578,7 +612,8 @@
       "sonner",
       "@tanstack/react-query"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SettingsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
@@ -601,7 +636,8 @@
       "@/components/ui/popover",
       "@/components/ui/calendar"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DashboardView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
@@ -617,7 +653,8 @@
     "exports": [
       "DashboardTimeRange",
       "useDashboardView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useDashboardView.ts."
   },
   {
     "id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
@@ -631,7 +668,8 @@
     ],
     "exports": [
       "ConcentricDashboardRing"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ConcentricDashboardRing.tsx."
   },
   {
     "id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
@@ -646,7 +684,8 @@
     ],
     "exports": [
       "ExecutiveKpiCards"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ExecutiveKpiCards.tsx."
   },
   {
     "id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
@@ -664,7 +703,8 @@
     ],
     "exports": [
       "RecentCostSheets"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
@@ -689,7 +729,8 @@
     ],
     "exports": [
       "ReportConfigPanel"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReportConfigPanel.tsx."
   },
   {
     "id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
@@ -708,7 +749,8 @@
     ],
     "exports": [
       "ReportPreview"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReportPreview.tsx."
   },
   {
     "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
@@ -730,7 +772,8 @@
       "@/types",
       "@/contracts/reports"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReportsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
@@ -747,7 +790,8 @@
     ],
     "exports": [
       "AuditLogsModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditLogsModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
@@ -763,7 +807,8 @@
       "./useStoresView",
       "./StoreModals"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StoresManagementView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/stores/useStoresView.ts",
@@ -784,7 +829,8 @@
     "exports": [
       "StoreFormMode",
       "useStoresView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useStoresView.ts."
   },
   {
     "id": "src/components/views/terminal/views/stores/StoreModals.tsx",
@@ -805,7 +851,8 @@
     ],
     "exports": [
       "StoreModals"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StoreModals.tsx."
   },
   {
     "id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
@@ -823,7 +870,8 @@
     ],
     "exports": [
       "MasteryDashboard"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con MasteryDashboard.tsx."
   },
   {
     "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
@@ -842,7 +890,8 @@
       "@/components/ui/CostProLoader",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AcademyView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/academy/Flashcard.tsx",
@@ -859,7 +908,8 @@
     ],
     "exports": [
       "Flashcard"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con Flashcard.tsx."
   },
   {
     "id": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
@@ -877,7 +927,8 @@
       "sonner",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CreateTransferModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
@@ -896,7 +947,8 @@
       "./CreateTransferModal",
       "./TransferDetailsModal"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransferenciasView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
@@ -914,7 +966,8 @@
       "date-fns/locale",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransferDetailsModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/HelpView.tsx",
@@ -944,7 +997,8 @@
       "@/store",
       "@/components/ThemeToggle"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con HelpView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
@@ -955,7 +1009,8 @@
       "framer-motion",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con KidsOnboarding.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
@@ -965,7 +1020,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StickyCartFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.test.tsx",
@@ -977,7 +1033,8 @@
       "vitest",
       "./StoreSkuDiagram"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StoreSkuDiagram.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
@@ -987,7 +1044,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con MobilePosDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
@@ -997,7 +1055,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con IpvFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
@@ -1007,7 +1066,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SecurityFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
@@ -1017,7 +1077,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con UserFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
@@ -1027,7 +1088,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con QuickModeMassiveDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx",
@@ -1039,7 +1101,8 @@
       "vitest",
       "./OfflineSyncDiagram"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con OfflineSyncDiagram.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/DarianDiagram.test.tsx",
@@ -1051,7 +1114,8 @@
       "vitest",
       "./DarianDiagram"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DarianDiagram.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
@@ -1061,7 +1125,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
@@ -1071,7 +1136,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RolesDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
@@ -1081,7 +1147,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con OfflineSyncDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
@@ -1091,7 +1158,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
@@ -1101,7 +1169,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con MobileFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
@@ -1111,7 +1180,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CashFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
@@ -1121,7 +1191,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryAdjustmentFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
@@ -1131,7 +1202,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StoreSkuDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
@@ -1141,7 +1213,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DarianDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
@@ -1151,7 +1224,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SalesFlowDiagram.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
@@ -1167,7 +1241,8 @@
       "framer-motion",
       "@/components/ui/atomic"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryCardView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
@@ -1185,7 +1260,8 @@
       "@/store",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryAdjustmentsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
@@ -1201,7 +1277,8 @@
       "sonner",
       "@/hooks/ui/useMobile"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryAdjustmentModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
@@ -1226,7 +1303,8 @@
       "papaparse",
       "@/components/ui/BaseModal"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ProductReceptionView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
@@ -1241,7 +1319,8 @@
       "@/components/ui/CostProLoader",
       "@/components/ui/ProductImage"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryTableView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
@@ -1269,7 +1348,8 @@
       "@/lib/utils",
       "@/components/ui/QueryInspector"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
@@ -1285,7 +1365,8 @@
       "@/store",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CashClosureView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
@@ -1305,7 +1386,8 @@
     ],
     "exports": [
       "TaxCalculationModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TaxCalculationModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
@@ -1323,7 +1405,8 @@
       "./TransactionDetailsModal",
       "./TaxCalculationModal"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SalesHistoryView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
@@ -1348,7 +1431,8 @@
     ],
     "exports": [
       "TransactionDetailsModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransactionDetailsModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
@@ -1366,7 +1450,8 @@
     ],
     "exports": [
       "useSalesHistoryView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useSalesHistoryView.ts."
   },
   {
     "id": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
@@ -1383,7 +1468,8 @@
     ],
     "exports": [
       "ReceptionDetailsModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReceptionDetailsModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
@@ -1402,7 +1488,8 @@
       "./useReceptionsHistoryView",
       "./ReceptionDetailsModal"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ReceptionsHistoryView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
@@ -1419,7 +1506,8 @@
     ],
     "exports": [
       "useReceptionsHistoryView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useReceptionsHistoryView.ts."
   },
   {
     "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
@@ -1438,7 +1526,8 @@
       "@/hooks/api/useStockMovements",
       "@/store"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StockHistoryView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
@@ -1482,7 +1571,8 @@
       "@/components/ui/tooltip",
       "./IPVHelpDialog"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
@@ -1495,7 +1585,8 @@
     ],
     "exports": [
       "IPVRightSidebar"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
@@ -1516,7 +1607,8 @@
     ],
     "exports": [
       "TransactionBreakdown"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransactionBreakdown.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
@@ -1532,7 +1624,8 @@
     ],
     "exports": [
       "ActionBadges"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ActionBadges.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
@@ -1566,7 +1659,8 @@
     ],
     "exports": [
       "TransactionTable"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransactionTable.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
@@ -1588,7 +1682,8 @@
     ],
     "exports": [
       "AddTransactionModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AddTransactionModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
@@ -1601,7 +1696,8 @@
     ],
     "exports": [
       "IncomeReceiptPreview"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con IncomeReceiptPreview.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
@@ -1620,7 +1716,8 @@
       "date-fns",
       "date-fns/locale"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con MovementsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
@@ -1643,7 +1740,8 @@
     ],
     "exports": [
       "IncomeReceiptSection"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con IncomeReceiptSection.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
@@ -1664,7 +1762,8 @@
     ],
     "exports": [
       "IPVPreviewModal"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
@@ -1680,7 +1779,8 @@
     ],
     "exports": [
       "MatchingTracePopover"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
@@ -1705,7 +1805,8 @@
     ],
     "exports": [
       "IPVReportView"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
@@ -1723,7 +1824,8 @@
     ],
     "exports": [
       "MatchingAuditView"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
@@ -1745,7 +1847,8 @@
     ],
     "exports": [
       "IngestionErrorsTable"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con IngestionErrorsTable.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
@@ -1771,7 +1874,8 @@
     ],
     "exports": [
       "TransferQRReportView"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con TransferQRReportView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
@@ -1795,7 +1899,8 @@
     ],
     "exports": [
       "ManualReconciliationView"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ManualReconciliationView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
@@ -1819,7 +1924,8 @@
     ],
     "exports": [
       "MatchingRulesEditor"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
@@ -1839,7 +1945,8 @@
     ],
     "exports": [
       "MatchingSimulation"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
@@ -1857,7 +1964,8 @@
     ],
     "exports": [
       "RuleMetaEditor"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RuleMetaEditor.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
@@ -1871,7 +1979,8 @@
     ],
     "exports": [
       "IPVReportsDropdown"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
@@ -1892,7 +2001,8 @@
     ],
     "exports": [
       "PivotStatementView"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con PivotStatementView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
@@ -1919,7 +2029,8 @@
     ],
     "exports": [
       "BankIngestion"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con BankIngestion.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
@@ -1936,7 +2047,8 @@
     ],
     "exports": [
       "IPVInstitutionalDashboard"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
@@ -1969,7 +2081,8 @@
     ],
     "exports": [
       "CatalogTable"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CatalogTable.tsx."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
@@ -1985,7 +2098,8 @@
     ],
     "exports": [
       "IPVHelpDialog"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
@@ -2004,7 +2118,8 @@
     ],
     "exports": [
       "IPVControlPanel"
-    ]
+    ],
+    "user_description": "Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
@@ -2019,7 +2134,8 @@
       "framer-motion",
       "./InventoryCountView"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryCountTableView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
@@ -2034,7 +2150,8 @@
       "framer-motion",
       "./InventoryCountView"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryCountCardView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
@@ -2058,7 +2175,8 @@
     ],
     "exports": [
       "ExtendedProduct"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con InventoryCountView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/data-loader.ts",
@@ -2068,7 +2186,8 @@
     "dependencies": [
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar data-loader.ts."
   },
   {
     "id": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
@@ -2085,7 +2204,8 @@
     ],
     "exports": [
       "CuentasModule"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CuentasModule.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
@@ -2102,7 +2222,8 @@
     ],
     "exports": [
       "AsientosModule"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AsientosModule.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
@@ -2116,7 +2237,8 @@
     ],
     "exports": [
       "WikiBreadcrumbs"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WikiBreadcrumbs.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
@@ -2129,7 +2251,8 @@
     ],
     "exports": [
       "WikiSearch"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WikiSearch.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/types.ts",
@@ -2148,7 +2271,8 @@
       "ClasificadorData",
       "WikiModule",
       "WikiState"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar types.ts."
   },
   {
     "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
@@ -2170,7 +2294,8 @@
       "./WikiSearch",
       "./WikiBreadcrumbs"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WikiView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
@@ -2184,7 +2309,8 @@
     ],
     "exports": [
       "WikiSidebar"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WikiSidebar.tsx."
   },
   {
     "id": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
@@ -2198,7 +2324,8 @@
     ],
     "exports": [
       "ClasificadorModule"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ClasificadorModule.tsx."
   },
   {
     "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
@@ -2212,7 +2339,8 @@
       "lucide-react",
       "@/components/ui/ProductImage"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con POSTableView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/pos/usePOSView.ts",
@@ -2235,7 +2363,8 @@
     ],
     "exports": [
       "usePOSView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar usePOSView.ts."
   },
   {
     "id": "src/components/views/terminal/views/pos/POSView.tsx",
@@ -2269,7 +2398,8 @@
       "@/components/ui/SpeedDial",
       "@/types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con POSView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/pos/POSCart.tsx",
@@ -2295,7 +2425,8 @@
     ],
     "exports": [
       "POSCart"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con POSCart.tsx."
   },
   {
     "id": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
@@ -2310,7 +2441,8 @@
     ],
     "exports": [
       "StickyCartSummary"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StickyCartSummary.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
@@ -2324,7 +2456,8 @@
     "exports": [
       "AuditCategory",
       "getAuditCategory"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditEventIcon.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/audit.test.ts",
@@ -2335,7 +2468,8 @@
       "vitest",
       "./AuditEventIcon"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar audit.test.ts."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditFilters.tsx",
@@ -2349,7 +2483,8 @@
       "@/lib/utils",
       "./AuditEventIcon"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditFilters.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditEventMeta.test.tsx",
@@ -2362,7 +2497,8 @@
       "./AuditEventMeta",
       "react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditEventMeta.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
@@ -2377,7 +2513,8 @@
       "./AuditEventIcon",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditTableView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
@@ -2389,7 +2526,8 @@
       "@testing-library/react",
       "./AuditTableView"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditTableView.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
@@ -2405,7 +2543,8 @@
       "@/lib/utils",
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditTimeline.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
@@ -2418,7 +2557,8 @@
       "./AuditLogsView",
       "./useAuditLogsView"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditLogsView.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
@@ -2432,7 +2572,8 @@
     ],
     "exports": [
       "useAuditLogsView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useAuditLogsView.ts."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
@@ -2448,7 +2589,8 @@
       "./AuditEventMeta",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditEventCard.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
@@ -2461,7 +2603,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditEventMeta.tsx."
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
@@ -2485,7 +2628,8 @@
       "@/lib/utils/pdf-export",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AuditLogsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
@@ -2504,7 +2648,8 @@
     ],
     "exports": [
       "CostSheetAuditView"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
@@ -2521,7 +2666,8 @@
     ],
     "exports": [
       "CostSheetSidebarNav"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
@@ -2534,7 +2680,8 @@
     ],
     "exports": [
       "CostSheetFormulaGuide"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
@@ -2547,7 +2694,8 @@
     ],
     "exports": [
       "CostSheetGenerateDropdown"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
@@ -2563,7 +2711,8 @@
     ],
     "exports": [
       "FormulaEditor"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con FormulaEditor.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
@@ -2575,7 +2724,8 @@
       "framer-motion",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CircularProgress.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
@@ -2591,7 +2741,8 @@
     ],
     "exports": [
       "CostSheetCalculator"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
@@ -2609,7 +2760,8 @@
       "lucide-react",
       "@/components/ui/atomic"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ProductInventoryPicker.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
@@ -2626,7 +2778,8 @@
     ],
     "exports": [
       "CostSheetBanner"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
@@ -2644,7 +2797,8 @@
     ],
     "exports": [
       "CostSheetAuditLog"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
@@ -2662,7 +2816,8 @@
     "exports": [
       "CostSheetMasterRing",
       "CostSheetTelemetry"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
@@ -2679,7 +2834,8 @@
     ],
     "exports": [
       "CostSheetActionsPanel"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
@@ -2731,7 +2887,8 @@
       "@/components/ui/SpeedDial",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
@@ -2743,7 +2900,8 @@
       "@/lib/utils",
       "@/types/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
@@ -2756,7 +2914,8 @@
     ],
     "exports": [
       "CostSheetHelpDropdown"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
@@ -2772,7 +2931,8 @@
       "./HealthBattery",
       "./CostSheetMasterRing"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
@@ -2790,7 +2950,8 @@
       "./CostSheetGenerateDropdown",
       "./CostSheetHelpDropdown"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
@@ -2804,7 +2965,8 @@
     ],
     "exports": [
       "CostSheetOptionsDropdown"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
@@ -2815,7 +2977,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
@@ -2831,7 +2994,8 @@
     ],
     "exports": [
       "CostSheetQuickMode"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
@@ -2846,7 +3010,8 @@
     ],
     "exports": [
       "CostSheetBottomNav"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
@@ -2858,7 +3023,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
@@ -2868,7 +3034,8 @@
     "dependencies": [
       "react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
@@ -2887,7 +3054,8 @@
     "exports": [
       "ExportOptions",
       "CostSheetExportModal"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
@@ -2899,7 +3067,8 @@
       "@/lib/utils",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con HealthBattery.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
@@ -2931,7 +3100,8 @@
     ],
     "exports": [
       "CostSheetTemplateExplorer"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
@@ -2948,7 +3118,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
@@ -2963,7 +3134,8 @@
     ],
     "exports": [
       "FormulaBuilder"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con FormulaBuilder.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
@@ -2986,7 +3158,8 @@
       "./CostSheetSectionActionsPanel",
       "./CircularProgress"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
@@ -3017,7 +3190,8 @@
     ],
     "exports": [
       "CostSheetMassiveGenerator"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
@@ -3036,7 +3210,8 @@
     ],
     "exports": [
       "CostSheetSidePanel"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
@@ -3047,7 +3222,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
@@ -3066,7 +3242,8 @@
     ],
     "exports": [
       "DarianEditor"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DarianEditor.tsx."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
@@ -3082,7 +3259,8 @@
       "@/lib/utils",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
@@ -3097,7 +3275,8 @@
     ],
     "exports": [
       "CostSheetFCDropdown"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
@@ -3115,7 +3294,8 @@
       "./CostSheetSidebarNav",
       "@/components/ui/progress"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
@@ -3140,7 +3320,8 @@
       "./CostSheetSectionActionsPanel",
       "@/lib/data/costpro-reinicio"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
@@ -3162,7 +3343,8 @@
       "@/lib/utils",
       "@/components/ui/ViewSwitcher"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
@@ -3177,7 +3359,8 @@
     ],
     "exports": [
       "CostSheetSectionActionsPanel"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
@@ -3192,7 +3375,8 @@
       "./CostSheetSignature",
       "@/components/ui/SecurityScrollContainer"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
@@ -3205,7 +3389,8 @@
       "@/components/ui/input",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
@@ -3221,7 +3406,8 @@
     "exports": [
       "CostSheetViewMode",
       "CostSheetModeDropdown"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
@@ -3237,7 +3423,8 @@
     ],
     "exports": [
       "CostSheetHelpPanel"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx",
@@ -3250,7 +3437,8 @@
       "../CostSheetTemplateExplorer",
       "react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/views/terminal/views/users/UserFormModal.tsx",
@@ -3267,7 +3455,8 @@
     ],
     "exports": [
       "UserFormModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con UserFormModal.tsx."
   },
   {
     "id": "src/components/views/terminal/views/users/useUsersView.ts",
@@ -3288,7 +3477,8 @@
     ],
     "exports": [
       "useUsersView"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useUsersView.ts."
   },
   {
     "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
@@ -3307,7 +3497,8 @@
       "./useUsersView",
       "./UserFormModal"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con UsersManagementView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/users/RoleForm.tsx",
@@ -3325,7 +3516,8 @@
     ],
     "exports": [
       "RoleFormData"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RoleForm.tsx."
   },
   {
     "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
@@ -3343,7 +3535,8 @@
       "./RoleForm",
       "@/types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RolesManagementView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/users/UserForm.tsx",
@@ -3362,7 +3555,8 @@
     ],
     "exports": [
       "UserFormData"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con UserForm.tsx."
   },
   {
     "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
@@ -3376,7 +3570,8 @@
       "@/components/ui/StateRenderer",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RSSManagementView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/rss/NewsView.tsx",
@@ -3391,7 +3586,8 @@
       "@/types",
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con NewsView.tsx."
   },
   {
     "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
@@ -3404,7 +3600,8 @@
       "./LegalView",
       "@/lib/supabaseClient"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LegalView.test.tsx."
   },
   {
     "id": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
@@ -3416,7 +3613,8 @@
       "jspdf-autotable",
       "date-fns"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar LegalPdfExporter.ts."
   },
   {
     "id": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
@@ -3435,7 +3633,8 @@
       "./LegalPdfExporter",
       "@/lib/utils/number-to-words-es"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LegalModelForm.tsx."
   },
   {
     "id": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
@@ -3448,7 +3647,8 @@
       "framer-motion",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LegalConsultant.tsx."
   },
   {
     "id": "src/components/views/terminal/views/legal/LegalView.tsx",
@@ -3465,7 +3665,8 @@
       "./LegalConsultant",
       "./LegalModelForm"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LegalView.tsx."
   },
   {
     "id": "src/components/ui/skeleton.tsx",
@@ -3475,7 +3676,8 @@
     "dependencies": [
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con skeleton.tsx."
   },
   {
     "id": "src/components/ui/DataDecryption.tsx",
@@ -3485,7 +3687,8 @@
     "dependencies": [
       "framer-motion"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con DataDecryption.tsx."
   },
   {
     "id": "src/components/ui/accordion.tsx",
@@ -3498,7 +3701,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con accordion.tsx."
   },
   {
     "id": "src/components/ui/ViewSwitcher.tsx",
@@ -3512,7 +3716,8 @@
     ],
     "exports": [
       "ViewMode"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ViewSwitcher.tsx."
   },
   {
     "id": "src/components/ui/hover-card.tsx",
@@ -3524,7 +3729,8 @@
       "@radix-ui/react-hover-card",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con hover-card.tsx."
   },
   {
     "id": "src/components/ui/LazyRender.tsx",
@@ -3536,7 +3742,8 @@
     ],
     "exports": [
       "LazyRender"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LazyRender.tsx."
   },
   {
     "id": "src/components/ui/command.tsx",
@@ -3549,7 +3756,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con command.tsx."
   },
   {
     "id": "src/components/ui/resizable.tsx",
@@ -3562,7 +3770,8 @@
       "react-resizable-panels",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con resizable.tsx."
   },
   {
     "id": "src/components/ui/QueryInspector.tsx",
@@ -3580,7 +3789,8 @@
     ],
     "exports": [
       "QueryInspector"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con QueryInspector.tsx."
   },
   {
     "id": "src/components/ui/SearchBar.tsx",
@@ -3594,7 +3804,8 @@
       "@/lib/utils",
       "next-themes"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SearchBar.tsx."
   },
   {
     "id": "src/components/ui/dropdown-menu.tsx",
@@ -3607,7 +3818,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con dropdown-menu.tsx."
   },
   {
     "id": "src/components/ui/separator.tsx",
@@ -3619,7 +3831,8 @@
       "@radix-ui/react-separator",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con separator.tsx."
   },
   {
     "id": "src/components/ui/MobileSafeContainer.tsx",
@@ -3632,7 +3845,8 @@
     ],
     "exports": [
       "MobileSafeContainer"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con MobileSafeContainer.tsx."
   },
   {
     "id": "src/components/ui/pagination.tsx",
@@ -3644,7 +3858,8 @@
       "@/lib/utils",
       "@/components/ui/button"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con pagination.tsx."
   },
   {
     "id": "src/components/ui/alert-dialog.tsx",
@@ -3657,7 +3872,8 @@
       "@/lib/utils",
       "@/components/ui/button"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con alert-dialog.tsx."
   },
   {
     "id": "src/components/ui/input-otp.tsx",
@@ -3670,7 +3886,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con input-otp.tsx."
   },
   {
     "id": "src/components/ui/alert.tsx",
@@ -3682,7 +3899,8 @@
       "class-variance-authority",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con alert.tsx."
   },
   {
     "id": "src/components/ui/CyberShell.tsx",
@@ -3692,7 +3910,8 @@
     "dependencies": [
       "react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con CyberShell.tsx."
   },
   {
     "id": "src/components/ui/popover.tsx",
@@ -3704,7 +3923,8 @@
       "@radix-ui/react-popover",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con popover.tsx."
   },
   {
     "id": "src/components/ui/table.tsx",
@@ -3715,7 +3935,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con table.tsx."
   },
   {
     "id": "src/components/ui/progress.tsx",
@@ -3727,7 +3948,8 @@
       "@radix-ui/react-progress",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con progress.tsx."
   },
   {
     "id": "src/components/ui/select.tsx",
@@ -3740,7 +3962,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con select.tsx."
   },
   {
     "id": "src/components/ui/sonner.tsx",
@@ -3751,7 +3974,8 @@
       "next-themes",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con sonner.tsx."
   },
   {
     "id": "src/components/ui/LoadingOverlay.tsx",
@@ -3765,7 +3989,8 @@
     ],
     "exports": [
       "LoadingOverlay"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con LoadingOverlay.tsx."
   },
   {
     "id": "src/components/ui/textarea.tsx",
@@ -3776,7 +4001,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con textarea.tsx."
   },
   {
     "id": "src/components/ui/PWAInstallModal.tsx",
@@ -3790,7 +4016,8 @@
     ],
     "exports": [
       "PWAInstallModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con PWAInstallModal.tsx."
   },
   {
     "id": "src/components/ui/toggle.tsx",
@@ -3803,7 +4030,8 @@
       "class-variance-authority",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con toggle.tsx."
   },
   {
     "id": "src/components/ui/StateRenderer.tsx",
@@ -3816,7 +4044,8 @@
     ],
     "exports": [
       "StateRenderer"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con StateRenderer.tsx."
   },
   {
     "id": "src/components/ui/Portal.tsx",
@@ -3829,7 +4058,8 @@
     ],
     "exports": [
       "Portal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con Portal.tsx."
   },
   {
     "id": "src/components/ui/toggle-group.tsx",
@@ -3843,7 +4073,8 @@
       "@/lib/utils",
       "@/components/ui/toggle"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con toggle-group.tsx."
   },
   {
     "id": "src/components/ui/scroll-area.tsx",
@@ -3855,7 +4086,8 @@
       "@radix-ui/react-scroll-area",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con scroll-area.tsx."
   },
   {
     "id": "src/components/ui/label.tsx",
@@ -3867,7 +4099,8 @@
       "@radix-ui/react-label",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con label.tsx."
   },
   {
     "id": "src/components/ui/chart.tsx",
@@ -3881,7 +4114,8 @@
     ],
     "exports": [
       "ChartConfig"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con chart.tsx."
   },
   {
     "id": "src/components/ui/sidebar.tsx",
@@ -3900,7 +4134,8 @@
       "@/components/ui/separator",
       "@/components/ui/skeleton"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con sidebar.tsx."
   },
   {
     "id": "src/components/ui/tabs.tsx",
@@ -3912,7 +4147,8 @@
       "@radix-ui/react-tabs",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con tabs.tsx."
   },
   {
     "id": "src/components/ui/BaseModal.tsx",
@@ -3925,7 +4161,8 @@
     ],
     "exports": [
       "BaseModal"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con BaseModal.tsx."
   },
   {
     "id": "src/components/ui/switch.tsx",
@@ -3937,7 +4174,8 @@
       "@radix-ui/react-switch",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con switch.tsx."
   },
   {
     "id": "src/components/ui/checkbox.tsx",
@@ -3950,7 +4188,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con checkbox.tsx."
   },
   {
     "id": "src/components/ui/context-menu.tsx",
@@ -3963,7 +4202,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con context-menu.tsx."
   },
   {
     "id": "src/components/ui/badge.tsx",
@@ -3976,7 +4216,8 @@
       "class-variance-authority",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con badge.tsx."
   },
   {
     "id": "src/components/ui/CostProLoader.tsx",
@@ -3989,7 +4230,8 @@
     ],
     "exports": [
       "CostProLoader"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/components/ui/calendar.tsx",
@@ -4002,7 +4244,8 @@
       "@/lib/utils",
       "@/components/ui/button"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con calendar.tsx."
   },
   {
     "id": "src/components/ui/toaster.tsx",
@@ -4014,7 +4257,8 @@
     ],
     "exports": [
       "Toaster"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con toaster.tsx."
   },
   {
     "id": "src/components/ui/navigation-menu.tsx",
@@ -4028,7 +4272,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con navigation-menu.tsx."
   },
   {
     "id": "src/components/ui/ActionMenu.tsx",
@@ -4042,7 +4287,8 @@
     ],
     "exports": [
       "Action"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ActionMenu.tsx."
   },
   {
     "id": "src/components/ui/ProductImage.tsx",
@@ -4056,7 +4302,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ProductImage.tsx."
   },
   {
     "id": "src/components/ui/toast.tsx",
@@ -4070,7 +4317,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con toast.tsx."
   },
   {
     "id": "src/components/ui/FloatingCalculator.tsx",
@@ -4086,7 +4334,8 @@
     ],
     "exports": [
       "FloatingCalculator"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con FloatingCalculator.tsx."
   },
   {
     "id": "src/components/ui/ScrollToTop.tsx",
@@ -4099,7 +4348,8 @@
       "framer-motion",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ScrollToTop.tsx."
   },
   {
     "id": "src/components/ui/button.tsx",
@@ -4112,7 +4362,8 @@
       "class-variance-authority",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con button.tsx."
   },
   {
     "id": "src/components/ui/avatar.tsx",
@@ -4124,7 +4375,8 @@
       "@radix-ui/react-avatar",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con avatar.tsx."
   },
   {
     "id": "src/components/ui/dialog.tsx",
@@ -4137,7 +4389,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con dialog.tsx."
   },
   {
     "id": "src/components/ui/SecurityScrollContainer.tsx",
@@ -4150,7 +4403,8 @@
     ],
     "exports": [
       "SecurityScrollContainer"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SecurityScrollContainer.tsx."
   },
   {
     "id": "src/components/ui/breadcrumb.tsx",
@@ -4163,7 +4417,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con breadcrumb.tsx."
   },
   {
     "id": "src/components/ui/form.tsx",
@@ -4177,7 +4432,8 @@
       "@/lib/utils",
       "@/components/ui/label"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con form.tsx."
   },
   {
     "id": "src/components/ui/slider.tsx",
@@ -4189,7 +4445,8 @@
       "@radix-ui/react-slider",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con slider.tsx."
   },
   {
     "id": "src/components/ui/menubar.tsx",
@@ -4202,7 +4459,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con menubar.tsx."
   },
   {
     "id": "src/components/ui/tooltip.tsx",
@@ -4214,7 +4472,8 @@
       "@radix-ui/react-tooltip",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con tooltip.tsx."
   },
   {
     "id": "src/components/ui/SpeedDial.tsx",
@@ -4231,7 +4490,8 @@
     "exports": [
       "SpeedDialAction",
       "SpeedDial"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SpeedDial.tsx."
   },
   {
     "id": "src/components/ui/ChatBot.tsx",
@@ -4250,7 +4510,8 @@
     ],
     "exports": [
       "ChatBot"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con ChatBot.tsx."
   },
   {
     "id": "src/components/ui/aspect-ratio.tsx",
@@ -4260,7 +4521,8 @@
     "dependencies": [
       "@radix-ui/react-aspect-ratio"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con aspect-ratio.tsx."
   },
   {
     "id": "src/components/ui/carousel.tsx",
@@ -4273,7 +4535,8 @@
       "@/lib/utils",
       "@/components/ui/button"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con carousel.tsx."
   },
   {
     "id": "src/components/ui/card.tsx",
@@ -4284,7 +4547,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con card.tsx."
   },
   {
     "id": "src/components/ui/sheet.tsx",
@@ -4297,7 +4561,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con sheet.tsx."
   },
   {
     "id": "src/components/ui/drawer.tsx",
@@ -4309,7 +4574,8 @@
       "vaul",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con drawer.tsx."
   },
   {
     "id": "src/components/ui/input.tsx",
@@ -4320,7 +4586,8 @@
       "react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con input.tsx."
   },
   {
     "id": "src/components/ui/HorizontalScroll.tsx",
@@ -4333,7 +4600,8 @@
     ],
     "exports": [
       "HorizontalScroll"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con HorizontalScroll.tsx."
   },
   {
     "id": "src/components/ui/collapsible.tsx",
@@ -4343,7 +4611,8 @@
     "dependencies": [
       "@radix-ui/react-collapsible"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con collapsible.tsx."
   },
   {
     "id": "src/components/ui/SyncStatusBadge.tsx",
@@ -4358,7 +4627,8 @@
     ],
     "exports": [
       "SyncStatusBadge"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SyncStatusBadge.tsx."
   },
   {
     "id": "src/components/ui/radio-group.tsx",
@@ -4371,7 +4641,8 @@
       "lucide-react",
       "@/lib/utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con radio-group.tsx."
   },
   {
     "id": "src/components/ui/atomic/index.tsx",
@@ -4394,7 +4665,8 @@
       "SearchInput",
       "CategoryChips",
       "ProductCard"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con index.tsx."
   },
   {
     "id": "src/components/auth/RegisterForm.tsx",
@@ -4409,7 +4681,8 @@
       "@/lib/logger",
       "@/components/ui/input"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con RegisterForm.tsx."
   },
   {
     "id": "src/components/auth/LoginForm.tsx",
@@ -4431,7 +4704,8 @@
       "@/services/user-service",
       "@/contracts/user"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Sistema de seguridad y acceso de usuarios."
   },
   {
     "id": "src/components/auth/WelcomeLandingView.tsx",
@@ -4451,7 +4725,8 @@
       "@/components/ui/PWAInstallModal",
       "@/store"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con WelcomeLandingView.tsx."
   },
   {
     "id": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
@@ -4463,7 +4738,8 @@
       "framer-motion",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con SpeedScaleDiagram.tsx."
   },
   {
     "id": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
@@ -4474,7 +4750,8 @@
       "framer-motion",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con AutomationWorkflowDiagram.tsx."
   },
   {
     "id": "src/app/page.tsx",
@@ -4489,7 +4766,8 @@
     ],
     "exports": [
       "metadata"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/layout.tsx",
@@ -4510,7 +4788,8 @@
     "exports": [
       "metadata",
       "viewport"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con layout.tsx."
   },
   {
     "id": "src/app/cost-sheets/page.tsx",
@@ -4522,7 +4801,8 @@
       "react",
       "@/components/ui/skeleton"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/api/route.ts",
@@ -4532,7 +4812,8 @@
     "dependencies": [
       "next/server"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/import-anexo/route.ts",
@@ -4544,7 +4825,8 @@
       "papaparse",
       "xlsx"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/save/route.ts",
@@ -4561,7 +4843,8 @@
     ],
     "exports": [
       "runtime"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/export-pdf/route.ts",
@@ -4576,7 +4859,8 @@
     ],
     "exports": [
       "runtime"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/import-json/route.ts",
@@ -4587,7 +4871,8 @@
       "next/server",
       "@/lib/cost-engine/schemas"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/ai/chat/route.ts",
@@ -4602,7 +4887,8 @@
     "exports": [
       "runtime",
       "maxDuration"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/cost-sheets/calculate/route.ts",
@@ -4614,7 +4900,8 @@
       "@/lib/cost-engine/schemas",
       "@/lib/cost-engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/system-health/route.ts",
@@ -4629,7 +4916,8 @@
     ],
     "exports": [
       "dynamic"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/reports/generate/route.ts",
@@ -4646,7 +4934,8 @@
       "date-fns/locale",
       "@/contracts/reports"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/academy/review/route.ts",
@@ -4660,7 +4949,8 @@
     ],
     "exports": [
       "runtime"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/academy/review/[cardId]/route.ts",
@@ -4675,7 +4965,8 @@
     ],
     "exports": [
       "runtime"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/academy/generate/route.ts",
@@ -4693,7 +4984,8 @@
     ],
     "exports": [
       "runtime"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/inventory/route.ts",
@@ -4706,7 +4998,8 @@
       "@/lib/auth",
       "@/types/inventory"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/inventory/adjust/route.ts",
@@ -4719,7 +5012,8 @@
       "@/types/inventory",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/inventory/[productId]/history/route.ts",
@@ -4732,7 +5026,8 @@
       "@/lib/auth",
       "@/types/inventory"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/inventory/products/route.ts",
@@ -4744,7 +5039,8 @@
       "@/lib/supabaseClient",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/inventory/adjustments/route.ts",
@@ -4756,7 +5052,8 @@
       "@/lib/supabaseClient",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/bot/chat/route.ts",
@@ -4771,7 +5068,8 @@
     "exports": [
       "runtime",
       "maxDuration"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/users/reset-password/route.ts",
@@ -4783,7 +5081,8 @@
       "next/server",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/users/toggle-status/route.ts",
@@ -4795,7 +5094,8 @@
       "next/server",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/users/delete/route.ts",
@@ -4807,7 +5107,8 @@
       "next/server",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/users/managed-create/route.ts",
@@ -4819,7 +5120,8 @@
       "next/server",
       "@/lib/auth"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/sync/batch/route.ts",
@@ -4832,7 +5134,8 @@
       "@/validation/schemas",
       "zod"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/rss/route.ts",
@@ -4847,7 +5150,8 @@
     ],
     "exports": [
       "revalidate"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/api/logs/route.ts",
@@ -4859,7 +5163,8 @@
       "fs",
       "path"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar route.ts."
   },
   {
     "id": "src/app/verify-dashboard/page.tsx",
@@ -4870,7 +5175,8 @@
       "@/components/views/terminal/views/dashboard/ConcentricDashboardRing",
       "@/components/views/terminal/views/dashboard/ExecutiveKpiCards"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/wiki/page.tsx",
@@ -4882,7 +5188,8 @@
       "react",
       "lucide-react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/cashier/close-session/page.tsx",
@@ -4901,7 +5208,8 @@
       "next/navigation",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/demo/executive/page.tsx",
@@ -4913,7 +5221,8 @@
     ],
     "exports": [
       "metadata"
-    ]
+    ],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/demo/calculate/page.tsx",
@@ -4934,7 +5243,8 @@
       "@/lib/cost-engine/fixtures/FC-DEMO-243.json",
       "@/lib/cost-engine/types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/app/login/page.tsx",
@@ -4950,7 +5260,8 @@
       "lucide-react",
       "@/components/CostProLogo"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Elemento de la interfaz de usuario para interactuar con page.tsx."
   },
   {
     "id": "src/services/bot-service.test.ts",
@@ -4962,7 +5273,8 @@
       "./bot-service",
       "@/lib/ai/orchestrator"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar bot-service.test.ts."
   },
   {
     "id": "src/services/store-service.ts",
@@ -4976,7 +5288,8 @@
     ],
     "exports": [
       "storeService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar store-service.ts."
   },
   {
     "id": "src/services/export-service.ts",
@@ -4993,7 +5306,8 @@
       "exportToPDF",
       "exportToCSV",
       "exportToExcel"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar export-service.ts."
   },
   {
     "id": "src/services/usage-service.ts",
@@ -5006,7 +5320,8 @@
     "exports": [
       "UsageAction",
       "usageService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar usage-service.ts."
   },
   {
     "id": "src/services/cash-service.ts",
@@ -5020,7 +5335,8 @@
     ],
     "exports": [
       "cashService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar cash-service.ts."
   },
   {
     "id": "src/services/transfer-service.ts",
@@ -5034,7 +5350,8 @@
     ],
     "exports": [
       "transferService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar transfer-service.ts."
   },
   {
     "id": "src/services/excel-service.ts",
@@ -5055,7 +5372,8 @@
       "importHeaderFromExcel",
       "exportSectionToExcel",
       "importSectionFromExcel"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar excel-service.ts."
   },
   {
     "id": "src/services/bot-service.ts",
@@ -5075,7 +5393,8 @@
     ],
     "exports": [
       "botService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar bot-service.ts."
   },
   {
     "id": "src/services/report-service.ts",
@@ -5088,7 +5407,8 @@
     ],
     "exports": [
       "reportService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar report-service.ts."
   },
   {
     "id": "src/services/import-service.ts",
@@ -5104,7 +5424,8 @@
       "ValidatedRow",
       "ParseResult",
       "importService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar import-service.ts."
   },
   {
     "id": "src/services/matching-log-service.ts",
@@ -5116,7 +5437,8 @@
     ],
     "exports": [
       "MatchingLogService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar matching-log-service.ts."
   },
   {
     "id": "src/services/rss-service.ts",
@@ -5129,7 +5451,8 @@
     ],
     "exports": [
       "rssService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar rss-service.ts."
   },
   {
     "id": "src/services/user-service.ts",
@@ -5145,7 +5468,8 @@
     ],
     "exports": [
       "userService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar user-service.ts."
   },
   {
     "id": "src/services/audit-service.ts",
@@ -5157,7 +5481,8 @@
     ],
     "exports": [
       "auditService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar audit-service.ts."
   },
   {
     "id": "src/services/catalog-service.ts",
@@ -5174,7 +5499,8 @@
     ],
     "exports": [
       "catalogService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar catalog-service.ts."
   },
   {
     "id": "src/services/__mocks__/matching-log-service.ts",
@@ -5184,7 +5510,8 @@
     "dependencies": [],
     "exports": [
       "MatchingLogService"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar matching-log-service.ts."
   },
   {
     "id": "src/hooks/useSync.ts",
@@ -5202,7 +5529,8 @@
     "exports": [
       "SyncStatus",
       "useSync"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useSync.ts."
   },
   {
     "id": "src/hooks/logic/useCostSheetCalculator.ts",
@@ -5220,7 +5548,8 @@
     ],
     "exports": [
       "useCostSheetCalculator"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/hooks/logic/usePOSProducts.ts",
@@ -5233,7 +5562,8 @@
     ],
     "exports": [
       "usePOSProducts"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar usePOSProducts.ts."
   },
   {
     "id": "src/hooks/logic/useSessionManager.ts",
@@ -5253,7 +5583,8 @@
     ],
     "exports": [
       "useSessionManager"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useSessionManager.ts."
   },
   {
     "id": "src/hooks/logic/useCostEngine.ts",
@@ -5268,7 +5599,8 @@
       "useCalculateFicha",
       "useImportJson",
       "useImportAnexo"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/hooks/api/useTransfers.ts",
@@ -5288,7 +5620,8 @@
       "useTransferableStores",
       "useCreateTransfer",
       "useConfirmTransfer"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useTransfers.ts."
   },
   {
     "id": "src/hooks/api/useDocumentActions.ts",
@@ -5306,7 +5639,8 @@
     "exports": [
       "useInvertDocument",
       "useDuplicateDocument"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useDocumentActions.ts."
   },
   {
     "id": "src/hooks/api/useCostSheets.ts",
@@ -5319,7 +5653,8 @@
     ],
     "exports": [
       "useCostSheets"
-    ]
+    ],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/hooks/api/useTaxes.ts",
@@ -5336,7 +5671,8 @@
     ],
     "exports": [
       "useTaxes"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useTaxes.ts."
   },
   {
     "id": "src/hooks/api/useProducts.ts",
@@ -5363,7 +5699,8 @@
       "useBulkUpdateProducts",
       "useAddVariant",
       "useDeleteVariant"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useProducts.ts."
   },
   {
     "id": "src/hooks/api/useTransactions.ts",
@@ -5383,7 +5720,8 @@
       "useTransactions",
       "useTransactionDetails",
       "useCreateSale"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useTransactions.ts."
   },
   {
     "id": "src/hooks/api/useStockMovements.ts",
@@ -5400,7 +5738,8 @@
     ],
     "exports": [
       "useStockMovements"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useStockMovements.ts."
   },
   {
     "id": "src/hooks/api/useCashClosures.ts",
@@ -5419,7 +5758,8 @@
       "useSalesSinceLastClosure",
       "useCreateCashClosure",
       "useUpdateCashClosure"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useCashClosures.ts."
   },
   {
     "id": "src/hooks/api/useStores.ts",
@@ -5437,7 +5777,8 @@
     ],
     "exports": [
       "useStores"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useStores.ts."
   },
   {
     "id": "src/hooks/api/useDashboard.ts",
@@ -5455,7 +5796,8 @@
     "exports": [
       "useSuspenseDashboardData",
       "useDashboardData"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useDashboard.ts."
   },
   {
     "id": "src/hooks/api/useUsers.ts",
@@ -5479,7 +5821,8 @@
       "useCreateUser",
       "useManageUserMemberships",
       "useUpdateUser"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useUsers.ts."
   },
   {
     "id": "src/hooks/api/useInventory.ts",
@@ -5500,7 +5843,8 @@
       "useInventory",
       "useRegisterReception",
       "useAdjustStock"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useInventory.ts."
   },
   {
     "id": "src/hooks/api/useRoles.ts",
@@ -5520,7 +5864,8 @@
       "useCreateRole",
       "useUpdateRole",
       "useDeleteRole"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useRoles.ts."
   },
   {
     "id": "src/hooks/api/hooks.test.ts",
@@ -5531,7 +5876,8 @@
       "vitest",
       "@/validation/schemas"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar hooks.test.ts."
   },
   {
     "id": "src/hooks/api/useAuditLogs.ts",
@@ -5549,7 +5895,8 @@
     "exports": [
       "AuditLogFilters",
       "useAuditLogs"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useAuditLogs.ts."
   },
   {
     "id": "src/hooks/api/base.ts",
@@ -5564,7 +5911,8 @@
     ],
     "exports": [
       "getCleanStoreId"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar base.ts."
   },
   {
     "id": "src/hooks/api/useReceptions.ts",
@@ -5581,7 +5929,8 @@
     "exports": [
       "useReceptions",
       "useReceptionDetails"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useReceptions.ts."
   },
   {
     "id": "src/hooks/api/useRSS.ts",
@@ -5601,7 +5950,8 @@
       "useUpdateRSSFeed",
       "useDeleteRSSFeed",
       "useUpdateRSSSettings"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useRSS.ts."
   },
   {
     "id": "src/hooks/ui/usePWA.ts",
@@ -5613,7 +5963,8 @@
     ],
     "exports": [
       "usePWA"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar usePWA.ts."
   },
   {
     "id": "src/hooks/ui/useTerminalNavigation.ts",
@@ -5630,7 +5981,8 @@
     "exports": [
       "NavigationItem",
       "useTerminalNavigation"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useTerminalNavigation.ts."
   },
   {
     "id": "src/hooks/ui/useCatalogModals.ts",
@@ -5642,7 +5994,8 @@
     ],
     "exports": [
       "useCatalogModals"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useCatalogModals.ts."
   },
   {
     "id": "src/hooks/ui/useMobile.ts",
@@ -5654,7 +6007,8 @@
     ],
     "exports": [
       "useIsMobile"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useMobile.ts."
   },
   {
     "id": "src/hooks/ui/useDebounce.ts",
@@ -5666,7 +6020,8 @@
     ],
     "exports": [
       "useDebounce"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useDebounce.ts."
   },
   {
     "id": "src/hooks/ui/useToast.ts",
@@ -5678,7 +6033,8 @@
     ],
     "exports": [
       "reducer"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useToast.ts."
   },
   {
     "id": "src/hooks/ui/__tests__/usePWA.test.ts",
@@ -5690,7 +6046,8 @@
       "../usePWA",
       "vitest"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar usePWA.test.ts."
   },
   {
     "id": "src/hooks/__tests__/useCostSheetCalculator.test.ts",
@@ -5703,7 +6060,8 @@
       "../logic/useCostSheetCalculator",
       "@/contracts"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Gestión y cálculo de fichas de costo para productos y servicios."
   },
   {
     "id": "src/hooks/__tests__/templates_verification.test.ts",
@@ -5718,7 +6076,8 @@
       "../../lib/data/template-juice",
       "../../lib/data/template-industrial"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar templates_verification.test.ts."
   },
   {
     "id": "src/store/cart.ts",
@@ -5735,7 +6094,8 @@
     "exports": [
       "CartItem",
       "useCartStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar cart.ts."
   },
   {
     "id": "src/store/session-store.ts",
@@ -5747,7 +6107,8 @@
     ],
     "exports": [
       "useSessionStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar session-store.ts."
   },
   {
     "id": "src/store/cost-sheet-store.ts",
@@ -5765,7 +6126,8 @@
     ],
     "exports": [
       "useCostSheetStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar cost-sheet-store.ts."
   },
   {
     "id": "src/store/index.ts",
@@ -5781,7 +6143,8 @@
       "ViewType",
       "useUIStore",
       "useAuthStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar index.ts."
   },
   {
     "id": "src/store/useAcademyStore.ts",
@@ -5796,7 +6159,8 @@
       "AcademyCard",
       "UserProgress",
       "useAcademyStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar useAcademyStore.ts."
   },
   {
     "id": "src/store/__tests__/session-store.test.ts",
@@ -5808,7 +6172,8 @@
       "../session-store",
       "@testing-library/react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar session-store.test.ts."
   },
   {
     "id": "src/store/__tests__/cart.test.ts",
@@ -5819,7 +6184,8 @@
       "vitest",
       "../cart"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar cart.test.ts."
   },
   {
     "id": "src/store/__tests__/auth.test.ts",
@@ -5831,7 +6197,8 @@
       "../index",
       "@/contracts"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar auth.test.ts."
   },
   {
     "id": "src/store/__tests__/cart_advanced.test.ts",
@@ -5842,7 +6209,8 @@
       "vitest",
       "../cart"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar cart_advanced.test.ts."
   },
   {
     "id": "src/store/__tests__/cost-sheet-store.test.ts",
@@ -5854,7 +6222,8 @@
       "../cost-sheet-store",
       "@testing-library/react"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar cost-sheet-store.test.ts."
   },
   {
     "id": "src/lib/db.ts",
@@ -5866,7 +6235,8 @@
     ],
     "exports": [
       "prisma"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar db.ts."
   },
   {
     "id": "src/lib/dexie.ts",
@@ -5892,7 +6262,8 @@
       "IPVSettings",
       "IPVDatabase",
       "db"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar dexie.ts."
   },
   {
     "id": "src/lib/inventory-logic.ts",
@@ -5904,7 +6275,8 @@
       "AdjustmentInput",
       "AdjustmentResult",
       "calcularAjusteInventario"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar inventory-logic.ts."
   },
   {
     "id": "src/lib/supabaseClient.ts",
@@ -5917,7 +6289,8 @@
     "exports": [
       "supabase",
       "getSupabaseAuthClient"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar supabaseClient.ts."
   },
   {
     "id": "src/lib/rpc-validator.ts",
@@ -5928,7 +6301,8 @@
       "zod",
       "sonner"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar rpc-validator.ts."
   },
   {
     "id": "src/lib/auth.ts",
@@ -5939,7 +6313,8 @@
       "next/server",
       "@/lib/supabaseClient"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar auth.ts."
   },
   {
     "id": "src/lib/query-inspector-utils.ts",
@@ -5950,7 +6325,8 @@
     "exports": [
       "formatPostgrestUrlToSql",
       "formatRpcToSql"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar query-inspector-utils.ts."
   },
   {
     "id": "src/lib/plan-utils.ts",
@@ -5961,7 +6337,8 @@
       "@/services/usage-service",
       "@/contracts/user"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar plan-utils.ts."
   },
   {
     "id": "src/lib/logger.ts",
@@ -5971,7 +6348,8 @@
     "dependencies": [],
     "exports": [
       "logger"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar logger.ts."
   },
   {
     "id": "src/lib/theme.test.ts",
@@ -5982,7 +6360,8 @@
       "vitest",
       "./utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar theme.test.ts."
   },
   {
     "id": "src/lib/utils.ts",
@@ -6008,7 +6387,8 @@
       "safeFormatDate",
       "isPerformanceTheme",
       "isDarkTheme"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar utils.ts."
   },
   {
     "id": "src/lib/errorHandler.ts",
@@ -6020,7 +6400,8 @@
     ],
     "exports": [
       "handleError"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar errorHandler.ts."
   },
   {
     "id": "src/lib/navigation.ts",
@@ -6030,7 +6411,8 @@
     "dependencies": [],
     "exports": [
       "safeNavigate"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar navigation.ts."
   },
   {
     "id": "src/lib/roles.ts",
@@ -6044,7 +6426,8 @@
       "getAllowedRoles",
       "hasRole",
       "canManageStore"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar roles.ts."
   },
   {
     "id": "src/lib/wallet/parser.ts",
@@ -6061,7 +6444,8 @@
       "deriveAnalyticalData",
       "calculateLedger",
       "calculateAnalytics"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar parser.ts."
   },
   {
     "id": "src/lib/wallet/types.ts",
@@ -6075,7 +6459,8 @@
       "AnalyticalTransaction",
       "WalletSummary",
       "WalletAnalytics"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar types.ts."
   },
   {
     "id": "src/lib/wallet/__tests__/parser.test.ts",
@@ -6086,7 +6471,8 @@
       "vitest",
       "../parser"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar parser.test.ts."
   },
   {
     "id": "src/lib/cost-engine/user-json.test.ts",
@@ -6098,7 +6484,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar user-json.test.ts."
   },
   {
     "id": "src/lib/cost-engine/heuristic.test.ts",
@@ -6110,7 +6497,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar heuristic.test.ts."
   },
   {
     "id": "src/lib/cost-engine/bidirectional.test.ts",
@@ -6122,7 +6510,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar bidirectional.test.ts."
   },
   {
     "id": "src/lib/cost-engine/formula-utils.ts",
@@ -6133,7 +6522,8 @@
     "exports": [
       "translateFormulaFromSpanish",
       "smartTranslate"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar formula-utils.ts."
   },
   {
     "id": "src/lib/cost-engine/index.ts",
@@ -6149,7 +6539,8 @@
       "extractDependencies",
       "validateFicha",
       "calculateFicha"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar index.ts."
   },
   {
     "id": "src/lib/cost-engine/accuracy.test.ts",
@@ -6161,7 +6552,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar accuracy.test.ts."
   },
   {
     "id": "src/lib/cost-engine/types.ts",
@@ -6184,7 +6576,8 @@
       "FichaJSON",
       "ValidationError",
       "CalculationResult"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar types.ts."
   },
   {
     "id": "src/lib/cost-engine/validations.ts",
@@ -6198,7 +6591,8 @@
       "ValidationResult",
       "HealthSummary",
       "calculateCostSheetHealth"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar validations.ts."
   },
   {
     "id": "src/lib/cost-engine/smart-annex.test.ts",
@@ -6210,7 +6604,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar smart-annex.test.ts."
   },
   {
     "id": "src/lib/cost-engine/topo-sort.test.ts",
@@ -6222,7 +6617,8 @@
       "./index",
       "./types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar topo-sort.test.ts."
   },
   {
     "id": "src/lib/cost-engine/index.test.ts",
@@ -6235,7 +6631,8 @@
       "./types",
       "./fixtures/FC-DEMO-243.json"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar index.test.ts."
   },
   {
     "id": "src/lib/cost-engine/schemas.ts",
@@ -6254,7 +6651,8 @@
       "AnexoRowSchema",
       "AnexoSchema",
       "FichaJSONSchema"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar schemas.ts."
   },
   {
     "id": "src/lib/utils/pdf-export.ts",
@@ -6267,7 +6665,8 @@
       "@/types",
       "date-fns"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar pdf-export.ts."
   },
   {
     "id": "src/lib/utils/number-to-words-es.ts",
@@ -6277,7 +6676,8 @@
     "dependencies": [],
     "exports": [
       "numeroALetras"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar number-to-words-es.ts."
   },
   {
     "id": "src/lib/observability/health-engine.ts",
@@ -6291,7 +6691,8 @@
       "HEALTH_THRESHOLDS",
       "calculateSHI",
       "MOCK_SYSTEM_HEALTH_V2"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar health-engine.ts."
   },
   {
     "id": "src/lib/observability/health-alerts.ts",
@@ -6302,7 +6703,8 @@
       "@/lib/supabaseClient",
       "./health-engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar health-alerts.ts."
   },
   {
     "id": "src/lib/observability/system-health.ts",
@@ -6314,7 +6716,8 @@
     ],
     "exports": [
       "SystemHealthLog"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar system-health.ts."
   },
   {
     "id": "src/lib/observability/__tests__/system-health.test.ts",
@@ -6325,7 +6728,8 @@
       "vitest",
       "../system-health"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar system-health.test.ts."
   },
   {
     "id": "src/lib/observability/__tests__/health-engine.test.ts",
@@ -6336,7 +6740,8 @@
       "vitest",
       "../health-engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar health-engine.test.ts."
   },
   {
     "id": "src/lib/academy/sm2.ts",
@@ -6347,7 +6752,8 @@
     "exports": [
       "SM2Result",
       "calculateSM2"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar sm2.ts."
   },
   {
     "id": "src/lib/academy/__tests__/sm2.test.ts",
@@ -6358,7 +6764,8 @@
       "vitest",
       "../sm2"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar sm2.test.ts."
   },
   {
     "id": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
@@ -6372,7 +6779,8 @@
     ],
     "exports": [
       "ReleaseGatePdfExporter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar ReleaseGatePdfExporter.ts."
   },
   {
     "id": "src/lib/release_gate/mri-engine.ts",
@@ -6388,7 +6796,8 @@
       "MRI_THRESHOLDS",
       "calculateMRI",
       "DEFAULT_MRI_DATA"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar mri-engine.ts."
   },
   {
     "id": "src/lib/release_gate/__tests__/mri-engine.test.ts",
@@ -6399,7 +6808,8 @@
       "vitest",
       "../mri-engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar mri-engine.test.ts."
   },
   {
     "id": "src/lib/data/template-repair.ts",
@@ -6409,7 +6819,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-repair.ts."
   },
   {
     "id": "src/lib/data/demo-products.ts",
@@ -6420,7 +6831,8 @@
     "exports": [
       "DemoProduct",
       "DEMO_DATASET"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar demo-products.ts."
   },
   {
     "id": "src/lib/data/costpro-ejemplo.ts",
@@ -6430,7 +6842,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar costpro-ejemplo.ts."
   },
   {
     "id": "src/lib/data/template-industrial.ts",
@@ -6440,7 +6853,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-industrial.ts."
   },
   {
     "id": "src/lib/data/costpro-reinicio.ts",
@@ -6448,7 +6862,8 @@
     "technical_description": "Módulo técnico costpro-reinicio.",
     "business_logic": "Lógica de negocio para costpro-reinicio.",
     "dependencies": [],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar costpro-reinicio.ts."
   },
   {
     "id": "src/lib/data/template-consultancy.ts",
@@ -6458,7 +6873,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-consultancy.ts."
   },
   {
     "id": "src/lib/data/template-logistics.ts",
@@ -6468,7 +6884,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-logistics.ts."
   },
   {
     "id": "src/lib/data/template-lavar.ts",
@@ -6476,7 +6893,8 @@
     "technical_description": "Módulo técnico template-lavar.",
     "business_logic": "Lógica de negocio para template-lavar.",
     "dependencies": [],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-lavar.ts."
   },
   {
     "id": "src/lib/data/template-pastry.ts",
@@ -6486,7 +6904,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-pastry.ts."
   },
   {
     "id": "src/lib/data/template-icecream.ts",
@@ -6496,7 +6915,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-icecream.ts."
   },
   {
     "id": "src/lib/data/template-juice.ts",
@@ -6506,7 +6926,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-juice.ts."
   },
   {
     "id": "src/lib/data/template-shoes.ts",
@@ -6516,7 +6937,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-shoes.ts."
   },
   {
     "id": "src/lib/data/template-pizza.ts",
@@ -6526,7 +6948,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-pizza.ts."
   },
   {
     "id": "src/lib/data/template-furniture.ts",
@@ -6536,7 +6959,8 @@
     "dependencies": [
       "@/contracts/cost-sheet"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar template-furniture.ts."
   },
   {
     "id": "src/lib/ipv/intelligence.ts",
@@ -6551,7 +6975,8 @@
       "suggestAlternativePrice",
       "checkWildcardCandidate",
       "calculateDynamicPriority"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar intelligence.ts."
   },
   {
     "id": "src/lib/ipv/calculations.ts",
@@ -6571,7 +6996,8 @@
       "getDailySalesHistory",
       "getTopProducts",
       "getTopPayers"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar calculations.ts."
   },
   {
     "id": "src/lib/ipv/importUtils.ts",
@@ -6581,7 +7007,8 @@
     "dependencies": [
       "../dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar importUtils.ts."
   },
   {
     "id": "src/lib/ipv/backup.ts",
@@ -6591,7 +7018,8 @@
     "dependencies": [
       "dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar backup.ts."
   },
   {
     "id": "src/lib/ipv/matching.worker.ts",
@@ -6601,7 +7029,8 @@
     "dependencies": [
       "./engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar matching.worker.ts."
   },
   {
     "id": "src/lib/ipv/bandecParser.ts",
@@ -6614,7 +7043,8 @@
       "./engine",
       "./utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar bandecParser.ts."
   },
   {
     "id": "src/lib/ipv/engine.ts",
@@ -6626,7 +7056,8 @@
       "MatchingResult",
       "DEFAULT_MATCHING_RULES",
       "MatchingEngine"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar engine.ts."
   },
   {
     "id": "src/lib/ipv/parser.ts",
@@ -6638,7 +7069,8 @@
       "ParsedObservation",
       "parseObservations",
       "parseTransactions"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar parser.ts."
   },
   {
     "id": "src/lib/ipv/utils.ts",
@@ -6653,7 +7085,8 @@
       "standardizeDate",
       "isProductAMedida",
       "classifyGroupHierarchy"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar utils.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
@@ -6664,7 +7097,8 @@
       "vitest",
       "../engine"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar global_goal_priority.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/calculations.test.ts",
@@ -6676,7 +7110,8 @@
       "../calculations",
       "@/lib/dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar calculations.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/bandecParser.test.ts",
@@ -6688,7 +7123,8 @@
       "../bandecParser",
       "../utils"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar bandecParser.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/repro_issue.test.ts",
@@ -6700,7 +7136,8 @@
       "../engine",
       "../../dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar repro_issue.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/advanced_engine.test.ts",
@@ -6712,7 +7149,8 @@
       "../engine",
       "../../dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar advanced_engine.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
@@ -6724,7 +7162,8 @@
       "../engine",
       "../../dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar bigbon_simulation.test.ts."
   },
   {
     "id": "src/lib/ipv/__tests__/engine.test.ts",
@@ -6736,7 +7175,8 @@
       "../engine",
       "../../dexie"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar engine.test.ts."
   },
   {
     "id": "src/lib/ai/orchestrator.ts",
@@ -6756,7 +7196,8 @@
     "exports": [
       "ProviderType",
       "getLLMProvider"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar orchestrator.ts."
   },
   {
     "id": "src/lib/ai/types.ts",
@@ -6773,7 +7214,8 @@
       "LLMProvider",
       "AIAction",
       "BotContext"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar types.ts."
   },
   {
     "id": "src/lib/ai/adapters/qwen-adapter.ts",
@@ -6785,7 +7227,8 @@
     ],
     "exports": [
       "QwenAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar qwen-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/openai-compatible-adapter.ts",
@@ -6797,7 +7240,8 @@
     ],
     "exports": [
       "OpenAICompatibleAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar openai-compatible-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/fallback-adapter.ts",
@@ -6809,7 +7253,8 @@
     ],
     "exports": [
       "FallbackAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar fallback-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/deepseek-adapter.ts",
@@ -6821,7 +7266,8 @@
     ],
     "exports": [
       "DeepSeekAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar deepseek-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/gemini-adapter.test.ts",
@@ -6833,7 +7279,8 @@
       "./gemini-adapter",
       "../types"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar gemini-adapter.test.ts."
   },
   {
     "id": "src/lib/ai/adapters/gemini-adapter.ts",
@@ -6846,7 +7293,8 @@
     ],
     "exports": [
       "GeminiAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar gemini-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/kimi-adapter.ts",
@@ -6858,7 +7306,8 @@
     ],
     "exports": [
       "KimiAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar kimi-adapter.ts."
   },
   {
     "id": "src/lib/ai/adapters/gpt-adapter.ts",
@@ -6870,7 +7319,8 @@
     ],
     "exports": [
       "GPTAdapter"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar gpt-adapter.ts."
   },
   {
     "id": "src/lib/ai/tools/definitions.ts",
@@ -6882,7 +7332,8 @@
     ],
     "exports": [
       "TOOLS"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar definitions.ts."
   },
   {
     "id": "src/lib/ai/tools/registry.ts",
@@ -6899,7 +7350,8 @@
     "exports": [
       "ToolHandlerContext",
       "toolHandlers"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar registry.ts."
   },
   {
     "id": "src/lib/ai/tools/registry.test.ts",
@@ -6910,7 +7362,8 @@
       "vitest",
       "./registry"
     ],
-    "exports": []
+    "exports": [],
+    "user_description": "Módulo del sistema para gestionar registry.test.ts."
   },
   {
     "id": "src/lib/sync/offline-storage.ts",
@@ -6925,6 +7378,7 @@
     ],
     "exports": [
       "offlineStorage"
-    ]
+    ],
+    "user_description": "Módulo del sistema para gestionar offline-storage.ts."
   }
 ]
