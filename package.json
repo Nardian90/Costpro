@@ -8,9 +8,8 @@
   "scripts": {
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
-    "postinstall": "npx prisma@4.16.2 generate",
-    "prebuild": "npx prisma@4.16.2 generate",
-    "build": "npx prisma@4.16.2 generate && next build && cp -r public .next/standalone/ && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r knowledge .next/standalone/",
+    "postinstall": "bun x prisma@4.16.2 generate",
+    "build": "next build && cp -r public .next/standalone/ && cp -r knowledge .next/standalone/ && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
