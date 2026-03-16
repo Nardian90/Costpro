@@ -2,7 +2,7 @@
 Pipeline escalonado diario para Scheduler AI - Nivel 10/10
 
 ---
-currentPhase: 3
+currentPhase: 2
 lastExecution: 2026-03-16
 pipelineVersion: 1.1.0
 ---

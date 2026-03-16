@@ -13,17 +13,17 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/button",
-      "next/link",
+      "@/lib/data/demo-products",
       "@/components/ui/CostProLoader",
-      "@/components/ui/card",
+      "@/components/ui/badge",
+      "next/link",
+      "lucide-react",
       "@/components/ui/progress",
+      "react",
       "framer-motion",
       "@/lib/utils",
-      "react",
-      "lucide-react",
-      "@/components/ui/badge",
-      "@/lib/data/demo-products"
+      "@/components/ui/card",
+      "@/components/ui/button"
     ]
   },
   {
@@ -40,23 +40,23 @@
       "Submit"
     ],
     "visible_components": [
+      "./ReleaseGateStatus",
+      "sonner",
       "@/components/ui/accordion",
       "@/components/ui/CostProLoader",
-      "./ViewNavigator",
-      "./ReleaseGateStatus",
-      "./ApplicationMetrics",
-      "sonner",
-      "./InfrastructureMetrics",
-      "./AuditSummary",
-      "@/lib/utils",
-      "@/components/ui/dropdown-menu",
-      "./HealthAgentLogs",
-      "react",
-      "./HealthStatusHeader",
-      "@/lib/release_gate/ReleaseGatePdfExporter",
-      "lucide-react",
       "./SecurityMetrics",
-      "./ArchitectureAuditTable"
+      "./AuditSummary",
+      "@/components/ui/dropdown-menu",
+      "lucide-react",
+      "./ArchitectureAuditTable",
+      "./ViewNavigator",
+      "react",
+      "./ApplicationMetrics",
+      "@/lib/utils",
+      "@/lib/release_gate/ReleaseGatePdfExporter",
+      "./HealthAgentLogs",
+      "./HealthStatusHeader",
+      "./InfrastructureMetrics"
     ]
   },
   {
@@ -73,17 +73,17 @@
       "Submit"
     ],
     "visible_components": [
+      "@/components/ui/input",
+      "sonner",
+      "@/lib/wallet/types",
+      "@/components/ui/badge",
+      "@/lib/wallet/parser",
       "lucide-react",
       "next/dynamic",
-      "@/components/ui/card",
-      "sonner",
-      "@/lib/utils",
-      "@/components/ui/input",
       "react",
-      "@/lib/wallet/parser",
-      "@/components/ui/button",
-      "@/lib/wallet/types",
-      "@/components/ui/badge"
+      "@/lib/utils",
+      "@/components/ui/card",
+      "@/components/ui/button"
     ]
   },
   {
@@ -100,24 +100,24 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/atomic",
-      "@/store",
-      "@/hooks/ui/useCatalogModals",
-      "@/components/ui/QueryInspector",
-      "@/types",
-      "@/components/ui/CostProLoader",
-      "./CatalogModals",
-      "jsbarcode",
-      "@/services/catalog-service",
+      "@/hooks/api/useProducts",
       "sonner",
+      "@/store",
       "@/components/ui/ViewSwitcher",
-      "@/lib/utils",
-      "react",
-      "@/hooks/ui/useMobile",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/ProductImage",
+      "@/components/ui/CostProLoader",
+      "@/components/ui/atomic",
       "lucide-react",
-      "@/hooks/api/useProducts"
+      "@/components/ui/ActionMenu",
+      "@/hooks/ui/useMobile",
+      "@/services/catalog-service",
+      "@/components/ui/QueryInspector",
+      "react",
+      "@/lib/utils",
+      "./CatalogModals",
+      "@/hooks/ui/useCatalogModals",
+      "@/types",
+      "@/components/ui/ProductImage",
+      "jsbarcode"
     ]
   },
   {
@@ -134,15 +134,15 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "next-themes",
-      "@tanstack/react-query",
       "sonner",
-      "@/lib/utils",
-      "react",
-      "lucide-react",
+      "@/store",
       "@/lib/supabaseClient",
-      "@/hooks/api/useTaxes"
+      "@/hooks/api/useTaxes",
+      "lucide-react",
+      "react",
+      "@/lib/utils",
+      "next-themes",
+      "@tanstack/react-query"
     ]
   },
   {
@@ -159,20 +159,20 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "@/components/ui/calendar",
-      "@/types",
-      "date-fns/locale",
-      "next/dynamic",
-      "./useDashboardView",
-      "@/components/ui/popover",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
-      "react",
-      "lucide-react",
       "@/hooks/api/useProducts",
       "date-fns",
-      "@/components/ui/toggle-group"
+      "@/store",
+      "@/components/ui/calendar",
+      "lucide-react",
+      "next/dynamic",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/toggle-group",
+      "date-fns/locale",
+      "@/types",
+      "@/components/ui/StateRenderer",
+      "@/components/ui/popover",
+      "./useDashboardView"
     ]
   },
   {
@@ -189,19 +189,19 @@
       "Submit"
     ],
     "visible_components": [
+      "sonner",
       "@/store",
-      "@/components/ui/button",
-      "@/types",
       "@/components/ui/CostProLoader",
       "./ReportPreview",
       "@/contracts/reports",
-      "@/components/ui/card",
-      "sonner",
-      "./ReportConfigPanel",
-      "react",
-      "./AuditLogsModal",
+      "@/types",
+      "lucide-react",
       "@/components/ui/ActionMenu",
-      "lucide-react"
+      "react",
+      "@/components/ui/card",
+      "./ReportConfigPanel",
+      "./AuditLogsModal",
+      "@/components/ui/button"
     ]
   },
   {
@@ -218,13 +218,13 @@
       "Submit"
     ],
     "visible_components": [
-      "./useStoresView",
-      "@/components/ui/SearchBar",
-      "@/lib/utils",
-      "react",
-      "@/components/ui/ActionMenu",
       "lucide-react",
-      "./StoreModals"
+      "@/components/ui/ActionMenu",
+      "@/components/ui/SearchBar",
+      "react",
+      "./StoreModals",
+      "@/lib/utils",
+      "./useStoresView"
     ]
   },
   {
@@ -241,16 +241,16 @@
       "Submit"
     ],
     "visible_components": [
-      "lucide-react",
-      "@/store",
-      "@/components/ui/button",
-      "@/components/ui/CostProLoader",
-      "framer-motion",
       "sonner",
+      "@/store",
+      "@/components/ui/CostProLoader",
+      "./MasteryDashboard",
+      "lucide-react",
+      "./Flashcard",
       "@/store/useAcademyStore",
       "react",
-      "./Flashcard",
-      "./MasteryDashboard"
+      "framer-motion",
+      "@/components/ui/button"
     ]
   },
   {
@@ -267,17 +267,17 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "date-fns/locale",
-      "@/hooks/api/useTransfers",
-      "./CreateTransferModal",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
-      "react",
-      "@/components/ui/ActionMenu",
-      "lucide-react",
       "date-fns",
-      "./TransferDetailsModal"
+      "@/store",
+      "./TransferDetailsModal",
+      "@/hooks/api/useTransfers",
+      "lucide-react",
+      "@/components/ui/ActionMenu",
+      "react",
+      "@/lib/utils",
+      "date-fns/locale",
+      "@/components/ui/StateRenderer",
+      "./CreateTransferModal"
     ]
   },
   {
@@ -294,29 +294,29 @@
       "Submit"
     ],
     "visible_components": [
-      "./help/DarianDiagram",
-      "./help/OfflineSyncDiagram",
-      "./help/StoreSkuDiagram",
-      "./help/RolesDiagram",
-      "@/components/ui/button",
-      "./help/StickyCartFlowDiagram",
-      "./help/SecurityFlowDiagram",
-      "./help/KidsOnboarding",
-      "./help/InventoryAdjustmentFlowDiagram",
-      "@/components/ThemeToggle",
-      "framer-motion",
-      "./help/SalesFlowDiagram",
-      "./help/InventoryFlowDiagram",
-      "@/components/ui/accordion",
-      "lucide-react",
-      "./help/MobilePosDiagram",
       "@/store",
+      "./help/KidsOnboarding",
+      "./help/OfflineSyncDiagram",
+      "@/components/ui/button",
+      "@/components/ui/accordion",
+      "./help/InventoryFlowDiagram",
       "./help/CostFlowDiagram",
-      "./help/QuickModeMassiveDiagram",
+      "./help/RolesDiagram",
+      "@/components/ui/badge",
+      "@/components/ThemeToggle",
+      "lucide-react",
+      "./help/InventoryAdjustmentFlowDiagram",
       "react",
-      "./help/IpvFlowDiagram",
       "@/lib/utils",
-      "@/components/ui/badge"
+      "./help/StoreSkuDiagram",
+      "./help/DarianDiagram",
+      "./help/SalesFlowDiagram",
+      "./help/QuickModeMassiveDiagram",
+      "./help/StickyCartFlowDiagram",
+      "./help/MobilePosDiagram",
+      "framer-motion",
+      "./help/IpvFlowDiagram",
+      "./help/SecurityFlowDiagram"
     ]
   },
   {
@@ -333,13 +333,13 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/atomic",
-      "@/types",
       "@/components/ui/CostProLoader",
-      "framer-motion",
-      "@/lib/utils",
+      "@/components/ui/atomic",
+      "lucide-react",
       "react",
-      "lucide-react"
+      "@/lib/utils",
+      "framer-motion",
+      "@/types"
     ]
   },
   {
@@ -356,15 +356,15 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "@/components/ui/QueryInspector",
-      "sonner",
-      "@/components/ui/SearchBar",
-      "@/lib/utils",
-      "react",
-      "@/components/ui/ActionMenu",
       "@/hooks/api/useStockMovements",
-      "lucide-react"
+      "@/store",
+      "sonner",
+      "lucide-react",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/SearchBar",
+      "@/components/ui/QueryInspector",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -381,22 +381,22 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/atomic",
+      "sonner",
       "@/store",
+      "@/hooks/ui/useDebounce",
+      "@/lib/supabaseClient",
+      "@/validation/schemas",
+      "@/components/ui/atomic",
+      "lucide-react",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/SecurityScrollContainer",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/lib/utils",
       "papaparse",
       "@/types",
       "@/hooks/api/useInventory",
-      "@/hooks/ui/useDebounce",
-      "@/validation/schemas",
-      "sonner",
-      "@/lib/utils",
-      "@/components/ui/BaseModal",
-      "react",
-      "@/services/import-service",
-      "@/components/ui/ActionMenu",
-      "lucide-react",
-      "@/lib/supabaseClient",
-      "@/components/ui/SecurityScrollContainer"
+      "@/services/import-service"
     ]
   },
   {
@@ -413,12 +413,12 @@
       "Submit"
     ],
     "visible_components": [
-      "@/types",
       "@/components/ui/CostProLoader",
-      "@/lib/utils",
+      "lucide-react",
       "react",
-      "@/components/ui/ProductImage",
-      "lucide-react"
+      "@/lib/utils",
+      "@/types",
+      "@/components/ui/ProductImage"
     ]
   },
   {
@@ -435,25 +435,25 @@
       "Submit"
     ],
     "visible_components": [
+      "sonner",
+      "@/store",
+      "@/validation/schemas",
       "@/components/ui/atomic",
       "./InventoryAdjustmentModal",
-      "./InventoryTableView",
-      "./InventoryCardView",
-      "@/components/ui/SearchBar",
       "@/components/ui/ActionMenu",
-      "./ProductReceptionView",
-      "@/types",
-      "@/hooks/api/useInventory",
-      "@/validation/schemas",
-      "sonner",
-      "lucide-react",
+      "./InventoryTableView",
       "@/components/ui/skeleton",
-      "@/store",
-      "@/components/ui/StateRenderer",
-      "react",
+      "@/hooks/api/useInventory",
       "@/hooks/ui/useMobile",
+      "lucide-react",
+      "@/components/ui/SearchBar",
+      "react",
+      "@/lib/utils",
+      "@/types",
+      "./ProductReceptionView",
       "@/components/ui/QueryInspector",
-      "@/lib/utils"
+      "./InventoryCardView",
+      "@/components/ui/StateRenderer"
     ]
   },
   {
@@ -470,13 +470,13 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "@/hooks/api/useCashClosures",
       "sonner",
-      "@/lib/utils",
-      "react",
+      "@/store",
+      "lucide-react",
       "@/components/ui/ActionMenu",
-      "lucide-react"
+      "react",
+      "@/lib/utils",
+      "@/hooks/api/useCashClosures"
     ]
   },
   {
@@ -493,15 +493,15 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/SearchBar",
-      "./TaxCalculationModal",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
-      "./TransactionDetailsModal",
-      "react",
       "lucide-react",
       "./useSalesHistoryView",
-      "@/components/ui/skeleton"
+      "@/components/ui/SearchBar",
+      "react",
+      "@/components/ui/skeleton",
+      "@/lib/utils",
+      "./TaxCalculationModal",
+      "./TransactionDetailsModal",
+      "@/components/ui/StateRenderer"
     ]
   },
   {
@@ -519,15 +519,15 @@
     ],
     "visible_components": [
       "sonner",
-      "@/components/ui/SearchBar",
-      "./ReceptionDetailsModal",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
-      "./useReceptionsHistoryView",
-      "react",
-      "@/components/ui/QueryInspector",
       "lucide-react",
-      "@/components/ui/skeleton"
+      "@/components/ui/QueryInspector",
+      "@/components/ui/SearchBar",
+      "./useReceptionsHistoryView",
+      "./ReceptionDetailsModal",
+      "react",
+      "@/components/ui/skeleton",
+      "@/lib/utils",
+      "@/components/ui/StateRenderer"
     ]
   },
   {
@@ -544,15 +544,15 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "@/components/ui/QueryInspector",
       "sonner",
-      "@/components/ui/SearchBar",
-      "@/lib/utils",
-      "react",
-      "@/components/ui/ActionMenu",
       "@/hooks/api/useStockMovements",
-      "lucide-react"
+      "@/store",
+      "lucide-react",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/SearchBar",
+      "@/components/ui/QueryInspector",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -569,42 +569,42 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/tabs",
-      "./MovementsView",
-      "./IPVControlPanel",
-      "@/lib/dexie",
+      "sonner",
+      "./ManualReconciliationView",
+      "@/components/ui/LoadingOverlay",
+      "./IPVReportView",
+      "./IPVHelpDialog",
+      "./TransactionTable",
+      "@/lib/ipv/backup",
       "@/components/ui/card",
-      "./TransferQRReportView",
+      "@/lib/ipv/utils",
+      "@/lib/dexie",
+      "@/components/ui/button",
+      "./CatalogTable",
+      "@/components/ui/tabs",
+      "@/lib/ipv/engine",
+      "./IPVReportsDropdown",
+      "./MatchingSimulation",
+      "dexie-react-hooks",
       "./BankIngestion",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/HorizontalScroll",
+      "@/components/ui/tooltip",
+      "@/components/ui/badge",
+      "./IPVInstitutionalDashboard",
+      "lucide-react",
+      "./MovementsView",
+      "./IngestionErrorsTable",
+      "react",
+      "@/lib/utils",
       "./IncomeReceiptSection",
       "./PivotStatementView",
-      "./TransactionBreakdown",
-      "./IngestionErrorsTable",
-      "@/lib/ipv/utils",
-      "./MatchingSimulation",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/button",
-      "@/lib/ipv/engine",
-      "./MatchingRulesEditor",
-      "./TransactionTable",
-      "@/components/ui/LoadingOverlay",
       "./MatchingAuditView",
-      "@/components/ui/HorizontalScroll",
-      "./IPVReportView",
+      "./MatchingRulesEditor",
+      "./IPVControlPanel",
       "./IPVRightSidebar",
-      "sonner",
-      "./CatalogTable",
-      "./IPVReportsDropdown",
-      "lucide-react",
-      "./IPVInstitutionalDashboard",
-      "dexie-react-hooks",
-      "@/lib/ipv/backup",
-      "./IPVHelpDialog",
-      "react",
-      "./ManualReconciliationView",
-      "@/lib/utils",
-      "@/components/ui/badge",
-      "@/components/ui/tooltip"
+      "./TransferQRReportView",
+      "./TransactionBreakdown"
     ]
   },
   {
@@ -621,18 +621,18 @@
       "Submit"
     ],
     "visible_components": [
-      "dexie-react-hooks",
-      "../../../../ui/card",
-      "../../../../ui/badge",
-      "../../../../ui/input",
-      "date-fns/locale",
       "sonner",
-      "../../../../../lib/dexie",
+      "date-fns",
       "../../../../ui/table",
-      "react",
+      "dexie-react-hooks",
+      "../../../../ui/input",
       "lucide-react",
+      "../../../../ui/badge",
+      "react",
       "../../../../ui/button",
-      "date-fns"
+      "date-fns/locale",
+      "../../../../ui/card",
+      "../../../../../lib/dexie"
     ]
   },
   {
@@ -649,23 +649,23 @@
       "Submit"
     ],
     "visible_components": [
-      "dexie-react-hooks",
-      "lucide-react",
-      "jspdf",
-      "@/components/ui/LoadingOverlay",
-      "uuid",
-      "@/lib/dexie",
-      "sonner",
-      "@/components/ui/table",
-      "@/components/ui/BaseModal",
-      "@/lib/utils",
-      "./IPVPreviewModal",
-      "react",
       "@/components/ui/input",
-      "jspdf-autotable",
-      "@/components/ui/button",
+      "sonner",
       "@/components/ui/badge",
-      "@/components/ui/tooltip"
+      "uuid",
+      "@/components/ui/LoadingOverlay",
+      "dexie-react-hooks",
+      "./IPVPreviewModal",
+      "jspdf-autotable",
+      "lucide-react",
+      "@/components/ui/tooltip",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/table",
+      "@/lib/dexie",
+      "@/components/ui/button",
+      "jspdf"
     ]
   },
   {
@@ -682,16 +682,16 @@
       "Submit"
     ],
     "visible_components": [
-      "dexie-react-hooks",
-      "lucide-react",
-      "recharts",
-      "@/components/ui/card",
-      "@/services/matching-log-service",
-      "@/components/ui/table",
-      "react",
       "@/components/ui/input",
-      "@/components/ui/button",
-      "@/components/ui/badge"
+      "@/components/ui/badge",
+      "dexie-react-hooks",
+      "@/components/ui/table",
+      "recharts",
+      "lucide-react",
+      "@/services/matching-log-service",
+      "react",
+      "@/components/ui/card",
+      "@/components/ui/button"
     ]
   },
   {
@@ -708,22 +708,22 @@
       "Submit"
     ],
     "visible_components": [
-      "dexie-react-hooks",
+      "@/components/ui/input",
+      "sonner",
       "@/store",
+      "@/lib/supabaseClient",
+      "@/components/ui/badge",
+      "dexie-react-hooks",
+      "@/components/ui/table",
+      "jspdf-autotable",
       "lucide-react",
-      "jspdf",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/card",
       "@/components/ui/label",
       "@/lib/dexie",
-      "@/components/ui/card",
-      "sonner",
-      "@/components/ui/table",
-      "@/lib/utils",
-      "jspdf-autotable",
-      "react",
-      "@/components/ui/input",
       "@/components/ui/button",
-      "@/components/ui/badge",
-      "@/lib/supabaseClient"
+      "jspdf"
     ]
   },
   {
@@ -740,19 +740,19 @@
       "Submit"
     ],
     "visible_components": [
-      "lucide-react",
+      "@/components/ui/input",
+      "@/lib/ipv/engine",
+      "sonner",
+      "@/components/ui/badge",
+      "uuid",
       "@/components/ui/scroll-area",
       "dexie-react-hooks",
-      "uuid",
+      "lucide-react",
+      "react",
+      "@/lib/utils",
       "@/lib/ipv/utils",
       "@/lib/dexie",
-      "sonner",
-      "@/lib/utils",
-      "react",
-      "@/components/ui/input",
-      "@/components/ui/button",
-      "@/components/ui/badge",
-      "@/lib/ipv/engine"
+      "@/components/ui/button"
     ]
   },
   {
@@ -769,17 +769,17 @@
       "Submit"
     ],
     "visible_components": [
-      "dexie-react-hooks",
-      "lucide-react",
-      "jspdf",
-      "@/lib/dexie",
-      "@/components/ui/card",
       "sonner",
+      "dexie-react-hooks",
       "@/components/ui/table",
-      "@/lib/utils",
       "jspdf-autotable",
+      "lucide-react",
       "react",
-      "@/components/ui/button"
+      "@/lib/utils",
+      "@/components/ui/card",
+      "@/lib/dexie",
+      "@/components/ui/button",
+      "jspdf"
     ]
   },
   {
@@ -796,12 +796,12 @@
       "Submit"
     ],
     "visible_components": [
-      "@/types",
       "./InventoryCountView",
+      "lucide-react",
+      "react",
       "framer-motion",
       "@/lib/utils",
-      "react",
-      "lucide-react"
+      "@/types"
     ]
   },
   {
@@ -818,12 +818,12 @@
       "Submit"
     ],
     "visible_components": [
-      "@/types",
       "./InventoryCountView",
+      "lucide-react",
+      "react",
       "framer-motion",
       "@/lib/utils",
-      "react",
-      "lucide-react"
+      "@/types"
     ]
   },
   {
@@ -840,20 +840,20 @@
       "Submit"
     ],
     "visible_components": [
-      "@/store",
-      "@/components/ui/QueryInspector",
-      "@/types",
-      "framer-motion",
       "sonner",
-      "@/components/ui/SearchBar",
-      "@/lib/utils",
-      "react",
+      "@/store",
       "@/hooks/ui/useMobile",
-      "@/components/ui/ActionMenu",
-      "./InventoryCountTableView",
       "lucide-react",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/SearchBar",
+      "@/components/ui/QueryInspector",
       "@/components/ui/SecurityScrollContainer",
-      "./InventoryCountCardView"
+      "react",
+      "./InventoryCountCardView",
+      "@/lib/utils",
+      "framer-motion",
+      "@/types",
+      "./InventoryCountTableView"
     ]
   },
   {
@@ -870,21 +870,21 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/scroll-area",
-      "@/components/ui/button",
-      "./WikiSidebar",
-      "./types",
-      "./CuentasModule",
-      "framer-motion",
-      "@/lib/utils",
-      "./data-loader",
-      "./WikiSearch",
-      "./WikiBreadcrumbs",
-      "react",
       "@/components/ui/input",
+      "./WikiBreadcrumbs",
       "./AsientosModule",
+      "./CuentasModule",
+      "./ClasificadorModule",
+      "./WikiSearch",
+      "@/components/ui/scroll-area",
+      "./types",
       "lucide-react",
-      "./ClasificadorModule"
+      "react",
+      "./WikiSidebar",
+      "@/lib/utils",
+      "framer-motion",
+      "./data-loader",
+      "@/components/ui/button"
     ]
   },
   {
@@ -901,11 +901,11 @@
       "Submit"
     ],
     "visible_components": [
-      "@/types",
-      "@/lib/utils",
+      "lucide-react",
       "react",
-      "@/components/ui/ProductImage",
-      "lucide-react"
+      "@/lib/utils",
+      "@/types",
+      "@/components/ui/ProductImage"
     ]
   },
   {
@@ -922,31 +922,31 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/atomic",
-      "@/components/ui/ViewSwitcher",
-      "@/components/ui/BaseModal",
-      "@/components/modals/PriceSelectorModal",
-      "@/components/modals/BarcodeScanner",
-      "./POSCart",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/drawer",
-      "@/types",
-      "@/hooks/logic/usePOSProducts",
-      "framer-motion",
       "sonner",
+      "@/components/ui/atomic",
       "@/components/ui/Portal",
-      "lucide-react",
+      "@/components/ui/ActionMenu",
       "@/components/ui/skeleton",
-      "./POSTableView",
+      "@/components/ui/ViewSwitcher",
+      "@/components/ui/drawer",
       "./usePOSView",
       "@/components/ui/SpeedDial",
-      "@/components/ui/StateRenderer",
-      "react",
       "@/hooks/ui/useMobile",
-      "@/components/ui/QueryInspector",
+      "lucide-react",
+      "@/components/ui/SearchBar",
+      "./POSCart",
+      "react",
       "@/lib/utils",
-      "./StickyCartSummary"
+      "@/components/ui/StateRenderer",
+      "@/types",
+      "./POSTableView",
+      "@/components/ui/QueryInspector",
+      "@/components/ui/BaseModal",
+      "./StickyCartSummary",
+      "@/components/modals/PriceSelectorModal",
+      "framer-motion",
+      "@/components/modals/BarcodeScanner",
+      "@/hooks/logic/usePOSProducts"
     ]
   },
   {
@@ -963,12 +963,12 @@
       "Submit"
     ],
     "visible_components": [
-      "date-fns/locale",
+      "date-fns",
       "@/validation/schemas",
       "./AuditEventIcon",
       "react",
       "@/lib/utils",
-      "date-fns"
+      "date-fns/locale"
     ]
   },
   {
@@ -985,21 +985,21 @@
       "Submit"
     ],
     "visible_components": [
-      "lucide-react",
-      "@/store",
-      "@/components/ui/tabs",
-      "@/components/ui/button",
-      "./AuditFilters",
       "sonner",
-      "./AuditEventIcon",
-      "@/components/ui/StateRenderer",
-      "react",
-      "@/lib/utils/pdf-export",
+      "@/store",
+      "./AuditFilters",
+      "./AuditTableView",
       "./useAuditLogsView",
-      "./AuditTimeline",
-      "@/components/ui/skeleton",
+      "lucide-react",
+      "./AuditEventIcon",
       "@/hooks/api/useStores",
-      "./AuditTableView"
+      "react",
+      "@/components/ui/skeleton",
+      "@/lib/utils/pdf-export",
+      "./AuditTimeline",
+      "@/components/ui/StateRenderer",
+      "@/components/ui/button",
+      "@/components/ui/tabs"
     ]
   },
   {
@@ -1016,14 +1016,14 @@
       "Submit"
     ],
     "visible_components": [
+      "@/components/ui/badge",
       "@/components/ui/scroll-area",
       "@/lib/cost-engine/validations",
-      "@/components/ui/card",
-      "@/lib/utils",
-      "react",
-      "./CostSheetAuditLog",
       "lucide-react",
-      "@/components/ui/badge"
+      "react",
+      "@/lib/utils",
+      "@/components/ui/card",
+      "./CostSheetAuditLog"
     ]
   },
   {
@@ -1040,46 +1040,46 @@
       "Submit"
     ],
     "visible_components": [
+      "sonner",
+      "@/store",
+      "@/hooks/logic/useCostSheetCalculator",
+      "./CostSheetMassiveGenerator",
+      "./CostSheetAuditView",
       "./CostSheetExportModal",
+      "./CostSheetSidebarNav",
+      "./CostSheetHeaderEditor",
+      "@/components/ui/button",
+      "./CostSheetNarrative",
+      "@/services/export-service",
       "./CostSheetNav",
-      "./CostSheetInteractiveTable",
-      "@/components/ui/ViewSwitcher",
-      "@/store/cost-sheet-store",
-      "@/components/ui/BaseModal",
+      "@/components/ui/ActionMenu",
+      "./CostSheetFormulaGuide",
       "./CostSheetAnnexEditor",
-      "./CostSheetSignatureEditor",
+      "@/components/ui/skeleton",
+      "@/components/ui/LazyRender",
+      "@/components/ui/ViewSwitcher",
       "./CostSheetSummary",
       "./CostSheetActionsPanel",
-      "./CostSheetPreview",
-      "@/services/export-service",
-      "./CostSheetCardView",
-      "@/components/ui/LazyRender",
-      "./CostSheetHelpPanel",
-      "./CostSheetNarrative",
-      "./CostSheetHeaderEditor",
-      "@/services/usage-service",
-      "./CostSheetAuditView",
-      "./CostSheetBottomNav",
-      "./CostSheetMassiveGenerator",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/button",
-      "./CostSheetTemplateExplorer",
-      "./CostSheetQuickMode",
-      "sonner",
-      "./CostSheetSidebarNav",
-      "./CostSheetWizard",
-      "./DarianEditor",
-      "lucide-react",
-      "./CostSheetFormulaGuide",
-      "@/components/ui/skeleton",
-      "@/store",
       "@/components/ui/SpeedDial",
-      "react",
+      "@/store/cost-sheet-store",
+      "./CostSheetWizard",
+      "./CostSheetQuickMode",
+      "./CostSheetTemplateExplorer",
+      "./CostSheetCardView",
+      "./CostSheetHelpPanel",
+      "lucide-react",
       "@/hooks/ui/useMobile",
-      "@/hooks/logic/useCostSheetCalculator",
+      "react",
       "@/lib/utils",
+      "./CostSheetSignatureEditor",
+      "./DarianEditor",
       "./CostSheetModeDropdown",
-      "@/components/modals/UpgradeModal"
+      "./CostSheetPreview",
+      "@/components/ui/BaseModal",
+      "@/components/modals/UpgradeModal",
+      "./CostSheetBottomNav",
+      "@/services/usage-service",
+      "./CostSheetInteractiveTable"
     ]
   },
   {
@@ -1096,21 +1096,21 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/LazyRender",
-      "./CircularProgress",
-      "@/services/excel-service",
-      "@/components/ui/button",
-      "framer-motion",
-      "sonner",
-      "@/store/cost-sheet-store",
-      "@/components/ui/popover",
-      "@/lib/utils",
-      "react",
       "@/components/ui/input",
+      "sonner",
       "./FormulaEditor",
-      "lucide-react",
       "./CostSheetSectionActionsPanel",
-      "@/types/cost-sheet"
+      "@/types/cost-sheet",
+      "@/store/cost-sheet-store",
+      "./CircularProgress",
+      "lucide-react",
+      "react",
+      "framer-motion",
+      "@/components/ui/LazyRender",
+      "@/lib/utils",
+      "@/services/excel-service",
+      "@/components/ui/popover",
+      "@/components/ui/button"
     ]
   },
   {
@@ -1127,16 +1127,16 @@
       "Submit"
     ],
     "visible_components": [
-      "@/components/ui/button",
-      "@/components/ui/select",
       "./UserFormModal",
-      "@/components/ui/SearchBar",
-      "@/components/ui/switch",
-      "@/lib/utils",
       "./useUsersView",
-      "react",
+      "lucide-react",
       "@/components/ui/ActionMenu",
-      "lucide-react"
+      "@/components/ui/SearchBar",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/switch",
+      "@/components/ui/button",
+      "@/components/ui/select"
     ]
   },
   {
@@ -1153,15 +1153,15 @@
       "Submit"
     ],
     "visible_components": [
-      "@/hooks/api/useRoles",
-      "@/types",
       "./RoleForm",
+      "@/types",
+      "lucide-react",
+      "@/components/ui/ActionMenu",
       "@/components/ui/SearchBar",
-      "@/lib/utils",
       "@/components/ui/BaseModal",
       "react",
-      "@/components/ui/ActionMenu",
-      "lucide-react"
+      "@/lib/utils",
+      "@/hooks/api/useRoles"
     ]
   },
   {
@@ -1178,12 +1178,12 @@
       "Submit"
     ],
     "visible_components": [
-      "@/hooks/api/useRSS",
       "sonner",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
+      "@/hooks/api/useRSS",
+      "lucide-react",
       "react",
-      "lucide-react"
+      "@/lib/utils",
+      "@/components/ui/StateRenderer"
     ]
   },
   {
@@ -1200,13 +1200,13 @@
       "Submit"
     ],
     "visible_components": [
-      "@/types",
-      "framer-motion",
       "@/hooks/api/useRSS",
-      "@/lib/utils",
-      "@/components/ui/StateRenderer",
+      "lucide-react",
       "react",
-      "lucide-react"
+      "@/lib/utils",
+      "framer-motion",
+      "@/types",
+      "@/components/ui/StateRenderer"
     ]
   },
   {
@@ -1223,13 +1223,13 @@
       "Submit"
     ],
     "visible_components": [
-      "framer-motion",
       "sonner",
-      "@/lib/utils",
-      "./LegalConsultant",
-      "react",
-      "lucide-react",
       "@/lib/supabaseClient",
+      "./LegalConsultant",
+      "lucide-react",
+      "react",
+      "@/lib/utils",
+      "framer-motion",
       "./LegalModelForm"
     ]
   }

@@ -100,7 +100,6 @@ class ArchitectureScheduler:
 
     def extract_description(self, business_logic):
         if not business_logic: return ""
-        # Improved regex to skip markdown headers and extract the first meaningful sentence
         clean_logic = re.sub(r'#+\s+.*?\n', '', business_logic)
         match = re.search(r"(?:Descripción|1\.\s+Descripción):\s*(.*?)(?:\n|$)", clean_logic, re.IGNORECASE)
         if match: return match.group(1).strip()
@@ -109,7 +108,6 @@ class ArchitectureScheduler:
     def step_1_read_state(self):
         print("Step 1: Reading pipeline state...")
         if not os.path.exists(PIPELINE_MD):
-            # Try to rename if the old one exists
             OLD_PIPELINE = "docs/automation/ARCHITECTURE_MAINTENANCE_PIPELINE.md"
             if os.path.exists(OLD_PIPELINE):
                 os.rename(OLD_PIPELINE, PIPELINE_MD)
