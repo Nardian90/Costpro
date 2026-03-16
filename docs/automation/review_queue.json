@@ -1,0 +1,20 @@
+{
+  "queue": [
+    {
+      "id": "rq-test-artifact-1.0.0-20260316144244",
+      "artifactName": "test-artifact",
+      "candidatePath": "docs/automation/quarantine/test-artifact-1.0.0+7cbfa5.json",
+      "metaPath": "public/_meta/test-artifact.meta.json",
+      "confidenceScore": 85.0,
+      "createdAt": "2026-03-16T14:42:44.949444Z",
+      "status": "open",
+      "priority": "normal"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2026-03-16T00:00:00Z",
+    "lastUpdated": "2026-03-16T14:42:44.950939Z",
+    "totalReviews": 1,
+    "pendingReviews": 1
+  }
+}

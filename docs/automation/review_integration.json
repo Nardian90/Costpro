@@ -1,0 +1,23 @@
+{
+  "webhookUrl": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+  "webhookEnabled": true,
+  "notificationChannels": {
+    "slack": true,
+    "email": false,
+    "jira": false
+  },
+  "reviewers": {
+    "default": ["platform-arch-team"],
+    "critical": ["senior-architects"],
+    "assignments": {
+      "architecture": ["platform-arch-team"],
+      "documentation": ["tech-writers"],
+      "business_logic": ["domain-experts"]
+    }
+  },
+  "sla": {
+    "normal": "48h",
+    "high": "8h",
+    "critical": "2h"
+  }
+}
