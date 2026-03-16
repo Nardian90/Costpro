@@ -1,5 +1,5 @@
 import { it, expect, describe, beforeEach } from 'vitest';
-import { MatchingEngine } from '../engine';
+import { MatchingEngine, DEFAULT_MATCHING_RULES } from '../engine';
 import { db } from '../../dexie';
 
 describe('BIG BON Simulation', () => {
@@ -11,6 +11,11 @@ describe('BIG BON Simulation', () => {
     });
 
     it('should decompose BIG BON CAJA -> PQT -> UNIDADES to fulfill a sale', async () => {
+        const rules = DEFAULT_MATCHING_RULES.map(r => {
+            if (r.tipo === 'STOCK_LIMIT') return { ...r, activo: true };
+            return r;
+        });
+
         // 1. Setup Hierarchy
         const products = [
             {
@@ -23,7 +28,7 @@ describe('BIG BON Simulation', () => {
                 prioridad_algoritmo: 1,
                 activo: true,
                 es_paquete: true,
-                contenido_paquete: 8, // 8 PQT per CAJA
+                contenido_paquete: 8,
                 stock_inicial_manual: 1,
                 created_at: new Date().toISOString()
             },
@@ -37,8 +42,8 @@ describe('BIG BON Simulation', () => {
                 prioridad_algoritmo: 1,
                 activo: true,
                 es_paquete: true,
-                contenido_paquete: 40, // 40 units per PQT
-                stock_inicial_manual: 0, // No stock of packs
+                contenido_paquete: 40,
+                stock_inicial_manual: 0,
                 created_at: new Date().toISOString()
             },
             {
@@ -51,51 +56,57 @@ describe('BIG BON Simulation', () => {
                 activo: true,
                 es_paquete: false,
                 contenido_paquete: 1,
-                stock_inicial_manual: 0, // No stock of units
+                stock_inicial_manual: 0,
                 created_at: new Date().toISOString()
             }
         ];
         await db.products.bulkPut(products);
 
         // 2. Create a transaction that needs "BOMBON" (Code 4)
-        // A sale of 10 units of BOMBON at 45 cents each = 450 cents
         const tx = {
-            id: 'tx_bigbon_sale',
-            fecha: new Date().toISOString(),
-            descripcion: 'VENTA BOMBON X10',
-            importe: -450, // Negative for sale
-            tipo: 'TRANSFERENCIA',
-            moneda: 'CUP',
-            estado: 'PENDIENTE'
+            referencia_origen: 'tx_bigbon_sale',
+            fecha: new Date().toISOString().split('T')[0],
+            referencia_corta: 'REF1',
+            observaciones: 'VENTA BOMBON X10 BOMBON',
+            importe_cents: 450,
+            tipo: 'Cr',
+            estado_conciliacion: 'PENDIENTE',
+            ingestion_hash: 'hash_bigbon',
+            created_at: new Date().toISOString()
         };
         await db.bank_statements.add(tx as any);
 
         // 3. Run Engine
-        await MatchingEngine.reconcileAll();
+        const engine = new MatchingEngine(products as any, rules);
+        const results = await engine.reconcileAll([tx as any]);
+
+        for (const res of results) {
+            if (res.lines.length > 0) {
+                await db.reconciliation_lines.bulkAdd(res.lines);
+            }
+            if (res.movements.length > 0) {
+                await db.product_movements.bulkAdd(res.movements);
+            }
+        }
 
         // 4. Verify results
-        const reconLines = await db.reconciliation_lines.where('transaction_id').equals('tx_bigbon_sale').toArray();
+        const reconLines = await db.reconciliation_lines.where('transaction_ref').equals('tx_bigbon_sale').toArray();
         expect(reconLines.length).toBe(1);
         expect(reconLines[0].product_cod).toBe('4');
-        expect(reconLines[0].qty).toBe(10);
+        expect(reconLines[0].cantidad).toBe(10);
 
         // 5. Verify movements (Decompositions)
         const movements = await db.product_movements.toArray();
-        // Should have 2 movements:
-        // 1. CAJA (2) -> PQT (3)
-        // 2. PQT (3) -> UNIT (4)
         expect(movements.length).toBe(2);
 
-        const m1 = movements.find(m => m.product_id === '2');
-        expect(m1?.target_product_id).toBe('3');
-        expect(m1?.qty_converted).toBe(1);
-        expect(m1?.resulting_qty).toBe(8);
+        const m1 = movements.find(m => m.producto_origen_cod === '2');
+        expect(m1?.producto_destino_cod).toBe('3');
+        expect(m1?.cantidad_origen).toBe(1);
+        expect(m1?.cantidad_destino).toBe(8);
 
-        const m2 = movements.find(m => m.product_id === '3');
-        expect(m2?.target_product_id).toBe('4');
-        expect(m2?.qty_converted).toBe(1);
-        expect(m2?.resulting_qty).toBe(40);
-
-        console.log('Simulation successful: CAJA decomposed into units to fulfill the sale.');
+        const m2 = movements.find(m => m.producto_origen_cod === '3');
+        expect(m2?.producto_destino_cod).toBe('4');
+        expect(m2?.cantidad_origen).toBe(1);
+        expect(m2?.cantidad_destino).toBe(40);
     });
 });
