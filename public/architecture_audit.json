@@ -1,14 +1,2524 @@
 {
-  "integrity": "OK",
-  "issues": [],
-  "metrics": {
-    "total_files": 454,
-    "by_type": {
-      "component": 277,
-      "view": 34,
-      "service": 16,
-      "hook": 32,
-      "other": 95
+  "audit": [
+    {
+      "component_id": "IntelligentThemeHandler",
+      "health": 10.0,
+      "lines": 68,
+      "complexity": 12
+    },
+    {
+      "component_id": "GlobalSessionManager",
+      "health": 10.0,
+      "lines": 29,
+      "complexity": 3
+    },
+    {
+      "component_id": "theme-provider",
+      "health": 10.0,
+      "lines": 8,
+      "complexity": 1
+    },
+    {
+      "component_id": "SplashScreen",
+      "health": 10.0,
+      "lines": 65,
+      "complexity": 5
+    },
+    {
+      "component_id": "ThemeToggle",
+      "health": 10.0,
+      "lines": 91,
+      "complexity": 3
+    },
+    {
+      "component_id": "CostProLogo",
+      "health": 10.0,
+      "lines": 106,
+      "complexity": 5
+    },
+    {
+      "component_id": "ServiceWorkerRegister",
+      "health": 10.0,
+      "lines": 32,
+      "complexity": 4
+    },
+    {
+      "component_id": "SyncConflictModal",
+      "health": 10.0,
+      "lines": 177,
+      "complexity": 7
+    },
+    {
+      "component_id": "CreateProductModal",
+      "health": 10.0,
+      "lines": 157,
+      "complexity": 6
+    },
+    {
+      "component_id": "BarcodeScanner",
+      "health": 10.0,
+      "lines": 123,
+      "complexity": 3
+    },
+    {
+      "component_id": "UpgradeModal",
+      "health": 10.0,
+      "lines": 72,
+      "complexity": 3
+    },
+    {
+      "component_id": "PriceSelectorModal",
+      "health": 10.0,
+      "lines": 86,
+      "complexity": 2
+    },
+    {
+      "component_id": "SyncProvider",
+      "health": 10.0,
+      "lines": 32,
+      "complexity": 2
+    },
+    {
+      "component_id": "QueryProvider",
+      "health": 10.0,
+      "lines": 35,
+      "complexity": 1
+    },
+    {
+      "component_id": "TerminalShell",
+      "health": 10.0,
+      "lines": 318,
+      "complexity": 54
+    },
+    {
+      "component_id": "ExecutiveDemoView",
+      "health": 10.0,
+      "lines": 408,
+      "complexity": 15
+    },
+    {
+      "component_id": "Sidebar",
+      "health": 10.0,
+      "lines": 389,
+      "complexity": 28
+    },
+    {
+      "component_id": "Header",
+      "health": 10.0,
+      "lines": 213,
+      "complexity": 25
+    },
+    {
+      "component_id": "SystemDependencyGraph",
+      "health": 10.0,
+      "lines": 129,
+      "complexity": 1
+    },
+    {
+      "component_id": "AuditSummary",
+      "health": 10.0,
+      "lines": 94,
+      "complexity": 4
+    },
+    {
+      "component_id": "SecurityMetrics",
+      "health": 10.0,
+      "lines": 78,
+      "complexity": 4
+    },
+    {
+      "component_id": "HealthStatusHeader",
+      "health": 10.0,
+      "lines": 82,
+      "complexity": 11
+    },
+    {
+      "component_id": "SystemHealthView",
+      "health": 10.0,
+      "lines": 326,
+      "complexity": 13
+    },
+    {
+      "component_id": "ArchitectureAuditTable",
+      "health": 10.0,
+      "lines": 572,
+      "complexity": 45
+    },
+    {
+      "component_id": "ReleaseGateStatus",
+      "health": 10.0,
+      "lines": 68,
+      "complexity": 3
+    },
+    {
+      "component_id": "ViewNavigator",
+      "health": 10.0,
+      "lines": 78,
+      "complexity": 2
+    },
+    {
+      "component_id": "HealthAgentLogs",
+      "health": 10.0,
+      "lines": 135,
+      "complexity": 12
+    },
+    {
+      "component_id": "DetailedRelationshipGraph",
+      "health": 10.0,
+      "lines": 229,
+      "complexity": 20
+    },
+    {
+      "component_id": "InfrastructureMetrics",
+      "health": 10.0,
+      "lines": 93,
+      "complexity": 1
+    },
+    {
+      "component_id": "ApplicationMetrics",
+      "health": 10.0,
+      "lines": 76,
+      "complexity": 2
+    },
+    {
+      "component_id": "WalletView",
+      "health": 10.0,
+      "lines": 216,
+      "complexity": 20
+    },
+    {
+      "component_id": "AnalyticsDashboard",
+      "health": 10.0,
+      "lines": 186,
+      "complexity": 7
+    },
+    {
+      "component_id": "CatalogModals",
+      "health": 10.0,
+      "lines": 262,
+      "complexity": 42
+    },
+    {
+      "component_id": "CatalogView",
+      "health": 10.0,
+      "lines": 467,
+      "complexity": 29
+    },
+    {
+      "component_id": "SettingsView",
+      "health": 10.0,
+      "lines": 423,
+      "complexity": 28
+    },
+    {
+      "component_id": "DashboardView",
+      "health": 10.0,
+      "lines": 221,
+      "complexity": 13
+    },
+    {
+      "component_id": "useDashboardView",
+      "health": 10.0,
+      "lines": 57,
+      "complexity": 8
+    },
+    {
+      "component_id": "ConcentricDashboardRing",
+      "health": 10.0,
+      "lines": 108,
+      "complexity": 4
+    },
+    {
+      "component_id": "ExecutiveKpiCards",
+      "health": 10.0,
+      "lines": 99,
+      "complexity": 5
+    },
+    {
+      "component_id": "RecentCostSheets",
+      "health": 10.0,
+      "lines": 80,
+      "complexity": 16
+    },
+    {
+      "component_id": "ReportConfigPanel",
+      "health": 10.0,
+      "lines": 323,
+      "complexity": 22
+    },
+    {
+      "component_id": "ReportPreview",
+      "health": 10.0,
+      "lines": 161,
+      "complexity": 17
+    },
+    {
+      "component_id": "ReportsView",
+      "health": 10.0,
+      "lines": 220,
+      "complexity": 20
+    },
+    {
+      "component_id": "AuditLogsModal",
+      "health": 10.0,
+      "lines": 74,
+      "complexity": 2
+    },
+    {
+      "component_id": "StoresManagementView",
+      "health": 10.0,
+      "lines": 132,
+      "complexity": 5
+    },
+    {
+      "component_id": "useStoresView",
+      "health": 10.0,
+      "lines": 145,
+      "complexity": 16
+    },
+    {
+      "component_id": "StoreModals",
+      "health": 10.0,
+      "lines": 272,
+      "complexity": 26
+    },
+    {
+      "component_id": "MasteryDashboard",
+      "health": 10.0,
+      "lines": 163,
+      "complexity": 10
+    },
+    {
+      "component_id": "AcademyView",
+      "health": 10.0,
+      "lines": 261,
+      "complexity": 13
+    },
+    {
+      "component_id": "Flashcard",
+      "health": 10.0,
+      "lines": 106,
+      "complexity": 7
+    },
+    {
+      "component_id": "CreateTransferModal",
+      "health": 10.0,
+      "lines": 232,
+      "complexity": 16
+    },
+    {
+      "component_id": "TransferenciasView",
+      "health": 10.0,
+      "lines": 185,
+      "complexity": 20
+    },
+    {
+      "component_id": "TransferDetailsModal",
+      "health": 10.0,
+      "lines": 157,
+      "complexity": 15
+    },
+    {
+      "component_id": "HelpView",
+      "health": 10.0,
+      "lines": 665,
+      "complexity": 8
+    },
+    {
+      "component_id": "KidsOnboarding",
+      "health": 10.0,
+      "lines": 222,
+      "complexity": 2
+    },
+    {
+      "component_id": "StickyCartFlowDiagram",
+      "health": 10.0,
+      "lines": 74,
+      "complexity": 1
+    },
+    {
+      "component_id": "StoreSkuDiagram.test",
+      "health": 10.0,
+      "lines": 21,
+      "complexity": 1
+    },
+    {
+      "component_id": "MobilePosDiagram",
+      "health": 10.0,
+      "lines": 79,
+      "complexity": 1
+    },
+    {
+      "component_id": "IpvFlowDiagram",
+      "health": 10.0,
+      "lines": 128,
+      "complexity": 1
+    },
+    {
+      "component_id": "SecurityFlowDiagram",
+      "health": 10.0,
+      "lines": 107,
+      "complexity": 1
+    },
+    {
+      "component_id": "UserFlowDiagram",
+      "health": 10.0,
+      "lines": 77,
+      "complexity": 1
+    },
+    {
+      "component_id": "QuickModeMassiveDiagram",
+      "health": 10.0,
+      "lines": 109,
+      "complexity": 1
+    },
+    {
+      "component_id": "OfflineSyncDiagram.test",
+      "health": 10.0,
+      "lines": 23,
+      "complexity": 1
+    },
+    {
+      "component_id": "DarianDiagram.test",
+      "health": 10.0,
+      "lines": 23,
+      "complexity": 1
+    },
+    {
+      "component_id": "CostFlowDiagram",
+      "health": 10.0,
+      "lines": 123,
+      "complexity": 1
+    },
+    {
+      "component_id": "RolesDiagram",
+      "health": 10.0,
+      "lines": 86,
+      "complexity": 1
+    },
+    {
+      "component_id": "OfflineSyncDiagram",
+      "health": 10.0,
+      "lines": 104,
+      "complexity": 1
+    },
+    {
+      "component_id": "InventoryFlowDiagram",
+      "health": 10.0,
+      "lines": 105,
+      "complexity": 1
+    },
+    {
+      "component_id": "MobileFlowDiagram",
+      "health": 10.0,
+      "lines": 73,
+      "complexity": 1
+    },
+    {
+      "component_id": "CashFlowDiagram",
+      "health": 10.0,
+      "lines": 94,
+      "complexity": 1
+    },
+    {
+      "component_id": "InventoryAdjustmentFlowDiagram",
+      "health": 10.0,
+      "lines": 125,
+      "complexity": 1
+    },
+    {
+      "component_id": "StoreSkuDiagram",
+      "health": 10.0,
+      "lines": 75,
+      "complexity": 1
+    },
+    {
+      "component_id": "DarianDiagram",
+      "health": 10.0,
+      "lines": 117,
+      "complexity": 1
+    },
+    {
+      "component_id": "SalesFlowDiagram",
+      "health": 10.0,
+      "lines": 77,
+      "complexity": 1
+    },
+    {
+      "component_id": "InventoryCardView",
+      "health": 10.0,
+      "lines": 81,
+      "complexity": 8
+    },
+    {
+      "component_id": "InventoryAdjustmentsView",
+      "health": 10.0,
+      "lines": 118,
+      "complexity": 22
+    },
+    {
+      "component_id": "InventoryAdjustmentModal",
+      "health": 10.0,
+      "lines": 347,
+      "complexity": 23
+    },
+    {
+      "component_id": "ProductReceptionView",
+      "health": 10.0,
+      "lines": 658,
+      "complexity": 38
+    },
+    {
+      "component_id": "InventoryTableView",
+      "health": 10.0,
+      "lines": 128,
+      "complexity": 11
+    },
+    {
+      "component_id": "InventoryView",
+      "health": 10.0,
+      "lines": 225,
+      "complexity": 21
+    },
+    {
+      "component_id": "CashClosureView",
+      "health": 10.0,
+      "lines": 285,
+      "complexity": 28
+    },
+    {
+      "component_id": "TaxCalculationModal",
+      "health": 10.0,
+      "lines": 245,
+      "complexity": 15
+    },
+    {
+      "component_id": "SalesHistoryView",
+      "health": 10.0,
+      "lines": 211,
+      "complexity": 10
+    },
+    {
+      "component_id": "TransactionDetailsModal",
+      "health": 10.0,
+      "lines": 202,
+      "complexity": 24
+    },
+    {
+      "component_id": "useSalesHistoryView",
+      "health": 10.0,
+      "lines": 137,
+      "complexity": 13
+    },
+    {
+      "component_id": "ReceptionDetailsModal",
+      "health": 10.0,
+      "lines": 181,
+      "complexity": 18
+    },
+    {
+      "component_id": "ReceptionsHistoryView",
+      "health": 10.0,
+      "lines": 217,
+      "complexity": 7
+    },
+    {
+      "component_id": "useReceptionsHistoryView",
+      "health": 10.0,
+      "lines": 142,
+      "complexity": 18
+    },
+    {
+      "component_id": "StockHistoryView",
+      "health": 10.0,
+      "lines": 139,
+      "complexity": 21
+    },
+    {
+      "component_id": "IPVView",
+      "health": 10.0,
+      "lines": 731,
+      "complexity": 40
+    },
+    {
+      "component_id": "IPVRightSidebar",
+      "health": 10.0,
+      "lines": 72,
+      "complexity": 3
+    },
+    {
+      "component_id": "TransactionBreakdown",
+      "health": 10.0,
+      "lines": 443,
+      "complexity": 52
+    },
+    {
+      "component_id": "ActionBadges",
+      "health": 10.0,
+      "lines": 41,
+      "complexity": 4
+    },
+    {
+      "component_id": "TransactionTable",
+      "health": 10.0,
+      "lines": 421,
+      "complexity": 49
+    },
+    {
+      "component_id": "AddTransactionModal",
+      "health": 10.0,
+      "lines": 211,
+      "complexity": 8
+    },
+    {
+      "component_id": "IncomeReceiptPreview",
+      "health": 10.0,
+      "lines": 138,
+      "complexity": 4
+    },
+    {
+      "component_id": "MovementsView",
+      "health": 10.0,
+      "lines": 127,
+      "complexity": 10
+    },
+    {
+      "component_id": "IncomeReceiptSection",
+      "health": 10.0,
+      "lines": 345,
+      "complexity": 27
+    },
+    {
+      "component_id": "IPVPreviewModal",
+      "health": 10.0,
+      "lines": 153,
+      "complexity": 4
+    },
+    {
+      "component_id": "MatchingTracePopover",
+      "health": 10.0,
+      "lines": 146,
+      "complexity": 22
+    },
+    {
+      "component_id": "IPVReportView",
+      "health": 10.0,
+      "lines": 695,
+      "complexity": 50
+    },
+    {
+      "component_id": "MatchingAuditView",
+      "health": 10.0,
+      "lines": 354,
+      "complexity": 11
+    },
+    {
+      "component_id": "IngestionErrorsTable",
+      "health": 10.0,
+      "lines": 194,
+      "complexity": 10
+    },
+    {
+      "component_id": "TransferQRReportView",
+      "health": 10.0,
+      "lines": 320,
+      "complexity": 25
+    },
+    {
+      "component_id": "ManualReconciliationView",
+      "health": 10.0,
+      "lines": 542,
+      "complexity": 53
+    },
+    {
+      "component_id": "MatchingRulesEditor",
+      "health": 10.0,
+      "lines": 329,
+      "complexity": 43
+    },
+    {
+      "component_id": "MatchingSimulation",
+      "health": 10.0,
+      "lines": 316,
+      "complexity": 18
+    },
+    {
+      "component_id": "RuleMetaEditor",
+      "health": 10.0,
+      "lines": 191,
+      "complexity": 5
+    },
+    {
+      "component_id": "IPVReportsDropdown",
+      "health": 10.0,
+      "lines": 67,
+      "complexity": 4
+    },
+    {
+      "component_id": "PivotStatementView",
+      "health": 10.0,
+      "lines": 332,
+      "complexity": 24
+    },
+    {
+      "component_id": "BankIngestion",
+      "health": 10.0,
+      "lines": 407,
+      "complexity": 43
+    },
+    {
+      "component_id": "IPVInstitutionalDashboard",
+      "health": 10.0,
+      "lines": 302,
+      "complexity": 11
+    },
+    {
+      "component_id": "CatalogTable",
+      "health": 10.0,
+      "lines": 916,
+      "complexity": 135
+    },
+    {
+      "component_id": "IPVHelpDialog",
+      "health": 10.0,
+      "lines": 163,
+      "complexity": 4
+    },
+    {
+      "component_id": "IPVControlPanel",
+      "health": 10.0,
+      "lines": 298,
+      "complexity": 11
+    },
+    {
+      "component_id": "InventoryCountTableView",
+      "health": 10.0,
+      "lines": 88,
+      "complexity": 8
+    },
+    {
+      "component_id": "InventoryCountCardView",
+      "health": 10.0,
+      "lines": 119,
+      "complexity": 9
+    },
+    {
+      "component_id": "InventoryCountView",
+      "health": 10.0,
+      "lines": 464,
+      "complexity": 44
+    },
+    {
+      "component_id": "data-loader",
+      "health": 10.0,
+      "lines": 19,
+      "complexity": 4
+    },
+    {
+      "component_id": "CuentasModule",
+      "health": 10.0,
+      "lines": 165,
+      "complexity": 5
+    },
+    {
+      "component_id": "AsientosModule",
+      "health": 10.0,
+      "lines": 248,
+      "complexity": 8
+    },
+    {
+      "component_id": "WikiBreadcrumbs",
+      "health": 10.0,
+      "lines": 40,
+      "complexity": 1
+    },
+    {
+      "component_id": "WikiSearch",
+      "health": 10.0,
+      "lines": 145,
+      "complexity": 2
+    },
+    {
+      "component_id": "types",
+      "health": 10.0,
+      "lines": 59,
+      "complexity": 4
+    },
+    {
+      "component_id": "WikiView",
+      "health": 10.0,
+      "lines": 197,
+      "complexity": 4
+    },
+    {
+      "component_id": "WikiSidebar",
+      "health": 10.0,
+      "lines": 50,
+      "complexity": 2
+    },
+    {
+      "component_id": "ClasificadorModule",
+      "health": 10.0,
+      "lines": 97,
+      "complexity": 4
+    },
+    {
+      "component_id": "POSTableView",
+      "health": 10.0,
+      "lines": 64,
+      "complexity": 1
+    },
+    {
+      "component_id": "usePOSView",
+      "health": 10.0,
+      "lines": 269,
+      "complexity": 27
+    },
+    {
+      "component_id": "POSView",
+      "health": 10.0,
+      "lines": 419,
+      "complexity": 15
+    },
+    {
+      "component_id": "POSCart",
+      "health": 10.0,
+      "lines": 1061,
+      "complexity": 79
+    },
+    {
+      "component_id": "StickyCartSummary",
+      "health": 10.0,
+      "lines": 75,
+      "complexity": 3
+    },
+    {
+      "component_id": "AuditEventIcon",
+      "health": 10.0,
+      "lines": 90,
+      "complexity": 16
+    },
+    {
+      "component_id": "audit.test",
+      "health": 10.0,
+      "lines": 29,
+      "complexity": 3
+    },
+    {
+      "component_id": "AuditFilters",
+      "health": 10.0,
+      "lines": 185,
+      "complexity": 4
+    },
+    {
+      "component_id": "AuditEventMeta.test",
+      "health": 10.0,
+      "lines": 41,
+      "complexity": 3
+    },
+    {
+      "component_id": "AuditTableView",
+      "health": 10.0,
+      "lines": 73,
+      "complexity": 7
+    },
+    {
+      "component_id": "AuditTableView.test",
+      "health": 10.0,
+      "lines": 28,
+      "complexity": 1
+    },
+    {
+      "component_id": "AuditTimeline",
+      "health": 10.0,
+      "lines": 98,
+      "complexity": 6
+    },
+    {
+      "component_id": "AuditLogsView.test",
+      "health": 10.0,
+      "lines": 77,
+      "complexity": 2
+    },
+    {
+      "component_id": "useAuditLogsView",
+      "health": 10.0,
+      "lines": 36,
+      "complexity": 3
+    },
+    {
+      "component_id": "AuditEventCard",
+      "health": 10.0,
+      "lines": 187,
+      "complexity": 36
+    },
+    {
+      "component_id": "AuditEventMeta",
+      "health": 10.0,
+      "lines": 118,
+      "complexity": 12
+    },
+    {
+      "component_id": "AuditLogsView",
+      "health": 10.0,
+      "lines": 211,
+      "complexity": 15
+    },
+    {
+      "component_id": "CostSheetAuditView",
+      "health": 10.0,
+      "lines": 144,
+      "complexity": 9
+    },
+    {
+      "component_id": "CostSheetSidebarNav",
+      "health": 10.0,
+      "lines": 169,
+      "complexity": 15
+    },
+    {
+      "component_id": "CostSheetFormulaGuide",
+      "health": 10.0,
+      "lines": 269,
+      "complexity": 3
+    },
+    {
+      "component_id": "CostSheetGenerateDropdown",
+      "health": 10.0,
+      "lines": 55,
+      "complexity": 1
+    },
+    {
+      "component_id": "FormulaEditor",
+      "health": 10.0,
+      "lines": 298,
+      "complexity": 11
+    },
+    {
+      "component_id": "CircularProgress",
+      "health": 10.0,
+      "lines": 75,
+      "complexity": 6
+    },
+    {
+      "component_id": "CostSheetCalculator",
+      "health": 10.0,
+      "lines": 196,
+      "complexity": 27
+    },
+    {
+      "component_id": "ProductInventoryPicker",
+      "health": 10.0,
+      "lines": 106,
+      "complexity": 4
+    },
+    {
+      "component_id": "CostSheetBanner",
+      "health": 10.0,
+      "lines": 69,
+      "complexity": 2
+    },
+    {
+      "component_id": "CostSheetAuditLog",
+      "health": 10.0,
+      "lines": 84,
+      "complexity": 7
+    },
+    {
+      "component_id": "CostSheetMasterRing",
+      "health": 10.0,
+      "lines": 259,
+      "complexity": 16
+    },
+    {
+      "component_id": "CostSheetActionsPanel",
+      "health": 10.0,
+      "lines": 344,
+      "complexity": 44
+    },
+    {
+      "component_id": "CostSheetView",
+      "health": 10.0,
+      "lines": 875,
+      "complexity": 94
+    },
+    {
+      "component_id": "CostSheetAnnexes",
+      "health": 10.0,
+      "lines": 131,
+      "complexity": 24
+    },
+    {
+      "component_id": "CostSheetHelpDropdown",
+      "health": 10.0,
+      "lines": 55,
+      "complexity": 1
+    },
+    {
+      "component_id": "CostSheetSummary",
+      "health": 10.0,
+      "lines": 445,
+      "complexity": 51
+    },
+    {
+      "component_id": "CostSheetNav",
+      "health": 10.0,
+      "lines": 163,
+      "complexity": 14
+    },
+    {
+      "component_id": "CostSheetOptionsDropdown",
+      "health": 10.0,
+      "lines": 80,
+      "complexity": 1
+    },
+    {
+      "component_id": "CostSheetHeader",
+      "health": 10.0,
+      "lines": 70,
+      "complexity": 3
+    },
+    {
+      "component_id": "CostSheetQuickMode",
+      "health": 10.0,
+      "lines": 218,
+      "complexity": 4
+    },
+    {
+      "component_id": "CostSheetBottomNav",
+      "health": 10.0,
+      "lines": 124,
+      "complexity": 4
+    },
+    {
+      "component_id": "CostSheetNarrative",
+      "health": 10.0,
+      "lines": 244,
+      "complexity": 18
+    },
+    {
+      "component_id": "CostSheetSignature",
+      "health": 10.0,
+      "lines": 28,
+      "complexity": 1
+    },
+    {
+      "component_id": "CostSheetExportModal",
+      "health": 10.0,
+      "lines": 271,
+      "complexity": 11
+    },
+    {
+      "component_id": "HealthBattery",
+      "health": 10.0,
+      "lines": 89,
+      "complexity": 14
+    },
+    {
+      "component_id": "CostSheetTemplateExplorer",
+      "health": 10.0,
+      "lines": 453,
+      "complexity": 27
+    },
+    {
+      "component_id": "CostSheetForm",
+      "health": 10.0,
+      "lines": 262,
+      "complexity": 66
+    },
+    {
+      "component_id": "FormulaBuilder",
+      "health": 10.0,
+      "lines": 360,
+      "complexity": 32
+    },
+    {
+      "component_id": "CostSheetCardView",
+      "health": 10.0,
+      "lines": 578,
+      "complexity": 62
+    },
+    {
+      "component_id": "CostSheetMassiveGenerator",
+      "health": 10.0,
+      "lines": 1054,
+      "complexity": 124
+    },
+    {
+      "component_id": "CostSheetSidePanel",
+      "health": 10.0,
+      "lines": 311,
+      "complexity": 48
+    },
+    {
+      "component_id": "CostSheetBody",
+      "health": 10.0,
+      "lines": 126,
+      "complexity": 17
+    },
+    {
+      "component_id": "DarianEditor",
+      "health": 10.0,
+      "lines": 264,
+      "complexity": 36
+    },
+    {
+      "component_id": "CostSheetHeaderEditor",
+      "health": 10.0,
+      "lines": 127,
+      "complexity": 17
+    },
+    {
+      "component_id": "CostSheetFCDropdown",
+      "health": 10.0,
+      "lines": 88,
+      "complexity": 8
+    },
+    {
+      "component_id": "CostSheetWizard",
+      "health": 10.0,
+      "lines": 133,
+      "complexity": 16
+    },
+    {
+      "component_id": "CostSheetInteractiveTable",
+      "health": 10.0,
+      "lines": 767,
+      "complexity": 104
+    },
+    {
+      "component_id": "CostSheetAnnexEditor",
+      "health": 10.0,
+      "lines": 459,
+      "complexity": 94
+    },
+    {
+      "component_id": "CostSheetSectionActionsPanel",
+      "health": 10.0,
+      "lines": 115,
+      "complexity": 2
+    },
+    {
+      "component_id": "CostSheetPreview",
+      "health": 10.0,
+      "lines": 63,
+      "complexity": 5
+    },
+    {
+      "component_id": "CostSheetSignatureEditor",
+      "health": 10.0,
+      "lines": 66,
+      "complexity": 5
+    },
+    {
+      "component_id": "CostSheetModeDropdown",
+      "health": 10.0,
+      "lines": 88,
+      "complexity": 2
+    },
+    {
+      "component_id": "CostSheetHelpPanel",
+      "health": 10.0,
+      "lines": 75,
+      "complexity": 1
+    },
+    {
+      "component_id": "CostSheetTemplateExplorer.test",
+      "health": 10.0,
+      "lines": 49,
+      "complexity": 1
+    },
+    {
+      "component_id": "UserFormModal",
+      "health": 10.0,
+      "lines": 76,
+      "complexity": 10
+    },
+    {
+      "component_id": "useUsersView",
+      "health": 10.0,
+      "lines": 255,
+      "complexity": 46
+    },
+    {
+      "component_id": "UsersManagementView",
+      "health": 10.0,
+      "lines": 242,
+      "complexity": 15
+    },
+    {
+      "component_id": "RoleForm",
+      "health": 10.0,
+      "lines": 181,
+      "complexity": 13
+    },
+    {
+      "component_id": "RolesManagementView",
+      "health": 10.0,
+      "lines": 172,
+      "complexity": 12
+    },
+    {
+      "component_id": "UserForm",
+      "health": 10.0,
+      "lines": 371,
+      "complexity": 28
+    },
+    {
+      "component_id": "RSSManagementView",
+      "health": 10.0,
+      "lines": 260,
+      "complexity": 9
+    },
+    {
+      "component_id": "NewsView",
+      "health": 10.0,
+      "lines": 237,
+      "complexity": 13
+    },
+    {
+      "component_id": "LegalView.test",
+      "health": 10.0,
+      "lines": 34,
+      "complexity": 1
+    },
+    {
+      "component_id": "LegalPdfExporter",
+      "health": 10.0,
+      "lines": 157,
+      "complexity": 14
+    },
+    {
+      "component_id": "LegalModelForm",
+      "health": 10.0,
+      "lines": 285,
+      "complexity": 19
+    },
+    {
+      "component_id": "LegalConsultant",
+      "health": 10.0,
+      "lines": 166,
+      "complexity": 14
+    },
+    {
+      "component_id": "LegalView",
+      "health": 10.0,
+      "lines": 100,
+      "complexity": 3
+    },
+    {
+      "component_id": "skeleton",
+      "health": 10.0,
+      "lines": 13,
+      "complexity": 1
+    },
+    {
+      "component_id": "DataDecryption",
+      "health": 10.0,
+      "lines": 26,
+      "complexity": 1
+    },
+    {
+      "component_id": "accordion",
+      "health": 10.0,
+      "lines": 66,
+      "complexity": 1
+    },
+    {
+      "component_id": "ViewSwitcher",
+      "health": 10.0,
+      "lines": 46,
+      "complexity": 4
+    },
+    {
+      "component_id": "hover-card",
+      "health": 10.0,
+      "lines": 44,
+      "complexity": 1
+    },
+    {
+      "component_id": "LazyRender",
+      "health": 10.0,
+      "lines": 44,
+      "complexity": 7
+    },
+    {
+      "component_id": "command",
+      "health": 10.0,
+      "lines": 184,
+      "complexity": 6
+    },
+    {
+      "component_id": "resizable",
+      "health": 10.0,
+      "lines": 56,
+      "complexity": 2
+    },
+    {
+      "component_id": "QueryInspector",
+      "health": 10.0,
+      "lines": 102,
+      "complexity": 9
+    },
+    {
+      "component_id": "SearchBar",
+      "health": 10.0,
+      "lines": 131,
+      "complexity": 17
+    },
+    {
+      "component_id": "dropdown-menu",
+      "health": 10.0,
+      "lines": 257,
+      "complexity": 5
+    },
+    {
+      "component_id": "separator",
+      "health": 10.0,
+      "lines": 28,
+      "complexity": 1
+    },
+    {
+      "component_id": "MobileSafeContainer",
+      "health": 10.0,
+      "lines": 31,
+      "complexity": 2
+    },
+    {
+      "component_id": "pagination",
+      "health": 10.0,
+      "lines": 127,
+      "complexity": 4
+    },
+    {
+      "component_id": "alert-dialog",
+      "health": 10.0,
+      "lines": 157,
+      "complexity": 1
+    },
+    {
+      "component_id": "input-otp",
+      "health": 10.0,
+      "lines": 77,
+      "complexity": 5
+    },
+    {
+      "component_id": "alert",
+      "health": 10.0,
+      "lines": 66,
+      "complexity": 1
+    },
+    {
+      "component_id": "CyberShell",
+      "health": 10.0,
+      "lines": 32,
+      "complexity": 1
+    },
+    {
+      "component_id": "popover",
+      "health": 10.0,
+      "lines": 48,
+      "complexity": 1
+    },
+    {
+      "component_id": "table",
+      "health": 10.0,
+      "lines": 116,
+      "complexity": 1
+    },
+    {
+      "component_id": "progress",
+      "health": 10.0,
+      "lines": 36,
+      "complexity": 2
+    },
+    {
+      "component_id": "select",
+      "health": 10.0,
+      "lines": 185,
+      "complexity": 2
+    },
+    {
+      "component_id": "sonner",
+      "health": 10.0,
+      "lines": 25,
+      "complexity": 1
+    },
+    {
+      "component_id": "LoadingOverlay",
+      "health": 10.0,
+      "lines": 45,
+      "complexity": 4
+    },
+    {
+      "component_id": "textarea",
+      "health": 10.0,
+      "lines": 18,
+      "complexity": 1
+    },
+    {
+      "component_id": "PWAInstallModal",
+      "health": 10.0,
+      "lines": 136,
+      "complexity": 7
+    },
+    {
+      "component_id": "toggle",
+      "health": 10.0,
+      "lines": 47,
+      "complexity": 1
+    },
+    {
+      "component_id": "StateRenderer",
+      "health": 10.0,
+      "lines": 59,
+      "complexity": 7
+    },
+    {
+      "component_id": "Portal",
+      "health": 10.0,
+      "lines": 21,
+      "complexity": 2
+    },
+    {
+      "component_id": "toggle-group",
+      "health": 10.0,
+      "lines": 73,
+      "complexity": 1
+    },
+    {
+      "component_id": "scroll-area",
+      "health": 10.0,
+      "lines": 58,
+      "complexity": 1
+    },
+    {
+      "component_id": "label",
+      "health": 10.0,
+      "lines": 24,
+      "complexity": 1
+    },
+    {
+      "component_id": "chart",
+      "health": 10.0,
+      "lines": 353,
+      "complexity": 47
+    },
+    {
+      "component_id": "sidebar",
+      "health": 10.0,
+      "lines": 733,
+      "complexity": 42
+    },
+    {
+      "component_id": "tabs",
+      "health": 10.0,
+      "lines": 66,
+      "complexity": 1
+    },
+    {
+      "component_id": "BaseModal",
+      "health": 10.0,
+      "lines": 96,
+      "complexity": 9
+    },
+    {
+      "component_id": "switch",
+      "health": 10.0,
+      "lines": 31,
+      "complexity": 1
+    },
+    {
+      "component_id": "checkbox",
+      "health": 10.0,
+      "lines": 32,
+      "complexity": 1
+    },
+    {
+      "component_id": "context-menu",
+      "health": 10.0,
+      "lines": 252,
+      "complexity": 5
+    },
+    {
+      "component_id": "badge",
+      "health": 10.0,
+      "lines": 46,
+      "complexity": 3
+    },
+    {
+      "component_id": "CostProLoader",
+      "health": 10.0,
+      "lines": 128,
+      "complexity": 7
+    },
+    {
+      "component_id": "calendar",
+      "health": 10.0,
+      "lines": 213,
+      "complexity": 7
+    },
+    {
+      "component_id": "toaster",
+      "health": 10.0,
+      "lines": 35,
+      "complexity": 1
+    },
+    {
+      "component_id": "navigation-menu",
+      "health": 10.0,
+      "lines": 168,
+      "complexity": 2
+    },
+    {
+      "component_id": "ActionMenu",
+      "health": 10.0,
+      "lines": 201,
+      "complexity": 31
+    },
+    {
+      "component_id": "ProductImage",
+      "health": 10.0,
+      "lines": 119,
+      "complexity": 18
+    },
+    {
+      "component_id": "toast",
+      "health": 10.0,
+      "lines": 129,
+      "complexity": 1
+    },
+    {
+      "component_id": "FloatingCalculator",
+      "health": 10.0,
+      "lines": 283,
+      "complexity": 25
+    },
+    {
+      "component_id": "ScrollToTop",
+      "health": 10.0,
+      "lines": 52,
+      "complexity": 2
+    },
+    {
+      "component_id": "button",
+      "health": 10.0,
+      "lines": 59,
+      "complexity": 3
+    },
+    {
+      "component_id": "avatar",
+      "health": 10.0,
+      "lines": 53,
+      "complexity": 1
+    },
+    {
+      "component_id": "dialog",
+      "health": 10.0,
+      "lines": 144,
+      "complexity": 2
+    },
+    {
+      "component_id": "SecurityScrollContainer",
+      "health": 10.0,
+      "lines": 32,
+      "complexity": 3
+    },
+    {
+      "component_id": "breadcrumb",
+      "health": 10.0,
+      "lines": 109,
+      "complexity": 5
+    },
+    {
+      "component_id": "form",
+      "health": 10.0,
+      "lines": 167,
+      "complexity": 8
+    },
+    {
+      "component_id": "slider",
+      "health": 10.0,
+      "lines": 63,
+      "complexity": 3
+    },
+    {
+      "component_id": "menubar",
+      "health": 10.0,
+      "lines": 276,
+      "complexity": 5
+    },
+    {
+      "component_id": "tooltip",
+      "health": 10.0,
+      "lines": 61,
+      "complexity": 1
+    },
+    {
+      "component_id": "SpeedDial",
+      "health": 10.0,
+      "lines": 103,
+      "complexity": 9
+    },
+    {
+      "component_id": "ChatBot",
+      "health": 10.0,
+      "lines": 408,
+      "complexity": 38
+    },
+    {
+      "component_id": "aspect-ratio",
+      "health": 10.0,
+      "lines": 11,
+      "complexity": 1
+    },
+    {
+      "component_id": "carousel",
+      "health": 10.0,
+      "lines": 241,
+      "complexity": 21
+    },
+    {
+      "component_id": "card",
+      "health": 10.0,
+      "lines": 92,
+      "complexity": 1
+    },
+    {
+      "component_id": "sheet",
+      "health": 10.0,
+      "lines": 139,
+      "complexity": 2
+    },
+    {
+      "component_id": "drawer",
+      "health": 10.0,
+      "lines": 135,
+      "complexity": 1
+    },
+    {
+      "component_id": "input",
+      "health": 10.0,
+      "lines": 21,
+      "complexity": 1
+    },
+    {
+      "component_id": "HorizontalScroll",
+      "health": 10.0,
+      "lines": 34,
+      "complexity": 4
+    },
+    {
+      "component_id": "collapsible",
+      "health": 10.0,
+      "lines": 33,
+      "complexity": 1
+    },
+    {
+      "component_id": "SyncStatusBadge",
+      "health": 10.0,
+      "lines": 75,
+      "complexity": 7
+    },
+    {
+      "component_id": "radio-group",
+      "health": 10.0,
+      "lines": 45,
+      "complexity": 1
+    },
+    {
+      "component_id": "index",
+      "health": 10.0,
+      "lines": 390,
+      "complexity": 42
+    },
+    {
+      "component_id": "RegisterForm",
+      "health": 10.0,
+      "lines": 179,
+      "complexity": 7
+    },
+    {
+      "component_id": "LoginForm",
+      "health": 10.0,
+      "lines": 241,
+      "complexity": 16
+    },
+    {
+      "component_id": "WelcomeLandingView",
+      "health": 10.0,
+      "lines": 423,
+      "complexity": 8
+    },
+    {
+      "component_id": "SpeedScaleDiagram",
+      "health": 10.0,
+      "lines": 133,
+      "complexity": 4
+    },
+    {
+      "component_id": "AutomationWorkflowDiagram",
+      "health": 10.0,
+      "lines": 150,
+      "complexity": 1
+    },
+    {
+      "component_id": "bot-service.test",
+      "health": 10.0,
+      "lines": 69,
+      "complexity": 2
+    },
+    {
+      "component_id": "store-service",
+      "health": 10.0,
+      "lines": 68,
+      "complexity": 7
+    },
+    {
+      "component_id": "export-service",
+      "health": 10.0,
+      "lines": 135,
+      "complexity": 11
+    },
+    {
+      "component_id": "usage-service",
+      "health": 10.0,
+      "lines": 61,
+      "complexity": 10
+    },
+    {
+      "component_id": "cash-service",
+      "health": 10.0,
+      "lines": 53,
+      "complexity": 6
+    },
+    {
+      "component_id": "transfer-service",
+      "health": 10.0,
+      "lines": 91,
+      "complexity": 10
+    },
+    {
+      "component_id": "excel-service",
+      "health": 10.0,
+      "lines": 319,
+      "complexity": 19
+    },
+    {
+      "component_id": "bot-service",
+      "health": 10.0,
+      "lines": 223,
+      "complexity": 42
+    },
+    {
+      "component_id": "report-service",
+      "health": 10.0,
+      "lines": 194,
+      "complexity": 46
+    },
+    {
+      "component_id": "import-service",
+      "health": 10.0,
+      "lines": 85,
+      "complexity": 6
+    },
+    {
+      "component_id": "matching-log-service",
+      "health": 10.0,
+      "lines": 99,
+      "complexity": 8
+    },
+    {
+      "component_id": "rss-service",
+      "health": 10.0,
+      "lines": 105,
+      "complexity": 9
+    },
+    {
+      "component_id": "user-service",
+      "health": 10.0,
+      "lines": 144,
+      "complexity": 18
+    },
+    {
+      "component_id": "audit-service",
+      "health": 10.0,
+      "lines": 52,
+      "complexity": 6
+    },
+    {
+      "component_id": "catalog-service",
+      "health": 10.0,
+      "lines": 123,
+      "complexity": 9
+    },
+    {
+      "component_id": "matching-log-service",
+      "health": 10.0,
+      "lines": 6,
+      "complexity": 1
+    },
+    {
+      "component_id": "useSync",
+      "health": 10.0,
+      "lines": 160,
+      "complexity": 16
+    },
+    {
+      "component_id": "useCostSheetCalculator",
+      "health": 10.0,
+      "lines": 527,
+      "complexity": 145
+    },
+    {
+      "component_id": "usePOSProducts",
+      "health": 10.0,
+      "lines": 44,
+      "complexity": 3
+    },
+    {
+      "component_id": "useSessionManager",
+      "health": 10.0,
+      "lines": 167,
+      "complexity": 21
+    },
+    {
+      "component_id": "useCostEngine",
+      "health": 10.0,
+      "lines": 71,
+      "complexity": 6
+    },
+    {
+      "component_id": "useTransfers",
+      "health": 10.0,
+      "lines": 73,
+      "complexity": 6
+    },
+    {
+      "component_id": "useDocumentActions",
+      "health": 10.0,
+      "lines": 165,
+      "complexity": 29
+    },
+    {
+      "component_id": "useCostSheets",
+      "health": 10.0,
+      "lines": 17,
+      "complexity": 2
+    },
+    {
+      "component_id": "useTaxes",
+      "health": 10.0,
+      "lines": 31,
+      "complexity": 3
+    },
+    {
+      "component_id": "useProducts",
+      "health": 10.0,
+      "lines": 236,
+      "complexity": 6
+    },
+    {
+      "component_id": "useTransactions",
+      "health": 10.0,
+      "lines": 107,
+      "complexity": 9
+    },
+    {
+      "component_id": "useStockMovements",
+      "health": 10.0,
+      "lines": 33,
+      "complexity": 3
+    },
+    {
+      "component_id": "useCashClosures",
+      "health": 10.0,
+      "lines": 62,
+      "complexity": 5
+    },
+    {
+      "component_id": "useStores",
+      "health": 10.0,
+      "lines": 47,
+      "complexity": 4
+    },
+    {
+      "component_id": "useDashboard",
+      "health": 10.0,
+      "lines": 176,
+      "complexity": 21
+    },
+    {
+      "component_id": "useUsers",
+      "health": 10.0,
+      "lines": 202,
+      "complexity": 20
+    },
+    {
+      "component_id": "useInventory",
+      "health": 10.0,
+      "lines": 140,
+      "complexity": 11
+    },
+    {
+      "component_id": "useRoles",
+      "health": 10.0,
+      "lines": 81,
+      "complexity": 4
+    },
+    {
+      "component_id": "hooks.test",
+      "health": 10.0,
+      "lines": 60,
+      "complexity": 6
+    },
+    {
+      "component_id": "useAuditLogs",
+      "health": 10.0,
+      "lines": 121,
+      "complexity": 13
+    },
+    {
+      "component_id": "base",
+      "health": 10.0,
+      "lines": 86,
+      "complexity": 16
+    },
+    {
+      "component_id": "useReceptions",
+      "health": 10.0,
+      "lines": 60,
+      "complexity": 8
+    },
+    {
+      "component_id": "useRSS",
+      "health": 10.0,
+      "lines": 70,
+      "complexity": 1
+    },
+    {
+      "component_id": "usePWA",
+      "health": 10.0,
+      "lines": 69,
+      "complexity": 5
+    },
+    {
+      "component_id": "useTerminalNavigation",
+      "health": 10.0,
+      "lines": 100,
+      "complexity": 6
+    },
+    {
+      "component_id": "useCatalogModals",
+      "health": 10.0,
+      "lines": 46,
+      "complexity": 1
+    },
+    {
+      "component_id": "useMobile",
+      "health": 10.0,
+      "lines": 24,
+      "complexity": 2
+    },
+    {
+      "component_id": "useDebounce",
+      "health": 10.0,
+      "lines": 27,
+      "complexity": 4
+    },
+    {
+      "component_id": "useToast",
+      "health": 10.0,
+      "lines": 195,
+      "complexity": 19
+    },
+    {
+      "component_id": "usePWA.test",
+      "health": 10.0,
+      "lines": 93,
+      "complexity": 5
+    },
+    {
+      "component_id": "useCostSheetCalculator.test",
+      "health": 10.0,
+      "lines": 66,
+      "complexity": 1
+    },
+    {
+      "component_id": "templates_verification.test",
+      "health": 10.0,
+      "lines": 64,
+      "complexity": 2
+    },
+    {
+      "component_id": "cart",
+      "health": 10.0,
+      "lines": 296,
+      "complexity": 27
+    },
+    {
+      "component_id": "session-store",
+      "health": 10.0,
+      "lines": 36,
+      "complexity": 7
+    },
+    {
+      "component_id": "cost-sheet-store",
+      "health": 10.0,
+      "lines": 333,
+      "complexity": 69
+    },
+    {
+      "component_id": "index",
+      "health": 10.0,
+      "lines": 103,
+      "complexity": 5
+    },
+    {
+      "component_id": "useAcademyStore",
+      "health": 10.0,
+      "lines": 122,
+      "complexity": 13
+    },
+    {
+      "component_id": "session-store.test",
+      "health": 10.0,
+      "lines": 80,
+      "complexity": 3
+    },
+    {
+      "component_id": "cart.test",
+      "health": 10.0,
+      "lines": 110,
+      "complexity": 2
+    },
+    {
+      "component_id": "auth.test",
+      "health": 10.0,
+      "lines": 35,
+      "complexity": 2
+    },
+    {
+      "component_id": "cart_advanced.test",
+      "health": 10.0,
+      "lines": 124,
+      "complexity": 1
+    },
+    {
+      "component_id": "cost-sheet-store.test",
+      "health": 10.0,
+      "lines": 33,
+      "complexity": 2
+    },
+    {
+      "component_id": "db",
+      "health": 10.0,
+      "lines": 15,
+      "complexity": 5
+    },
+    {
+      "component_id": "dexie",
+      "health": 10.0,
+      "lines": 259,
+      "complexity": 41
+    },
+    {
+      "component_id": "inventory-logic",
+      "health": 10.0,
+      "lines": 80,
+      "complexity": 10
+    },
+    {
+      "component_id": "supabaseClient",
+      "health": 10.0,
+      "lines": 37,
+      "complexity": 4
+    },
+    {
+      "component_id": "rpc-validator",
+      "health": 10.0,
+      "lines": 105,
+      "complexity": 12
+    },
+    {
+      "component_id": "auth",
+      "health": 10.0,
+      "lines": 35,
+      "complexity": 7
+    },
+    {
+      "component_id": "query-inspector-utils",
+      "health": 10.0,
+      "lines": 115,
+      "complexity": 20
+    },
+    {
+      "component_id": "plan-utils",
+      "health": 10.0,
+      "lines": 14,
+      "complexity": 3
+    },
+    {
+      "component_id": "logger",
+      "health": 10.0,
+      "lines": 43,
+      "complexity": 6
+    },
+    {
+      "component_id": "theme.test",
+      "health": 10.0,
+      "lines": 22,
+      "complexity": 1
+    },
+    {
+      "component_id": "utils",
+      "health": 10.0,
+      "lines": 149,
+      "complexity": 16
+    },
+    {
+      "component_id": "errorHandler",
+      "health": 10.0,
+      "lines": 22,
+      "complexity": 4
+    },
+    {
+      "component_id": "navigation",
+      "health": 10.0,
+      "lines": 27,
+      "complexity": 5
+    },
+    {
+      "component_id": "roles",
+      "health": 10.0,
+      "lines": 55,
+      "complexity": 20
+    },
+    {
+      "component_id": "parser",
+      "health": 10.0,
+      "lines": 416,
+      "complexity": 83
+    },
+    {
+      "component_id": "types",
+      "health": 10.0,
+      "lines": 53,
+      "complexity": 6
+    },
+    {
+      "component_id": "parser.test",
+      "health": 10.0,
+      "lines": 48,
+      "complexity": 1
+    },
+    {
+      "component_id": "user-json.test",
+      "health": 10.0,
+      "lines": 136,
+      "complexity": 7
+    },
+    {
+      "component_id": "heuristic.test",
+      "health": 10.0,
+      "lines": 70,
+      "complexity": 2
+    },
+    {
+      "component_id": "bidirectional.test",
+      "health": 10.0,
+      "lines": 112,
+      "complexity": 6
+    },
+    {
+      "component_id": "formula-utils",
+      "health": 10.0,
+      "lines": 76,
+      "complexity": 8
+    },
+    {
+      "component_id": "index",
+      "health": 10.0,
+      "lines": 864,
+      "complexity": 177
+    },
+    {
+      "component_id": "accuracy.test",
+      "health": 10.0,
+      "lines": 114,
+      "complexity": 7
+    },
+    {
+      "component_id": "types",
+      "health": 10.0,
+      "lines": 103,
+      "complexity": 35
+    },
+    {
+      "component_id": "validations",
+      "health": 10.0,
+      "lines": 462,
+      "complexity": 101
+    },
+    {
+      "component_id": "smart-annex.test",
+      "health": 10.0,
+      "lines": 90,
+      "complexity": 6
+    },
+    {
+      "component_id": "topo-sort.test",
+      "health": 10.0,
+      "lines": 89,
+      "complexity": 6
+    },
+    {
+      "component_id": "index.test",
+      "health": 10.0,
+      "lines": 203,
+      "complexity": 14
+    },
+    {
+      "component_id": "schemas",
+      "health": 10.0,
+      "lines": 68,
+      "complexity": 1
+    },
+    {
+      "component_id": "pdf-export",
+      "health": 10.0,
+      "lines": 37,
+      "complexity": 2
+    },
+    {
+      "component_id": "number-to-words-es",
+      "health": 10.0,
+      "lines": 54,
+      "complexity": 14
+    },
+    {
+      "component_id": "health-engine",
+      "health": 10.0,
+      "lines": 174,
+      "complexity": 22
+    },
+    {
+      "component_id": "health-alerts",
+      "health": 10.0,
+      "lines": 22,
+      "complexity": 4
+    },
+    {
+      "component_id": "system-health",
+      "health": 10.0,
+      "lines": 41,
+      "complexity": 9
+    },
+    {
+      "component_id": "system-health.test",
+      "health": 10.0,
+      "lines": 38,
+      "complexity": 1
+    },
+    {
+      "component_id": "health-engine.test",
+      "health": 10.0,
+      "lines": 37,
+      "complexity": 2
+    },
+    {
+      "component_id": "sm2",
+      "health": 10.0,
+      "lines": 43,
+      "complexity": 5
+    },
+    {
+      "component_id": "sm2.test",
+      "health": 10.0,
+      "lines": 34,
+      "complexity": 2
+    },
+    {
+      "component_id": "ReleaseGatePdfExporter",
+      "health": 10.0,
+      "lines": 117,
+      "complexity": 36
+    },
+    {
+      "component_id": "mri-engine",
+      "health": 10.0,
+      "lines": 106,
+      "complexity": 6
+    },
+    {
+      "component_id": "mri-engine.test",
+      "health": 10.0,
+      "lines": 22,
+      "complexity": 3
+    },
+    {
+      "component_id": "template-repair",
+      "health": 10.0,
+      "lines": 270,
+      "complexity": 1
+    },
+    {
+      "component_id": "demo-products",
+      "health": 10.0,
+      "lines": 13,
+      "complexity": 2
+    },
+    {
+      "component_id": "costpro-ejemplo",
+      "health": 10.0,
+      "lines": 506,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-industrial",
+      "health": 10.0,
+      "lines": 318,
+      "complexity": 1
+    },
+    {
+      "component_id": "costpro-reinicio",
+      "health": 10.0,
+      "lines": 569,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-consultancy",
+      "health": 10.0,
+      "lines": 271,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-logistics",
+      "health": 10.0,
+      "lines": 294,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-lavar",
+      "health": 10.0,
+      "lines": 723,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-pastry",
+      "health": 10.0,
+      "lines": 282,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-icecream",
+      "health": 10.0,
+      "lines": 285,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-juice",
+      "health": 10.0,
+      "lines": 295,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-shoes",
+      "health": 10.0,
+      "lines": 286,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-pizza",
+      "health": 10.0,
+      "lines": 270,
+      "complexity": 1
+    },
+    {
+      "component_id": "template-furniture",
+      "health": 10.0,
+      "lines": 298,
+      "complexity": 1
+    },
+    {
+      "component_id": "intelligence",
+      "health": 10.0,
+      "lines": 88,
+      "complexity": 17
+    },
+    {
+      "component_id": "calculations",
+      "health": 10.0,
+      "lines": 176,
+      "complexity": 11
+    },
+    {
+      "component_id": "importUtils",
+      "health": 10.0,
+      "lines": 59,
+      "complexity": 12
+    },
+    {
+      "component_id": "backup",
+      "health": 10.0,
+      "lines": 55,
+      "complexity": 5
+    },
+    {
+      "component_id": "matching.worker",
+      "health": 10.0,
+      "lines": 21,
+      "complexity": 2
+    },
+    {
+      "component_id": "bandecParser",
+      "health": 10.0,
+      "lines": 104,
+      "complexity": 15
+    },
+    {
+      "component_id": "engine",
+      "health": 10.0,
+      "lines": 733,
+      "complexity": 140
+    },
+    {
+      "component_id": "parser",
+      "health": 10.0,
+      "lines": 69,
+      "complexity": 19
+    },
+    {
+      "component_id": "utils",
+      "health": 10.0,
+      "lines": 172,
+      "complexity": 36
+    },
+    {
+      "component_id": "global_goal_priority.test",
+      "health": 10.0,
+      "lines": 41,
+      "complexity": 3
+    },
+    {
+      "component_id": "calculations.test",
+      "health": 10.0,
+      "lines": 47,
+      "complexity": 1
+    },
+    {
+      "component_id": "bandecParser.test",
+      "health": 10.0,
+      "lines": 39,
+      "complexity": 1
+    },
+    {
+      "component_id": "repro_issue.test",
+      "health": 10.0,
+      "lines": 87,
+      "complexity": 2
+    },
+    {
+      "component_id": "advanced_engine.test",
+      "health": 10.0,
+      "lines": 71,
+      "complexity": 2
+    },
+    {
+      "component_id": "bigbon_simulation.test",
+      "health": 10.0,
+      "lines": 112,
+      "complexity": 11
+    },
+    {
+      "component_id": "engine.test",
+      "health": 10.0,
+      "lines": 174,
+      "complexity": 1
+    },
+    {
+      "component_id": "orchestrator",
+      "health": 10.0,
+      "lines": 167,
+      "complexity": 32
+    },
+    {
+      "component_id": "types",
+      "health": 10.0,
+      "lines": 60,
+      "complexity": 18
+    },
+    {
+      "component_id": "qwen-adapter",
+      "health": 10.0,
+      "lines": 56,
+      "complexity": 10
+    },
+    {
+      "component_id": "openai-compatible-adapter",
+      "health": 10.0,
+      "lines": 55,
+      "complexity": 13
+    },
+    {
+      "component_id": "fallback-adapter",
+      "health": 10.0,
+      "lines": 38,
+      "complexity": 4
+    },
+    {
+      "component_id": "deepseek-adapter",
+      "health": 10.0,
+      "lines": 7,
+      "complexity": 1
+    },
+    {
+      "component_id": "gemini-adapter.test",
+      "health": 10.0,
+      "lines": 47,
+      "complexity": 1
+    },
+    {
+      "component_id": "gemini-adapter",
+      "health": 10.0,
+      "lines": 158,
+      "complexity": 39
+    },
+    {
+      "component_id": "kimi-adapter",
+      "health": 10.0,
+      "lines": 7,
+      "complexity": 1
+    },
+    {
+      "component_id": "gpt-adapter",
+      "health": 10.0,
+      "lines": 7,
+      "complexity": 1
+    },
+    {
+      "component_id": "definitions",
+      "health": 10.0,
+      "lines": 118,
+      "complexity": 1
+    },
+    {
+      "component_id": "registry",
+      "health": 10.0,
+      "lines": 175,
+      "complexity": 14
+    },
+    {
+      "component_id": "registry.test",
+      "health": 10.0,
+      "lines": 47,
+      "complexity": 1
+    },
+    {
+      "component_id": "offline-storage",
+      "health": 10.0,
+      "lines": 123,
+      "complexity": 7
     }
-  }
+  ]
 }

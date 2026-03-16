@@ -1,0 +1,7434 @@
+{
+  "nodes": [
+    {
+      "id": "IntelligentThemeHandler",
+      "group": "component"
+    },
+    {
+      "id": "GlobalSessionManager",
+      "group": "component"
+    },
+    {
+      "id": "theme-provider",
+      "group": "component"
+    },
+    {
+      "id": "SplashScreen",
+      "group": "component"
+    },
+    {
+      "id": "ThemeToggle",
+      "group": "component"
+    },
+    {
+      "id": "CostProLogo",
+      "group": "component"
+    },
+    {
+      "id": "ServiceWorkerRegister",
+      "group": "component"
+    },
+    {
+      "id": "SyncConflictModal",
+      "group": "component"
+    },
+    {
+      "id": "CreateProductModal",
+      "group": "component"
+    },
+    {
+      "id": "BarcodeScanner",
+      "group": "component"
+    },
+    {
+      "id": "UpgradeModal",
+      "group": "component"
+    },
+    {
+      "id": "PriceSelectorModal",
+      "group": "component"
+    },
+    {
+      "id": "SyncProvider",
+      "group": "component"
+    },
+    {
+      "id": "QueryProvider",
+      "group": "component"
+    },
+    {
+      "id": "TerminalShell",
+      "group": "component"
+    },
+    {
+      "id": "ExecutiveDemoView",
+      "group": "view"
+    },
+    {
+      "id": "Sidebar",
+      "group": "component"
+    },
+    {
+      "id": "Header",
+      "group": "component"
+    },
+    {
+      "id": "SystemDependencyGraph",
+      "group": "component"
+    },
+    {
+      "id": "AuditSummary",
+      "group": "component"
+    },
+    {
+      "id": "SecurityMetrics",
+      "group": "component"
+    },
+    {
+      "id": "HealthStatusHeader",
+      "group": "component"
+    },
+    {
+      "id": "SystemHealthView",
+      "group": "view"
+    },
+    {
+      "id": "ArchitectureAuditTable",
+      "group": "component"
+    },
+    {
+      "id": "ReleaseGateStatus",
+      "group": "component"
+    },
+    {
+      "id": "ViewNavigator",
+      "group": "component"
+    },
+    {
+      "id": "HealthAgentLogs",
+      "group": "component"
+    },
+    {
+      "id": "DetailedRelationshipGraph",
+      "group": "component"
+    },
+    {
+      "id": "InfrastructureMetrics",
+      "group": "component"
+    },
+    {
+      "id": "ApplicationMetrics",
+      "group": "component"
+    },
+    {
+      "id": "WalletView",
+      "group": "view"
+    },
+    {
+      "id": "AnalyticsDashboard",
+      "group": "component"
+    },
+    {
+      "id": "CatalogModals",
+      "group": "component"
+    },
+    {
+      "id": "CatalogView",
+      "group": "view"
+    },
+    {
+      "id": "SettingsView",
+      "group": "view"
+    },
+    {
+      "id": "DashboardView",
+      "group": "view"
+    },
+    {
+      "id": "useDashboardView",
+      "group": "component"
+    },
+    {
+      "id": "ConcentricDashboardRing",
+      "group": "component"
+    },
+    {
+      "id": "ExecutiveKpiCards",
+      "group": "component"
+    },
+    {
+      "id": "RecentCostSheets",
+      "group": "component"
+    },
+    {
+      "id": "ReportConfigPanel",
+      "group": "component"
+    },
+    {
+      "id": "ReportPreview",
+      "group": "component"
+    },
+    {
+      "id": "ReportsView",
+      "group": "view"
+    },
+    {
+      "id": "AuditLogsModal",
+      "group": "component"
+    },
+    {
+      "id": "StoresManagementView",
+      "group": "view"
+    },
+    {
+      "id": "useStoresView",
+      "group": "component"
+    },
+    {
+      "id": "StoreModals",
+      "group": "component"
+    },
+    {
+      "id": "MasteryDashboard",
+      "group": "component"
+    },
+    {
+      "id": "AcademyView",
+      "group": "view"
+    },
+    {
+      "id": "Flashcard",
+      "group": "component"
+    },
+    {
+      "id": "CreateTransferModal",
+      "group": "component"
+    },
+    {
+      "id": "TransferenciasView",
+      "group": "view"
+    },
+    {
+      "id": "TransferDetailsModal",
+      "group": "component"
+    },
+    {
+      "id": "HelpView",
+      "group": "view"
+    },
+    {
+      "id": "KidsOnboarding",
+      "group": "component"
+    },
+    {
+      "id": "StickyCartFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "StoreSkuDiagram.test",
+      "group": "component"
+    },
+    {
+      "id": "MobilePosDiagram",
+      "group": "component"
+    },
+    {
+      "id": "IpvFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "SecurityFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "UserFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "QuickModeMassiveDiagram",
+      "group": "component"
+    },
+    {
+      "id": "OfflineSyncDiagram.test",
+      "group": "component"
+    },
+    {
+      "id": "DarianDiagram.test",
+      "group": "component"
+    },
+    {
+      "id": "CostFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "RolesDiagram",
+      "group": "component"
+    },
+    {
+      "id": "OfflineSyncDiagram",
+      "group": "component"
+    },
+    {
+      "id": "InventoryFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "MobileFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "CashFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "InventoryAdjustmentFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "StoreSkuDiagram",
+      "group": "component"
+    },
+    {
+      "id": "DarianDiagram",
+      "group": "component"
+    },
+    {
+      "id": "SalesFlowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "InventoryCardView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryAdjustmentsView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryAdjustmentModal",
+      "group": "component"
+    },
+    {
+      "id": "ProductReceptionView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryTableView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryView",
+      "group": "view"
+    },
+    {
+      "id": "CashClosureView",
+      "group": "view"
+    },
+    {
+      "id": "TaxCalculationModal",
+      "group": "component"
+    },
+    {
+      "id": "SalesHistoryView",
+      "group": "view"
+    },
+    {
+      "id": "TransactionDetailsModal",
+      "group": "component"
+    },
+    {
+      "id": "useSalesHistoryView",
+      "group": "component"
+    },
+    {
+      "id": "ReceptionDetailsModal",
+      "group": "component"
+    },
+    {
+      "id": "ReceptionsHistoryView",
+      "group": "view"
+    },
+    {
+      "id": "useReceptionsHistoryView",
+      "group": "component"
+    },
+    {
+      "id": "StockHistoryView",
+      "group": "view"
+    },
+    {
+      "id": "IPVView",
+      "group": "view"
+    },
+    {
+      "id": "IPVRightSidebar",
+      "group": "component"
+    },
+    {
+      "id": "TransactionBreakdown",
+      "group": "component"
+    },
+    {
+      "id": "ActionBadges",
+      "group": "component"
+    },
+    {
+      "id": "TransactionTable",
+      "group": "component"
+    },
+    {
+      "id": "AddTransactionModal",
+      "group": "component"
+    },
+    {
+      "id": "IncomeReceiptPreview",
+      "group": "component"
+    },
+    {
+      "id": "MovementsView",
+      "group": "view"
+    },
+    {
+      "id": "IncomeReceiptSection",
+      "group": "component"
+    },
+    {
+      "id": "IPVPreviewModal",
+      "group": "component"
+    },
+    {
+      "id": "MatchingTracePopover",
+      "group": "component"
+    },
+    {
+      "id": "IPVReportView",
+      "group": "view"
+    },
+    {
+      "id": "MatchingAuditView",
+      "group": "view"
+    },
+    {
+      "id": "IngestionErrorsTable",
+      "group": "component"
+    },
+    {
+      "id": "TransferQRReportView",
+      "group": "view"
+    },
+    {
+      "id": "ManualReconciliationView",
+      "group": "view"
+    },
+    {
+      "id": "MatchingRulesEditor",
+      "group": "component"
+    },
+    {
+      "id": "MatchingSimulation",
+      "group": "component"
+    },
+    {
+      "id": "RuleMetaEditor",
+      "group": "component"
+    },
+    {
+      "id": "IPVReportsDropdown",
+      "group": "component"
+    },
+    {
+      "id": "PivotStatementView",
+      "group": "view"
+    },
+    {
+      "id": "BankIngestion",
+      "group": "component"
+    },
+    {
+      "id": "IPVInstitutionalDashboard",
+      "group": "component"
+    },
+    {
+      "id": "CatalogTable",
+      "group": "component"
+    },
+    {
+      "id": "IPVHelpDialog",
+      "group": "component"
+    },
+    {
+      "id": "IPVControlPanel",
+      "group": "component"
+    },
+    {
+      "id": "InventoryCountTableView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryCountCardView",
+      "group": "view"
+    },
+    {
+      "id": "InventoryCountView",
+      "group": "view"
+    },
+    {
+      "id": "data-loader",
+      "group": "component"
+    },
+    {
+      "id": "CuentasModule",
+      "group": "component"
+    },
+    {
+      "id": "AsientosModule",
+      "group": "component"
+    },
+    {
+      "id": "WikiBreadcrumbs",
+      "group": "component"
+    },
+    {
+      "id": "WikiSearch",
+      "group": "component"
+    },
+    {
+      "id": "types",
+      "group": "component"
+    },
+    {
+      "id": "WikiView",
+      "group": "view"
+    },
+    {
+      "id": "WikiSidebar",
+      "group": "component"
+    },
+    {
+      "id": "ClasificadorModule",
+      "group": "component"
+    },
+    {
+      "id": "POSTableView",
+      "group": "view"
+    },
+    {
+      "id": "usePOSView",
+      "group": "component"
+    },
+    {
+      "id": "POSView",
+      "group": "view"
+    },
+    {
+      "id": "POSCart",
+      "group": "component"
+    },
+    {
+      "id": "StickyCartSummary",
+      "group": "component"
+    },
+    {
+      "id": "AuditEventIcon",
+      "group": "component"
+    },
+    {
+      "id": "audit.test",
+      "group": "component"
+    },
+    {
+      "id": "AuditFilters",
+      "group": "component"
+    },
+    {
+      "id": "AuditEventMeta.test",
+      "group": "component"
+    },
+    {
+      "id": "AuditTableView",
+      "group": "view"
+    },
+    {
+      "id": "AuditTableView.test",
+      "group": "component"
+    },
+    {
+      "id": "AuditTimeline",
+      "group": "component"
+    },
+    {
+      "id": "AuditLogsView.test",
+      "group": "component"
+    },
+    {
+      "id": "useAuditLogsView",
+      "group": "component"
+    },
+    {
+      "id": "AuditEventCard",
+      "group": "component"
+    },
+    {
+      "id": "AuditEventMeta",
+      "group": "component"
+    },
+    {
+      "id": "AuditLogsView",
+      "group": "view"
+    },
+    {
+      "id": "CostSheetAuditView",
+      "group": "view"
+    },
+    {
+      "id": "CostSheetSidebarNav",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetFormulaGuide",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetGenerateDropdown",
+      "group": "component"
+    },
+    {
+      "id": "FormulaEditor",
+      "group": "component"
+    },
+    {
+      "id": "CircularProgress",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetCalculator",
+      "group": "component"
+    },
+    {
+      "id": "ProductInventoryPicker",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetBanner",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetAuditLog",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetMasterRing",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetActionsPanel",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetView",
+      "group": "view"
+    },
+    {
+      "id": "CostSheetAnnexes",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetHelpDropdown",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetSummary",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetNav",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetOptionsDropdown",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetHeader",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetQuickMode",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetBottomNav",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetNarrative",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetSignature",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetExportModal",
+      "group": "component"
+    },
+    {
+      "id": "HealthBattery",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetTemplateExplorer",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetForm",
+      "group": "component"
+    },
+    {
+      "id": "FormulaBuilder",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetCardView",
+      "group": "view"
+    },
+    {
+      "id": "CostSheetMassiveGenerator",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetSidePanel",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetBody",
+      "group": "component"
+    },
+    {
+      "id": "DarianEditor",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetHeaderEditor",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetFCDropdown",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetWizard",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetInteractiveTable",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetAnnexEditor",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetSectionActionsPanel",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetPreview",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetSignatureEditor",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetModeDropdown",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetHelpPanel",
+      "group": "component"
+    },
+    {
+      "id": "CostSheetTemplateExplorer.test",
+      "group": "component"
+    },
+    {
+      "id": "UserFormModal",
+      "group": "component"
+    },
+    {
+      "id": "useUsersView",
+      "group": "component"
+    },
+    {
+      "id": "UsersManagementView",
+      "group": "view"
+    },
+    {
+      "id": "RoleForm",
+      "group": "component"
+    },
+    {
+      "id": "RolesManagementView",
+      "group": "view"
+    },
+    {
+      "id": "UserForm",
+      "group": "component"
+    },
+    {
+      "id": "RSSManagementView",
+      "group": "view"
+    },
+    {
+      "id": "NewsView",
+      "group": "view"
+    },
+    {
+      "id": "LegalView.test",
+      "group": "component"
+    },
+    {
+      "id": "LegalPdfExporter",
+      "group": "component"
+    },
+    {
+      "id": "LegalModelForm",
+      "group": "component"
+    },
+    {
+      "id": "LegalConsultant",
+      "group": "component"
+    },
+    {
+      "id": "LegalView",
+      "group": "view"
+    },
+    {
+      "id": "skeleton",
+      "group": "component"
+    },
+    {
+      "id": "DataDecryption",
+      "group": "component"
+    },
+    {
+      "id": "accordion",
+      "group": "component"
+    },
+    {
+      "id": "ViewSwitcher",
+      "group": "component"
+    },
+    {
+      "id": "hover-card",
+      "group": "component"
+    },
+    {
+      "id": "LazyRender",
+      "group": "component"
+    },
+    {
+      "id": "command",
+      "group": "component"
+    },
+    {
+      "id": "resizable",
+      "group": "component"
+    },
+    {
+      "id": "QueryInspector",
+      "group": "component"
+    },
+    {
+      "id": "SearchBar",
+      "group": "component"
+    },
+    {
+      "id": "dropdown-menu",
+      "group": "component"
+    },
+    {
+      "id": "separator",
+      "group": "component"
+    },
+    {
+      "id": "MobileSafeContainer",
+      "group": "component"
+    },
+    {
+      "id": "pagination",
+      "group": "component"
+    },
+    {
+      "id": "alert-dialog",
+      "group": "component"
+    },
+    {
+      "id": "input-otp",
+      "group": "component"
+    },
+    {
+      "id": "alert",
+      "group": "component"
+    },
+    {
+      "id": "CyberShell",
+      "group": "component"
+    },
+    {
+      "id": "popover",
+      "group": "component"
+    },
+    {
+      "id": "table",
+      "group": "component"
+    },
+    {
+      "id": "progress",
+      "group": "component"
+    },
+    {
+      "id": "select",
+      "group": "component"
+    },
+    {
+      "id": "sonner",
+      "group": "component"
+    },
+    {
+      "id": "LoadingOverlay",
+      "group": "component"
+    },
+    {
+      "id": "textarea",
+      "group": "component"
+    },
+    {
+      "id": "PWAInstallModal",
+      "group": "component"
+    },
+    {
+      "id": "toggle",
+      "group": "component"
+    },
+    {
+      "id": "StateRenderer",
+      "group": "component"
+    },
+    {
+      "id": "Portal",
+      "group": "component"
+    },
+    {
+      "id": "toggle-group",
+      "group": "component"
+    },
+    {
+      "id": "scroll-area",
+      "group": "component"
+    },
+    {
+      "id": "label",
+      "group": "component"
+    },
+    {
+      "id": "chart",
+      "group": "component"
+    },
+    {
+      "id": "sidebar",
+      "group": "component"
+    },
+    {
+      "id": "tabs",
+      "group": "component"
+    },
+    {
+      "id": "BaseModal",
+      "group": "component"
+    },
+    {
+      "id": "switch",
+      "group": "component"
+    },
+    {
+      "id": "checkbox",
+      "group": "component"
+    },
+    {
+      "id": "context-menu",
+      "group": "component"
+    },
+    {
+      "id": "badge",
+      "group": "component"
+    },
+    {
+      "id": "CostProLoader",
+      "group": "component"
+    },
+    {
+      "id": "calendar",
+      "group": "component"
+    },
+    {
+      "id": "toaster",
+      "group": "component"
+    },
+    {
+      "id": "navigation-menu",
+      "group": "component"
+    },
+    {
+      "id": "ActionMenu",
+      "group": "component"
+    },
+    {
+      "id": "ProductImage",
+      "group": "component"
+    },
+    {
+      "id": "toast",
+      "group": "component"
+    },
+    {
+      "id": "FloatingCalculator",
+      "group": "component"
+    },
+    {
+      "id": "ScrollToTop",
+      "group": "component"
+    },
+    {
+      "id": "button",
+      "group": "component"
+    },
+    {
+      "id": "avatar",
+      "group": "component"
+    },
+    {
+      "id": "dialog",
+      "group": "component"
+    },
+    {
+      "id": "SecurityScrollContainer",
+      "group": "component"
+    },
+    {
+      "id": "breadcrumb",
+      "group": "component"
+    },
+    {
+      "id": "form",
+      "group": "component"
+    },
+    {
+      "id": "slider",
+      "group": "component"
+    },
+    {
+      "id": "menubar",
+      "group": "component"
+    },
+    {
+      "id": "tooltip",
+      "group": "component"
+    },
+    {
+      "id": "SpeedDial",
+      "group": "component"
+    },
+    {
+      "id": "ChatBot",
+      "group": "component"
+    },
+    {
+      "id": "aspect-ratio",
+      "group": "component"
+    },
+    {
+      "id": "carousel",
+      "group": "component"
+    },
+    {
+      "id": "card",
+      "group": "component"
+    },
+    {
+      "id": "sheet",
+      "group": "component"
+    },
+    {
+      "id": "drawer",
+      "group": "component"
+    },
+    {
+      "id": "input",
+      "group": "component"
+    },
+    {
+      "id": "HorizontalScroll",
+      "group": "component"
+    },
+    {
+      "id": "collapsible",
+      "group": "component"
+    },
+    {
+      "id": "SyncStatusBadge",
+      "group": "component"
+    },
+    {
+      "id": "radio-group",
+      "group": "component"
+    },
+    {
+      "id": "index",
+      "group": "component"
+    },
+    {
+      "id": "RegisterForm",
+      "group": "component"
+    },
+    {
+      "id": "LoginForm",
+      "group": "component"
+    },
+    {
+      "id": "WelcomeLandingView",
+      "group": "component"
+    },
+    {
+      "id": "SpeedScaleDiagram",
+      "group": "component"
+    },
+    {
+      "id": "AutomationWorkflowDiagram",
+      "group": "component"
+    },
+    {
+      "id": "bot-service.test",
+      "group": "service"
+    },
+    {
+      "id": "store-service",
+      "group": "service"
+    },
+    {
+      "id": "export-service",
+      "group": "service"
+    },
+    {
+      "id": "usage-service",
+      "group": "service"
+    },
+    {
+      "id": "cash-service",
+      "group": "service"
+    },
+    {
+      "id": "transfer-service",
+      "group": "service"
+    },
+    {
+      "id": "excel-service",
+      "group": "service"
+    },
+    {
+      "id": "bot-service",
+      "group": "service"
+    },
+    {
+      "id": "report-service",
+      "group": "service"
+    },
+    {
+      "id": "import-service",
+      "group": "service"
+    },
+    {
+      "id": "matching-log-service",
+      "group": "service"
+    },
+    {
+      "id": "rss-service",
+      "group": "service"
+    },
+    {
+      "id": "user-service",
+      "group": "service"
+    },
+    {
+      "id": "audit-service",
+      "group": "service"
+    },
+    {
+      "id": "catalog-service",
+      "group": "service"
+    },
+    {
+      "id": "matching-log-service",
+      "group": "service"
+    },
+    {
+      "id": "useSync",
+      "group": "hook"
+    },
+    {
+      "id": "useCostSheetCalculator",
+      "group": "hook"
+    },
+    {
+      "id": "usePOSProducts",
+      "group": "hook"
+    },
+    {
+      "id": "useSessionManager",
+      "group": "hook"
+    },
+    {
+      "id": "useCostEngine",
+      "group": "hook"
+    },
+    {
+      "id": "useTransfers",
+      "group": "hook"
+    },
+    {
+      "id": "useDocumentActions",
+      "group": "hook"
+    },
+    {
+      "id": "useCostSheets",
+      "group": "hook"
+    },
+    {
+      "id": "useTaxes",
+      "group": "hook"
+    },
+    {
+      "id": "useProducts",
+      "group": "hook"
+    },
+    {
+      "id": "useTransactions",
+      "group": "hook"
+    },
+    {
+      "id": "useStockMovements",
+      "group": "hook"
+    },
+    {
+      "id": "useCashClosures",
+      "group": "hook"
+    },
+    {
+      "id": "useStores",
+      "group": "hook"
+    },
+    {
+      "id": "useDashboard",
+      "group": "hook"
+    },
+    {
+      "id": "useUsers",
+      "group": "hook"
+    },
+    {
+      "id": "useInventory",
+      "group": "hook"
+    },
+    {
+      "id": "useRoles",
+      "group": "hook"
+    },
+    {
+      "id": "hooks.test",
+      "group": "hook"
+    },
+    {
+      "id": "useAuditLogs",
+      "group": "hook"
+    },
+    {
+      "id": "base",
+      "group": "hook"
+    },
+    {
+      "id": "useReceptions",
+      "group": "hook"
+    },
+    {
+      "id": "useRSS",
+      "group": "hook"
+    },
+    {
+      "id": "usePWA",
+      "group": "hook"
+    },
+    {
+      "id": "useTerminalNavigation",
+      "group": "hook"
+    },
+    {
+      "id": "useCatalogModals",
+      "group": "hook"
+    },
+    {
+      "id": "useMobile",
+      "group": "hook"
+    },
+    {
+      "id": "useDebounce",
+      "group": "hook"
+    },
+    {
+      "id": "useToast",
+      "group": "hook"
+    },
+    {
+      "id": "usePWA.test",
+      "group": "hook"
+    },
+    {
+      "id": "useCostSheetCalculator.test",
+      "group": "hook"
+    },
+    {
+      "id": "templates_verification.test",
+      "group": "hook"
+    },
+    {
+      "id": "cart",
+      "group": "unknown"
+    },
+    {
+      "id": "session-store",
+      "group": "unknown"
+    },
+    {
+      "id": "cost-sheet-store",
+      "group": "unknown"
+    },
+    {
+      "id": "index",
+      "group": "unknown"
+    },
+    {
+      "id": "useAcademyStore",
+      "group": "unknown"
+    },
+    {
+      "id": "session-store.test",
+      "group": "unknown"
+    },
+    {
+      "id": "cart.test",
+      "group": "unknown"
+    },
+    {
+      "id": "auth.test",
+      "group": "unknown"
+    },
+    {
+      "id": "cart_advanced.test",
+      "group": "unknown"
+    },
+    {
+      "id": "cost-sheet-store.test",
+      "group": "unknown"
+    },
+    {
+      "id": "db",
+      "group": "utility"
+    },
+    {
+      "id": "dexie",
+      "group": "utility"
+    },
+    {
+      "id": "inventory-logic",
+      "group": "utility"
+    },
+    {
+      "id": "supabaseClient",
+      "group": "utility"
+    },
+    {
+      "id": "rpc-validator",
+      "group": "utility"
+    },
+    {
+      "id": "auth",
+      "group": "utility"
+    },
+    {
+      "id": "query-inspector-utils",
+      "group": "utility"
+    },
+    {
+      "id": "plan-utils",
+      "group": "utility"
+    },
+    {
+      "id": "logger",
+      "group": "utility"
+    },
+    {
+      "id": "theme.test",
+      "group": "utility"
+    },
+    {
+      "id": "utils",
+      "group": "utility"
+    },
+    {
+      "id": "errorHandler",
+      "group": "utility"
+    },
+    {
+      "id": "navigation",
+      "group": "utility"
+    },
+    {
+      "id": "roles",
+      "group": "utility"
+    },
+    {
+      "id": "parser",
+      "group": "utility"
+    },
+    {
+      "id": "types",
+      "group": "utility"
+    },
+    {
+      "id": "parser.test",
+      "group": "utility"
+    },
+    {
+      "id": "user-json.test",
+      "group": "utility"
+    },
+    {
+      "id": "heuristic.test",
+      "group": "utility"
+    },
+    {
+      "id": "bidirectional.test",
+      "group": "utility"
+    },
+    {
+      "id": "formula-utils",
+      "group": "utility"
+    },
+    {
+      "id": "index",
+      "group": "utility"
+    },
+    {
+      "id": "accuracy.test",
+      "group": "utility"
+    },
+    {
+      "id": "types",
+      "group": "utility"
+    },
+    {
+      "id": "validations",
+      "group": "utility"
+    },
+    {
+      "id": "smart-annex.test",
+      "group": "utility"
+    },
+    {
+      "id": "topo-sort.test",
+      "group": "utility"
+    },
+    {
+      "id": "index.test",
+      "group": "utility"
+    },
+    {
+      "id": "schemas",
+      "group": "utility"
+    },
+    {
+      "id": "pdf-export",
+      "group": "utility"
+    },
+    {
+      "id": "number-to-words-es",
+      "group": "utility"
+    },
+    {
+      "id": "health-engine",
+      "group": "utility"
+    },
+    {
+      "id": "health-alerts",
+      "group": "utility"
+    },
+    {
+      "id": "system-health",
+      "group": "utility"
+    },
+    {
+      "id": "system-health.test",
+      "group": "utility"
+    },
+    {
+      "id": "health-engine.test",
+      "group": "utility"
+    },
+    {
+      "id": "sm2",
+      "group": "utility"
+    },
+    {
+      "id": "sm2.test",
+      "group": "utility"
+    },
+    {
+      "id": "ReleaseGatePdfExporter",
+      "group": "utility"
+    },
+    {
+      "id": "mri-engine",
+      "group": "utility"
+    },
+    {
+      "id": "mri-engine.test",
+      "group": "utility"
+    },
+    {
+      "id": "template-repair",
+      "group": "utility"
+    },
+    {
+      "id": "demo-products",
+      "group": "utility"
+    },
+    {
+      "id": "costpro-ejemplo",
+      "group": "utility"
+    },
+    {
+      "id": "template-industrial",
+      "group": "utility"
+    },
+    {
+      "id": "costpro-reinicio",
+      "group": "utility"
+    },
+    {
+      "id": "template-consultancy",
+      "group": "utility"
+    },
+    {
+      "id": "template-logistics",
+      "group": "utility"
+    },
+    {
+      "id": "template-lavar",
+      "group": "utility"
+    },
+    {
+      "id": "template-pastry",
+      "group": "utility"
+    },
+    {
+      "id": "template-icecream",
+      "group": "utility"
+    },
+    {
+      "id": "template-juice",
+      "group": "utility"
+    },
+    {
+      "id": "template-shoes",
+      "group": "utility"
+    },
+    {
+      "id": "template-pizza",
+      "group": "utility"
+    },
+    {
+      "id": "template-furniture",
+      "group": "utility"
+    },
+    {
+      "id": "intelligence",
+      "group": "utility"
+    },
+    {
+      "id": "calculations",
+      "group": "utility"
+    },
+    {
+      "id": "importUtils",
+      "group": "utility"
+    },
+    {
+      "id": "backup",
+      "group": "utility"
+    },
+    {
+      "id": "matching.worker",
+      "group": "utility"
+    },
+    {
+      "id": "bandecParser",
+      "group": "utility"
+    },
+    {
+      "id": "engine",
+      "group": "utility"
+    },
+    {
+      "id": "parser",
+      "group": "utility"
+    },
+    {
+      "id": "utils",
+      "group": "utility"
+    },
+    {
+      "id": "global_goal_priority.test",
+      "group": "utility"
+    },
+    {
+      "id": "calculations.test",
+      "group": "utility"
+    },
+    {
+      "id": "bandecParser.test",
+      "group": "utility"
+    },
+    {
+      "id": "repro_issue.test",
+      "group": "utility"
+    },
+    {
+      "id": "advanced_engine.test",
+      "group": "utility"
+    },
+    {
+      "id": "bigbon_simulation.test",
+      "group": "utility"
+    },
+    {
+      "id": "engine.test",
+      "group": "utility"
+    },
+    {
+      "id": "orchestrator",
+      "group": "utility"
+    },
+    {
+      "id": "types",
+      "group": "utility"
+    },
+    {
+      "id": "qwen-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "openai-compatible-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "fallback-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "deepseek-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "gemini-adapter.test",
+      "group": "utility"
+    },
+    {
+      "id": "gemini-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "kimi-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "gpt-adapter",
+      "group": "utility"
+    },
+    {
+      "id": "definitions",
+      "group": "utility"
+    },
+    {
+      "id": "registry",
+      "group": "utility"
+    },
+    {
+      "id": "registry.test",
+      "group": "utility"
+    },
+    {
+      "id": "offline-storage",
+      "group": "utility"
+    }
+  ],
+  "links": [
+    {
+      "source": "IntelligentThemeHandler",
+      "target": "store"
+    },
+    {
+      "source": "GlobalSessionManager",
+      "target": "useSessionManager"
+    },
+    {
+      "source": "GlobalSessionManager",
+      "target": "session-store"
+    },
+    {
+      "source": "SplashScreen",
+      "target": "CostProLogo"
+    },
+    {
+      "source": "ThemeToggle",
+      "target": "store"
+    },
+    {
+      "source": "ThemeToggle",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "ThemeToggle",
+      "target": "utils"
+    },
+    {
+      "source": "SyncConflictModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "SyncConflictModal",
+      "target": "atomic"
+    },
+    {
+      "source": "SyncConflictModal",
+      "target": "offline-storage"
+    },
+    {
+      "source": "SyncConflictModal",
+      "target": "SyncProvider"
+    },
+    {
+      "source": "CreateProductModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "CreateProductModal",
+      "target": "atomic"
+    },
+    {
+      "source": "CreateProductModal",
+      "target": "store"
+    },
+    {
+      "source": "CreateProductModal",
+      "target": "useProducts"
+    },
+    {
+      "source": "BarcodeScanner",
+      "target": "BaseModal"
+    },
+    {
+      "source": "BarcodeScanner",
+      "target": "atomic"
+    },
+    {
+      "source": "UpgradeModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "UpgradeModal",
+      "target": "button"
+    },
+    {
+      "source": "PriceSelectorModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "PriceSelectorModal",
+      "target": "atomic"
+    },
+    {
+      "source": "PriceSelectorModal",
+      "target": "utils"
+    },
+    {
+      "source": "PriceSelectorModal",
+      "target": "types"
+    },
+    {
+      "source": "SyncProvider",
+      "target": "useSync"
+    },
+    {
+      "source": "QueryProvider",
+      "target": "react-query"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "store"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "Sidebar"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "Header"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useTerminalNavigation"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useMobile"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "user-service"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "navigation"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "utils"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "react-query"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useStores"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useProducts"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useTransactions"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useDashboard"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useAuditLogs"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "useReceptions"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "FloatingCalculator"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "ChatBot"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "CreateProductModal"
+    },
+    {
+      "source": "TerminalShell",
+      "target": "MobileSafeContainer"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "button"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "progress"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "badge"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "card"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "demo-products"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "utils"
+    },
+    {
+      "source": "ExecutiveDemoView",
+      "target": "link"
+    },
+    {
+      "source": "Sidebar",
+      "target": "utils"
+    },
+    {
+      "source": "Sidebar",
+      "target": "CostProLogo"
+    },
+    {
+      "source": "Sidebar",
+      "target": "store"
+    },
+    {
+      "source": "Sidebar",
+      "target": "useTerminalNavigation"
+    },
+    {
+      "source": "Header",
+      "target": "utils"
+    },
+    {
+      "source": "Header",
+      "target": "ThemeToggle"
+    },
+    {
+      "source": "Header",
+      "target": "store"
+    },
+    {
+      "source": "Header",
+      "target": "user"
+    },
+    {
+      "source": "Header",
+      "target": "useTerminalNavigation"
+    },
+    {
+      "source": "Header",
+      "target": "SyncStatusBadge"
+    },
+    {
+      "source": "Header",
+      "target": "SyncConflictModal"
+    },
+    {
+      "source": "Header",
+      "target": "popover"
+    },
+    {
+      "source": "Header",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "AuditSummary",
+      "target": "useAuditLogs"
+    },
+    {
+      "source": "AuditSummary",
+      "target": "locale"
+    },
+    {
+      "source": "SecurityMetrics",
+      "target": "utils"
+    },
+    {
+      "source": "HealthStatusHeader",
+      "target": "utils"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "utils"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "HealthStatusHeader"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "InfrastructureMetrics"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "ApplicationMetrics"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "SecurityMetrics"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "ReleaseGateStatus"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "ReleaseGatePdfExporter"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "AuditSummary"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "ViewNavigator"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "ArchitectureAuditTable"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "HealthAgentLogs"
+    },
+    {
+      "source": "SystemHealthView",
+      "target": "accordion"
+    },
+    {
+      "source": "ArchitectureAuditTable",
+      "target": "input"
+    },
+    {
+      "source": "ArchitectureAuditTable",
+      "target": "badge"
+    },
+    {
+      "source": "ArchitectureAuditTable",
+      "target": "table"
+    },
+    {
+      "source": "ArchitectureAuditTable",
+      "target": "utils"
+    },
+    {
+      "source": "ArchitectureAuditTable",
+      "target": "sheet"
+    },
+    {
+      "source": "ReleaseGateStatus",
+      "target": "utils"
+    },
+    {
+      "source": "ViewNavigator",
+      "target": "viewRegistry"
+    },
+    {
+      "source": "ViewNavigator",
+      "target": "store"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "system-health"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "card"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "badge"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "utils"
+    },
+    {
+      "source": "HealthAgentLogs",
+      "target": "locale"
+    },
+    {
+      "source": "DetailedRelationshipGraph",
+      "target": "utils"
+    },
+    {
+      "source": "DetailedRelationshipGraph",
+      "target": "badge"
+    },
+    {
+      "source": "InfrastructureMetrics",
+      "target": "utils"
+    },
+    {
+      "source": "InfrastructureMetrics",
+      "target": "progress"
+    },
+    {
+      "source": "ApplicationMetrics",
+      "target": "utils"
+    },
+    {
+      "source": "WalletView",
+      "target": "dynamic"
+    },
+    {
+      "source": "WalletView",
+      "target": "card"
+    },
+    {
+      "source": "WalletView",
+      "target": "button"
+    },
+    {
+      "source": "WalletView",
+      "target": "input"
+    },
+    {
+      "source": "WalletView",
+      "target": "badge"
+    },
+    {
+      "source": "WalletView",
+      "target": "utils"
+    },
+    {
+      "source": "WalletView",
+      "target": "parser"
+    },
+    {
+      "source": "WalletView",
+      "target": "types"
+    },
+    {
+      "source": "AnalyticsDashboard",
+      "target": "card"
+    },
+    {
+      "source": "AnalyticsDashboard",
+      "target": "types"
+    },
+    {
+      "source": "CatalogModals",
+      "target": "BaseModal"
+    },
+    {
+      "source": "CatalogModals",
+      "target": "ProductImage"
+    },
+    {
+      "source": "CatalogModals",
+      "target": "atomic"
+    },
+    {
+      "source": "CatalogModals",
+      "target": "utils"
+    },
+    {
+      "source": "CatalogModals",
+      "target": "types"
+    },
+    {
+      "source": "CatalogView",
+      "target": "store"
+    },
+    {
+      "source": "CatalogView",
+      "target": "useProducts"
+    },
+    {
+      "source": "CatalogView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "CatalogView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "CatalogView",
+      "target": "atomic"
+    },
+    {
+      "source": "CatalogView",
+      "target": "useMobile"
+    },
+    {
+      "source": "CatalogView",
+      "target": "catalog-service"
+    },
+    {
+      "source": "CatalogView",
+      "target": "useCatalogModals"
+    },
+    {
+      "source": "CatalogView",
+      "target": "CatalogModals"
+    },
+    {
+      "source": "CatalogView",
+      "target": "utils"
+    },
+    {
+      "source": "CatalogView",
+      "target": "ProductImage"
+    },
+    {
+      "source": "CatalogView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "CatalogView",
+      "target": "ViewSwitcher"
+    },
+    {
+      "source": "CatalogView",
+      "target": "types"
+    },
+    {
+      "source": "SettingsView",
+      "target": "utils"
+    },
+    {
+      "source": "SettingsView",
+      "target": "useTaxes"
+    },
+    {
+      "source": "SettingsView",
+      "target": "store"
+    },
+    {
+      "source": "SettingsView",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "SettingsView",
+      "target": "react-query"
+    },
+    {
+      "source": "DashboardView",
+      "target": "dynamic"
+    },
+    {
+      "source": "DashboardView",
+      "target": "utils"
+    },
+    {
+      "source": "DashboardView",
+      "target": "store"
+    },
+    {
+      "source": "DashboardView",
+      "target": "useProducts"
+    },
+    {
+      "source": "DashboardView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "DashboardView",
+      "target": "types"
+    },
+    {
+      "source": "DashboardView",
+      "target": "useDashboardView"
+    },
+    {
+      "source": "DashboardView",
+      "target": "store"
+    },
+    {
+      "source": "DashboardView",
+      "target": "toggle-group"
+    },
+    {
+      "source": "DashboardView",
+      "target": "locale"
+    },
+    {
+      "source": "DashboardView",
+      "target": "popover"
+    },
+    {
+      "source": "DashboardView",
+      "target": "calendar"
+    },
+    {
+      "source": "useDashboardView",
+      "target": "store"
+    },
+    {
+      "source": "useDashboardView",
+      "target": "useDashboard"
+    },
+    {
+      "source": "ConcentricDashboardRing",
+      "target": "utils"
+    },
+    {
+      "source": "ExecutiveKpiCards",
+      "target": "utils"
+    },
+    {
+      "source": "RecentCostSheets",
+      "target": "useCostSheets"
+    },
+    {
+      "source": "RecentCostSheets",
+      "target": "utils"
+    },
+    {
+      "source": "RecentCostSheets",
+      "target": "store"
+    },
+    {
+      "source": "RecentCostSheets",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "card"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "input"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "label"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "select"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "checkbox"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "types"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "useProducts"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "store"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "useStores"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "reports"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "utils"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "command"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "popover"
+    },
+    {
+      "source": "ReportConfigPanel",
+      "target": "button"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "card"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "types"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "locale"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "reports"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "store"
+    },
+    {
+      "source": "ReportPreview",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "ReportsView",
+      "target": "card"
+    },
+    {
+      "source": "ReportsView",
+      "target": "button"
+    },
+    {
+      "source": "ReportsView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "ReportsView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "ReportsView",
+      "target": "store"
+    },
+    {
+      "source": "ReportsView",
+      "target": "ReportConfigPanel"
+    },
+    {
+      "source": "ReportsView",
+      "target": "ReportPreview"
+    },
+    {
+      "source": "ReportsView",
+      "target": "AuditLogsModal"
+    },
+    {
+      "source": "ReportsView",
+      "target": "types"
+    },
+    {
+      "source": "ReportsView",
+      "target": "reports"
+    },
+    {
+      "source": "AuditLogsModal",
+      "target": "dialog"
+    },
+    {
+      "source": "AuditLogsModal",
+      "target": "useAuditLogs"
+    },
+    {
+      "source": "AuditLogsModal",
+      "target": "AuditTimeline"
+    },
+    {
+      "source": "AuditLogsModal",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "AuditLogsModal",
+      "target": "skeleton"
+    },
+    {
+      "source": "StoresManagementView",
+      "target": "utils"
+    },
+    {
+      "source": "StoresManagementView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "StoresManagementView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "StoresManagementView",
+      "target": "useStoresView"
+    },
+    {
+      "source": "StoresManagementView",
+      "target": "StoreModals"
+    },
+    {
+      "source": "useStoresView",
+      "target": "store"
+    },
+    {
+      "source": "useStoresView",
+      "target": "useStores"
+    },
+    {
+      "source": "useStoresView",
+      "target": "types"
+    },
+    {
+      "source": "useStoresView",
+      "target": "logger"
+    },
+    {
+      "source": "useStoresView",
+      "target": "store-service"
+    },
+    {
+      "source": "useStoresView",
+      "target": "user-service"
+    },
+    {
+      "source": "useStoresView",
+      "target": "react-query"
+    },
+    {
+      "source": "StoreModals",
+      "target": "BaseModal"
+    },
+    {
+      "source": "StoreModals",
+      "target": "button"
+    },
+    {
+      "source": "StoreModals",
+      "target": "input"
+    },
+    {
+      "source": "StoreModals",
+      "target": "label"
+    },
+    {
+      "source": "StoreModals",
+      "target": "types"
+    },
+    {
+      "source": "StoreModals",
+      "target": "useStoresView"
+    },
+    {
+      "source": "StoreModals",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "MasteryDashboard",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "MasteryDashboard",
+      "target": "store"
+    },
+    {
+      "source": "MasteryDashboard",
+      "target": "card"
+    },
+    {
+      "source": "MasteryDashboard",
+      "target": "progress"
+    },
+    {
+      "source": "AcademyView",
+      "target": "useAcademyStore"
+    },
+    {
+      "source": "AcademyView",
+      "target": "store"
+    },
+    {
+      "source": "AcademyView",
+      "target": "Flashcard"
+    },
+    {
+      "source": "AcademyView",
+      "target": "MasteryDashboard"
+    },
+    {
+      "source": "AcademyView",
+      "target": "button"
+    },
+    {
+      "source": "AcademyView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "Flashcard",
+      "target": "card"
+    },
+    {
+      "source": "Flashcard",
+      "target": "button"
+    },
+    {
+      "source": "Flashcard",
+      "target": "utils"
+    },
+    {
+      "source": "Flashcard",
+      "target": "useAcademyStore"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "store"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "useInventory"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "useTransfers"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "useDebounce"
+    },
+    {
+      "source": "CreateTransferModal",
+      "target": "utils"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "store"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "useTransfers"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "utils"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "locale"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "CreateTransferModal"
+    },
+    {
+      "source": "TransferenciasView",
+      "target": "TransferDetailsModal"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "store"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "useTransfers"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "utils"
+    },
+    {
+      "source": "TransferDetailsModal",
+      "target": "locale"
+    },
+    {
+      "source": "HelpView",
+      "target": "utils"
+    },
+    {
+      "source": "HelpView",
+      "target": "button"
+    },
+    {
+      "source": "HelpView",
+      "target": "accordion"
+    },
+    {
+      "source": "HelpView",
+      "target": "badge"
+    },
+    {
+      "source": "HelpView",
+      "target": "CostFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "QuickModeMassiveDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "StickyCartFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "MobilePosDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "SalesFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "InventoryFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "InventoryAdjustmentFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "StoreSkuDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "DarianDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "OfflineSyncDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "SecurityFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "IpvFlowDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "RolesDiagram"
+    },
+    {
+      "source": "HelpView",
+      "target": "KidsOnboarding"
+    },
+    {
+      "source": "HelpView",
+      "target": "store"
+    },
+    {
+      "source": "HelpView",
+      "target": "ThemeToggle"
+    },
+    {
+      "source": "StoreSkuDiagram.test",
+      "target": "react"
+    },
+    {
+      "source": "StoreSkuDiagram.test",
+      "target": "StoreSkuDiagram"
+    },
+    {
+      "source": "OfflineSyncDiagram.test",
+      "target": "react"
+    },
+    {
+      "source": "OfflineSyncDiagram.test",
+      "target": "OfflineSyncDiagram"
+    },
+    {
+      "source": "DarianDiagram.test",
+      "target": "react"
+    },
+    {
+      "source": "DarianDiagram.test",
+      "target": "DarianDiagram"
+    },
+    {
+      "source": "InventoryCardView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryCardView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryCardView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "InventoryCardView",
+      "target": "atomic"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "useStockMovements"
+    },
+    {
+      "source": "InventoryAdjustmentsView",
+      "target": "store"
+    },
+    {
+      "source": "InventoryAdjustmentModal",
+      "target": "types"
+    },
+    {
+      "source": "InventoryAdjustmentModal",
+      "target": "inventory-logic"
+    },
+    {
+      "source": "InventoryAdjustmentModal",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryAdjustmentModal",
+      "target": "useMobile"
+    },
+    {
+      "source": "InventoryAdjustmentModal",
+      "target": "drawer"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "store"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "types"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "useInventory"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "useDebounce"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "utils"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "atomic"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "SecurityScrollContainer"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "import-service"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "schemas"
+    },
+    {
+      "source": "ProductReceptionView",
+      "target": "BaseModal"
+    },
+    {
+      "source": "InventoryTableView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryTableView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryTableView",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "InventoryTableView",
+      "target": "ProductImage"
+    },
+    {
+      "source": "InventoryView",
+      "target": "store"
+    },
+    {
+      "source": "InventoryView",
+      "target": "useInventory"
+    },
+    {
+      "source": "InventoryView",
+      "target": "InventoryCardView"
+    },
+    {
+      "source": "InventoryView",
+      "target": "InventoryTableView"
+    },
+    {
+      "source": "InventoryView",
+      "target": "ProductReceptionView"
+    },
+    {
+      "source": "InventoryView",
+      "target": "InventoryAdjustmentModal"
+    },
+    {
+      "source": "InventoryView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryView",
+      "target": "schemas"
+    },
+    {
+      "source": "InventoryView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "InventoryView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "InventoryView",
+      "target": "atomic"
+    },
+    {
+      "source": "InventoryView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "InventoryView",
+      "target": "skeleton"
+    },
+    {
+      "source": "InventoryView",
+      "target": "useMobile"
+    },
+    {
+      "source": "InventoryView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "CashClosureView",
+      "target": "utils"
+    },
+    {
+      "source": "CashClosureView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "CashClosureView",
+      "target": "useCashClosures"
+    },
+    {
+      "source": "CashClosureView",
+      "target": "store"
+    },
+    {
+      "source": "TaxCalculationModal",
+      "target": "dialog"
+    },
+    {
+      "source": "TaxCalculationModal",
+      "target": "utils"
+    },
+    {
+      "source": "TaxCalculationModal",
+      "target": "types"
+    },
+    {
+      "source": "TaxCalculationModal",
+      "target": "useTaxes"
+    },
+    {
+      "source": "TaxCalculationModal",
+      "target": "store"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "utils"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "skeleton"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "useSalesHistoryView"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "TransactionDetailsModal"
+    },
+    {
+      "source": "SalesHistoryView",
+      "target": "TaxCalculationModal"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "table"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "badge"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "utils"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "locale"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "types"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "useTaxes"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "store"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "TransactionDetailsModal",
+      "target": "react-query"
+    },
+    {
+      "source": "useSalesHistoryView",
+      "target": "store"
+    },
+    {
+      "source": "useSalesHistoryView",
+      "target": "useTransactions"
+    },
+    {
+      "source": "useSalesHistoryView",
+      "target": "useTransactions"
+    },
+    {
+      "source": "useSalesHistoryView",
+      "target": "types"
+    },
+    {
+      "source": "useSalesHistoryView",
+      "target": "useDocumentActions"
+    },
+    {
+      "source": "ReceptionDetailsModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "ReceptionDetailsModal",
+      "target": "types"
+    },
+    {
+      "source": "ReceptionDetailsModal",
+      "target": "skeleton"
+    },
+    {
+      "source": "ReceptionDetailsModal",
+      "target": "utils"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "utils"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "skeleton"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "useReceptionsHistoryView"
+    },
+    {
+      "source": "ReceptionsHistoryView",
+      "target": "ReceptionDetailsModal"
+    },
+    {
+      "source": "useReceptionsHistoryView",
+      "target": "store"
+    },
+    {
+      "source": "useReceptionsHistoryView",
+      "target": "useReceptions"
+    },
+    {
+      "source": "useReceptionsHistoryView",
+      "target": "types"
+    },
+    {
+      "source": "useReceptionsHistoryView",
+      "target": "useDocumentActions"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "utils"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "useStockMovements"
+    },
+    {
+      "source": "StockHistoryView",
+      "target": "store"
+    },
+    {
+      "source": "IPVView",
+      "target": "dexie"
+    },
+    {
+      "source": "IPVView",
+      "target": "card"
+    },
+    {
+      "source": "IPVView",
+      "target": "tabs"
+    },
+    {
+      "source": "IPVView",
+      "target": "button"
+    },
+    {
+      "source": "IPVView",
+      "target": "badge"
+    },
+    {
+      "source": "IPVView",
+      "target": "MatchingAuditView"
+    },
+    {
+      "source": "IPVView",
+      "target": "BankIngestion"
+    },
+    {
+      "source": "IPVView",
+      "target": "TransactionTable"
+    },
+    {
+      "source": "IPVView",
+      "target": "CatalogTable"
+    },
+    {
+      "source": "IPVView",
+      "target": "MovementsView"
+    },
+    {
+      "source": "IPVView",
+      "target": "MatchingSimulation"
+    },
+    {
+      "source": "IPVView",
+      "target": "TransactionBreakdown"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVReportView"
+    },
+    {
+      "source": "IPVView",
+      "target": "MatchingRulesEditor"
+    },
+    {
+      "source": "IPVView",
+      "target": "PivotStatementView"
+    },
+    {
+      "source": "IPVView",
+      "target": "IngestionErrorsTable"
+    },
+    {
+      "source": "IPVView",
+      "target": "ManualReconciliationView"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVControlPanel"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVInstitutionalDashboard"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVRightSidebar"
+    },
+    {
+      "source": "IPVView",
+      "target": "IncomeReceiptSection"
+    },
+    {
+      "source": "IPVView",
+      "target": "TransferQRReportView"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVReportsDropdown"
+    },
+    {
+      "source": "IPVView",
+      "target": "engine"
+    },
+    {
+      "source": "IPVView",
+      "target": "backup"
+    },
+    {
+      "source": "IPVView",
+      "target": "utils"
+    },
+    {
+      "source": "IPVView",
+      "target": "utils"
+    },
+    {
+      "source": "IPVView",
+      "target": "LoadingOverlay"
+    },
+    {
+      "source": "IPVView",
+      "target": "HorizontalScroll"
+    },
+    {
+      "source": "IPVView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "IPVView",
+      "target": "tooltip"
+    },
+    {
+      "source": "IPVView",
+      "target": "IPVHelpDialog"
+    },
+    {
+      "source": "IPVRightSidebar",
+      "target": "button"
+    },
+    {
+      "source": "IPVRightSidebar",
+      "target": "tooltip"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "dexie"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "table"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "badge"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "input"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "button"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "utils"
+    },
+    {
+      "source": "TransactionBreakdown",
+      "target": "dialog"
+    },
+    {
+      "source": "ActionBadges",
+      "target": "badge"
+    },
+    {
+      "source": "ActionBadges",
+      "target": "tooltip"
+    },
+    {
+      "source": "ActionBadges",
+      "target": "utils"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "AddTransactionModal"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "BaseModal"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "dexie"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "MatchingTracePopover"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "ActionBadges"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "table"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "badge"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "button"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "card"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "checkbox"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "input"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "scroll-area"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "engine"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "switch"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "label"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "utils"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "popover"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "tooltip"
+    },
+    {
+      "source": "TransactionTable",
+      "target": "dialog"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "dialog"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "button"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "input"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "label"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "select"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "dexie"
+    },
+    {
+      "source": "AddTransactionModal",
+      "target": "engine"
+    },
+    {
+      "source": "IncomeReceiptPreview",
+      "target": "utils"
+    },
+    {
+      "source": "MovementsView",
+      "target": "dexie"
+    },
+    {
+      "source": "MovementsView",
+      "target": "table"
+    },
+    {
+      "source": "MovementsView",
+      "target": "card"
+    },
+    {
+      "source": "MovementsView",
+      "target": "badge"
+    },
+    {
+      "source": "MovementsView",
+      "target": "button"
+    },
+    {
+      "source": "MovementsView",
+      "target": "input"
+    },
+    {
+      "source": "MovementsView",
+      "target": "locale"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "dexie"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "card"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "button"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "input"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "label"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "IncomeReceiptPreview"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "LegalPdfExporter"
+    },
+    {
+      "source": "IncomeReceiptSection",
+      "target": "locale"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "dialog"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "table"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "badge"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "button"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "checkbox"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "label"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "scroll-area"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "utils"
+    },
+    {
+      "source": "IPVPreviewModal",
+      "target": "dexie"
+    },
+    {
+      "source": "MatchingTracePopover",
+      "target": "popover"
+    },
+    {
+      "source": "MatchingTracePopover",
+      "target": "badge"
+    },
+    {
+      "source": "MatchingTracePopover",
+      "target": "scroll-area"
+    },
+    {
+      "source": "MatchingTracePopover",
+      "target": "dexie"
+    },
+    {
+      "source": "MatchingTracePopover",
+      "target": "utils"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "BaseModal"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "dexie"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "table"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "button"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "badge"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "input"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "utils"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "IPVPreviewModal"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "LoadingOverlay"
+    },
+    {
+      "source": "IPVReportView",
+      "target": "tooltip"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "matching-log-service"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "card"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "button"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "input"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "badge"
+    },
+    {
+      "source": "MatchingAuditView",
+      "target": "table"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "dexie"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "table"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "badge"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "button"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "input"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "utils"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "engine"
+    },
+    {
+      "source": "IngestionErrorsTable",
+      "target": "utils"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "store"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "dexie"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "card"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "table"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "badge"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "label"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "button"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "input"
+    },
+    {
+      "source": "TransferQRReportView",
+      "target": "utils"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "button"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "dexie"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "utils"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "badge"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "scroll-area"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "input"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "engine"
+    },
+    {
+      "source": "ManualReconciliationView",
+      "target": "utils"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "dexie"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "engine"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "card"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "button"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "label"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "switch"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "badge"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "core"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "sortable"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "utilities"
+    },
+    {
+      "source": "MatchingRulesEditor",
+      "target": "RuleMetaEditor"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "dexie"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "engine"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "card"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "button"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "input"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "badge"
+    },
+    {
+      "source": "MatchingSimulation",
+      "target": "table"
+    },
+    {
+      "source": "RuleMetaEditor",
+      "target": "dexie"
+    },
+    {
+      "source": "RuleMetaEditor",
+      "target": "button"
+    },
+    {
+      "source": "RuleMetaEditor",
+      "target": "input"
+    },
+    {
+      "source": "RuleMetaEditor",
+      "target": "card"
+    },
+    {
+      "source": "RuleMetaEditor",
+      "target": "badge"
+    },
+    {
+      "source": "IPVReportsDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "IPVReportsDropdown",
+      "target": "button"
+    },
+    {
+      "source": "IPVReportsDropdown",
+      "target": "utils"
+    },
+    {
+      "source": "PivotStatementView",
+      "target": "dexie"
+    },
+    {
+      "source": "PivotStatementView",
+      "target": "card"
+    },
+    {
+      "source": "PivotStatementView",
+      "target": "table"
+    },
+    {
+      "source": "PivotStatementView",
+      "target": "button"
+    },
+    {
+      "source": "PivotStatementView",
+      "target": "utils"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "card"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "BaseModal"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "dexie"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "engine"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "bandecParser"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "utils"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "importUtils"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "button"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "badge"
+    },
+    {
+      "source": "BankIngestion",
+      "target": "backup"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "card"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "dexie"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "utils"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "calculations"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "button"
+    },
+    {
+      "source": "IPVInstitutionalDashboard",
+      "target": "badge"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "dexie"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "engine"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "table"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "badge"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "BaseModal"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "button"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "card"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "label"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "input"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "utils"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "switch"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "useStores"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "store"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "roles"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "intelligence"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "utils"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "importUtils"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "CatalogTable",
+      "target": "tooltip"
+    },
+    {
+      "source": "IPVHelpDialog",
+      "target": "dialog"
+    },
+    {
+      "source": "IPVHelpDialog",
+      "target": "button"
+    },
+    {
+      "source": "IPVHelpDialog",
+      "target": "badge"
+    },
+    {
+      "source": "IPVHelpDialog",
+      "target": "scroll-area"
+    },
+    {
+      "source": "IPVHelpDialog",
+      "target": "tooltip"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "card"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "button"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "badge"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "tooltip"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "backup"
+    },
+    {
+      "source": "IPVControlPanel",
+      "target": "dexie"
+    },
+    {
+      "source": "InventoryCountTableView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryCountTableView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryCountTableView",
+      "target": "InventoryCountView"
+    },
+    {
+      "source": "InventoryCountCardView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryCountCardView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryCountCardView",
+      "target": "InventoryCountView"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "store"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "types"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "utils"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "SecurityScrollContainer"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "useMobile"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "InventoryCountCardView"
+    },
+    {
+      "source": "InventoryCountView",
+      "target": "InventoryCountTableView"
+    },
+    {
+      "source": "data-loader",
+      "target": "types"
+    },
+    {
+      "source": "CuentasModule",
+      "target": "utils"
+    },
+    {
+      "source": "CuentasModule",
+      "target": "badge"
+    },
+    {
+      "source": "CuentasModule",
+      "target": "button"
+    },
+    {
+      "source": "CuentasModule",
+      "target": "scroll-area"
+    },
+    {
+      "source": "CuentasModule",
+      "target": "types"
+    },
+    {
+      "source": "AsientosModule",
+      "target": "utils"
+    },
+    {
+      "source": "AsientosModule",
+      "target": "badge"
+    },
+    {
+      "source": "AsientosModule",
+      "target": "button"
+    },
+    {
+      "source": "AsientosModule",
+      "target": "input"
+    },
+    {
+      "source": "AsientosModule",
+      "target": "types"
+    },
+    {
+      "source": "WikiBreadcrumbs",
+      "target": "types"
+    },
+    {
+      "source": "WikiSearch",
+      "target": "command"
+    },
+    {
+      "source": "WikiSearch",
+      "target": "types"
+    },
+    {
+      "source": "WikiView",
+      "target": "utils"
+    },
+    {
+      "source": "WikiView",
+      "target": "button"
+    },
+    {
+      "source": "WikiView",
+      "target": "input"
+    },
+    {
+      "source": "WikiView",
+      "target": "scroll-area"
+    },
+    {
+      "source": "WikiView",
+      "target": "types"
+    },
+    {
+      "source": "WikiView",
+      "target": "data-loader"
+    },
+    {
+      "source": "WikiView",
+      "target": "AsientosModule"
+    },
+    {
+      "source": "WikiView",
+      "target": "CuentasModule"
+    },
+    {
+      "source": "WikiView",
+      "target": "ClasificadorModule"
+    },
+    {
+      "source": "WikiView",
+      "target": "WikiSidebar"
+    },
+    {
+      "source": "WikiView",
+      "target": "WikiSearch"
+    },
+    {
+      "source": "WikiView",
+      "target": "WikiBreadcrumbs"
+    },
+    {
+      "source": "WikiSidebar",
+      "target": "utils"
+    },
+    {
+      "source": "WikiSidebar",
+      "target": "types"
+    },
+    {
+      "source": "ClasificadorModule",
+      "target": "utils"
+    },
+    {
+      "source": "ClasificadorModule",
+      "target": "types"
+    },
+    {
+      "source": "ClasificadorModule",
+      "target": "accordion"
+    },
+    {
+      "source": "POSTableView",
+      "target": "types"
+    },
+    {
+      "source": "POSTableView",
+      "target": "utils"
+    },
+    {
+      "source": "POSTableView",
+      "target": "ProductImage"
+    },
+    {
+      "source": "usePOSView",
+      "target": "logger"
+    },
+    {
+      "source": "usePOSView",
+      "target": "utils"
+    },
+    {
+      "source": "usePOSView",
+      "target": "store"
+    },
+    {
+      "source": "usePOSView",
+      "target": "useProducts"
+    },
+    {
+      "source": "usePOSView",
+      "target": "useTransactions"
+    },
+    {
+      "source": "usePOSView",
+      "target": "types"
+    },
+    {
+      "source": "usePOSView",
+      "target": "audit-service"
+    },
+    {
+      "source": "usePOSView",
+      "target": "schemas"
+    },
+    {
+      "source": "usePOSView",
+      "target": "cart"
+    },
+    {
+      "source": "usePOSView",
+      "target": "types"
+    },
+    {
+      "source": "POSView",
+      "target": "utils"
+    },
+    {
+      "source": "POSView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "POSView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "POSView",
+      "target": "atomic"
+    },
+    {
+      "source": "POSView",
+      "target": "POSTableView"
+    },
+    {
+      "source": "POSView",
+      "target": "ViewSwitcher"
+    },
+    {
+      "source": "POSView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "POSView",
+      "target": "skeleton"
+    },
+    {
+      "source": "POSView",
+      "target": "usePOSProducts"
+    },
+    {
+      "source": "POSView",
+      "target": "useMobile"
+    },
+    {
+      "source": "POSView",
+      "target": "Portal"
+    },
+    {
+      "source": "POSView",
+      "target": "drawer"
+    },
+    {
+      "source": "POSView",
+      "target": "BaseModal"
+    },
+    {
+      "source": "POSView",
+      "target": "atomic"
+    },
+    {
+      "source": "POSView",
+      "target": "POSCart"
+    },
+    {
+      "source": "POSView",
+      "target": "StickyCartSummary"
+    },
+    {
+      "source": "POSView",
+      "target": "usePOSView"
+    },
+    {
+      "source": "POSView",
+      "target": "QueryInspector"
+    },
+    {
+      "source": "POSView",
+      "target": "PriceSelectorModal"
+    },
+    {
+      "source": "POSView",
+      "target": "BarcodeScanner"
+    },
+    {
+      "source": "POSView",
+      "target": "SpeedDial"
+    },
+    {
+      "source": "POSView",
+      "target": "types"
+    },
+    {
+      "source": "POSCart",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "POSCart",
+      "target": "ProductImage"
+    },
+    {
+      "source": "POSCart",
+      "target": "utils"
+    },
+    {
+      "source": "POSCart",
+      "target": "types"
+    },
+    {
+      "source": "POSCart",
+      "target": "useMobile"
+    },
+    {
+      "source": "POSCart",
+      "target": "useTaxes"
+    },
+    {
+      "source": "POSCart",
+      "target": "store"
+    },
+    {
+      "source": "POSCart",
+      "target": "BaseModal"
+    },
+    {
+      "source": "POSCart",
+      "target": "atomic"
+    },
+    {
+      "source": "StickyCartSummary",
+      "target": "utils"
+    },
+    {
+      "source": "AuditEventIcon",
+      "target": "utils"
+    },
+    {
+      "source": "audit.test",
+      "target": "AuditEventIcon"
+    },
+    {
+      "source": "AuditFilters",
+      "target": "utils"
+    },
+    {
+      "source": "AuditFilters",
+      "target": "AuditEventIcon"
+    },
+    {
+      "source": "AuditEventMeta.test",
+      "target": "react"
+    },
+    {
+      "source": "AuditEventMeta.test",
+      "target": "AuditEventMeta"
+    },
+    {
+      "source": "AuditTableView",
+      "target": "locale"
+    },
+    {
+      "source": "AuditTableView",
+      "target": "schemas"
+    },
+    {
+      "source": "AuditTableView",
+      "target": "AuditEventIcon"
+    },
+    {
+      "source": "AuditTableView",
+      "target": "utils"
+    },
+    {
+      "source": "AuditTableView.test",
+      "target": "react"
+    },
+    {
+      "source": "AuditTableView.test",
+      "target": "AuditTableView"
+    },
+    {
+      "source": "AuditTimeline",
+      "target": "types"
+    },
+    {
+      "source": "AuditTimeline",
+      "target": "AuditEventCard"
+    },
+    {
+      "source": "AuditTimeline",
+      "target": "locale"
+    },
+    {
+      "source": "AuditTimeline",
+      "target": "utils"
+    },
+    {
+      "source": "AuditLogsView.test",
+      "target": "react"
+    },
+    {
+      "source": "AuditLogsView.test",
+      "target": "AuditLogsView"
+    },
+    {
+      "source": "AuditLogsView.test",
+      "target": "useAuditLogsView"
+    },
+    {
+      "source": "useAuditLogsView",
+      "target": "useAuditLogs"
+    },
+    {
+      "source": "useAuditLogsView",
+      "target": "useDebounce"
+    },
+    {
+      "source": "AuditEventCard",
+      "target": "types"
+    },
+    {
+      "source": "AuditEventCard",
+      "target": "locale"
+    },
+    {
+      "source": "AuditEventCard",
+      "target": "AuditEventIcon"
+    },
+    {
+      "source": "AuditEventCard",
+      "target": "AuditEventMeta"
+    },
+    {
+      "source": "AuditEventCard",
+      "target": "utils"
+    },
+    {
+      "source": "AuditEventMeta",
+      "target": "utils"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "AuditFilters"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "AuditTimeline"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "AuditTableView"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "AuditEventIcon"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "skeleton"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "useAuditLogsView"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "useStores"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "store"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "tabs"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "button"
+    },
+    {
+      "source": "AuditLogsView",
+      "target": "pdf-export"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "card"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "badge"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "scroll-area"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "CostSheetAuditLog"
+    },
+    {
+      "source": "CostSheetAuditView",
+      "target": "validations"
+    },
+    {
+      "source": "CostSheetSidebarNav",
+      "target": "sheet"
+    },
+    {
+      "source": "CostSheetSidebarNav",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetSidebarNav",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetSidebarNav",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetSidebarNav",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetFormulaGuide",
+      "target": "accordion"
+    },
+    {
+      "source": "CostSheetGenerateDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "FormulaEditor",
+      "target": "utils"
+    },
+    {
+      "source": "FormulaEditor",
+      "target": "popover"
+    },
+    {
+      "source": "FormulaEditor",
+      "target": "dialog"
+    },
+    {
+      "source": "FormulaEditor",
+      "target": "badge"
+    },
+    {
+      "source": "FormulaEditor",
+      "target": "FormulaBuilder"
+    },
+    {
+      "source": "CircularProgress",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetCalculator",
+      "target": "utils"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "BaseModal"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "useProducts"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "SearchBar"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "table"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "skeleton"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "utils"
+    },
+    {
+      "source": "ProductInventoryPicker",
+      "target": "atomic"
+    },
+    {
+      "source": "CostSheetBanner",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetBanner",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetBanner",
+      "target": "ThemeToggle"
+    },
+    {
+      "source": "CostSheetBanner",
+      "target": "CostSheetModeDropdown"
+    },
+    {
+      "source": "CostSheetAuditLog",
+      "target": "card"
+    },
+    {
+      "source": "CostSheetAuditLog",
+      "target": "badge"
+    },
+    {
+      "source": "CostSheetAuditLog",
+      "target": "scroll-area"
+    },
+    {
+      "source": "CostSheetAuditLog",
+      "target": "types"
+    },
+    {
+      "source": "CostSheetAuditLog",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetMasterRing",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetMasterRing",
+      "target": "slider"
+    },
+    {
+      "source": "CostSheetActionsPanel",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetActionsPanel",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetActionsPanel",
+      "target": "ViewSwitcher"
+    },
+    {
+      "source": "CostSheetActionsPanel",
+      "target": "CostSheetModeDropdown"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "DarianEditor"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "LazyRender"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "useCostSheetCalculator"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetNav"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetCardView"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetInteractiveTable"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetAnnexEditor"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetHeaderEditor"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetSignatureEditor"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetPreview"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetNarrative"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetWizard"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetSummary"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetFormulaGuide"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetAuditView"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "BaseModal"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetActionsPanel"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetHelpPanel"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetTemplateExplorer"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetSidebarNav"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetBottomNav"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetMassiveGenerator"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetExportModal"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetQuickMode"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "CostSheetModeDropdown"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "ViewSwitcher"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "skeleton"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "usage-service"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "UpgradeModal"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "export-service"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "useMobile"
+    },
+    {
+      "source": "CostSheetView",
+      "target": "SpeedDial"
+    },
+    {
+      "source": "CostSheetAnnexes",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetAnnexes",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "CostSheetHelpDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "slider"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "HealthBattery"
+    },
+    {
+      "source": "CostSheetSummary",
+      "target": "CostSheetMasterRing"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "CostSheetFCDropdown"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "CostSheetModeDropdown"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "CostSheetOptionsDropdown"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "CostSheetGenerateDropdown"
+    },
+    {
+      "source": "CostSheetNav",
+      "target": "CostSheetHelpDropdown"
+    },
+    {
+      "source": "CostSheetOptionsDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "CostSheetOptionsDropdown",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetHeader",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetQuickMode",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetQuickMode",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetQuickMode",
+      "target": "select"
+    },
+    {
+      "source": "CostSheetBottomNav",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetBottomNav",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "CostSheetBottomNav",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetNarrative",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "dialog"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "checkbox"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "switch"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "label"
+    },
+    {
+      "source": "CostSheetExportModal",
+      "target": "scroll-area"
+    },
+    {
+      "source": "HealthBattery",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "costpro-reinicio"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "costpro-ejemplo"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-juice"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-pizza"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-pastry"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-furniture"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-industrial"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-consultancy"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-icecream"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-repair"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-shoes"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-logistics"
+    },
+    {
+      "source": "CostSheetTemplateExplorer",
+      "target": "template-lavar"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "label"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "table"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetForm",
+      "target": "utils"
+    },
+    {
+      "source": "FormulaBuilder",
+      "target": "utils"
+    },
+    {
+      "source": "FormulaBuilder",
+      "target": "scroll-area"
+    },
+    {
+      "source": "FormulaBuilder",
+      "target": "tabs"
+    },
+    {
+      "source": "FormulaBuilder",
+      "target": "HorizontalScroll"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "LazyRender"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "excel-service"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "FormulaEditor"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "popover"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "CostSheetSectionActionsPanel"
+    },
+    {
+      "source": "CostSheetCardView",
+      "target": "CircularProgress"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "dialog"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "progress"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "tabs"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "table"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "useInventory"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "cost-engine"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "types"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "checkbox"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "switch"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "label"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "CostSheetExportModal"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "export-service"
+    },
+    {
+      "source": "CostSheetMassiveGenerator",
+      "target": "excel-service"
+    },
+    {
+      "source": "CostSheetSidePanel",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetSidePanel",
+      "target": "DarianEditor"
+    },
+    {
+      "source": "CostSheetSidePanel",
+      "target": "CostSheetCalculator"
+    },
+    {
+      "source": "CostSheetSidePanel",
+      "target": "useMobile"
+    },
+    {
+      "source": "CostSheetBody",
+      "target": "utils"
+    },
+    {
+      "source": "DarianEditor",
+      "target": "utils"
+    },
+    {
+      "source": "DarianEditor",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetHeaderEditor",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetHeaderEditor",
+      "target": "card"
+    },
+    {
+      "source": "CostSheetHeaderEditor",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetHeaderEditor",
+      "target": "label"
+    },
+    {
+      "source": "CostSheetHeaderEditor",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetFCDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "CostSheetFCDropdown",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "CostSheetHeaderEditor"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "CostSheetAnnexEditor"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "CostSheetInteractiveTable"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "CostSheetSignatureEditor"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "CostSheetSidebarNav"
+    },
+    {
+      "source": "CostSheetWizard",
+      "target": "progress"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "LazyRender"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "popover"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "select"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "table"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "FormulaEditor"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "excel-service"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "CostSheetSectionActionsPanel"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "costpro-reinicio"
+    },
+    {
+      "source": "CostSheetInteractiveTable",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "useCostSheetCalculator"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "table"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "ProductInventoryPicker"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "store"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "excel-service"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetAnnexEditor",
+      "target": "ViewSwitcher"
+    },
+    {
+      "source": "CostSheetSectionActionsPanel",
+      "target": "sheet"
+    },
+    {
+      "source": "CostSheetSectionActionsPanel",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetSectionActionsPanel",
+      "target": "button"
+    },
+    {
+      "source": "CostSheetPreview",
+      "target": "CostSheetHeader"
+    },
+    {
+      "source": "CostSheetPreview",
+      "target": "CostSheetBody"
+    },
+    {
+      "source": "CostSheetPreview",
+      "target": "CostSheetAnnexes"
+    },
+    {
+      "source": "CostSheetPreview",
+      "target": "CostSheetSignature"
+    },
+    {
+      "source": "CostSheetPreview",
+      "target": "SecurityScrollContainer"
+    },
+    {
+      "source": "CostSheetSignatureEditor",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "CostSheetSignatureEditor",
+      "target": "input"
+    },
+    {
+      "source": "CostSheetModeDropdown",
+      "target": "dropdown-menu"
+    },
+    {
+      "source": "CostSheetModeDropdown",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetHelpPanel",
+      "target": "utils"
+    },
+    {
+      "source": "CostSheetHelpPanel",
+      "target": "CostSheetFormulaGuide"
+    },
+    {
+      "source": "CostSheetTemplateExplorer.test",
+      "target": "react"
+    },
+    {
+      "source": "CostSheetTemplateExplorer.test",
+      "target": "CostSheetTemplateExplorer"
+    },
+    {
+      "source": "UserFormModal",
+      "target": "BaseModal"
+    },
+    {
+      "source": "UserFormModal",
+      "target": "UserForm"
+    },
+    {
+      "source": "UserFormModal",
+      "target": "user"
+    },
+    {
+      "source": "UserFormModal",
+      "target": "types"
+    },
+    {
+      "source": "UserFormModal",
+      "target": "types"
+    },
+    {
+      "source": "useUsersView",
+      "target": "store"
+    },
+    {
+      "source": "useUsersView",
+      "target": "useUsers"
+    },
+    {
+      "source": "useUsersView",
+      "target": "useStores"
+    },
+    {
+      "source": "useUsersView",
+      "target": "UserForm"
+    },
+    {
+      "source": "useUsersView",
+      "target": "user"
+    },
+    {
+      "source": "useUsersView",
+      "target": "types"
+    },
+    {
+      "source": "useUsersView",
+      "target": "roles"
+    },
+    {
+      "source": "useUsersView",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "utils"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "button"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "switch"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "select"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "useUsersView"
+    },
+    {
+      "source": "UsersManagementView",
+      "target": "UserFormModal"
+    },
+    {
+      "source": "RoleForm",
+      "target": "zod"
+    },
+    {
+      "source": "RoleForm",
+      "target": "utils"
+    },
+    {
+      "source": "RoleForm",
+      "target": "types"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "utils"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "SearchBar"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "ActionMenu"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "useRoles"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "BaseModal"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "RoleForm"
+    },
+    {
+      "source": "RolesManagementView",
+      "target": "types"
+    },
+    {
+      "source": "UserForm",
+      "target": "zod"
+    },
+    {
+      "source": "UserForm",
+      "target": "utils"
+    },
+    {
+      "source": "UserForm",
+      "target": "user"
+    },
+    {
+      "source": "UserForm",
+      "target": "types"
+    },
+    {
+      "source": "RSSManagementView",
+      "target": "utils"
+    },
+    {
+      "source": "RSSManagementView",
+      "target": "useRSS"
+    },
+    {
+      "source": "RSSManagementView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "NewsView",
+      "target": "utils"
+    },
+    {
+      "source": "NewsView",
+      "target": "useRSS"
+    },
+    {
+      "source": "NewsView",
+      "target": "StateRenderer"
+    },
+    {
+      "source": "NewsView",
+      "target": "types"
+    },
+    {
+      "source": "LegalView.test",
+      "target": "react"
+    },
+    {
+      "source": "LegalView.test",
+      "target": "LegalView"
+    },
+    {
+      "source": "LegalView.test",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "LegalModelForm",
+      "target": "store"
+    },
+    {
+      "source": "LegalModelForm",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "LegalModelForm",
+      "target": "utils"
+    },
+    {
+      "source": "LegalModelForm",
+      "target": "LegalPdfExporter"
+    },
+    {
+      "source": "LegalModelForm",
+      "target": "number-to-words-es"
+    },
+    {
+      "source": "LegalConsultant",
+      "target": "utils"
+    },
+    {
+      "source": "LegalView",
+      "target": "utils"
+    },
+    {
+      "source": "LegalView",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "LegalView",
+      "target": "LegalConsultant"
+    },
+    {
+      "source": "LegalView",
+      "target": "LegalModelForm"
+    },
+    {
+      "source": "skeleton",
+      "target": "utils"
+    },
+    {
+      "source": "accordion",
+      "target": "react-accordion"
+    },
+    {
+      "source": "accordion",
+      "target": "utils"
+    },
+    {
+      "source": "ViewSwitcher",
+      "target": "utils"
+    },
+    {
+      "source": "hover-card",
+      "target": "react-hover-card"
+    },
+    {
+      "source": "hover-card",
+      "target": "utils"
+    },
+    {
+      "source": "command",
+      "target": "utils"
+    },
+    {
+      "source": "command",
+      "target": "dialog"
+    },
+    {
+      "source": "resizable",
+      "target": "utils"
+    },
+    {
+      "source": "QueryInspector",
+      "target": "store"
+    },
+    {
+      "source": "QueryInspector",
+      "target": "prism"
+    },
+    {
+      "source": "QueryInspector",
+      "target": "utils"
+    },
+    {
+      "source": "SearchBar",
+      "target": "utils"
+    },
+    {
+      "source": "dropdown-menu",
+      "target": "react-dropdown-menu"
+    },
+    {
+      "source": "dropdown-menu",
+      "target": "utils"
+    },
+    {
+      "source": "separator",
+      "target": "react-separator"
+    },
+    {
+      "source": "separator",
+      "target": "utils"
+    },
+    {
+      "source": "MobileSafeContainer",
+      "target": "utils"
+    },
+    {
+      "source": "pagination",
+      "target": "utils"
+    },
+    {
+      "source": "pagination",
+      "target": "button"
+    },
+    {
+      "source": "alert-dialog",
+      "target": "react-alert-dialog"
+    },
+    {
+      "source": "alert-dialog",
+      "target": "utils"
+    },
+    {
+      "source": "alert-dialog",
+      "target": "button"
+    },
+    {
+      "source": "input-otp",
+      "target": "utils"
+    },
+    {
+      "source": "alert",
+      "target": "utils"
+    },
+    {
+      "source": "popover",
+      "target": "react-popover"
+    },
+    {
+      "source": "popover",
+      "target": "utils"
+    },
+    {
+      "source": "table",
+      "target": "utils"
+    },
+    {
+      "source": "progress",
+      "target": "react-progress"
+    },
+    {
+      "source": "progress",
+      "target": "utils"
+    },
+    {
+      "source": "select",
+      "target": "react-select"
+    },
+    {
+      "source": "select",
+      "target": "utils"
+    },
+    {
+      "source": "LoadingOverlay",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "textarea",
+      "target": "utils"
+    },
+    {
+      "source": "PWAInstallModal",
+      "target": "dialog"
+    },
+    {
+      "source": "PWAInstallModal",
+      "target": "utils"
+    },
+    {
+      "source": "toggle",
+      "target": "react-toggle"
+    },
+    {
+      "source": "toggle",
+      "target": "utils"
+    },
+    {
+      "source": "StateRenderer",
+      "target": "CostProLoader"
+    },
+    {
+      "source": "toggle-group",
+      "target": "react-toggle-group"
+    },
+    {
+      "source": "toggle-group",
+      "target": "utils"
+    },
+    {
+      "source": "toggle-group",
+      "target": "toggle"
+    },
+    {
+      "source": "scroll-area",
+      "target": "react-scroll-area"
+    },
+    {
+      "source": "scroll-area",
+      "target": "utils"
+    },
+    {
+      "source": "label",
+      "target": "react-label"
+    },
+    {
+      "source": "label",
+      "target": "utils"
+    },
+    {
+      "source": "chart",
+      "target": "utils"
+    },
+    {
+      "source": "sidebar",
+      "target": "react-slot"
+    },
+    {
+      "source": "sidebar",
+      "target": "useMobile"
+    },
+    {
+      "source": "sidebar",
+      "target": "utils"
+    },
+    {
+      "source": "sidebar",
+      "target": "button"
+    },
+    {
+      "source": "sidebar",
+      "target": "input"
+    },
+    {
+      "source": "sidebar",
+      "target": "separator"
+    },
+    {
+      "source": "sidebar",
+      "target": "sheet"
+    },
+    {
+      "source": "sidebar",
+      "target": "skeleton"
+    },
+    {
+      "source": "sidebar",
+      "target": "tooltip"
+    },
+    {
+      "source": "tabs",
+      "target": "react-tabs"
+    },
+    {
+      "source": "tabs",
+      "target": "utils"
+    },
+    {
+      "source": "BaseModal",
+      "target": "dialog"
+    },
+    {
+      "source": "BaseModal",
+      "target": "utils"
+    },
+    {
+      "source": "switch",
+      "target": "react-switch"
+    },
+    {
+      "source": "switch",
+      "target": "utils"
+    },
+    {
+      "source": "checkbox",
+      "target": "react-checkbox"
+    },
+    {
+      "source": "checkbox",
+      "target": "utils"
+    },
+    {
+      "source": "context-menu",
+      "target": "react-context-menu"
+    },
+    {
+      "source": "context-menu",
+      "target": "utils"
+    },
+    {
+      "source": "badge",
+      "target": "react-slot"
+    },
+    {
+      "source": "badge",
+      "target": "utils"
+    },
+    {
+      "source": "CostProLoader",
+      "target": "utils"
+    },
+    {
+      "source": "calendar",
+      "target": "utils"
+    },
+    {
+      "source": "calendar",
+      "target": "button"
+    },
+    {
+      "source": "toaster",
+      "target": "useToast"
+    },
+    {
+      "source": "toaster",
+      "target": "toast"
+    },
+    {
+      "source": "navigation-menu",
+      "target": "react-navigation-menu"
+    },
+    {
+      "source": "navigation-menu",
+      "target": "utils"
+    },
+    {
+      "source": "ActionMenu",
+      "target": "utils"
+    },
+    {
+      "source": "ActionMenu",
+      "target": "tooltip"
+    },
+    {
+      "source": "ProductImage",
+      "target": "image"
+    },
+    {
+      "source": "ProductImage",
+      "target": "utils"
+    },
+    {
+      "source": "toast",
+      "target": "react-toast"
+    },
+    {
+      "source": "toast",
+      "target": "utils"
+    },
+    {
+      "source": "FloatingCalculator",
+      "target": "utils"
+    },
+    {
+      "source": "FloatingCalculator",
+      "target": "store"
+    },
+    {
+      "source": "ScrollToTop",
+      "target": "utils"
+    },
+    {
+      "source": "button",
+      "target": "react-slot"
+    },
+    {
+      "source": "button",
+      "target": "utils"
+    },
+    {
+      "source": "avatar",
+      "target": "react-avatar"
+    },
+    {
+      "source": "avatar",
+      "target": "utils"
+    },
+    {
+      "source": "dialog",
+      "target": "react-dialog"
+    },
+    {
+      "source": "dialog",
+      "target": "utils"
+    },
+    {
+      "source": "SecurityScrollContainer",
+      "target": "utils"
+    },
+    {
+      "source": "breadcrumb",
+      "target": "react-slot"
+    },
+    {
+      "source": "breadcrumb",
+      "target": "utils"
+    },
+    {
+      "source": "form",
+      "target": "react-label"
+    },
+    {
+      "source": "form",
+      "target": "react-slot"
+    },
+    {
+      "source": "form",
+      "target": "utils"
+    },
+    {
+      "source": "form",
+      "target": "label"
+    },
+    {
+      "source": "slider",
+      "target": "react-slider"
+    },
+    {
+      "source": "slider",
+      "target": "utils"
+    },
+    {
+      "source": "menubar",
+      "target": "react-menubar"
+    },
+    {
+      "source": "menubar",
+      "target": "utils"
+    },
+    {
+      "source": "tooltip",
+      "target": "react-tooltip"
+    },
+    {
+      "source": "tooltip",
+      "target": "utils"
+    },
+    {
+      "source": "SpeedDial",
+      "target": "utils"
+    },
+    {
+      "source": "SpeedDial",
+      "target": "Portal"
+    },
+    {
+      "source": "ChatBot",
+      "target": "store"
+    },
+    {
+      "source": "ChatBot",
+      "target": "utils"
+    },
+    {
+      "source": "ChatBot",
+      "target": "user-service"
+    },
+    {
+      "source": "ChatBot",
+      "target": "navigation"
+    },
+    {
+      "source": "aspect-ratio",
+      "target": "react-aspect-ratio"
+    },
+    {
+      "source": "carousel",
+      "target": "utils"
+    },
+    {
+      "source": "carousel",
+      "target": "button"
+    },
+    {
+      "source": "card",
+      "target": "utils"
+    },
+    {
+      "source": "sheet",
+      "target": "react-dialog"
+    },
+    {
+      "source": "sheet",
+      "target": "utils"
+    },
+    {
+      "source": "drawer",
+      "target": "utils"
+    },
+    {
+      "source": "input",
+      "target": "utils"
+    },
+    {
+      "source": "HorizontalScroll",
+      "target": "utils"
+    },
+    {
+      "source": "collapsible",
+      "target": "react-collapsible"
+    },
+    {
+      "source": "SyncStatusBadge",
+      "target": "SyncProvider"
+    },
+    {
+      "source": "SyncStatusBadge",
+      "target": "utils"
+    },
+    {
+      "source": "radio-group",
+      "target": "react-radio-group"
+    },
+    {
+      "source": "radio-group",
+      "target": "utils"
+    },
+    {
+      "source": "index",
+      "target": "utils"
+    },
+    {
+      "source": "index",
+      "target": "react-slot"
+    },
+    {
+      "source": "index",
+      "target": "ProductImage"
+    },
+    {
+      "source": "index",
+      "target": "HorizontalScroll"
+    },
+    {
+      "source": "index",
+      "target": "types"
+    },
+    {
+      "source": "RegisterForm",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "RegisterForm",
+      "target": "logger"
+    },
+    {
+      "source": "RegisterForm",
+      "target": "input"
+    },
+    {
+      "source": "LoginForm",
+      "target": "store"
+    },
+    {
+      "source": "LoginForm",
+      "target": "navigation"
+    },
+    {
+      "source": "LoginForm",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "LoginForm",
+      "target": "RegisterForm"
+    },
+    {
+      "source": "LoginForm",
+      "target": "input"
+    },
+    {
+      "source": "LoginForm",
+      "target": "logger"
+    },
+    {
+      "source": "LoginForm",
+      "target": "contracts"
+    },
+    {
+      "source": "LoginForm",
+      "target": "navigation"
+    },
+    {
+      "source": "LoginForm",
+      "target": "user-service"
+    },
+    {
+      "source": "LoginForm",
+      "target": "user"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "link"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "CostProLogo"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "ThemeToggle"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "AutomationWorkflowDiagram"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "SpeedScaleDiagram"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "usePWA"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "utils"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "PWAInstallModal"
+    },
+    {
+      "source": "WelcomeLandingView",
+      "target": "store"
+    },
+    {
+      "source": "bot-service.test",
+      "target": "bot-service"
+    },
+    {
+      "source": "bot-service.test",
+      "target": "orchestrator"
+    },
+    {
+      "source": "store-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "store-service",
+      "target": "logger"
+    },
+    {
+      "source": "store-service",
+      "target": "types"
+    },
+    {
+      "source": "usage-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "cash-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "cash-service",
+      "target": "types"
+    },
+    {
+      "source": "cash-service",
+      "target": "schemas"
+    },
+    {
+      "source": "transfer-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "transfer-service",
+      "target": "types"
+    },
+    {
+      "source": "transfer-service",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "transfer-service",
+      "target": "schemas"
+    },
+    {
+      "source": "excel-service",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "bot-service",
+      "target": "supabase-js"
+    },
+    {
+      "source": "bot-service",
+      "target": "orchestrator"
+    },
+    {
+      "source": "bot-service",
+      "target": "types"
+    },
+    {
+      "source": "bot-service",
+      "target": "definitions"
+    },
+    {
+      "source": "bot-service",
+      "target": "registry"
+    },
+    {
+      "source": "bot-service",
+      "target": "viewRegistry"
+    },
+    {
+      "source": "bot-service",
+      "target": "ai-form-schemas"
+    },
+    {
+      "source": "report-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "report-service",
+      "target": "types"
+    },
+    {
+      "source": "matching-log-service",
+      "target": "dexie"
+    },
+    {
+      "source": "rss-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "rss-service",
+      "target": "types"
+    },
+    {
+      "source": "user-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "user-service",
+      "target": "logger"
+    },
+    {
+      "source": "user-service",
+      "target": "types"
+    },
+    {
+      "source": "user-service",
+      "target": "schemas"
+    },
+    {
+      "source": "user-service",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "audit-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "catalog-service",
+      "target": "types"
+    },
+    {
+      "source": "catalog-service",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "catalog-service",
+      "target": "import-service"
+    },
+    {
+      "source": "catalog-service",
+      "target": "schemas"
+    },
+    {
+      "source": "useSync",
+      "target": "offline-storage"
+    },
+    {
+      "source": "useSync",
+      "target": "schemas"
+    },
+    {
+      "source": "useSync",
+      "target": "store"
+    },
+    {
+      "source": "useCostSheetCalculator",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "useCostSheetCalculator",
+      "target": "cost-engine"
+    },
+    {
+      "source": "useCostSheetCalculator",
+      "target": "types"
+    },
+    {
+      "source": "useCostSheetCalculator",
+      "target": "validations"
+    },
+    {
+      "source": "usePOSProducts",
+      "target": "types"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "store"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "session-store"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "navigation"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "navigation"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "user"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "user-service"
+    },
+    {
+      "source": "useSessionManager",
+      "target": "types"
+    },
+    {
+      "source": "useCostEngine",
+      "target": "react-query"
+    },
+    {
+      "source": "useCostEngine",
+      "target": "types"
+    },
+    {
+      "source": "useTransfers",
+      "target": "react-query"
+    },
+    {
+      "source": "useTransfers",
+      "target": "transfer-service"
+    },
+    {
+      "source": "useTransfers",
+      "target": "SyncProvider"
+    },
+    {
+      "source": "useTransfers",
+      "target": "base"
+    },
+    {
+      "source": "useDocumentActions",
+      "target": "react-query"
+    },
+    {
+      "source": "useDocumentActions",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useDocumentActions",
+      "target": "store"
+    },
+    {
+      "source": "useDocumentActions",
+      "target": "base"
+    },
+    {
+      "source": "useDocumentActions",
+      "target": "store"
+    },
+    {
+      "source": "useCostSheets",
+      "target": "react-query"
+    },
+    {
+      "source": "useCostSheets",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useTaxes",
+      "target": "react-query"
+    },
+    {
+      "source": "useTaxes",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useTaxes",
+      "target": "schemas"
+    },
+    {
+      "source": "useTaxes",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useTaxes",
+      "target": "base"
+    },
+    {
+      "source": "useTaxes",
+      "target": "types"
+    },
+    {
+      "source": "useProducts",
+      "target": "react-query"
+    },
+    {
+      "source": "useProducts",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useProducts",
+      "target": "schemas"
+    },
+    {
+      "source": "useProducts",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useProducts",
+      "target": "schemas"
+    },
+    {
+      "source": "useProducts",
+      "target": "utils"
+    },
+    {
+      "source": "useProducts",
+      "target": "base"
+    },
+    {
+      "source": "useProducts",
+      "target": "types"
+    },
+    {
+      "source": "useTransactions",
+      "target": "react-query"
+    },
+    {
+      "source": "useTransactions",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useTransactions",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useTransactions",
+      "target": "schemas"
+    },
+    {
+      "source": "useTransactions",
+      "target": "base"
+    },
+    {
+      "source": "useTransactions",
+      "target": "SyncProvider"
+    },
+    {
+      "source": "useStockMovements",
+      "target": "react-query"
+    },
+    {
+      "source": "useStockMovements",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useStockMovements",
+      "target": "base"
+    },
+    {
+      "source": "useStockMovements",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useStockMovements",
+      "target": "schemas"
+    },
+    {
+      "source": "useCashClosures",
+      "target": "react-query"
+    },
+    {
+      "source": "useCashClosures",
+      "target": "cash-service"
+    },
+    {
+      "source": "useCashClosures",
+      "target": "types"
+    },
+    {
+      "source": "useCashClosures",
+      "target": "base"
+    },
+    {
+      "source": "useStores",
+      "target": "react-query"
+    },
+    {
+      "source": "useStores",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useStores",
+      "target": "logger"
+    },
+    {
+      "source": "useStores",
+      "target": "schemas"
+    },
+    {
+      "source": "useStores",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useStores",
+      "target": "base"
+    },
+    {
+      "source": "useStores",
+      "target": "types"
+    },
+    {
+      "source": "useDashboard",
+      "target": "react-query"
+    },
+    {
+      "source": "useDashboard",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useDashboard",
+      "target": "schemas"
+    },
+    {
+      "source": "useDashboard",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useDashboard",
+      "target": "schemas"
+    },
+    {
+      "source": "useDashboard",
+      "target": "base"
+    },
+    {
+      "source": "useDashboard",
+      "target": "types"
+    },
+    {
+      "source": "useUsers",
+      "target": "react-query"
+    },
+    {
+      "source": "useUsers",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useUsers",
+      "target": "logger"
+    },
+    {
+      "source": "useUsers",
+      "target": "base"
+    },
+    {
+      "source": "useUsers",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useUsers",
+      "target": "schemas"
+    },
+    {
+      "source": "useUsers",
+      "target": "types"
+    },
+    {
+      "source": "useInventory",
+      "target": "react-query"
+    },
+    {
+      "source": "useInventory",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useInventory",
+      "target": "schemas"
+    },
+    {
+      "source": "useInventory",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useInventory",
+      "target": "schemas"
+    },
+    {
+      "source": "useInventory",
+      "target": "base"
+    },
+    {
+      "source": "useInventory",
+      "target": "SyncProvider"
+    },
+    {
+      "source": "useRoles",
+      "target": "react-query"
+    },
+    {
+      "source": "useRoles",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useRoles",
+      "target": "logger"
+    },
+    {
+      "source": "useRoles",
+      "target": "base"
+    },
+    {
+      "source": "useRoles",
+      "target": "types"
+    },
+    {
+      "source": "hooks.test",
+      "target": "schemas"
+    },
+    {
+      "source": "useAuditLogs",
+      "target": "react-query"
+    },
+    {
+      "source": "useAuditLogs",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useAuditLogs",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useAuditLogs",
+      "target": "schemas"
+    },
+    {
+      "source": "useAuditLogs",
+      "target": "base"
+    },
+    {
+      "source": "base",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "base",
+      "target": "logger"
+    },
+    {
+      "source": "base",
+      "target": "store"
+    },
+    {
+      "source": "base",
+      "target": "query-inspector-utils"
+    },
+    {
+      "source": "useReceptions",
+      "target": "react-query"
+    },
+    {
+      "source": "useReceptions",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "useReceptions",
+      "target": "rpc-validator"
+    },
+    {
+      "source": "useReceptions",
+      "target": "schemas"
+    },
+    {
+      "source": "useReceptions",
+      "target": "base"
+    },
+    {
+      "source": "useRSS",
+      "target": "react-query"
+    },
+    {
+      "source": "useRSS",
+      "target": "rss-service"
+    },
+    {
+      "source": "useRSS",
+      "target": "types"
+    },
+    {
+      "source": "useTerminalNavigation",
+      "target": "types"
+    },
+    {
+      "source": "useTerminalNavigation",
+      "target": "user"
+    },
+    {
+      "source": "useTerminalNavigation",
+      "target": "roles"
+    },
+    {
+      "source": "useToast",
+      "target": "toast"
+    },
+    {
+      "source": "usePWA.test",
+      "target": "react"
+    },
+    {
+      "source": "usePWA.test",
+      "target": "usePWA"
+    },
+    {
+      "source": "useCostSheetCalculator.test",
+      "target": "react"
+    },
+    {
+      "source": "useCostSheetCalculator.test",
+      "target": "useCostSheetCalculator"
+    },
+    {
+      "source": "useCostSheetCalculator.test",
+      "target": "contracts"
+    },
+    {
+      "source": "templates_verification.test",
+      "target": "react"
+    },
+    {
+      "source": "templates_verification.test",
+      "target": "useCostSheetCalculator"
+    },
+    {
+      "source": "templates_verification.test",
+      "target": "costpro-reinicio"
+    },
+    {
+      "source": "templates_verification.test",
+      "target": "template-juice"
+    },
+    {
+      "source": "templates_verification.test",
+      "target": "template-industrial"
+    },
+    {
+      "source": "cart",
+      "target": "middleware"
+    },
+    {
+      "source": "cart",
+      "target": "types"
+    },
+    {
+      "source": "cost-sheet-store",
+      "target": "middleware"
+    },
+    {
+      "source": "cost-sheet-store",
+      "target": "costpro-reinicio"
+    },
+    {
+      "source": "cost-sheet-store",
+      "target": "costpro-ejemplo"
+    },
+    {
+      "source": "cost-sheet-store",
+      "target": "contracts"
+    },
+    {
+      "source": "cost-sheet-store",
+      "target": "schemas"
+    },
+    {
+      "source": "index",
+      "target": "middleware"
+    },
+    {
+      "source": "index",
+      "target": "user"
+    },
+    {
+      "source": "index",
+      "target": "cart"
+    },
+    {
+      "source": "index",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "index",
+      "target": "session-store"
+    },
+    {
+      "source": "index",
+      "target": "useAcademyStore"
+    },
+    {
+      "source": "useAcademyStore",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "session-store.test",
+      "target": "session-store"
+    },
+    {
+      "source": "session-store.test",
+      "target": "react"
+    },
+    {
+      "source": "cart.test",
+      "target": "cart"
+    },
+    {
+      "source": "auth.test",
+      "target": "index"
+    },
+    {
+      "source": "auth.test",
+      "target": "contracts"
+    },
+    {
+      "source": "cart_advanced.test",
+      "target": "cart"
+    },
+    {
+      "source": "cost-sheet-store.test",
+      "target": "cost-sheet-store"
+    },
+    {
+      "source": "cost-sheet-store.test",
+      "target": "react"
+    },
+    {
+      "source": "db",
+      "target": "client"
+    },
+    {
+      "source": "supabaseClient",
+      "target": "supabase-js"
+    },
+    {
+      "source": "auth",
+      "target": "server"
+    },
+    {
+      "source": "auth",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "plan-utils",
+      "target": "usage-service"
+    },
+    {
+      "source": "plan-utils",
+      "target": "user"
+    },
+    {
+      "source": "theme.test",
+      "target": "utils"
+    },
+    {
+      "source": "utils",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "utils",
+      "target": "types"
+    },
+    {
+      "source": "errorHandler",
+      "target": "logger"
+    },
+    {
+      "source": "roles",
+      "target": "types"
+    },
+    {
+      "source": "parser",
+      "target": "types"
+    },
+    {
+      "source": "parser.test",
+      "target": "parser"
+    },
+    {
+      "source": "user-json.test",
+      "target": "index"
+    },
+    {
+      "source": "user-json.test",
+      "target": "types"
+    },
+    {
+      "source": "heuristic.test",
+      "target": "index"
+    },
+    {
+      "source": "heuristic.test",
+      "target": "types"
+    },
+    {
+      "source": "bidirectional.test",
+      "target": "index"
+    },
+    {
+      "source": "bidirectional.test",
+      "target": "types"
+    },
+    {
+      "source": "index",
+      "target": "types"
+    },
+    {
+      "source": "index",
+      "target": "formula-utils"
+    },
+    {
+      "source": "accuracy.test",
+      "target": "index"
+    },
+    {
+      "source": "accuracy.test",
+      "target": "types"
+    },
+    {
+      "source": "validations",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "smart-annex.test",
+      "target": "index"
+    },
+    {
+      "source": "smart-annex.test",
+      "target": "types"
+    },
+    {
+      "source": "topo-sort.test",
+      "target": "index"
+    },
+    {
+      "source": "topo-sort.test",
+      "target": "types"
+    },
+    {
+      "source": "index.test",
+      "target": "index"
+    },
+    {
+      "source": "index.test",
+      "target": "types"
+    },
+    {
+      "source": "index.test",
+      "target": "FC-DEMO-243.json"
+    },
+    {
+      "source": "pdf-export",
+      "target": "types"
+    },
+    {
+      "source": "health-alerts",
+      "target": "supabaseClient"
+    },
+    {
+      "source": "health-alerts",
+      "target": "health-engine"
+    },
+    {
+      "source": "system-health",
+      "target": "supabase-js"
+    },
+    {
+      "source": "system-health.test",
+      "target": "system-health"
+    },
+    {
+      "source": "health-engine.test",
+      "target": "health-engine"
+    },
+    {
+      "source": "sm2.test",
+      "target": "sm2"
+    },
+    {
+      "source": "ReleaseGatePdfExporter",
+      "target": "locale"
+    },
+    {
+      "source": "mri-engine.test",
+      "target": "mri-engine"
+    },
+    {
+      "source": "template-repair",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "costpro-ejemplo",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-industrial",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-consultancy",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-logistics",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-pastry",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-icecream",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-juice",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-shoes",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-pizza",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "template-furniture",
+      "target": "cost-sheet"
+    },
+    {
+      "source": "intelligence",
+      "target": "dexie"
+    },
+    {
+      "source": "calculations",
+      "target": "dexie"
+    },
+    {
+      "source": "calculations",
+      "target": "parser"
+    },
+    {
+      "source": "importUtils",
+      "target": "dexie"
+    },
+    {
+      "source": "matching.worker",
+      "target": "engine"
+    },
+    {
+      "source": "bandecParser",
+      "target": "dexie"
+    },
+    {
+      "source": "bandecParser",
+      "target": "engine"
+    },
+    {
+      "source": "bandecParser",
+      "target": "utils"
+    },
+    {
+      "source": "engine",
+      "target": "dexie"
+    },
+    {
+      "source": "utils",
+      "target": "dexie"
+    },
+    {
+      "source": "global_goal_priority.test",
+      "target": "engine"
+    },
+    {
+      "source": "calculations.test",
+      "target": "calculations"
+    },
+    {
+      "source": "calculations.test",
+      "target": "dexie"
+    },
+    {
+      "source": "bandecParser.test",
+      "target": "bandecParser"
+    },
+    {
+      "source": "bandecParser.test",
+      "target": "utils"
+    },
+    {
+      "source": "repro_issue.test",
+      "target": "engine"
+    },
+    {
+      "source": "repro_issue.test",
+      "target": "dexie"
+    },
+    {
+      "source": "advanced_engine.test",
+      "target": "engine"
+    },
+    {
+      "source": "advanced_engine.test",
+      "target": "dexie"
+    },
+    {
+      "source": "bigbon_simulation.test",
+      "target": "engine"
+    },
+    {
+      "source": "bigbon_simulation.test",
+      "target": "dexie"
+    },
+    {
+      "source": "engine.test",
+      "target": "engine"
+    },
+    {
+      "source": "engine.test",
+      "target": "dexie"
+    },
+    {
+      "source": "orchestrator",
+      "target": "types"
+    },
+    {
+      "source": "orchestrator",
+      "target": "gemini-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "gpt-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "qwen-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "deepseek-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "kimi-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "fallback-adapter"
+    },
+    {
+      "source": "orchestrator",
+      "target": "supabase-js"
+    },
+    {
+      "source": "qwen-adapter",
+      "target": "types"
+    },
+    {
+      "source": "openai-compatible-adapter",
+      "target": "types"
+    },
+    {
+      "source": "fallback-adapter",
+      "target": "types"
+    },
+    {
+      "source": "deepseek-adapter",
+      "target": "openai-compatible-adapter"
+    },
+    {
+      "source": "gemini-adapter.test",
+      "target": "gemini-adapter"
+    },
+    {
+      "source": "gemini-adapter.test",
+      "target": "types"
+    },
+    {
+      "source": "gemini-adapter",
+      "target": "types"
+    },
+    {
+      "source": "gemini-adapter",
+      "target": "generative-ai"
+    },
+    {
+      "source": "kimi-adapter",
+      "target": "openai-compatible-adapter"
+    },
+    {
+      "source": "gpt-adapter",
+      "target": "openai-compatible-adapter"
+    },
+    {
+      "source": "definitions",
+      "target": "types"
+    },
+    {
+      "source": "registry",
+      "target": "supabase-js"
+    },
+    {
+      "source": "registry",
+      "target": "viewRegistry"
+    },
+    {
+      "source": "registry",
+      "target": "definitions"
+    },
+    {
+      "source": "registry",
+      "target": "system-health"
+    },
+    {
+      "source": "registry.test",
+      "target": "registry"
+    },
+    {
+      "source": "offline-storage",
+      "target": "schemas"
+    }
+  ]
+}

@@ -1,44 +1,20 @@
 [
   {
-    "id": "reconciliacion_ipv",
-    "name": "Conciliación de Inventario (IPV)",
+    "id": "wf-sales",
+    "name": "Flujo de Ventas",
     "steps": [
-      "Importar extracto bancario en BankIngestion",
-      "Verificar catálogo en CatalogTable",
-      "Ejecutar MatchingEngine para cruzar datos",
-      "Revisar resultados en MatchingAuditView"
-    ],
-    "business_goal": "Asegurar que cada peso recibido en el banco corresponda a una salida de inventario válida."
+      "POSView",
+      "TransactionTable",
+      "InventoryUpdate"
+    ]
   },
   {
-    "id": "gestion_productos",
-    "name": "Gestión de Productos y Precios",
+    "id": "wf-costing",
+    "name": "Flujo de Costeo",
     "steps": [
-      "Crear o importar productos",
-      "Definir variaciones permitidas",
-      "Organizar por grupos y subgrupos"
-    ],
-    "business_goal": "Mantener un catálogo actualizado para la automatización del matching."
-  },
-  {
-    "id": "aprendizaje_conceptos",
-    "name": "Aprendizaje y Capacitación (Academy)",
-    "steps": [
-      "Acceder al módulo Academy",
-      "Seleccionar categoría de estudio",
-      "Realizar sesiones de repaso con Flashcards",
-      "Monitorear progreso en Mastery Dashboard"
-    ],
-    "business_goal": "Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetición espaciada."
-  },
-  {
-    "id": "gestion_billetera_digital",
-    "name": "Gestión de Billetera y Notificaciones (Wallet)",
-    "steps": [
-      "Importar mensajes de texto o archivos de banco",
-      "Visualizar registros crudos en la pestaña BD",
-      "Analizar métricas financieras en Analytics Dashboard"
-    ],
-    "business_goal": "Centralizar y analizar el flujo de caja proveniente de notificaciones bancarias digitales."
+      "CatalogTable",
+      "CostSheetView",
+      "PriceUpdate"
+    ]
   }
 ]
