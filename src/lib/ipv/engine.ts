@@ -566,7 +566,7 @@ export class MatchingEngine {
     origen: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER',
     clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
   ): Promise<ReconciliationLine> {
-    if (this.useStockLimit && this.getVirtualStock(product.cod) < qty) {
+    if (this.useStockLimit) {
         let currentStock = this.stockMap.get(product.cod) || 0;
         while (currentStock < qty) {
             const decomposed = await this.attemptDecomposition(product.cod);
