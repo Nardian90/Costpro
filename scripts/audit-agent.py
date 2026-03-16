@@ -413,7 +413,7 @@ def run_phase_1():
     sorted_items = sorted(items, key=lambda x: (x['type'], x['name']))
     for item in sorted_items:
         health_str = get_md_health_status(item['health'])
-        rows += f"| {item['name']} | {item['path']} | {item['type']} | {health_str} | {', '.join(item['dependencies'])} | {item['lastAudit']} |\n"
+        rows += f"| {item['name']} | {item['path']} | {item['type']} | {health_str} | {', '.join(sorted(item['dependencies']))} | {item['lastAudit']} |\n"
 
     with open(DOCS_MAP, 'w', encoding='utf-8') as f:
         f.write("# Mapa Arquitectónico Vivo\n\n")

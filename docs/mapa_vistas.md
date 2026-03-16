@@ -223,7 +223,7 @@
 | useReceptionsHistoryView | src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts | component | Óptimo |  | 2026-03-16 |
 | useSalesHistoryView | src/components/views/terminal/views/sales/useSalesHistoryView.ts | component | Óptimo |  | 2026-03-16 |
 | useStoresView | src/components/views/terminal/views/stores/useStoresView.ts | component | Óptimo | logger | 2026-03-16 |
-| useUsersView | src/components/views/terminal/views/users/useUsersView.ts | component | Advertencia | roles, UserForm, supabaseClient | 2026-03-16 |
+| useUsersView | src/components/views/terminal/views/users/useUsersView.ts | component | Advertencia | UserForm, roles, supabaseClient | 2026-03-16 |
 | ReleaseGatePdfExporter | src/lib/release_gate/ReleaseGatePdfExporter.ts | utility | Óptimo |  | 2026-03-16 |
 | auth | src/lib/auth.ts | utility | Óptimo | supabaseClient | 2026-03-16 |
 | backup | src/lib/ipv/backup.ts | utility | Óptimo |  | 2026-03-16 |
@@ -263,7 +263,7 @@
 | plan-utils | src/lib/plan-utils.ts | utility | Óptimo |  | 2026-03-16 |
 | query-inspector-utils | src/lib/query-inspector-utils.ts | utility | Óptimo |  | 2026-03-16 |
 | qwen-adapter | src/lib/ai/adapters/qwen-adapter.ts | utility | Óptimo | types | 2026-03-16 |
-| registry | src/lib/ai/tools/registry.ts | utility | Óptimo | system-health, definitions | 2026-03-16 |
+| registry | src/lib/ai/tools/registry.ts | utility | Óptimo | definitions, system-health | 2026-03-16 |
 | roles | src/lib/roles.ts | utility | Óptimo |  | 2026-03-16 |
 | rpc-validator | src/lib/rpc-validator.ts | utility | Óptimo |  | 2026-03-16 |
 | schemas | src/lib/cost-engine/schemas.ts | utility | Óptimo |  | 2026-03-16 |
