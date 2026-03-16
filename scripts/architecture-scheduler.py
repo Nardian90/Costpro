@@ -12,10 +12,13 @@ PUBLIC_DIR = "public"
 DOCS_DIR = "docs/architecture"
 INTEGRITY_REPORT = os.path.join(DOCS_DIR, "INTEGRITY_REPORT.md")
 
+# Artifacts organization for System Health API and Render deployment
 ARTIFACTS = {
     "public": ["system_architecture.json", "architecture_graph.json", "architecture_audit.json"],
-    "knowledge": ["components.json", "user_help.json", "views.json", "workflows.json", "master_user_manual.json"],
-    "root": ["knowledge_graph.json", "ai_context_index.json"]
+    "knowledge": [
+        "components.json", "user_help.json", "views.json", "workflows.json",
+        "master_user_manual.json", "knowledge_graph.json", "ai_context_index.json"
+    ]
 }
 
 def get_artifact_path(name):
@@ -64,6 +67,8 @@ class ArchitectureScheduler:
         self.repair_mode = False
         self.components = []
         self.scan_results = []
+        self.components_json = []
+        self.workflows = []
 
     def get_layer(self, path):
         if "components" in path: return "UI Components"
@@ -71,6 +76,8 @@ class ArchitectureScheduler:
         if "app" in path: return "Application"
         if "hooks" in path: return "Hooks"
         if "services" in path: return "Services"
+        if "engines" in path: return "Engines"
+        if "modules" in path: return "Modules"
         return "Infrastructure"
 
     def get_type(self, path):
@@ -78,7 +85,7 @@ class ArchitectureScheduler:
         if "components" in path: return "component"
         if "hooks" in path: return "hook"
         if "services" in path: return "service"
-        if "lib" in path: return "utility"
+        if "lib" in path or "engines" in path or "modules" in path: return "utility"
         return "unknown"
 
     def calculate_complexity(self, content):
@@ -89,7 +96,7 @@ class ArchitectureScheduler:
         return complexity
 
     def extract_dependencies(self, content):
-        return re.findall(r'from [\'"](.*)[\'"]', content)
+        return list(set(re.findall(r'from [\'"](.*)[\'"]', content)))
 
     def extract_description(self, business_logic):
         if not business_logic: return ""
@@ -102,8 +109,13 @@ class ArchitectureScheduler:
     def step_1_read_state(self):
         print("Step 1: Reading pipeline state...")
         if not os.path.exists(PIPELINE_MD):
-            print(f"Error: {PIPELINE_MD} not found.")
-            return False
+            # Try to rename if the old one exists
+            OLD_PIPELINE = "docs/automation/ARCHITECTURE_MAINTENANCE_PIPELINE.md"
+            if os.path.exists(OLD_PIPELINE):
+                os.rename(OLD_PIPELINE, PIPELINE_MD)
+            else:
+                print(f"Error: {PIPELINE_MD} not found.")
+                return False
 
         with open(PIPELINE_MD, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -118,7 +130,7 @@ class ArchitectureScheduler:
     def step_2_verify_integrity(self):
         print("Step 2: Verifying integrity...")
         missing = []
-        all_artifacts = ARTIFACTS["public"] + ARTIFACTS["knowledge"] + ARTIFACTS["root"]
+        all_artifacts = ARTIFACTS["public"] + ARTIFACTS["knowledge"]
 
         for art in all_artifacts:
             path = get_artifact_path(art)
@@ -128,10 +140,7 @@ class ArchitectureScheduler:
         if missing:
             print(f"Missing artifacts detected: {missing}")
             self.repair_mode = True
-            print("Activating repair_mode...")
-            # In a real scenario, this would trigger reconstruction logic
 
-        # Basic JSON validation
         for art in all_artifacts:
             path = get_artifact_path(art)
             if os.path.exists(path):
@@ -148,12 +157,9 @@ class ArchitectureScheduler:
     def step_3_analyze_changes(self):
         print("Step 3: Analyzing repository changes...")
         try:
-            # Detect new, modified, deleted and renamed files
             res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
             changes = res.stdout.splitlines()
             print(f"Detected {len(changes)} changes in repository.")
-            for change in changes:
-                print(f"  {change}")
         except Exception as e:
             print(f"Error analyzing changes: {e}")
         return True
@@ -361,7 +367,6 @@ class ArchitectureScheduler:
             "## Consistency Check"
         ]
 
-        # Simple cross-reference check
         comp_ids = [c["id"] for c in self.components_json]
         if len(comp_ids) == len(self.scan_results):
             report.append("- [x] Component list consistency verified.")

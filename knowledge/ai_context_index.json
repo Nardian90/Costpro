@@ -1,2208 +1,1881 @@
 {
   "component_summaries": [
     {
-      "id": "src/components/IntelligentThemeHandler.tsx",
-      "summary": "IntelligentThemeHandler.tsx: Módulo técnico IntelligentThemeHandler. Lógica de negocio para IntelligentThemeHandler."
+      "name": "IntelligentThemeHandler",
+      "summary": "Lógica para IntelligentThemeHandler"
     },
     {
-      "id": "src/components/GlobalSessionManager.tsx",
-      "summary": "GlobalSessionManager.tsx: Módulo técnico GlobalSessionManager. Lógica de negocio para GlobalSessionManager."
+      "name": "GlobalSessionManager",
+      "summary": "Lógica para GlobalSessionManager"
     },
     {
-      "id": "src/components/theme-provider.tsx",
-      "summary": "theme-provider.tsx: Módulo técnico theme-provider. Lógica de negocio para theme-provider."
+      "name": "theme-provider",
+      "summary": "Lógica para theme-provider"
     },
     {
-      "id": "src/components/SplashScreen.tsx",
-      "summary": "SplashScreen.tsx: Módulo técnico SplashScreen. Lógica de negocio para SplashScreen."
+      "name": "SplashScreen",
+      "summary": "Lógica para SplashScreen"
     },
     {
-      "id": "src/components/ThemeToggle.tsx",
-      "summary": "ThemeToggle.tsx: Módulo técnico ThemeToggle. Lógica de negocio para ThemeToggle."
+      "name": "ThemeToggle",
+      "summary": "Lógica para ThemeToggle"
     },
     {
-      "id": "src/components/CostProLogo.tsx",
-      "summary": "CostProLogo.tsx: Módulo técnico CostProLogo. Lógica de negocio para CostProLogo."
+      "name": "CostProLogo",
+      "summary": "Lógica para CostProLogo"
     },
     {
-      "id": "src/components/ServiceWorkerRegister.tsx",
-      "summary": "ServiceWorkerRegister.tsx: Módulo técnico ServiceWorkerRegister. Lógica de negocio para ServiceWorkerRegister."
+      "name": "ServiceWorkerRegister",
+      "summary": "Lógica para ServiceWorkerRegister"
     },
     {
-      "id": "src/components/modals/SyncConflictModal.tsx",
-      "summary": "SyncConflictModal.tsx: Módulo técnico SyncConflictModal. Lógica de negocio para SyncConflictModal."
+      "name": "SyncConflictModal",
+      "summary": "Lógica para SyncConflictModal"
     },
     {
-      "id": "src/components/modals/CreateProductModal.tsx",
-      "summary": "CreateProductModal.tsx: Módulo técnico CreateProductModal. Lógica de negocio para CreateProductModal."
+      "name": "CreateProductModal",
+      "summary": "Lógica para CreateProductModal"
     },
     {
-      "id": "src/components/modals/BarcodeScanner.tsx",
-      "summary": "BarcodeScanner.tsx: Módulo técnico BarcodeScanner. Lógica de negocio para BarcodeScanner."
+      "name": "BarcodeScanner",
+      "summary": "Lógica para BarcodeScanner"
     },
     {
-      "id": "src/components/modals/UpgradeModal.tsx",
-      "summary": "UpgradeModal.tsx: Módulo técnico UpgradeModal. Lógica de negocio para UpgradeModal."
+      "name": "UpgradeModal",
+      "summary": "Lógica para UpgradeModal"
     },
     {
-      "id": "src/components/modals/PriceSelectorModal.tsx",
-      "summary": "PriceSelectorModal.tsx: Módulo técnico PriceSelectorModal. Lógica de negocio para PriceSelectorModal."
+      "name": "PriceSelectorModal",
+      "summary": "Lógica para PriceSelectorModal"
     },
     {
-      "id": "src/components/providers/SyncProvider.tsx",
-      "summary": "SyncProvider.tsx: Módulo técnico SyncProvider. Lógica de negocio para SyncProvider."
+      "name": "SyncProvider",
+      "summary": "Lógica para SyncProvider"
     },
     {
-      "id": "src/components/providers/QueryProvider.tsx",
-      "summary": "QueryProvider.tsx: Módulo técnico QueryProvider. Lógica de negocio para QueryProvider."
+      "name": "QueryProvider",
+      "summary": "Lógica para QueryProvider"
     },
     {
-      "id": "src/components/views/TerminalShell.tsx",
-      "summary": "TerminalShell.tsx: Módulo técnico TerminalShell. Lógica de negocio para TerminalShell."
+      "name": "TerminalShell",
+      "summary": "Lógica para TerminalShell"
     },
     {
-      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "summary": "ExecutiveDemoView.tsx: Módulo técnico ExecutiveDemoView. Lógica de negocio para ExecutiveDemoView."
+      "name": "ExecutiveDemoView",
+      "summary": "Lógica para ExecutiveDemoView"
     },
     {
-      "id": "src/components/views/terminal/Sidebar.tsx",
-      "summary": "Sidebar.tsx: Módulo técnico Sidebar. Lógica de negocio para Sidebar."
+      "name": "Sidebar",
+      "summary": "Lógica para Sidebar"
     },
     {
-      "id": "src/components/views/terminal/Header.tsx",
-      "summary": "Header.tsx: Módulo técnico Header. Lógica de negocio para Header."
+      "name": "Header",
+      "summary": "Lógica para Header"
     },
     {
-      "id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
-      "summary": "SystemDependencyGraph.tsx: Módulo técnico SystemDependencyGraph. Lógica de negocio para SystemDependencyGraph."
+      "name": "SystemDependencyGraph",
+      "summary": "Lógica para SystemDependencyGraph"
     },
     {
-      "id": "src/components/views/terminal/views/health/AuditSummary.tsx",
-      "summary": "AuditSummary.tsx: Módulo técnico AuditSummary. Lógica de negocio para AuditSummary."
+      "name": "AuditSummary",
+      "summary": "Lógica para AuditSummary"
     },
     {
-      "id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
-      "summary": "SecurityMetrics.tsx: Módulo técnico SecurityMetrics. Lógica de negocio para SecurityMetrics."
+      "name": "SecurityMetrics",
+      "summary": "Lógica para SecurityMetrics"
     },
     {
-      "id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
-      "summary": "HealthStatusHeader.tsx: Módulo técnico HealthStatusHeader. Lógica de negocio para HealthStatusHeader."
+      "name": "HealthStatusHeader",
+      "summary": "Lógica para HealthStatusHeader"
     },
     {
-      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "summary": "SystemHealthView.tsx: Módulo técnico SystemHealthView. Lógica de negocio para SystemHealthView."
+      "name": "SystemHealthView",
+      "summary": "Lógica para SystemHealthView"
     },
     {
-      "id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
-      "summary": "ArchitectureAuditTable.tsx: Módulo técnico ArchitectureAuditTable. Lógica de negocio para ArchitectureAuditTable."
+      "name": "ArchitectureAuditTable",
+      "summary": "Lógica para ArchitectureAuditTable"
     },
     {
-      "id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
-      "summary": "ReleaseGateStatus.tsx: Módulo técnico ReleaseGateStatus. Lógica de negocio para ReleaseGateStatus."
+      "name": "ReleaseGateStatus",
+      "summary": "Lógica para ReleaseGateStatus"
     },
     {
-      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
-      "summary": "ViewNavigator.tsx: Módulo técnico ViewNavigator. Lógica de negocio para ViewNavigator."
+      "name": "ViewNavigator",
+      "summary": "Lógica para ViewNavigator"
     },
     {
-      "id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
-      "summary": "HealthAgentLogs.tsx: Módulo técnico HealthAgentLogs. Lógica de negocio para HealthAgentLogs."
+      "name": "HealthAgentLogs",
+      "summary": "Lógica para HealthAgentLogs"
     },
     {
-      "id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
-      "summary": "DetailedRelationshipGraph.tsx: Módulo técnico DetailedRelationshipGraph. Lógica de negocio para DetailedRelationshipGraph."
+      "name": "DetailedRelationshipGraph",
+      "summary": "Lógica para DetailedRelationshipGraph"
     },
     {
-      "id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
-      "summary": "InfrastructureMetrics.tsx: Módulo técnico InfrastructureMetrics. Lógica de negocio para InfrastructureMetrics."
+      "name": "InfrastructureMetrics",
+      "summary": "Lógica para InfrastructureMetrics"
     },
     {
-      "id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
-      "summary": "ApplicationMetrics.tsx: Módulo técnico ApplicationMetrics. Lógica de negocio para ApplicationMetrics."
+      "name": "ApplicationMetrics",
+      "summary": "Lógica para ApplicationMetrics"
     },
     {
-      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "summary": "WalletView.tsx: Módulo técnico WalletView. Lógica de negocio para WalletView."
+      "name": "WalletView",
+      "summary": "Lógica para WalletView"
     },
     {
-      "id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
-      "summary": "AnalyticsDashboard.tsx: Módulo técnico AnalyticsDashboard. Lógica de negocio para AnalyticsDashboard."
+      "name": "AnalyticsDashboard",
+      "summary": "Lógica para AnalyticsDashboard"
     },
     {
-      "id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
-      "summary": "CatalogModals.tsx: Módulo técnico CatalogModals. Lógica de negocio para CatalogModals."
+      "name": "CatalogModals",
+      "summary": "Lógica para CatalogModals"
     },
     {
-      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "summary": "CatalogView.tsx: Módulo técnico CatalogView. Lógica de negocio para CatalogView."
+      "name": "CatalogView",
+      "summary": "Lógica para CatalogView"
     },
     {
-      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
-      "summary": "SettingsView.tsx: Módulo técnico SettingsView. Lógica de negocio para SettingsView."
+      "name": "SettingsView",
+      "summary": "Lógica para SettingsView"
     },
     {
-      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "summary": "DashboardView.tsx: Módulo técnico DashboardView. Lógica de negocio para DashboardView."
+      "name": "DashboardView",
+      "summary": "Lógica para DashboardView"
     },
     {
-      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
-      "summary": "useDashboardView.ts: Módulo técnico useDashboardView. Lógica de negocio para useDashboardView."
+      "name": "useDashboardView",
+      "summary": "Lógica para useDashboardView"
     },
     {
-      "id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
-      "summary": "ConcentricDashboardRing.tsx: Módulo técnico ConcentricDashboardRing. Lógica de negocio para ConcentricDashboardRing."
+      "name": "ConcentricDashboardRing",
+      "summary": "Lógica para ConcentricDashboardRing"
     },
     {
-      "id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
-      "summary": "ExecutiveKpiCards.tsx: Módulo técnico ExecutiveKpiCards. Lógica de negocio para ExecutiveKpiCards."
+      "name": "ExecutiveKpiCards",
+      "summary": "Lógica para ExecutiveKpiCards"
     },
     {
-      "id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
-      "summary": "RecentCostSheets.tsx: Módulo técnico RecentCostSheets. Lógica de negocio para RecentCostSheets."
+      "name": "RecentCostSheets",
+      "summary": "Lógica para RecentCostSheets"
     },
     {
-      "id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
-      "summary": "ReportConfigPanel.tsx: Módulo técnico ReportConfigPanel. Lógica de negocio para ReportConfigPanel."
+      "name": "ReportConfigPanel",
+      "summary": "Lógica para ReportConfigPanel"
     },
     {
-      "id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
-      "summary": "ReportPreview.tsx: Módulo técnico ReportPreview. Lógica de negocio para ReportPreview."
+      "name": "ReportPreview",
+      "summary": "Lógica para ReportPreview"
     },
     {
-      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "summary": "ReportsView.tsx: Módulo técnico ReportsView. Lógica de negocio para ReportsView."
+      "name": "ReportsView",
+      "summary": "Lógica para ReportsView"
     },
     {
-      "id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
-      "summary": "AuditLogsModal.tsx: Módulo técnico AuditLogsModal. Lógica de negocio para AuditLogsModal."
+      "name": "AuditLogsModal",
+      "summary": "Lógica para AuditLogsModal"
     },
     {
-      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "summary": "StoresManagementView.tsx: Módulo técnico StoresManagementView. Lógica de negocio para StoresManagementView."
+      "name": "StoresManagementView",
+      "summary": "Lógica para StoresManagementView"
     },
     {
-      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
-      "summary": "useStoresView.ts: Módulo técnico useStoresView. Lógica de negocio para useStoresView."
+      "name": "useStoresView",
+      "summary": "Lógica para useStoresView"
     },
     {
-      "id": "src/components/views/terminal/views/stores/StoreModals.tsx",
-      "summary": "StoreModals.tsx: Módulo técnico StoreModals. Lógica de negocio para StoreModals."
+      "name": "StoreModals",
+      "summary": "Lógica para StoreModals"
     },
     {
-      "id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
-      "summary": "MasteryDashboard.tsx: Módulo técnico MasteryDashboard. Lógica de negocio para MasteryDashboard."
+      "name": "MasteryDashboard",
+      "summary": "Lógica para MasteryDashboard"
     },
     {
-      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "summary": "AcademyView.tsx: Módulo técnico AcademyView. Lógica de negocio para AcademyView."
+      "name": "AcademyView",
+      "summary": "Lógica para AcademyView"
     },
     {
-      "id": "src/components/views/terminal/views/academy/Flashcard.tsx",
-      "summary": "Flashcard.tsx: Módulo técnico Flashcard. Lógica de negocio para Flashcard."
+      "name": "Flashcard",
+      "summary": "Lógica para Flashcard"
     },
     {
-      "id": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
-      "summary": "CreateTransferModal.tsx: Módulo técnico CreateTransferModal. Lógica de negocio para CreateTransferModal."
+      "name": "CreateTransferModal",
+      "summary": "Lógica para CreateTransferModal"
     },
     {
-      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "summary": "TransferenciasView.tsx: Módulo técnico TransferenciasView. Lógica de negocio para TransferenciasView."
+      "name": "TransferenciasView",
+      "summary": "Lógica para TransferenciasView"
     },
     {
-      "id": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
-      "summary": "TransferDetailsModal.tsx: Módulo técnico TransferDetailsModal. Lógica de negocio para TransferDetailsModal."
+      "name": "TransferDetailsModal",
+      "summary": "Lógica para TransferDetailsModal"
     },
     {
-      "id": "src/components/views/terminal/views/help/HelpView.tsx",
-      "summary": "HelpView.tsx: Módulo técnico HelpView. Lógica de negocio para HelpView."
+      "name": "HelpView",
+      "summary": "Lógica para HelpView"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
-      "summary": "KidsOnboarding.tsx: Módulo técnico KidsOnboarding. Lógica de negocio para KidsOnboarding."
+      "name": "KidsOnboarding",
+      "summary": "Lógica para KidsOnboarding"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
-      "summary": "StickyCartFlowDiagram.tsx: Módulo técnico StickyCartFlowDiagram. Lógica de negocio para StickyCartFlowDiagram."
+      "name": "StickyCartFlowDiagram",
+      "summary": "Lógica para StickyCartFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.test.tsx",
-      "summary": "StoreSkuDiagram.test.tsx: Módulo técnico StoreSkuDiagram.test. Lógica de negocio para StoreSkuDiagram.test."
+      "name": "StoreSkuDiagram.test",
+      "summary": "Lógica para StoreSkuDiagram.test"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
-      "summary": "MobilePosDiagram.tsx: Módulo técnico MobilePosDiagram. Lógica de negocio para MobilePosDiagram."
+      "name": "MobilePosDiagram",
+      "summary": "Lógica para MobilePosDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
-      "summary": "IpvFlowDiagram.tsx: Módulo técnico IpvFlowDiagram. Lógica de negocio para IpvFlowDiagram."
+      "name": "IpvFlowDiagram",
+      "summary": "Lógica para IpvFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
-      "summary": "SecurityFlowDiagram.tsx: Módulo técnico SecurityFlowDiagram. Lógica de negocio para SecurityFlowDiagram."
+      "name": "SecurityFlowDiagram",
+      "summary": "Lógica para SecurityFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
-      "summary": "UserFlowDiagram.tsx: Módulo técnico UserFlowDiagram. Lógica de negocio para UserFlowDiagram."
+      "name": "UserFlowDiagram",
+      "summary": "Lógica para UserFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
-      "summary": "QuickModeMassiveDiagram.tsx: Módulo técnico QuickModeMassiveDiagram. Lógica de negocio para QuickModeMassiveDiagram."
+      "name": "QuickModeMassiveDiagram",
+      "summary": "Lógica para QuickModeMassiveDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx",
-      "summary": "OfflineSyncDiagram.test.tsx: Módulo técnico OfflineSyncDiagram.test. Lógica de negocio para OfflineSyncDiagram.test."
+      "name": "OfflineSyncDiagram.test",
+      "summary": "Lógica para OfflineSyncDiagram.test"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/DarianDiagram.test.tsx",
-      "summary": "DarianDiagram.test.tsx: Módulo técnico DarianDiagram.test. Lógica de negocio para DarianDiagram.test."
+      "name": "DarianDiagram.test",
+      "summary": "Lógica para DarianDiagram.test"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
-      "summary": "CostFlowDiagram.tsx: Módulo técnico CostFlowDiagram. Lógica de negocio para CostFlowDiagram."
+      "name": "CostFlowDiagram",
+      "summary": "Lógica para CostFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
-      "summary": "RolesDiagram.tsx: Módulo técnico RolesDiagram. Lógica de negocio para RolesDiagram."
+      "name": "RolesDiagram",
+      "summary": "Lógica para RolesDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
-      "summary": "OfflineSyncDiagram.tsx: Módulo técnico OfflineSyncDiagram. Lógica de negocio para OfflineSyncDiagram."
+      "name": "OfflineSyncDiagram",
+      "summary": "Lógica para OfflineSyncDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
-      "summary": "InventoryFlowDiagram.tsx: Módulo técnico InventoryFlowDiagram. Lógica de negocio para InventoryFlowDiagram."
+      "name": "InventoryFlowDiagram",
+      "summary": "Lógica para InventoryFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
-      "summary": "MobileFlowDiagram.tsx: Módulo técnico MobileFlowDiagram. Lógica de negocio para MobileFlowDiagram."
+      "name": "MobileFlowDiagram",
+      "summary": "Lógica para MobileFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
-      "summary": "CashFlowDiagram.tsx: Módulo técnico CashFlowDiagram. Lógica de negocio para CashFlowDiagram."
+      "name": "CashFlowDiagram",
+      "summary": "Lógica para CashFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
-      "summary": "InventoryAdjustmentFlowDiagram.tsx: Módulo técnico InventoryAdjustmentFlowDiagram. Lógica de negocio para InventoryAdjustmentFlowDiagram."
+      "name": "InventoryAdjustmentFlowDiagram",
+      "summary": "Lógica para InventoryAdjustmentFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
-      "summary": "StoreSkuDiagram.tsx: Módulo técnico StoreSkuDiagram. Lógica de negocio para StoreSkuDiagram."
+      "name": "StoreSkuDiagram",
+      "summary": "Lógica para StoreSkuDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
-      "summary": "DarianDiagram.tsx: Módulo técnico DarianDiagram. Lógica de negocio para DarianDiagram."
+      "name": "DarianDiagram",
+      "summary": "Lógica para DarianDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
-      "summary": "SalesFlowDiagram.tsx: Módulo técnico SalesFlowDiagram. Lógica de negocio para SalesFlowDiagram."
+      "name": "SalesFlowDiagram",
+      "summary": "Lógica para SalesFlowDiagram"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
-      "summary": "InventoryCardView.tsx: Módulo técnico InventoryCardView. Lógica de negocio para InventoryCardView."
+      "name": "InventoryCardView",
+      "summary": "Lógica para InventoryCardView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "summary": "InventoryAdjustmentsView.tsx: Módulo técnico InventoryAdjustmentsView. Lógica de negocio para InventoryAdjustmentsView."
+      "name": "InventoryAdjustmentsView",
+      "summary": "Lógica para InventoryAdjustmentsView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
-      "summary": "InventoryAdjustmentModal.tsx: Módulo técnico InventoryAdjustmentModal. Lógica de negocio para InventoryAdjustmentModal."
+      "name": "InventoryAdjustmentModal",
+      "summary": "Lógica para InventoryAdjustmentModal"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "summary": "ProductReceptionView.tsx: Módulo técnico ProductReceptionView. Lógica de negocio para ProductReceptionView."
+      "name": "ProductReceptionView",
+      "summary": "Lógica para ProductReceptionView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
-      "summary": "InventoryTableView.tsx: Módulo técnico InventoryTableView. Lógica de negocio para InventoryTableView."
+      "name": "InventoryTableView",
+      "summary": "Lógica para InventoryTableView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "summary": "InventoryView.tsx: Módulo técnico InventoryView. Lógica de negocio para InventoryView."
+      "name": "InventoryView",
+      "summary": "Panel de control ejecutivo para la gestión de existencias. Visualiza niveles de stock, alertas de reposición y valorización de inventario."
     },
     {
-      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
-      "summary": "CashClosureView.tsx: Módulo técnico CashClosureView. Lógica de negocio para CashClosureView."
+      "name": "CashClosureView",
+      "summary": "Lógica para CashClosureView"
     },
     {
-      "id": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
-      "summary": "TaxCalculationModal.tsx: Módulo técnico TaxCalculationModal. Lógica de negocio para TaxCalculationModal."
+      "name": "TaxCalculationModal",
+      "summary": "Lógica para TaxCalculationModal"
     },
     {
-      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "summary": "SalesHistoryView.tsx: Módulo técnico SalesHistoryView. Lógica de negocio para SalesHistoryView."
+      "name": "SalesHistoryView",
+      "summary": "Lógica para SalesHistoryView"
     },
     {
-      "id": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
-      "summary": "TransactionDetailsModal.tsx: Módulo técnico TransactionDetailsModal. Lógica de negocio para TransactionDetailsModal."
+      "name": "TransactionDetailsModal",
+      "summary": "Lógica para TransactionDetailsModal"
     },
     {
-      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
-      "summary": "useSalesHistoryView.ts: Módulo técnico useSalesHistoryView. Lógica de negocio para useSalesHistoryView."
+      "name": "useSalesHistoryView",
+      "summary": "Lógica para useSalesHistoryView"
     },
     {
-      "id": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
-      "summary": "ReceptionDetailsModal.tsx: Módulo técnico ReceptionDetailsModal. Lógica de negocio para ReceptionDetailsModal."
+      "name": "ReceptionDetailsModal",
+      "summary": "Lógica para ReceptionDetailsModal"
     },
     {
-      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "summary": "ReceptionsHistoryView.tsx: Módulo técnico ReceptionsHistoryView. Lógica de negocio para ReceptionsHistoryView."
+      "name": "ReceptionsHistoryView",
+      "summary": "Lógica para ReceptionsHistoryView"
     },
     {
-      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
-      "summary": "useReceptionsHistoryView.ts: Módulo técnico useReceptionsHistoryView. Lógica de negocio para useReceptionsHistoryView."
+      "name": "useReceptionsHistoryView",
+      "summary": "Lógica para useReceptionsHistoryView"
     },
     {
-      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "summary": "StockHistoryView.tsx: Módulo técnico StockHistoryView. Lógica de negocio para StockHistoryView."
+      "name": "StockHistoryView",
+      "summary": "Lógica para StockHistoryView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "summary": "IPVView.tsx: Módulo técnico IPVView. Lógica de negocio para IPVView."
+      "name": "IPVView",
+      "summary": "Lógica para IPVView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
-      "summary": "IPVRightSidebar.tsx: Módulo técnico IPVRightSidebar. Lógica de negocio para IPVRightSidebar."
+      "name": "IPVRightSidebar",
+      "summary": "Lógica para IPVRightSidebar"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
-      "summary": "TransactionBreakdown.tsx: Módulo técnico TransactionBreakdown. Lógica de negocio para TransactionBreakdown."
+      "name": "TransactionBreakdown",
+      "summary": "Lógica para TransactionBreakdown"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
-      "summary": "ActionBadges.tsx: Módulo técnico ActionBadges. Lógica de negocio para ActionBadges."
+      "name": "ActionBadges",
+      "summary": "Lógica para ActionBadges"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
-      "summary": "TransactionTable.tsx: Módulo técnico TransactionTable. Lógica de negocio para TransactionTable."
+      "name": "TransactionTable",
+      "summary": "Lógica para TransactionTable"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
-      "summary": "AddTransactionModal.tsx: Módulo técnico AddTransactionModal. Lógica de negocio para AddTransactionModal."
+      "name": "AddTransactionModal",
+      "summary": "Lógica para AddTransactionModal"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
-      "summary": "IncomeReceiptPreview.tsx: Módulo técnico IncomeReceiptPreview. Lógica de negocio para IncomeReceiptPreview."
+      "name": "IncomeReceiptPreview",
+      "summary": "Lógica para IncomeReceiptPreview"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "summary": "MovementsView.tsx: Módulo técnico MovementsView. Lógica de negocio para MovementsView."
+      "name": "MovementsView",
+      "summary": "Lógica para MovementsView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
-      "summary": "IncomeReceiptSection.tsx: Módulo técnico IncomeReceiptSection. Lógica de negocio para IncomeReceiptSection."
+      "name": "IncomeReceiptSection",
+      "summary": "Lógica para IncomeReceiptSection"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
-      "summary": "IPVPreviewModal.tsx: Módulo técnico IPVPreviewModal. Lógica de negocio para IPVPreviewModal."
+      "name": "IPVPreviewModal",
+      "summary": "Lógica para IPVPreviewModal"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
-      "summary": "MatchingTracePopover.tsx: Módulo técnico MatchingTracePopover. Lógica de negocio para MatchingTracePopover."
+      "name": "MatchingTracePopover",
+      "summary": "Lógica para MatchingTracePopover"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "summary": "IPVReportView.tsx: Módulo técnico IPVReportView. Lógica de negocio para IPVReportView."
+      "name": "IPVReportView",
+      "summary": "Lógica para IPVReportView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "summary": "MatchingAuditView.tsx: Módulo técnico MatchingAuditView. Lógica de negocio para MatchingAuditView."
+      "name": "MatchingAuditView",
+      "summary": "Lógica para MatchingAuditView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
-      "summary": "IngestionErrorsTable.tsx: Módulo técnico IngestionErrorsTable. Lógica de negocio para IngestionErrorsTable."
+      "name": "IngestionErrorsTable",
+      "summary": "Lógica para IngestionErrorsTable"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "summary": "TransferQRReportView.tsx: Módulo técnico TransferQRReportView. Lógica de negocio para TransferQRReportView."
+      "name": "TransferQRReportView",
+      "summary": "Lógica para TransferQRReportView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "summary": "ManualReconciliationView.tsx: Módulo técnico ManualReconciliationView. Lógica de negocio para ManualReconciliationView."
+      "name": "ManualReconciliationView",
+      "summary": "Lógica para ManualReconciliationView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
-      "summary": "MatchingRulesEditor.tsx: Módulo técnico MatchingRulesEditor. Lógica de negocio para MatchingRulesEditor."
+      "name": "MatchingRulesEditor",
+      "summary": "Lógica para MatchingRulesEditor"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
-      "summary": "MatchingSimulation.tsx: Módulo técnico MatchingSimulation. Lógica de negocio para MatchingSimulation."
+      "name": "MatchingSimulation",
+      "summary": "Lógica para MatchingSimulation"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
-      "summary": "RuleMetaEditor.tsx: Módulo técnico RuleMetaEditor. Lógica de negocio para RuleMetaEditor."
+      "name": "RuleMetaEditor",
+      "summary": "Lógica para RuleMetaEditor"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
-      "summary": "IPVReportsDropdown.tsx: Módulo técnico IPVReportsDropdown. Lógica de negocio para IPVReportsDropdown."
+      "name": "IPVReportsDropdown",
+      "summary": "Lógica para IPVReportsDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
-      "summary": "PivotStatementView.tsx: Módulo técnico PivotStatementView. Lógica de negocio para PivotStatementView."
+      "name": "PivotStatementView",
+      "summary": "Lógica para PivotStatementView"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
-      "summary": "BankIngestion.tsx: Módulo de procesamiento de extractos bancarios. Gestiona la carga y limpieza de datos provenientes de bancos para su posterior conciliación."
+      "name": "BankIngestion",
+      "summary": "Lógica para BankIngestion"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
-      "summary": "IPVInstitutionalDashboard.tsx: Módulo técnico IPVInstitutionalDashboard. Lógica de negocio para IPVInstitutionalDashboard."
+      "name": "IPVInstitutionalDashboard",
+      "summary": "Lógica para IPVInstitutionalDashboard"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
-      "summary": "CatalogTable.tsx: Componente de gestión de inventario. Visualiza y administra el catálogo de productos, permitiendo ajustes de stock y visualización de métricas de entrada/salida."
+      "name": "CatalogTable",
+      "summary": "Lógica para CatalogTable"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
-      "summary": "IPVHelpDialog.tsx: Módulo técnico IPVHelpDialog. Lógica de negocio para IPVHelpDialog."
+      "name": "IPVHelpDialog",
+      "summary": "Lógica para IPVHelpDialog"
     },
     {
-      "id": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
-      "summary": "IPVControlPanel.tsx: Módulo técnico IPVControlPanel. Lógica de negocio para IPVControlPanel."
+      "name": "IPVControlPanel",
+      "summary": "Lógica para IPVControlPanel"
     },
     {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
-      "summary": "InventoryCountTableView.tsx: Módulo técnico InventoryCountTableView. Lógica de negocio para InventoryCountTableView."
+      "name": "InventoryCountTableView",
+      "summary": "Lógica para InventoryCountTableView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
-      "summary": "InventoryCountCardView.tsx: Módulo técnico InventoryCountCardView. Lógica de negocio para InventoryCountCardView."
+      "name": "InventoryCountCardView",
+      "summary": "Lógica para InventoryCountCardView"
     },
     {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "summary": "InventoryCountView.tsx: Módulo técnico InventoryCountView. Lógica de negocio para InventoryCountView."
+      "name": "InventoryCountView",
+      "summary": "Lógica para InventoryCountView"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/data-loader.ts",
-      "summary": "data-loader.ts: Módulo técnico data-loader. Lógica de negocio para data-loader."
+      "name": "data-loader",
+      "summary": "Lógica para data-loader"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
-      "summary": "CuentasModule.tsx: Módulo técnico CuentasModule. Lógica de negocio para CuentasModule."
+      "name": "CuentasModule",
+      "summary": "Lógica para CuentasModule"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
-      "summary": "AsientosModule.tsx: Módulo técnico AsientosModule. Lógica de negocio para AsientosModule."
+      "name": "AsientosModule",
+      "summary": "Lógica para AsientosModule"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
-      "summary": "WikiBreadcrumbs.tsx: Módulo técnico WikiBreadcrumbs. Lógica de negocio para WikiBreadcrumbs."
+      "name": "WikiBreadcrumbs",
+      "summary": "Lógica para WikiBreadcrumbs"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
-      "summary": "WikiSearch.tsx: Módulo técnico WikiSearch. Lógica de negocio para WikiSearch."
+      "name": "WikiSearch",
+      "summary": "Lógica para WikiSearch"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/types.ts",
-      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+      "name": "types",
+      "summary": "Lógica para types"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "summary": "WikiView.tsx: Módulo técnico WikiView. Lógica de negocio para WikiView."
+      "name": "WikiView",
+      "summary": "Lógica para WikiView"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
-      "summary": "WikiSidebar.tsx: Módulo técnico WikiSidebar. Lógica de negocio para WikiSidebar."
+      "name": "WikiSidebar",
+      "summary": "Lógica para WikiSidebar"
     },
     {
-      "id": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
-      "summary": "ClasificadorModule.tsx: Módulo técnico ClasificadorModule. Lógica de negocio para ClasificadorModule."
+      "name": "ClasificadorModule",
+      "summary": "Lógica para ClasificadorModule"
     },
     {
-      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
-      "summary": "POSTableView.tsx: Módulo técnico POSTableView. Lógica de negocio para POSTableView."
+      "name": "POSTableView",
+      "summary": "Lógica para POSTableView"
     },
     {
-      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
-      "summary": "usePOSView.ts: Módulo técnico usePOSView. Lógica de negocio para usePOSView."
+      "name": "usePOSView",
+      "summary": "Lógica para usePOSView"
     },
     {
-      "id": "src/components/views/terminal/views/pos/POSView.tsx",
-      "summary": "POSView.tsx: Módulo técnico POSView. Lógica de negocio para POSView."
+      "name": "POSView",
+      "summary": "Lógica para POSView"
     },
     {
-      "id": "src/components/views/terminal/views/pos/POSCart.tsx",
-      "summary": "POSCart.tsx: Módulo técnico POSCart. Lógica de negocio para POSCart."
+      "name": "POSCart",
+      "summary": "Lógica para POSCart"
     },
     {
-      "id": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
-      "summary": "StickyCartSummary.tsx: Módulo técnico StickyCartSummary. Lógica de negocio para StickyCartSummary."
+      "name": "StickyCartSummary",
+      "summary": "Lógica para StickyCartSummary"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
-      "summary": "AuditEventIcon.tsx: Módulo técnico AuditEventIcon. Lógica de negocio para AuditEventIcon."
+      "name": "AuditEventIcon",
+      "summary": "Lógica para AuditEventIcon"
     },
     {
-      "id": "src/components/views/terminal/views/audit/audit.test.ts",
-      "summary": "audit.test.ts: Módulo técnico audit.test. Lógica de negocio para audit.test."
+      "name": "audit.test",
+      "summary": "Lógica para audit.test"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditFilters.tsx",
-      "summary": "AuditFilters.tsx: Módulo técnico AuditFilters. Lógica de negocio para AuditFilters."
+      "name": "AuditFilters",
+      "summary": "Lógica para AuditFilters"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditEventMeta.test.tsx",
-      "summary": "AuditEventMeta.test.tsx: Módulo técnico AuditEventMeta.test. Lógica de negocio para AuditEventMeta.test."
+      "name": "AuditEventMeta.test",
+      "summary": "Lógica para AuditEventMeta.test"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
-      "summary": "AuditTableView.tsx: Módulo técnico AuditTableView. Lógica de negocio para AuditTableView."
+      "name": "AuditTableView",
+      "summary": "Lógica para AuditTableView"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
-      "summary": "AuditTableView.test.tsx: Módulo técnico AuditTableView.test. Lógica de negocio para AuditTableView.test."
+      "name": "AuditTableView.test",
+      "summary": "Lógica para AuditTableView.test"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
-      "summary": "AuditTimeline.tsx: Módulo técnico AuditTimeline. Lógica de negocio para AuditTimeline."
+      "name": "AuditTimeline",
+      "summary": "Lógica para AuditTimeline"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
-      "summary": "AuditLogsView.test.tsx: Módulo técnico AuditLogsView.test. Lógica de negocio para AuditLogsView.test."
+      "name": "AuditLogsView.test",
+      "summary": "Lógica para AuditLogsView.test"
     },
     {
-      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
-      "summary": "useAuditLogsView.ts: Módulo técnico useAuditLogsView. Lógica de negocio para useAuditLogsView."
+      "name": "useAuditLogsView",
+      "summary": "Lógica para useAuditLogsView"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
-      "summary": "AuditEventCard.tsx: Módulo técnico AuditEventCard. Lógica de negocio para AuditEventCard."
+      "name": "AuditEventCard",
+      "summary": "Lógica para AuditEventCard"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
-      "summary": "AuditEventMeta.tsx: Módulo técnico AuditEventMeta. Lógica de negocio para AuditEventMeta."
+      "name": "AuditEventMeta",
+      "summary": "Lógica para AuditEventMeta"
     },
     {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "summary": "AuditLogsView.tsx: Módulo técnico AuditLogsView. Lógica de negocio para AuditLogsView."
+      "name": "AuditLogsView",
+      "summary": "Lógica para AuditLogsView"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "summary": "CostSheetAuditView.tsx: Módulo técnico CostSheetAuditView. Lógica de negocio para CostSheetAuditView."
+      "name": "CostSheetAuditView",
+      "summary": "Lógica para CostSheetAuditView"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
-      "summary": "CostSheetSidebarNav.tsx: Módulo técnico CostSheetSidebarNav. Lógica de negocio para CostSheetSidebarNav."
+      "name": "CostSheetSidebarNav",
+      "summary": "Lógica para CostSheetSidebarNav"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
-      "summary": "CostSheetFormulaGuide.tsx: Módulo técnico CostSheetFormulaGuide. Lógica de negocio para CostSheetFormulaGuide."
+      "name": "CostSheetFormulaGuide",
+      "summary": "Lógica para CostSheetFormulaGuide"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
-      "summary": "CostSheetGenerateDropdown.tsx: Módulo técnico CostSheetGenerateDropdown. Lógica de negocio para CostSheetGenerateDropdown."
+      "name": "CostSheetGenerateDropdown",
+      "summary": "Lógica para CostSheetGenerateDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
-      "summary": "FormulaEditor.tsx: Módulo técnico FormulaEditor. Lógica de negocio para FormulaEditor."
+      "name": "FormulaEditor",
+      "summary": "Lógica para FormulaEditor"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
-      "summary": "CircularProgress.tsx: Módulo técnico CircularProgress. Lógica de negocio para CircularProgress."
+      "name": "CircularProgress",
+      "summary": "Lógica para CircularProgress"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
-      "summary": "CostSheetCalculator.tsx: Módulo técnico CostSheetCalculator. Lógica de negocio para CostSheetCalculator."
+      "name": "CostSheetCalculator",
+      "summary": "Lógica para CostSheetCalculator"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
-      "summary": "ProductInventoryPicker.tsx: Módulo técnico ProductInventoryPicker. Lógica de negocio para ProductInventoryPicker."
+      "name": "ProductInventoryPicker",
+      "summary": "Lógica para ProductInventoryPicker"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
-      "summary": "CostSheetBanner.tsx: Módulo técnico CostSheetBanner. Lógica de negocio para CostSheetBanner."
+      "name": "CostSheetBanner",
+      "summary": "Lógica para CostSheetBanner"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
-      "summary": "CostSheetAuditLog.tsx: Módulo técnico CostSheetAuditLog. Lógica de negocio para CostSheetAuditLog."
+      "name": "CostSheetAuditLog",
+      "summary": "Lógica para CostSheetAuditLog"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
-      "summary": "CostSheetMasterRing.tsx: Módulo técnico CostSheetMasterRing. Lógica de negocio para CostSheetMasterRing."
+      "name": "CostSheetMasterRing",
+      "summary": "Lógica para CostSheetMasterRing"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
-      "summary": "CostSheetActionsPanel.tsx: Módulo técnico CostSheetActionsPanel. Lógica de negocio para CostSheetActionsPanel."
+      "name": "CostSheetActionsPanel",
+      "summary": "Lógica para CostSheetActionsPanel"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "summary": "CostSheetView.tsx: Módulo técnico CostSheetView. Lógica de negocio para CostSheetView."
+      "name": "CostSheetView",
+      "summary": "Lógica para CostSheetView"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
-      "summary": "CostSheetAnnexes.tsx: Módulo técnico CostSheetAnnexes. Lógica de negocio para CostSheetAnnexes."
+      "name": "CostSheetAnnexes",
+      "summary": "Lógica para CostSheetAnnexes"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
-      "summary": "CostSheetHelpDropdown.tsx: Módulo técnico CostSheetHelpDropdown. Lógica de negocio para CostSheetHelpDropdown."
+      "name": "CostSheetHelpDropdown",
+      "summary": "Lógica para CostSheetHelpDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
-      "summary": "CostSheetSummary.tsx: Módulo técnico CostSheetSummary. Lógica de negocio para CostSheetSummary."
+      "name": "CostSheetSummary",
+      "summary": "Lógica para CostSheetSummary"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "summary": "CostSheetNav.tsx: Módulo técnico CostSheetNav. Lógica de negocio para CostSheetNav."
+      "name": "CostSheetNav",
+      "summary": "Lógica para CostSheetNav"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
-      "summary": "CostSheetOptionsDropdown.tsx: Módulo técnico CostSheetOptionsDropdown. Lógica de negocio para CostSheetOptionsDropdown."
+      "name": "CostSheetOptionsDropdown",
+      "summary": "Lógica para CostSheetOptionsDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
-      "summary": "CostSheetHeader.tsx: Módulo técnico CostSheetHeader. Lógica de negocio para CostSheetHeader."
+      "name": "CostSheetHeader",
+      "summary": "Lógica para CostSheetHeader"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
-      "summary": "CostSheetQuickMode.tsx: Módulo técnico CostSheetQuickMode. Lógica de negocio para CostSheetQuickMode."
+      "name": "CostSheetQuickMode",
+      "summary": "Lógica para CostSheetQuickMode"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
-      "summary": "CostSheetBottomNav.tsx: Módulo técnico CostSheetBottomNav. Lógica de negocio para CostSheetBottomNav."
+      "name": "CostSheetBottomNav",
+      "summary": "Lógica para CostSheetBottomNav"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
-      "summary": "CostSheetNarrative.tsx: Módulo técnico CostSheetNarrative. Lógica de negocio para CostSheetNarrative."
+      "name": "CostSheetNarrative",
+      "summary": "Lógica para CostSheetNarrative"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
-      "summary": "CostSheetSignature.tsx: Módulo técnico CostSheetSignature. Lógica de negocio para CostSheetSignature."
+      "name": "CostSheetSignature",
+      "summary": "Lógica para CostSheetSignature"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
-      "summary": "CostSheetExportModal.tsx: Módulo técnico CostSheetExportModal. Lógica de negocio para CostSheetExportModal."
+      "name": "CostSheetExportModal",
+      "summary": "Lógica para CostSheetExportModal"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
-      "summary": "HealthBattery.tsx: Módulo técnico HealthBattery. Lógica de negocio para HealthBattery."
+      "name": "HealthBattery",
+      "summary": "Lógica para HealthBattery"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
-      "summary": "CostSheetTemplateExplorer.tsx: Módulo técnico CostSheetTemplateExplorer. Lógica de negocio para CostSheetTemplateExplorer."
+      "name": "CostSheetTemplateExplorer",
+      "summary": "Lógica para CostSheetTemplateExplorer"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
-      "summary": "CostSheetForm.tsx: Módulo técnico CostSheetForm. Lógica de negocio para CostSheetForm."
+      "name": "CostSheetForm",
+      "summary": "Lógica para CostSheetForm"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
-      "summary": "FormulaBuilder.tsx: Módulo técnico FormulaBuilder. Lógica de negocio para FormulaBuilder."
+      "name": "FormulaBuilder",
+      "summary": "Lógica para FormulaBuilder"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "summary": "CostSheetCardView.tsx: Módulo técnico CostSheetCardView. Lógica de negocio para CostSheetCardView."
+      "name": "CostSheetCardView",
+      "summary": "Lógica para CostSheetCardView"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
-      "summary": "CostSheetMassiveGenerator.tsx: Módulo técnico CostSheetMassiveGenerator. Lógica de negocio para CostSheetMassiveGenerator."
+      "name": "CostSheetMassiveGenerator",
+      "summary": "Lógica para CostSheetMassiveGenerator"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
-      "summary": "CostSheetSidePanel.tsx: Módulo técnico CostSheetSidePanel. Lógica de negocio para CostSheetSidePanel."
+      "name": "CostSheetSidePanel",
+      "summary": "Lógica para CostSheetSidePanel"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
-      "summary": "CostSheetBody.tsx: Módulo técnico CostSheetBody. Lógica de negocio para CostSheetBody."
+      "name": "CostSheetBody",
+      "summary": "Lógica para CostSheetBody"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
-      "summary": "DarianEditor.tsx: Módulo técnico DarianEditor. Lógica de negocio para DarianEditor."
+      "name": "DarianEditor",
+      "summary": "Lógica para DarianEditor"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
-      "summary": "CostSheetHeaderEditor.tsx: Módulo técnico CostSheetHeaderEditor. Lógica de negocio para CostSheetHeaderEditor."
+      "name": "CostSheetHeaderEditor",
+      "summary": "Lógica para CostSheetHeaderEditor"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
-      "summary": "CostSheetFCDropdown.tsx: Módulo técnico CostSheetFCDropdown. Lógica de negocio para CostSheetFCDropdown."
+      "name": "CostSheetFCDropdown",
+      "summary": "Lógica para CostSheetFCDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "summary": "CostSheetWizard.tsx: Módulo técnico CostSheetWizard. Lógica de negocio para CostSheetWizard."
+      "name": "CostSheetWizard",
+      "summary": "Lógica para CostSheetWizard"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
-      "summary": "CostSheetInteractiveTable.tsx: Módulo técnico CostSheetInteractiveTable. Lógica de negocio para CostSheetInteractiveTable."
+      "name": "CostSheetInteractiveTable",
+      "summary": "Lógica para CostSheetInteractiveTable"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
-      "summary": "CostSheetAnnexEditor.tsx: Módulo técnico CostSheetAnnexEditor. Lógica de negocio para CostSheetAnnexEditor."
+      "name": "CostSheetAnnexEditor",
+      "summary": "Lógica para CostSheetAnnexEditor"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
-      "summary": "CostSheetSectionActionsPanel.tsx: Módulo técnico CostSheetSectionActionsPanel. Lógica de negocio para CostSheetSectionActionsPanel."
+      "name": "CostSheetSectionActionsPanel",
+      "summary": "Lógica para CostSheetSectionActionsPanel"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "summary": "CostSheetPreview.tsx: Módulo técnico CostSheetPreview. Lógica de negocio para CostSheetPreview."
+      "name": "CostSheetPreview",
+      "summary": "Lógica para CostSheetPreview"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
-      "summary": "CostSheetSignatureEditor.tsx: Módulo técnico CostSheetSignatureEditor. Lógica de negocio para CostSheetSignatureEditor."
+      "name": "CostSheetSignatureEditor",
+      "summary": "Lógica para CostSheetSignatureEditor"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
-      "summary": "CostSheetModeDropdown.tsx: Módulo técnico CostSheetModeDropdown. Lógica de negocio para CostSheetModeDropdown."
+      "name": "CostSheetModeDropdown",
+      "summary": "Lógica para CostSheetModeDropdown"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
-      "summary": "CostSheetHelpPanel.tsx: Módulo técnico CostSheetHelpPanel. Lógica de negocio para CostSheetHelpPanel."
+      "name": "CostSheetHelpPanel",
+      "summary": "Lógica para CostSheetHelpPanel"
     },
     {
-      "id": "src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx",
-      "summary": "CostSheetTemplateExplorer.test.tsx: Módulo técnico CostSheetTemplateExplorer.test. Lógica de negocio para CostSheetTemplateExplorer.test."
+      "name": "CostSheetTemplateExplorer.test",
+      "summary": "Lógica para CostSheetTemplateExplorer.test"
     },
     {
-      "id": "src/components/views/terminal/views/users/UserFormModal.tsx",
-      "summary": "UserFormModal.tsx: Módulo técnico UserFormModal. Lógica de negocio para UserFormModal."
+      "name": "UserFormModal",
+      "summary": "Lógica para UserFormModal"
     },
     {
-      "id": "src/components/views/terminal/views/users/useUsersView.ts",
-      "summary": "useUsersView.ts: Módulo técnico useUsersView. Lógica de negocio para useUsersView."
+      "name": "useUsersView",
+      "summary": "Lógica para useUsersView"
     },
     {
-      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "summary": "UsersManagementView.tsx: Módulo técnico UsersManagementView. Lógica de negocio para UsersManagementView."
+      "name": "UsersManagementView",
+      "summary": "Lógica para UsersManagementView"
     },
     {
-      "id": "src/components/views/terminal/views/users/RoleForm.tsx",
-      "summary": "RoleForm.tsx: Módulo técnico RoleForm. Lógica de negocio para RoleForm."
+      "name": "RoleForm",
+      "summary": "Lógica para RoleForm"
     },
     {
-      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "summary": "RolesManagementView.tsx: Módulo técnico RolesManagementView. Lógica de negocio para RolesManagementView."
+      "name": "RolesManagementView",
+      "summary": "Lógica para RolesManagementView"
     },
     {
-      "id": "src/components/views/terminal/views/users/UserForm.tsx",
-      "summary": "UserForm.tsx: Módulo técnico UserForm. Lógica de negocio para UserForm."
+      "name": "UserForm",
+      "summary": "Lógica para UserForm"
     },
     {
-      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
-      "summary": "RSSManagementView.tsx: Módulo técnico RSSManagementView. Lógica de negocio para RSSManagementView."
+      "name": "RSSManagementView",
+      "summary": "Lógica para RSSManagementView"
     },
     {
-      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
-      "summary": "NewsView.tsx: Módulo técnico NewsView. Lógica de negocio para NewsView."
+      "name": "NewsView",
+      "summary": "Lógica para NewsView"
     },
     {
-      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
-      "summary": "LegalView.test.tsx: Módulo técnico LegalView.test. Lógica de negocio para LegalView.test."
+      "name": "LegalView.test",
+      "summary": "Lógica para LegalView.test"
     },
     {
-      "id": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
-      "summary": "LegalPdfExporter.ts: Módulo técnico LegalPdfExporter. Lógica de negocio para LegalPdfExporter."
+      "name": "LegalPdfExporter",
+      "summary": "Lógica para LegalPdfExporter"
     },
     {
-      "id": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
-      "summary": "LegalModelForm.tsx: Módulo técnico LegalModelForm. Lógica de negocio para LegalModelForm."
+      "name": "LegalModelForm",
+      "summary": "Lógica para LegalModelForm"
     },
     {
-      "id": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
-      "summary": "LegalConsultant.tsx: Módulo técnico LegalConsultant. Lógica de negocio para LegalConsultant."
+      "name": "LegalConsultant",
+      "summary": "Lógica para LegalConsultant"
     },
     {
-      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
-      "summary": "LegalView.tsx: Módulo técnico LegalView. Lógica de negocio para LegalView."
+      "name": "LegalView",
+      "summary": "Lógica para LegalView"
     },
     {
-      "id": "src/components/ui/skeleton.tsx",
-      "summary": "skeleton.tsx: Módulo técnico skeleton. Lógica de negocio para skeleton."
+      "name": "skeleton",
+      "summary": "Lógica para skeleton"
     },
     {
-      "id": "src/components/ui/DataDecryption.tsx",
-      "summary": "DataDecryption.tsx: Módulo técnico DataDecryption. Lógica de negocio para DataDecryption."
+      "name": "DataDecryption",
+      "summary": "Lógica para DataDecryption"
     },
     {
-      "id": "src/components/ui/accordion.tsx",
-      "summary": "accordion.tsx: Módulo técnico accordion. Lógica de negocio para accordion."
+      "name": "accordion",
+      "summary": "Lógica para accordion"
     },
     {
-      "id": "src/components/ui/ViewSwitcher.tsx",
-      "summary": "ViewSwitcher.tsx: Módulo técnico ViewSwitcher. Lógica de negocio para ViewSwitcher."
+      "name": "ViewSwitcher",
+      "summary": "Lógica para ViewSwitcher"
     },
     {
-      "id": "src/components/ui/hover-card.tsx",
-      "summary": "hover-card.tsx: Módulo técnico hover-card. Lógica de negocio para hover-card."
+      "name": "hover-card",
+      "summary": "Lógica para hover-card"
     },
     {
-      "id": "src/components/ui/LazyRender.tsx",
-      "summary": "LazyRender.tsx: Módulo técnico LazyRender. Lógica de negocio para LazyRender."
+      "name": "LazyRender",
+      "summary": "Lógica para LazyRender"
     },
     {
-      "id": "src/components/ui/command.tsx",
-      "summary": "command.tsx: Módulo técnico command. Lógica de negocio para command."
+      "name": "command",
+      "summary": "Lógica para command"
     },
     {
-      "id": "src/components/ui/resizable.tsx",
-      "summary": "resizable.tsx: Módulo técnico resizable. Lógica de negocio para resizable."
+      "name": "resizable",
+      "summary": "Lógica para resizable"
     },
     {
-      "id": "src/components/ui/QueryInspector.tsx",
-      "summary": "QueryInspector.tsx: Módulo técnico QueryInspector. Lógica de negocio para QueryInspector."
+      "name": "QueryInspector",
+      "summary": "Lógica para QueryInspector"
     },
     {
-      "id": "src/components/ui/SearchBar.tsx",
-      "summary": "SearchBar.tsx: Módulo técnico SearchBar. Lógica de negocio para SearchBar."
+      "name": "SearchBar",
+      "summary": "Lógica para SearchBar"
     },
     {
-      "id": "src/components/ui/dropdown-menu.tsx",
-      "summary": "dropdown-menu.tsx: Módulo técnico dropdown-menu. Lógica de negocio para dropdown-menu."
+      "name": "dropdown-menu",
+      "summary": "Lógica para dropdown-menu"
     },
     {
-      "id": "src/components/ui/separator.tsx",
-      "summary": "separator.tsx: Módulo técnico separator. Lógica de negocio para separator."
+      "name": "separator",
+      "summary": "Lógica para separator"
     },
     {
-      "id": "src/components/ui/MobileSafeContainer.tsx",
-      "summary": "MobileSafeContainer.tsx: Módulo técnico MobileSafeContainer. Lógica de negocio para MobileSafeContainer."
+      "name": "MobileSafeContainer",
+      "summary": "Lógica para MobileSafeContainer"
     },
     {
-      "id": "src/components/ui/pagination.tsx",
-      "summary": "pagination.tsx: Módulo técnico pagination. Lógica de negocio para pagination."
+      "name": "pagination",
+      "summary": "Lógica para pagination"
     },
     {
-      "id": "src/components/ui/alert-dialog.tsx",
-      "summary": "alert-dialog.tsx: Módulo técnico alert-dialog. Lógica de negocio para alert-dialog."
+      "name": "alert-dialog",
+      "summary": "Lógica para alert-dialog"
     },
     {
-      "id": "src/components/ui/input-otp.tsx",
-      "summary": "input-otp.tsx: Módulo técnico input-otp. Lógica de negocio para input-otp."
+      "name": "input-otp",
+      "summary": "Lógica para input-otp"
     },
     {
-      "id": "src/components/ui/alert.tsx",
-      "summary": "alert.tsx: Módulo técnico alert. Lógica de negocio para alert."
+      "name": "alert",
+      "summary": "Lógica para alert"
     },
     {
-      "id": "src/components/ui/CyberShell.tsx",
-      "summary": "CyberShell.tsx: Módulo técnico CyberShell. Lógica de negocio para CyberShell."
+      "name": "CyberShell",
+      "summary": "Lógica para CyberShell"
     },
     {
-      "id": "src/components/ui/popover.tsx",
-      "summary": "popover.tsx: Módulo técnico popover. Lógica de negocio para popover."
+      "name": "popover",
+      "summary": "Lógica para popover"
     },
     {
-      "id": "src/components/ui/table.tsx",
-      "summary": "table.tsx: Módulo técnico table. Lógica de negocio para table."
+      "name": "table",
+      "summary": "Lógica para table"
     },
     {
-      "id": "src/components/ui/progress.tsx",
-      "summary": "progress.tsx: Módulo técnico progress. Lógica de negocio para progress."
+      "name": "progress",
+      "summary": "Lógica para progress"
     },
     {
-      "id": "src/components/ui/select.tsx",
-      "summary": "select.tsx: Módulo técnico select. Lógica de negocio para select."
+      "name": "select",
+      "summary": "Lógica para select"
     },
     {
-      "id": "src/components/ui/sonner.tsx",
-      "summary": "sonner.tsx: Módulo técnico sonner. Lógica de negocio para sonner."
+      "name": "sonner",
+      "summary": "Lógica para sonner"
     },
     {
-      "id": "src/components/ui/LoadingOverlay.tsx",
-      "summary": "LoadingOverlay.tsx: Módulo técnico LoadingOverlay. Lógica de negocio para LoadingOverlay."
+      "name": "LoadingOverlay",
+      "summary": "Lógica para LoadingOverlay"
     },
     {
-      "id": "src/components/ui/textarea.tsx",
-      "summary": "textarea.tsx: Módulo técnico textarea. Lógica de negocio para textarea."
+      "name": "textarea",
+      "summary": "Lógica para textarea"
     },
     {
-      "id": "src/components/ui/PWAInstallModal.tsx",
-      "summary": "PWAInstallModal.tsx: Módulo técnico PWAInstallModal. Lógica de negocio para PWAInstallModal."
+      "name": "PWAInstallModal",
+      "summary": "Lógica para PWAInstallModal"
     },
     {
-      "id": "src/components/ui/toggle.tsx",
-      "summary": "toggle.tsx: Módulo técnico toggle. Lógica de negocio para toggle."
+      "name": "toggle",
+      "summary": "Lógica para toggle"
     },
     {
-      "id": "src/components/ui/StateRenderer.tsx",
-      "summary": "StateRenderer.tsx: Módulo técnico StateRenderer. Lógica de negocio para StateRenderer."
+      "name": "StateRenderer",
+      "summary": "Lógica para StateRenderer"
     },
     {
-      "id": "src/components/ui/Portal.tsx",
-      "summary": "Portal.tsx: Módulo técnico Portal. Lógica de negocio para Portal."
+      "name": "Portal",
+      "summary": "Lógica para Portal"
     },
     {
-      "id": "src/components/ui/toggle-group.tsx",
-      "summary": "toggle-group.tsx: Módulo técnico toggle-group. Lógica de negocio para toggle-group."
+      "name": "toggle-group",
+      "summary": "Lógica para toggle-group"
     },
     {
-      "id": "src/components/ui/scroll-area.tsx",
-      "summary": "scroll-area.tsx: Módulo técnico scroll-area. Lógica de negocio para scroll-area."
+      "name": "scroll-area",
+      "summary": "Lógica para scroll-area"
     },
     {
-      "id": "src/components/ui/label.tsx",
-      "summary": "label.tsx: Módulo técnico label. Lógica de negocio para label."
+      "name": "label",
+      "summary": "Lógica para label"
     },
     {
-      "id": "src/components/ui/chart.tsx",
-      "summary": "chart.tsx: Módulo técnico chart. Lógica de negocio para chart."
+      "name": "chart",
+      "summary": "Lógica para chart"
     },
     {
-      "id": "src/components/ui/sidebar.tsx",
-      "summary": "sidebar.tsx: Módulo técnico sidebar. Lógica de negocio para sidebar."
+      "name": "sidebar",
+      "summary": "Lógica para sidebar"
     },
     {
-      "id": "src/components/ui/tabs.tsx",
-      "summary": "tabs.tsx: Módulo técnico tabs. Lógica de negocio para tabs."
+      "name": "tabs",
+      "summary": "Lógica para tabs"
     },
     {
-      "id": "src/components/ui/BaseModal.tsx",
-      "summary": "BaseModal.tsx: Módulo técnico BaseModal. Lógica de negocio para BaseModal."
+      "name": "BaseModal",
+      "summary": "Lógica para BaseModal"
     },
     {
-      "id": "src/components/ui/switch.tsx",
-      "summary": "switch.tsx: Módulo técnico switch. Lógica de negocio para switch."
+      "name": "switch",
+      "summary": "Lógica para switch"
     },
     {
-      "id": "src/components/ui/checkbox.tsx",
-      "summary": "checkbox.tsx: Módulo técnico checkbox. Lógica de negocio para checkbox."
+      "name": "checkbox",
+      "summary": "Lógica para checkbox"
     },
     {
-      "id": "src/components/ui/context-menu.tsx",
-      "summary": "context-menu.tsx: Módulo técnico context-menu. Lógica de negocio para context-menu."
+      "name": "context-menu",
+      "summary": "Lógica para context-menu"
     },
     {
-      "id": "src/components/ui/badge.tsx",
-      "summary": "badge.tsx: Módulo técnico badge. Lógica de negocio para badge."
+      "name": "badge",
+      "summary": "Lógica para badge"
     },
     {
-      "id": "src/components/ui/CostProLoader.tsx",
-      "summary": "CostProLoader.tsx: Módulo técnico CostProLoader. Lógica de negocio para CostProLoader."
+      "name": "CostProLoader",
+      "summary": "Lógica para CostProLoader"
     },
     {
-      "id": "src/components/ui/calendar.tsx",
-      "summary": "calendar.tsx: Módulo técnico calendar. Lógica de negocio para calendar."
+      "name": "calendar",
+      "summary": "Lógica para calendar"
     },
     {
-      "id": "src/components/ui/toaster.tsx",
-      "summary": "toaster.tsx: Módulo técnico toaster. Lógica de negocio para toaster."
+      "name": "toaster",
+      "summary": "Lógica para toaster"
     },
     {
-      "id": "src/components/ui/navigation-menu.tsx",
-      "summary": "navigation-menu.tsx: Módulo técnico navigation-menu. Lógica de negocio para navigation-menu."
+      "name": "navigation-menu",
+      "summary": "Lógica para navigation-menu"
     },
     {
-      "id": "src/components/ui/ActionMenu.tsx",
-      "summary": "ActionMenu.tsx: Módulo técnico ActionMenu. Lógica de negocio para ActionMenu."
+      "name": "ActionMenu",
+      "summary": "Lógica para ActionMenu"
     },
     {
-      "id": "src/components/ui/ProductImage.tsx",
-      "summary": "ProductImage.tsx: Módulo técnico ProductImage. Lógica de negocio para ProductImage."
+      "name": "ProductImage",
+      "summary": "Lógica para ProductImage"
     },
     {
-      "id": "src/components/ui/toast.tsx",
-      "summary": "toast.tsx: Módulo técnico toast. Lógica de negocio para toast."
+      "name": "toast",
+      "summary": "Lógica para toast"
     },
     {
-      "id": "src/components/ui/FloatingCalculator.tsx",
-      "summary": "FloatingCalculator.tsx: Módulo técnico FloatingCalculator. Lógica de negocio para FloatingCalculator."
+      "name": "FloatingCalculator",
+      "summary": "Lógica para FloatingCalculator"
     },
     {
-      "id": "src/components/ui/ScrollToTop.tsx",
-      "summary": "ScrollToTop.tsx: Módulo técnico ScrollToTop. Lógica de negocio para ScrollToTop."
+      "name": "ScrollToTop",
+      "summary": "Lógica para ScrollToTop"
     },
     {
-      "id": "src/components/ui/button.tsx",
-      "summary": "button.tsx: Módulo técnico button. Lógica de negocio para button."
+      "name": "button",
+      "summary": "Lógica para button"
     },
     {
-      "id": "src/components/ui/avatar.tsx",
-      "summary": "avatar.tsx: Módulo técnico avatar. Lógica de negocio para avatar."
+      "name": "avatar",
+      "summary": "Lógica para avatar"
     },
     {
-      "id": "src/components/ui/dialog.tsx",
-      "summary": "dialog.tsx: Módulo técnico dialog. Lógica de negocio para dialog."
+      "name": "dialog",
+      "summary": "Lógica para dialog"
     },
     {
-      "id": "src/components/ui/SecurityScrollContainer.tsx",
-      "summary": "SecurityScrollContainer.tsx: Módulo técnico SecurityScrollContainer. Lógica de negocio para SecurityScrollContainer."
+      "name": "SecurityScrollContainer",
+      "summary": "Lógica para SecurityScrollContainer"
     },
     {
-      "id": "src/components/ui/breadcrumb.tsx",
-      "summary": "breadcrumb.tsx: Módulo técnico breadcrumb. Lógica de negocio para breadcrumb."
+      "name": "breadcrumb",
+      "summary": "Lógica para breadcrumb"
     },
     {
-      "id": "src/components/ui/form.tsx",
-      "summary": "form.tsx: Módulo técnico form. Lógica de negocio para form."
+      "name": "form",
+      "summary": "Lógica para form"
     },
     {
-      "id": "src/components/ui/slider.tsx",
-      "summary": "slider.tsx: Módulo técnico slider. Lógica de negocio para slider."
+      "name": "slider",
+      "summary": "Lógica para slider"
     },
     {
-      "id": "src/components/ui/menubar.tsx",
-      "summary": "menubar.tsx: Módulo técnico menubar. Lógica de negocio para menubar."
+      "name": "menubar",
+      "summary": "Lógica para menubar"
     },
     {
-      "id": "src/components/ui/tooltip.tsx",
-      "summary": "tooltip.tsx: Módulo técnico tooltip. Lógica de negocio para tooltip."
+      "name": "tooltip",
+      "summary": "Lógica para tooltip"
     },
     {
-      "id": "src/components/ui/SpeedDial.tsx",
-      "summary": "SpeedDial.tsx: Módulo técnico SpeedDial. Lógica de negocio para SpeedDial."
+      "name": "SpeedDial",
+      "summary": "Lógica para SpeedDial"
     },
     {
-      "id": "src/components/ui/ChatBot.tsx",
-      "summary": "ChatBot.tsx: Interfaz de asistente virtual Darian. Proporciona soporte interactivo al usuario mediante IA, integrando herramientas de consulta de arquitectura y ayuda operativa."
+      "name": "ChatBot",
+      "summary": "Lógica para ChatBot"
     },
     {
-      "id": "src/components/ui/aspect-ratio.tsx",
-      "summary": "aspect-ratio.tsx: Módulo técnico aspect-ratio. Lógica de negocio para aspect-ratio."
+      "name": "aspect-ratio",
+      "summary": "Lógica para aspect-ratio"
     },
     {
-      "id": "src/components/ui/carousel.tsx",
-      "summary": "carousel.tsx: Módulo técnico carousel. Lógica de negocio para carousel."
+      "name": "carousel",
+      "summary": "Lógica para carousel"
     },
     {
-      "id": "src/components/ui/card.tsx",
-      "summary": "card.tsx: Módulo técnico card. Lógica de negocio para card."
+      "name": "card",
+      "summary": "Lógica para card"
     },
     {
-      "id": "src/components/ui/sheet.tsx",
-      "summary": "sheet.tsx: Módulo técnico sheet. Lógica de negocio para sheet."
+      "name": "sheet",
+      "summary": "Lógica para sheet"
     },
     {
-      "id": "src/components/ui/drawer.tsx",
-      "summary": "drawer.tsx: Módulo técnico drawer. Lógica de negocio para drawer."
+      "name": "drawer",
+      "summary": "Lógica para drawer"
     },
     {
-      "id": "src/components/ui/input.tsx",
-      "summary": "input.tsx: Módulo técnico input. Lógica de negocio para input."
+      "name": "input",
+      "summary": "Lógica para input"
     },
     {
-      "id": "src/components/ui/HorizontalScroll.tsx",
-      "summary": "HorizontalScroll.tsx: Módulo técnico HorizontalScroll. Lógica de negocio para HorizontalScroll."
+      "name": "HorizontalScroll",
+      "summary": "Lógica para HorizontalScroll"
     },
     {
-      "id": "src/components/ui/collapsible.tsx",
-      "summary": "collapsible.tsx: Módulo técnico collapsible. Lógica de negocio para collapsible."
+      "name": "collapsible",
+      "summary": "Lógica para collapsible"
     },
     {
-      "id": "src/components/ui/SyncStatusBadge.tsx",
-      "summary": "SyncStatusBadge.tsx: Módulo técnico SyncStatusBadge. Lógica de negocio para SyncStatusBadge."
+      "name": "SyncStatusBadge",
+      "summary": "Lógica para SyncStatusBadge"
     },
     {
-      "id": "src/components/ui/radio-group.tsx",
-      "summary": "radio-group.tsx: Módulo técnico radio-group. Lógica de negocio para radio-group."
+      "name": "radio-group",
+      "summary": "Lógica para radio-group"
     },
     {
-      "id": "src/components/ui/atomic/index.tsx",
-      "summary": "index.tsx: Módulo técnico index. Lógica de negocio para index."
+      "name": "index",
+      "summary": "Lógica para index"
     },
     {
-      "id": "src/components/auth/RegisterForm.tsx",
-      "summary": "RegisterForm.tsx: Módulo técnico RegisterForm. Lógica de negocio para RegisterForm."
+      "name": "RegisterForm",
+      "summary": "Lógica para RegisterForm"
     },
     {
-      "id": "src/components/auth/LoginForm.tsx",
-      "summary": "LoginForm.tsx: Módulo técnico LoginForm. Lógica de negocio para LoginForm."
+      "name": "LoginForm",
+      "summary": "Lógica para LoginForm"
     },
     {
-      "id": "src/components/auth/WelcomeLandingView.tsx",
-      "summary": "WelcomeLandingView.tsx: Módulo técnico WelcomeLandingView. Lógica de negocio para WelcomeLandingView."
+      "name": "WelcomeLandingView",
+      "summary": "Lógica para WelcomeLandingView"
     },
     {
-      "id": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
-      "summary": "SpeedScaleDiagram.tsx: Módulo técnico SpeedScaleDiagram. Lógica de negocio para SpeedScaleDiagram."
+      "name": "SpeedScaleDiagram",
+      "summary": "Lógica para SpeedScaleDiagram"
     },
     {
-      "id": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
-      "summary": "AutomationWorkflowDiagram.tsx: Módulo técnico AutomationWorkflowDiagram. Lógica de negocio para AutomationWorkflowDiagram."
+      "name": "AutomationWorkflowDiagram",
+      "summary": "Lógica para AutomationWorkflowDiagram"
     },
     {
-      "id": "src/app/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "bot-service.test",
+      "summary": "Lógica para bot-service.test"
     },
     {
-      "id": "src/app/layout.tsx",
-      "summary": "layout.tsx: Módulo técnico layout. Lógica de negocio para layout."
+      "name": "store-service",
+      "summary": "Lógica para store-service"
     },
     {
-      "id": "src/app/cost-sheets/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "export-service",
+      "summary": "Lógica para export-service"
     },
     {
-      "id": "src/app/api/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "usage-service",
+      "summary": "Lógica para usage-service"
     },
     {
-      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "cash-service",
+      "summary": "Lógica para cash-service"
     },
     {
-      "id": "src/app/api/cost-sheets/save/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "transfer-service",
+      "summary": "Lógica para transfer-service"
     },
     {
-      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "excel-service",
+      "summary": "Lógica para excel-service"
     },
     {
-      "id": "src/app/api/cost-sheets/import-json/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "bot-service",
+      "summary": "Lógica para bot-service"
     },
     {
-      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "report-service",
+      "summary": "Lógica para report-service"
     },
     {
-      "id": "src/app/api/cost-sheets/calculate/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "import-service",
+      "summary": "Lógica para import-service"
     },
     {
-      "id": "src/app/api/system-health/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "matching-log-service",
+      "summary": "Lógica para matching-log-service"
     },
     {
-      "id": "src/app/api/reports/generate/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "rss-service",
+      "summary": "Lógica para rss-service"
     },
     {
-      "id": "src/app/api/academy/review/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "user-service",
+      "summary": "Lógica para user-service"
     },
     {
-      "id": "src/app/api/academy/review/[cardId]/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "audit-service",
+      "summary": "Lógica para audit-service"
     },
     {
-      "id": "src/app/api/academy/generate/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "catalog-service",
+      "summary": "Lógica para catalog-service"
     },
     {
-      "id": "src/app/api/inventory/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "matching-log-service",
+      "summary": "Lógica para matching-log-service"
     },
     {
-      "id": "src/app/api/inventory/adjust/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useSync",
+      "summary": "Lógica para useSync"
     },
     {
-      "id": "src/app/api/inventory/[productId]/history/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useCostSheetCalculator",
+      "summary": "Lógica para useCostSheetCalculator"
     },
     {
-      "id": "src/app/api/inventory/products/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "usePOSProducts",
+      "summary": "Lógica para usePOSProducts"
     },
     {
-      "id": "src/app/api/inventory/adjustments/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useSessionManager",
+      "summary": "Lógica para useSessionManager"
     },
     {
-      "id": "src/app/api/bot/chat/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useCostEngine",
+      "summary": "Lógica para useCostEngine"
     },
     {
-      "id": "src/app/api/users/reset-password/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useTransfers",
+      "summary": "Lógica para useTransfers"
     },
     {
-      "id": "src/app/api/users/toggle-status/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useDocumentActions",
+      "summary": "Lógica para useDocumentActions"
     },
     {
-      "id": "src/app/api/users/delete/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useCostSheets",
+      "summary": "Lógica para useCostSheets"
     },
     {
-      "id": "src/app/api/users/managed-create/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useTaxes",
+      "summary": "Lógica para useTaxes"
     },
     {
-      "id": "src/app/api/sync/batch/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useProducts",
+      "summary": "Lógica para useProducts"
     },
     {
-      "id": "src/app/api/rss/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useTransactions",
+      "summary": "Lógica para useTransactions"
     },
     {
-      "id": "src/app/api/logs/route.ts",
-      "summary": "route.ts: Módulo técnico route. Lógica de negocio para route."
+      "name": "useStockMovements",
+      "summary": "Lógica para useStockMovements"
     },
     {
-      "id": "src/app/verify-dashboard/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useCashClosures",
+      "summary": "Lógica para useCashClosures"
     },
     {
-      "id": "src/app/wiki/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useStores",
+      "summary": "Lógica para useStores"
     },
     {
-      "id": "src/app/cashier/close-session/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useDashboard",
+      "summary": "Lógica para useDashboard"
     },
     {
-      "id": "src/app/demo/executive/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useUsers",
+      "summary": "Lógica para useUsers"
     },
     {
-      "id": "src/app/demo/calculate/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useInventory",
+      "summary": "Lógica para useInventory"
     },
     {
-      "id": "src/app/login/page.tsx",
-      "summary": "page.tsx: Módulo técnico page. Lógica de negocio para page."
+      "name": "useRoles",
+      "summary": "Lógica para useRoles"
     },
     {
-      "id": "src/services/bot-service.test.ts",
-      "summary": "bot-service.test.ts: Módulo técnico bot-service.test. Lógica de negocio para bot-service.test."
+      "name": "hooks.test",
+      "summary": "Lógica para hooks.test"
     },
     {
-      "id": "src/services/store-service.ts",
-      "summary": "store-service.ts: Módulo técnico store-service. Lógica de negocio para store-service."
+      "name": "useAuditLogs",
+      "summary": "Lógica para useAuditLogs"
     },
     {
-      "id": "src/services/export-service.ts",
-      "summary": "export-service.ts: Módulo técnico export-service. Lógica de negocio para export-service."
+      "name": "base",
+      "summary": "Lógica para base"
     },
     {
-      "id": "src/services/usage-service.ts",
-      "summary": "usage-service.ts: Módulo técnico usage-service. Lógica de negocio para usage-service."
+      "name": "useReceptions",
+      "summary": "Lógica para useReceptions"
     },
     {
-      "id": "src/services/cash-service.ts",
-      "summary": "cash-service.ts: Módulo técnico cash-service. Lógica de negocio para cash-service."
+      "name": "useRSS",
+      "summary": "Lógica para useRSS"
     },
     {
-      "id": "src/services/transfer-service.ts",
-      "summary": "transfer-service.ts: Módulo técnico transfer-service. Lógica de negocio para transfer-service."
+      "name": "usePWA",
+      "summary": "Lógica para usePWA"
     },
     {
-      "id": "src/services/excel-service.ts",
-      "summary": "excel-service.ts: Módulo técnico excel-service. Lógica de negocio para excel-service."
+      "name": "useTerminalNavigation",
+      "summary": "Lógica para useTerminalNavigation"
     },
     {
-      "id": "src/services/bot-service.ts",
-      "summary": "bot-service.ts: Módulo técnico bot-service. Lógica de negocio para bot-service."
+      "name": "useCatalogModals",
+      "summary": "Lógica para useCatalogModals"
     },
     {
-      "id": "src/services/report-service.ts",
-      "summary": "report-service.ts: Módulo técnico report-service. Lógica de negocio para report-service."
+      "name": "useMobile",
+      "summary": "Lógica para useMobile"
     },
     {
-      "id": "src/services/import-service.ts",
-      "summary": "import-service.ts: Módulo técnico import-service. Lógica de negocio para import-service."
+      "name": "useDebounce",
+      "summary": "Lógica para useDebounce"
     },
     {
-      "id": "src/services/matching-log-service.ts",
-      "summary": "matching-log-service.ts: Módulo técnico matching-log-service. Lógica de negocio para matching-log-service."
+      "name": "useToast",
+      "summary": "Lógica para useToast"
     },
     {
-      "id": "src/services/rss-service.ts",
-      "summary": "rss-service.ts: Módulo técnico rss-service. Lógica de negocio para rss-service."
+      "name": "usePWA.test",
+      "summary": "Lógica para usePWA.test"
     },
     {
-      "id": "src/services/user-service.ts",
-      "summary": "user-service.ts: Módulo técnico user-service. Lógica de negocio para user-service."
+      "name": "useCostSheetCalculator.test",
+      "summary": "Lógica para useCostSheetCalculator.test"
     },
     {
-      "id": "src/services/audit-service.ts",
-      "summary": "audit-service.ts: Módulo técnico audit-service. Lógica de negocio para audit-service."
+      "name": "templates_verification.test",
+      "summary": "Lógica para templates_verification.test"
     },
     {
-      "id": "src/services/catalog-service.ts",
-      "summary": "catalog-service.ts: Módulo técnico catalog-service. Lógica de negocio para catalog-service."
+      "name": "cart",
+      "summary": "Lógica para cart"
     },
     {
-      "id": "src/services/__mocks__/matching-log-service.ts",
-      "summary": "matching-log-service.ts: Módulo técnico matching-log-service. Lógica de negocio para matching-log-service."
+      "name": "session-store",
+      "summary": "Lógica para session-store"
     },
     {
-      "id": "src/hooks/useSync.ts",
-      "summary": "useSync.ts: Módulo técnico useSync. Lógica de negocio para useSync."
+      "name": "cost-sheet-store",
+      "summary": "Lógica para cost-sheet-store"
     },
     {
-      "id": "src/hooks/logic/useCostSheetCalculator.ts",
-      "summary": "useCostSheetCalculator.ts: Módulo técnico useCostSheetCalculator. Lógica de negocio para useCostSheetCalculator."
+      "name": "index",
+      "summary": "Lógica para index"
     },
     {
-      "id": "src/hooks/logic/usePOSProducts.ts",
-      "summary": "usePOSProducts.ts: Módulo técnico usePOSProducts. Lógica de negocio para usePOSProducts."
+      "name": "useAcademyStore",
+      "summary": "Lógica para useAcademyStore"
     },
     {
-      "id": "src/hooks/logic/useSessionManager.ts",
-      "summary": "useSessionManager.ts: Módulo técnico useSessionManager. Lógica de negocio para useSessionManager."
+      "name": "session-store.test",
+      "summary": "Lógica para session-store.test"
     },
     {
-      "id": "src/hooks/logic/useCostEngine.ts",
-      "summary": "useCostEngine.ts: Módulo técnico useCostEngine. Lógica de negocio para useCostEngine."
+      "name": "cart.test",
+      "summary": "Lógica para cart.test"
     },
     {
-      "id": "src/hooks/api/useTransfers.ts",
-      "summary": "useTransfers.ts: Módulo técnico useTransfers. Lógica de negocio para useTransfers."
+      "name": "auth.test",
+      "summary": "Lógica para auth.test"
     },
     {
-      "id": "src/hooks/api/useDocumentActions.ts",
-      "summary": "useDocumentActions.ts: Módulo técnico useDocumentActions. Lógica de negocio para useDocumentActions."
+      "name": "cart_advanced.test",
+      "summary": "Lógica para cart_advanced.test"
     },
     {
-      "id": "src/hooks/api/useCostSheets.ts",
-      "summary": "useCostSheets.ts: Módulo técnico useCostSheets. Lógica de negocio para useCostSheets."
+      "name": "cost-sheet-store.test",
+      "summary": "Lógica para cost-sheet-store.test"
     },
     {
-      "id": "src/hooks/api/useTaxes.ts",
-      "summary": "useTaxes.ts: Módulo técnico useTaxes. Lógica de negocio para useTaxes."
+      "name": "db",
+      "summary": "Lógica para db"
     },
     {
-      "id": "src/hooks/api/useProducts.ts",
-      "summary": "useProducts.ts: Módulo técnico useProducts. Lógica de negocio para useProducts."
+      "name": "dexie",
+      "summary": "Lógica para dexie"
     },
     {
-      "id": "src/hooks/api/useTransactions.ts",
-      "summary": "useTransactions.ts: Módulo técnico useTransactions. Lógica de negocio para useTransactions."
+      "name": "inventory-logic",
+      "summary": "Lógica para inventory-logic"
     },
     {
-      "id": "src/hooks/api/useStockMovements.ts",
-      "summary": "useStockMovements.ts: Módulo técnico useStockMovements. Lógica de negocio para useStockMovements."
+      "name": "supabaseClient",
+      "summary": "Lógica para supabaseClient"
     },
     {
-      "id": "src/hooks/api/useCashClosures.ts",
-      "summary": "useCashClosures.ts: Módulo técnico useCashClosures. Lógica de negocio para useCashClosures."
+      "name": "rpc-validator",
+      "summary": "Lógica para rpc-validator"
     },
     {
-      "id": "src/hooks/api/useStores.ts",
-      "summary": "useStores.ts: Módulo técnico useStores. Lógica de negocio para useStores."
+      "name": "auth",
+      "summary": "Lógica para auth"
     },
     {
-      "id": "src/hooks/api/useDashboard.ts",
-      "summary": "useDashboard.ts: Módulo técnico useDashboard. Lógica de negocio para useDashboard."
+      "name": "query-inspector-utils",
+      "summary": "Lógica para query-inspector-utils"
     },
     {
-      "id": "src/hooks/api/useUsers.ts",
-      "summary": "useUsers.ts: Módulo técnico useUsers. Lógica de negocio para useUsers."
+      "name": "plan-utils",
+      "summary": "Lógica para plan-utils"
     },
     {
-      "id": "src/hooks/api/useInventory.ts",
-      "summary": "useInventory.ts: Módulo técnico useInventory. Lógica de negocio para useInventory."
+      "name": "logger",
+      "summary": "Lógica para logger"
     },
     {
-      "id": "src/hooks/api/useRoles.ts",
-      "summary": "useRoles.ts: Módulo técnico useRoles. Lógica de negocio para useRoles."
+      "name": "theme.test",
+      "summary": "Lógica para theme.test"
     },
     {
-      "id": "src/hooks/api/hooks.test.ts",
-      "summary": "hooks.test.ts: Módulo técnico hooks.test. Lógica de negocio para hooks.test."
+      "name": "utils",
+      "summary": "Lógica para utils"
     },
     {
-      "id": "src/hooks/api/useAuditLogs.ts",
-      "summary": "useAuditLogs.ts: Módulo técnico useAuditLogs. Lógica de negocio para useAuditLogs."
+      "name": "errorHandler",
+      "summary": "Lógica para errorHandler"
     },
     {
-      "id": "src/hooks/api/base.ts",
-      "summary": "base.ts: Módulo técnico base. Lógica de negocio para base."
+      "name": "navigation",
+      "summary": "Lógica para navigation"
     },
     {
-      "id": "src/hooks/api/useReceptions.ts",
-      "summary": "useReceptions.ts: Módulo técnico useReceptions. Lógica de negocio para useReceptions."
+      "name": "roles",
+      "summary": "Lógica para roles"
     },
     {
-      "id": "src/hooks/api/useRSS.ts",
-      "summary": "useRSS.ts: Módulo técnico useRSS. Lógica de negocio para useRSS."
+      "name": "parser",
+      "summary": "Lógica para parser"
     },
     {
-      "id": "src/hooks/ui/usePWA.ts",
-      "summary": "usePWA.ts: Módulo técnico usePWA. Lógica de negocio para usePWA."
+      "name": "types",
+      "summary": "Lógica para types"
     },
     {
-      "id": "src/hooks/ui/useTerminalNavigation.ts",
-      "summary": "useTerminalNavigation.ts: Módulo técnico useTerminalNavigation. Lógica de negocio para useTerminalNavigation."
+      "name": "parser.test",
+      "summary": "Lógica para parser.test"
     },
     {
-      "id": "src/hooks/ui/useCatalogModals.ts",
-      "summary": "useCatalogModals.ts: Módulo técnico useCatalogModals. Lógica de negocio para useCatalogModals."
+      "name": "user-json.test",
+      "summary": "Lógica para user-json.test"
     },
     {
-      "id": "src/hooks/ui/useMobile.ts",
-      "summary": "useMobile.ts: Módulo técnico useMobile. Lógica de negocio para useMobile."
+      "name": "heuristic.test",
+      "summary": "Lógica para heuristic.test"
     },
     {
-      "id": "src/hooks/ui/useDebounce.ts",
-      "summary": "useDebounce.ts: Módulo técnico useDebounce. Lógica de negocio para useDebounce."
+      "name": "bidirectional.test",
+      "summary": "Lógica para bidirectional.test"
     },
     {
-      "id": "src/hooks/ui/useToast.ts",
-      "summary": "useToast.ts: Módulo técnico useToast. Lógica de negocio para useToast."
+      "name": "formula-utils",
+      "summary": "Lógica para formula-utils"
     },
     {
-      "id": "src/hooks/ui/__tests__/usePWA.test.ts",
-      "summary": "usePWA.test.ts: Módulo técnico usePWA.test. Lógica de negocio para usePWA.test."
+      "name": "index",
+      "summary": "Lógica para index"
     },
     {
-      "id": "src/hooks/__tests__/useCostSheetCalculator.test.ts",
-      "summary": "useCostSheetCalculator.test.ts: Módulo técnico useCostSheetCalculator.test. Lógica de negocio para useCostSheetCalculator.test."
+      "name": "accuracy.test",
+      "summary": "Lógica para accuracy.test"
     },
     {
-      "id": "src/hooks/__tests__/templates_verification.test.ts",
-      "summary": "templates_verification.test.ts: Módulo técnico templates_verification.test. Lógica de negocio para templates_verification.test."
+      "name": "types",
+      "summary": "Lógica para types"
     },
     {
-      "id": "src/store/cart.ts",
-      "summary": "cart.ts: Módulo técnico cart. Lógica de negocio para cart."
+      "name": "validations",
+      "summary": "Lógica para validations"
     },
     {
-      "id": "src/store/session-store.ts",
-      "summary": "session-store.ts: Módulo técnico session-store. Lógica de negocio para session-store."
+      "name": "smart-annex.test",
+      "summary": "Lógica para smart-annex.test"
     },
     {
-      "id": "src/store/cost-sheet-store.ts",
-      "summary": "cost-sheet-store.ts: Módulo técnico cost-sheet-store. Lógica de negocio para cost-sheet-store."
+      "name": "topo-sort.test",
+      "summary": "Lógica para topo-sort.test"
     },
     {
-      "id": "src/store/index.ts",
-      "summary": "index.ts: Módulo técnico index. Lógica de negocio para index."
+      "name": "index.test",
+      "summary": "Lógica para index.test"
     },
     {
-      "id": "src/store/useAcademyStore.ts",
-      "summary": "useAcademyStore.ts: Módulo técnico useAcademyStore. Lógica de negocio para useAcademyStore."
+      "name": "schemas",
+      "summary": "Lógica para schemas"
     },
     {
-      "id": "src/store/__tests__/session-store.test.ts",
-      "summary": "session-store.test.ts: Módulo técnico session-store.test. Lógica de negocio para session-store.test."
+      "name": "pdf-export",
+      "summary": "Lógica para pdf-export"
     },
     {
-      "id": "src/store/__tests__/cart.test.ts",
-      "summary": "cart.test.ts: Módulo técnico cart.test. Lógica de negocio para cart.test."
+      "name": "number-to-words-es",
+      "summary": "Lógica para number-to-words-es"
     },
     {
-      "id": "src/store/__tests__/auth.test.ts",
-      "summary": "auth.test.ts: Módulo técnico auth.test. Lógica de negocio para auth.test."
+      "name": "health-engine",
+      "summary": "Lógica para health-engine"
     },
     {
-      "id": "src/store/__tests__/cart_advanced.test.ts",
-      "summary": "cart_advanced.test.ts: Módulo técnico cart_advanced.test. Lógica de negocio para cart_advanced.test."
+      "name": "health-alerts",
+      "summary": "Lógica para health-alerts"
     },
     {
-      "id": "src/store/__tests__/cost-sheet-store.test.ts",
-      "summary": "cost-sheet-store.test.ts: Módulo técnico cost-sheet-store.test. Lógica de negocio para cost-sheet-store.test."
+      "name": "system-health",
+      "summary": "Lógica para system-health"
     },
     {
-      "id": "src/lib/db.ts",
-      "summary": "db.ts: Módulo técnico db. Lógica de negocio para db."
+      "name": "system-health.test",
+      "summary": "Lógica para system-health.test"
     },
     {
-      "id": "src/lib/dexie.ts",
-      "summary": "dexie.ts: Configuración de persistencia local con Dexie.js (IndexedDB). Define el esquema de datos local para productos, transacciones, reglas de matching y logs de auditoría, permitiendo funcionamiento offline."
+      "name": "health-engine.test",
+      "summary": "Lógica para health-engine.test"
     },
     {
-      "id": "src/lib/inventory-logic.ts",
-      "summary": "inventory-logic.ts: Módulo técnico inventory-logic. Lógica de negocio para inventory-logic."
+      "name": "sm2",
+      "summary": "Lógica para sm2"
     },
     {
-      "id": "src/lib/supabaseClient.ts",
-      "summary": "supabaseClient.ts: Módulo técnico supabaseClient. Lógica de negocio para supabaseClient."
+      "name": "sm2.test",
+      "summary": "Lógica para sm2.test"
     },
     {
-      "id": "src/lib/rpc-validator.ts",
-      "summary": "rpc-validator.ts: Módulo técnico rpc-validator. Lógica de negocio para rpc-validator."
+      "name": "ReleaseGatePdfExporter",
+      "summary": "Lógica para ReleaseGatePdfExporter"
     },
     {
-      "id": "src/lib/auth.ts",
-      "summary": "auth.ts: Módulo técnico auth. Lógica de negocio para auth."
+      "name": "mri-engine",
+      "summary": "Lógica para mri-engine"
     },
     {
-      "id": "src/lib/query-inspector-utils.ts",
-      "summary": "query-inspector-utils.ts: Módulo técnico query-inspector-utils. Lógica de negocio para query-inspector-utils."
+      "name": "mri-engine.test",
+      "summary": "Lógica para mri-engine.test"
     },
     {
-      "id": "src/lib/plan-utils.ts",
-      "summary": "plan-utils.ts: Módulo técnico plan-utils. Lógica de negocio para plan-utils."
+      "name": "template-repair",
+      "summary": "Lógica para template-repair"
     },
     {
-      "id": "src/lib/logger.ts",
-      "summary": "logger.ts: Módulo técnico logger. Lógica de negocio para logger."
+      "name": "demo-products",
+      "summary": "Lógica para demo-products"
     },
     {
-      "id": "src/lib/theme.test.ts",
-      "summary": "theme.test.ts: Módulo técnico theme.test. Lógica de negocio para theme.test."
+      "name": "costpro-ejemplo",
+      "summary": "Lógica para costpro-ejemplo"
     },
     {
-      "id": "src/lib/utils.ts",
-      "summary": "utils.ts: Módulo técnico utils. Lógica de negocio para utils."
+      "name": "template-industrial",
+      "summary": "Lógica para template-industrial"
     },
     {
-      "id": "src/lib/errorHandler.ts",
-      "summary": "errorHandler.ts: Módulo técnico errorHandler. Lógica de negocio para errorHandler."
+      "name": "costpro-reinicio",
+      "summary": "Lógica para costpro-reinicio"
     },
     {
-      "id": "src/lib/navigation.ts",
-      "summary": "navigation.ts: Módulo técnico navigation. Lógica de negocio para navigation."
+      "name": "template-consultancy",
+      "summary": "Lógica para template-consultancy"
     },
     {
-      "id": "src/lib/roles.ts",
-      "summary": "roles.ts: Módulo técnico roles. Lógica de negocio para roles."
+      "name": "template-logistics",
+      "summary": "Lógica para template-logistics"
     },
     {
-      "id": "src/lib/wallet/parser.ts",
-      "summary": "parser.ts: Módulo técnico parser. Lógica de negocio para parser."
+      "name": "template-lavar",
+      "summary": "Lógica para template-lavar"
     },
     {
-      "id": "src/lib/wallet/types.ts",
-      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+      "name": "template-pastry",
+      "summary": "Lógica para template-pastry"
     },
     {
-      "id": "src/lib/wallet/__tests__/parser.test.ts",
-      "summary": "parser.test.ts: Módulo técnico parser.test. Lógica de negocio para parser.test."
+      "name": "template-icecream",
+      "summary": "Lógica para template-icecream"
     },
     {
-      "id": "src/lib/cost-engine/user-json.test.ts",
-      "summary": "user-json.test.ts: Módulo técnico user-json.test. Lógica de negocio para user-json.test."
+      "name": "template-juice",
+      "summary": "Lógica para template-juice"
     },
     {
-      "id": "src/lib/cost-engine/heuristic.test.ts",
-      "summary": "heuristic.test.ts: Módulo técnico heuristic.test. Lógica de negocio para heuristic.test."
+      "name": "template-shoes",
+      "summary": "Lógica para template-shoes"
     },
     {
-      "id": "src/lib/cost-engine/bidirectional.test.ts",
-      "summary": "bidirectional.test.ts: Módulo técnico bidirectional.test. Lógica de negocio para bidirectional.test."
+      "name": "template-pizza",
+      "summary": "Lógica para template-pizza"
     },
     {
-      "id": "src/lib/cost-engine/formula-utils.ts",
-      "summary": "formula-utils.ts: Módulo técnico formula-utils. Lógica de negocio para formula-utils."
+      "name": "template-furniture",
+      "summary": "Lógica para template-furniture"
     },
     {
-      "id": "src/lib/cost-engine/index.ts",
-      "summary": "index.ts: Módulo técnico index. Lógica de negocio para index."
+      "name": "intelligence",
+      "summary": "Lógica para intelligence"
     },
     {
-      "id": "src/lib/cost-engine/accuracy.test.ts",
-      "summary": "accuracy.test.ts: Módulo técnico accuracy.test. Lógica de negocio para accuracy.test."
+      "name": "calculations",
+      "summary": "Lógica para calculations"
     },
     {
-      "id": "src/lib/cost-engine/types.ts",
-      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
+      "name": "importUtils",
+      "summary": "Lógica para importUtils"
     },
     {
-      "id": "src/lib/cost-engine/validations.ts",
-      "summary": "validations.ts: Módulo técnico validations. Lógica de negocio para validations."
+      "name": "backup",
+      "summary": "Lógica para backup"
     },
     {
-      "id": "src/lib/cost-engine/smart-annex.test.ts",
-      "summary": "smart-annex.test.ts: Módulo técnico smart-annex.test. Lógica de negocio para smart-annex.test."
+      "name": "matching.worker",
+      "summary": "Lógica para matching.worker"
     },
     {
-      "id": "src/lib/cost-engine/topo-sort.test.ts",
-      "summary": "topo-sort.test.ts: Módulo técnico topo-sort.test. Lógica de negocio para topo-sort.test."
+      "name": "bandecParser",
+      "summary": "Lógica para bandecParser"
     },
     {
-      "id": "src/lib/cost-engine/index.test.ts",
-      "summary": "index.test.ts: Módulo técnico index.test. Lógica de negocio para index.test."
+      "name": "engine",
+      "summary": "Lógica para engine"
     },
     {
-      "id": "src/lib/cost-engine/schemas.ts",
-      "summary": "schemas.ts: Módulo técnico schemas. Lógica de negocio para schemas."
+      "name": "parser",
+      "summary": "Lógica para parser"
     },
     {
-      "id": "src/lib/utils/pdf-export.ts",
-      "summary": "pdf-export.ts: Módulo técnico pdf-export. Lógica de negocio para pdf-export."
+      "name": "utils",
+      "summary": "Lógica para utils"
     },
     {
-      "id": "src/lib/utils/number-to-words-es.ts",
-      "summary": "number-to-words-es.ts: Módulo técnico number-to-words-es. Lógica de negocio para number-to-words-es."
+      "name": "global_goal_priority.test",
+      "summary": "Lógica para global_goal_priority.test"
     },
     {
-      "id": "src/lib/observability/health-engine.ts",
-      "summary": "health-engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
+      "name": "calculations.test",
+      "summary": "Lógica para calculations.test"
     },
     {
-      "id": "src/lib/observability/health-alerts.ts",
-      "summary": "health-alerts.ts: Módulo técnico health-alerts. Lógica de negocio para health-alerts."
+      "name": "bandecParser.test",
+      "summary": "Lógica para bandecParser.test"
     },
     {
-      "id": "src/lib/observability/system-health.ts",
-      "summary": "system-health.ts: Módulo técnico system-health. Lógica de negocio para system-health."
+      "name": "repro_issue.test",
+      "summary": "Lógica para repro_issue.test"
     },
     {
-      "id": "src/lib/observability/__tests__/system-health.test.ts",
-      "summary": "system-health.test.ts: Módulo técnico system-health.test. Lógica de negocio para system-health.test."
+      "name": "advanced_engine.test",
+      "summary": "Lógica para advanced_engine.test"
     },
     {
-      "id": "src/lib/observability/__tests__/health-engine.test.ts",
-      "summary": "health-engine.test.ts: Módulo técnico health-engine.test. Lógica de negocio para health-engine.test."
+      "name": "bigbon_simulation.test",
+      "summary": "Lógica para bigbon_simulation.test"
     },
     {
-      "id": "src/lib/academy/sm2.ts",
-      "summary": "sm2.ts: Módulo técnico sm2. Lógica de negocio para sm2."
+      "name": "engine.test",
+      "summary": "Lógica para engine.test"
     },
     {
-      "id": "src/lib/academy/__tests__/sm2.test.ts",
-      "summary": "sm2.test.ts: Módulo técnico sm2.test. Lógica de negocio para sm2.test."
+      "name": "orchestrator",
+      "summary": "Lógica para orchestrator"
     },
     {
-      "id": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
-      "summary": "ReleaseGatePdfExporter.ts: Módulo técnico ReleaseGatePdfExporter. Lógica de negocio para ReleaseGatePdfExporter."
+      "name": "types",
+      "summary": "Lógica para types"
     },
     {
-      "id": "src/lib/release_gate/mri-engine.ts",
-      "summary": "mri-engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
+      "name": "qwen-adapter",
+      "summary": "Lógica para qwen-adapter"
     },
     {
-      "id": "src/lib/release_gate/__tests__/mri-engine.test.ts",
-      "summary": "mri-engine.test.ts: Módulo técnico mri-engine.test. Lógica de negocio para mri-engine.test."
+      "name": "openai-compatible-adapter",
+      "summary": "Lógica para openai-compatible-adapter"
     },
     {
-      "id": "src/lib/data/template-repair.ts",
-      "summary": "template-repair.ts: Módulo técnico template-repair. Lógica de negocio para template-repair."
+      "name": "fallback-adapter",
+      "summary": "Lógica para fallback-adapter"
     },
     {
-      "id": "src/lib/data/demo-products.ts",
-      "summary": "demo-products.ts: Módulo técnico demo-products. Lógica de negocio para demo-products."
+      "name": "deepseek-adapter",
+      "summary": "Adaptador especializado para el modelo DeepSeek. Implementa la interfaz AIAdapter para procesamiento de lenguaje natural y generación de fichas de costo."
     },
     {
-      "id": "src/lib/data/costpro-ejemplo.ts",
-      "summary": "costpro-ejemplo.ts: Módulo técnico costpro-ejemplo. Lógica de negocio para costpro-ejemplo."
+      "name": "gemini-adapter.test",
+      "summary": "Lógica para gemini-adapter.test"
     },
     {
-      "id": "src/lib/data/template-industrial.ts",
-      "summary": "template-industrial.ts: Módulo técnico template-industrial. Lógica de negocio para template-industrial."
+      "name": "gemini-adapter",
+      "summary": "Lógica para gemini-adapter"
     },
     {
-      "id": "src/lib/data/costpro-reinicio.ts",
-      "summary": "costpro-reinicio.ts: Módulo técnico costpro-reinicio. Lógica de negocio para costpro-reinicio."
+      "name": "kimi-adapter",
+      "summary": "Lógica para kimi-adapter"
     },
     {
-      "id": "src/lib/data/template-consultancy.ts",
-      "summary": "template-consultancy.ts: Módulo técnico template-consultancy. Lógica de negocio para template-consultancy."
+      "name": "gpt-adapter",
+      "summary": "Lógica para gpt-adapter"
     },
     {
-      "id": "src/lib/data/template-logistics.ts",
-      "summary": "template-logistics.ts: Módulo técnico template-logistics. Lógica de negocio para template-logistics."
+      "name": "definitions",
+      "summary": "Lógica para definitions"
     },
     {
-      "id": "src/lib/data/template-lavar.ts",
-      "summary": "template-lavar.ts: Módulo técnico template-lavar. Lógica de negocio para template-lavar."
+      "name": "registry",
+      "summary": "Lógica para registry"
     },
     {
-      "id": "src/lib/data/template-pastry.ts",
-      "summary": "template-pastry.ts: Módulo técnico template-pastry. Lógica de negocio para template-pastry."
+      "name": "registry.test",
+      "summary": "Lógica para registry.test"
     },
     {
-      "id": "src/lib/data/template-icecream.ts",
-      "summary": "template-icecream.ts: Módulo técnico template-icecream. Lógica de negocio para template-icecream."
-    },
-    {
-      "id": "src/lib/data/template-juice.ts",
-      "summary": "template-juice.ts: Módulo técnico template-juice. Lógica de negocio para template-juice."
-    },
-    {
-      "id": "src/lib/data/template-shoes.ts",
-      "summary": "template-shoes.ts: Módulo técnico template-shoes. Lógica de negocio para template-shoes."
-    },
-    {
-      "id": "src/lib/data/template-pizza.ts",
-      "summary": "template-pizza.ts: Módulo técnico template-pizza. Lógica de negocio para template-pizza."
-    },
-    {
-      "id": "src/lib/data/template-furniture.ts",
-      "summary": "template-furniture.ts: Módulo técnico template-furniture. Lógica de negocio para template-furniture."
-    },
-    {
-      "id": "src/lib/ipv/intelligence.ts",
-      "summary": "intelligence.ts: Módulo técnico intelligence. Lógica de negocio para intelligence."
-    },
-    {
-      "id": "src/lib/ipv/calculations.ts",
-      "summary": "calculations.ts: Módulo técnico calculations. Lógica de negocio para calculations."
-    },
-    {
-      "id": "src/lib/ipv/importUtils.ts",
-      "summary": "importUtils.ts: Módulo técnico importUtils. Lógica de negocio para importUtils."
-    },
-    {
-      "id": "src/lib/ipv/backup.ts",
-      "summary": "backup.ts: Módulo técnico backup. Lógica de negocio para backup."
-    },
-    {
-      "id": "src/lib/ipv/matching.worker.ts",
-      "summary": "matching.worker.ts: Módulo técnico matching.worker. Lógica de negocio para matching.worker."
-    },
-    {
-      "id": "src/lib/ipv/bandecParser.ts",
-      "summary": "bandecParser.ts: Módulo técnico bandecParser. Lógica de negocio para bandecParser."
-    },
-    {
-      "id": "src/lib/ipv/engine.ts",
-      "summary": "engine.ts: Motor de conciliación IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso. Implementa la lógica central de reconciliación de transacciones bancarias con productos del catálogo, manejando descomposiciones y ajustes de precio."
-    },
-    {
-      "id": "src/lib/ipv/parser.ts",
-      "summary": "parser.ts: Módulo técnico parser. Lógica de negocio para parser."
-    },
-    {
-      "id": "src/lib/ipv/utils.ts",
-      "summary": "utils.ts: Módulo técnico utils. Lógica de negocio para utils."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
-      "summary": "global_goal_priority.test.ts: Módulo técnico global_goal_priority.test. Lógica de negocio para global_goal_priority.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/calculations.test.ts",
-      "summary": "calculations.test.ts: Módulo técnico calculations.test. Lógica de negocio para calculations.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/bandecParser.test.ts",
-      "summary": "bandecParser.test.ts: Módulo técnico bandecParser.test. Lógica de negocio para bandecParser.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/repro_issue.test.ts",
-      "summary": "repro_issue.test.ts: Módulo técnico repro_issue.test. Lógica de negocio para repro_issue.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/advanced_engine.test.ts",
-      "summary": "advanced_engine.test.ts: Módulo técnico advanced_engine.test. Lógica de negocio para advanced_engine.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
-      "summary": "bigbon_simulation.test.ts: Módulo técnico bigbon_simulation.test. Lógica de negocio para bigbon_simulation.test."
-    },
-    {
-      "id": "src/lib/ipv/__tests__/engine.test.ts",
-      "summary": "engine.test.ts: Módulo técnico engine.test. Lógica de negocio para engine.test."
-    },
-    {
-      "id": "src/lib/ai/orchestrator.ts",
-      "summary": "orchestrator.ts: Módulo técnico orchestrator. Lógica de negocio para orchestrator."
-    },
-    {
-      "id": "src/lib/ai/types.ts",
-      "summary": "types.ts: Módulo técnico types. Lógica de negocio para types."
-    },
-    {
-      "id": "src/lib/ai/adapters/qwen-adapter.ts",
-      "summary": "qwen-adapter.ts: Módulo técnico qwen-adapter. Lógica de negocio para qwen-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/openai-compatible-adapter.ts",
-      "summary": "openai-compatible-adapter.ts: Módulo técnico openai-compatible-adapter. Lógica de negocio para openai-compatible-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/fallback-adapter.ts",
-      "summary": "fallback-adapter.ts: Módulo técnico fallback-adapter. Lógica de negocio para fallback-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/deepseek-adapter.ts",
-      "summary": "deepseek-adapter.ts: Módulo técnico deepseek-adapter. Lógica de negocio para deepseek-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/gemini-adapter.test.ts",
-      "summary": "gemini-adapter.test.ts: Módulo técnico gemini-adapter.test. Lógica de negocio para gemini-adapter.test."
-    },
-    {
-      "id": "src/lib/ai/adapters/gemini-adapter.ts",
-      "summary": "gemini-adapter.ts: Módulo técnico gemini-adapter. Lógica de negocio para gemini-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/kimi-adapter.ts",
-      "summary": "kimi-adapter.ts: Módulo técnico kimi-adapter. Lógica de negocio para kimi-adapter."
-    },
-    {
-      "id": "src/lib/ai/adapters/gpt-adapter.ts",
-      "summary": "gpt-adapter.ts: Módulo técnico gpt-adapter. Lógica de negocio para gpt-adapter."
-    },
-    {
-      "id": "src/lib/ai/tools/definitions.ts",
-      "summary": "definitions.ts: Módulo técnico definitions. Lógica de negocio para definitions."
-    },
-    {
-      "id": "src/lib/ai/tools/registry.ts",
-      "summary": "registry.ts: Módulo técnico registry. Lógica de negocio para registry."
-    },
-    {
-      "id": "src/lib/ai/tools/registry.test.ts",
-      "summary": "registry.test.ts: Módulo técnico registry.test. Lógica de negocio para registry.test."
-    },
-    {
-      "id": "src/lib/sync/offline-storage.ts",
-      "summary": "offline-storage.ts: Módulo técnico offline-storage. Lógica de negocio para offline-storage."
-    }
-  ],
-  "view_summaries": [
-    {
-      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "summary": "Vista ExecutiveDemoView.tsx accesible en src/components/views/executive-demo/ExecutiveDemoView.tsx. Dependencias clave: 5 componentes (@/components/ui/button, @/components/ui/progress, @/components/ui/badge, @/components/ui/card, @/components/ui/CostProLoader)."
-    },
-    {
-      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "summary": "Vista SystemHealthView.tsx accesible en src/components/views/terminal/views/health/SystemHealthView.tsx. Dependencias clave: 1 componentes (@/components/ui/CostProLoader)."
-    },
-    {
-      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
-      "summary": "Vista ViewNavigator.tsx accesible en src/components/views/terminal/views/health/ViewNavigator.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "summary": "Vista WalletView.tsx accesible en src/components/views/terminal/views/wallet/WalletView.tsx. Dependencias clave: 4 componentes (@/components/ui/card, @/components/ui/button, @/components/ui/input, @/components/ui/badge)."
-    },
-    {
-      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "summary": "Vista CatalogView.tsx accesible en src/components/views/terminal/views/catalog/CatalogView.tsx. Dependencias clave: 5 componentes (@/components/ui/CostProLoader, @/components/ui/ActionMenu, @/components/ui/ProductImage, @/components/ui/QueryInspector, @/components/ui/ViewSwitcher)."
-    },
-    {
-      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
-      "summary": "Vista SettingsView.tsx accesible en src/components/views/terminal/views/settings/SettingsView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "summary": "Vista DashboardView.tsx accesible en src/components/views/terminal/views/dashboard/DashboardView.tsx. Dependencias clave: 4 componentes (@/components/ui/StateRenderer, @/components/ui/toggle-group, @/components/ui/popover, @/components/ui/calendar)."
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
-      "summary": "Vista useDashboardView.ts accesible en src/components/views/terminal/views/dashboard/useDashboardView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "summary": "Vista ReportsView.tsx accesible en src/components/views/terminal/views/reports/ReportsView.tsx. Dependencias clave: 4 componentes (@/components/ui/card, @/components/ui/button, @/components/ui/ActionMenu, @/components/ui/CostProLoader)."
-    },
-    {
-      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "summary": "Vista StoresManagementView.tsx accesible en src/components/views/terminal/views/stores/StoresManagementView.tsx. Dependencias clave: 2 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu)."
-    },
-    {
-      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
-      "summary": "Vista useStoresView.ts accesible en src/components/views/terminal/views/stores/useStoresView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "summary": "Vista AcademyView.tsx accesible en src/components/views/terminal/views/academy/AcademyView.tsx. Dependencias clave: 2 componentes (@/components/ui/button, @/components/ui/CostProLoader)."
-    },
-    {
-      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "summary": "Vista TransferenciasView.tsx accesible en src/components/views/terminal/views/transfers/TransferenciasView.tsx. Dependencias clave: 2 componentes (@/components/ui/ActionMenu, @/components/ui/StateRenderer)."
-    },
-    {
-      "id": "src/components/views/terminal/views/help/HelpView.tsx",
-      "summary": "Vista HelpView.tsx accesible en src/components/views/terminal/views/help/HelpView.tsx. Dependencias clave: 3 componentes (@/components/ui/button, @/components/ui/badge, @/components/ThemeToggle)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
-      "summary": "Vista InventoryCardView.tsx accesible en src/components/views/terminal/views/inventory/InventoryCardView.tsx. Dependencias clave: 2 componentes (@/components/ui/CostProLoader, @/components/ui/atomic)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "summary": "Vista InventoryAdjustmentsView.tsx accesible en src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx. Dependencias clave: 3 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu, @/components/ui/QueryInspector)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "summary": "Vista ProductReceptionView.tsx accesible en src/components/views/terminal/views/inventory/ProductReceptionView.tsx. Dependencias clave: 4 componentes (@/components/ui/ActionMenu, @/components/ui/atomic, @/components/ui/SecurityScrollContainer, @/components/ui/BaseModal)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
-      "summary": "Vista InventoryTableView.tsx accesible en src/components/views/terminal/views/inventory/InventoryTableView.tsx. Dependencias clave: 2 componentes (@/components/ui/CostProLoader, @/components/ui/ProductImage)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "summary": "Vista InventoryView.tsx accesible en src/components/views/terminal/views/inventory/InventoryView.tsx. Dependencias clave: 6 componentes (@/components/ui/ActionMenu, @/components/ui/SearchBar, @/components/ui/atomic, @/components/ui/StateRenderer, @/components/ui/skeleton, @/components/ui/QueryInspector)."
-    },
-    {
-      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
-      "summary": "Vista CashClosureView.tsx accesible en src/components/views/terminal/views/cash_closure/CashClosureView.tsx. Dependencias clave: 1 componentes (@/components/ui/ActionMenu)."
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "summary": "Vista SalesHistoryView.tsx accesible en src/components/views/terminal/views/sales/SalesHistoryView.tsx. Dependencias clave: 3 componentes (@/components/ui/SearchBar, @/components/ui/StateRenderer, @/components/ui/skeleton)."
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
-      "summary": "Vista useSalesHistoryView.ts accesible en src/components/views/terminal/views/sales/useSalesHistoryView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "summary": "Vista ReceptionsHistoryView.tsx accesible en src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx. Dependencias clave: 4 componentes (@/components/ui/SearchBar, @/components/ui/QueryInspector, @/components/ui/StateRenderer, @/components/ui/skeleton)."
-    },
-    {
-      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
-      "summary": "Vista useReceptionsHistoryView.ts accesible en src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "summary": "Vista StockHistoryView.tsx accesible en src/components/views/terminal/views/stock_history/StockHistoryView.tsx. Dependencias clave: 3 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu, @/components/ui/QueryInspector)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "summary": "Vista IPVView.tsx accesible en src/components/views/terminal/views/ipv/IPVView.tsx. Dependencias clave: 8 componentes (@/components/ui/card, @/components/ui/tabs, @/components/ui/button, @/components/ui/badge, @/components/ui/LoadingOverlay, @/components/ui/HorizontalScroll, @/components/ui/ActionMenu, @/components/ui/tooltip)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "summary": "Vista MovementsView.tsx accesible en src/components/views/terminal/views/ipv/MovementsView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "summary": "Vista IPVReportView.tsx accesible en src/components/views/terminal/views/ipv/IPVReportView.tsx. Dependencias clave: 5 componentes (@/components/ui/BaseModal, @/components/ui/button, @/components/ui/badge, @/components/ui/input, @/components/ui/LoadingOverlay)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "summary": "Vista MatchingAuditView.tsx accesible en src/components/views/terminal/views/ipv/MatchingAuditView.tsx. Dependencias clave: 4 componentes (@/components/ui/card, @/components/ui/button, @/components/ui/input, @/components/ui/badge)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "summary": "Vista TransferQRReportView.tsx accesible en src/components/views/terminal/views/ipv/TransferQRReportView.tsx. Dependencias clave: 5 componentes (@/components/ui/card, @/components/ui/badge, @/components/ui/label, @/components/ui/button, @/components/ui/input)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "summary": "Vista ManualReconciliationView.tsx accesible en src/components/views/terminal/views/ipv/ManualReconciliationView.tsx. Dependencias clave: 4 componentes (@/components/ui/button, @/components/ui/badge, @/components/ui/scroll-area, @/components/ui/input)."
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
-      "summary": "Vista PivotStatementView.tsx accesible en src/components/views/terminal/views/ipv/PivotStatementView.tsx. Dependencias clave: 2 componentes (@/components/ui/card, @/components/ui/button)."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
-      "summary": "Vista InventoryCountTableView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
-      "summary": "Vista InventoryCountCardView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "summary": "Vista InventoryCountView.tsx accesible en src/components/views/terminal/views/inventory_count/InventoryCountView.tsx. Dependencias clave: 4 componentes (@/components/ui/ActionMenu, @/components/ui/SearchBar, @/components/ui/QueryInspector, @/components/ui/SecurityScrollContainer)."
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "summary": "Vista WikiView.tsx accesible en src/components/views/terminal/views/wiki/WikiView.tsx. Dependencias clave: 3 componentes (@/components/ui/button, @/components/ui/input, @/components/ui/scroll-area)."
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
-      "summary": "Vista POSTableView.tsx accesible en src/components/views/terminal/views/pos/POSTableView.tsx. Dependencias clave: 1 componentes (@/components/ui/ProductImage)."
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
-      "summary": "Vista usePOSView.ts accesible en src/components/views/terminal/views/pos/usePOSView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/POSView.tsx",
-      "summary": "Vista POSView.tsx accesible en src/components/views/terminal/views/pos/POSView.tsx. Dependencias clave: 13 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu, @/components/ui/atomic, @/components/ui/ViewSwitcher, @/components/ui/StateRenderer, @/components/ui/skeleton, @/components/ui/Portal, @/components/ui/BaseModal, @/components/ui/atomic, @/components/ui/QueryInspector, @/components/modals/PriceSelectorModal, @/components/modals/BarcodeScanner, @/components/ui/SpeedDial)."
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
-      "summary": "Vista AuditTableView.tsx accesible en src/components/views/terminal/views/audit/AuditTableView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
-      "summary": "Vista AuditTableView.test.tsx accesible en src/components/views/terminal/views/audit/AuditTableView.test.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
-      "summary": "Vista AuditLogsView.test.tsx accesible en src/components/views/terminal/views/audit/AuditLogsView.test.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
-      "summary": "Vista useAuditLogsView.ts accesible en src/components/views/terminal/views/audit/useAuditLogsView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "summary": "Vista AuditLogsView.tsx accesible en src/components/views/terminal/views/audit/AuditLogsView.tsx. Dependencias clave: 4 componentes (@/components/ui/StateRenderer, @/components/ui/skeleton, @/components/ui/tabs, @/components/ui/button)."
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "summary": "Vista CostSheetAuditView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx. Dependencias clave: 3 componentes (@/components/ui/card, @/components/ui/badge, @/components/ui/scroll-area)."
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "summary": "Vista CostSheetView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetView.tsx. Dependencias clave: 8 componentes (@/components/ui/LazyRender, @/components/ui/BaseModal, @/components/ui/ViewSwitcher, @/components/ui/ActionMenu, @/components/ui/skeleton, @/components/ui/button, @/components/modals/UpgradeModal, @/components/ui/SpeedDial)."
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "summary": "Vista CostSheetCardView.tsx accesible en src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx. Dependencias clave: 4 componentes (@/components/ui/LazyRender, @/components/ui/button, @/components/ui/input, @/components/ui/popover)."
-    },
-    {
-      "id": "src/components/views/terminal/views/users/useUsersView.ts",
-      "summary": "Vista useUsersView.ts accesible en src/components/views/terminal/views/users/useUsersView.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "summary": "Vista UsersManagementView.tsx accesible en src/components/views/terminal/views/users/UsersManagementView.tsx. Dependencias clave: 5 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu, @/components/ui/button, @/components/ui/switch, @/components/ui/select)."
-    },
-    {
-      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "summary": "Vista RolesManagementView.tsx accesible en src/components/views/terminal/views/users/RolesManagementView.tsx. Dependencias clave: 3 componentes (@/components/ui/SearchBar, @/components/ui/ActionMenu, @/components/ui/BaseModal)."
-    },
-    {
-      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
-      "summary": "Vista RSSManagementView.tsx accesible en src/components/views/terminal/views/rss/RSSManagementView.tsx. Dependencias clave: 1 componentes (@/components/ui/StateRenderer)."
-    },
-    {
-      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
-      "summary": "Vista NewsView.tsx accesible en src/components/views/terminal/views/rss/NewsView.tsx. Dependencias clave: 1 componentes (@/components/ui/StateRenderer)."
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
-      "summary": "Vista LegalView.test.tsx accesible en src/components/views/terminal/views/legal/LegalView.test.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
-      "summary": "Vista LegalView.tsx accesible en src/components/views/terminal/views/legal/LegalView.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/ui/ViewSwitcher.tsx",
-      "summary": "Vista ViewSwitcher.tsx accesible en src/components/ui/ViewSwitcher.tsx. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/components/auth/WelcomeLandingView.tsx",
-      "summary": "Vista WelcomeLandingView.tsx accesible en src/components/auth/WelcomeLandingView.tsx. Dependencias clave: 3 componentes (@/components/CostProLogo, @/components/ThemeToggle, @/components/ui/PWAInstallModal)."
-    },
-    {
-      "id": "src/app/page.tsx",
-      "summary": "Vista page.tsx accesible en /. Dependencias clave: 3 componentes (@/components/ui/CyberShell, @/components/views/TerminalShell, @/components/ui/DataDecryption)."
-    },
-    {
-      "id": "src/app/layout.tsx",
-      "summary": "Vista layout.tsx accesible en /layout.tsx. Dependencias clave: 6 componentes (@/components/theme-provider, @/components/GlobalSessionManager, @/components/ServiceWorkerRegister, @/components/providers/QueryProvider, @/components/providers/SyncProvider, @/components/IntelligentThemeHandler)."
-    },
-    {
-      "id": "src/app/cost-sheets/page.tsx",
-      "summary": "Vista page.tsx accesible en /cost-sheets. Dependencias clave: 1 componentes (@/components/ui/skeleton)."
-    },
-    {
-      "id": "src/app/api/route.ts",
-      "summary": "Vista route.ts accesible en /api/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/import-anexo/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/save/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/save/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/export-pdf/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/import-json/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/import-json/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/ai/chat/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/cost-sheets/calculate/route.ts",
-      "summary": "Vista route.ts accesible en /api/cost-sheets/calculate/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/system-health/route.ts",
-      "summary": "Vista route.ts accesible en /api/system-health/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/reports/generate/route.ts",
-      "summary": "Vista route.ts accesible en /api/reports/generate/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/academy/review/route.ts",
-      "summary": "Vista route.ts accesible en /api/academy/review/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/academy/review/[cardId]/route.ts",
-      "summary": "Vista route.ts accesible en /api/academy/review/[cardId]/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/academy/generate/route.ts",
-      "summary": "Vista route.ts accesible en /api/academy/generate/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/inventory/route.ts",
-      "summary": "Vista route.ts accesible en /api/inventory/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/inventory/adjust/route.ts",
-      "summary": "Vista route.ts accesible en /api/inventory/adjust/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/inventory/[productId]/history/route.ts",
-      "summary": "Vista route.ts accesible en /api/inventory/[productId]/history/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/inventory/products/route.ts",
-      "summary": "Vista route.ts accesible en /api/inventory/products/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/inventory/adjustments/route.ts",
-      "summary": "Vista route.ts accesible en /api/inventory/adjustments/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/bot/chat/route.ts",
-      "summary": "Vista route.ts accesible en /api/bot/chat/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/users/reset-password/route.ts",
-      "summary": "Vista route.ts accesible en /api/users/reset-password/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/users/toggle-status/route.ts",
-      "summary": "Vista route.ts accesible en /api/users/toggle-status/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/users/delete/route.ts",
-      "summary": "Vista route.ts accesible en /api/users/delete/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/users/managed-create/route.ts",
-      "summary": "Vista route.ts accesible en /api/users/managed-create/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/sync/batch/route.ts",
-      "summary": "Vista route.ts accesible en /api/sync/batch/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/rss/route.ts",
-      "summary": "Vista route.ts accesible en /api/rss/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/api/logs/route.ts",
-      "summary": "Vista route.ts accesible en /api/logs/route.ts. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/verify-dashboard/page.tsx",
-      "summary": "Vista page.tsx accesible en /verify-dashboard. Dependencias clave: 2 componentes (@/components/views/terminal/views/dashboard/ConcentricDashboardRing, @/components/views/terminal/views/dashboard/ExecutiveKpiCards)."
-    },
-    {
-      "id": "src/app/wiki/page.tsx",
-      "summary": "Vista page.tsx accesible en /wiki. Dependencias clave: 0 componentes ()."
-    },
-    {
-      "id": "src/app/cashier/close-session/page.tsx",
-      "summary": "Vista page.tsx accesible en /cashier/close-session. Dependencias clave: 4 componentes (@/components/ui/button, @/components/ui/input, @/components/ui/card, @/components/ui/BaseModal)."
-    },
-    {
-      "id": "src/app/demo/executive/page.tsx",
-      "summary": "Vista page.tsx accesible en /demo/executive. Dependencias clave: 1 componentes (@/components/views/executive-demo/ExecutiveDemoView)."
-    },
-    {
-      "id": "src/app/demo/calculate/page.tsx",
-      "summary": "Vista page.tsx accesible en /demo/calculate. Dependencias clave: 6 componentes (@/components/ui/card, @/components/ui/button, @/components/ui/table, @/components/ui/badge, @/components/ui/input, @/components/ui/select)."
-    },
-    {
-      "id": "src/app/login/page.tsx",
-      "summary": "Vista page.tsx accesible en /login. Dependencias clave: 4 componentes (@/components/SplashScreen, @/components/auth/WelcomeLandingView, @/components/auth/LoginForm, @/components/CostProLogo)."
+      "name": "offline-storage",
+      "summary": "Lógica para offline-storage"
     }
   ],
   "workflow_summaries": [
     {
-      "id": "reconciliacion_ipv",
-      "summary": "Workflow 'Conciliación de Inventario (IPV)': Asegurar que cada peso recibido en el banco corresponda a una salida de inventario válida. Pasos: Importar extracto bancario en BankIngestion, Verificar catálogo en CatalogTable, Ejecutar MatchingEngine para cruzar datos, Revisar resultados en MatchingAuditView"
+      "name": "Flujo de Ventas",
+      "steps": [
+        "POSView",
+        "TransactionTable",
+        "InventoryUpdate"
+      ]
     },
     {
-      "id": "gestion_productos",
-      "summary": "Workflow 'Gestión de Productos y Precios': Mantener un catálogo actualizado para la automatización del matching. Pasos: Crear o importar productos, Definir variaciones permitidas, Organizar por grupos y subgrupos"
+      "name": "Flujo de Costeo",
+      "steps": [
+        "CatalogTable",
+        "CostSheetView",
+        "PriceUpdate"
+      ]
+    }
+  ],
+  "view_summaries": [
+    {
+      "name": "ExecutiveDemoView",
+      "path": "src/components/views/executive-demo/ExecutiveDemoView.tsx"
     },
     {
-      "id": "aprendizaje_conceptos",
-      "summary": "Workflow 'Aprendizaje y Capacitación (Academy)': Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetición espaciada. Pasos: Acceder al módulo Academy, Seleccionar categoría de estudio, Realizar sesiones de repaso con Flashcards, Monitorear progreso en Mastery Dashboard"
+      "name": "SystemHealthView",
+      "path": "src/components/views/terminal/views/health/SystemHealthView.tsx"
     },
     {
-      "id": "gestion_billetera_digital",
-      "summary": "Workflow 'Gestión de Billetera y Notificaciones (Wallet)': Centralizar y analizar el flujo de caja proveniente de notificaciones bancarias digitales. Pasos: Importar mensajes de texto o archivos de banco, Visualizar registros crudos en la pestaña BD, Analizar métricas financieras en Analytics Dashboard"
+      "name": "WalletView",
+      "path": "src/components/views/terminal/views/wallet/WalletView.tsx"
+    },
+    {
+      "name": "CatalogView",
+      "path": "src/components/views/terminal/views/catalog/CatalogView.tsx"
+    },
+    {
+      "name": "SettingsView",
+      "path": "src/components/views/terminal/views/settings/SettingsView.tsx"
+    },
+    {
+      "name": "DashboardView",
+      "path": "src/components/views/terminal/views/dashboard/DashboardView.tsx"
+    },
+    {
+      "name": "ReportsView",
+      "path": "src/components/views/terminal/views/reports/ReportsView.tsx"
+    },
+    {
+      "name": "StoresManagementView",
+      "path": "src/components/views/terminal/views/stores/StoresManagementView.tsx"
+    },
+    {
+      "name": "AcademyView",
+      "path": "src/components/views/terminal/views/academy/AcademyView.tsx"
+    },
+    {
+      "name": "TransferenciasView",
+      "path": "src/components/views/terminal/views/transfers/TransferenciasView.tsx"
+    },
+    {
+      "name": "HelpView",
+      "path": "src/components/views/terminal/views/help/HelpView.tsx"
+    },
+    {
+      "name": "InventoryCardView",
+      "path": "src/components/views/terminal/views/inventory/InventoryCardView.tsx"
+    },
+    {
+      "name": "InventoryAdjustmentsView",
+      "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx"
+    },
+    {
+      "name": "ProductReceptionView",
+      "path": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx"
+    },
+    {
+      "name": "InventoryTableView",
+      "path": "src/components/views/terminal/views/inventory/InventoryTableView.tsx"
+    },
+    {
+      "name": "InventoryView",
+      "path": "src/components/views/terminal/views/inventory/InventoryView.tsx"
+    },
+    {
+      "name": "CashClosureView",
+      "path": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx"
+    },
+    {
+      "name": "SalesHistoryView",
+      "path": "src/components/views/terminal/views/sales/SalesHistoryView.tsx"
+    },
+    {
+      "name": "ReceptionsHistoryView",
+      "path": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx"
+    },
+    {
+      "name": "StockHistoryView",
+      "path": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx"
+    },
+    {
+      "name": "IPVView",
+      "path": "src/components/views/terminal/views/ipv/IPVView.tsx"
+    },
+    {
+      "name": "MovementsView",
+      "path": "src/components/views/terminal/views/ipv/MovementsView.tsx"
+    },
+    {
+      "name": "IPVReportView",
+      "path": "src/components/views/terminal/views/ipv/IPVReportView.tsx"
+    },
+    {
+      "name": "MatchingAuditView",
+      "path": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx"
+    },
+    {
+      "name": "TransferQRReportView",
+      "path": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx"
+    },
+    {
+      "name": "ManualReconciliationView",
+      "path": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx"
+    },
+    {
+      "name": "PivotStatementView",
+      "path": "src/components/views/terminal/views/ipv/PivotStatementView.tsx"
+    },
+    {
+      "name": "InventoryCountTableView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx"
+    },
+    {
+      "name": "InventoryCountCardView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx"
+    },
+    {
+      "name": "InventoryCountView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx"
+    },
+    {
+      "name": "WikiView",
+      "path": "src/components/views/terminal/views/wiki/WikiView.tsx"
+    },
+    {
+      "name": "POSTableView",
+      "path": "src/components/views/terminal/views/pos/POSTableView.tsx"
+    },
+    {
+      "name": "POSView",
+      "path": "src/components/views/terminal/views/pos/POSView.tsx"
+    },
+    {
+      "name": "AuditTableView",
+      "path": "src/components/views/terminal/views/audit/AuditTableView.tsx"
+    },
+    {
+      "name": "AuditLogsView",
+      "path": "src/components/views/terminal/views/audit/AuditLogsView.tsx"
+    },
+    {
+      "name": "CostSheetAuditView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx"
+    },
+    {
+      "name": "CostSheetView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx"
+    },
+    {
+      "name": "CostSheetCardView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx"
+    },
+    {
+      "name": "UsersManagementView",
+      "path": "src/components/views/terminal/views/users/UsersManagementView.tsx"
+    },
+    {
+      "name": "RolesManagementView",
+      "path": "src/components/views/terminal/views/users/RolesManagementView.tsx"
+    },
+    {
+      "name": "RSSManagementView",
+      "path": "src/components/views/terminal/views/rss/RSSManagementView.tsx"
+    },
+    {
+      "name": "NewsView",
+      "path": "src/components/views/terminal/views/rss/NewsView.tsx"
+    },
+    {
+      "name": "LegalView",
+      "path": "src/components/views/terminal/views/legal/LegalView.tsx"
     }
   ],
   "business_rules": [
-    "R1: Coherencia táctica de precios - Los precios ajustados se bloquean por fecha.",
-    "R2: Combinaciones profundas - El matching engine busca sumas exactas de productos para igualar montos bancarios.",
-    "R3: Decomposición recursiva - Un paquete vendido se descompone en sus unidades para el cuadre de stock.",
-    "R4: Seguridad por reversión - Las API Keys se recuperan mediante normalización si están ofuscadas.",
-    "R5: Mobile Hardening - Preservar orden del DOM, usar unidades relativas y CLS < 0.01.",
-    "R6: Resolución 148 - Tope de 30% de utilidad y validación de integridad estructural."
+    "Resolution 12/2007 compliance",
+    "IPV exact match priority",
+    "Daily price locking policy"
   ]
 }

@@ -5,9 +5,9 @@
     "technical_description": "Módulo técnico IntelligentThemeHandler.",
     "business_logic": "Lógica para IntelligentThemeHandler",
     "dependencies": [
-      "react",
+      "@/store",
       "next-themes",
-      "@/store"
+      "react"
     ]
   },
   {
@@ -16,10 +16,10 @@
     "technical_description": "Módulo técnico GlobalSessionManager.",
     "business_logic": "Lógica para GlobalSessionManager",
     "dependencies": [
-      "react",
-      "@/hooks/logic/useSessionManager",
       "@/store/session-store",
-      "sonner"
+      "react",
+      "sonner",
+      "@/hooks/logic/useSessionManager"
     ]
   },
   {
@@ -28,8 +28,8 @@
     "technical_description": "Módulo técnico theme-provider.",
     "business_logic": "Lógica para theme-provider",
     "dependencies": [
-      "react",
-      "next-themes"
+      "next-themes",
+      "react"
     ]
   },
   {
@@ -38,9 +38,9 @@
     "technical_description": "Módulo técnico SplashScreen.",
     "business_logic": "Lógica para SplashScreen",
     "dependencies": [
-      "react",
+      "./CostProLogo",
       "framer-motion",
-      "./CostProLogo"
+      "react"
     ]
   },
   {
@@ -49,13 +49,13 @@
     "technical_description": "Módulo técnico ThemeToggle.",
     "business_logic": "Lógica para ThemeToggle",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "next-themes",
       "@/store",
-      "@/components/ui/dropdown-menu",
+      "next-themes",
       "framer-motion",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/dropdown-menu",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -64,8 +64,8 @@
     "technical_description": "Módulo técnico CostProLogo.",
     "business_logic": "Lógica para CostProLogo",
     "dependencies": [
-      "react",
-      "framer-motion"
+      "framer-motion",
+      "react"
     ]
   },
   {
@@ -74,8 +74,8 @@
     "technical_description": "Módulo técnico ServiceWorkerRegister.",
     "business_logic": "Lógica para ServiceWorkerRegister",
     "dependencies": [
-      "react",
-      "workbox-window"
+      "workbox-window",
+      "react"
     ]
   },
   {
@@ -84,11 +84,11 @@
     "technical_description": "Módulo técnico SyncConflictModal.",
     "business_logic": "Lógica para SyncConflictModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "lucide-react",
       "@/components/ui/atomic",
       "@/lib/sync/offline-storage",
+      "@/components/ui/BaseModal",
+      "react",
+      "lucide-react",
       "@/components/providers/SyncProvider"
     ]
   },
@@ -98,12 +98,12 @@
     "technical_description": "Módulo técnico CreateProductModal.",
     "business_logic": "Lógica para CreateProductModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
       "@/components/ui/atomic",
       "@/store",
-      "@/hooks/api/useProducts",
-      "sonner"
+      "sonner",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/hooks/api/useProducts"
     ]
   },
   {
@@ -112,10 +112,10 @@
     "technical_description": "Módulo técnico BarcodeScanner.",
     "business_logic": "Lógica para BarcodeScanner",
     "dependencies": [
-      "react",
       "html5-qrcode",
-      "@/components/ui/BaseModal",
       "@/components/ui/atomic",
+      "@/components/ui/BaseModal",
+      "react",
       "lucide-react"
     ]
   },
@@ -125,10 +125,10 @@
     "technical_description": "Módulo técnico UpgradeModal.",
     "business_logic": "Lógica para UpgradeModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
+      "lucide-react",
       "@/components/ui/button",
-      "lucide-react"
+      "@/components/ui/BaseModal",
+      "react"
     ]
   },
   {
@@ -137,12 +137,12 @@
     "technical_description": "Módulo técnico PriceSelectorModal.",
     "business_logic": "Lógica para PriceSelectorModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
       "@/components/ui/atomic",
-      "@/lib/utils",
+      "lucide-react",
       "@/types",
-      "lucide-react"
+      "@/components/ui/BaseModal",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -151,8 +151,8 @@
     "technical_description": "Módulo técnico SyncProvider.",
     "business_logic": "Lógica para SyncProvider",
     "dependencies": [
-      "react",
-      "@/hooks/useSync"
+      "@/hooks/useSync",
+      "react"
     ]
   },
   {
@@ -171,30 +171,30 @@
     "technical_description": "Módulo técnico TerminalShell.",
     "business_logic": "Lógica para TerminalShell",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "@/store",
+      "@/components/modals/CreateProductModal",
       "./terminal/Sidebar",
       "./terminal/Header",
-      "@/hooks/ui/useTerminalNavigation",
-      "@/hooks/ui/useMobile",
-      "lucide-react",
-      "@/services/user-service",
-      "next/navigation",
-      "@/lib/utils",
-      "@tanstack/react-query",
-      "@/hooks/api/useStores",
-      "@/hooks/api/useProducts",
-      "@/hooks/api/useTransactions",
-      "@/hooks/api/useDashboard",
-      "@/hooks/api/useAuditLogs",
-      "@/hooks/api/useReceptions",
-      "@/components/ui/CostProLoader",
-      "@/components/ui/FloatingCalculator",
-      "@/components/ui/ChatBot",
-      "@/components/modals/CreateProductModal",
       "@/components/ui/MobileSafeContainer",
-      "sonner"
+      "@/components/ui/CostProLoader",
+      "@/hooks/api/useReceptions",
+      "@tanstack/react-query",
+      "@/hooks/api/useTransactions",
+      "@/hooks/ui/useTerminalNavigation",
+      "@/hooks/api/useProducts",
+      "@/hooks/api/useDashboard",
+      "@/components/ui/FloatingCalculator",
+      "framer-motion",
+      "sonner",
+      "@/hooks/api/useAuditLogs",
+      "@/components/ui/ChatBot",
+      "lucide-react",
+      "@/hooks/api/useStores",
+      "@/services/user-service",
+      "@/store",
+      "next/navigation",
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/lib/utils"
     ]
   },
   {
@@ -203,17 +203,17 @@
     "technical_description": "Módulo técnico ExecutiveDemoView.",
     "business_logic": "Lógica para ExecutiveDemoView",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
       "@/components/ui/button",
-      "@/components/ui/progress",
-      "@/components/ui/badge",
-      "@/components/ui/card",
-      "@/lib/data/demo-products",
+      "next/link",
       "@/components/ui/CostProLoader",
+      "@/components/ui/card",
+      "@/components/ui/progress",
+      "framer-motion",
       "@/lib/utils",
-      "next/link"
+      "react",
+      "lucide-react",
+      "@/components/ui/badge",
+      "@/lib/data/demo-products"
     ]
   },
   {
@@ -222,13 +222,12 @@
     "technical_description": "Módulo técnico Sidebar.",
     "business_logic": "Lógica para Sidebar",
     "dependencies": [
-      "react",
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/CostProLogo",
       "@/store",
+      "@/components/CostProLogo",
+      "framer-motion",
+      "@/lib/utils",
+      "react",
+      "lucide-react",
       "@/hooks/ui/useTerminalNavigation"
     ]
   },
@@ -238,17 +237,17 @@
     "technical_description": "Módulo técnico Header.",
     "business_logic": "Lógica para Header",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ThemeToggle",
       "@/store",
       "@/contracts/user",
-      "@/hooks/ui/useTerminalNavigation",
       "@/components/ui/SyncStatusBadge",
-      "@/components/modals/SyncConflictModal",
+      "@/components/ThemeToggle",
       "@/components/ui/popover",
-      "@/components/ui/dropdown-menu"
+      "@/lib/utils",
+      "@/components/modals/SyncConflictModal",
+      "@/components/ui/dropdown-menu",
+      "react",
+      "lucide-react",
+      "@/hooks/ui/useTerminalNavigation"
     ]
   },
   {
@@ -257,9 +256,9 @@
     "technical_description": "Módulo técnico SystemDependencyGraph.",
     "business_logic": "Lógica para SystemDependencyGraph",
     "dependencies": [
-      "react",
+      "lucide-react",
       "framer-motion",
-      "lucide-react"
+      "react"
     ]
   },
   {
@@ -268,12 +267,12 @@
     "technical_description": "Módulo técnico AuditSummary.",
     "business_logic": "Lógica para AuditSummary",
     "dependencies": [
-      "react",
+      "date-fns/locale",
       "framer-motion",
-      "lucide-react",
       "@/hooks/api/useAuditLogs",
-      "date-fns",
-      "date-fns/locale"
+      "react",
+      "lucide-react",
+      "date-fns"
     ]
   },
   {
@@ -282,9 +281,9 @@
     "technical_description": "Módulo técnico SecurityMetrics.",
     "business_logic": "Lógica para SecurityMetrics",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -293,10 +292,10 @@
     "technical_description": "Módulo técnico HealthStatusHeader.",
     "business_logic": "Lógica para HealthStatusHeader",
     "dependencies": [
-      "react",
-      "framer-motion",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "framer-motion",
+      "react"
     ]
   },
   {
@@ -305,23 +304,23 @@
     "technical_description": "Módulo técnico SystemHealthView.",
     "business_logic": "Lógica para SystemHealthView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "sonner",
-      "./HealthStatusHeader",
-      "./InfrastructureMetrics",
-      "./ApplicationMetrics",
-      "./SecurityMetrics",
-      "./ReleaseGateStatus",
+      "@/components/ui/accordion",
       "@/components/ui/CostProLoader",
-      "@/lib/release_gate/ReleaseGatePdfExporter",
-      "./AuditSummary",
       "./ViewNavigator",
-      "./ArchitectureAuditTable",
+      "./ReleaseGateStatus",
+      "./ApplicationMetrics",
+      "sonner",
+      "./InfrastructureMetrics",
+      "./AuditSummary",
+      "@/lib/utils",
       "@/components/ui/dropdown-menu",
       "./HealthAgentLogs",
-      "@/components/ui/accordion"
+      "react",
+      "./HealthStatusHeader",
+      "@/lib/release_gate/ReleaseGatePdfExporter",
+      "lucide-react",
+      "./SecurityMetrics",
+      "./ArchitectureAuditTable"
     ]
   },
   {
@@ -330,15 +329,15 @@
     "technical_description": "Módulo técnico ArchitectureAuditTable.",
     "business_logic": "Lógica para ArchitectureAuditTable",
     "dependencies": [
-      "react",
-      "framer-motion",
+      "@/components/ui/sheet",
       "xlsx",
-      "lucide-react",
-      "@/components/ui/input",
-      "@/components/ui/badge",
+      "framer-motion",
       "@/components/ui/table",
       "@/lib/utils",
-      "@/components/ui/sheet"
+      "@/components/ui/input",
+      "react",
+      "lucide-react",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -347,9 +346,9 @@
     "technical_description": "Módulo técnico ReleaseGateStatus.",
     "business_logic": "Lógica para ReleaseGateStatus",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -358,10 +357,10 @@
     "technical_description": "Módulo técnico ViewNavigator.",
     "business_logic": "Lógica para ViewNavigator",
     "dependencies": [
-      "react",
+      "@/store",
       "framer-motion",
       "@/config/viewRegistry",
-      "@/store",
+      "react",
       "lucide-react"
     ]
   },
@@ -371,15 +370,15 @@
     "technical_description": "Módulo técnico HealthAgentLogs.",
     "business_logic": "Lógica para HealthAgentLogs",
     "dependencies": [
-      "react",
-      "@/lib/supabaseClient",
-      "@/lib/observability/system-health",
+      "date-fns/locale",
       "@/components/ui/card",
-      "@/components/ui/badge",
-      "lucide-react",
       "@/lib/utils",
-      "date-fns",
-      "date-fns/locale"
+      "@/lib/observability/system-health",
+      "react",
+      "lucide-react",
+      "@/components/ui/badge",
+      "@/lib/supabaseClient",
+      "date-fns"
     ]
   },
   {
@@ -388,10 +387,10 @@
     "technical_description": "Módulo técnico DetailedRelationshipGraph.",
     "business_logic": "Lógica para DetailedRelationshipGraph",
     "dependencies": [
-      "react",
       "framer-motion",
-      "lucide-react",
       "@/lib/utils",
+      "react",
+      "lucide-react",
       "@/components/ui/badge"
     ]
   },
@@ -401,11 +400,11 @@
     "technical_description": "Módulo técnico InfrastructureMetrics.",
     "business_logic": "Lógica para InfrastructureMetrics",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
+      "recharts",
       "@/components/ui/progress",
-      "recharts"
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -414,10 +413,10 @@
     "technical_description": "Módulo técnico ApplicationMetrics.",
     "business_logic": "Lógica para ApplicationMetrics",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
-      "recharts"
+      "recharts",
+      "react"
     ]
   },
   {
@@ -426,17 +425,17 @@
     "technical_description": "Módulo técnico WalletView.",
     "business_logic": "Lógica para WalletView",
     "dependencies": [
-      "react",
+      "lucide-react",
       "next/dynamic",
       "@/components/ui/card",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/badge",
-      "lucide-react",
+      "sonner",
       "@/lib/utils",
+      "@/components/ui/input",
+      "react",
       "@/lib/wallet/parser",
+      "@/components/ui/button",
       "@/lib/wallet/types",
-      "sonner"
+      "@/components/ui/badge"
     ]
   },
   {
@@ -445,10 +444,10 @@
     "technical_description": "Módulo técnico AnalyticsDashboard.",
     "business_logic": "Lógica para AnalyticsDashboard",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "lucide-react",
       "recharts",
+      "@/components/ui/card",
+      "react",
+      "lucide-react",
       "@/lib/wallet/types"
     ]
   },
@@ -458,13 +457,13 @@
     "technical_description": "Módulo técnico CatalogModals.",
     "business_logic": "Lógica para CatalogModals",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "lucide-react",
-      "@/components/ui/ProductImage",
       "@/components/ui/atomic",
+      "@/types",
       "@/lib/utils",
-      "@/types"
+      "@/components/ui/BaseModal",
+      "react",
+      "@/components/ui/ProductImage",
+      "lucide-react"
     ]
   },
   {
@@ -473,24 +472,24 @@
     "technical_description": "Módulo técnico CatalogView.",
     "business_logic": "Lógica para CatalogView",
     "dependencies": [
-      "react",
-      "@/store",
-      "@/hooks/api/useProducts",
-      "sonner",
-      "lucide-react",
-      "@/components/ui/CostProLoader",
-      "@/components/ui/ActionMenu",
       "@/components/ui/atomic",
-      "@/hooks/ui/useMobile",
-      "@/services/catalog-service",
+      "@/store",
       "@/hooks/ui/useCatalogModals",
-      "./CatalogModals",
-      "@/lib/utils",
-      "@/components/ui/ProductImage",
       "@/components/ui/QueryInspector",
-      "@/components/ui/ViewSwitcher",
+      "@/types",
+      "@/components/ui/CostProLoader",
+      "./CatalogModals",
       "jsbarcode",
-      "@/types"
+      "@/services/catalog-service",
+      "sonner",
+      "@/components/ui/ViewSwitcher",
+      "@/lib/utils",
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/ProductImage",
+      "lucide-react",
+      "@/hooks/api/useProducts"
     ]
   },
   {
@@ -499,15 +498,15 @@
     "technical_description": "Módulo técnico SettingsView.",
     "business_logic": "Lógica para SettingsView",
     "dependencies": [
+      "@/store",
+      "next-themes",
+      "@tanstack/react-query",
+      "sonner",
+      "@/lib/utils",
       "react",
       "lucide-react",
-      "@/lib/utils",
-      "next-themes",
-      "@/hooks/api/useTaxes",
-      "@/store",
       "@/lib/supabaseClient",
-      "sonner",
-      "@tanstack/react-query"
+      "@/hooks/api/useTaxes"
     ]
   },
   {
@@ -516,21 +515,20 @@
     "technical_description": "Módulo técnico DashboardView.",
     "business_logic": "Lógica para DashboardView",
     "dependencies": [
-      "react",
-      "next/dynamic",
-      "lucide-react",
-      "@/lib/utils",
       "@/store",
-      "@/hooks/api/useProducts",
-      "@/components/ui/StateRenderer",
+      "@/components/ui/calendar",
       "@/types",
-      "./useDashboardView",
-      "@/store",
-      "@/components/ui/toggle-group",
-      "date-fns",
       "date-fns/locale",
+      "next/dynamic",
+      "./useDashboardView",
       "@/components/ui/popover",
-      "@/components/ui/calendar"
+      "@/lib/utils",
+      "@/components/ui/StateRenderer",
+      "react",
+      "lucide-react",
+      "@/hooks/api/useProducts",
+      "date-fns",
+      "@/components/ui/toggle-group"
     ]
   },
   {
@@ -539,9 +537,9 @@
     "technical_description": "Módulo técnico useDashboardView.",
     "business_logic": "Lógica para useDashboardView",
     "dependencies": [
-      "react",
       "@/store",
       "@/hooks/api/useDashboard",
+      "react",
       "date-fns"
     ]
   },
@@ -551,9 +549,9 @@
     "technical_description": "Módulo técnico ConcentricDashboardRing.",
     "business_logic": "Lógica para ConcentricDashboardRing",
     "dependencies": [
-      "react",
+      "@/lib/utils",
       "framer-motion",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -562,10 +560,10 @@
     "technical_description": "Módulo técnico ExecutiveKpiCards.",
     "business_logic": "Lógica para ExecutiveKpiCards",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
-      "next-themes"
+      "next-themes",
+      "react"
     ]
   },
   {
@@ -574,13 +572,13 @@
     "technical_description": "Módulo técnico RecentCostSheets.",
     "business_logic": "Lógica para RecentCostSheets",
     "dependencies": [
-      "react",
-      "@/hooks/api/useCostSheets",
-      "lucide-react",
-      "@/lib/utils",
       "@/store",
+      "framer-motion",
       "@/store/cost-sheet-store",
-      "framer-motion"
+      "@/lib/utils",
+      "@/hooks/api/useCostSheets",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -589,22 +587,22 @@
     "technical_description": "Módulo técnico ReportConfigPanel.",
     "business_logic": "Lógica para ReportConfigPanel",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "@/components/ui/input",
-      "@/components/ui/label",
-      "@/components/ui/select",
-      "@/components/ui/checkbox",
-      "@/types",
-      "@/hooks/api/useProducts",
       "@/store",
-      "@/hooks/api/useStores",
-      "lucide-react",
+      "@/components/ui/button",
+      "@/components/ui/label",
+      "@/types",
       "@/contracts/reports",
-      "@/lib/utils",
       "@/components/ui/command",
+      "@/components/ui/select",
+      "@/components/ui/card",
+      "@/components/ui/checkbox",
       "@/components/ui/popover",
-      "@/components/ui/button"
+      "@/lib/utils",
+      "@/components/ui/input",
+      "react",
+      "lucide-react",
+      "@/hooks/api/useStores",
+      "@/hooks/api/useProducts"
     ]
   },
   {
@@ -613,14 +611,14 @@
     "technical_description": "Módulo técnico ReportPreview.",
     "business_logic": "Lógica para ReportPreview",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "@/types",
-      "date-fns",
-      "date-fns/locale",
-      "@/contracts/reports",
       "@/store",
-      "@/components/ui/CostProLoader"
+      "@/types",
+      "@/components/ui/CostProLoader",
+      "date-fns/locale",
+      "@/components/ui/card",
+      "react",
+      "@/contracts/reports",
+      "date-fns"
     ]
   },
   {
@@ -629,19 +627,19 @@
     "technical_description": "Módulo técnico ReportsView.",
     "business_logic": "Lógica para ReportsView",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "@/components/ui/button",
-      "lucide-react",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/CostProLoader",
-      "sonner",
       "@/store",
-      "./ReportConfigPanel",
-      "./ReportPreview",
-      "./AuditLogsModal",
+      "@/components/ui/button",
       "@/types",
-      "@/contracts/reports"
+      "@/components/ui/CostProLoader",
+      "./ReportPreview",
+      "@/contracts/reports",
+      "@/components/ui/card",
+      "sonner",
+      "./ReportConfigPanel",
+      "react",
+      "./AuditLogsModal",
+      "@/components/ui/ActionMenu",
+      "lucide-react"
     ]
   },
   {
@@ -650,13 +648,13 @@
     "technical_description": "Módulo técnico AuditLogsModal.",
     "business_logic": "Lógica para AuditLogsModal",
     "dependencies": [
-      "react",
       "@/components/ui/dialog",
-      "@/hooks/api/useAuditLogs",
       "../audit/AuditTimeline",
       "@/components/ui/StateRenderer",
-      "@/components/ui/skeleton",
-      "lucide-react"
+      "@/hooks/api/useAuditLogs",
+      "react",
+      "lucide-react",
+      "@/components/ui/skeleton"
     ]
   },
   {
@@ -665,12 +663,12 @@
     "technical_description": "Módulo técnico StoresManagementView.",
     "business_logic": "Lógica para StoresManagementView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
       "./useStoresView",
+      "@/components/ui/SearchBar",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/ActionMenu",
+      "lucide-react",
       "./StoreModals"
     ]
   },
@@ -680,15 +678,15 @@
     "technical_description": "Módulo técnico useStoresView.",
     "business_logic": "Lógica para useStoresView",
     "dependencies": [
-      "react",
-      "@/store",
-      "@/hooks/api/useStores",
-      "@/types",
-      "sonner",
-      "@/lib/logger",
       "@/services/store-service",
-      "@/services/user-service",
-      "@tanstack/react-query"
+      "@/store",
+      "@/types",
+      "@tanstack/react-query",
+      "sonner",
+      "react",
+      "@/lib/logger",
+      "@/hooks/api/useStores",
+      "@/services/user-service"
     ]
   },
   {
@@ -697,16 +695,16 @@
     "technical_description": "Módulo técnico StoreModals.",
     "business_logic": "Lógica para StoreModals",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "@/components/ui/button",
-      "@/components/ui/input",
+      "lucide-react",
       "@/components/ui/label",
       "@/types",
       "./useStoresView",
-      "lucide-react",
-      "@/lib/supabaseClient",
-      "sonner"
+      "sonner",
+      "@/components/ui/BaseModal",
+      "@/components/ui/input",
+      "react",
+      "@/components/ui/button",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -715,13 +713,13 @@
     "technical_description": "Módulo técnico MasteryDashboard.",
     "business_logic": "Lógica para MasteryDashboard",
     "dependencies": [
-      "react",
-      "@/lib/supabaseClient",
       "@/store",
+      "recharts",
       "@/components/ui/card",
       "@/components/ui/progress",
-      "recharts",
-      "lucide-react"
+      "react",
+      "lucide-react",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -730,16 +728,16 @@
     "technical_description": "Módulo técnico AcademyView.",
     "business_logic": "Lógica para AcademyView",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "@/store/useAcademyStore",
-      "@/store",
-      "./Flashcard",
-      "./MasteryDashboard",
-      "@/components/ui/button",
       "lucide-react",
+      "@/store",
+      "@/components/ui/button",
       "@/components/ui/CostProLoader",
-      "sonner"
+      "framer-motion",
+      "sonner",
+      "@/store/useAcademyStore",
+      "react",
+      "./Flashcard",
+      "./MasteryDashboard"
     ]
   },
   {
@@ -748,12 +746,12 @@
     "technical_description": "Módulo técnico Flashcard.",
     "business_logic": "Lógica para Flashcard",
     "dependencies": [
-      "react",
-      "framer-motion",
       "@/components/ui/card",
-      "@/components/ui/button",
+      "framer-motion",
+      "@/store/useAcademyStore",
       "@/lib/utils",
-      "@/store/useAcademyStore"
+      "react",
+      "@/components/ui/button"
     ]
   },
   {
@@ -762,15 +760,15 @@
     "technical_description": "Módulo técnico CreateTransferModal.",
     "business_logic": "Lógica para CreateTransferModal",
     "dependencies": [
-      "react",
       "@/store",
-      "@/components/ui/BaseModal",
-      "lucide-react",
       "@/hooks/api/useInventory",
-      "@/hooks/api/useTransfers",
       "@/hooks/ui/useDebounce",
+      "@/hooks/api/useTransfers",
       "sonner",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/BaseModal",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -779,16 +777,16 @@
     "technical_description": "Módulo técnico TransferenciasView.",
     "business_logic": "Lógica para TransferenciasView",
     "dependencies": [
-      "react",
       "@/store",
-      "lucide-react",
-      "@/hooks/api/useTransfers",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/StateRenderer",
-      "@/lib/utils",
-      "date-fns",
       "date-fns/locale",
+      "@/hooks/api/useTransfers",
       "./CreateTransferModal",
+      "@/lib/utils",
+      "@/components/ui/StateRenderer",
+      "react",
+      "@/components/ui/ActionMenu",
+      "lucide-react",
+      "date-fns",
       "./TransferDetailsModal"
     ]
   },
@@ -799,14 +797,14 @@
     "business_logic": "Lógica para TransferDetailsModal",
     "dependencies": [
       "@/store",
-      "@/components/ui/BaseModal",
+      "date-fns/locale",
       "@/hooks/api/useTransfers",
+      "sonner",
+      "@/lib/utils",
+      "@/components/ui/BaseModal",
       "@/components/ui/StateRenderer",
       "lucide-react",
-      "@/lib/utils",
-      "date-fns",
-      "date-fns/locale",
-      "sonner"
+      "date-fns"
     ]
   },
   {
@@ -815,29 +813,29 @@
     "technical_description": "Módulo técnico HelpView.",
     "business_logic": "Lógica para HelpView",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/button",
-      "@/components/ui/accordion",
-      "@/components/ui/badge",
-      "./help/CostFlowDiagram",
-      "./help/QuickModeMassiveDiagram",
-      "./help/StickyCartFlowDiagram",
-      "./help/MobilePosDiagram",
-      "./help/SalesFlowDiagram",
-      "./help/InventoryFlowDiagram",
-      "./help/InventoryAdjustmentFlowDiagram",
-      "./help/StoreSkuDiagram",
       "./help/DarianDiagram",
       "./help/OfflineSyncDiagram",
-      "./help/SecurityFlowDiagram",
-      "./help/IpvFlowDiagram",
+      "./help/StoreSkuDiagram",
       "./help/RolesDiagram",
+      "@/components/ui/button",
+      "./help/StickyCartFlowDiagram",
+      "./help/SecurityFlowDiagram",
       "./help/KidsOnboarding",
+      "./help/InventoryAdjustmentFlowDiagram",
+      "@/components/ThemeToggle",
+      "framer-motion",
+      "./help/SalesFlowDiagram",
+      "./help/InventoryFlowDiagram",
+      "@/components/ui/accordion",
+      "lucide-react",
+      "./help/MobilePosDiagram",
       "@/store",
-      "@/components/ThemeToggle"
+      "./help/CostFlowDiagram",
+      "./help/QuickModeMassiveDiagram",
+      "react",
+      "./help/IpvFlowDiagram",
+      "@/lib/utils",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -846,8 +844,8 @@
     "technical_description": "Módulo técnico KidsOnboarding.",
     "business_logic": "Lógica para KidsOnboarding",
     "dependencies": [
-      "framer-motion",
-      "lucide-react"
+      "lucide-react",
+      "framer-motion"
     ]
   },
   {
@@ -865,8 +863,8 @@
     "technical_description": "Módulo técnico StoreSkuDiagram.test.",
     "business_logic": "Lógica para StoreSkuDiagram.test",
     "dependencies": [
-      "@testing-library/react",
       "vitest",
+      "@testing-library/react",
       "./StoreSkuDiagram"
     ]
   },
@@ -921,8 +919,8 @@
     "technical_description": "Módulo técnico OfflineSyncDiagram.test.",
     "business_logic": "Lógica para OfflineSyncDiagram.test",
     "dependencies": [
-      "@testing-library/react",
       "vitest",
+      "@testing-library/react",
       "./OfflineSyncDiagram"
     ]
   },
@@ -932,9 +930,9 @@
     "technical_description": "Módulo técnico DarianDiagram.test.",
     "business_logic": "Lógica para DarianDiagram.test",
     "dependencies": [
-      "@testing-library/react",
       "vitest",
-      "./DarianDiagram"
+      "./DarianDiagram",
+      "@testing-library/react"
     ]
   },
   {
@@ -1033,13 +1031,13 @@
     "technical_description": "Módulo técnico InventoryCardView.",
     "business_logic": "Lógica para InventoryCardView",
     "dependencies": [
-      "react",
+      "@/components/ui/atomic",
       "@/types",
-      "@/lib/utils",
-      "lucide-react",
       "@/components/ui/CostProLoader",
       "framer-motion",
-      "@/components/ui/atomic"
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -1048,15 +1046,15 @@
     "technical_description": "Módulo técnico InventoryAdjustmentsView.",
     "business_logic": "Lógica para InventoryAdjustmentsView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/QueryInspector",
-      "@/hooks/api/useStockMovements",
       "@/store",
-      "sonner"
+      "@/components/ui/QueryInspector",
+      "sonner",
+      "@/components/ui/SearchBar",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/ActionMenu",
+      "@/hooks/api/useStockMovements",
+      "lucide-react"
     ]
   },
   {
@@ -1065,14 +1063,14 @@
     "technical_description": "Módulo técnico InventoryAdjustmentModal.",
     "business_logic": "Lógica para InventoryAdjustmentModal",
     "dependencies": [
-      "react",
-      "lucide-react",
       "@/types",
-      "@/lib/inventory-logic",
-      "@/lib/utils",
       "sonner",
+      "@/lib/utils",
+      "react",
       "@/hooks/ui/useMobile",
-      "@/components/ui/drawer"
+      "@/components/ui/drawer",
+      "lucide-react",
+      "@/lib/inventory-logic"
     ]
   },
   {
@@ -1081,22 +1079,22 @@
     "technical_description": "Módulo técnico ProductReceptionView.",
     "business_logic": "Lógica para ProductReceptionView",
     "dependencies": [
-      "react",
-      "@/lib/supabaseClient",
+      "@/components/ui/atomic",
       "@/store",
+      "papaparse",
       "@/types",
-      "sonner",
-      "lucide-react",
       "@/hooks/api/useInventory",
       "@/hooks/ui/useDebounce",
-      "@/lib/utils",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/atomic",
-      "@/components/ui/SecurityScrollContainer",
-      "@/services/import-service",
       "@/validation/schemas",
-      "papaparse",
-      "@/components/ui/BaseModal"
+      "sonner",
+      "@/lib/utils",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/services/import-service",
+      "@/components/ui/ActionMenu",
+      "lucide-react",
+      "@/lib/supabaseClient",
+      "@/components/ui/SecurityScrollContainer"
     ]
   },
   {
@@ -1105,12 +1103,12 @@
     "technical_description": "Módulo técnico InventoryTableView.",
     "business_logic": "Lógica para InventoryTableView",
     "dependencies": [
-      "react",
       "@/types",
-      "@/lib/utils",
-      "lucide-react",
       "@/components/ui/CostProLoader",
-      "@/components/ui/ProductImage"
+      "@/lib/utils",
+      "react",
+      "@/components/ui/ProductImage",
+      "lucide-react"
     ]
   },
   {
@@ -1119,25 +1117,25 @@
     "technical_description": "Módulo técnico InventoryView.",
     "business_logic": "### Descripción\nPanel de control ejecutivo para la gestión de existencias. Visualiza niveles de stock, alertas de reposición y valorización de inventario.\n### Propósito\nProporcionar visibilidad total del capital inmovilizado y asegurar la continuidad operativa mediante reabastecimiento inteligente.\n### Impacto en el Negocio\nPreviene quiebres de stock y sobre-inventario, optimizando el flujo de caja del negocio.",
     "dependencies": [
-      "react",
-      "@/store",
-      "@/hooks/api/useInventory",
-      "lucide-react",
-      "sonner",
-      "./InventoryCardView",
-      "./InventoryTableView",
-      "./ProductReceptionView",
-      "./InventoryAdjustmentModal",
-      "@/types",
-      "@/validation/schemas",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/SearchBar",
       "@/components/ui/atomic",
-      "@/components/ui/StateRenderer",
+      "./InventoryAdjustmentModal",
+      "./InventoryTableView",
+      "./InventoryCardView",
+      "@/components/ui/SearchBar",
+      "@/components/ui/ActionMenu",
+      "./ProductReceptionView",
+      "@/types",
+      "@/hooks/api/useInventory",
+      "@/validation/schemas",
+      "sonner",
+      "lucide-react",
       "@/components/ui/skeleton",
+      "@/store",
+      "@/components/ui/StateRenderer",
+      "react",
       "@/hooks/ui/useMobile",
-      "@/lib/utils",
-      "@/components/ui/QueryInspector"
+      "@/components/ui/QueryInspector",
+      "@/lib/utils"
     ]
   },
   {
@@ -1146,13 +1144,13 @@
     "technical_description": "Módulo técnico CashClosureView.",
     "business_logic": "Lógica para CashClosureView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/ActionMenu",
-      "@/hooks/api/useCashClosures",
       "@/store",
-      "sonner"
+      "@/hooks/api/useCashClosures",
+      "sonner",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/ActionMenu",
+      "lucide-react"
     ]
   },
   {
@@ -1161,16 +1159,16 @@
     "technical_description": "Módulo técnico TaxCalculationModal.",
     "business_logic": "Lógica para TaxCalculationModal",
     "dependencies": [
-      "react",
-      "@/components/ui/dialog",
-      "lucide-react",
-      "@/lib/utils",
-      "@/types",
-      "@/hooks/api/useTaxes",
       "@/store",
-      "sonner",
       "jspdf",
-      "jspdf-autotable"
+      "@/types",
+      "@/components/ui/dialog",
+      "sonner",
+      "@/lib/utils",
+      "jspdf-autotable",
+      "react",
+      "lucide-react",
+      "@/hooks/api/useTaxes"
     ]
   },
   {
@@ -1179,15 +1177,15 @@
     "technical_description": "Módulo técnico SalesHistoryView.",
     "business_logic": "Lógica para SalesHistoryView",
     "dependencies": [
+      "@/components/ui/SearchBar",
+      "./TaxCalculationModal",
+      "@/lib/utils",
+      "@/components/ui/StateRenderer",
+      "./TransactionDetailsModal",
       "react",
       "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/StateRenderer",
-      "@/components/ui/skeleton",
       "./useSalesHistoryView",
-      "./TransactionDetailsModal",
-      "./TaxCalculationModal"
+      "@/components/ui/skeleton"
     ]
   },
   {
@@ -1196,20 +1194,20 @@
     "technical_description": "Módulo técnico TransactionDetailsModal.",
     "business_logic": "Lógica para TransactionDetailsModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/lib/utils",
-      "date-fns",
-      "date-fns/locale",
-      "@/types",
-      "@/hooks/api/useTaxes",
+      "lucide-react",
       "@/store",
-      "@/lib/supabaseClient",
-      "sonner",
+      "@/types",
+      "date-fns/locale",
       "@tanstack/react-query",
-      "lucide-react"
+      "sonner",
+      "@/hooks/api/useTaxes",
+      "@/components/ui/table",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/badge",
+      "@/lib/supabaseClient",
+      "date-fns"
     ]
   },
   {
@@ -1218,13 +1216,12 @@
     "technical_description": "Módulo técnico useSalesHistoryView.",
     "business_logic": "Lógica para useSalesHistoryView",
     "dependencies": [
-      "react",
       "@/store",
-      "@/hooks/api/useTransactions",
-      "@/hooks/api/useTransactions",
       "@/types",
+      "sonner",
       "@/hooks/api/useDocumentActions",
-      "sonner"
+      "react",
+      "@/hooks/api/useTransactions"
     ]
   },
   {
@@ -1233,12 +1230,12 @@
     "technical_description": "Módulo técnico ReceptionDetailsModal.",
     "business_logic": "Lógica para ReceptionDetailsModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "lucide-react",
       "@/types",
-      "@/components/ui/skeleton",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/BaseModal",
+      "react",
+      "lucide-react",
+      "@/components/ui/skeleton"
     ]
   },
   {
@@ -1247,16 +1244,16 @@
     "technical_description": "Módulo técnico ReceptionsHistoryView.",
     "business_logic": "Lógica para ReceptionsHistoryView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
       "sonner",
       "@/components/ui/SearchBar",
-      "@/components/ui/QueryInspector",
+      "./ReceptionDetailsModal",
+      "@/lib/utils",
       "@/components/ui/StateRenderer",
-      "@/components/ui/skeleton",
       "./useReceptionsHistoryView",
-      "./ReceptionDetailsModal"
+      "react",
+      "@/components/ui/QueryInspector",
+      "lucide-react",
+      "@/components/ui/skeleton"
     ]
   },
   {
@@ -1265,12 +1262,12 @@
     "technical_description": "Módulo técnico useReceptionsHistoryView.",
     "business_logic": "Lógica para useReceptionsHistoryView",
     "dependencies": [
-      "react",
       "@/store",
-      "@/hooks/api/useReceptions",
       "@/types",
+      "@/hooks/api/useReceptions",
+      "sonner",
       "@/hooks/api/useDocumentActions",
-      "sonner"
+      "react"
     ]
   },
   {
@@ -1279,16 +1276,15 @@
     "technical_description": "Módulo técnico StockHistoryView.",
     "business_logic": "Lógica para StockHistoryView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
+      "@/store",
       "@/components/ui/QueryInspector",
-      "react",
       "sonner",
+      "@/components/ui/SearchBar",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/ActionMenu",
       "@/hooks/api/useStockMovements",
-      "@/store"
+      "lucide-react"
     ]
   },
   {
@@ -1297,42 +1293,42 @@
     "technical_description": "Módulo técnico IPVView.",
     "business_logic": "Lógica para IPVView",
     "dependencies": [
-      "react",
-      "dexie-react-hooks",
+      "@/components/ui/tabs",
+      "./MovementsView",
+      "./IPVControlPanel",
       "@/lib/dexie",
       "@/components/ui/card",
-      "@/components/ui/tabs",
-      "@/components/ui/button",
-      "@/components/ui/badge",
-      "lucide-react",
-      "./MatchingAuditView",
-      "./BankIngestion",
-      "./TransactionTable",
-      "./CatalogTable",
-      "./MovementsView",
-      "./MatchingSimulation",
-      "./TransactionBreakdown",
-      "./IPVReportView",
-      "./MatchingRulesEditor",
-      "./PivotStatementView",
-      "./IngestionErrorsTable",
-      "./ManualReconciliationView",
-      "./IPVControlPanel",
-      "./IPVInstitutionalDashboard",
-      "./IPVRightSidebar",
-      "./IncomeReceiptSection",
       "./TransferQRReportView",
-      "./IPVReportsDropdown",
-      "@/lib/ipv/engine",
-      "@/lib/ipv/backup",
+      "./BankIngestion",
+      "./IncomeReceiptSection",
+      "./PivotStatementView",
+      "./TransactionBreakdown",
+      "./IngestionErrorsTable",
       "@/lib/ipv/utils",
-      "@/lib/utils",
-      "sonner",
-      "@/components/ui/LoadingOverlay",
-      "@/components/ui/HorizontalScroll",
+      "./MatchingSimulation",
       "@/components/ui/ActionMenu",
-      "@/components/ui/tooltip",
-      "./IPVHelpDialog"
+      "@/components/ui/button",
+      "@/lib/ipv/engine",
+      "./MatchingRulesEditor",
+      "./TransactionTable",
+      "@/components/ui/LoadingOverlay",
+      "./MatchingAuditView",
+      "@/components/ui/HorizontalScroll",
+      "./IPVReportView",
+      "./IPVRightSidebar",
+      "sonner",
+      "./CatalogTable",
+      "./IPVReportsDropdown",
+      "lucide-react",
+      "./IPVInstitutionalDashboard",
+      "dexie-react-hooks",
+      "@/lib/ipv/backup",
+      "./IPVHelpDialog",
+      "react",
+      "./ManualReconciliationView",
+      "@/lib/utils",
+      "@/components/ui/badge",
+      "@/components/ui/tooltip"
     ]
   },
   {
@@ -1341,9 +1337,9 @@
     "technical_description": "Módulo técnico IPVRightSidebar.",
     "business_logic": "Lógica para IPVRightSidebar",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/components/ui/button",
+      "react",
       "@/components/ui/tooltip"
     ]
   },
@@ -1353,17 +1349,17 @@
     "technical_description": "Módulo técnico TransactionBreakdown.",
     "business_logic": "Lógica para TransactionBreakdown",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
+      "lucide-react",
+      "@/components/ui/dialog",
       "@/lib/dexie",
+      "sonner",
       "@/components/ui/table",
-      "@/components/ui/badge",
+      "@/lib/utils",
+      "react",
       "@/components/ui/input",
       "@/components/ui/button",
-      "lucide-react",
-      "@/lib/utils",
-      "sonner",
-      "@/components/ui/dialog"
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1372,11 +1368,11 @@
     "technical_description": "Módulo técnico ActionBadges.",
     "business_logic": "Lógica para ActionBadges",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@/components/ui/badge",
-      "@/components/ui/tooltip",
       "lucide-react",
-      "@/lib/utils"
+      "@/components/ui/badge",
+      "@/components/ui/tooltip"
     ]
   },
   {
@@ -1385,30 +1381,30 @@
     "technical_description": "Módulo técnico TransactionTable.",
     "business_logic": "Lógica para TransactionTable",
     "dependencies": [
-      "react",
-      "./AddTransactionModal",
-      "@/components/ui/BaseModal",
-      "dexie-react-hooks",
-      "@/lib/dexie",
+      "@/components/ui/dialog",
       "./MatchingTracePopover",
-      "./ActionBadges",
-      "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/components/ui/button",
+      "@/lib/dexie",
       "@/components/ui/card",
-      "@/components/ui/checkbox",
-      "lucide-react",
-      "@/components/ui/input",
+      "@/components/ui/table",
+      "@/components/ui/BaseModal",
       "@/components/ui/scroll-area",
-      "@/lib/ipv/engine",
-      "uuid",
-      "@/components/ui/switch",
       "@/components/ui/label",
-      "@/lib/utils",
-      "sonner",
+      "@/components/ui/checkbox",
       "@/components/ui/popover",
-      "@/components/ui/tooltip",
-      "@/components/ui/dialog"
+      "@/components/ui/switch",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/lib/ipv/engine",
+      "./ActionBadges",
+      "uuid",
+      "sonner",
+      "lucide-react",
+      "dexie-react-hooks",
+      "./AddTransactionModal",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/badge",
+      "@/components/ui/tooltip"
     ]
   },
   {
@@ -1417,16 +1413,16 @@
     "technical_description": "Módulo técnico AddTransactionModal.",
     "business_logic": "Lógica para AddTransactionModal",
     "dependencies": [
-      "react",
-      "@/components/ui/dialog",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/label",
-      "@/components/ui/select",
-      "@/lib/dexie",
       "dexie-react-hooks",
+      "@/components/ui/label",
+      "@/components/ui/dialog",
+      "@/components/ui/select",
       "uuid",
+      "@/lib/dexie",
       "sonner",
+      "@/components/ui/input",
+      "react",
+      "@/components/ui/button",
       "@/lib/ipv/engine"
     ]
   },
@@ -1436,8 +1432,8 @@
     "technical_description": "Módulo técnico IncomeReceiptPreview.",
     "business_logic": "Lógica para IncomeReceiptPreview",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -1446,18 +1442,18 @@
     "technical_description": "Módulo técnico MovementsView.",
     "business_logic": "Lógica para MovementsView",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
-      "../../../../../lib/dexie",
-      "../../../../ui/table",
       "../../../../ui/card",
       "../../../../ui/badge",
-      "../../../../ui/button",
       "../../../../ui/input",
-      "lucide-react",
+      "date-fns/locale",
       "sonner",
-      "date-fns",
-      "date-fns/locale"
+      "../../../../../lib/dexie",
+      "../../../../ui/table",
+      "react",
+      "lucide-react",
+      "../../../../ui/button",
+      "date-fns"
     ]
   },
   {
@@ -1466,19 +1462,19 @@
     "technical_description": "Módulo técnico IncomeReceiptSection.",
     "business_logic": "Lógica para IncomeReceiptSection",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
+      "lucide-react",
+      "@/components/ui/label",
+      "../legal/LegalPdfExporter",
+      "date-fns/locale",
       "@/lib/dexie",
       "@/components/ui/card",
-      "@/components/ui/button",
+      "sonner",
+      "react",
       "@/components/ui/input",
-      "@/components/ui/label",
-      "lucide-react",
       "./IncomeReceiptPreview",
-      "../legal/LegalPdfExporter",
-      "date-fns",
-      "date-fns/locale",
-      "sonner"
+      "@/components/ui/button",
+      "date-fns"
     ]
   },
   {
@@ -1487,17 +1483,17 @@
     "technical_description": "Módulo técnico IPVPreviewModal.",
     "business_logic": "Lógica para IPVPreviewModal",
     "dependencies": [
-      "react",
-      "@/components/ui/dialog",
-      "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/components/ui/button",
-      "@/components/ui/checkbox",
-      "@/components/ui/label",
-      "@/components/ui/scroll-area",
-      "@/lib/utils",
       "lucide-react",
-      "@/lib/dexie"
+      "@/components/ui/scroll-area",
+      "@/components/ui/label",
+      "@/components/ui/dialog",
+      "@/lib/dexie",
+      "@/components/ui/checkbox",
+      "@/components/ui/table",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/button",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1506,13 +1502,13 @@
     "technical_description": "Módulo técnico MatchingTracePopover.",
     "business_logic": "Lógica para MatchingTracePopover",
     "dependencies": [
-      "react",
-      "@/components/ui/popover",
-      "@/components/ui/badge",
       "@/components/ui/scroll-area",
-      "lucide-react",
       "@/lib/dexie",
-      "@/lib/utils"
+      "@/components/ui/popover",
+      "@/lib/utils",
+      "react",
+      "lucide-react",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1521,22 +1517,22 @@
     "technical_description": "Módulo técnico IPVReportView.",
     "business_logic": "Lógica para IPVReportView",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
       "dexie-react-hooks",
-      "@/lib/dexie",
-      "@/components/ui/table",
-      "@/components/ui/button",
-      "@/components/ui/badge",
-      "@/components/ui/input",
       "lucide-react",
+      "jspdf",
+      "@/components/ui/LoadingOverlay",
+      "uuid",
+      "@/lib/dexie",
+      "sonner",
+      "@/components/ui/table",
+      "@/components/ui/BaseModal",
       "@/lib/utils",
       "./IPVPreviewModal",
-      "sonner",
-      "jspdf",
+      "react",
+      "@/components/ui/input",
       "jspdf-autotable",
-      "uuid",
-      "@/components/ui/LoadingOverlay",
+      "@/components/ui/button",
+      "@/components/ui/badge",
       "@/components/ui/tooltip"
     ]
   },
@@ -1546,16 +1542,16 @@
     "technical_description": "Módulo técnico MatchingAuditView.",
     "business_logic": "Lógica para MatchingAuditView",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
-      "@/services/matching-log-service",
-      "@/components/ui/card",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/badge",
-      "@/components/ui/table",
+      "lucide-react",
       "recharts",
-      "lucide-react"
+      "@/components/ui/card",
+      "@/services/matching-log-service",
+      "@/components/ui/table",
+      "react",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1564,18 +1560,18 @@
     "technical_description": "Módulo técnico IngestionErrorsTable.",
     "business_logic": "Lógica para IngestionErrorsTable",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
-      "@/lib/dexie",
-      "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/components/ui/button",
-      "@/components/ui/input",
       "lucide-react",
-      "@/lib/utils",
+      "@/lib/ipv/utils",
+      "@/lib/dexie",
       "sonner",
-      "@/lib/ipv/engine",
-      "@/lib/ipv/utils"
+      "@/components/ui/table",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/components/ui/badge",
+      "@/lib/ipv/engine"
     ]
   },
   {
@@ -1584,22 +1580,22 @@
     "technical_description": "Módulo técnico TransferQRReportView.",
     "business_logic": "Lógica para TransferQRReportView",
     "dependencies": [
-      "@/lib/supabaseClient",
-      "@/store",
-      "react",
       "dexie-react-hooks",
+      "@/store",
+      "lucide-react",
+      "jspdf",
+      "@/components/ui/label",
       "@/lib/dexie",
       "@/components/ui/card",
+      "sonner",
       "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/components/ui/label",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "lucide-react",
       "@/lib/utils",
-      "jspdf",
       "jspdf-autotable",
-      "sonner"
+      "react",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/components/ui/badge",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -1608,19 +1604,19 @@
     "technical_description": "Módulo técnico ManualReconciliationView.",
     "business_logic": "Lógica para ManualReconciliationView",
     "dependencies": [
-      "react",
-      "@/components/ui/button",
-      "@/lib/dexie",
-      "@/lib/utils",
-      "@/components/ui/badge",
-      "@/components/ui/scroll-area",
-      "@/components/ui/input",
       "lucide-react",
+      "@/components/ui/scroll-area",
       "dexie-react-hooks",
-      "@/lib/ipv/engine",
       "uuid",
+      "@/lib/ipv/utils",
+      "@/lib/dexie",
       "sonner",
-      "@/lib/ipv/utils"
+      "@/lib/utils",
+      "react",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/components/ui/badge",
+      "@/lib/ipv/engine"
     ]
   },
   {
@@ -1629,20 +1625,20 @@
     "technical_description": "Módulo técnico MatchingRulesEditor.",
     "business_logic": "Lógica para MatchingRulesEditor",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
-      "@/lib/dexie",
-      "@/lib/ipv/engine",
-      "@/components/ui/card",
+      "lucide-react",
       "@/components/ui/button",
       "@/components/ui/label",
-      "@/components/ui/switch",
-      "@/components/ui/badge",
-      "lucide-react",
-      "sonner",
-      "@dnd-kit/core",
       "@dnd-kit/sortable",
       "@dnd-kit/utilities",
+      "@/lib/dexie",
+      "@/components/ui/card",
+      "sonner",
+      "@/components/ui/switch",
+      "react",
+      "@/lib/ipv/engine",
+      "@/components/ui/badge",
+      "@dnd-kit/core",
       "./RuleMetaEditor"
     ]
   },
@@ -1652,17 +1648,17 @@
     "technical_description": "Módulo técnico MatchingSimulation.",
     "business_logic": "Lógica para MatchingSimulation",
     "dependencies": [
-      "react",
-      "@/lib/dexie",
-      "@/lib/ipv/engine",
-      "@/components/ui/card",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/badge",
-      "@/components/ui/table",
       "lucide-react",
+      "dexie-react-hooks",
+      "@/lib/dexie",
+      "@/components/ui/card",
       "sonner",
-      "dexie-react-hooks"
+      "@/components/ui/table",
+      "react",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "@/components/ui/badge",
+      "@/lib/ipv/engine"
     ]
   },
   {
@@ -1671,14 +1667,14 @@
     "technical_description": "Módulo técnico RuleMetaEditor.",
     "business_logic": "Lógica para RuleMetaEditor",
     "dependencies": [
-      "react",
-      "@/lib/dexie",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/card",
-      "@/components/ui/badge",
       "lucide-react",
-      "sonner"
+      "@/lib/dexie",
+      "@/components/ui/card",
+      "sonner",
+      "@/components/ui/input",
+      "react",
+      "@/components/ui/button",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1687,11 +1683,11 @@
     "technical_description": "Módulo técnico IPVReportsDropdown.",
     "business_logic": "Lógica para IPVReportsDropdown",
     "dependencies": [
-      "react",
-      "@/components/ui/dropdown-menu",
       "@/components/ui/button",
-      "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/dropdown-menu",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -1700,17 +1696,17 @@
     "technical_description": "Módulo técnico PivotStatementView.",
     "business_logic": "Lógica para PivotStatementView",
     "dependencies": [
-      "react",
       "dexie-react-hooks",
+      "lucide-react",
+      "jspdf",
       "@/lib/dexie",
       "@/components/ui/card",
+      "sonner",
       "@/components/ui/table",
-      "@/components/ui/button",
-      "lucide-react",
       "@/lib/utils",
-      "jspdf",
       "jspdf-autotable",
-      "sonner"
+      "react",
+      "@/components/ui/button"
     ]
   },
   {
@@ -1719,23 +1715,23 @@
     "technical_description": "Módulo técnico BankIngestion.",
     "business_logic": "Lógica para BankIngestion",
     "dependencies": [
-      "@/components/ui/card",
-      "react",
-      "@/components/ui/BaseModal",
-      "react-dropzone",
-      "@/lib/dexie",
-      "@/lib/ipv/engine",
-      "@/lib/ipv/bandecParser",
-      "@/lib/ipv/utils",
       "@/lib/ipv/importUtils",
-      "@/components/ui/button",
-      "@/components/ui/badge",
       "lucide-react",
-      "sonner",
       "papaparse",
+      "@/components/ui/button",
+      "@/lib/ipv/backup",
       "xlsx",
       "uuid",
-      "@/lib/ipv/backup"
+      "react-dropzone",
+      "@/lib/ipv/utils",
+      "@/lib/dexie",
+      "@/components/ui/card",
+      "@/lib/ipv/bandecParser",
+      "sonner",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/lib/ipv/engine",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1744,15 +1740,15 @@
     "technical_description": "Módulo técnico IPVInstitutionalDashboard.",
     "business_logic": "Lógica para IPVInstitutionalDashboard",
     "dependencies": [
-      "react",
-      "recharts",
-      "@/components/ui/card",
-      "@/lib/dexie",
-      "@/lib/utils",
-      "@/lib/ipv/calculations",
       "lucide-react",
+      "recharts",
       "@/components/ui/button",
-      "@/components/ui/badge"
+      "@/lib/dexie",
+      "@/components/ui/card",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/badge",
+      "@/lib/ipv/calculations"
     ]
   },
   {
@@ -1761,30 +1757,30 @@
     "technical_description": "Módulo técnico CatalogTable.",
     "business_logic": "Lógica para CatalogTable",
     "dependencies": [
-      "react",
-      "dexie-react-hooks",
       "@/lib/dexie",
-      "@/lib/ipv/engine",
-      "@/components/ui/table",
-      "@/components/ui/badge",
-      "@/components/ui/BaseModal",
-      "@/components/ui/button",
       "@/components/ui/card",
-      "@/components/ui/label",
-      "lucide-react",
-      "@/components/ui/input",
-      "@/lib/utils",
-      "@/components/ui/switch",
-      "sonner",
+      "@/components/ui/table",
+      "@/components/ui/BaseModal",
       "@/lib/supabaseClient",
-      "@/hooks/api/useStores",
-      "@/store",
-      "@/lib/roles",
-      "@/lib/ipv/intelligence",
-      "@/lib/ipv/utils",
       "@/lib/ipv/importUtils",
+      "@/components/ui/label",
+      "@/lib/ipv/utils",
+      "@/components/ui/switch",
+      "@/components/ui/input",
       "@/components/ui/ActionMenu",
+      "@/components/ui/button",
+      "@/lib/ipv/engine",
+      "sonner",
+      "lucide-react",
+      "@/hooks/api/useStores",
+      "dexie-react-hooks",
+      "@/store",
       "xlsx",
+      "@/lib/ipv/intelligence",
+      "@/lib/roles",
+      "react",
+      "@/lib/utils",
+      "@/components/ui/badge",
       "@/components/ui/tooltip"
     ]
   },
@@ -1794,12 +1790,12 @@
     "technical_description": "Módulo técnico IPVHelpDialog.",
     "business_logic": "Lógica para IPVHelpDialog",
     "dependencies": [
-      "react",
-      "@/components/ui/dialog",
-      "@/components/ui/button",
       "lucide-react",
-      "@/components/ui/badge",
       "@/components/ui/scroll-area",
+      "@/components/ui/dialog",
+      "react",
+      "@/components/ui/button",
+      "@/components/ui/badge",
       "@/components/ui/tooltip"
     ]
   },
@@ -1809,15 +1805,15 @@
     "technical_description": "Módulo técnico IPVControlPanel.",
     "business_logic": "Lógica para IPVControlPanel",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "lucide-react",
-      "@/components/ui/button",
-      "@/components/ui/badge",
-      "@/components/ui/tooltip",
       "@/lib/ipv/backup",
+      "@/components/ui/button",
+      "@/components/ui/card",
       "@/lib/dexie",
-      "framer-motion"
+      "framer-motion",
+      "react",
+      "lucide-react",
+      "@/components/ui/badge",
+      "@/components/ui/tooltip"
     ]
   },
   {
@@ -1826,12 +1822,12 @@
     "technical_description": "Módulo técnico InventoryCountTableView.",
     "business_logic": "Lógica para InventoryCountTableView",
     "dependencies": [
-      "react",
       "@/types",
-      "@/lib/utils",
-      "lucide-react",
+      "./InventoryCountView",
       "framer-motion",
-      "./InventoryCountView"
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -1840,12 +1836,12 @@
     "technical_description": "Módulo técnico InventoryCountCardView.",
     "business_logic": "Lógica para InventoryCountCardView",
     "dependencies": [
-      "react",
       "@/types",
-      "@/lib/utils",
-      "lucide-react",
+      "./InventoryCountView",
       "framer-motion",
-      "./InventoryCountView"
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -1854,20 +1850,20 @@
     "technical_description": "Módulo técnico InventoryCountView.",
     "business_logic": "Lógica para InventoryCountView",
     "dependencies": [
-      "react",
       "@/store",
-      "lucide-react",
-      "@/types",
-      "sonner",
-      "@/components/ui/ActionMenu",
-      "@/components/ui/SearchBar",
       "@/components/ui/QueryInspector",
-      "@/lib/utils",
-      "@/components/ui/SecurityScrollContainer",
-      "@/hooks/ui/useMobile",
+      "@/types",
       "framer-motion",
-      "./InventoryCountCardView",
-      "./InventoryCountTableView"
+      "sonner",
+      "@/components/ui/SearchBar",
+      "@/lib/utils",
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/components/ui/ActionMenu",
+      "./InventoryCountTableView",
+      "lucide-react",
+      "@/components/ui/SecurityScrollContainer",
+      "./InventoryCountCardView"
     ]
   },
   {
@@ -1885,13 +1881,13 @@
     "technical_description": "Módulo técnico CuentasModule.",
     "business_logic": "Lógica para CuentasModule",
     "dependencies": [
+      "@/components/ui/scroll-area",
+      "@/components/ui/button",
+      "./types",
+      "@/lib/utils",
       "react",
       "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/badge",
-      "@/components/ui/button",
-      "@/components/ui/scroll-area",
-      "./types"
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1900,13 +1896,13 @@
     "technical_description": "Módulo técnico AsientosModule.",
     "business_logic": "Lógica para AsientosModule",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/badge",
       "@/components/ui/button",
+      "./types",
+      "@/lib/utils",
+      "react",
       "@/components/ui/input",
-      "./types"
+      "lucide-react",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -1915,8 +1911,8 @@
     "technical_description": "Módulo técnico WikiBreadcrumbs.",
     "business_logic": "Lógica para WikiBreadcrumbs",
     "dependencies": [
-      "react",
       "lucide-react",
+      "react",
       "./types"
     ]
   },
@@ -1926,10 +1922,10 @@
     "technical_description": "Módulo técnico WikiSearch.",
     "business_logic": "Lógica para WikiSearch",
     "dependencies": [
-      "react",
+      "./types",
       "lucide-react",
-      "@/components/ui/command",
-      "./types"
+      "react",
+      "@/components/ui/command"
     ]
   },
   {
@@ -1945,21 +1941,21 @@
     "technical_description": "Módulo técnico WikiView.",
     "business_logic": "Lógica para WikiView",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/button",
-      "@/components/ui/input",
       "@/components/ui/scroll-area",
-      "./types",
-      "./data-loader",
-      "./AsientosModule",
-      "./CuentasModule",
-      "./ClasificadorModule",
+      "@/components/ui/button",
       "./WikiSidebar",
+      "./types",
+      "./CuentasModule",
+      "framer-motion",
+      "@/lib/utils",
+      "./data-loader",
       "./WikiSearch",
-      "./WikiBreadcrumbs"
+      "./WikiBreadcrumbs",
+      "react",
+      "@/components/ui/input",
+      "./AsientosModule",
+      "lucide-react",
+      "./ClasificadorModule"
     ]
   },
   {
@@ -1968,9 +1964,9 @@
     "technical_description": "Módulo técnico WikiSidebar.",
     "business_logic": "Lógica para WikiSidebar",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
+      "react",
       "./types"
     ]
   },
@@ -1980,10 +1976,10 @@
     "technical_description": "Módulo técnico ClasificadorModule.",
     "business_logic": "Lógica para ClasificadorModule",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/lib/utils",
       "./types",
+      "@/lib/utils",
+      "react",
       "@/components/ui/accordion"
     ]
   },
@@ -1993,11 +1989,11 @@
     "technical_description": "Módulo técnico POSTableView.",
     "business_logic": "Lógica para POSTableView",
     "dependencies": [
-      "react",
       "@/types",
       "@/lib/utils",
-      "lucide-react",
-      "@/components/ui/ProductImage"
+      "react",
+      "@/components/ui/ProductImage",
+      "lucide-react"
     ]
   },
   {
@@ -2006,18 +2002,17 @@
     "technical_description": "Módulo técnico usePOSView.",
     "business_logic": "Lógica para usePOSView",
     "dependencies": [
-      "react",
-      "sonner",
-      "@/lib/logger",
-      "@/lib/utils",
       "@/store",
-      "@/hooks/api/useProducts",
-      "@/hooks/api/useTransactions",
       "@/types",
-      "@/services/audit-service",
       "@/validation/schemas",
+      "sonner",
       "@/store/cart",
-      "@/types"
+      "react",
+      "@/hooks/api/useTransactions",
+      "@/lib/utils",
+      "@/lib/logger",
+      "@/services/audit-service",
+      "@/hooks/api/useProducts"
     ]
   },
   {
@@ -2026,32 +2021,31 @@
     "technical_description": "Módulo técnico POSView.",
     "business_logic": "Lógica para POSView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "sonner",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
       "@/components/ui/atomic",
-      "./POSTableView",
       "@/components/ui/ViewSwitcher",
-      "@/components/ui/StateRenderer",
-      "@/components/ui/skeleton",
-      "framer-motion",
-      "@/hooks/logic/usePOSProducts",
-      "@/hooks/ui/useMobile",
-      "@/components/ui/Portal",
-      "@/components/ui/drawer",
       "@/components/ui/BaseModal",
-      "@/components/ui/atomic",
-      "./POSCart",
-      "./StickyCartSummary",
-      "./usePOSView",
-      "@/components/ui/QueryInspector",
       "@/components/modals/PriceSelectorModal",
       "@/components/modals/BarcodeScanner",
+      "./POSCart",
+      "@/components/ui/SearchBar",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/drawer",
+      "@/types",
+      "@/hooks/logic/usePOSProducts",
+      "framer-motion",
+      "sonner",
+      "@/components/ui/Portal",
+      "lucide-react",
+      "@/components/ui/skeleton",
+      "./POSTableView",
+      "./usePOSView",
       "@/components/ui/SpeedDial",
-      "@/types"
+      "@/components/ui/StateRenderer",
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/components/ui/QueryInspector",
+      "@/lib/utils",
+      "./StickyCartSummary"
     ]
   },
   {
@@ -2060,22 +2054,22 @@
     "technical_description": "Módulo técnico POSCart.",
     "business_logic": "Lógica para POSCart",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/components/ui/CostProLoader",
-      "@/components/ui/ProductImage",
-      "@/lib/utils",
-      "jspdf",
-      "jspdf-autotable",
-      "html2canvas",
-      "sonner",
-      "@/types",
-      "@/hooks/ui/useMobile",
-      "@/hooks/api/useTaxes",
+      "@/components/ui/atomic",
       "@/store",
+      "jspdf",
+      "html2canvas",
+      "@/types",
+      "@/components/ui/CostProLoader",
+      "framer-motion",
+      "sonner",
+      "@/lib/utils",
       "@/components/ui/BaseModal",
-      "@/components/ui/atomic"
+      "jspdf-autotable",
+      "react",
+      "@/components/ui/ProductImage",
+      "@/hooks/ui/useMobile",
+      "lucide-react",
+      "@/hooks/api/useTaxes"
     ]
   },
   {
@@ -2084,10 +2078,10 @@
     "technical_description": "Módulo técnico StickyCartSummary.",
     "business_logic": "Lógica para StickyCartSummary",
     "dependencies": [
-      "react",
-      "framer-motion",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "framer-motion",
+      "react"
     ]
   },
   {
@@ -2096,9 +2090,9 @@
     "technical_description": "Módulo técnico AuditEventIcon.",
     "business_logic": "Lógica para AuditEventIcon",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -2117,11 +2111,11 @@
     "technical_description": "Módulo técnico AuditFilters.",
     "business_logic": "Lógica para AuditFilters",
     "dependencies": [
+      "./AuditEventIcon",
+      "@/lib/utils",
       "react",
       "lucide-react",
-      "date-fns",
-      "@/lib/utils",
-      "./AuditEventIcon"
+      "date-fns"
     ]
   },
   {
@@ -2131,9 +2125,9 @@
     "business_logic": "Lógica para AuditEventMeta.test",
     "dependencies": [
       "vitest",
+      "react",
       "@testing-library/react",
-      "./AuditEventMeta",
-      "react"
+      "./AuditEventMeta"
     ]
   },
   {
@@ -2142,12 +2136,12 @@
     "technical_description": "Módulo técnico AuditTableView.",
     "business_logic": "Lógica para AuditTableView",
     "dependencies": [
-      "react",
-      "date-fns",
       "date-fns/locale",
       "@/validation/schemas",
       "./AuditEventIcon",
-      "@/lib/utils"
+      "react",
+      "@/lib/utils",
+      "date-fns"
     ]
   },
   {
@@ -2167,13 +2161,13 @@
     "technical_description": "Módulo técnico AuditTimeline.",
     "business_logic": "Lógica para AuditTimeline",
     "dependencies": [
-      "react",
-      "@/types",
       "./AuditEventCard",
-      "date-fns",
+      "@/types",
       "date-fns/locale",
+      "framer-motion",
+      "react",
       "@/lib/utils",
-      "framer-motion"
+      "date-fns"
     ]
   },
   {
@@ -2183,8 +2177,8 @@
     "business_logic": "Lógica para AuditLogsView.test",
     "dependencies": [
       "vitest",
-      "@testing-library/react",
       "./AuditLogsView",
+      "@testing-library/react",
       "./useAuditLogsView"
     ]
   },
@@ -2194,9 +2188,9 @@
     "technical_description": "Módulo técnico useAuditLogsView.",
     "business_logic": "Lógica para useAuditLogsView",
     "dependencies": [
-      "react",
       "@/hooks/api/useAuditLogs",
-      "@/hooks/ui/useDebounce"
+      "@/hooks/ui/useDebounce",
+      "react"
     ]
   },
   {
@@ -2205,13 +2199,13 @@
     "technical_description": "Módulo técnico AuditEventCard.",
     "business_logic": "Lógica para AuditEventCard",
     "dependencies": [
-      "react",
       "@/types",
-      "date-fns",
       "date-fns/locale",
       "./AuditEventIcon",
+      "react",
+      "@/lib/utils",
       "./AuditEventMeta",
-      "@/lib/utils"
+      "date-fns"
     ]
   },
   {
@@ -2220,10 +2214,9 @@
     "technical_description": "Módulo técnico AuditEventMeta.",
     "business_logic": "Lógica para AuditEventMeta",
     "dependencies": [
-      "react",
       "lucide-react",
-      "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -2232,21 +2225,21 @@
     "technical_description": "Módulo técnico AuditLogsView.",
     "business_logic": "Lógica para AuditLogsView",
     "dependencies": [
-      "react",
-      "./AuditFilters",
-      "./AuditTimeline",
-      "./AuditTableView",
-      "./AuditEventIcon",
-      "@/components/ui/StateRenderer",
-      "@/components/ui/skeleton",
-      "./useAuditLogsView",
-      "@/hooks/api/useStores",
-      "@/store",
       "lucide-react",
+      "@/store",
       "@/components/ui/tabs",
       "@/components/ui/button",
+      "./AuditFilters",
+      "sonner",
+      "./AuditEventIcon",
+      "@/components/ui/StateRenderer",
+      "react",
       "@/lib/utils/pdf-export",
-      "sonner"
+      "./useAuditLogsView",
+      "./AuditTimeline",
+      "@/components/ui/skeleton",
+      "@/hooks/api/useStores",
+      "./AuditTableView"
     ]
   },
   {
@@ -2255,14 +2248,14 @@
     "technical_description": "Módulo técnico CostSheetAuditView.",
     "business_logic": "Lógica para CostSheetAuditView",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "@/components/ui/badge",
       "@/components/ui/scroll-area",
-      "lucide-react",
+      "@/lib/cost-engine/validations",
+      "@/components/ui/card",
       "@/lib/utils",
+      "react",
       "./CostSheetAuditLog",
-      "@/lib/cost-engine/validations"
+      "lucide-react",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -2271,13 +2264,13 @@
     "technical_description": "Módulo técnico CostSheetSidebarNav.",
     "business_logic": "Lógica para CostSheetSidebarNav",
     "dependencies": [
-      "react",
-      "@/components/ui/sheet",
-      "@/lib/utils",
-      "lucide-react",
       "@/store",
       "@/components/ui/button",
-      "@/store/cost-sheet-store"
+      "@/components/ui/sheet",
+      "@/store/cost-sheet-store",
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2286,9 +2279,9 @@
     "technical_description": "Módulo técnico CostSheetFormulaGuide.",
     "business_logic": "Lógica para CostSheetFormulaGuide",
     "dependencies": [
-      "react",
+      "lucide-react",
       "@/components/ui/accordion",
-      "lucide-react"
+      "react"
     ]
   },
   {
@@ -2297,9 +2290,9 @@
     "technical_description": "Módulo técnico CostSheetGenerateDropdown.",
     "business_logic": "Lógica para CostSheetGenerateDropdown",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/components/ui/dropdown-menu"
+      "@/components/ui/dropdown-menu",
+      "react"
     ]
   },
   {
@@ -2308,14 +2301,14 @@
     "technical_description": "Módulo técnico FormulaEditor.",
     "business_logic": "Lógica para FormulaEditor",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "framer-motion",
-      "@/lib/utils",
-      "@/components/ui/popover",
       "@/components/ui/dialog",
-      "@/components/ui/badge",
-      "./FormulaBuilder"
+      "framer-motion",
+      "@/components/ui/popover",
+      "@/lib/utils",
+      "react",
+      "./FormulaBuilder",
+      "lucide-react",
+      "@/components/ui/badge"
     ]
   },
   {
@@ -2324,9 +2317,9 @@
     "technical_description": "Módulo técnico CircularProgress.",
     "business_logic": "Lógica para CircularProgress",
     "dependencies": [
-      "react",
+      "@/lib/utils",
       "framer-motion",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -2335,11 +2328,11 @@
     "technical_description": "Módulo técnico CostSheetCalculator.",
     "business_logic": "Lógica para CostSheetCalculator",
     "dependencies": [
-      "react",
+      "next-themes",
       "framer-motion",
-      "lucide-react",
       "@/lib/utils",
-      "next-themes"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2348,15 +2341,15 @@
     "technical_description": "Módulo técnico ProductInventoryPicker.",
     "business_logic": "Lógica para ProductInventoryPicker",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "@/hooks/api/useProducts",
+      "lucide-react",
+      "@/components/ui/atomic",
       "@/components/ui/SearchBar",
       "@/components/ui/table",
-      "@/components/ui/skeleton",
+      "@/components/ui/BaseModal",
+      "react",
       "@/lib/utils",
-      "lucide-react",
-      "@/components/ui/atomic"
+      "@/hooks/api/useProducts",
+      "@/components/ui/skeleton"
     ]
   },
   {
@@ -2365,11 +2358,11 @@
     "technical_description": "Módulo técnico CostSheetBanner.",
     "business_logic": "Lógica para CostSheetBanner",
     "dependencies": [
-      "react",
       "@/store",
       "@/components/ui/button",
-      "lucide-react",
       "@/components/ThemeToggle",
+      "react",
+      "lucide-react",
       "./CostSheetModeDropdown"
     ]
   },
@@ -2379,13 +2372,13 @@
     "technical_description": "Módulo técnico CostSheetAuditLog.",
     "business_logic": "Lógica para CostSheetAuditLog",
     "dependencies": [
-      "react",
-      "@/components/ui/card",
-      "@/components/ui/badge",
       "@/components/ui/scroll-area",
       "@/lib/cost-engine/types",
+      "@/components/ui/card",
+      "@/lib/utils",
+      "react",
       "lucide-react",
-      "@/lib/utils"
+      "@/components/ui/badge"
     ]
   },
   {
@@ -2394,12 +2387,12 @@
     "technical_description": "Módulo técnico CostSheetMasterRing.",
     "business_logic": "Lógica para CostSheetMasterRing",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "@/lib/utils",
-      "lucide-react",
       "next-themes",
-      "@/components/ui/slider"
+      "framer-motion",
+      "@/components/ui/slider",
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2408,12 +2401,12 @@
     "technical_description": "Módulo técnico CostSheetActionsPanel.",
     "business_logic": "Lógica para CostSheetActionsPanel",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
       "@/components/ui/button",
+      "framer-motion",
       "@/components/ui/ViewSwitcher",
+      "@/lib/utils",
+      "react",
+      "lucide-react",
       "./CostSheetModeDropdown"
     ]
   },
@@ -2423,49 +2416,46 @@
     "technical_description": "Módulo técnico CostSheetView.",
     "business_logic": "Lógica para CostSheetView",
     "dependencies": [
-      "./DarianEditor",
-      "@/components/ui/LazyRender",
-      "react",
-      "@/store/cost-sheet-store",
-      "@/hooks/logic/useCostSheetCalculator",
-      "./CostSheetNav",
-      "./CostSheetCardView",
-      "./CostSheetInteractiveTable",
-      "./CostSheetAnnexEditor",
-      "./CostSheetHeaderEditor",
-      "./CostSheetSignatureEditor",
-      "./CostSheetPreview",
-      "./CostSheetNarrative",
-      "./CostSheetWizard",
-      "./CostSheetSummary",
-      "./CostSheetFormulaGuide",
-      "./CostSheetAuditView",
-      "@/components/ui/BaseModal",
-      "./CostSheetActionsPanel",
-      "./CostSheetHelpPanel",
-      "./CostSheetTemplateExplorer",
-      "lucide-react",
-      "./CostSheetSidebarNav",
-      "./CostSheetBottomNav",
-      "@/store",
-      "./CostSheetMassiveGenerator",
       "./CostSheetExportModal",
-      "./CostSheetQuickMode",
-      "./CostSheetModeDropdown",
+      "./CostSheetNav",
+      "./CostSheetInteractiveTable",
       "@/components/ui/ViewSwitcher",
-      "@/components/ui/ActionMenu",
-      "@/lib/utils",
-      "lucide-react",
-      "@/components/ui/skeleton",
-      "@/components/ui/button",
-      "sonner",
-      "@/services/usage-service",
-      "@/components/modals/UpgradeModal",
-      "@/store",
+      "@/store/cost-sheet-store",
+      "@/components/ui/BaseModal",
+      "./CostSheetAnnexEditor",
+      "./CostSheetSignatureEditor",
+      "./CostSheetSummary",
+      "./CostSheetActionsPanel",
+      "./CostSheetPreview",
       "@/services/export-service",
-      "@/hooks/ui/useMobile",
+      "./CostSheetCardView",
+      "@/components/ui/LazyRender",
+      "./CostSheetHelpPanel",
+      "./CostSheetNarrative",
+      "./CostSheetHeaderEditor",
+      "@/services/usage-service",
+      "./CostSheetAuditView",
+      "./CostSheetBottomNav",
+      "./CostSheetMassiveGenerator",
+      "@/components/ui/ActionMenu",
+      "@/components/ui/button",
+      "./CostSheetTemplateExplorer",
+      "./CostSheetQuickMode",
+      "sonner",
+      "./CostSheetSidebarNav",
+      "./CostSheetWizard",
+      "./DarianEditor",
+      "lucide-react",
+      "./CostSheetFormulaGuide",
+      "@/components/ui/skeleton",
+      "@/store",
       "@/components/ui/SpeedDial",
-      "lucide-react"
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/hooks/logic/useCostSheetCalculator",
+      "@/lib/utils",
+      "./CostSheetModeDropdown",
+      "@/components/modals/UpgradeModal"
     ]
   },
   {
@@ -2474,8 +2464,8 @@
     "technical_description": "Módulo técnico CostSheetAnnexes.",
     "business_logic": "Lógica para CostSheetAnnexes",
     "dependencies": [
-      "react",
       "@/lib/utils",
+      "react",
       "@/types/cost-sheet"
     ]
   },
@@ -2485,9 +2475,9 @@
     "technical_description": "Módulo técnico CostSheetHelpDropdown.",
     "business_logic": "Lógica para CostSheetHelpDropdown",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/components/ui/dropdown-menu"
+      "@/components/ui/dropdown-menu",
+      "react"
     ]
   },
   {
@@ -2496,14 +2486,14 @@
     "technical_description": "Módulo técnico CostSheetSummary.",
     "business_logic": "Lógica para CostSheetSummary",
     "dependencies": [
-      "react",
-      "@/lib/utils",
-      "lucide-react",
-      "@/types/cost-sheet",
-      "@/store/cost-sheet-store",
       "@/components/ui/slider",
+      "@/store/cost-sheet-store",
+      "./CostSheetMasterRing",
+      "@/lib/utils",
       "./HealthBattery",
-      "./CostSheetMasterRing"
+      "react",
+      "lucide-react",
+      "@/types/cost-sheet"
     ]
   },
   {
@@ -2512,15 +2502,15 @@
     "technical_description": "Módulo técnico CostSheetNav.",
     "business_logic": "Lógica para CostSheetNav",
     "dependencies": [
+      "./CostSheetOptionsDropdown",
+      "./CostSheetHelpDropdown",
       "@/lib/utils",
+      "./CostSheetGenerateDropdown",
+      "./CostSheetFCDropdown",
       "react",
       "@/components/ui/ActionMenu",
       "lucide-react",
-      "./CostSheetFCDropdown",
-      "./CostSheetModeDropdown",
-      "./CostSheetOptionsDropdown",
-      "./CostSheetGenerateDropdown",
-      "./CostSheetHelpDropdown"
+      "./CostSheetModeDropdown"
     ]
   },
   {
@@ -2529,10 +2519,10 @@
     "technical_description": "Módulo técnico CostSheetOptionsDropdown.",
     "business_logic": "Lógica para CostSheetOptionsDropdown",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/components/ui/dropdown-menu",
-      "@/store"
+      "@/store",
+      "react"
     ]
   },
   {
@@ -2541,8 +2531,8 @@
     "technical_description": "Módulo técnico CostSheetHeader.",
     "business_logic": "Lógica para CostSheetHeader",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -2551,12 +2541,12 @@
     "technical_description": "Módulo técnico CostSheetQuickMode.",
     "business_logic": "Lógica para CostSheetQuickMode",
     "dependencies": [
-      "react",
-      "lucide-react",
       "@/components/ui/button",
-      "@/components/ui/input",
       "@/components/ui/select",
-      "sonner"
+      "sonner",
+      "@/components/ui/input",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2565,11 +2555,11 @@
     "technical_description": "Módulo técnico CostSheetBottomNav.",
     "business_logic": "Lógica para CostSheetBottomNav",
     "dependencies": [
-      "react",
+      "@/store",
       "@/lib/utils",
-      "lucide-react",
       "@/components/ui/dropdown-menu",
-      "@/store"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2578,10 +2568,10 @@
     "technical_description": "Módulo técnico CostSheetNarrative.",
     "business_logic": "Lógica para CostSheetNarrative",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
-      "recharts"
+      "recharts",
+      "react"
     ]
   },
   {
@@ -2599,14 +2589,14 @@
     "technical_description": "Módulo técnico CostSheetExportModal.",
     "business_logic": "Lógica para CostSheetExportModal",
     "dependencies": [
-      "react",
+      "lucide-react",
+      "@/components/ui/scroll-area",
+      "@/components/ui/label",
       "@/components/ui/dialog",
-      "@/components/ui/button",
       "@/components/ui/checkbox",
       "@/components/ui/switch",
-      "@/components/ui/label",
-      "lucide-react",
-      "@/components/ui/scroll-area"
+      "react",
+      "@/components/ui/button"
     ]
   },
   {
@@ -2615,9 +2605,9 @@
     "technical_description": "Módulo técnico HealthBattery.",
     "business_logic": "Lógica para HealthBattery",
     "dependencies": [
-      "react",
+      "lucide-react",
       "@/lib/utils",
-      "lucide-react"
+      "react"
     ]
   },
   {
@@ -2626,28 +2616,28 @@
     "technical_description": "Módulo técnico CostSheetTemplateExplorer.",
     "business_logic": "Lógica para CostSheetTemplateExplorer",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/button",
-      "@/components/ui/input",
-      "@/store",
-      "sonner",
-      "@/lib/supabaseClient",
-      "@/lib/data/costpro-reinicio",
-      "@/lib/data/costpro-ejemplo",
-      "@/lib/data/template-juice",
-      "@/lib/data/template-pizza",
-      "@/lib/data/template-pastry",
-      "@/lib/data/template-furniture",
-      "@/lib/data/template-industrial",
       "@/lib/data/template-consultancy",
-      "@/lib/data/template-icecream",
+      "@/lib/data/costpro-ejemplo",
+      "@/lib/data/template-furniture",
+      "@/lib/data/template-pizza",
+      "@/lib/data/template-logistics",
+      "@/lib/supabaseClient",
+      "@/lib/data/template-pastry",
       "@/lib/data/template-repair",
       "@/lib/data/template-shoes",
-      "@/lib/data/template-logistics",
-      "@/lib/data/template-lavar"
+      "@/lib/data/template-juice",
+      "@/components/ui/input",
+      "@/components/ui/button",
+      "framer-motion",
+      "sonner",
+      "@/lib/data/template-industrial",
+      "@/lib/data/template-lavar",
+      "lucide-react",
+      "@/lib/data/template-icecream",
+      "@/store",
+      "react",
+      "@/lib/data/costpro-reinicio",
+      "@/lib/utils"
     ]
   },
   {
@@ -2656,14 +2646,14 @@
     "technical_description": "Módulo técnico CostSheetForm.",
     "business_logic": "Lógica para CostSheetForm",
     "dependencies": [
-      "react",
-      "@/store/cost-sheet-store",
-      "@/components/ui/input",
-      "@/components/ui/label",
-      "@/components/ui/table",
-      "@/components/ui/button",
       "lucide-react",
-      "@/lib/utils"
+      "@/components/ui/label",
+      "@/store/cost-sheet-store",
+      "@/components/ui/table",
+      "@/lib/utils",
+      "@/components/ui/input",
+      "react",
+      "@/components/ui/button"
     ]
   },
   {
@@ -2672,12 +2662,12 @@
     "technical_description": "Módulo técnico FormulaBuilder.",
     "business_logic": "Lógica para FormulaBuilder",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/scroll-area",
       "@/components/ui/tabs",
-      "@/components/ui/HorizontalScroll"
+      "@/components/ui/scroll-area",
+      "@/components/ui/HorizontalScroll",
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2687,20 +2677,20 @@
     "business_logic": "Lógica para CostSheetCardView",
     "dependencies": [
       "@/components/ui/LazyRender",
-      "sonner",
+      "./CircularProgress",
       "@/services/excel-service",
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/store/cost-sheet-store",
-      "@/types/cost-sheet",
       "@/components/ui/button",
+      "framer-motion",
+      "sonner",
+      "@/store/cost-sheet-store",
+      "@/components/ui/popover",
+      "@/lib/utils",
+      "react",
       "@/components/ui/input",
       "./FormulaEditor",
-      "@/components/ui/popover",
+      "lucide-react",
       "./CostSheetSectionActionsPanel",
-      "./CircularProgress"
+      "@/types/cost-sheet"
     ]
   },
   {
@@ -2709,28 +2699,28 @@
     "technical_description": "Módulo técnico CostSheetMassiveGenerator.",
     "business_logic": "Lógica para CostSheetMassiveGenerator",
     "dependencies": [
-      "react",
-      "@/components/ui/dialog",
-      "@/components/ui/button",
-      "@/components/ui/progress",
       "@/components/ui/tabs",
-      "@/components/ui/table",
-      "@/lib/utils",
+      "./CostSheetExportModal",
+      "@/components/ui/dialog",
+      "@/components/ui/progress",
       "@/store/cost-sheet-store",
-      "@/hooks/api/useInventory",
-      "@/store",
-      "@/lib/cost-engine",
-      "@/lib/cost-engine/types",
-      "sonner",
-      "lucide-react",
+      "@/components/ui/table",
+      "@/services/export-service",
+      "@/services/excel-service",
+      "@/components/ui/label",
       "@/components/ui/CostProLoader",
       "@/components/ui/checkbox",
       "@/components/ui/switch",
-      "@/components/ui/label",
-      "./CostSheetExportModal",
       "jszip",
-      "@/services/export-service",
-      "@/services/excel-service"
+      "@/components/ui/button",
+      "@/lib/cost-engine",
+      "@/hooks/api/useInventory",
+      "sonner",
+      "lucide-react",
+      "@/store",
+      "@/lib/cost-engine/types",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -2739,14 +2729,14 @@
     "technical_description": "Módulo técnico CostSheetSidePanel.",
     "business_logic": "Lógica para CostSheetSidePanel",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "next-themes",
-      "./DarianEditor",
       "./CostSheetCalculator",
-      "@/hooks/ui/useMobile"
+      "next-themes",
+      "framer-motion",
+      "@/lib/utils",
+      "./DarianEditor",
+      "react",
+      "@/hooks/ui/useMobile",
+      "lucide-react"
     ]
   },
   {
@@ -2755,8 +2745,8 @@
     "technical_description": "Módulo técnico CostSheetBody.",
     "business_logic": "Lógica para CostSheetBody",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -2765,14 +2755,14 @@
     "technical_description": "Módulo técnico DarianEditor.",
     "business_logic": "Lógica para DarianEditor",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "framer-motion",
-      "@/lib/utils",
-      "react-markdown",
       "@/store",
+      "react-markdown",
+      "framer-motion",
       "next-themes",
-      "sonner"
+      "sonner",
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2781,13 +2771,13 @@
     "technical_description": "Módulo técnico CostSheetHeaderEditor.",
     "business_logic": "Lógica para CostSheetHeaderEditor",
     "dependencies": [
-      "react",
-      "@/store/cost-sheet-store",
-      "@/components/ui/card",
-      "@/components/ui/input",
+      "lucide-react",
       "@/components/ui/label",
-      "@/lib/utils",
-      "lucide-react"
+      "@/components/ui/card",
+      "@/store/cost-sheet-store",
+      "@/components/ui/input",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -2796,11 +2786,11 @@
     "technical_description": "Módulo técnico CostSheetFCDropdown.",
     "business_logic": "Lógica para CostSheetFCDropdown",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/components/ui/dropdown-menu",
       "framer-motion",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/dropdown-menu",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2809,15 +2799,15 @@
     "technical_description": "Módulo técnico CostSheetWizard.",
     "business_logic": "Lógica para CostSheetWizard",
     "dependencies": [
-      "react",
       "@/components/ui/button",
-      "lucide-react",
       "./CostSheetHeaderEditor",
-      "./CostSheetAnnexEditor",
       "./CostSheetInteractiveTable",
-      "./CostSheetSignatureEditor",
+      "@/components/ui/progress",
       "./CostSheetSidebarNav",
-      "@/components/ui/progress"
+      "./CostSheetAnnexEditor",
+      "react",
+      "./CostSheetSignatureEditor",
+      "lucide-react"
     ]
   },
   {
@@ -2827,21 +2817,21 @@
     "business_logic": "Lógica para CostSheetInteractiveTable",
     "dependencies": [
       "@/components/ui/LazyRender",
-      "framer-motion",
-      "react",
-      "@/store/cost-sheet-store",
-      "lucide-react",
-      "@/components/ui/popover",
-      "@/components/ui/select",
-      "@/components/ui/input",
-      "@/components/ui/table",
       "@/components/ui/button",
-      "@/lib/utils",
-      "./FormulaEditor",
-      "sonner",
       "@/services/excel-service",
-      "./CostSheetSectionActionsPanel",
+      "@/components/ui/select",
+      "framer-motion",
+      "sonner",
+      "@/store/cost-sheet-store",
+      "@/components/ui/popover",
+      "@/components/ui/table",
+      "@/lib/utils",
+      "react",
+      "@/components/ui/input",
+      "./FormulaEditor",
       "@/lib/data/costpro-reinicio",
+      "lucide-react",
+      "./CostSheetSectionActionsPanel",
       "@/types/cost-sheet"
     ]
   },
@@ -2851,19 +2841,19 @@
     "technical_description": "Módulo técnico CostSheetAnnexEditor.",
     "business_logic": "Lógica para CostSheetAnnexEditor",
     "dependencies": [
-      "react",
-      "@/store/cost-sheet-store",
-      "@/hooks/logic/useCostSheetCalculator",
-      "@/components/ui/input",
-      "@/components/ui/table",
-      "@/components/ui/button",
       "lucide-react",
-      "@/types/cost-sheet",
-      "./ProductInventoryPicker",
       "@/store",
       "@/services/excel-service",
+      "@/components/ui/ViewSwitcher",
+      "@/store/cost-sheet-store",
+      "./ProductInventoryPicker",
+      "@/components/ui/table",
       "@/lib/utils",
-      "@/components/ui/ViewSwitcher"
+      "@/components/ui/input",
+      "react",
+      "@/hooks/logic/useCostSheetCalculator",
+      "@/components/ui/button",
+      "@/types/cost-sheet"
     ]
   },
   {
@@ -2872,11 +2862,11 @@
     "technical_description": "Módulo técnico CostSheetSectionActionsPanel.",
     "business_logic": "Lógica para CostSheetSectionActionsPanel",
     "dependencies": [
-      "react",
+      "@/components/ui/button",
       "@/components/ui/sheet",
       "@/lib/utils",
-      "lucide-react",
-      "@/components/ui/button"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2885,10 +2875,10 @@
     "technical_description": "Módulo técnico CostSheetPreview.",
     "business_logic": "Lógica para CostSheetPreview",
     "dependencies": [
+      "./CostSheetAnnexes",
       "react",
       "./CostSheetHeader",
       "./CostSheetBody",
-      "./CostSheetAnnexes",
       "./CostSheetSignature",
       "@/components/ui/SecurityScrollContainer"
     ]
@@ -2899,10 +2889,10 @@
     "technical_description": "Módulo técnico CostSheetSignatureEditor.",
     "business_logic": "Lógica para CostSheetSignatureEditor",
     "dependencies": [
-      "react",
-      "@/store/cost-sheet-store",
+      "lucide-react",
       "@/components/ui/input",
-      "lucide-react"
+      "react",
+      "@/store/cost-sheet-store"
     ]
   },
   {
@@ -2911,11 +2901,11 @@
     "technical_description": "Módulo técnico CostSheetModeDropdown.",
     "business_logic": "Lógica para CostSheetModeDropdown",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/components/ui/dropdown-menu",
       "framer-motion",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@/components/ui/dropdown-menu",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -2924,10 +2914,10 @@
     "technical_description": "Módulo técnico CostSheetHelpPanel.",
     "business_logic": "Lógica para CostSheetHelpPanel",
     "dependencies": [
-      "react",
       "framer-motion",
-      "lucide-react",
       "@/lib/utils",
+      "react",
+      "lucide-react",
       "./CostSheetFormulaGuide"
     ]
   },
@@ -2938,8 +2928,8 @@
     "business_logic": "Lógica para CostSheetTemplateExplorer.test",
     "dependencies": [
       "vitest",
-      "@testing-library/react",
       "../CostSheetTemplateExplorer",
+      "@testing-library/react",
       "react"
     ]
   },
@@ -2949,12 +2939,11 @@
     "technical_description": "Módulo técnico UserFormModal.",
     "business_logic": "Lógica para UserFormModal",
     "dependencies": [
-      "react",
-      "@/components/ui/BaseModal",
-      "./UserForm",
-      "@/contracts/user",
       "@/types",
-      "@/types"
+      "@/contracts/user",
+      "@/components/ui/BaseModal",
+      "react",
+      "./UserForm"
     ]
   },
   {
@@ -2963,15 +2952,15 @@
     "technical_description": "Módulo técnico useUsersView.",
     "business_logic": "Lógica para useUsersView",
     "dependencies": [
-      "react",
       "@/store",
-      "@/hooks/api/useUsers",
-      "@/hooks/api/useStores",
-      "./UserForm",
-      "sonner",
       "@/contracts/user",
       "@/types",
+      "@/hooks/api/useUsers",
       "@/lib/roles",
+      "sonner",
+      "./UserForm",
+      "react",
+      "@/hooks/api/useStores",
       "@/lib/supabaseClient"
     ]
   },
@@ -2981,16 +2970,16 @@
     "technical_description": "Módulo técnico UsersManagementView.",
     "business_logic": "Lógica para UsersManagementView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
       "@/components/ui/button",
-      "@/components/ui/switch",
       "@/components/ui/select",
+      "./UserFormModal",
+      "@/components/ui/SearchBar",
+      "@/components/ui/switch",
+      "@/lib/utils",
       "./useUsersView",
-      "./UserFormModal"
+      "react",
+      "@/components/ui/ActionMenu",
+      "lucide-react"
     ]
   },
   {
@@ -2999,13 +2988,13 @@
     "technical_description": "Módulo técnico RoleForm.",
     "business_logic": "Lógica para RoleForm",
     "dependencies": [
-      "react",
-      "zod",
-      "react-hook-form",
-      "@hookform/resolvers/zod",
-      "@/lib/utils",
+      "lucide-react",
       "@/types",
-      "lucide-react"
+      "react-hook-form",
+      "zod",
+      "@hookform/resolvers/zod",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -3014,15 +3003,15 @@
     "technical_description": "Módulo técnico RolesManagementView.",
     "business_logic": "Lógica para RolesManagementView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/SearchBar",
-      "@/components/ui/ActionMenu",
       "@/hooks/api/useRoles",
-      "@/components/ui/BaseModal",
+      "@/types",
       "./RoleForm",
-      "@/types"
+      "@/components/ui/SearchBar",
+      "@/lib/utils",
+      "@/components/ui/BaseModal",
+      "react",
+      "@/components/ui/ActionMenu",
+      "lucide-react"
     ]
   },
   {
@@ -3031,14 +3020,14 @@
     "technical_description": "Módulo técnico UserForm.",
     "business_logic": "Lógica para UserForm",
     "dependencies": [
-      "react",
-      "zod",
-      "react-hook-form",
-      "@hookform/resolvers/zod",
-      "@/lib/utils",
+      "lucide-react",
       "@/contracts/user",
       "@/types",
-      "lucide-react"
+      "react-hook-form",
+      "zod",
+      "@hookform/resolvers/zod",
+      "react",
+      "@/lib/utils"
     ]
   },
   {
@@ -3047,12 +3036,12 @@
     "technical_description": "Módulo técnico RSSManagementView.",
     "business_logic": "Lógica para RSSManagementView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
       "@/hooks/api/useRSS",
+      "sonner",
+      "@/lib/utils",
       "@/components/ui/StateRenderer",
-      "sonner"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3061,13 +3050,13 @@
     "technical_description": "Módulo técnico NewsView.",
     "business_logic": "Lógica para NewsView",
     "dependencies": [
-      "react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/hooks/api/useRSS",
-      "@/components/ui/StateRenderer",
       "@/types",
-      "framer-motion"
+      "framer-motion",
+      "@/hooks/api/useRSS",
+      "@/lib/utils",
+      "@/components/ui/StateRenderer",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3077,9 +3066,9 @@
     "business_logic": "Lógica para LegalView.test",
     "dependencies": [
       "vitest",
-      "@testing-library/react",
       "./LegalView",
-      "@/lib/supabaseClient"
+      "@/lib/supabaseClient",
+      "@testing-library/react"
     ]
   },
   {
@@ -3099,17 +3088,16 @@
     "technical_description": "Módulo técnico LegalModelForm.",
     "business_logic": "Lógica para LegalModelForm",
     "dependencies": [
-      "react",
-      "react",
-      "react-hook-form",
-      "lucide-react",
       "@/store",
-      "@/lib/supabaseClient",
+      "@/lib/utils/number-to-words-es",
+      "react-hook-form",
+      "framer-motion",
       "sonner",
       "@/lib/utils",
-      "framer-motion",
-      "./LegalPdfExporter",
-      "@/lib/utils/number-to-words-es"
+      "react",
+      "lucide-react",
+      "@/lib/supabaseClient",
+      "./LegalPdfExporter"
     ]
   },
   {
@@ -3118,11 +3106,10 @@
     "technical_description": "Módulo técnico LegalConsultant.",
     "business_logic": "Lógica para LegalConsultant",
     "dependencies": [
-      "react",
-      "react",
-      "framer-motion",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "framer-motion",
+      "react"
     ]
   },
   {
@@ -3131,14 +3118,13 @@
     "technical_description": "Módulo técnico LegalView.",
     "business_logic": "Lógica para LegalView",
     "dependencies": [
-      "react",
-      "react",
       "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
-      "@/lib/supabaseClient",
       "sonner",
+      "@/lib/utils",
       "./LegalConsultant",
+      "react",
+      "lucide-react",
+      "@/lib/supabaseClient",
       "./LegalModelForm"
     ]
   },
@@ -3166,10 +3152,10 @@
     "technical_description": "Módulo técnico accordion.",
     "business_logic": "Lógica para accordion",
     "dependencies": [
-      "react",
-      "@radix-ui/react-accordion",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-accordion",
+      "react"
     ]
   },
   {
@@ -3178,9 +3164,9 @@
     "technical_description": "Módulo técnico ViewSwitcher.",
     "business_logic": "Lógica para ViewSwitcher",
     "dependencies": [
-      "react",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3189,9 +3175,9 @@
     "technical_description": "Módulo técnico hover-card.",
     "business_logic": "Lógica para hover-card",
     "dependencies": [
-      "react",
       "@radix-ui/react-hover-card",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3209,11 +3195,11 @@
     "technical_description": "Módulo técnico command.",
     "business_logic": "Lógica para command",
     "dependencies": [
-      "react",
+      "@/components/ui/dialog",
       "cmdk",
-      "lucide-react",
       "@/lib/utils",
-      "@/components/ui/dialog"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3222,10 +3208,10 @@
     "technical_description": "Módulo técnico resizable.",
     "business_logic": "Lógica para resizable",
     "dependencies": [
-      "react",
       "lucide-react",
+      "@/lib/utils",
       "react-resizable-panels",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -3234,13 +3220,13 @@
     "technical_description": "Módulo técnico QueryInspector.",
     "business_logic": "Lógica para QueryInspector",
     "dependencies": [
-      "react",
       "@/store",
       "react-syntax-highlighter",
       "react-syntax-highlighter/dist/esm/styles/prism",
-      "lucide-react",
+      "sonner",
       "@/lib/utils",
-      "sonner"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3249,11 +3235,11 @@
     "technical_description": "Módulo técnico SearchBar.",
     "business_logic": "Lógica para SearchBar",
     "dependencies": [
-      "react",
-      "lucide-react",
+      "next-themes",
       "framer-motion",
       "@/lib/utils",
-      "next-themes"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3262,10 +3248,10 @@
     "technical_description": "Módulo técnico dropdown-menu.",
     "business_logic": "Lógica para dropdown-menu",
     "dependencies": [
-      "react",
       "@radix-ui/react-dropdown-menu",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3274,9 +3260,9 @@
     "technical_description": "Módulo técnico separator.",
     "business_logic": "Lógica para separator",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-separator",
-      "@/lib/utils"
+      "@radix-ui/react-separator"
     ]
   },
   {
@@ -3285,8 +3271,8 @@
     "technical_description": "Módulo técnico MobileSafeContainer.",
     "business_logic": "Lógica para MobileSafeContainer",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3295,10 +3281,10 @@
     "technical_description": "Módulo técnico pagination.",
     "business_logic": "Lógica para pagination",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
-      "@/components/ui/button"
+      "@/components/ui/button",
+      "react"
     ]
   },
   {
@@ -3307,10 +3293,10 @@
     "technical_description": "Módulo técnico alert-dialog.",
     "business_logic": "Lógica para alert-dialog",
     "dependencies": [
-      "react",
-      "@radix-ui/react-alert-dialog",
       "@/lib/utils",
-      "@/components/ui/button"
+      "@/components/ui/button",
+      "@radix-ui/react-alert-dialog",
+      "react"
     ]
   },
   {
@@ -3319,10 +3305,10 @@
     "technical_description": "Módulo técnico input-otp.",
     "business_logic": "Lógica para input-otp",
     "dependencies": [
-      "react",
-      "input-otp",
       "lucide-react",
-      "@/lib/utils"
+      "input-otp",
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3331,9 +3317,9 @@
     "technical_description": "Módulo técnico alert.",
     "business_logic": "Lógica para alert",
     "dependencies": [
-      "react",
       "class-variance-authority",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3351,9 +3337,9 @@
     "technical_description": "Módulo técnico popover.",
     "business_logic": "Lógica para popover",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-popover",
-      "@/lib/utils"
+      "@radix-ui/react-popover"
     ]
   },
   {
@@ -3362,8 +3348,8 @@
     "technical_description": "Módulo técnico table.",
     "business_logic": "Lógica para table",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3372,9 +3358,9 @@
     "technical_description": "Módulo técnico progress.",
     "business_logic": "Lógica para progress",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-progress",
-      "@/lib/utils"
+      "@radix-ui/react-progress"
     ]
   },
   {
@@ -3383,10 +3369,10 @@
     "technical_description": "Módulo técnico select.",
     "business_logic": "Lógica para select",
     "dependencies": [
-      "react",
-      "@radix-ui/react-select",
       "lucide-react",
-      "@/lib/utils"
+      "@radix-ui/react-select",
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3405,9 +3391,9 @@
     "technical_description": "Módulo técnico LoadingOverlay.",
     "business_logic": "Lógica para LoadingOverlay",
     "dependencies": [
-      "react",
+      "./CostProLoader",
       "framer-motion",
-      "./CostProLoader"
+      "react"
     ]
   },
   {
@@ -3416,8 +3402,8 @@
     "technical_description": "Módulo técnico textarea.",
     "business_logic": "Lógica para textarea",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3426,10 +3412,10 @@
     "technical_description": "Módulo técnico PWAInstallModal.",
     "business_logic": "Lógica para PWAInstallModal",
     "dependencies": [
-      "react",
       "@/components/ui/dialog",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3438,10 +3424,10 @@
     "technical_description": "Módulo técnico toggle.",
     "business_logic": "Lógica para toggle",
     "dependencies": [
-      "react",
-      "@radix-ui/react-toggle",
       "class-variance-authority",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-toggle",
+      "react"
     ]
   },
   {
@@ -3450,8 +3436,8 @@
     "technical_description": "Módulo técnico StateRenderer.",
     "business_logic": "Lógica para StateRenderer",
     "dependencies": [
-      "react",
-      "./CostProLoader"
+      "./CostProLoader",
+      "react"
     ]
   },
   {
@@ -3460,8 +3446,8 @@
     "technical_description": "Módulo técnico Portal.",
     "business_logic": "Lógica para Portal",
     "dependencies": [
-      "react",
-      "react-dom"
+      "react-dom",
+      "react"
     ]
   },
   {
@@ -3470,10 +3456,10 @@
     "technical_description": "Módulo técnico toggle-group.",
     "business_logic": "Lógica para toggle-group",
     "dependencies": [
-      "react",
-      "@radix-ui/react-toggle-group",
       "class-variance-authority",
+      "react",
       "@/lib/utils",
+      "@radix-ui/react-toggle-group",
       "@/components/ui/toggle"
     ]
   },
@@ -3483,9 +3469,9 @@
     "technical_description": "Módulo técnico scroll-area.",
     "business_logic": "Lógica para scroll-area",
     "dependencies": [
-      "react",
       "@radix-ui/react-scroll-area",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3494,9 +3480,9 @@
     "technical_description": "Módulo técnico label.",
     "business_logic": "Lógica para label",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-label",
-      "@/lib/utils"
+      "@radix-ui/react-label"
     ]
   },
   {
@@ -3505,9 +3491,9 @@
     "technical_description": "Módulo técnico chart.",
     "business_logic": "Lógica para chart",
     "dependencies": [
-      "react",
+      "@/lib/utils",
       "recharts",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -3516,18 +3502,18 @@
     "technical_description": "Módulo técnico sidebar.",
     "business_logic": "Lógica para sidebar",
     "dependencies": [
-      "react",
-      "@radix-ui/react-slot",
-      "class-variance-authority",
-      "lucide-react",
-      "@/hooks/ui/useMobile",
-      "@/lib/utils",
       "@/components/ui/button",
-      "@/components/ui/input",
-      "@/components/ui/separator",
       "@/components/ui/sheet",
+      "class-variance-authority",
+      "@/components/ui/separator",
+      "@/components/ui/tooltip",
+      "@/lib/utils",
+      "react",
+      "@/hooks/ui/useMobile",
+      "@/components/ui/input",
+      "lucide-react",
       "@/components/ui/skeleton",
-      "@/components/ui/tooltip"
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3536,9 +3522,9 @@
     "technical_description": "Módulo técnico tabs.",
     "business_logic": "Lógica para tabs",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-tabs",
-      "@/lib/utils"
+      "@radix-ui/react-tabs"
     ]
   },
   {
@@ -3547,9 +3533,9 @@
     "technical_description": "Módulo técnico BaseModal.",
     "business_logic": "Lógica para BaseModal",
     "dependencies": [
-      "react",
       "@/components/ui/dialog",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3558,9 +3544,9 @@
     "technical_description": "Módulo técnico switch.",
     "business_logic": "Lógica para switch",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-switch",
-      "@/lib/utils"
+      "@radix-ui/react-switch"
     ]
   },
   {
@@ -3569,10 +3555,10 @@
     "technical_description": "Módulo técnico checkbox.",
     "business_logic": "Lógica para checkbox",
     "dependencies": [
-      "react",
-      "@radix-ui/react-checkbox",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-checkbox",
+      "react"
     ]
   },
   {
@@ -3581,10 +3567,10 @@
     "technical_description": "Módulo técnico context-menu.",
     "business_logic": "Lógica para context-menu",
     "dependencies": [
-      "react",
-      "@radix-ui/react-context-menu",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@radix-ui/react-context-menu"
     ]
   },
   {
@@ -3593,10 +3579,10 @@
     "technical_description": "Módulo técnico badge.",
     "business_logic": "Lógica para badge",
     "dependencies": [
-      "react",
-      "@radix-ui/react-slot",
       "class-variance-authority",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3605,8 +3591,8 @@
     "technical_description": "Módulo técnico CostProLoader.",
     "business_logic": "Lógica para CostProLoader",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3615,11 +3601,11 @@
     "technical_description": "Módulo técnico calendar.",
     "business_logic": "Lógica para calendar",
     "dependencies": [
-      "react",
-      "lucide-react",
+      "@/components/ui/button",
       "react-day-picker",
       "@/lib/utils",
-      "@/components/ui/button"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3628,8 +3614,8 @@
     "technical_description": "Módulo técnico toaster.",
     "business_logic": "Lógica para toaster",
     "dependencies": [
-      "@/hooks/ui/useToast",
-      "@/components/ui/toast"
+      "@/components/ui/toast",
+      "@/hooks/ui/useToast"
     ]
   },
   {
@@ -3638,11 +3624,11 @@
     "technical_description": "Módulo técnico navigation-menu.",
     "business_logic": "Lógica para navigation-menu",
     "dependencies": [
-      "react",
-      "@radix-ui/react-navigation-menu",
       "class-variance-authority",
-      "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-navigation-menu",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3651,9 +3637,9 @@
     "technical_description": "Módulo técnico ActionMenu.",
     "business_logic": "Lógica para ActionMenu",
     "dependencies": [
-      "react",
       "lucide-react",
       "@/lib/utils",
+      "react",
       "@/components/ui/tooltip"
     ]
   },
@@ -3663,11 +3649,11 @@
     "technical_description": "Módulo técnico ProductImage.",
     "business_logic": "Lógica para ProductImage",
     "dependencies": [
-      "react",
-      "next/image",
       "next-themes",
+      "@/lib/utils",
+      "react",
       "lucide-react",
-      "@/lib/utils"
+      "next/image"
     ]
   },
   {
@@ -3676,10 +3662,10 @@
     "technical_description": "Módulo técnico toast.",
     "business_logic": "Lógica para toast",
     "dependencies": [
-      "react",
-      "@radix-ui/react-toast",
-      "class-variance-authority",
       "lucide-react",
+      "class-variance-authority",
+      "@radix-ui/react-toast",
+      "react",
       "@/lib/utils"
     ]
   },
@@ -3689,12 +3675,12 @@
     "technical_description": "Módulo técnico FloatingCalculator.",
     "business_logic": "Lógica para FloatingCalculator",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/lib/utils",
+      "@/store",
       "next-themes",
-      "@/store"
+      "framer-motion",
+      "@/lib/utils",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3703,10 +3689,10 @@
     "technical_description": "Módulo técnico ScrollToTop.",
     "business_logic": "Lógica para ScrollToTop",
     "dependencies": [
-      "react",
       "lucide-react",
+      "@/lib/utils",
       "framer-motion",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -3715,10 +3701,10 @@
     "technical_description": "Módulo técnico button.",
     "business_logic": "Lógica para button",
     "dependencies": [
-      "react",
-      "@radix-ui/react-slot",
       "class-variance-authority",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3727,9 +3713,9 @@
     "technical_description": "Módulo técnico avatar.",
     "business_logic": "Lógica para avatar",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-avatar",
-      "@/lib/utils"
+      "@radix-ui/react-avatar"
     ]
   },
   {
@@ -3738,10 +3724,10 @@
     "technical_description": "Módulo técnico dialog.",
     "business_logic": "Lógica para dialog",
     "dependencies": [
-      "react",
-      "@radix-ui/react-dialog",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-dialog",
+      "react"
     ]
   },
   {
@@ -3750,8 +3736,8 @@
     "technical_description": "Módulo técnico SecurityScrollContainer.",
     "business_logic": "Lógica para SecurityScrollContainer",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3760,10 +3746,10 @@
     "technical_description": "Módulo técnico breadcrumb.",
     "business_logic": "Lógica para breadcrumb",
     "dependencies": [
-      "react",
-      "@radix-ui/react-slot",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3772,12 +3758,12 @@
     "technical_description": "Módulo técnico form.",
     "business_logic": "Lógica para form",
     "dependencies": [
-      "react",
-      "@radix-ui/react-label",
-      "@radix-ui/react-slot",
+      "@/components/ui/label",
       "react-hook-form",
+      "react",
       "@/lib/utils",
-      "@/components/ui/label"
+      "@radix-ui/react-label",
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3786,9 +3772,9 @@
     "technical_description": "Módulo técnico slider.",
     "business_logic": "Lógica para slider",
     "dependencies": [
-      "react",
+      "@/lib/utils",
       "@radix-ui/react-slider",
-      "@/lib/utils"
+      "react"
     ]
   },
   {
@@ -3797,10 +3783,10 @@
     "technical_description": "Módulo técnico menubar.",
     "business_logic": "Lógica para menubar",
     "dependencies": [
-      "react",
-      "@radix-ui/react-menubar",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@radix-ui/react-menubar"
     ]
   },
   {
@@ -3809,9 +3795,9 @@
     "technical_description": "Módulo técnico tooltip.",
     "business_logic": "Lógica para tooltip",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "@radix-ui/react-tooltip",
-      "@/lib/utils"
+      "@radix-ui/react-tooltip"
     ]
   },
   {
@@ -3820,11 +3806,11 @@
     "technical_description": "Módulo técnico SpeedDial.",
     "business_logic": "Lógica para SpeedDial",
     "dependencies": [
-      "react",
+      "./Portal",
       "framer-motion",
-      "lucide-react",
       "@/lib/utils",
-      "./Portal"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -3833,14 +3819,14 @@
     "technical_description": "Módulo técnico ChatBot.",
     "business_logic": "Lógica para ChatBot",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
       "@/store",
-      "@/lib/utils",
-      "@/services/user-service",
+      "framer-motion",
       "sonner",
-      "next/navigation"
+      "next/navigation",
+      "@/lib/utils",
+      "react",
+      "lucide-react",
+      "@/services/user-service"
     ]
   },
   {
@@ -3858,11 +3844,11 @@
     "technical_description": "Módulo técnico carousel.",
     "business_logic": "Lógica para carousel",
     "dependencies": [
+      "@/components/ui/button",
+      "@/lib/utils",
       "react",
       "embla-carousel-react",
-      "lucide-react",
-      "@/lib/utils",
-      "@/components/ui/button"
+      "lucide-react"
     ]
   },
   {
@@ -3871,8 +3857,8 @@
     "technical_description": "Módulo técnico card.",
     "business_logic": "Lógica para card",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3881,10 +3867,10 @@
     "technical_description": "Módulo técnico sheet.",
     "business_logic": "Lógica para sheet",
     "dependencies": [
-      "react",
-      "@radix-ui/react-dialog",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "@radix-ui/react-dialog",
+      "react"
     ]
   },
   {
@@ -3893,9 +3879,9 @@
     "technical_description": "Módulo técnico drawer.",
     "business_logic": "Lógica para drawer",
     "dependencies": [
+      "@/lib/utils",
       "react",
-      "vaul",
-      "@/lib/utils"
+      "vaul"
     ]
   },
   {
@@ -3904,8 +3890,8 @@
     "technical_description": "Módulo técnico input.",
     "business_logic": "Lógica para input",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3914,8 +3900,8 @@
     "technical_description": "Módulo técnico HorizontalScroll.",
     "business_logic": "Lógica para HorizontalScroll",
     "dependencies": [
-      "react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3933,10 +3919,10 @@
     "technical_description": "Módulo técnico SyncStatusBadge.",
     "business_logic": "Lógica para SyncStatusBadge",
     "dependencies": [
-      "react",
-      "@/components/providers/SyncProvider",
       "lucide-react",
-      "@/lib/utils"
+      "@/lib/utils",
+      "react",
+      "@/components/providers/SyncProvider"
     ]
   },
   {
@@ -3945,10 +3931,10 @@
     "technical_description": "Módulo técnico radio-group.",
     "business_logic": "Lógica para radio-group",
     "dependencies": [
-      "react",
-      "@radix-ui/react-radio-group",
       "lucide-react",
-      "@/lib/utils"
+      "@radix-ui/react-radio-group",
+      "@/lib/utils",
+      "react"
     ]
   },
   {
@@ -3957,13 +3943,13 @@
     "technical_description": "Módulo técnico index.",
     "business_logic": "Lógica para index",
     "dependencies": [
-      "react",
+      "@/types",
       "@/lib/utils",
-      "@radix-ui/react-slot",
-      "lucide-react",
       "../ProductImage",
+      "react",
       "../HorizontalScroll",
-      "@/types"
+      "lucide-react",
+      "@radix-ui/react-slot"
     ]
   },
   {
@@ -3972,12 +3958,12 @@
     "technical_description": "Módulo técnico RegisterForm.",
     "business_logic": "Lógica para RegisterForm",
     "dependencies": [
-      "react",
-      "@/lib/supabaseClient",
       "sonner",
+      "react",
+      "@/components/ui/input",
       "lucide-react",
       "@/lib/logger",
-      "@/components/ui/input"
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -3986,19 +3972,19 @@
     "technical_description": "Módulo técnico LoginForm.",
     "business_logic": "Lógica para LoginForm",
     "dependencies": [
-      "react",
       "@/store",
-      "next/navigation",
-      "lucide-react",
-      "@/lib/supabaseClient",
-      "./RegisterForm",
-      "sonner",
-      "@/components/ui/input",
-      "@/lib/logger",
       "@/contracts",
-      "@/lib/navigation",
+      "@/contracts/user",
+      "next/navigation",
+      "sonner",
+      "./RegisterForm",
+      "react",
+      "@/components/ui/input",
+      "lucide-react",
+      "@/lib/logger",
+      "@/lib/supabaseClient",
       "@/services/user-service",
-      "@/contracts/user"
+      "@/lib/navigation"
     ]
   },
   {
@@ -4007,18 +3993,18 @@
     "technical_description": "Módulo técnico WelcomeLandingView.",
     "business_logic": "Lógica para WelcomeLandingView",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
+      "@/store",
       "next/link",
       "@/components/CostProLogo",
       "@/components/ThemeToggle",
-      "./diagrams/AutomationWorkflowDiagram",
+      "framer-motion",
       "./diagrams/SpeedScaleDiagram",
       "@/hooks/ui/usePWA",
       "@/lib/utils",
+      "./diagrams/AutomationWorkflowDiagram",
       "@/components/ui/PWAInstallModal",
-      "@/store"
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -4027,9 +4013,9 @@
     "technical_description": "Módulo técnico SpeedScaleDiagram.",
     "business_logic": "Lógica para SpeedScaleDiagram",
     "dependencies": [
-      "react",
+      "lucide-react",
       "framer-motion",
-      "lucide-react"
+      "react"
     ]
   },
   {
@@ -4038,8 +4024,8 @@
     "technical_description": "Módulo técnico AutomationWorkflowDiagram.",
     "business_logic": "Lógica para AutomationWorkflowDiagram",
     "dependencies": [
-      "framer-motion",
-      "lucide-react"
+      "lucide-react",
+      "framer-motion"
     ]
   },
   {
@@ -4059,8 +4045,8 @@
     "technical_description": "Módulo técnico store-service.",
     "business_logic": "Lógica para store-service",
     "dependencies": [
-      "@/lib/supabaseClient",
       "@/lib/logger",
+      "@/lib/supabaseClient",
       "@/types"
     ]
   },
@@ -4072,8 +4058,8 @@
     "dependencies": [
       "jspdf",
       "html2canvas",
-      "sonner",
-      "xlsx"
+      "xlsx",
+      "sonner"
     ]
   },
   {
@@ -4102,9 +4088,9 @@
     "technical_description": "Módulo técnico transfer-service.",
     "business_logic": "Lógica para transfer-service",
     "dependencies": [
+      "@/lib/rpc-validator",
       "@/lib/supabaseClient",
       "@/types",
-      "@/lib/rpc-validator",
       "@/validation/schemas"
     ]
   },
@@ -4125,15 +4111,15 @@
     "technical_description": "Módulo técnico bot-service.",
     "business_logic": "Lógica para bot-service",
     "dependencies": [
+      "@/lib/ai/types",
+      "path",
+      "@/validation/forms/ai-form-schemas",
+      "@/config/viewRegistry",
       "@supabase/supabase-js",
       "fs",
-      "path",
-      "@/lib/ai/orchestrator",
-      "@/lib/ai/types",
       "@/lib/ai/tools/definitions",
       "@/lib/ai/tools/registry",
-      "@/config/viewRegistry",
-      "@/validation/forms/ai-form-schemas"
+      "@/lib/ai/orchestrator"
     ]
   },
   {
@@ -4181,11 +4167,11 @@
     "technical_description": "Módulo técnico user-service.",
     "business_logic": "Lógica para user-service",
     "dependencies": [
-      "@/lib/supabaseClient",
-      "@/lib/logger",
       "@/types",
+      "@/lib/rpc-validator",
       "@/validation/schemas",
-      "@/lib/rpc-validator"
+      "@/lib/logger",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4204,11 +4190,11 @@
     "business_logic": "Lógica para catalog-service",
     "dependencies": [
       "papaparse",
-      "sonner",
       "@/types",
-      "@/lib/supabaseClient",
+      "@/validation/schemas",
+      "sonner",
       "./import-service",
-      "@/validation/schemas"
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4224,12 +4210,12 @@
     "technical_description": "Módulo técnico useSync.",
     "business_logic": "Lógica para useSync",
     "dependencies": [
-      "react",
-      "@/lib/sync/offline-storage",
-      "@/validation/schemas",
       "@/store",
+      "@/lib/sync/offline-storage",
       "uuid",
-      "sonner"
+      "@/validation/schemas",
+      "sonner",
+      "react"
     ]
   },
   {
@@ -4238,14 +4224,14 @@
     "technical_description": "Módulo técnico useCostSheetCalculator.",
     "business_logic": "Lógica para useCostSheetCalculator",
     "dependencies": [
-      "react",
-      "immer",
-      "decimal.js",
-      "expr-eval",
-      "@/types/cost-sheet",
-      "@/lib/cost-engine",
       "@/lib/cost-engine/types",
-      "@/lib/cost-engine/validations"
+      "decimal.js",
+      "@/lib/cost-engine",
+      "@/lib/cost-engine/validations",
+      "immer",
+      "expr-eval",
+      "react",
+      "@/types/cost-sheet"
     ]
   },
   {
@@ -4254,8 +4240,8 @@
     "technical_description": "Módulo técnico usePOSProducts.",
     "business_logic": "Lógica para usePOSProducts",
     "dependencies": [
-      "react",
-      "@/types"
+      "@/types",
+      "react"
     ]
   },
   {
@@ -4264,15 +4250,15 @@
     "technical_description": "Módulo técnico useSessionManager.",
     "business_logic": "Lógica para useSessionManager",
     "dependencies": [
-      "react",
       "@/store",
-      "@/store/session-store",
-      "@/lib/supabaseClient",
-      "next/navigation",
-      "@/lib/navigation",
       "@/contracts/user",
+      "@/types",
+      "next/navigation",
+      "@/store/session-store",
+      "react",
+      "@/lib/supabaseClient",
       "@/services/user-service",
-      "@/types"
+      "@/lib/navigation"
     ]
   },
   {
@@ -4281,8 +4267,8 @@
     "technical_description": "Módulo técnico useCostEngine.",
     "business_logic": "Lógica para useCostEngine",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/cost-engine/types"
+      "@/lib/cost-engine/types",
+      "@tanstack/react-query"
     ]
   },
   {
@@ -4291,10 +4277,10 @@
     "technical_description": "Módulo técnico useTransfers.",
     "business_logic": "Lógica para useTransfers",
     "dependencies": [
-      "@tanstack/react-query",
       "@/services/transfer-service",
-      "@/components/providers/SyncProvider",
-      "./base"
+      "./base",
+      "@tanstack/react-query",
+      "@/components/providers/SyncProvider"
     ]
   },
   {
@@ -4303,12 +4289,11 @@
     "technical_description": "Módulo técnico useDocumentActions.",
     "business_logic": "Lógica para useDocumentActions",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
       "@/store",
+      "@tanstack/react-query",
       "sonner",
       "./base",
-      "@/store"
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4317,8 +4302,8 @@
     "technical_description": "Módulo técnico useCostSheets.",
     "business_logic": "Lógica para useCostSheets",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient"
+      "@/lib/supabaseClient",
+      "@tanstack/react-query"
     ]
   },
   {
@@ -4327,12 +4312,12 @@
     "technical_description": "Módulo técnico useTaxes.",
     "business_logic": "Lógica para useTaxes",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/validation/schemas",
+      "@/types",
       "@/lib/rpc-validator",
+      "@tanstack/react-query",
+      "@/validation/schemas",
       "./base",
-      "@/types"
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4341,15 +4326,14 @@
     "technical_description": "Módulo técnico useProducts.",
     "business_logic": "Lógica para useProducts",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/validation/schemas",
+      "@/types",
       "@/lib/rpc-validator",
-      "@/validation/schemas",
-      "@/lib/utils",
-      "./base",
       "zod",
-      "@/types"
+      "@tanstack/react-query",
+      "@/validation/schemas",
+      "./base",
+      "@/lib/utils",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4359,12 +4343,12 @@
     "business_logic": "Lógica para useTransactions",
     "dependencies": [
       "uuid",
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
       "@/lib/rpc-validator",
+      "zod",
+      "@tanstack/react-query",
       "@/validation/schemas",
       "./base",
-      "zod",
+      "@/lib/supabaseClient",
       "@/components/providers/SyncProvider"
     ]
   },
@@ -4374,12 +4358,12 @@
     "technical_description": "Módulo técnico useStockMovements.",
     "business_logic": "Lógica para useStockMovements",
     "dependencies": [
-      "@tanstack/react-query",
       "zod",
-      "@/lib/supabaseClient",
-      "./base",
       "@/lib/rpc-validator",
-      "@/validation/schemas"
+      "@tanstack/react-query",
+      "@/validation/schemas",
+      "./base",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4388,9 +4372,9 @@
     "technical_description": "Módulo técnico useCashClosures.",
     "business_logic": "Lógica para useCashClosures",
     "dependencies": [
-      "@tanstack/react-query",
       "@/services/cash-service",
       "@/types",
+      "@tanstack/react-query",
       "sonner",
       "./base"
     ]
@@ -4401,13 +4385,13 @@
     "technical_description": "Módulo técnico useStores.",
     "business_logic": "Lógica para useStores",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/lib/logger",
-      "@/validation/schemas",
+      "@/types",
       "@/lib/rpc-validator",
+      "@tanstack/react-query",
+      "@/validation/schemas",
       "./base",
-      "@/types"
+      "@/lib/logger",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4416,13 +4400,12 @@
     "technical_description": "Módulo técnico useDashboard.",
     "business_logic": "Lógica para useDashboard",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/validation/schemas",
+      "@/types",
       "@/lib/rpc-validator",
+      "@tanstack/react-query",
       "@/validation/schemas",
       "./base",
-      "@/types"
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4431,15 +4414,15 @@
     "technical_description": "Módulo técnico useUsers.",
     "business_logic": "Lógica para useUsers",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/lib/logger",
-      "./base",
-      "@/lib/rpc-validator",
-      "@/validation/schemas",
       "@/types",
+      "@/lib/rpc-validator",
       "zod",
-      "sonner"
+      "@tanstack/react-query",
+      "@/validation/schemas",
+      "sonner",
+      "./base",
+      "@/lib/logger",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4448,13 +4431,12 @@
     "technical_description": "Módulo técnico useInventory.",
     "business_logic": "Lógica para useInventory",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/validation/schemas",
       "@/lib/rpc-validator",
+      "zod",
+      "@tanstack/react-query",
       "@/validation/schemas",
       "./base",
-      "zod",
+      "@/lib/supabaseClient",
       "@/components/providers/SyncProvider"
     ]
   },
@@ -4464,12 +4446,12 @@
     "technical_description": "Módulo técnico useRoles.",
     "business_logic": "Lógica para useRoles",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
-      "@/lib/logger",
-      "./base",
       "@/types",
-      "sonner"
+      "@tanstack/react-query",
+      "sonner",
+      "./base",
+      "@/lib/logger",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4488,12 +4470,12 @@
     "technical_description": "Módulo técnico useAuditLogs.",
     "business_logic": "Lógica para useAuditLogs",
     "dependencies": [
-      "@tanstack/react-query",
-      "zod",
-      "@/lib/supabaseClient",
       "@/lib/rpc-validator",
+      "zod",
+      "@tanstack/react-query",
       "@/validation/schemas",
-      "./base"
+      "./base",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4502,9 +4484,9 @@
     "technical_description": "Módulo técnico base.",
     "business_logic": "Lógica para base",
     "dependencies": [
-      "@/lib/supabaseClient",
-      "@/lib/logger",
       "@/store",
+      "@/lib/logger",
+      "@/lib/supabaseClient",
       "@/lib/query-inspector-utils"
     ]
   },
@@ -4514,11 +4496,11 @@
     "technical_description": "Módulo técnico useReceptions.",
     "business_logic": "Lógica para useReceptions",
     "dependencies": [
-      "@tanstack/react-query",
-      "@/lib/supabaseClient",
       "@/lib/rpc-validator",
+      "@tanstack/react-query",
       "@/validation/schemas",
-      "./base"
+      "./base",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -4528,8 +4510,8 @@
     "business_logic": "Lógica para useRSS",
     "dependencies": [
       "@tanstack/react-query",
-      "@/services/rss-service",
-      "@/types"
+      "@/types",
+      "@/services/rss-service"
     ]
   },
   {
@@ -4547,12 +4529,12 @@
     "technical_description": "Módulo técnico useTerminalNavigation.",
     "business_logic": "Lógica para useTerminalNavigation",
     "dependencies": [
-      "react",
-      "framer-motion",
-      "lucide-react",
-      "@/types",
       "@/contracts/user",
-      "@/lib/roles"
+      "@/types",
+      "framer-motion",
+      "@/lib/roles",
+      "react",
+      "lucide-react"
     ]
   },
   {
@@ -4588,8 +4570,8 @@
     "technical_description": "Módulo técnico useToast.",
     "business_logic": "Lógica para useToast",
     "dependencies": [
-      "react",
-      "@/components/ui/toast"
+      "@/components/ui/toast",
+      "react"
     ]
   },
   {
@@ -4598,9 +4580,9 @@
     "technical_description": "Módulo técnico usePWA.test.",
     "business_logic": "Lógica para usePWA.test",
     "dependencies": [
-      "@testing-library/react",
+      "vitest",
       "../usePWA",
-      "vitest"
+      "@testing-library/react"
     ]
   },
   {
@@ -4610,8 +4592,8 @@
     "business_logic": "Lógica para useCostSheetCalculator.test",
     "dependencies": [
       "vitest",
-      "@testing-library/react",
       "../logic/useCostSheetCalculator",
+      "@testing-library/react",
       "@/contracts"
     ]
   },
@@ -4622,11 +4604,11 @@
     "business_logic": "Lógica para templates_verification.test",
     "dependencies": [
       "vitest",
-      "@testing-library/react",
       "../logic/useCostSheetCalculator",
-      "../../lib/data/costpro-reinicio",
+      "@testing-library/react",
+      "../../lib/data/template-industrial",
       "../../lib/data/template-juice",
-      "../../lib/data/template-industrial"
+      "../../lib/data/costpro-reinicio"
     ]
   },
   {
@@ -4635,11 +4617,11 @@
     "technical_description": "Módulo técnico cart.",
     "business_logic": "Lógica para cart",
     "dependencies": [
-      "zustand",
-      "zustand/middleware",
-      "immer",
       "@/types",
-      "sonner"
+      "zustand",
+      "sonner",
+      "immer",
+      "zustand/middleware"
     ]
   },
   {
@@ -4657,14 +4639,14 @@
     "technical_description": "Módulo técnico cost-sheet-store.",
     "business_logic": "Lógica para cost-sheet-store",
     "dependencies": [
-      "zustand",
-      "zustand/middleware",
-      "@/lib/data/costpro-reinicio",
-      "@/lib/data/costpro-ejemplo",
-      "immer",
       "@/contracts",
+      "zustand",
+      "@/lib/data/costpro-ejemplo",
       "@/validation/schemas",
-      "sonner"
+      "sonner",
+      "immer",
+      "@/lib/data/costpro-reinicio",
+      "zustand/middleware"
     ]
   },
   {
@@ -4673,13 +4655,13 @@
     "technical_description": "Módulo técnico index.",
     "business_logic": "Lógica para index",
     "dependencies": [
-      "zustand",
-      "zustand/middleware",
-      "@/contracts/user",
       "./cart",
+      "@/contracts/user",
+      "zustand",
+      "./useAcademyStore",
       "./cost-sheet-store",
       "./session-store",
-      "./useAcademyStore"
+      "zustand/middleware"
     ]
   },
   {
@@ -4720,8 +4702,8 @@
     "business_logic": "Lógica para auth.test",
     "dependencies": [
       "vitest",
-      "../index",
-      "@/contracts"
+      "@/contracts",
+      "../index"
     ]
   },
   {
@@ -4795,8 +4777,8 @@
     "technical_description": "Módulo técnico auth.",
     "business_logic": "Lógica para auth",
     "dependencies": [
-      "next/server",
-      "@/lib/supabaseClient"
+      "@/lib/supabaseClient",
+      "next/server"
     ]
   },
   {
@@ -4812,8 +4794,8 @@
     "technical_description": "Módulo técnico plan-utils.",
     "business_logic": "Lógica para plan-utils",
     "dependencies": [
-      "@/services/usage-service",
-      "@/contracts/user"
+      "@/contracts/user",
+      "@/services/usage-service"
     ]
   },
   {
@@ -4839,10 +4821,10 @@
     "technical_description": "Módulo técnico utils.",
     "business_logic": "Lógica para utils",
     "dependencies": [
-      "clsx",
-      "tailwind-merge",
+      "@/types",
       "./supabaseClient",
-      "@/types"
+      "clsx",
+      "tailwind-merge"
     ]
   },
   {
@@ -4942,10 +4924,10 @@
     "technical_description": "Módulo técnico index.",
     "business_logic": "Lógica para index",
     "dependencies": [
-      "decimal.js",
+      "./formula-utils",
       "expr-eval",
-      "./types",
-      "./formula-utils"
+      "decimal.js",
+      "./types"
     ]
   },
   {
@@ -5007,8 +4989,8 @@
     "dependencies": [
       "vitest",
       "./index",
-      "./types",
-      "./fixtures/FC-DEMO-243.json"
+      "./fixtures/FC-DEMO-243.json",
+      "./types"
     ]
   },
   {
@@ -5028,8 +5010,8 @@
     "dependencies": [
       "jspdf",
       "jspdf-autotable",
-      "@/types",
-      "date-fns"
+      "date-fns",
+      "@/types"
     ]
   },
   {
@@ -5052,8 +5034,8 @@
     "technical_description": "Módulo técnico health-alerts.",
     "business_logic": "Lógica para health-alerts",
     "dependencies": [
-      "@/lib/supabaseClient",
-      "./health-engine"
+      "./health-engine",
+      "@/lib/supabaseClient"
     ]
   },
   {
@@ -5108,9 +5090,9 @@
     "technical_description": "Módulo técnico ReleaseGatePdfExporter.",
     "business_logic": "Lógica para ReleaseGatePdfExporter",
     "dependencies": [
+      "date-fns/locale",
       "jspdf",
-      "date-fns",
-      "date-fns/locale"
+      "date-fns"
     ]
   },
   {
@@ -5303,8 +5285,8 @@
     "business_logic": "Lógica para bandecParser",
     "dependencies": [
       "uuid",
-      "../dexie",
       "./engine",
+      "../dexie",
       "./utils"
     ]
   },
@@ -5361,8 +5343,8 @@
     "business_logic": "Lógica para bandecParser.test",
     "dependencies": [
       "vitest",
-      "../bandecParser",
-      "../utils"
+      "../utils",
+      "../bandecParser"
     ]
   },
   {
@@ -5415,14 +5397,14 @@
     "technical_description": "Módulo técnico orchestrator.",
     "business_logic": "Lógica para orchestrator",
     "dependencies": [
-      "./types",
       "./adapters/gemini-adapter",
-      "./adapters/gpt-adapter",
-      "./adapters/qwen-adapter",
-      "./adapters/deepseek-adapter",
+      "./types",
       "./adapters/kimi-adapter",
+      "@supabase/supabase-js",
+      "./adapters/gpt-adapter",
+      "./adapters/deepseek-adapter",
       "./adapters/fallback-adapter",
-      "@supabase/supabase-js"
+      "./adapters/qwen-adapter"
     ]
   },
   {
@@ -5475,8 +5457,8 @@
     "business_logic": "Lógica para gemini-adapter.test",
     "dependencies": [
       "vitest",
-      "./gemini-adapter",
-      "../types"
+      "../types",
+      "./gemini-adapter"
     ]
   },
   {
@@ -5522,11 +5504,11 @@
     "technical_description": "Módulo técnico registry.",
     "business_logic": "Lógica para registry",
     "dependencies": [
-      "@supabase/supabase-js",
-      "@/config/viewRegistry",
-      "./definitions",
+      "../../observability/system-health",
       "zod",
-      "../../observability/system-health"
+      "./definitions",
+      "@/config/viewRegistry",
+      "@supabase/supabase-js"
     ]
   },
   {
@@ -5545,10 +5527,10 @@
     "technical_description": "Módulo técnico offline-storage.",
     "business_logic": "Lógica para offline-storage",
     "dependencies": [
-      "localforage",
       "uuid",
+      "zod",
       "@/validation/schemas",
-      "zod"
+      "localforage"
     ]
   }
 ]
