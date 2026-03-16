@@ -1,3384 +1,4922 @@
 {
   "nodes": [
     {
-      "id": "src/components/IntelligentThemeHandler.tsx",
-      "name": "IntelligentThemeHandler.tsx",
+      "id": "IntelligentThemeHandler",
       "type": "component"
     },
     {
-      "id": "src/components/GlobalSessionManager.tsx",
-      "name": "GlobalSessionManager.tsx",
+      "id": "GlobalSessionManager",
       "type": "component"
     },
     {
-      "id": "src/components/theme-provider.tsx",
-      "name": "theme-provider.tsx",
+      "id": "theme-provider",
       "type": "component"
     },
     {
-      "id": "src/components/SplashScreen.tsx",
-      "name": "SplashScreen.tsx",
+      "id": "SplashScreen",
       "type": "component"
     },
     {
-      "id": "src/components/ThemeToggle.tsx",
-      "name": "ThemeToggle.tsx",
+      "id": "ThemeToggle",
       "type": "component"
     },
     {
-      "id": "src/components/CostProLogo.tsx",
-      "name": "CostProLogo.tsx",
+      "id": "CostProLogo",
       "type": "component"
     },
     {
-      "id": "src/components/ServiceWorkerRegister.tsx",
-      "name": "ServiceWorkerRegister.tsx",
+      "id": "ServiceWorkerRegister",
       "type": "component"
     },
     {
-      "id": "src/components/modals/SyncConflictModal.tsx",
-      "name": "SyncConflictModal.tsx",
+      "id": "SyncConflictModal",
       "type": "component"
     },
     {
-      "id": "src/components/modals/CreateProductModal.tsx",
-      "name": "CreateProductModal.tsx",
+      "id": "CreateProductModal",
       "type": "component"
     },
     {
-      "id": "src/components/modals/BarcodeScanner.tsx",
-      "name": "BarcodeScanner.tsx",
+      "id": "BarcodeScanner",
       "type": "component"
     },
     {
-      "id": "src/components/modals/UpgradeModal.tsx",
-      "name": "UpgradeModal.tsx",
+      "id": "UpgradeModal",
       "type": "component"
     },
     {
-      "id": "src/components/modals/PriceSelectorModal.tsx",
-      "name": "PriceSelectorModal.tsx",
+      "id": "PriceSelectorModal",
       "type": "component"
     },
     {
-      "id": "src/components/providers/SyncProvider.tsx",
-      "name": "SyncProvider.tsx",
+      "id": "SyncProvider",
       "type": "component"
     },
     {
-      "id": "src/components/providers/QueryProvider.tsx",
-      "name": "QueryProvider.tsx",
+      "id": "QueryProvider",
       "type": "component"
     },
     {
-      "id": "src/components/views/TerminalShell.tsx",
-      "name": "TerminalShell.tsx",
+      "id": "TerminalShell",
       "type": "component"
     },
     {
-      "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "name": "ExecutiveDemoView.tsx",
+      "id": "ExecutiveDemoView",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/Sidebar.tsx",
-      "name": "Sidebar.tsx",
+      "id": "Sidebar",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/Header.tsx",
-      "name": "Header.tsx",
+      "id": "Header",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
-      "name": "SystemDependencyGraph.tsx",
+      "id": "SystemDependencyGraph",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/views/health/AuditSummary.tsx",
-      "name": "AuditSummary.tsx",
+      "id": "AuditSummary",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
-      "name": "SecurityMetrics.tsx",
+      "id": "SecurityMetrics",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
-      "name": "HealthStatusHeader.tsx",
+      "id": "HealthStatusHeader",
       "type": "component"
     },
     {
-      "id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "name": "SystemHealthView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
-      "name": "ArchitectureAuditTable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
-      "name": "ReleaseGateStatus.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
-      "name": "ViewNavigator.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
-      "name": "HealthAgentLogs.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
-      "name": "DetailedRelationshipGraph.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
-      "name": "InfrastructureMetrics.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
-      "name": "ApplicationMetrics.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "name": "WalletView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
-      "name": "AnalyticsDashboard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
-      "name": "CatalogModals.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "name": "CatalogView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/settings/SettingsView.tsx",
-      "name": "SettingsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "name": "DashboardView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
-      "name": "useDashboardView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
-      "name": "ConcentricDashboardRing.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
-      "name": "ExecutiveKpiCards.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
-      "name": "RecentCostSheets.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
-      "name": "ReportConfigPanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
-      "name": "ReportPreview.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "name": "ReportsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
-      "name": "AuditLogsModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "name": "StoresManagementView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/stores/useStoresView.ts",
-      "name": "useStoresView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/stores/StoreModals.tsx",
-      "name": "StoreModals.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
-      "name": "MasteryDashboard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "name": "AcademyView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/academy/Flashcard.tsx",
-      "name": "Flashcard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
-      "name": "CreateTransferModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "name": "TransferenciasView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
-      "name": "TransferDetailsModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/HelpView.tsx",
-      "name": "HelpView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
-      "name": "KidsOnboarding.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
-      "name": "StickyCartFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.test.tsx",
-      "name": "StoreSkuDiagram.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
-      "name": "MobilePosDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
-      "name": "IpvFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
-      "name": "SecurityFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
-      "name": "UserFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
-      "name": "QuickModeMassiveDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx",
-      "name": "OfflineSyncDiagram.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/DarianDiagram.test.tsx",
-      "name": "DarianDiagram.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
-      "name": "CostFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
-      "name": "RolesDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
-      "name": "OfflineSyncDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
-      "name": "InventoryFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
-      "name": "MobileFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
-      "name": "CashFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
-      "name": "InventoryAdjustmentFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
-      "name": "StoreSkuDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
-      "name": "DarianDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
-      "name": "SalesFlowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
-      "name": "InventoryCardView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "name": "InventoryAdjustmentsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
-      "name": "InventoryAdjustmentModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "name": "ProductReceptionView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
-      "name": "InventoryTableView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "name": "InventoryView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
-      "name": "CashClosureView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
-      "name": "TaxCalculationModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "name": "SalesHistoryView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
-      "name": "TransactionDetailsModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
-      "name": "useSalesHistoryView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
-      "name": "ReceptionDetailsModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "name": "ReceptionsHistoryView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
-      "name": "useReceptionsHistoryView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "name": "StockHistoryView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "name": "IPVView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
-      "name": "IPVRightSidebar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
-      "name": "TransactionBreakdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
-      "name": "ActionBadges.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
-      "name": "TransactionTable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
-      "name": "AddTransactionModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
-      "name": "IncomeReceiptPreview.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "name": "MovementsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
-      "name": "IncomeReceiptSection.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
-      "name": "IPVPreviewModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
-      "name": "MatchingTracePopover.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "name": "IPVReportView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "name": "MatchingAuditView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
-      "name": "IngestionErrorsTable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "name": "TransferQRReportView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "name": "ManualReconciliationView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
-      "name": "MatchingRulesEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
-      "name": "MatchingSimulation.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
-      "name": "RuleMetaEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
-      "name": "IPVReportsDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
-      "name": "PivotStatementView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
-      "name": "BankIngestion.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
-      "name": "IPVInstitutionalDashboard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
-      "name": "CatalogTable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
-      "name": "IPVHelpDialog.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
-      "name": "IPVControlPanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
-      "name": "InventoryCountTableView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
-      "name": "InventoryCountCardView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "name": "InventoryCountView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/data-loader.ts",
-      "name": "data-loader.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
-      "name": "CuentasModule.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
-      "name": "AsientosModule.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
-      "name": "WikiBreadcrumbs.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
-      "name": "WikiSearch.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/types.ts",
-      "name": "types.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "name": "WikiView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
-      "name": "WikiSidebar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
-      "name": "ClasificadorModule.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
-      "name": "POSTableView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/usePOSView.ts",
-      "name": "usePOSView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/POSView.tsx",
-      "name": "POSView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/POSCart.tsx",
-      "name": "POSCart.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
-      "name": "StickyCartSummary.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
-      "name": "AuditEventIcon.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/audit.test.ts",
-      "name": "audit.test.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditFilters.tsx",
-      "name": "AuditFilters.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditEventMeta.test.tsx",
-      "name": "AuditEventMeta.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.tsx",
-      "name": "AuditTableView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
-      "name": "AuditTableView.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
-      "name": "AuditTimeline.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
-      "name": "AuditLogsView.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
-      "name": "useAuditLogsView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
-      "name": "AuditEventCard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
-      "name": "AuditEventMeta.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "name": "AuditLogsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "name": "CostSheetAuditView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
-      "name": "CostSheetSidebarNav.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
-      "name": "CostSheetFormulaGuide.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
-      "name": "CostSheetGenerateDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
-      "name": "FormulaEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
-      "name": "CircularProgress.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
-      "name": "CostSheetCalculator.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
-      "name": "ProductInventoryPicker.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
-      "name": "CostSheetBanner.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
-      "name": "CostSheetAuditLog.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
-      "name": "CostSheetMasterRing.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
-      "name": "CostSheetActionsPanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "name": "CostSheetView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
-      "name": "CostSheetAnnexes.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
-      "name": "CostSheetHelpDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
-      "name": "CostSheetSummary.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "name": "CostSheetNav.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
-      "name": "CostSheetOptionsDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
-      "name": "CostSheetHeader.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
-      "name": "CostSheetQuickMode.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
-      "name": "CostSheetBottomNav.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
-      "name": "CostSheetNarrative.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
-      "name": "CostSheetSignature.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
-      "name": "CostSheetExportModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
-      "name": "HealthBattery.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
-      "name": "CostSheetTemplateExplorer.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
-      "name": "CostSheetForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
-      "name": "FormulaBuilder.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "name": "CostSheetCardView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
-      "name": "CostSheetMassiveGenerator.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
-      "name": "CostSheetSidePanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
-      "name": "CostSheetBody.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
-      "name": "DarianEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
-      "name": "CostSheetHeaderEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
-      "name": "CostSheetFCDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "name": "CostSheetWizard.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
-      "name": "CostSheetInteractiveTable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
-      "name": "CostSheetAnnexEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
-      "name": "CostSheetSectionActionsPanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "name": "CostSheetPreview.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
-      "name": "CostSheetSignatureEditor.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
-      "name": "CostSheetModeDropdown.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
-      "name": "CostSheetHelpPanel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx",
-      "name": "CostSheetTemplateExplorer.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/UserFormModal.tsx",
-      "name": "UserFormModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/useUsersView.ts",
-      "name": "useUsersView.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "name": "UsersManagementView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/RoleForm.tsx",
-      "name": "RoleForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "name": "RolesManagementView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/users/UserForm.tsx",
-      "name": "UserForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
-      "name": "RSSManagementView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/rss/NewsView.tsx",
-      "name": "NewsView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalView.test.tsx",
-      "name": "LegalView.test.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
-      "name": "LegalPdfExporter.ts",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
-      "name": "LegalModelForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
-      "name": "LegalConsultant.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/views/terminal/views/legal/LegalView.tsx",
-      "name": "LegalView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/skeleton.tsx",
-      "name": "skeleton.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/DataDecryption.tsx",
-      "name": "DataDecryption.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/accordion.tsx",
-      "name": "accordion.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/ViewSwitcher.tsx",
-      "name": "ViewSwitcher.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/hover-card.tsx",
-      "name": "hover-card.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/LazyRender.tsx",
-      "name": "LazyRender.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/command.tsx",
-      "name": "command.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/resizable.tsx",
-      "name": "resizable.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/QueryInspector.tsx",
-      "name": "QueryInspector.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/SearchBar.tsx",
-      "name": "SearchBar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/dropdown-menu.tsx",
-      "name": "dropdown-menu.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/separator.tsx",
-      "name": "separator.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/MobileSafeContainer.tsx",
-      "name": "MobileSafeContainer.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/pagination.tsx",
-      "name": "pagination.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/alert-dialog.tsx",
-      "name": "alert-dialog.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/input-otp.tsx",
-      "name": "input-otp.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/alert.tsx",
-      "name": "alert.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/CyberShell.tsx",
-      "name": "CyberShell.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/popover.tsx",
-      "name": "popover.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/table.tsx",
-      "name": "table.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/progress.tsx",
-      "name": "progress.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/select.tsx",
-      "name": "select.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/sonner.tsx",
-      "name": "sonner.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/LoadingOverlay.tsx",
-      "name": "LoadingOverlay.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/textarea.tsx",
-      "name": "textarea.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/PWAInstallModal.tsx",
-      "name": "PWAInstallModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/toggle.tsx",
-      "name": "toggle.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/StateRenderer.tsx",
-      "name": "StateRenderer.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/Portal.tsx",
-      "name": "Portal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/toggle-group.tsx",
-      "name": "toggle-group.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/scroll-area.tsx",
-      "name": "scroll-area.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/label.tsx",
-      "name": "label.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/chart.tsx",
-      "name": "chart.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/sidebar.tsx",
-      "name": "sidebar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/tabs.tsx",
-      "name": "tabs.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/BaseModal.tsx",
-      "name": "BaseModal.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/switch.tsx",
-      "name": "switch.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/checkbox.tsx",
-      "name": "checkbox.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/context-menu.tsx",
-      "name": "context-menu.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/badge.tsx",
-      "name": "badge.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/CostProLoader.tsx",
-      "name": "CostProLoader.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/calendar.tsx",
-      "name": "calendar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/toaster.tsx",
-      "name": "toaster.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/navigation-menu.tsx",
-      "name": "navigation-menu.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/ActionMenu.tsx",
-      "name": "ActionMenu.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/ProductImage.tsx",
-      "name": "ProductImage.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/toast.tsx",
-      "name": "toast.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/FloatingCalculator.tsx",
-      "name": "FloatingCalculator.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/ScrollToTop.tsx",
-      "name": "ScrollToTop.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/button.tsx",
-      "name": "button.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/avatar.tsx",
-      "name": "avatar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/dialog.tsx",
-      "name": "dialog.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/SecurityScrollContainer.tsx",
-      "name": "SecurityScrollContainer.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/breadcrumb.tsx",
-      "name": "breadcrumb.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/form.tsx",
-      "name": "form.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/slider.tsx",
-      "name": "slider.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/menubar.tsx",
-      "name": "menubar.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/tooltip.tsx",
-      "name": "tooltip.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/SpeedDial.tsx",
-      "name": "SpeedDial.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/ChatBot.tsx",
-      "name": "ChatBot.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/aspect-ratio.tsx",
-      "name": "aspect-ratio.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/carousel.tsx",
-      "name": "carousel.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/card.tsx",
-      "name": "card.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/sheet.tsx",
-      "name": "sheet.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/drawer.tsx",
-      "name": "drawer.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/input.tsx",
-      "name": "input.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/HorizontalScroll.tsx",
-      "name": "HorizontalScroll.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/collapsible.tsx",
-      "name": "collapsible.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/SyncStatusBadge.tsx",
-      "name": "SyncStatusBadge.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/radio-group.tsx",
-      "name": "radio-group.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/ui/atomic/index.tsx",
-      "name": "index.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/auth/RegisterForm.tsx",
-      "name": "RegisterForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/auth/LoginForm.tsx",
-      "name": "LoginForm.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/auth/WelcomeLandingView.tsx",
-      "name": "WelcomeLandingView.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
-      "name": "SpeedScaleDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
-      "name": "AutomationWorkflowDiagram.tsx",
-      "type": "component"
-    },
-    {
-      "id": "src/app/page.tsx",
-      "name": "page.tsx",
+      "id": "SystemHealthView",
       "type": "view"
     },
     {
-      "id": "src/app/layout.tsx",
-      "name": "layout.tsx",
+      "id": "ArchitectureAuditTable",
+      "type": "component"
+    },
+    {
+      "id": "ReleaseGateStatus",
+      "type": "component"
+    },
+    {
+      "id": "ViewNavigator",
+      "type": "component"
+    },
+    {
+      "id": "HealthAgentLogs",
+      "type": "component"
+    },
+    {
+      "id": "DetailedRelationshipGraph",
+      "type": "component"
+    },
+    {
+      "id": "InfrastructureMetrics",
+      "type": "component"
+    },
+    {
+      "id": "ApplicationMetrics",
+      "type": "component"
+    },
+    {
+      "id": "WalletView",
       "type": "view"
     },
     {
-      "id": "src/app/cost-sheets/page.tsx",
-      "name": "page.tsx",
+      "id": "AnalyticsDashboard",
+      "type": "component"
+    },
+    {
+      "id": "CatalogModals",
+      "type": "component"
+    },
+    {
+      "id": "CatalogView",
       "type": "view"
     },
     {
-      "id": "src/app/api/route.ts",
-      "name": "route.ts",
+      "id": "SettingsView",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/import-anexo/route.ts",
-      "name": "route.ts",
+      "id": "DashboardView",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/save/route.ts",
-      "name": "route.ts",
+      "id": "useDashboardView",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/export-pdf/route.ts",
-      "name": "route.ts",
+      "id": "ConcentricDashboardRing",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/import-json/route.ts",
-      "name": "route.ts",
+      "id": "ExecutiveKpiCards",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/ai/chat/route.ts",
-      "name": "route.ts",
+      "id": "RecentCostSheets",
       "type": "view"
     },
     {
-      "id": "src/app/api/cost-sheets/calculate/route.ts",
-      "name": "route.ts",
+      "id": "ReportConfigPanel",
+      "type": "component"
+    },
+    {
+      "id": "ReportPreview",
+      "type": "component"
+    },
+    {
+      "id": "ReportsView",
       "type": "view"
     },
     {
-      "id": "src/app/api/system-health/route.ts",
-      "name": "route.ts",
+      "id": "AuditLogsModal",
+      "type": "component"
+    },
+    {
+      "id": "StoresManagementView",
       "type": "view"
     },
     {
-      "id": "src/app/api/reports/generate/route.ts",
-      "name": "route.ts",
+      "id": "useStoresView",
+      "type": "component"
+    },
+    {
+      "id": "StoreModals",
+      "type": "component"
+    },
+    {
+      "id": "MasteryDashboard",
+      "type": "component"
+    },
+    {
+      "id": "AcademyView",
       "type": "view"
     },
     {
-      "id": "src/app/api/academy/review/route.ts",
-      "name": "route.ts",
+      "id": "Flashcard",
+      "type": "component"
+    },
+    {
+      "id": "CreateTransferModal",
+      "type": "component"
+    },
+    {
+      "id": "TransferenciasView",
       "type": "view"
     },
     {
-      "id": "src/app/api/academy/review/[cardId]/route.ts",
-      "name": "route.ts",
+      "id": "TransferDetailsModal",
+      "type": "component"
+    },
+    {
+      "id": "HelpView",
       "type": "view"
     },
     {
-      "id": "src/app/api/academy/generate/route.ts",
-      "name": "route.ts",
+      "id": "KidsOnboarding",
+      "type": "component"
+    },
+    {
+      "id": "StickyCartFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "MobilePosDiagram",
+      "type": "component"
+    },
+    {
+      "id": "IpvFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "SecurityFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "UserFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "QuickModeMassiveDiagram",
+      "type": "component"
+    },
+    {
+      "id": "CostFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "RolesDiagram",
+      "type": "component"
+    },
+    {
+      "id": "OfflineSyncDiagram",
+      "type": "component"
+    },
+    {
+      "id": "InventoryFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "MobileFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "CashFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "InventoryAdjustmentFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "StoreSkuDiagram",
+      "type": "component"
+    },
+    {
+      "id": "DarianDiagram",
+      "type": "component"
+    },
+    {
+      "id": "SalesFlowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "InventoryCardView",
       "type": "view"
     },
     {
-      "id": "src/app/api/inventory/route.ts",
-      "name": "route.ts",
+      "id": "InventoryAdjustmentsView",
       "type": "view"
     },
     {
-      "id": "src/app/api/inventory/adjust/route.ts",
-      "name": "route.ts",
+      "id": "InventoryAdjustmentModal",
+      "type": "component"
+    },
+    {
+      "id": "ProductReceptionView",
       "type": "view"
     },
     {
-      "id": "src/app/api/inventory/[productId]/history/route.ts",
-      "name": "route.ts",
+      "id": "InventoryTableView",
       "type": "view"
     },
     {
-      "id": "src/app/api/inventory/products/route.ts",
-      "name": "route.ts",
+      "id": "InventoryView",
       "type": "view"
     },
     {
-      "id": "src/app/api/inventory/adjustments/route.ts",
-      "name": "route.ts",
+      "id": "CashClosureView",
       "type": "view"
     },
     {
-      "id": "src/app/api/bot/chat/route.ts",
-      "name": "route.ts",
+      "id": "TaxCalculationModal",
+      "type": "component"
+    },
+    {
+      "id": "SalesHistoryView",
       "type": "view"
     },
     {
-      "id": "src/app/api/users/reset-password/route.ts",
-      "name": "route.ts",
+      "id": "TransactionDetailsModal",
+      "type": "component"
+    },
+    {
+      "id": "useSalesHistoryView",
+      "type": "component"
+    },
+    {
+      "id": "ReceptionDetailsModal",
+      "type": "component"
+    },
+    {
+      "id": "ReceptionsHistoryView",
       "type": "view"
     },
     {
-      "id": "src/app/api/users/toggle-status/route.ts",
-      "name": "route.ts",
+      "id": "useReceptionsHistoryView",
+      "type": "component"
+    },
+    {
+      "id": "StockHistoryView",
       "type": "view"
     },
     {
-      "id": "src/app/api/users/delete/route.ts",
-      "name": "route.ts",
+      "id": "IPVView",
       "type": "view"
     },
     {
-      "id": "src/app/api/users/managed-create/route.ts",
-      "name": "route.ts",
+      "id": "IPVRightSidebar",
+      "type": "component"
+    },
+    {
+      "id": "TransactionBreakdown",
+      "type": "component"
+    },
+    {
+      "id": "ActionBadges",
+      "type": "component"
+    },
+    {
+      "id": "TransactionTable",
+      "type": "component"
+    },
+    {
+      "id": "AddTransactionModal",
+      "type": "component"
+    },
+    {
+      "id": "IncomeReceiptPreview",
+      "type": "component"
+    },
+    {
+      "id": "MovementsView",
       "type": "view"
     },
     {
-      "id": "src/app/api/sync/batch/route.ts",
-      "name": "route.ts",
+      "id": "IncomeReceiptSection",
+      "type": "component"
+    },
+    {
+      "id": "IPVPreviewModal",
+      "type": "component"
+    },
+    {
+      "id": "MatchingTracePopover",
+      "type": "component"
+    },
+    {
+      "id": "IPVReportView",
       "type": "view"
     },
     {
-      "id": "src/app/api/rss/route.ts",
-      "name": "route.ts",
+      "id": "MatchingAuditView",
       "type": "view"
     },
     {
-      "id": "src/app/api/logs/route.ts",
-      "name": "route.ts",
+      "id": "IngestionErrorsTable",
+      "type": "component"
+    },
+    {
+      "id": "TransferQRReportView",
       "type": "view"
     },
     {
-      "id": "src/app/verify-dashboard/page.tsx",
-      "name": "page.tsx",
+      "id": "ManualReconciliationView",
       "type": "view"
     },
     {
-      "id": "src/app/wiki/page.tsx",
-      "name": "page.tsx",
+      "id": "MatchingRulesEditor",
+      "type": "component"
+    },
+    {
+      "id": "MatchingSimulation",
+      "type": "component"
+    },
+    {
+      "id": "RuleMetaEditor",
+      "type": "component"
+    },
+    {
+      "id": "IPVReportsDropdown",
+      "type": "component"
+    },
+    {
+      "id": "PivotStatementView",
       "type": "view"
     },
     {
-      "id": "src/app/cashier/close-session/page.tsx",
-      "name": "page.tsx",
+      "id": "BankIngestion",
+      "type": "component"
+    },
+    {
+      "id": "IPVInstitutionalDashboard",
+      "type": "component"
+    },
+    {
+      "id": "CatalogTable",
+      "type": "component"
+    },
+    {
+      "id": "IPVHelpDialog",
+      "type": "component"
+    },
+    {
+      "id": "IPVControlPanel",
+      "type": "component"
+    },
+    {
+      "id": "InventoryCountTableView",
       "type": "view"
     },
     {
-      "id": "src/app/demo/executive/page.tsx",
-      "name": "page.tsx",
+      "id": "InventoryCountCardView",
       "type": "view"
     },
     {
-      "id": "src/app/demo/calculate/page.tsx",
-      "name": "page.tsx",
+      "id": "InventoryCountView",
       "type": "view"
     },
     {
-      "id": "src/app/login/page.tsx",
-      "name": "page.tsx",
+      "id": "data-loader",
+      "type": "component"
+    },
+    {
+      "id": "CuentasModule",
+      "type": "component"
+    },
+    {
+      "id": "AsientosModule",
+      "type": "component"
+    },
+    {
+      "id": "WikiBreadcrumbs",
+      "type": "component"
+    },
+    {
+      "id": "WikiSearch",
+      "type": "component"
+    },
+    {
+      "id": "types",
+      "type": "component"
+    },
+    {
+      "id": "WikiView",
       "type": "view"
     },
     {
-      "id": "src/services/bot-service.test.ts",
-      "name": "bot-service.test.ts",
-      "type": "service"
+      "id": "WikiSidebar",
+      "type": "component"
     },
     {
-      "id": "src/services/store-service.ts",
-      "name": "store-service.ts",
-      "type": "service"
+      "id": "ClasificadorModule",
+      "type": "component"
     },
     {
-      "id": "src/services/export-service.ts",
-      "name": "export-service.ts",
-      "type": "service"
+      "id": "POSTableView",
+      "type": "view"
     },
     {
-      "id": "src/services/usage-service.ts",
-      "name": "usage-service.ts",
-      "type": "service"
+      "id": "usePOSView",
+      "type": "component"
     },
     {
-      "id": "src/services/cash-service.ts",
-      "name": "cash-service.ts",
-      "type": "service"
+      "id": "POSView",
+      "type": "view"
     },
     {
-      "id": "src/services/transfer-service.ts",
-      "name": "transfer-service.ts",
-      "type": "service"
+      "id": "POSCart",
+      "type": "component"
     },
     {
-      "id": "src/services/excel-service.ts",
-      "name": "excel-service.ts",
-      "type": "service"
+      "id": "StickyCartSummary",
+      "type": "component"
     },
     {
-      "id": "src/services/bot-service.ts",
-      "name": "bot-service.ts",
-      "type": "service"
+      "id": "AuditEventIcon",
+      "type": "component"
     },
     {
-      "id": "src/services/report-service.ts",
-      "name": "report-service.ts",
-      "type": "service"
+      "id": "AuditFilters",
+      "type": "component"
     },
     {
-      "id": "src/services/import-service.ts",
-      "name": "import-service.ts",
-      "type": "service"
+      "id": "AuditTableView",
+      "type": "view"
     },
     {
-      "id": "src/services/matching-log-service.ts",
-      "name": "matching-log-service.ts",
-      "type": "service"
+      "id": "AuditTimeline",
+      "type": "component"
     },
     {
-      "id": "src/services/rss-service.ts",
-      "name": "rss-service.ts",
-      "type": "service"
+      "id": "useAuditLogsView",
+      "type": "component"
     },
     {
-      "id": "src/services/user-service.ts",
-      "name": "user-service.ts",
-      "type": "service"
+      "id": "AuditEventCard",
+      "type": "component"
     },
     {
-      "id": "src/services/audit-service.ts",
-      "name": "audit-service.ts",
-      "type": "service"
+      "id": "AuditEventMeta",
+      "type": "component"
     },
     {
-      "id": "src/services/catalog-service.ts",
-      "name": "catalog-service.ts",
-      "type": "service"
+      "id": "AuditLogsView",
+      "type": "view"
     },
     {
-      "id": "src/services/__mocks__/matching-log-service.ts",
-      "name": "matching-log-service.ts",
-      "type": "service"
+      "id": "CostSheetAuditView",
+      "type": "view"
     },
     {
-      "id": "src/hooks/useSync.ts",
-      "name": "useSync.ts",
-      "type": "hook"
+      "id": "CostSheetSidebarNav",
+      "type": "component"
     },
     {
-      "id": "src/hooks/logic/useCostSheetCalculator.ts",
-      "name": "useCostSheetCalculator.ts",
-      "type": "hook"
+      "id": "CostSheetFormulaGuide",
+      "type": "component"
     },
     {
-      "id": "src/hooks/logic/usePOSProducts.ts",
-      "name": "usePOSProducts.ts",
-      "type": "hook"
+      "id": "CostSheetGenerateDropdown",
+      "type": "component"
     },
     {
-      "id": "src/hooks/logic/useSessionManager.ts",
-      "name": "useSessionManager.ts",
-      "type": "hook"
+      "id": "FormulaEditor",
+      "type": "component"
     },
     {
-      "id": "src/hooks/logic/useCostEngine.ts",
-      "name": "useCostEngine.ts",
-      "type": "hook"
+      "id": "CircularProgress",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useTransfers.ts",
-      "name": "useTransfers.ts",
-      "type": "hook"
+      "id": "CostSheetCalculator",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useDocumentActions.ts",
-      "name": "useDocumentActions.ts",
-      "type": "hook"
+      "id": "ProductInventoryPicker",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useCostSheets.ts",
-      "name": "useCostSheets.ts",
-      "type": "hook"
+      "id": "CostSheetBanner",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useTaxes.ts",
-      "name": "useTaxes.ts",
-      "type": "hook"
+      "id": "CostSheetAuditLog",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useProducts.ts",
-      "name": "useProducts.ts",
-      "type": "hook"
+      "id": "CostSheetMasterRing",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useTransactions.ts",
-      "name": "useTransactions.ts",
-      "type": "hook"
+      "id": "CostSheetActionsPanel",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useStockMovements.ts",
-      "name": "useStockMovements.ts",
-      "type": "hook"
+      "id": "CostSheetView",
+      "type": "view"
     },
     {
-      "id": "src/hooks/api/useCashClosures.ts",
-      "name": "useCashClosures.ts",
-      "type": "hook"
+      "id": "CostSheetAnnexes",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useStores.ts",
-      "name": "useStores.ts",
-      "type": "hook"
+      "id": "CostSheetHelpDropdown",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useDashboard.ts",
-      "name": "useDashboard.ts",
-      "type": "hook"
+      "id": "CostSheetSummary",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useUsers.ts",
-      "name": "useUsers.ts",
-      "type": "hook"
+      "id": "CostSheetNav",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useInventory.ts",
-      "name": "useInventory.ts",
-      "type": "hook"
+      "id": "CostSheetOptionsDropdown",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useRoles.ts",
-      "name": "useRoles.ts",
-      "type": "hook"
+      "id": "CostSheetHeader",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/hooks.test.ts",
-      "name": "hooks.test.ts",
-      "type": "hook"
+      "id": "CostSheetQuickMode",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useAuditLogs.ts",
-      "name": "useAuditLogs.ts",
-      "type": "hook"
+      "id": "CostSheetBottomNav",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/base.ts",
-      "name": "base.ts",
-      "type": "hook"
+      "id": "CostSheetNarrative",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useReceptions.ts",
-      "name": "useReceptions.ts",
-      "type": "hook"
+      "id": "CostSheetSignature",
+      "type": "component"
     },
     {
-      "id": "src/hooks/api/useRSS.ts",
-      "name": "useRSS.ts",
-      "type": "hook"
+      "id": "CostSheetExportModal",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/usePWA.ts",
-      "name": "usePWA.ts",
-      "type": "hook"
+      "id": "HealthBattery",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/useTerminalNavigation.ts",
-      "name": "useTerminalNavigation.ts",
-      "type": "hook"
+      "id": "CostSheetTemplateExplorer",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/useCatalogModals.ts",
-      "name": "useCatalogModals.ts",
-      "type": "hook"
+      "id": "CostSheetForm",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/useMobile.ts",
-      "name": "useMobile.ts",
-      "type": "hook"
+      "id": "FormulaBuilder",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/useDebounce.ts",
-      "name": "useDebounce.ts",
-      "type": "hook"
+      "id": "CostSheetCardView",
+      "type": "view"
     },
     {
-      "id": "src/hooks/ui/useToast.ts",
-      "name": "useToast.ts",
-      "type": "hook"
+      "id": "CostSheetMassiveGenerator",
+      "type": "component"
     },
     {
-      "id": "src/hooks/ui/__tests__/usePWA.test.ts",
-      "name": "usePWA.test.ts",
-      "type": "hook"
+      "id": "CostSheetSidePanel",
+      "type": "component"
     },
     {
-      "id": "src/hooks/__tests__/useCostSheetCalculator.test.ts",
-      "name": "useCostSheetCalculator.test.ts",
-      "type": "hook"
+      "id": "CostSheetBody",
+      "type": "component"
     },
     {
-      "id": "src/hooks/__tests__/templates_verification.test.ts",
-      "name": "templates_verification.test.ts",
-      "type": "hook"
+      "id": "DarianEditor",
+      "type": "component"
     },
     {
-      "id": "src/store/cart.ts",
-      "name": "cart.ts",
-      "type": "other"
+      "id": "CostSheetHeaderEditor",
+      "type": "component"
     },
     {
-      "id": "src/store/session-store.ts",
-      "name": "session-store.ts",
-      "type": "other"
+      "id": "CostSheetFCDropdown",
+      "type": "component"
     },
     {
-      "id": "src/store/cost-sheet-store.ts",
-      "name": "cost-sheet-store.ts",
-      "type": "other"
+      "id": "CostSheetWizard",
+      "type": "component"
     },
     {
-      "id": "src/store/index.ts",
-      "name": "index.ts",
-      "type": "other"
+      "id": "CostSheetInteractiveTable",
+      "type": "component"
     },
     {
-      "id": "src/store/useAcademyStore.ts",
-      "name": "useAcademyStore.ts",
-      "type": "other"
+      "id": "CostSheetAnnexEditor",
+      "type": "component"
     },
     {
-      "id": "src/store/__tests__/session-store.test.ts",
-      "name": "session-store.test.ts",
-      "type": "other"
+      "id": "CostSheetSectionActionsPanel",
+      "type": "component"
     },
     {
-      "id": "src/store/__tests__/cart.test.ts",
-      "name": "cart.test.ts",
-      "type": "other"
+      "id": "CostSheetPreview",
+      "type": "component"
     },
     {
-      "id": "src/store/__tests__/auth.test.ts",
-      "name": "auth.test.ts",
-      "type": "other"
+      "id": "CostSheetSignatureEditor",
+      "type": "component"
     },
     {
-      "id": "src/store/__tests__/cart_advanced.test.ts",
-      "name": "cart_advanced.test.ts",
-      "type": "other"
+      "id": "CostSheetModeDropdown",
+      "type": "component"
     },
     {
-      "id": "src/store/__tests__/cost-sheet-store.test.ts",
-      "name": "cost-sheet-store.test.ts",
-      "type": "other"
+      "id": "CostSheetHelpPanel",
+      "type": "component"
     },
     {
-      "id": "src/lib/db.ts",
-      "name": "db.ts",
-      "type": "other"
+      "id": "UserFormModal",
+      "type": "component"
     },
     {
-      "id": "src/lib/dexie.ts",
-      "name": "dexie.ts",
-      "type": "other"
+      "id": "useUsersView",
+      "type": "component"
     },
     {
-      "id": "src/lib/inventory-logic.ts",
-      "name": "inventory-logic.ts",
-      "type": "other"
+      "id": "UsersManagementView",
+      "type": "view"
     },
     {
-      "id": "src/lib/supabaseClient.ts",
-      "name": "supabaseClient.ts",
-      "type": "other"
+      "id": "RoleForm",
+      "type": "component"
     },
     {
-      "id": "src/lib/rpc-validator.ts",
-      "name": "rpc-validator.ts",
-      "type": "other"
+      "id": "RolesManagementView",
+      "type": "view"
     },
     {
-      "id": "src/lib/auth.ts",
-      "name": "auth.ts",
-      "type": "other"
+      "id": "UserForm",
+      "type": "component"
     },
     {
-      "id": "src/lib/query-inspector-utils.ts",
-      "name": "query-inspector-utils.ts",
-      "type": "other"
+      "id": "RSSManagementView",
+      "type": "view"
     },
     {
-      "id": "src/lib/plan-utils.ts",
-      "name": "plan-utils.ts",
-      "type": "other"
+      "id": "NewsView",
+      "type": "view"
     },
     {
-      "id": "src/lib/logger.ts",
-      "name": "logger.ts",
-      "type": "other"
+      "id": "LegalPdfExporter",
+      "type": "component"
     },
     {
-      "id": "src/lib/theme.test.ts",
-      "name": "theme.test.ts",
-      "type": "other"
+      "id": "LegalModelForm",
+      "type": "component"
     },
     {
-      "id": "src/lib/utils.ts",
-      "name": "utils.ts",
-      "type": "other"
+      "id": "LegalConsultant",
+      "type": "component"
     },
     {
-      "id": "src/lib/errorHandler.ts",
-      "name": "errorHandler.ts",
-      "type": "other"
+      "id": "LegalView",
+      "type": "view"
     },
     {
-      "id": "src/lib/navigation.ts",
-      "name": "navigation.ts",
-      "type": "other"
+      "id": "skeleton",
+      "type": "component"
     },
     {
-      "id": "src/lib/roles.ts",
-      "name": "roles.ts",
-      "type": "other"
+      "id": "DataDecryption",
+      "type": "component"
     },
     {
-      "id": "src/lib/wallet/parser.ts",
-      "name": "parser.ts",
-      "type": "other"
+      "id": "accordion",
+      "type": "component"
     },
     {
-      "id": "src/lib/wallet/types.ts",
-      "name": "types.ts",
-      "type": "other"
+      "id": "ViewSwitcher",
+      "type": "component"
     },
     {
-      "id": "src/lib/wallet/__tests__/parser.test.ts",
-      "name": "parser.test.ts",
-      "type": "other"
+      "id": "hover-card",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/user-json.test.ts",
-      "name": "user-json.test.ts",
-      "type": "other"
+      "id": "LazyRender",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/heuristic.test.ts",
-      "name": "heuristic.test.ts",
-      "type": "other"
+      "id": "command",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/bidirectional.test.ts",
-      "name": "bidirectional.test.ts",
-      "type": "other"
+      "id": "resizable",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/formula-utils.ts",
-      "name": "formula-utils.ts",
-      "type": "other"
+      "id": "QueryInspector",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/index.ts",
-      "name": "index.ts",
-      "type": "other"
+      "id": "SearchBar",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/accuracy.test.ts",
-      "name": "accuracy.test.ts",
-      "type": "other"
+      "id": "dropdown-menu",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/types.ts",
-      "name": "types.ts",
-      "type": "other"
+      "id": "separator",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/validations.ts",
-      "name": "validations.ts",
-      "type": "other"
+      "id": "MobileSafeContainer",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/smart-annex.test.ts",
-      "name": "smart-annex.test.ts",
-      "type": "other"
+      "id": "pagination",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/topo-sort.test.ts",
-      "name": "topo-sort.test.ts",
-      "type": "other"
+      "id": "alert-dialog",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/index.test.ts",
-      "name": "index.test.ts",
-      "type": "other"
+      "id": "input-otp",
+      "type": "component"
     },
     {
-      "id": "src/lib/cost-engine/schemas.ts",
-      "name": "schemas.ts",
-      "type": "other"
+      "id": "alert",
+      "type": "component"
     },
     {
-      "id": "src/lib/utils/pdf-export.ts",
-      "name": "pdf-export.ts",
-      "type": "other"
+      "id": "CyberShell",
+      "type": "component"
     },
     {
-      "id": "src/lib/utils/number-to-words-es.ts",
-      "name": "number-to-words-es.ts",
-      "type": "other"
+      "id": "popover",
+      "type": "component"
     },
     {
-      "id": "src/lib/observability/health-engine.ts",
-      "name": "health-engine.ts",
-      "type": "other"
+      "id": "table",
+      "type": "component"
     },
     {
-      "id": "src/lib/observability/health-alerts.ts",
-      "name": "health-alerts.ts",
-      "type": "other"
+      "id": "progress",
+      "type": "component"
     },
     {
-      "id": "src/lib/observability/system-health.ts",
-      "name": "system-health.ts",
-      "type": "other"
+      "id": "select",
+      "type": "component"
     },
     {
-      "id": "src/lib/observability/__tests__/system-health.test.ts",
-      "name": "system-health.test.ts",
-      "type": "other"
+      "id": "sonner",
+      "type": "component"
     },
     {
-      "id": "src/lib/observability/__tests__/health-engine.test.ts",
-      "name": "health-engine.test.ts",
-      "type": "other"
+      "id": "LoadingOverlay",
+      "type": "component"
     },
     {
-      "id": "src/lib/academy/sm2.ts",
-      "name": "sm2.ts",
-      "type": "other"
+      "id": "textarea",
+      "type": "component"
     },
     {
-      "id": "src/lib/academy/__tests__/sm2.test.ts",
-      "name": "sm2.test.ts",
-      "type": "other"
+      "id": "PWAInstallModal",
+      "type": "component"
     },
     {
-      "id": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
-      "name": "ReleaseGatePdfExporter.ts",
-      "type": "other"
+      "id": "toggle",
+      "type": "component"
     },
     {
-      "id": "src/lib/release_gate/mri-engine.ts",
-      "name": "mri-engine.ts",
-      "type": "other"
+      "id": "StateRenderer",
+      "type": "component"
     },
     {
-      "id": "src/lib/release_gate/__tests__/mri-engine.test.ts",
-      "name": "mri-engine.test.ts",
-      "type": "other"
+      "id": "Portal",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-repair.ts",
-      "name": "template-repair.ts",
-      "type": "other"
+      "id": "toggle-group",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/demo-products.ts",
-      "name": "demo-products.ts",
-      "type": "other"
+      "id": "scroll-area",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/costpro-ejemplo.ts",
-      "name": "costpro-ejemplo.ts",
-      "type": "other"
+      "id": "label",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-industrial.ts",
-      "name": "template-industrial.ts",
-      "type": "other"
+      "id": "chart",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/costpro-reinicio.ts",
-      "name": "costpro-reinicio.ts",
-      "type": "other"
+      "id": "sidebar",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-consultancy.ts",
-      "name": "template-consultancy.ts",
-      "type": "other"
+      "id": "tabs",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-logistics.ts",
-      "name": "template-logistics.ts",
-      "type": "other"
+      "id": "BaseModal",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-lavar.ts",
-      "name": "template-lavar.ts",
-      "type": "other"
+      "id": "switch",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-pastry.ts",
-      "name": "template-pastry.ts",
-      "type": "other"
+      "id": "checkbox",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-icecream.ts",
-      "name": "template-icecream.ts",
-      "type": "other"
+      "id": "context-menu",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-juice.ts",
-      "name": "template-juice.ts",
-      "type": "other"
+      "id": "badge",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-shoes.ts",
-      "name": "template-shoes.ts",
-      "type": "other"
+      "id": "CostProLoader",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-pizza.ts",
-      "name": "template-pizza.ts",
-      "type": "other"
+      "id": "calendar",
+      "type": "component"
     },
     {
-      "id": "src/lib/data/template-furniture.ts",
-      "name": "template-furniture.ts",
-      "type": "other"
+      "id": "toaster",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/intelligence.ts",
-      "name": "intelligence.ts",
-      "type": "other"
+      "id": "navigation-menu",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/calculations.ts",
-      "name": "calculations.ts",
-      "type": "other"
+      "id": "ActionMenu",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/importUtils.ts",
-      "name": "importUtils.ts",
-      "type": "other"
+      "id": "ProductImage",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/backup.ts",
-      "name": "backup.ts",
-      "type": "other"
+      "id": "toast",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/matching.worker.ts",
-      "name": "matching.worker.ts",
-      "type": "other"
+      "id": "FloatingCalculator",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/bandecParser.ts",
-      "name": "bandecParser.ts",
-      "type": "other"
+      "id": "ScrollToTop",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/engine.ts",
-      "name": "engine.ts",
-      "type": "other"
+      "id": "button",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/parser.ts",
-      "name": "parser.ts",
-      "type": "other"
+      "id": "avatar",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/utils.ts",
-      "name": "utils.ts",
-      "type": "other"
+      "id": "dialog",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
-      "name": "global_goal_priority.test.ts",
-      "type": "other"
+      "id": "SecurityScrollContainer",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/calculations.test.ts",
-      "name": "calculations.test.ts",
-      "type": "other"
+      "id": "breadcrumb",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/bandecParser.test.ts",
-      "name": "bandecParser.test.ts",
-      "type": "other"
+      "id": "form",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/repro_issue.test.ts",
-      "name": "repro_issue.test.ts",
-      "type": "other"
+      "id": "slider",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/advanced_engine.test.ts",
-      "name": "advanced_engine.test.ts",
-      "type": "other"
+      "id": "menubar",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
-      "name": "bigbon_simulation.test.ts",
-      "type": "other"
+      "id": "tooltip",
+      "type": "component"
     },
     {
-      "id": "src/lib/ipv/__tests__/engine.test.ts",
-      "name": "engine.test.ts",
-      "type": "other"
+      "id": "SpeedDial",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/orchestrator.ts",
-      "name": "orchestrator.ts",
-      "type": "other"
+      "id": "ChatBot",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/types.ts",
-      "name": "types.ts",
-      "type": "other"
+      "id": "aspect-ratio",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/qwen-adapter.ts",
-      "name": "qwen-adapter.ts",
-      "type": "other"
+      "id": "carousel",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/openai-compatible-adapter.ts",
-      "name": "openai-compatible-adapter.ts",
-      "type": "other"
+      "id": "card",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/fallback-adapter.ts",
-      "name": "fallback-adapter.ts",
-      "type": "other"
+      "id": "sheet",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/deepseek-adapter.ts",
-      "name": "deepseek-adapter.ts",
-      "type": "other"
+      "id": "drawer",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/gemini-adapter.test.ts",
-      "name": "gemini-adapter.test.ts",
-      "type": "other"
+      "id": "input",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/gemini-adapter.ts",
-      "name": "gemini-adapter.ts",
-      "type": "other"
+      "id": "HorizontalScroll",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/kimi-adapter.ts",
-      "name": "kimi-adapter.ts",
-      "type": "other"
+      "id": "collapsible",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/adapters/gpt-adapter.ts",
-      "name": "gpt-adapter.ts",
-      "type": "other"
+      "id": "SyncStatusBadge",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/tools/definitions.ts",
-      "name": "definitions.ts",
-      "type": "other"
+      "id": "radio-group",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/tools/registry.ts",
-      "name": "registry.ts",
-      "type": "other"
+      "id": "index",
+      "type": "component"
     },
     {
-      "id": "src/lib/ai/tools/registry.test.ts",
-      "name": "registry.test.ts",
-      "type": "other"
+      "id": "RegisterForm",
+      "type": "component"
     },
     {
-      "id": "src/lib/sync/offline-storage.ts",
-      "name": "offline-storage.ts",
-      "type": "other"
+      "id": "LoginForm",
+      "type": "component"
+    },
+    {
+      "id": "WelcomeLandingView",
+      "type": "component"
+    },
+    {
+      "id": "SpeedScaleDiagram",
+      "type": "component"
+    },
+    {
+      "id": "AutomationWorkflowDiagram",
+      "type": "component"
+    },
+    {
+      "id": "db",
+      "type": "utility"
+    },
+    {
+      "id": "dexie",
+      "type": "utility"
+    },
+    {
+      "id": "inventory-logic",
+      "type": "utility"
+    },
+    {
+      "id": "supabaseClient",
+      "type": "utility"
+    },
+    {
+      "id": "rpc-validator",
+      "type": "utility"
+    },
+    {
+      "id": "auth",
+      "type": "utility"
+    },
+    {
+      "id": "query-inspector-utils",
+      "type": "utility"
+    },
+    {
+      "id": "plan-utils",
+      "type": "utility"
+    },
+    {
+      "id": "logger",
+      "type": "utility"
+    },
+    {
+      "id": "utils",
+      "type": "utility"
+    },
+    {
+      "id": "errorHandler",
+      "type": "utility"
+    },
+    {
+      "id": "navigation",
+      "type": "utility"
+    },
+    {
+      "id": "roles",
+      "type": "utility"
+    },
+    {
+      "id": "parser",
+      "type": "utility"
+    },
+    {
+      "id": "types",
+      "type": "utility"
+    },
+    {
+      "id": "formula-utils",
+      "type": "utility"
+    },
+    {
+      "id": "index",
+      "type": "utility"
+    },
+    {
+      "id": "types",
+      "type": "utility"
+    },
+    {
+      "id": "validations",
+      "type": "utility"
+    },
+    {
+      "id": "schemas",
+      "type": "utility"
+    },
+    {
+      "id": "pdf-export",
+      "type": "utility"
+    },
+    {
+      "id": "number-to-words-es",
+      "type": "utility"
+    },
+    {
+      "id": "health-engine",
+      "type": "utility"
+    },
+    {
+      "id": "health-alerts",
+      "type": "utility"
+    },
+    {
+      "id": "system-health",
+      "type": "utility"
+    },
+    {
+      "id": "sm2",
+      "type": "utility"
+    },
+    {
+      "id": "ReleaseGatePdfExporter",
+      "type": "utility"
+    },
+    {
+      "id": "mri-engine",
+      "type": "utility"
+    },
+    {
+      "id": "template-repair",
+      "type": "utility"
+    },
+    {
+      "id": "demo-products",
+      "type": "utility"
+    },
+    {
+      "id": "costpro-ejemplo",
+      "type": "utility"
+    },
+    {
+      "id": "template-industrial",
+      "type": "utility"
+    },
+    {
+      "id": "costpro-reinicio",
+      "type": "utility"
+    },
+    {
+      "id": "template-consultancy",
+      "type": "utility"
+    },
+    {
+      "id": "template-logistics",
+      "type": "utility"
+    },
+    {
+      "id": "template-lavar",
+      "type": "utility"
+    },
+    {
+      "id": "template-pastry",
+      "type": "utility"
+    },
+    {
+      "id": "template-icecream",
+      "type": "utility"
+    },
+    {
+      "id": "template-juice",
+      "type": "utility"
+    },
+    {
+      "id": "template-shoes",
+      "type": "utility"
+    },
+    {
+      "id": "template-pizza",
+      "type": "utility"
+    },
+    {
+      "id": "template-furniture",
+      "type": "utility"
+    },
+    {
+      "id": "intelligence",
+      "type": "utility"
+    },
+    {
+      "id": "calculations",
+      "type": "utility"
+    },
+    {
+      "id": "importUtils",
+      "type": "utility"
+    },
+    {
+      "id": "backup",
+      "type": "utility"
+    },
+    {
+      "id": "matching.worker",
+      "type": "utility"
+    },
+    {
+      "id": "bandecParser",
+      "type": "utility"
+    },
+    {
+      "id": "engine",
+      "type": "utility"
+    },
+    {
+      "id": "parser",
+      "type": "utility"
+    },
+    {
+      "id": "utils",
+      "type": "utility"
+    },
+    {
+      "id": "orchestrator",
+      "type": "utility"
+    },
+    {
+      "id": "types",
+      "type": "utility"
+    },
+    {
+      "id": "qwen-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "openai-compatible-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "fallback-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "deepseek-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "gemini-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "kimi-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "gpt-adapter",
+      "type": "utility"
+    },
+    {
+      "id": "definitions",
+      "type": "utility"
+    },
+    {
+      "id": "registry",
+      "type": "utility"
+    },
+    {
+      "id": "offline-storage",
+      "type": "utility"
     }
   ],
-  "links": [
+  "edges": [
     {
-      "source": "src/components/SplashScreen.tsx",
-      "target": "src/components/CostProLogo.tsx"
+      "from": "SplashScreen",
+      "to": "CostProLogo"
     },
     {
-      "source": "src/components/views/TerminalShell.tsx",
-      "target": "src/components/views/terminal/Sidebar.tsx"
+      "from": "ThemeToggle",
+      "to": "dropdown-menu"
     },
     {
-      "source": "src/components/views/TerminalShell.tsx",
-      "target": "src/components/views/terminal/Header.tsx"
+      "from": "ThemeToggle",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/HealthStatusHeader.tsx"
+      "from": "SyncConflictModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx"
+      "from": "SyncConflictModal",
+      "to": "SyncProvider"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/ApplicationMetrics.tsx"
+      "from": "SyncConflictModal",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/SecurityMetrics.tsx"
+      "from": "SyncConflictModal",
+      "to": "offline-storage"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx"
+      "from": "CreateProductModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/AuditSummary.tsx"
+      "from": "CreateProductModal",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/ViewNavigator.tsx"
+      "from": "BarcodeScanner",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx"
+      "from": "BarcodeScanner",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "src/components/views/terminal/views/health/HealthAgentLogs.tsx"
+      "from": "UpgradeModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "src/components/views/terminal/views/catalog/CatalogModals.tsx"
+      "from": "UpgradeModal",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "target": "src/components/views/terminal/views/dashboard/useDashboardView.ts"
+      "from": "PriceSelectorModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx"
+      "from": "PriceSelectorModal",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "src/components/views/terminal/views/reports/ReportPreview.tsx"
+      "from": "PriceSelectorModal",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "src/components/views/terminal/views/reports/AuditLogsModal.tsx"
+      "from": "TerminalShell",
+      "to": "FloatingCalculator"
     },
     {
-      "source": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditTimeline.tsx"
+      "from": "TerminalShell",
+      "to": "Header"
     },
     {
-      "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "target": "src/components/views/terminal/views/stores/useStoresView.ts"
+      "from": "TerminalShell",
+      "to": "MobileSafeContainer"
     },
     {
-      "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "target": "src/components/views/terminal/views/stores/StoreModals.tsx"
+      "from": "TerminalShell",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/stores/StoreModals.tsx",
-      "target": "src/components/views/terminal/views/stores/useStoresView.ts"
+      "from": "TerminalShell",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "target": "src/components/views/terminal/views/academy/Flashcard.tsx"
+      "from": "TerminalShell",
+      "to": "ChatBot"
     },
     {
-      "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "target": "src/components/views/terminal/views/academy/MasteryDashboard.tsx"
+      "from": "TerminalShell",
+      "to": "CreateProductModal"
     },
     {
-      "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "target": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx"
+      "from": "TerminalShell",
+      "to": "Sidebar"
     },
     {
-      "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "target": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "demo-products"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "progress"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx"
+      "from": "ExecutiveDemoView",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx"
+      "from": "Sidebar",
+      "to": "CostProLogo"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx"
+      "from": "Sidebar",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/DarianDiagram.tsx"
+      "from": "Header",
+      "to": "ThemeToggle"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx"
+      "from": "Header",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx"
+      "from": "Header",
+      "to": "SyncStatusBadge"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx"
+      "from": "Header",
+      "to": "popover"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/RolesDiagram.tsx"
+      "from": "Header",
+      "to": "dropdown-menu"
     },
     {
-      "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx"
+      "from": "Header",
+      "to": "SyncConflictModal"
     },
     {
-      "source": "src/components/views/terminal/views/help/help/StoreSkuDiagram.test.tsx",
-      "target": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx"
+      "from": "SecurityMetrics",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx",
-      "target": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx"
+      "from": "HealthStatusHeader",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/help/help/DarianDiagram.test.tsx",
-      "target": "src/components/views/terminal/views/help/help/DarianDiagram.tsx"
+      "from": "SystemHealthView",
+      "to": "ArchitectureAuditTable"
     },
     {
-      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "src/components/views/terminal/views/inventory/InventoryCardView.tsx"
+      "from": "SystemHealthView",
+      "to": "HealthStatusHeader"
     },
     {
-      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "src/components/views/terminal/views/inventory/InventoryTableView.tsx"
+      "from": "SystemHealthView",
+      "to": "ReleaseGatePdfExporter"
     },
     {
-      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx"
+      "from": "SystemHealthView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx"
+      "from": "SystemHealthView",
+      "to": "SecurityMetrics"
     },
     {
-      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "src/components/views/terminal/views/sales/useSalesHistoryView.ts"
+      "from": "SystemHealthView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx"
+      "from": "SystemHealthView",
+      "to": "ReleaseGateStatus"
     },
     {
-      "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx"
+      "from": "SystemHealthView",
+      "to": "ViewNavigator"
     },
     {
-      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts"
+      "from": "SystemHealthView",
+      "to": "HealthAgentLogs"
     },
     {
-      "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx"
+      "from": "SystemHealthView",
+      "to": "accordion"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx"
+      "from": "SystemHealthView",
+      "to": "InfrastructureMetrics"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/BankIngestion.tsx"
+      "from": "SystemHealthView",
+      "to": "dropdown-menu"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/TransactionTable.tsx"
+      "from": "SystemHealthView",
+      "to": "AuditSummary"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/CatalogTable.tsx"
+      "from": "SystemHealthView",
+      "to": "ApplicationMetrics"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/MovementsView.tsx"
+      "from": "ArchitectureAuditTable",
+      "to": "input"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx"
+      "from": "ArchitectureAuditTable",
+      "to": "table"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx"
+      "from": "ArchitectureAuditTable",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVReportView.tsx"
+      "from": "ArchitectureAuditTable",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx"
+      "from": "ArchitectureAuditTable",
+      "to": "sheet"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/PivotStatementView.tsx"
+      "from": "ReleaseGateStatus",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx"
+      "from": "HealthAgentLogs",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx"
+      "from": "HealthAgentLogs",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx"
+      "from": "HealthAgentLogs",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx"
+      "from": "HealthAgentLogs",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx"
+      "from": "HealthAgentLogs",
+      "to": "system-health"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx"
+      "from": "DetailedRelationshipGraph",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx"
+      "from": "DetailedRelationshipGraph",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx"
+      "from": "InfrastructureMetrics",
+      "to": "progress"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx"
+      "from": "InfrastructureMetrics",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
-      "target": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx"
+      "from": "ApplicationMetrics",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
-      "target": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx"
+      "from": "WalletView",
+      "to": "types"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
-      "target": "src/components/views/terminal/views/ipv/ActionBadges.tsx"
+      "from": "WalletView",
+      "to": "input"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "target": "src/lib/dexie.ts"
+      "from": "WalletView",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "target": "src/components/ui/card.tsx"
+      "from": "WalletView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "target": "src/components/ui/badge.tsx"
+      "from": "WalletView",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "target": "src/components/ui/button.tsx"
+      "from": "WalletView",
+      "to": "parser"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MovementsView.tsx",
-      "target": "src/components/ui/input.tsx"
+      "from": "WalletView",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
-      "target": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx"
+      "from": "AnalyticsDashboard",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
-      "target": "src/components/views/terminal/views/legal/LegalPdfExporter.ts"
+      "from": "AnalyticsDashboard",
+      "to": "types"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx"
+      "from": "CatalogModals",
+      "to": "ProductImage"
     },
     {
-      "source": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
-      "target": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx"
+      "from": "CatalogModals",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
-      "target": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx"
+      "from": "CatalogModals",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
-      "target": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx"
+      "from": "CatalogModals",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx"
+      "from": "CatalogView",
+      "to": "ProductImage"
     },
     {
-      "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx"
+      "from": "CatalogView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/data-loader.ts",
-      "target": "src/components/views/terminal/views/wiki/types.ts"
+      "from": "CatalogView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
-      "target": "src/components/views/terminal/views/wiki/types.ts"
+      "from": "CatalogView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/data-loader.ts"
+      "from": "CatalogView",
+      "to": "QueryInspector"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/AsientosModule.tsx"
+      "from": "CatalogView",
+      "to": "CatalogModals"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/CuentasModule.tsx"
+      "from": "CatalogView",
+      "to": "index"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx"
+      "from": "CatalogView",
+      "to": "ViewSwitcher"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/WikiSidebar.tsx"
+      "from": "SettingsView",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/WikiSearch.tsx"
+      "from": "SettingsView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx"
+      "from": "DashboardView",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
-      "target": "src/components/views/terminal/views/wiki/types.ts"
+      "from": "DashboardView",
+      "to": "useDashboardView"
     },
     {
-      "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "src/components/views/terminal/views/pos/POSTableView.tsx"
+      "from": "DashboardView",
+      "to": "calendar"
     },
     {
-      "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "src/components/views/terminal/views/pos/POSCart.tsx"
+      "from": "DashboardView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "src/components/views/terminal/views/pos/StickyCartSummary.tsx"
+      "from": "DashboardView",
+      "to": "popover"
     },
     {
-      "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "src/components/views/terminal/views/pos/usePOSView.ts"
+      "from": "DashboardView",
+      "to": "toggle-group"
     },
     {
-      "source": "src/components/views/terminal/views/audit/audit.test.ts",
-      "target": "src/components/views/terminal/views/audit/AuditEventIcon.tsx"
+      "from": "ConcentricDashboardRing",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditFilters.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventIcon.tsx"
+      "from": "ExecutiveKpiCards",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditEventMeta.test.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventMeta.tsx"
+      "from": "RecentCostSheets",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditTableView.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventIcon.tsx"
+      "from": "ReportConfigPanel",
+      "to": "input"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditTableView.test.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditTableView.tsx"
+      "from": "ReportConfigPanel",
+      "to": "checkbox"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventCard.tsx"
+      "from": "ReportConfigPanel",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditLogsView.tsx"
+      "from": "ReportConfigPanel",
+      "to": "command"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.test.tsx",
-      "target": "src/components/views/terminal/views/audit/useAuditLogsView.ts"
+      "from": "ReportConfigPanel",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventIcon.tsx"
+      "from": "ReportConfigPanel",
+      "to": "select"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventMeta.tsx"
+      "from": "ReportConfigPanel",
+      "to": "label"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditFilters.tsx"
+      "from": "ReportConfigPanel",
+      "to": "popover"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditTimeline.tsx"
+      "from": "ReportConfigPanel",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditTableView.tsx"
+      "from": "ReportPreview",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "src/components/views/terminal/views/audit/AuditEventIcon.tsx"
+      "from": "ReportPreview",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "src/components/views/terminal/views/audit/useAuditLogsView.ts"
+      "from": "ReportsView",
+      "to": "AuditLogsModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx"
+      "from": "ReportsView",
+      "to": "ReportPreview"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx"
+      "from": "ReportsView",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx"
+      "from": "ReportsView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx"
+      "from": "ReportsView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx"
+      "from": "ReportsView",
+      "to": "ReportConfigPanel"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx"
+      "from": "ReportsView",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx"
+      "from": "AuditLogsModal",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx"
+      "from": "AuditLogsModal",
+      "to": "skeleton"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx"
+      "from": "AuditLogsModal",
+      "to": "AuditTimeline"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx"
+      "from": "AuditLogsModal",
+      "to": "dialog"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx"
+      "from": "StoresManagementView",
+      "to": "StoreModals"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx"
+      "from": "StoresManagementView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx"
+      "from": "StoresManagementView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx"
+      "from": "StoresManagementView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx"
+      "from": "StoresManagementView",
+      "to": "useStoresView"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx"
+      "from": "useStoresView",
+      "to": "logger"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx"
+      "from": "StoreModals",
+      "to": "input"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx"
+      "from": "StoreModals",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx"
+      "from": "StoreModals",
+      "to": "label"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx"
+      "from": "StoreModals",
+      "to": "useStoresView"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx"
+      "from": "StoreModals",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx"
+      "from": "StoreModals",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx"
+      "from": "MasteryDashboard",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx"
+      "from": "MasteryDashboard",
+      "to": "progress"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx"
+      "from": "MasteryDashboard",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx"
+      "from": "AcademyView",
+      "to": "MasteryDashboard"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx"
+      "from": "AcademyView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx"
+      "from": "AcademyView",
+      "to": "Flashcard"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx"
+      "from": "AcademyView",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx"
+      "from": "Flashcard",
+      "to": "card"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx"
+      "from": "Flashcard",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx"
+      "from": "Flashcard",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx"
+      "from": "CreateTransferModal",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx"
+      "from": "CreateTransferModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx"
+      "from": "TransferenciasView",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx"
+      "from": "TransferenciasView",
+      "to": "TransferDetailsModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx"
+      "from": "TransferenciasView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx"
+      "from": "TransferenciasView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx"
+      "from": "TransferenciasView",
+      "to": "CreateTransferModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx"
+      "from": "TransferDetailsModal",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx"
+      "from": "TransferDetailsModal",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx"
+      "from": "TransferDetailsModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx"
+      "from": "HelpView",
+      "to": "RolesDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx"
+      "from": "HelpView",
+      "to": "accordion"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx"
+      "from": "HelpView",
+      "to": "QuickModeMassiveDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx"
+      "from": "HelpView",
+      "to": "SecurityFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx"
+      "from": "HelpView",
+      "to": "InventoryAdjustmentFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx"
+      "from": "HelpView",
+      "to": "KidsOnboarding"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx"
+      "from": "HelpView",
+      "to": "StoreSkuDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx"
+      "from": "HelpView",
+      "to": "IpvFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx"
+      "from": "HelpView",
+      "to": "CostFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx"
+      "from": "HelpView",
+      "to": "MobilePosDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx",
-      "target": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx"
+      "from": "HelpView",
+      "to": "InventoryFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/users/UserFormModal.tsx",
-      "target": "src/components/views/terminal/views/users/UserForm.tsx"
+      "from": "HelpView",
+      "to": "ThemeToggle"
     },
     {
-      "source": "src/components/views/terminal/views/users/useUsersView.ts",
-      "target": "src/components/views/terminal/views/users/UserForm.tsx"
+      "from": "HelpView",
+      "to": "utils"
     },
     {
-      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "src/components/views/terminal/views/users/useUsersView.ts"
+      "from": "HelpView",
+      "to": "badge"
     },
     {
-      "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "src/components/views/terminal/views/users/UserFormModal.tsx"
+      "from": "HelpView",
+      "to": "StickyCartFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "target": "src/components/views/terminal/views/users/RoleForm.tsx"
+      "from": "HelpView",
+      "to": "DarianDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/legal/LegalView.test.tsx",
-      "target": "src/components/views/terminal/views/legal/LegalView.tsx"
+      "from": "HelpView",
+      "to": "OfflineSyncDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
-      "target": "src/components/views/terminal/views/legal/LegalPdfExporter.ts"
+      "from": "HelpView",
+      "to": "SalesFlowDiagram"
     },
     {
-      "source": "src/components/views/terminal/views/legal/LegalView.tsx",
-      "target": "src/components/views/terminal/views/legal/LegalConsultant.tsx"
+      "from": "HelpView",
+      "to": "button"
     },
     {
-      "source": "src/components/views/terminal/views/legal/LegalView.tsx",
-      "target": "src/components/views/terminal/views/legal/LegalModelForm.tsx"
+      "from": "InventoryCardView",
+      "to": "utils"
     },
     {
-      "source": "src/components/ui/LoadingOverlay.tsx",
-      "target": "src/components/ui/CostProLoader.tsx"
+      "from": "InventoryCardView",
+      "to": "index"
     },
     {
-      "source": "src/components/ui/StateRenderer.tsx",
-      "target": "src/components/ui/CostProLoader.tsx"
+      "from": "InventoryCardView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/components/ui/SpeedDial.tsx",
-      "target": "src/components/ui/Portal.tsx"
+      "from": "InventoryAdjustmentsView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/components/ui/atomic/index.tsx",
-      "target": "src/components/ui/ProductImage.tsx"
+      "from": "InventoryAdjustmentsView",
+      "to": "QueryInspector"
     },
     {
-      "source": "src/components/ui/atomic/index.tsx",
-      "target": "src/components/ui/HorizontalScroll.tsx"
+      "from": "InventoryAdjustmentsView",
+      "to": "utils"
     },
     {
-      "source": "src/components/auth/LoginForm.tsx",
-      "target": "src/components/auth/RegisterForm.tsx"
+      "from": "InventoryAdjustmentsView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/components/auth/WelcomeLandingView.tsx",
-      "target": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx"
+      "from": "InventoryAdjustmentModal",
+      "to": "drawer"
     },
     {
-      "source": "src/components/auth/WelcomeLandingView.tsx",
-      "target": "src/components/auth/diagrams/SpeedScaleDiagram.tsx"
+      "from": "InventoryAdjustmentModal",
+      "to": "utils"
     },
     {
-      "source": "src/services/bot-service.test.ts",
-      "target": "src/services/bot-service.ts"
+      "from": "InventoryAdjustmentModal",
+      "to": "inventory-logic"
     },
     {
-      "source": "src/services/catalog-service.ts",
-      "target": "src/services/import-service.ts"
+      "from": "ProductReceptionView",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/hooks/api/useTransfers.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "ProductReceptionView",
+      "to": "utils"
     },
     {
-      "source": "src/hooks/api/useDocumentActions.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "ProductReceptionView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/hooks/api/useTaxes.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "ProductReceptionView",
+      "to": "SecurityScrollContainer"
     },
     {
-      "source": "src/hooks/api/useProducts.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "ProductReceptionView",
+      "to": "BaseModal"
     },
     {
-      "source": "src/hooks/api/useTransactions.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "ProductReceptionView",
+      "to": "index"
     },
     {
-      "source": "src/hooks/api/useStockMovements.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryTableView",
+      "to": "ProductImage"
     },
     {
-      "source": "src/hooks/api/useCashClosures.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryTableView",
+      "to": "utils"
     },
     {
-      "source": "src/hooks/api/useStores.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryTableView",
+      "to": "CostProLoader"
     },
     {
-      "source": "src/hooks/api/useDashboard.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/hooks/api/useUsers.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "InventoryTableView"
     },
     {
-      "source": "src/hooks/api/useInventory.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "skeleton"
     },
     {
-      "source": "src/hooks/api/useRoles.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/hooks/api/useAuditLogs.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/hooks/api/useReceptions.ts",
-      "target": "src/hooks/api/base.ts"
+      "from": "InventoryView",
+      "to": "InventoryAdjustmentModal"
     },
     {
-      "source": "src/hooks/ui/__tests__/usePWA.test.ts",
-      "target": "src/hooks/ui/usePWA.ts"
+      "from": "InventoryView",
+      "to": "utils"
     },
     {
-      "source": "src/hooks/__tests__/useCostSheetCalculator.test.ts",
-      "target": "src/hooks/logic/useCostSheetCalculator.ts"
+      "from": "InventoryView",
+      "to": "index"
     },
     {
-      "source": "src/hooks/__tests__/templates_verification.test.ts",
-      "target": "src/hooks/logic/useCostSheetCalculator.ts"
+      "from": "InventoryView",
+      "to": "QueryInspector"
     },
     {
-      "source": "src/hooks/__tests__/templates_verification.test.ts",
-      "target": "src/lib/data/costpro-reinicio.ts"
+      "from": "InventoryView",
+      "to": "ProductReceptionView"
     },
     {
-      "source": "src/hooks/__tests__/templates_verification.test.ts",
-      "target": "src/lib/data/template-juice.ts"
+      "from": "InventoryView",
+      "to": "InventoryCardView"
     },
     {
-      "source": "src/hooks/__tests__/templates_verification.test.ts",
-      "target": "src/lib/data/template-industrial.ts"
+      "from": "CashClosureView",
+      "to": "utils"
     },
     {
-      "source": "src/store/__tests__/session-store.test.ts",
-      "target": "src/store/session-store.ts"
+      "from": "CashClosureView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/store/__tests__/cart.test.ts",
-      "target": "src/store/cart.ts"
+      "from": "TaxCalculationModal",
+      "to": "utils"
     },
     {
-      "source": "src/store/__tests__/auth.test.ts",
-      "target": "src/store/index.ts"
+      "from": "TaxCalculationModal",
+      "to": "dialog"
     },
     {
-      "source": "src/store/__tests__/cart_advanced.test.ts",
-      "target": "src/store/cart.ts"
+      "from": "SalesHistoryView",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/store/__tests__/cost-sheet-store.test.ts",
-      "target": "src/store/cost-sheet-store.ts"
+      "from": "SalesHistoryView",
+      "to": "skeleton"
     },
     {
-      "source": "src/lib/theme.test.ts",
-      "target": "src/lib/utils.ts"
+      "from": "SalesHistoryView",
+      "to": "TransactionDetailsModal"
     },
     {
-      "source": "src/lib/utils.ts",
-      "target": "src/lib/supabaseClient.ts"
+      "from": "SalesHistoryView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/lib/errorHandler.ts",
-      "target": "src/lib/logger.ts"
+      "from": "SalesHistoryView",
+      "to": "utils"
     },
     {
-      "source": "src/lib/wallet/parser.ts",
-      "target": "src/lib/wallet/types.ts"
+      "from": "SalesHistoryView",
+      "to": "TaxCalculationModal"
     },
     {
-      "source": "src/lib/wallet/__tests__/parser.test.ts",
-      "target": "src/lib/wallet/parser.ts"
+      "from": "SalesHistoryView",
+      "to": "useSalesHistoryView"
     },
     {
-      "source": "src/lib/cost-engine/user-json.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "TransactionDetailsModal",
+      "to": "table"
     },
     {
-      "source": "src/lib/cost-engine/user-json.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "TransactionDetailsModal",
+      "to": "utils"
     },
     {
-      "source": "src/lib/cost-engine/heuristic.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "TransactionDetailsModal",
+      "to": "badge"
     },
     {
-      "source": "src/lib/cost-engine/heuristic.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "TransactionDetailsModal",
+      "to": "supabaseClient"
     },
     {
-      "source": "src/lib/cost-engine/bidirectional.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "TransactionDetailsModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/lib/cost-engine/bidirectional.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "ReceptionDetailsModal",
+      "to": "skeleton"
     },
     {
-      "source": "src/lib/cost-engine/index.ts",
-      "target": "src/lib/cost-engine/formula-utils.ts"
+      "from": "ReceptionDetailsModal",
+      "to": "BaseModal"
     },
     {
-      "source": "src/lib/cost-engine/accuracy.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "ReceptionDetailsModal",
+      "to": "utils"
     },
     {
-      "source": "src/lib/cost-engine/accuracy.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "StateRenderer"
     },
     {
-      "source": "src/lib/cost-engine/smart-annex.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "skeleton"
     },
     {
-      "source": "src/lib/cost-engine/smart-annex.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/lib/cost-engine/topo-sort.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "utils"
     },
     {
-      "source": "src/lib/cost-engine/topo-sort.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "QueryInspector"
     },
     {
-      "source": "src/lib/cost-engine/index.test.ts",
-      "target": "src/lib/cost-engine/index.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "ReceptionDetailsModal"
     },
     {
-      "source": "src/lib/cost-engine/index.test.ts",
-      "target": "src/lib/cost-engine/types.ts"
+      "from": "ReceptionsHistoryView",
+      "to": "useReceptionsHistoryView"
     },
     {
-      "source": "src/lib/observability/health-alerts.ts",
-      "target": "src/lib/observability/health-engine.ts"
+      "from": "StockHistoryView",
+      "to": "SearchBar"
     },
     {
-      "source": "src/lib/observability/__tests__/system-health.test.ts",
-      "target": "src/lib/observability/system-health.ts"
+      "from": "StockHistoryView",
+      "to": "QueryInspector"
     },
     {
-      "source": "src/lib/observability/__tests__/health-engine.test.ts",
-      "target": "src/lib/observability/health-engine.ts"
+      "from": "StockHistoryView",
+      "to": "utils"
     },
     {
-      "source": "src/lib/academy/__tests__/sm2.test.ts",
-      "target": "src/lib/academy/sm2.ts"
+      "from": "StockHistoryView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/lib/release_gate/__tests__/mri-engine.test.ts",
-      "target": "src/lib/release_gate/mri-engine.ts"
+      "from": "IPVView",
+      "to": "card"
     },
     {
-      "source": "src/lib/ipv/intelligence.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "TransactionTable"
     },
     {
-      "source": "src/lib/ipv/calculations.ts",
-      "target": "src/lib/ipv/parser.ts"
+      "from": "IPVView",
+      "to": "TransferQRReportView"
     },
     {
-      "source": "src/lib/ipv/importUtils.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "IPVReportView"
     },
     {
-      "source": "src/lib/ipv/matching.worker.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "MatchingRulesEditor"
     },
     {
-      "source": "src/lib/ipv/bandecParser.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "IPVRightSidebar"
     },
     {
-      "source": "src/lib/ipv/bandecParser.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "IPVControlPanel"
     },
     {
-      "source": "src/lib/ipv/bandecParser.ts",
-      "target": "src/lib/ipv/utils.ts"
+      "from": "IPVView",
+      "to": "MatchingAuditView"
     },
     {
-      "source": "src/lib/ipv/utils.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "BankIngestion"
     },
     {
-      "source": "src/lib/ipv/__tests__/global_goal_priority.test.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "MatchingSimulation"
     },
     {
-      "source": "src/lib/ipv/__tests__/calculations.test.ts",
-      "target": "src/lib/ipv/calculations.ts"
+      "from": "IPVView",
+      "to": "tabs"
     },
     {
-      "source": "src/lib/ipv/__tests__/bandecParser.test.ts",
-      "target": "src/lib/ipv/bandecParser.ts"
+      "from": "IPVView",
+      "to": "LoadingOverlay"
     },
     {
-      "source": "src/lib/ipv/__tests__/bandecParser.test.ts",
-      "target": "src/lib/ipv/utils.ts"
+      "from": "IPVView",
+      "to": "PivotStatementView"
     },
     {
-      "source": "src/lib/ipv/__tests__/repro_issue.test.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "ManualReconciliationView"
     },
     {
-      "source": "src/lib/ipv/__tests__/repro_issue.test.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "TransactionBreakdown"
     },
     {
-      "source": "src/lib/ipv/__tests__/advanced_engine.test.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "CatalogTable"
     },
     {
-      "source": "src/lib/ipv/__tests__/advanced_engine.test.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "IPVReportsDropdown"
     },
     {
-      "source": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "engine"
     },
     {
-      "source": "src/lib/ipv/__tests__/bigbon_simulation.test.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "backup"
     },
     {
-      "source": "src/lib/ipv/__tests__/engine.test.ts",
-      "target": "src/lib/ipv/engine.ts"
+      "from": "IPVView",
+      "to": "dexie"
     },
     {
-      "source": "src/lib/ipv/__tests__/engine.test.ts",
-      "target": "src/lib/dexie.ts"
+      "from": "IPVView",
+      "to": "tooltip"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "IPVView",
+      "to": "IPVInstitutionalDashboard"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/gemini-adapter.ts"
+      "from": "IPVView",
+      "to": "IncomeReceiptSection"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/gpt-adapter.ts"
+      "from": "IPVView",
+      "to": "MovementsView"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/qwen-adapter.ts"
+      "from": "IPVView",
+      "to": "utils"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/deepseek-adapter.ts"
+      "from": "IPVView",
+      "to": "utils"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/kimi-adapter.ts"
+      "from": "IPVView",
+      "to": "badge"
     },
     {
-      "source": "src/lib/ai/orchestrator.ts",
-      "target": "src/lib/ai/adapters/fallback-adapter.ts"
+      "from": "IPVView",
+      "to": "HorizontalScroll"
     },
     {
-      "source": "src/lib/ai/adapters/qwen-adapter.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "IPVView",
+      "to": "ActionMenu"
     },
     {
-      "source": "src/lib/ai/adapters/openai-compatible-adapter.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "IPVView",
+      "to": "IPVHelpDialog"
     },
     {
-      "source": "src/lib/ai/adapters/fallback-adapter.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "IPVView",
+      "to": "button"
     },
     {
-      "source": "src/lib/ai/adapters/deepseek-adapter.ts",
-      "target": "src/lib/ai/adapters/openai-compatible-adapter.ts"
+      "from": "IPVView",
+      "to": "IngestionErrorsTable"
     },
     {
-      "source": "src/lib/ai/adapters/gemini-adapter.test.ts",
-      "target": "src/lib/ai/adapters/gemini-adapter.ts"
+      "from": "IPVRightSidebar",
+      "to": "tooltip"
     },
     {
-      "source": "src/lib/ai/adapters/gemini-adapter.test.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "IPVRightSidebar",
+      "to": "button"
     },
     {
-      "source": "src/lib/ai/adapters/gemini-adapter.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "TransactionBreakdown",
+      "to": "input"
     },
     {
-      "source": "src/lib/ai/adapters/kimi-adapter.ts",
-      "target": "src/lib/ai/adapters/openai-compatible-adapter.ts"
+      "from": "TransactionBreakdown",
+      "to": "table"
     },
     {
-      "source": "src/lib/ai/adapters/gpt-adapter.ts",
-      "target": "src/lib/ai/adapters/openai-compatible-adapter.ts"
+      "from": "TransactionBreakdown",
+      "to": "utils"
     },
     {
-      "source": "src/lib/ai/tools/definitions.ts",
-      "target": "src/lib/ai/types.ts"
+      "from": "TransactionBreakdown",
+      "to": "badge"
     },
     {
-      "source": "src/lib/ai/tools/registry.ts",
-      "target": "src/lib/ai/tools/definitions.ts"
+      "from": "TransactionBreakdown",
+      "to": "dexie"
     },
     {
-      "source": "src/lib/ai/tools/registry.ts",
-      "target": "src/lib/observability/system-health.ts"
+      "from": "TransactionBreakdown",
+      "to": "button"
     },
     {
-      "source": "src/lib/ai/tools/registry.test.ts",
-      "target": "src/lib/ai/tools/registry.ts"
+      "from": "TransactionBreakdown",
+      "to": "dialog"
+    },
+    {
+      "from": "ActionBadges",
+      "to": "tooltip"
+    },
+    {
+      "from": "ActionBadges",
+      "to": "utils"
+    },
+    {
+      "from": "ActionBadges",
+      "to": "badge"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "card"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "AddTransactionModal"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "checkbox"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "popover"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "engine"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "input"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "table"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "ActionBadges"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "dexie"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "tooltip"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "label"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "dialog"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "scroll-area"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "MatchingTracePopover"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "utils"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "badge"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "BaseModal"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "button"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "switch"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "engine"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "input"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "dexie"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "select"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "label"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "button"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "dialog"
+    },
+    {
+      "from": "IncomeReceiptPreview",
+      "to": "utils"
+    },
+    {
+      "from": "MovementsView",
+      "to": "input"
+    },
+    {
+      "from": "MovementsView",
+      "to": "table"
+    },
+    {
+      "from": "MovementsView",
+      "to": "card"
+    },
+    {
+      "from": "MovementsView",
+      "to": "badge"
+    },
+    {
+      "from": "MovementsView",
+      "to": "dexie"
+    },
+    {
+      "from": "MovementsView",
+      "to": "button"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "input"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "card"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "dexie"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "IncomeReceiptPreview"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "label"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "button"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "LegalPdfExporter"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "scroll-area"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "checkbox"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "table"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "utils"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "badge"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "dexie"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "label"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "button"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "dialog"
+    },
+    {
+      "from": "MatchingTracePopover",
+      "to": "scroll-area"
+    },
+    {
+      "from": "MatchingTracePopover",
+      "to": "utils"
+    },
+    {
+      "from": "MatchingTracePopover",
+      "to": "dexie"
+    },
+    {
+      "from": "MatchingTracePopover",
+      "to": "badge"
+    },
+    {
+      "from": "MatchingTracePopover",
+      "to": "popover"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "input"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "IPVPreviewModal"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "table"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "utils"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "badge"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "dexie"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "LoadingOverlay"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "tooltip"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "button"
+    },
+    {
+      "from": "MatchingAuditView",
+      "to": "input"
+    },
+    {
+      "from": "MatchingAuditView",
+      "to": "table"
+    },
+    {
+      "from": "MatchingAuditView",
+      "to": "card"
+    },
+    {
+      "from": "MatchingAuditView",
+      "to": "badge"
+    },
+    {
+      "from": "MatchingAuditView",
+      "to": "button"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "engine"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "input"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "table"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "utils"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "badge"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "dexie"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "utils"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "button"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "input"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "table"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "card"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "dexie"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "badge"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "utils"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "label"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "button"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "engine"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "scroll-area"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "input"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "utils"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "badge"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "dexie"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "utils"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "button"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "engine"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "card"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "dexie"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "badge"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "label"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "RuleMetaEditor"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "button"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "switch"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "engine"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "input"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "table"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "card"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "dexie"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "badge"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "button"
+    },
+    {
+      "from": "RuleMetaEditor",
+      "to": "input"
+    },
+    {
+      "from": "RuleMetaEditor",
+      "to": "card"
+    },
+    {
+      "from": "RuleMetaEditor",
+      "to": "badge"
+    },
+    {
+      "from": "RuleMetaEditor",
+      "to": "dexie"
+    },
+    {
+      "from": "RuleMetaEditor",
+      "to": "button"
+    },
+    {
+      "from": "IPVReportsDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "IPVReportsDropdown",
+      "to": "button"
+    },
+    {
+      "from": "IPVReportsDropdown",
+      "to": "utils"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "table"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "card"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "utils"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "dexie"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "button"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "engine"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "backup"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "card"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "importUtils"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "dexie"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "badge"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "utils"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "bandecParser"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "BaseModal"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "button"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "card"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "calculations"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "utils"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "dexie"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "badge"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "button"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "card"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "intelligence"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "importUtils"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "engine"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "input"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "table"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "dexie"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "tooltip"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "label"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "utils"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "roles"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "utils"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "badge"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "BaseModal"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "button"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "switch"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "scroll-area"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "badge"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "tooltip"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "button"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "dialog"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "backup"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "card"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "badge"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "dexie"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "tooltip"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "button"
+    },
+    {
+      "from": "InventoryCountTableView",
+      "to": "InventoryCountView"
+    },
+    {
+      "from": "InventoryCountTableView",
+      "to": "utils"
+    },
+    {
+      "from": "InventoryCountCardView",
+      "to": "InventoryCountView"
+    },
+    {
+      "from": "InventoryCountCardView",
+      "to": "utils"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "InventoryCountTableView"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "SearchBar"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "QueryInspector"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "utils"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "InventoryCountCardView"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "SecurityScrollContainer"
+    },
+    {
+      "from": "data-loader",
+      "to": "types"
+    },
+    {
+      "from": "CuentasModule",
+      "to": "scroll-area"
+    },
+    {
+      "from": "CuentasModule",
+      "to": "utils"
+    },
+    {
+      "from": "CuentasModule",
+      "to": "badge"
+    },
+    {
+      "from": "CuentasModule",
+      "to": "types"
+    },
+    {
+      "from": "CuentasModule",
+      "to": "button"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "input"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "utils"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "badge"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "types"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "button"
+    },
+    {
+      "from": "WikiBreadcrumbs",
+      "to": "types"
+    },
+    {
+      "from": "WikiSearch",
+      "to": "types"
+    },
+    {
+      "from": "WikiSearch",
+      "to": "command"
+    },
+    {
+      "from": "WikiView",
+      "to": "scroll-area"
+    },
+    {
+      "from": "WikiView",
+      "to": "input"
+    },
+    {
+      "from": "WikiView",
+      "to": "WikiBreadcrumbs"
+    },
+    {
+      "from": "WikiView",
+      "to": "CuentasModule"
+    },
+    {
+      "from": "WikiView",
+      "to": "AsientosModule"
+    },
+    {
+      "from": "WikiView",
+      "to": "utils"
+    },
+    {
+      "from": "WikiView",
+      "to": "WikiSearch"
+    },
+    {
+      "from": "WikiView",
+      "to": "types"
+    },
+    {
+      "from": "WikiView",
+      "to": "ClasificadorModule"
+    },
+    {
+      "from": "WikiView",
+      "to": "button"
+    },
+    {
+      "from": "WikiView",
+      "to": "data-loader"
+    },
+    {
+      "from": "WikiView",
+      "to": "WikiSidebar"
+    },
+    {
+      "from": "WikiSidebar",
+      "to": "types"
+    },
+    {
+      "from": "WikiSidebar",
+      "to": "utils"
+    },
+    {
+      "from": "ClasificadorModule",
+      "to": "types"
+    },
+    {
+      "from": "ClasificadorModule",
+      "to": "accordion"
+    },
+    {
+      "from": "ClasificadorModule",
+      "to": "utils"
+    },
+    {
+      "from": "POSTableView",
+      "to": "ProductImage"
+    },
+    {
+      "from": "POSTableView",
+      "to": "utils"
+    },
+    {
+      "from": "usePOSView",
+      "to": "utils"
+    },
+    {
+      "from": "usePOSView",
+      "to": "logger"
+    },
+    {
+      "from": "POSView",
+      "to": "Portal"
+    },
+    {
+      "from": "POSView",
+      "to": "POSCart"
+    },
+    {
+      "from": "POSView",
+      "to": "PriceSelectorModal"
+    },
+    {
+      "from": "POSView",
+      "to": "POSTableView"
+    },
+    {
+      "from": "POSView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "POSView",
+      "to": "drawer"
+    },
+    {
+      "from": "POSView",
+      "to": "QueryInspector"
+    },
+    {
+      "from": "POSView",
+      "to": "skeleton"
+    },
+    {
+      "from": "POSView",
+      "to": "usePOSView"
+    },
+    {
+      "from": "POSView",
+      "to": "StickyCartSummary"
+    },
+    {
+      "from": "POSView",
+      "to": "index"
+    },
+    {
+      "from": "POSView",
+      "to": "ViewSwitcher"
+    },
+    {
+      "from": "POSView",
+      "to": "SpeedDial"
+    },
+    {
+      "from": "POSView",
+      "to": "SearchBar"
+    },
+    {
+      "from": "POSView",
+      "to": "utils"
+    },
+    {
+      "from": "POSView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "POSView",
+      "to": "BarcodeScanner"
+    },
+    {
+      "from": "POSView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "POSCart",
+      "to": "ProductImage"
+    },
+    {
+      "from": "POSCart",
+      "to": "utils"
+    },
+    {
+      "from": "POSCart",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "POSCart",
+      "to": "BaseModal"
+    },
+    {
+      "from": "POSCart",
+      "to": "index"
+    },
+    {
+      "from": "StickyCartSummary",
+      "to": "utils"
+    },
+    {
+      "from": "AuditEventIcon",
+      "to": "utils"
+    },
+    {
+      "from": "AuditFilters",
+      "to": "AuditEventIcon"
+    },
+    {
+      "from": "AuditFilters",
+      "to": "utils"
+    },
+    {
+      "from": "AuditTableView",
+      "to": "AuditEventIcon"
+    },
+    {
+      "from": "AuditTableView",
+      "to": "utils"
+    },
+    {
+      "from": "AuditTimeline",
+      "to": "utils"
+    },
+    {
+      "from": "AuditTimeline",
+      "to": "AuditEventCard"
+    },
+    {
+      "from": "AuditEventCard",
+      "to": "AuditEventIcon"
+    },
+    {
+      "from": "AuditEventCard",
+      "to": "AuditEventMeta"
+    },
+    {
+      "from": "AuditEventCard",
+      "to": "utils"
+    },
+    {
+      "from": "AuditEventMeta",
+      "to": "utils"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditTableView"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "skeleton"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditEventIcon"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "tabs"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "useAuditLogsView"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "pdf-export"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditFilters"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditTimeline"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "scroll-area"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "card"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "badge"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "validations"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "CostSheetAuditLog"
+    },
+    {
+      "from": "CostSheetSidebarNav",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetSidebarNav",
+      "to": "sheet"
+    },
+    {
+      "from": "CostSheetSidebarNav",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetFormulaGuide",
+      "to": "accordion"
+    },
+    {
+      "from": "CostSheetGenerateDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "FormulaBuilder"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "utils"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "badge"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "popover"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "dialog"
+    },
+    {
+      "from": "CircularProgress",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetCalculator",
+      "to": "utils"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "table"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "skeleton"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "SearchBar"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "utils"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "BaseModal"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "index"
+    },
+    {
+      "from": "CostSheetBanner",
+      "to": "CostSheetModeDropdown"
+    },
+    {
+      "from": "CostSheetBanner",
+      "to": "ThemeToggle"
+    },
+    {
+      "from": "CostSheetBanner",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "scroll-area"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "card"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "types"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "badge"
+    },
+    {
+      "from": "CostSheetMasterRing",
+      "to": "slider"
+    },
+    {
+      "from": "CostSheetMasterRing",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "CostSheetModeDropdown"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "ViewSwitcher"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetSignatureEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetSidebarNav"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetMassiveGenerator"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "DarianEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetActionsPanel"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetTemplateExplorer"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetFormulaGuide"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "LazyRender"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "UpgradeModal"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetQuickMode"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetPreview"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetWizard"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetNarrative"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetModeDropdown"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetCardView"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetInteractiveTable"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetExportModal"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "skeleton"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetAuditView"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetNav"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "ViewSwitcher"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetHelpPanel"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "SpeedDial"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetHeaderEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetBottomNav"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetAnnexEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetSummary"
+    },
+    {
+      "from": "CostSheetAnnexes",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetHelpDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "CostSheetSummary",
+      "to": "HealthBattery"
+    },
+    {
+      "from": "CostSheetSummary",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetSummary",
+      "to": "slider"
+    },
+    {
+      "from": "CostSheetSummary",
+      "to": "CostSheetMasterRing"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetGenerateDropdown"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetHelpDropdown"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetOptionsDropdown"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetFCDropdown"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetModeDropdown"
+    },
+    {
+      "from": "CostSheetOptionsDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "CostSheetHeader",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetQuickMode",
+      "to": "select"
+    },
+    {
+      "from": "CostSheetQuickMode",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetQuickMode",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetBottomNav",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "CostSheetBottomNav",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetNarrative",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "scroll-area"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "checkbox"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "label"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "dialog"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "switch"
+    },
+    {
+      "from": "HealthBattery",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-repair"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-consultancy"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-logistics"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-lavar"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "costpro-reinicio"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-furniture"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-industrial"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-shoes"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-pastry"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-pizza"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-icecream"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "costpro-ejemplo"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-juice"
+    },
+    {
+      "from": "CostSheetForm",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetForm",
+      "to": "table"
+    },
+    {
+      "from": "CostSheetForm",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetForm",
+      "to": "label"
+    },
+    {
+      "from": "CostSheetForm",
+      "to": "button"
+    },
+    {
+      "from": "FormulaBuilder",
+      "to": "scroll-area"
+    },
+    {
+      "from": "FormulaBuilder",
+      "to": "HorizontalScroll"
+    },
+    {
+      "from": "FormulaBuilder",
+      "to": "utils"
+    },
+    {
+      "from": "FormulaBuilder",
+      "to": "tabs"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "LazyRender"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "CostSheetSectionActionsPanel"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "CircularProgress"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "popover"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "FormulaEditor"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "checkbox"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "table"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "CostSheetExportModal"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "tabs"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "types"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "progress"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "label"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "index"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "dialog"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "switch"
+    },
+    {
+      "from": "CostSheetSidePanel",
+      "to": "CostSheetCalculator"
+    },
+    {
+      "from": "CostSheetSidePanel",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetSidePanel",
+      "to": "DarianEditor"
+    },
+    {
+      "from": "CostSheetBody",
+      "to": "utils"
+    },
+    {
+      "from": "DarianEditor",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetHeaderEditor",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetHeaderEditor",
+      "to": "card"
+    },
+    {
+      "from": "CostSheetHeaderEditor",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetHeaderEditor",
+      "to": "label"
+    },
+    {
+      "from": "CostSheetFCDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "CostSheetFCDropdown",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "CostSheetInteractiveTable"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "CostSheetHeaderEditor"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "CostSheetSignatureEditor"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "progress"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "CostSheetSidebarNav"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "CostSheetAnnexEditor"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "LazyRender"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "table"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "CostSheetSectionActionsPanel"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "costpro-reinicio"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "select"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "popover"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "FormulaEditor"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "table"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "ProductInventoryPicker"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "ViewSwitcher"
+    },
+    {
+      "from": "CostSheetSectionActionsPanel",
+      "to": "sheet"
+    },
+    {
+      "from": "CostSheetSectionActionsPanel",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetSectionActionsPanel",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetPreview",
+      "to": "CostSheetAnnexes"
+    },
+    {
+      "from": "CostSheetPreview",
+      "to": "CostSheetSignature"
+    },
+    {
+      "from": "CostSheetPreview",
+      "to": "CostSheetBody"
+    },
+    {
+      "from": "CostSheetPreview",
+      "to": "SecurityScrollContainer"
+    },
+    {
+      "from": "CostSheetPreview",
+      "to": "CostSheetHeader"
+    },
+    {
+      "from": "CostSheetSignatureEditor",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetModeDropdown",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "CostSheetModeDropdown",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetHelpPanel",
+      "to": "CostSheetFormulaGuide"
+    },
+    {
+      "from": "CostSheetHelpPanel",
+      "to": "utils"
+    },
+    {
+      "from": "UserFormModal",
+      "to": "BaseModal"
+    },
+    {
+      "from": "UserFormModal",
+      "to": "UserForm"
+    },
+    {
+      "from": "useUsersView",
+      "to": "roles"
+    },
+    {
+      "from": "useUsersView",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "useUsersView",
+      "to": "UserForm"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "SearchBar"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "utils"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "UserFormModal"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "select"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "useUsersView"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "button"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "switch"
+    },
+    {
+      "from": "RoleForm",
+      "to": "utils"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "SearchBar"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "utils"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "RoleForm"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "UserForm",
+      "to": "utils"
+    },
+    {
+      "from": "RSSManagementView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "RSSManagementView",
+      "to": "utils"
+    },
+    {
+      "from": "NewsView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "NewsView",
+      "to": "utils"
+    },
+    {
+      "from": "LegalModelForm",
+      "to": "utils"
+    },
+    {
+      "from": "LegalModelForm",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "LegalModelForm",
+      "to": "number-to-words-es"
+    },
+    {
+      "from": "LegalModelForm",
+      "to": "LegalPdfExporter"
+    },
+    {
+      "from": "LegalConsultant",
+      "to": "utils"
+    },
+    {
+      "from": "LegalView",
+      "to": "LegalModelForm"
+    },
+    {
+      "from": "LegalView",
+      "to": "LegalConsultant"
+    },
+    {
+      "from": "LegalView",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "LegalView",
+      "to": "utils"
+    },
+    {
+      "from": "skeleton",
+      "to": "utils"
+    },
+    {
+      "from": "accordion",
+      "to": "utils"
+    },
+    {
+      "from": "ViewSwitcher",
+      "to": "utils"
+    },
+    {
+      "from": "hover-card",
+      "to": "utils"
+    },
+    {
+      "from": "command",
+      "to": "dialog"
+    },
+    {
+      "from": "command",
+      "to": "utils"
+    },
+    {
+      "from": "resizable",
+      "to": "utils"
+    },
+    {
+      "from": "QueryInspector",
+      "to": "utils"
+    },
+    {
+      "from": "SearchBar",
+      "to": "utils"
+    },
+    {
+      "from": "dropdown-menu",
+      "to": "utils"
+    },
+    {
+      "from": "separator",
+      "to": "utils"
+    },
+    {
+      "from": "MobileSafeContainer",
+      "to": "utils"
+    },
+    {
+      "from": "pagination",
+      "to": "button"
+    },
+    {
+      "from": "pagination",
+      "to": "utils"
+    },
+    {
+      "from": "alert-dialog",
+      "to": "button"
+    },
+    {
+      "from": "alert-dialog",
+      "to": "utils"
+    },
+    {
+      "from": "input-otp",
+      "to": "utils"
+    },
+    {
+      "from": "alert",
+      "to": "utils"
+    },
+    {
+      "from": "popover",
+      "to": "utils"
+    },
+    {
+      "from": "table",
+      "to": "utils"
+    },
+    {
+      "from": "progress",
+      "to": "utils"
+    },
+    {
+      "from": "select",
+      "to": "utils"
+    },
+    {
+      "from": "LoadingOverlay",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "textarea",
+      "to": "utils"
+    },
+    {
+      "from": "PWAInstallModal",
+      "to": "utils"
+    },
+    {
+      "from": "PWAInstallModal",
+      "to": "dialog"
+    },
+    {
+      "from": "toggle",
+      "to": "utils"
+    },
+    {
+      "from": "StateRenderer",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "toggle-group",
+      "to": "toggle"
+    },
+    {
+      "from": "toggle-group",
+      "to": "utils"
+    },
+    {
+      "from": "scroll-area",
+      "to": "utils"
+    },
+    {
+      "from": "label",
+      "to": "utils"
+    },
+    {
+      "from": "chart",
+      "to": "utils"
+    },
+    {
+      "from": "sidebar",
+      "to": "input"
+    },
+    {
+      "from": "sidebar",
+      "to": "skeleton"
+    },
+    {
+      "from": "sidebar",
+      "to": "separator"
+    },
+    {
+      "from": "sidebar",
+      "to": "utils"
+    },
+    {
+      "from": "sidebar",
+      "to": "sheet"
+    },
+    {
+      "from": "sidebar",
+      "to": "tooltip"
+    },
+    {
+      "from": "sidebar",
+      "to": "button"
+    },
+    {
+      "from": "tabs",
+      "to": "utils"
+    },
+    {
+      "from": "BaseModal",
+      "to": "utils"
+    },
+    {
+      "from": "BaseModal",
+      "to": "dialog"
+    },
+    {
+      "from": "switch",
+      "to": "utils"
+    },
+    {
+      "from": "checkbox",
+      "to": "utils"
+    },
+    {
+      "from": "context-menu",
+      "to": "utils"
+    },
+    {
+      "from": "badge",
+      "to": "utils"
+    },
+    {
+      "from": "CostProLoader",
+      "to": "utils"
+    },
+    {
+      "from": "calendar",
+      "to": "button"
+    },
+    {
+      "from": "calendar",
+      "to": "utils"
+    },
+    {
+      "from": "toaster",
+      "to": "toast"
+    },
+    {
+      "from": "navigation-menu",
+      "to": "utils"
+    },
+    {
+      "from": "ActionMenu",
+      "to": "tooltip"
+    },
+    {
+      "from": "ActionMenu",
+      "to": "utils"
+    },
+    {
+      "from": "ProductImage",
+      "to": "utils"
+    },
+    {
+      "from": "toast",
+      "to": "utils"
+    },
+    {
+      "from": "FloatingCalculator",
+      "to": "utils"
+    },
+    {
+      "from": "ScrollToTop",
+      "to": "utils"
+    },
+    {
+      "from": "button",
+      "to": "utils"
+    },
+    {
+      "from": "avatar",
+      "to": "utils"
+    },
+    {
+      "from": "dialog",
+      "to": "utils"
+    },
+    {
+      "from": "SecurityScrollContainer",
+      "to": "utils"
+    },
+    {
+      "from": "breadcrumb",
+      "to": "utils"
+    },
+    {
+      "from": "form",
+      "to": "label"
+    },
+    {
+      "from": "form",
+      "to": "utils"
+    },
+    {
+      "from": "slider",
+      "to": "utils"
+    },
+    {
+      "from": "menubar",
+      "to": "utils"
+    },
+    {
+      "from": "tooltip",
+      "to": "utils"
+    },
+    {
+      "from": "SpeedDial",
+      "to": "utils"
+    },
+    {
+      "from": "SpeedDial",
+      "to": "Portal"
+    },
+    {
+      "from": "ChatBot",
+      "to": "utils"
+    },
+    {
+      "from": "carousel",
+      "to": "button"
+    },
+    {
+      "from": "carousel",
+      "to": "utils"
+    },
+    {
+      "from": "card",
+      "to": "utils"
+    },
+    {
+      "from": "sheet",
+      "to": "utils"
+    },
+    {
+      "from": "drawer",
+      "to": "utils"
+    },
+    {
+      "from": "input",
+      "to": "utils"
+    },
+    {
+      "from": "HorizontalScroll",
+      "to": "utils"
+    },
+    {
+      "from": "SyncStatusBadge",
+      "to": "SyncProvider"
+    },
+    {
+      "from": "SyncStatusBadge",
+      "to": "utils"
+    },
+    {
+      "from": "radio-group",
+      "to": "utils"
+    },
+    {
+      "from": "index",
+      "to": "ProductImage"
+    },
+    {
+      "from": "index",
+      "to": "utils"
+    },
+    {
+      "from": "index",
+      "to": "HorizontalScroll"
+    },
+    {
+      "from": "RegisterForm",
+      "to": "logger"
+    },
+    {
+      "from": "RegisterForm",
+      "to": "input"
+    },
+    {
+      "from": "RegisterForm",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "LoginForm",
+      "to": "navigation"
+    },
+    {
+      "from": "LoginForm",
+      "to": "RegisterForm"
+    },
+    {
+      "from": "LoginForm",
+      "to": "input"
+    },
+    {
+      "from": "LoginForm",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "LoginForm",
+      "to": "logger"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "CostProLogo"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "AutomationWorkflowDiagram"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "ThemeToggle"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "utils"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "PWAInstallModal"
+    },
+    {
+      "from": "WelcomeLandingView",
+      "to": "SpeedScaleDiagram"
+    },
+    {
+      "from": "auth",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "utils",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "errorHandler",
+      "to": "logger"
+    },
+    {
+      "from": "parser",
+      "to": "types"
+    },
+    {
+      "from": "index",
+      "to": "formula-utils"
+    },
+    {
+      "from": "index",
+      "to": "types"
+    },
+    {
+      "from": "health-alerts",
+      "to": "health-engine"
+    },
+    {
+      "from": "health-alerts",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "intelligence",
+      "to": "dexie"
+    },
+    {
+      "from": "calculations",
+      "to": "parser"
+    },
+    {
+      "from": "calculations",
+      "to": "dexie"
+    },
+    {
+      "from": "importUtils",
+      "to": "dexie"
+    },
+    {
+      "from": "matching.worker",
+      "to": "engine"
+    },
+    {
+      "from": "bandecParser",
+      "to": "engine"
+    },
+    {
+      "from": "bandecParser",
+      "to": "utils"
+    },
+    {
+      "from": "bandecParser",
+      "to": "dexie"
+    },
+    {
+      "from": "engine",
+      "to": "dexie"
+    },
+    {
+      "from": "utils",
+      "to": "dexie"
+    },
+    {
+      "from": "orchestrator",
+      "to": "fallback-adapter"
+    },
+    {
+      "from": "orchestrator",
+      "to": "kimi-adapter"
+    },
+    {
+      "from": "orchestrator",
+      "to": "deepseek-adapter"
+    },
+    {
+      "from": "orchestrator",
+      "to": "gpt-adapter"
+    },
+    {
+      "from": "orchestrator",
+      "to": "gemini-adapter"
+    },
+    {
+      "from": "orchestrator",
+      "to": "types"
+    },
+    {
+      "from": "orchestrator",
+      "to": "qwen-adapter"
+    },
+    {
+      "from": "qwen-adapter",
+      "to": "types"
+    },
+    {
+      "from": "openai-compatible-adapter",
+      "to": "types"
+    },
+    {
+      "from": "fallback-adapter",
+      "to": "types"
+    },
+    {
+      "from": "deepseek-adapter",
+      "to": "openai-compatible-adapter"
+    },
+    {
+      "from": "gemini-adapter",
+      "to": "types"
+    },
+    {
+      "from": "kimi-adapter",
+      "to": "openai-compatible-adapter"
+    },
+    {
+      "from": "gpt-adapter",
+      "to": "openai-compatible-adapter"
+    },
+    {
+      "from": "definitions",
+      "to": "types"
+    },
+    {
+      "from": "registry",
+      "to": "definitions"
+    },
+    {
+      "from": "registry",
+      "to": "system-health"
     }
-  ]
+  ],
+  "graphStats": {
+    "totalNodes": 331,
+    "totalEdges": 895,
+    "topCoupled": [
+      "IPVView",
+      "CatalogTable",
+      "CostSheetView",
+      "CostSheetMassiveGenerator",
+      "button"
+    ],
+    "communities": []
+  }
 }
