@@ -1,11 +1,12 @@
 {
   "title": "Manual Maestro de Usuario - CostPro AI",
-  "version": "1.0.0",
-  "intro": "Bienvenido al sistema inteligente de gestión de costos y conciliación. Esta guía te ayudará a navegar y operar el sistema.",
+  "version": "1.1.0",
+  "lastUpdated": "2026-03-16",
+  "intro": "Bienvenido al sistema inteligente de gestión de costos y conciliación. Esta guía te ayudará a navegar y operar el sistema de manera eficiente.",
   "sections": [
     {
       "title": "Introducción a los Procesos",
-      "content": "El sistema se basa en workflows automatizados que aseguran la integridad de tus datos.",
+      "content": "El sistema se basa en workflows automatizados que aseguran la integridad de tus datos y optimizan la gestión empresarial.",
       "workflows": [
         {
           "id": "reconciliacion_ipv",
@@ -27,12 +28,33 @@
             "Organizar por grupos y subgrupos"
           ],
           "business_goal": "Mantener un catálogo actualizado para la automatización del matching."
+        },
+        {
+          "id": "aprendizaje_conceptos",
+          "name": "Aprendizaje y Capacitación (Academy)",
+          "steps": [
+            "Acceder al módulo Academy",
+            "Seleccionar categoría de estudio",
+            "Realizar sesiones de repaso con Flashcards",
+            "Monitorear progreso en Mastery Dashboard"
+          ],
+          "business_goal": "Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetición espaciada."
+        },
+        {
+          "id": "gestion_billetera_digital",
+          "name": "Gestión de Billetera y Notificaciones (Wallet)",
+          "steps": [
+            "Importar mensajes de texto o archivos de banco",
+            "Visualizar registros crudos en la pestaña BD",
+            "Analizar métricas financieras en Analytics Dashboard"
+          ],
+          "business_goal": "Centralizar y analizar el flujo de caja proveniente de notificaciones bancarias digitales."
         }
       ]
     },
     {
       "title": "Guía de Vistas y Módulos",
-      "content": "Detalle de las principales pantallas del sistema.",
+      "content": "Detalle de las principales pantallas del sistema, sus rutas y componentes principales.",
       "views": [
         {
           "id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
@@ -792,67 +814,357 @@
     },
     {
       "title": "Preguntas Frecuentes y Ayuda",
-      "content": "Información resumida para soporte rápido.",
+      "content": "Información resumida y ayuda contextual para los componentes clave del sistema.",
       "help": [
         {
           "component_id": "src/components/IntelligentThemeHandler.tsx",
-          "user_description": "Esta sección te permite gestionar IntelligentThemeHandler.",
-          "tooltip_help": "Usa esto para interactuar con IntelligentThemeHandler.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar IntelligentThemeHandler.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con IntelligentThemeHandler.tsx.",
+          "tooltip_help": "Interactuar con IntelligentThemeHandler.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con IntelligentThemeHandler.tsx."
+        },
+        {
+          "component_id": "src/components/GlobalSessionManager.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con GlobalSessionManager.tsx.",
+          "tooltip_help": "Interactuar con GlobalSessionManager.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con GlobalSessionManager.tsx."
+        },
+        {
+          "component_id": "src/components/theme-provider.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con theme-provider.tsx.",
+          "tooltip_help": "Interactuar con theme-provider.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con theme-provider.tsx."
         },
         {
           "component_id": "src/components/SplashScreen.tsx",
-          "user_description": "Esta sección te permite gestionar SplashScreen.",
-          "tooltip_help": "Usa esto para interactuar con SplashScreen.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar SplashScreen.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SplashScreen.tsx.",
+          "tooltip_help": "Interactuar con SplashScreen.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SplashScreen.tsx."
         },
         {
           "component_id": "src/components/ThemeToggle.tsx",
-          "user_description": "Esta sección te permite gestionar ThemeToggle.",
-          "tooltip_help": "Usa esto para interactuar con ThemeToggle.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar ThemeToggle.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ThemeToggle.tsx.",
+          "tooltip_help": "Interactuar con ThemeToggle.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ThemeToggle.tsx."
         },
         {
           "component_id": "src/components/CostProLogo.tsx",
-          "user_description": "Esta sección te permite gestionar CostProLogo.",
-          "tooltip_help": "Usa esto para interactuar con CostProLogo.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar CostProLogo.tsx de forma eficiente."
+          "user_description": "Gestión y cálculo de fichas de costo para productos y servicios.",
+          "tooltip_help": "Cálculo de fichas de costo.",
+          "modal_help": "Permite desglosar cada gasto asociado a la producción para obtener márgenes de ganancia precisos.",
+          "quick_description": "Cálculo de fichas de costo."
+        },
+        {
+          "component_id": "src/components/ServiceWorkerRegister.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ServiceWorkerRegister.tsx.",
+          "tooltip_help": "Interactuar con ServiceWorkerRegister.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ServiceWorkerRegister.tsx."
         },
         {
           "component_id": "src/components/modals/SyncConflictModal.tsx",
-          "user_description": "Esta sección te permite gestionar SyncConflictModal.",
-          "tooltip_help": "Usa esto para interactuar con SyncConflictModal.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar SyncConflictModal.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SyncConflictModal.tsx.",
+          "tooltip_help": "Interactuar con SyncConflictModal.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SyncConflictModal.tsx."
         },
         {
           "component_id": "src/components/modals/CreateProductModal.tsx",
-          "user_description": "Esta sección te permite gestionar CreateProductModal.",
-          "tooltip_help": "Usa esto para interactuar con CreateProductModal.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar CreateProductModal.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con CreateProductModal.tsx.",
+          "tooltip_help": "Interactuar con CreateProductModal.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con CreateProductModal.tsx."
         },
         {
           "component_id": "src/components/modals/BarcodeScanner.tsx",
-          "user_description": "Esta sección te permite gestionar BarcodeScanner.",
-          "tooltip_help": "Usa esto para interactuar con BarcodeScanner.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar BarcodeScanner.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con BarcodeScanner.tsx.",
+          "tooltip_help": "Interactuar con BarcodeScanner.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con BarcodeScanner.tsx."
         },
         {
           "component_id": "src/components/modals/UpgradeModal.tsx",
-          "user_description": "Esta sección te permite gestionar UpgradeModal.",
-          "tooltip_help": "Usa esto para interactuar con UpgradeModal.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar UpgradeModal.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con UpgradeModal.tsx.",
+          "tooltip_help": "Interactuar con UpgradeModal.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con UpgradeModal.tsx."
         },
         {
           "component_id": "src/components/modals/PriceSelectorModal.tsx",
-          "user_description": "Esta sección te permite gestionar PriceSelectorModal.",
-          "tooltip_help": "Usa esto para interactuar con PriceSelectorModal.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar PriceSelectorModal.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con PriceSelectorModal.tsx.",
+          "tooltip_help": "Interactuar con PriceSelectorModal.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con PriceSelectorModal.tsx."
+        },
+        {
+          "component_id": "src/components/providers/SyncProvider.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SyncProvider.tsx.",
+          "tooltip_help": "Interactuar con SyncProvider.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SyncProvider.tsx."
+        },
+        {
+          "component_id": "src/components/providers/QueryProvider.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con QueryProvider.tsx.",
+          "tooltip_help": "Interactuar con QueryProvider.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con QueryProvider.tsx."
         },
         {
           "component_id": "src/components/views/TerminalShell.tsx",
-          "user_description": "Esta sección te permite gestionar TerminalShell.",
-          "tooltip_help": "Usa esto para interactuar con TerminalShell.tsx.",
-          "modal_help": "Guía detallada sobre cómo operar TerminalShell.tsx de forma eficiente."
+          "user_description": "Elemento de la interfaz de usuario para interactuar con TerminalShell.tsx.",
+          "tooltip_help": "Interactuar con TerminalShell.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con TerminalShell.tsx."
+        },
+        {
+          "component_id": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ExecutiveDemoView.tsx.",
+          "tooltip_help": "Interactuar con ExecutiveDemoView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ExecutiveDemoView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/Sidebar.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con Sidebar.tsx.",
+          "tooltip_help": "Interactuar con Sidebar.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con Sidebar.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/Header.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con Header.tsx.",
+          "tooltip_help": "Interactuar con Header.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con Header.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SystemDependencyGraph.tsx.",
+          "tooltip_help": "Interactuar con SystemDependencyGraph.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SystemDependencyGraph.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/AuditSummary.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con AuditSummary.tsx.",
+          "tooltip_help": "Interactuar con AuditSummary.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con AuditSummary.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SecurityMetrics.tsx.",
+          "tooltip_help": "Interactuar con SecurityMetrics.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SecurityMetrics.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con HealthStatusHeader.tsx.",
+          "tooltip_help": "Interactuar con HealthStatusHeader.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con HealthStatusHeader.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SystemHealthView.tsx.",
+          "tooltip_help": "Interactuar con SystemHealthView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SystemHealthView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ArchitectureAuditTable.tsx.",
+          "tooltip_help": "Interactuar con ArchitectureAuditTable.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ArchitectureAuditTable.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ReleaseGateStatus.tsx.",
+          "tooltip_help": "Interactuar con ReleaseGateStatus.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ReleaseGateStatus.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ViewNavigator.tsx.",
+          "tooltip_help": "Interactuar con ViewNavigator.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ViewNavigator.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con HealthAgentLogs.tsx.",
+          "tooltip_help": "Interactuar con HealthAgentLogs.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con HealthAgentLogs.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con DetailedRelationshipGraph.tsx.",
+          "tooltip_help": "Interactuar con DetailedRelationshipGraph.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con DetailedRelationshipGraph.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con InfrastructureMetrics.tsx.",
+          "tooltip_help": "Interactuar con InfrastructureMetrics.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con InfrastructureMetrics.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ApplicationMetrics.tsx.",
+          "tooltip_help": "Interactuar con ApplicationMetrics.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ApplicationMetrics.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/wallet/WalletView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con WalletView.tsx.",
+          "tooltip_help": "Interactuar con WalletView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con WalletView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con AnalyticsDashboard.tsx.",
+          "tooltip_help": "Interactuar con AnalyticsDashboard.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con AnalyticsDashboard.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con CatalogModals.tsx.",
+          "tooltip_help": "Interactuar con CatalogModals.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con CatalogModals.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con CatalogView.tsx.",
+          "tooltip_help": "Interactuar con CatalogView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con CatalogView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/settings/SettingsView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con SettingsView.tsx.",
+          "tooltip_help": "Interactuar con SettingsView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con SettingsView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con DashboardView.tsx.",
+          "tooltip_help": "Interactuar con DashboardView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con DashboardView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+          "user_description": "Módulo del sistema para gestionar useDashboardView.ts.",
+          "tooltip_help": "Gestionar useDashboardView.ts.",
+          "modal_help": "Ayuda a realizar tareas operativas relacionadas con useDashboardView.ts de manera eficiente.",
+          "quick_description": "Gestionar useDashboardView.ts."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ConcentricDashboardRing.tsx.",
+          "tooltip_help": "Interactuar con ConcentricDashboardRing.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ConcentricDashboardRing.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ExecutiveKpiCards.tsx.",
+          "tooltip_help": "Interactuar con ExecutiveKpiCards.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ExecutiveKpiCards.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
+          "user_description": "Gestión y cálculo de fichas de costo para productos y servicios.",
+          "tooltip_help": "Cálculo de fichas de costo.",
+          "modal_help": "Permite desglosar cada gasto asociado a la producción para obtener márgenes de ganancia precisos.",
+          "quick_description": "Cálculo de fichas de costo."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ReportConfigPanel.tsx.",
+          "tooltip_help": "Interactuar con ReportConfigPanel.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ReportConfigPanel.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/reports/ReportPreview.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ReportPreview.tsx.",
+          "tooltip_help": "Interactuar con ReportPreview.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ReportPreview.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/reports/ReportsView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con ReportsView.tsx.",
+          "tooltip_help": "Interactuar con ReportsView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con ReportsView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con AuditLogsModal.tsx.",
+          "tooltip_help": "Interactuar con AuditLogsModal.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con AuditLogsModal.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con StoresManagementView.tsx.",
+          "tooltip_help": "Interactuar con StoresManagementView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con StoresManagementView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/stores/useStoresView.ts",
+          "user_description": "Módulo del sistema para gestionar useStoresView.ts.",
+          "tooltip_help": "Gestionar useStoresView.ts.",
+          "modal_help": "Ayuda a realizar tareas operativas relacionadas con useStoresView.ts de manera eficiente.",
+          "quick_description": "Gestionar useStoresView.ts."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/stores/StoreModals.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con StoreModals.tsx.",
+          "tooltip_help": "Interactuar con StoreModals.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con StoreModals.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con MasteryDashboard.tsx.",
+          "tooltip_help": "Interactuar con MasteryDashboard.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con MasteryDashboard.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/academy/AcademyView.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con AcademyView.tsx.",
+          "tooltip_help": "Interactuar con AcademyView.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con AcademyView.tsx."
+        },
+        {
+          "component_id": "src/components/views/terminal/views/academy/Flashcard.tsx",
+          "user_description": "Elemento de la interfaz de usuario para interactuar con Flashcard.tsx.",
+          "tooltip_help": "Interactuar con Flashcard.tsx.",
+          "modal_help": "Proporciona los controles visuales necesarios para realizar operaciones en el sistema.",
+          "quick_description": "Interactuar con Flashcard.tsx."
         }
       ]
     }

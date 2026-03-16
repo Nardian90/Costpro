@@ -6,3 +6,4 @@
 | 2026-03-15 | 8 | Refinamiento de metadatos del pipeline | docs/automation/ARCHITECTURE_MAINTENANCE_PIPELINE.md |
 | 2026-03-16 | 9 | Mapeo de flujos de vista y componentes | public/user_knowledge_base.json, public/master_user_manual.json |
 | 2026-03-17 | 10 | Detección y generación de flujos de trabajo (Academy, Wallet) | knowledge/workflows.json |
+| 2026-03-16 | 11 | Generación de manual maestro (Manual Maestro de Usuario) | knowledge/master_user_manual.json, public/master_user_manual.json |
