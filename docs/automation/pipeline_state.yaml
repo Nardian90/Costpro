@@ -1,0 +1,16 @@
+currentPhase: 1
+lastExecution: null
+pipelineVersion: 8.0.0
+cycle: 1
+schedulerMode: normal
+documentationModel: ISO_26514 + Diataxis
+repairThreshold: 80
+confidenceThreshold: 90
+quarantinePath: docs/automation/quarantine/
+artifactStore: public/
+metadataStore: public/_meta/
+archiveStore: public/_archive/
+reviewQueue: docs/automation/review_queue.json
+ai_embeddings_path: ai_context/ai_embeddings/
+ai_vector_index_path: ai_context/ai_vector_index/
+humanFeedbackStore: docs/automation/human_feedback.json

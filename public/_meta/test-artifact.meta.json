@@ -1,0 +1,19 @@
+{
+  "artifactName": "test-artifact",
+  "version": "1.0.0",
+  "hash": "sha256:7cbfa5aa5e1ca2030672f777c8e615c57af85d0b5392cbe0988d81fd64f7996e",
+  "createdAt": "2026-03-16T14:42:44.949444Z",
+  "createdBy": "architecture-scheduler/8.0",
+  "sourcePhase": 1,
+  "confidenceScore": 85.0,
+  "confidenceModel": "ai-arch-v8.0",
+  "reviewRequired": true,
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/8.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 1",
+  "previousVersions": []
+}
