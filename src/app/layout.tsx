@@ -29,6 +29,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Costpro - Sistema de Gestión Integral",
+  metadataBase: new URL("https://costpro.onrender.com"),
   description: "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
   other: {
     google: "notranslate",
