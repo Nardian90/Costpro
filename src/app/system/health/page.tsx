@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { ArchitectureAuditTable } from '@/components/views/terminal/views/health/ArchitectureAuditTable';
 
 export default function SystemHealthPage() {
   const [data, setData] = useState<any>(null);
@@ -51,7 +52,7 @@ export default function SystemHealthPage() {
     );
   }
 
-  const componentCoverage = data?.knowledge?.length ? Math.round((data.help.length / data.knowledge.length) * 100) : 0;
+  const componentCoverage = data?.components?.length ? Math.round(((data.user_help?.length || 0) / data.components.length) * 100) : 0;
   const workflowCoverage = data?.workflows?.length ? 100 : 0;
 
   return (
@@ -99,7 +100,7 @@ export default function SystemHealthPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{data?.knowledge?.length || 0}</div>
+            <div className="text-2xl font-bold text-foreground">{data?.components?.length || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">Total de módulos escaneados</p>
           </CardContent>
         </Card>
@@ -131,10 +132,10 @@ export default function SystemHealthPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="artifacts" className="space-y-4">
         <TabsList className="bg-muted border border-border">
           <TabsTrigger value="overview">Resumen General</TabsTrigger>
-          <TabsTrigger value="artifacts">Artefactos</TabsTrigger>
+          <TabsTrigger value="artifacts">Auditoría de Artefactos</TabsTrigger>
           <TabsTrigger value="graph">Grafo de Dependencias</TabsTrigger>
           <TabsTrigger value="logs">Logs & Historial</TabsTrigger>
         </TabsList>
@@ -192,22 +193,33 @@ export default function SystemHealthPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="artifacts">
+        <TabsContent value="artifacts" className="space-y-6">
+           <Card className="border-none shadow-none bg-transparent">
+             <CardHeader className="px-0">
+               <CardTitle>Inventario Global de Conocimiento</CardTitle>
+               <CardDescription>Visualización integrada de todos los artefactos de arquitectura y lógica de negocio.</CardDescription>
+             </CardHeader>
+             <CardContent className="px-0">
+               <ArchitectureAuditTable />
+             </CardContent>
+           </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Estado de Artefactos de Arquitectura</CardTitle>
               <CardDescription>Verificación de existencia y formato de archivos críticos.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
-                  { name: 'Architecture Manifest', path: '/architecture_manifest.json' },
-                  { name: 'System Architecture', path: '/system_architecture.json' },
-                  { name: 'Knowledge Graph', path: 'knowledge/knowledge_graph.json' },
-                  { name: 'AI Context Index', path: 'knowledge/ai_context_index.json' },
-                  { name: 'Master Manual', path: 'knowledge/master_user_manual.json' }
+                  { name: 'Architecture Manifest', path: '/architecture_manifest.json', status: data?.manifest ? 'OK' : 'MISSING' },
+                  { name: 'System Architecture', path: '/system_architecture.json', status: data?.arch ? 'OK' : 'MISSING' },
+                  { name: 'Knowledge Graph', path: 'knowledge/knowledge_graph.json', status: data?.knowledge_graph ? 'OK' : 'MISSING' },
+                  { name: 'AI Context Index', path: 'knowledge/ai_context_index.json', status: data?.ai_context ? 'OK' : 'MISSING' },
+                  { name: 'Master Manual', path: 'knowledge/master_user_manual.json', status: data?.master_manual ? 'OK' : 'MISSING' },
+                  { name: 'Components Map', path: 'knowledge/components.json', status: data?.components ? 'OK' : 'MISSING' }
                 ].map((art) => (
-                  <div key={art.path} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                  <div key={art.path} className="flex items-center justify-between p-3 border border-border rounded-lg bg-card">
                     <div className="flex items-center gap-3">
                       <FileSearch className="w-4 h-4 text-muted-foreground" />
                       <div>
@@ -215,8 +227,11 @@ export default function SystemHealthPage() {
                         <p className="text-xs text-muted-foreground font-mono">{art.path}</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
-                      OK
+                    <Badge
+                      variant={art.status === 'OK' ? 'secondary' : 'destructive'}
+                      className={art.status === 'OK' ? "bg-green-500/10 text-green-600 border-green-500/20" : ""}
+                    >
+                      {art.status}
                     </Badge>
                   </div>
                 ))}
@@ -231,7 +246,7 @@ export default function SystemHealthPage() {
               <Network className="w-12 h-12 text-muted-foreground mx-auto" />
               <CardTitle>Mapa de Dependencias Interactivo</CardTitle>
               <p className="text-muted-foreground max-w-md mx-auto">
-                El motor de visualización de grafos está cargando los {data?.arch?.summary?.total_files || 0} nodos detectados.
+                El motor de visualización de grafos está cargando los {data?.graph?.nodes?.length || 0} nodos detectados.
               </p>
               <Button variant="secondary">Cargar Visualización</Button>
             </div>
