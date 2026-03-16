@@ -762,6 +762,65 @@ def run_phase_7():
             f.write("```\n\n")
 
     print(f"Phase 7 complete. Updated {output_path}.")
+def run_phase_8():
+    print("Executing Phase 8: User Language Translation...")
+    components_path = "knowledge/components.json"
+    user_help_path = "knowledge/user_help.json"
+
+    if not os.path.exists(components_path):
+        print(f"Error: {components_path} not found.")
+        return
+
+    with open(components_path, "r", encoding="utf-8") as f:
+        components = json.load(f)
+
+    user_help = []
+    for comp in components:
+        name = comp.get("name", "Component")
+        tech_desc = comp.get("technical_description", "Módulo técnico.")
+
+        # Logic to "translate" based on common patterns
+        if "IPV" in name or "Matching" in name:
+            user_desc = f"Herramienta para la conciliación de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock físico."
+            tooltip = "Conciliación de inventarios y ventas."
+            modal = "Este módulo automatiza el cruce de información entre lo vendido y lo que realmente hay en almacén."
+        elif "Cost" in name:
+            user_desc = "Gestión y cálculo de fichas de costo para productos y servicios."
+            tooltip = "Cálculo de fichas de costo."
+            modal = "Permite desglosar cada gasto asociado a la producción para obtener márgenes de ganancia precisos."
+        elif "Auth" in name or "Login" in name:
+            user_desc = "Sistema de seguridad y acceso de usuarios."
+            tooltip = "Acceso y seguridad."
+            modal = "Protege la información del negocio mediante el control de identidades y permisos."
+        elif "UI" in name or ".tsx" in name:
+            user_desc = f"Elemento de la interfaz de usuario para interactuar con {name}."
+            tooltip = f"Interactuar con {name}."
+            modal = f"Proporciona los controles visuales necesarios para realizar operaciones en el sistema."
+        else:
+            user_desc = f"Módulo del sistema para gestionar {name}."
+            tooltip = f"Gestionar {name}."
+            modal = f"Ayuda a realizar tareas operativas relacionadas con {name} de manera eficiente."
+
+        help_entry = {
+            "component_id": comp.get("id"),
+            "user_description": user_desc,
+            "tooltip_help": tooltip,
+            "modal_help": modal,
+            "quick_description": tooltip
+        }
+        user_help.append(help_entry)
+
+        # Update original component as well
+        comp["user_description"] = user_desc
+
+    with open(user_help_path, "w", encoding="utf-8") as f:
+        json.dump(user_help, f, indent=2, ensure_ascii=False)
+
+    with open(components_path, "w", encoding="utf-8") as f:
+        json.dump(components, f, indent=2, ensure_ascii=False)
+
+    print(f"Phase 8 complete. Updated {user_help_path} and {components_path}.")
+
 
 def run_phase_9():
     print("Executing Phase 9: System Health Evaluation...")
@@ -875,6 +934,8 @@ def main():
         run_phase_6()
     elif args.phase == 7:
         run_phase_7()
+    elif args.phase == 8:
+        run_phase_8()
     elif args.phase == 9:
         run_phase_9()
     elif args.phase == 10:
