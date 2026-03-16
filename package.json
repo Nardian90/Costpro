@@ -5,7 +5,7 @@
   "scripts": {
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
-    "build": "prisma generate && npx next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge",
+    "build": "npx prisma generate && npx next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
@@ -120,7 +120,6 @@
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.15.5",
     "@playwright/test": "^1.58.2",
-    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react-syntax-highlighter": "^15.5.13",
