@@ -597,6 +597,7 @@ export default function IPVView() {
                     setActiveTab('manual-recon');
                 }}
                 onForceMatch={handleForceMatch}
+                onAnalyzeAll={handleRunMatching}
                 />
             </div>
           )}
