@@ -1,13 +1,13 @@
 {
-  "artifactName": "test-artifact",
+  "artifactName": "architecture_manifest",
   "version": "1.0.0",
-  "hash": "sha256:7cbfa5aa5e1ca2030672f777c8e615c57af85d0b5392cbe0988d81fd64f7996e",
-  "createdAt": "2026-03-16T14:42:44.949444Z",
+  "hash": "sha256:dac40dc9a9b8380e78362565dc4600e91d831088731be79afc758e1ec76b1e2b",
+  "createdAt": "2026-03-17T13:10:12.620447+00:00Z",
   "createdBy": "architecture-scheduler/8.0",
   "sourcePhase": 1,
-  "confidenceScore": 85.0,
+  "confidenceScore": 100.0,
   "confidenceModel": "ai-arch-v8.0",
-  "reviewRequired": true,
+  "reviewRequired": false,
   "provenance": {
     "inputs": [],
     "tools": [

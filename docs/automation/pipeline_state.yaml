@@ -1,16 +1,16 @@
-currentPhase: 1
-lastExecution: null
-pipelineVersion: 8.0.0
-cycle: 1
-schedulerMode: normal
-documentationModel: ISO_26514 + Diataxis
-repairThreshold: 80
-confidenceThreshold: 90
-quarantinePath: docs/automation/quarantine/
-artifactStore: public/
-metadataStore: public/_meta/
-archiveStore: public/_archive/
-reviewQueue: docs/automation/review_queue.json
 ai_embeddings_path: ai_context/ai_embeddings/
 ai_vector_index_path: ai_context/ai_vector_index/
+archiveStore: public/_archive/
+artifactStore: public/
+confidenceThreshold: 90
+currentPhase: 2
+cycle: 1
+documentationModel: ISO_26514 + Diataxis
 humanFeedbackStore: docs/automation/human_feedback.json
+lastExecution: '2026-03-17T13:10:12.622628+00:00'
+metadataStore: public/_meta/
+pipelineVersion: 8.0.0
+quarantinePath: docs/automation/quarantine/
+repairThreshold: 80
+reviewQueue: docs/automation/review_queue.json
+schedulerMode: normal
