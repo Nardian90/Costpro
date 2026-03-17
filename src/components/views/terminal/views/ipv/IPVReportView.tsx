@@ -1,5 +1,5 @@
 'use client';
-
+import * as XLSX from 'xlsx';
 import React, { useState } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -416,6 +416,57 @@ export function IPVReportView() {
     });
   };
 
+  const exportToExcel = async () => {
+    if (!reports || reports.length === 0) {
+        toast.error("No hay reportes para exportar");
+        return;
+    }
+    try {
+        const wb = XLSX.utils.book_new();
+
+        const summaryData = reports.map(r => ({
+            "Fecha": r.fecha_reporte,
+            "Total Ventas": r.total_ventas_cents / 100,
+            "Efectivo": r.resumen_efectivo_cents / 100,
+            "Transferencias": r.resumen_transferencia_cents / 100,
+            "Estado": r.estado
+        }));
+        const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen de Reportes");
+
+        const detailData: any[] = [];
+        reports.forEach(r => {
+            r.filas.forEach(f => {
+                detailData.push({
+                    "Fecha Reporte": r.fecha_reporte,
+                    "Código": f.cod,
+                    "Descripción": f.descripcion,
+                    "UM": f.um,
+                    "Saldo Inicial": f.saldo_inicial_qty,
+                    "Entradas": f.entrada_qty || 0,
+                    "Salidas": f.salida_qty || 0,
+                    "Ventas (Cant)": f.venta_cantidad_qty,
+                    "Precio Unitario": f.precio_unitario_cents / 100,
+                    "Importe Total": f.importe_cents / 100,
+                    "Existencia Final": f.existencia_final_qty
+                });
+            });
+        });
+
+        if (detailData.length > 0) {
+            const wsDetail = XLSX.utils.json_to_sheet(detailData);
+            XLSX.utils.book_append_sheet(wb, wsDetail, "Detalle de Productos");
+        }
+
+        const timestamp = new Date().toISOString().split("T")[0];
+        XLSX.writeFile(wb, `IPV_REPORTES_INTEGRAL_${timestamp}.xlsx`);
+        toast.success("Excel integral exportado correctamente");
+    } catch (error) {
+        console.error("Excel export error:", error);
+        toast.error("Error al exportar a Excel");
+    }
+  };
+
   const exportConsolidatedMonthlyPDF = async () => {
     const monthReports = reports?.filter(r => {
         const date = new Date(r.fecha_reporte + 'T12:00:00');
@@ -550,6 +601,7 @@ export function IPVReportView() {
               </Tooltip>
               <Tooltip>
                   <TooltipTrigger asChild>
+                      <Button onClick={exportToExcel} variant="outline" className="h-9 text-xs font-black uppercase border-green-200 text-green-600 hover:bg-green-50">Exportar a Excel</Button>
                       <Button onClick={exportRangePDF} variant="outline" className="h-9 text-xs font-black uppercase border-primary/20 text-primary hover:bg-primary/5">Exportar PDF (Rango)</Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Genera un único archivo PDF que contiene todos los reportes individuales del rango seleccionado.</TooltipContent>
