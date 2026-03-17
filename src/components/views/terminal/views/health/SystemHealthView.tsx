@@ -28,7 +28,7 @@ export default function SystemHealthView() {
   const liveTimestamp = useLiveScan();
 
   if (loading || componentsLoading) {
-    return <CostProLoader message="Sincronizando con el cerebro del sistema..." />;
+    return <CostProLoader text="Sincronizando con el cerebro del sistema..." />;
   }
 
   const shi = data?.shi;
