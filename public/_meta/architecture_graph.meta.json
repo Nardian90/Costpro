@@ -1,0 +1,45 @@
+{
+  "artifactName": "architecture_graph",
+  "version": "1.0.5",
+  "hash": "sha256:64acbcdef451e60a9af7ced7962619ba84e0312e9ea78c7a681695ece7b880e0",
+  "confidenceScore": 100.0,
+  "reviewRequired": false,
+  "createdAt": "2026-03-17T16:34:57.524212+00:00Z",
+  "sourcePhase": 3,
+  "createdBy": "architecture-scheduler/8.0",
+  "confidenceModel": "ai-arch-v8.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/8.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 3",
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:a5ab9f6194a3a470f574bfa998f2021c57adc65238bd346d40a6f659d18f6c5d",
+      "createdAt": "2026-03-17T16:27:04.082157+00:00Z"
+    },
+    {
+      "version": "1.0.1",
+      "hash": "sha256:a5ab9f6194a3a470f574bfa998f2021c57adc65238bd346d40a6f659d18f6c5d",
+      "createdAt": "2026-03-17T16:28:46.419804+00:00Z"
+    },
+    {
+      "version": "1.0.2",
+      "hash": "sha256:a5ab9f6194a3a470f574bfa998f2021c57adc65238bd346d40a6f659d18f6c5d",
+      "createdAt": "2026-03-17T16:29:14.451659+00:00Z"
+    },
+    {
+      "version": "1.0.3",
+      "hash": "sha256:ef5187e0453362cc1b1de8f1a4b0d9c14359cd807aa83f6648834e2ad13ff8a9",
+      "createdAt": "2026-03-17T16:30:32.043691+00:00Z"
+    },
+    {
+      "version": "1.0.4",
+      "hash": "sha256:ef5187e0453362cc1b1de8f1a4b0d9c14359cd807aa83f6648834e2ad13ff8a9",
+      "createdAt": "2026-03-17T16:31:16.994654+00:00Z"
+    }
+  ]
+}
