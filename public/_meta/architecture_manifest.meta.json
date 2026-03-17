@@ -1,8 +1,8 @@
 {
   "artifactName": "architecture_manifest",
-  "version": "1.0.1",
-  "hash": "sha256:8511fdeaab4f4137da147961ffeadb41a57c4eb6cac0d46b5df347ca4ee775fe",
-  "createdAt": "2026-03-17T13:42:54.584971+00:00Z",
+  "version": "1.0.2",
+  "hash": "sha256:81d7f7c326cef6ec2fe388b0bcde1faaba73b1bfb057740d76ab61899b2bdbdf",
+  "createdAt": "2026-03-17T14:11:49.290152+00:00Z",
   "createdBy": "architecture-scheduler/8.0",
   "sourcePhase": 1,
   "confidenceScore": 100.0,
@@ -20,6 +20,11 @@
       "version": "1.0.0",
       "hash": "sha256:dac40dc9a9b8380e78362565dc4600e91d831088731be79afc758e1ec76b1e2b",
       "createdAt": "2026-03-17T13:10:12.620447+00:00Z"
+    },
+    {
+      "version": "1.0.1",
+      "hash": "sha256:8511fdeaab4f4137da147961ffeadb41a57c4eb6cac0d46b5df347ca4ee775fe",
+      "createdAt": "2026-03-17T13:42:54.584971+00:00Z"
     }
   ]
 }
