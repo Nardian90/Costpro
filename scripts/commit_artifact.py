@@ -19,7 +19,33 @@ STATE_PATH = "docs/automation/pipeline_state.yaml"
 def load_config():
     if os.path.exists(STATE_PATH):
         with open(STATE_PATH, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+            raw = yaml.safe_load(f)
+            # Normalization mapping (internal English names)
+            mapping = {
+                "artefactoTienda": "artifactStore",
+                "metadataTienda": "metadataStore",
+                "cuarentenaRuta": "quarantinePath",
+                "confianzaUmbral": "confidenceThreshold",
+                "Umbral": "repairThreshold",
+                "archiveStore": "archiveStore",
+                "reviewQueue": "reviewQueue"
+            }
+            config = {
+                "artifactStore": "public/",
+                "metadataStore": "public/_meta/",
+                "archiveStore": "public/_archive/",
+                "quarantinePath": "docs/automation/quarantine/",
+                "reviewQueue": "docs/automation/review_queue.json",
+                "confidenceThreshold": 90
+            }
+            for yaml_key, internal_key in mapping.items():
+                if yaml_key in raw:
+                    config[internal_key] = raw[yaml_key]
+            # Also support direct English keys if present
+            for internal_key in config.keys():
+                if internal_key in raw:
+                    config[internal_key] = raw[internal_key]
+            return config
     return {
         "artifactStore": "public/",
         "metadataStore": "public/_meta/",
@@ -29,38 +55,22 @@ def load_config():
         "confidenceThreshold": 90
     }
 
-def normalize_config(raw):
-    mapping = {
-        "artefactoTienda": "artifactStore",
-        "metadataTienda": "metadataStore",
-        "cuarentenaRuta": "quarantinePath",
-        "confianzaUmbral": "confidenceThreshold",
-        "Umbral": "repairThreshold"
-    }
-    for new_key, old_key in mapping.items():
-        if new_key in raw:
-            raw[old_key] = raw[new_key]
-    return raw
-
-STATE = normalize_config(load_config())
+STATE = load_config()
 
 def get_destination_base(name, source_phase):
-    # Mapping based on v8.0 structure
     if name in ["system_architecture", "architecture_manifest", "architecture_graph", "architecture_audit", "architecture_changes", "architecture_metrics"]:
-        return "public/"
+        return STATE.get("artifactStore", "public/")
     if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
         return "knowledge/"
     if name == "knowledge_graph":
-        return "./" # Root as per 3.4
+        return "./"
     if name.startswith("docs/") or name == "iso_manual":
         return "knowledge/"
     if name.startswith("ai_context") or name == "vector_index":
         return "ai_context/"
-
-    # Fallback based on phase
-    if source_phase <= 6: return "public/"
+    if source_phase <= 6: return STATE.get("artifactStore", "public/")
     if source_phase <= 13: return "knowledge/"
-    return "public/"
+    return STATE.get("artifactStore", "public/")
 
 def canonical_json(obj):
     return json.dumps(obj, separators=(',', ':'), sort_keys=True, ensure_ascii=False)
@@ -90,7 +100,7 @@ def get_file_hash(path):
                 data = json.load(f)
                 return sha256_hex(canonical_json(data))
             except json.JSONDecodeError:
-                pass # Fallback to binary hash if invalid JSON
+                pass
 
     hasher = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -199,12 +209,8 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         print(f"QUARANTINED: {quarantine_path}")
         return "quarantined"
 
-    # Deterministic destination base
     dest_base = get_destination_base(name, source_phase)
-
-    # Deterministic destination extension
     ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
-    # If name already has extension, don't append it
     dest_filename = name if name.endswith(ext) else name + ext
     dest_path = os.path.normpath(os.path.join(dest_base, dest_filename))
 
@@ -217,7 +223,6 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         shutil.copy2(artifact_path, dest_path)
 
-    # Archive
     short_hash = hash_value[:6]
     archive_name = f"{name.replace('/', '_')}-{version}+{short_hash}{ext}"
     archive_path = os.path.join(STATE["archiveStore"], archive_name)
