@@ -38,9 +38,10 @@ interface TransactionTableProps {
     txReconciliationTotals: Record<string, number>;
     onReconcile: (tx: BankTransaction) => void;
     onForceMatch?: (tx: BankTransaction) => void;
+    onAnalyzeAll?: () => void;
 }
 
-export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile, onForceMatch }: TransactionTableProps) {
+export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile, onForceMatch, onAnalyzeAll }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
@@ -154,7 +155,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   <div className="h-4 w-px bg-border mx-1" />
                   <div className="flex gap-1 items-center">
                       <Button variant="ghost" size="sm" onClick={bulkResetMatching} className="h-7 text-xs font-black uppercase text-orange-600 hover:bg-orange-500/10"><RotateCcw className="w-3 h-3 mr-1" /> Reset</Button>
-                      <BulkForceMatchPopover transactions={filtered} />
+                      <Button variant="ghost" size="sm" onClick={onAnalyzeAll} className="h-7 text-xs font-black uppercase text-primary hover:bg-primary/10"><Wand2 className="w-3 h-3 mr-1" /> Analizar todo</Button>
                   </div>
               </div>
               <Button variant="default" size="sm" onClick={() => setIsAddTxOpen(true)} className="h-10 px-4 neu-btn-primary text-xs font-black uppercase italic"><Plus className="w-4 h-4 mr-2" /> Nueva Transacción</Button>
@@ -368,54 +369,4 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
                 <div className="p-3 border-b bg-muted/20"><div className="relative"><Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" /><Input placeholder="Buscar producto..." className="pl-7 h-8 text-xs rounded-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
                 <ScrollArea className="h-64"><div className="p-1">{filtered.map(p => (<button key={p.cod} className="w-full text-left p-2 hover:bg-primary/5 rounded-lg transition-all flex justify-between items-center" onClick={() => handleForceMatch(p)}><div className="min-w-0 flex-1"><p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p><div className="flex gap-2"><span className="text-xs text-primary font-bold uppercase">${p.precio_cents}</span></div></div><Plus className="w-3 h-3 text-primary ml-2 shrink-0" /></button>))}</div></ScrollArea>
             </PopoverContent></Popover>
-    );
-}
-
-function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction[] }) {
-    const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
-    const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
-    const rules = useLiveQuery(() => db.matching_rules.toArray());
-    const [searchTerm, setSearchTerm] = useState('');
-    const currentStockMap = React.useMemo(() => {
-        const map = new Map<string, number>();
-        if (!products || !reconciliationLines) return map;
-        products.forEach(p => {
-            const sold = reconciliationLines.filter(l => l.product_cod === p.cod).reduce((sum, l) => sum + l.cantidad, 0);
-            map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
-        });
-        return map;
-    }, [products, reconciliationLines]);
-    const filteredProducts = React.useMemo(() => {
-        if (!products) return [];
-        return products.filter(p => p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) || p.cod.toLowerCase().includes(searchTerm.toLowerCase())).sort((a, b) => (currentStockMap.get(b.cod) || 0) - (currentStockMap.get(a.cod) || 0));
-    }, [products, searchTerm, currentStockMap]);
-    const handleBulkForceMatch = async (product: any) => {
-        const pendings = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE');
-        if (pendings.length === 0) { toast.error('No hay transacciones pendientes'); return; }
-        const loadingToast = toast.loading(`Forzando matching...`);
-        try {
-            await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
-                for (const tx of pendings) {
-                    const target = tx.importe_venta_cents || tx.importe_cents;
-                    const qty = Math.floor(target / product.precio_cents);
-                    if (qty <= 0) continue;
-                    const importe = product.precio_cents * qty;
-                    const remaining = target - importe;
-                    const newLine: any = {
-                        id: uuidv4(), transaction_ref: tx.referencia_origen, fecha_operacion: tx.fecha, ingreso_banco_cents: tx.importe_cents, venta_real_calculada_cents: importe, comision_banco_cents: tx.comision_cents || 0, product_cod: product.cod, product_um: product.um, cantidad: qty, precio_unitario_cents: product.precio_cents, importe_linea_cents: importe, cuadre_cents: 0, clasificacion: tx.tipo === 'Cr' ? 'Transferencia' : 'Efectivo', origen_dato: 'MANUAL_USER', reconciliation_hash: await generateHash(`${tx.referencia_origen}-${product.cod}-${qty}-${Date.now()}`), created_at: new Date().toISOString()
-                    };
-                    await db.reconciliation_lines.add(newLine);
-                    await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
-                }
-            });
-            toast.success(`Matching forzado masivo completado`, { id: loadingToast });
-        } catch (error) { toast.error('Error proceso masivo', { id: loadingToast }); }
-    };
-    return (
-        <Popover><PopoverTrigger asChild><Button variant="ghost" size="sm" className="h-7 text-xs font-black uppercase text-blue-600 hover:bg-blue-500/10"><Target className="w-3 h-3 mr-1" /> Forzar Matching</Button></PopoverTrigger>
-            <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
-                <div className="p-3 border-b bg-muted/20"><div className="relative"><Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" /><Input placeholder="Buscar producto..." className="pl-7 h-8 text-xs rounded-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
-                <ScrollArea className="h-64"><div className="p-1">{filteredProducts.map(p => (<button key={p.cod} className="w-full text-left p-2 hover:bg-primary/5 rounded-lg transition-all flex justify-between items-center" onClick={() => handleBulkForceMatch(p)}><div className="min-w-0 flex-1"><p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p><div className="flex gap-2"><span className="text-xs text-primary font-bold uppercase">${p.precio_cents}</span></div></div><Plus className="w-3 h-3 text-primary ml-2 shrink-0" /></button>))}</div></ScrollArea>
-            </PopoverContent></Popover>
-    );
-}
+    );}
