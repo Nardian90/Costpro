@@ -1,5 +1,10 @@
 import json
 import os
+import sys
+
+# Add scripts to path for commit_artifact
+sys.path.append('scripts')
+from commit_artifact import commit_artifact
 
 COMPONENTS_PATH = 'knowledge/components.json'
 
@@ -39,8 +44,14 @@ def main():
     for comp in components:
         comp['domain'] = classify_domain(comp.get('id', ''))
 
-    with open(COMPONENTS_PATH, 'w', encoding='utf-8') as f:
+    temp_path = 'knowledge/components.temp.json'
+    with open(temp_path, 'w', encoding='utf-8') as f:
         json.dump(components, f, indent=2, ensure_ascii=False)
+
+    commit_artifact("components", temp_path, 100, 2)
+
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
 
     print(f"Successfully updated {COMPONENTS_PATH} with domain classification.")
 
