@@ -3661,13 +3661,37 @@
         "system_architecture",
         "architecture_manifest"
       ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T13:42:30.458282+00:00",
+      "endTime": "2026-03-17T13:42:54.586000+00:00",
+      "durationMs": 24127,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T13:42:30.375868+00:00Z",
+      "endTime": "2026-03-17T13:42:54.610816+00:00Z",
+      "durationMs": 24234,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ]
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 0,
-    "slowestPhase": 0,
+    "averagePhaseDurationMs": 16120,
+    "slowestPhase": 24234,
     "fastestPhase": 0,
-    "lastCycleDurationMs": 0,
-    "lastUpdated": "2026-03-17T08:11:21.636905+00:00Z"
+    "lastCycleDurationMs": 48361,
+    "lastUpdated": "2026-03-17T13:42:54.610816+00:00Z"
   }
 }

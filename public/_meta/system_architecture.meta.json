@@ -1,8 +1,8 @@
 {
   "artifactName": "system_architecture",
-  "version": "1.0.0",
-  "hash": "sha256:f47393ca06c46e590a40bce476dfd3dade20727920ee76d987aff6aac085fe97",
-  "createdAt": "2026-03-17T13:10:12.611969+00:00Z",
+  "version": "1.0.1",
+  "hash": "sha256:81e815e25b27d85af660d5878489c3326187915e8c5e64c2df129c07e59bda36",
+  "createdAt": "2026-03-17T13:42:54.581380+00:00Z",
   "createdBy": "architecture-scheduler/8.0",
   "sourcePhase": 1,
   "confidenceScore": 100.0,
@@ -15,5 +15,11 @@
     ]
   },
   "explainabilitySummary": "Generado automáticamente en Fase 1",
-  "previousVersions": []
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:f47393ca06c46e590a40bce476dfd3dade20727920ee76d987aff6aac085fe97",
+      "createdAt": "2026-03-17T13:10:12.611969+00:00Z"
+    }
+  ]
 }

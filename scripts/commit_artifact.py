@@ -12,14 +12,10 @@ import sys
 import hashlib
 import yaml
 from datetime import datetime, timezone
-import yaml
 
 # Configuration
 STATE_PATH = "docs/automation/pipeline_state.yaml"
 AUDIT_PATH = "public/architecture_audit.json"
-
-# Configuración desde pipeline_state.yaml
-STATE_PATH = "docs/automation/pipeline_state.yaml"
 
 def load_config():
     if os.path.exists(STATE_PATH):
@@ -108,9 +104,9 @@ def append_review_queue(entry):
     with open(queue_path, 'w', encoding='utf-8') as f:
         json.dump(queue, f, indent=2, ensure_ascii=False)
 
-def rollback_artifact(name, config):
+def rollback_artifact(name):
     """Restores the last version from archive if integrity fails"""
-    meta = load_meta(name, config)
+    meta = load_meta(name)
     if not meta or not meta.get("previousVersions"):
         print(f"ROLLBACK FAILED: No previous version for {name}")
         return False
@@ -118,10 +114,10 @@ def rollback_artifact(name, config):
     last_v = meta["previousVersions"][-1]
     short_hash = last_v["hash"].replace("sha256:", "")[:6]
     archive_name = f"{name}-{last_v['version']}+{short_hash}.json"
-    archive_path = os.path.join(config["archiveStore"], archive_name)
+    archive_path = os.path.join(STATE["archiveStore"], archive_name)
 
     if os.path.exists(archive_path):
-        dest_path = os.path.join(config["artifactStore"], f"{name}.json")
+        dest_path = os.path.join(STATE["artifactStore"], f"{name}.json")
         shutil.copy2(archive_path, dest_path)
         print(f"ROLLBACK SUCCESSFUL: Restored {name} v{last_v['version']}")
         return True
@@ -158,8 +154,8 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
             "createdAt": meta.get("createdAt")
         })
 
-    os.makedirs(config["metadataStore"], exist_ok=True)
-    meta_path = os.path.join(config["metadataStore"], f"{name}.meta.json")
+    os.makedirs(STATE["metadataStore"], exist_ok=True)
+    meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
 
     if confidence_score < STATE.get("confidenceThreshold", 90):
         short_hash = hash_value[:6]
