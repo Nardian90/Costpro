@@ -3648,5 +3648,76 @@
       "technical_risk": "Low",
       "complexity": "Medium"
     }
-  ]
+  ],
+  "phaseExecutions": [
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T02:05:30.719482+00:00Z",
+      "endTime": "2026-03-17T02:05:30.719482+00:00Z",
+      "durationMs": 45000,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T02:12:11.666812+00:00Z",
+      "endTime": "2026-03-17T02:12:31.626097+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T02:14:14.819772+00:00Z",
+      "endTime": "2026-03-17T02:14:35.281744+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T02:17:29.078772+00:00",
+      "endTime": "2026-03-17T02:17:43.712497+00:00",
+      "durationMs": 14633,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T13:09:56.991903+00:00",
+      "endTime": "2026-03-17T13:10:12.622628+00:00",
+      "durationMs": 15630,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture.json",
+        "architecture_manifest.json"
+      ]
+    }
+  ],
+  "performanceSummary": {
+    "averagePhaseDurationMs": 15052,
+    "slowestPhase": 1,
+    "slowestPhaseDurationMs": 45000,
+    "fastestPhase": 2,
+    "fastestPhaseDurationMs": 0,
+    "lastCycleDurationMs": 75263,
+    "lastUpdated": "2026-03-17T13:10:12.622628+00:00"
+  }
 }
