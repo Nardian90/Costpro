@@ -8,7 +8,6 @@ import sys
 # Import components
 sys.path.append('scripts')
 from commit_artifact import commit_artifact
-from update_state_audit import update_system_dynamic
 
 BASE_PATHS = ["src/app", "src/components", "src/lib"]
 
@@ -84,7 +83,6 @@ def path_to_id(path):
 
 def execute_phase_1():
     print("Executing Phase 1: Architecture Discovery (AST-based)...")
-    start_time = datetime.datetime.now(timezone.utc).isoformat()
 
     nodes = {}
     file_list = []
@@ -128,7 +126,7 @@ def execute_phase_1():
     temp_arch = "system_architecture.temp.json"
     with open(temp_arch, 'w', encoding='utf-8') as f:
         json.dump({"components": arch_components}, f, indent=2, ensure_ascii=False)
-    res1 = commit_artifact("system_architecture", temp_arch, 100, 1)
+    commit_artifact("system_architecture", temp_arch, 100, 1)
 
     manifest = {
         "generated_at": datetime.datetime.now(timezone.utc).isoformat(),
@@ -142,15 +140,11 @@ def execute_phase_1():
     temp_manifest = "architecture_manifest.temp.json"
     with open(temp_manifest, 'w', encoding='utf-8') as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
-    res2 = commit_artifact("architecture_manifest", temp_manifest, 100, 1)
-
-    # Finalize state
-    status = "success" if res1 == "committed" and res2 == "committed" else "partial"
-    update_system_dynamic(1, "Architecture Discovery", ["system_architecture.json", "architecture_manifest.json"], status, start_time)
+    commit_artifact("architecture_manifest", temp_manifest, 100, 1)
 
     if os.path.exists(temp_arch): os.remove(temp_arch)
     if os.path.exists(temp_manifest): os.remove(temp_manifest)
-    print("Phase 1 Complete.")
+    print("Phase 1 Sub-logic Complete.")
 
 if __name__ == "__main__":
     execute_phase_1()
