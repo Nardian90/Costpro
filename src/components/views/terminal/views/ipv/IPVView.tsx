@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -30,7 +29,8 @@ import {
   Receipt,
   ArrowRightLeft,
   QrCode,
-  ChevronDown
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
@@ -116,13 +116,6 @@ export default function IPVView() {
 
       const reconciledCents = txTotals[t.referencia_origen] || 0;
       totalSales += reconciledCents;
-
-      // Clasificación por montos ya conciliados
-      if (reconciledCents > 0) {
-          // Necesitamos las líneas para saber si es efectivo o transferencia,
-          // pero para las stats globales simplificamos o buscamos en reconciliationLines
-          // (esta parte podría optimizarse si se guarda en bank_statements)
-      }
 
       if (t.estado_conciliacion === 'COMPLETO') squared++;
       else if (t.estado_conciliacion === 'PARCIAL') inProcess++;
@@ -294,7 +287,7 @@ export default function IPVView() {
         onClick: () => {},
         component: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />
     }
-  ], [activeTab]);
+  ], [activeTab, activeTab]);
 
   if (!isStarted) {
     return (
@@ -360,7 +353,10 @@ export default function IPVView() {
           {activeTab === 'transactions' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <TransactionTable
-                onManualRecon={(tx) => {
+                transactions={transactions || []}
+                kpiFilter="ALL"
+                txReconciliationTotals={txTotals}
+                onReconcile={(tx) => {
                     setSelectedReconTx(tx);
                     setActiveTab('manual-recon');
                 }}
@@ -372,7 +368,7 @@ export default function IPVView() {
           {activeTab === 'manual-recon' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <ManualReconciliationView
-                    transaction={selectedReconTx}
+                    transaction={selectedReconTx as BankTransaction}
                     onBack={() => {
                         setActiveTab('transactions');
                         setSelectedReconTx(null);
@@ -431,7 +427,6 @@ export default function IPVView() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Aquí iría el editor de reglas, por ahora placeholder */}
                     <Card className="p-12 flex flex-col items-center justify-center border-dashed text-center opacity-50">
                         <Settings className="w-12 h-12 mb-4 text-primary/20" />
                         <p className="font-black uppercase text-xs tracking-widest">Módulo de Reglas v8.0</p>
