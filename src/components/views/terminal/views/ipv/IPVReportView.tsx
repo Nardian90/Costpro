@@ -13,6 +13,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -283,7 +284,7 @@ export function IPVReportView() {
       body: tableData,
       theme: 'grid',
       styles: { fontSize: 8 },
-      headStyles: { fillStyle: 'DF' }
+      headStyles: { fillColor: [220, 220, 220] }
     });
 
     doc.save(`IPV_Reporte_${report.fecha_reporte}.pdf`);
@@ -296,7 +297,7 @@ export function IPVReportView() {
 
   return (
     <div className="space-y-6">
-      {isLoading && <LoadingOverlay message={loadingMessage} />}
+      <LoadingOverlay isVisible={isLoading} message={loadingMessage} />
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card/50 p-6 rounded-xl border border-border/50 backdrop-blur-sm shadow-sm">
         <div className="flex items-center gap-3">
@@ -479,15 +480,16 @@ export function IPVReportView() {
 
       {previewReport && (
         <IPVPreviewModal
-          isOpen={isPreviewOpen}
-          onClose={() => setIsPreviewOpen(false)}
+          open={isPreviewOpen}
+          onOpenChange={(open) => setIsPreviewOpen(open)}
           report={previewReport}
+          onExportPDF={(r, d) => downloadPDF(r)}
         />
       )}
 
       <BaseModal
-        isOpen={confirmation.open}
-        onClose={() => setConfirmation(prev => ({ ...prev, open: false }))}
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
         title={confirmation.title}
         footer={
           <div className="flex gap-2 w-full">
