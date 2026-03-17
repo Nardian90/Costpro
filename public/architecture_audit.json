@@ -3856,12 +3856,24 @@
         "architecture_manifest"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 2,
+      "phaseName": "Domain Classification",
+      "startTime": "2026-03-17T18:50:15.297426+00:00Z",
+      "endTime": "2026-03-17T18:50:15.461574+00:00Z",
+      "durationMs": 164,
+      "status": "success",
+      "artifactsGenerated": [
+        "components"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 6489,
+    "averagePhaseDurationMs": 6138,
     "slowestPhase": 1,
     "fastestPhase": 1,
-    "lastCycleDurationMs": 49739
+    "lastCycleDurationMs": 49903
   }
 }
