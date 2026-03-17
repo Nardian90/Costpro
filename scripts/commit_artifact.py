@@ -29,7 +29,20 @@ def load_config():
         "confidenceThreshold": 90
     }
 
-STATE = load_config()
+def normalize_config(raw):
+    mapping = {
+        "artefactoTienda": "artifactStore",
+        "metadataTienda": "metadataStore",
+        "cuarentenaRuta": "quarantinePath",
+        "confianzaUmbral": "confidenceThreshold",
+        "Umbral": "repairThreshold"
+    }
+    for new_key, old_key in mapping.items():
+        if new_key in raw:
+            raw[old_key] = raw[new_key]
+    return raw
+
+STATE = normalize_config(load_config())
 
 def get_destination_base(name, source_phase):
     # Mapping based on v8.0 structure
