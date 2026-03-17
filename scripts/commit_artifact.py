@@ -98,14 +98,9 @@ def load_meta(name):
                 return None
     return None
 
-def bump_version(meta, current_hash):
+def bump_version(meta):
     if not meta:
         return "1.0.0"
-
-    # Rule 4.1: If hash is the same, don't bump version
-    if meta.get("hash") == f"sha256:{current_hash}":
-        return meta.get("version")
-
     version = meta.get("version", "1.0.0").split('.')
     while len(version) < 3: version.append("0")
     major, minor, patch = map(int, version)
@@ -134,7 +129,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
 
     hash_value = get_file_hash(artifact_path)
     meta = load_meta(name)
-    version = bump_version(meta, hash_value)
+    version = bump_version(meta)
 
     meta_obj = {
         "artifactName": name,
@@ -151,10 +146,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         "previousVersions": meta.get("previousVersions", []) if meta else []
     }
 
-    # If the hash is same as current meta, we might not want to archive or re-commit
-    is_new = meta is None or meta.get("hash") != f"sha256:{hash_value}"
-
-    if meta and is_new:
+    if meta:
         meta_obj["previousVersions"].append({
             "version": meta.get("version"),
             "hash": meta.get("hash"),
@@ -212,18 +204,17 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         shutil.copy2(artifact_path, dest_path)
 
-    # Archive (only if new content)
-    if is_new:
-        short_hash = hash_value[:6]
-        archive_name = f"{name.replace('/', '_')}-{version}+{short_hash}{ext}"
-        archive_path = os.path.join(STATE["archiveStore"], archive_name)
-        os.makedirs(STATE["archiveStore"], exist_ok=True)
-        if os.path.isdir(artifact_path):
-            if os.path.exists(archive_path):
-                shutil.rmtree(archive_path)
-            shutil.copytree(artifact_path, archive_path)
-        else:
-            shutil.copy2(artifact_path, archive_path) # FIXED: was archive_path, archive_path
+    # Archive
+    short_hash = hash_value[:6]
+    archive_name = f"{name.replace('/', '_')}-{version}+{short_hash}{ext}"
+    archive_path = os.path.join(STATE["archiveStore"], archive_name)
+    os.makedirs(STATE["archiveStore"], exist_ok=True)
+    if os.path.isdir(artifact_path):
+        if os.path.exists(archive_path):
+            shutil.rmtree(archive_path)
+        shutil.copytree(artifact_path, archive_path)
+    else:
+        shutil.copy2(artifact_path, archive_path)
 
     meta_obj["reviewRequired"] = False
     with open(meta_path, 'w', encoding='utf-8') as f:
