@@ -50,6 +50,7 @@ import { IncomeReceiptSection } from './IncomeReceiptSection';
 import { TransferQRReportView } from './TransferQRReportView';
 import { IPVReportsDropdown } from './IPVReportsDropdown';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
 import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
 import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
