@@ -12,6 +12,11 @@ import sys
 import hashlib
 import yaml
 from datetime import datetime, timezone
+import yaml
+
+# Configuration
+STATE_PATH = "docs/automation/pipeline_state.yaml"
+AUDIT_PATH = "public/architecture_audit.json"
 
 # Configuración desde pipeline_state.yaml
 STATE_PATH = "docs/automation/pipeline_state.yaml"
@@ -73,13 +78,17 @@ def load_meta(name):
     meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
     if os.path.exists(meta_path):
         with open(meta_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except:
+                return None
     return None
 
 def bump_version(meta):
     if not meta:
         return "1.0.0"
-    version = meta.get("version", "0.0.0").split('.')
+    version = meta.get("version", "1.0.0").split('.')
+    while len(version) < 3: version.append("0")
     major, minor, patch = map(int, version)
     patch += 1
     return f"{major}.{minor}.{patch}"
@@ -99,6 +108,25 @@ def append_review_queue(entry):
     with open(queue_path, 'w', encoding='utf-8') as f:
         json.dump(queue, f, indent=2, ensure_ascii=False)
 
+def rollback_artifact(name, config):
+    """Restores the last version from archive if integrity fails"""
+    meta = load_meta(name, config)
+    if not meta or not meta.get("previousVersions"):
+        print(f"ROLLBACK FAILED: No previous version for {name}")
+        return False
+
+    last_v = meta["previousVersions"][-1]
+    short_hash = last_v["hash"].replace("sha256:", "")[:6]
+    archive_name = f"{name}-{last_v['version']}+{short_hash}.json"
+    archive_path = os.path.join(config["archiveStore"], archive_name)
+
+    if os.path.exists(archive_path):
+        dest_path = os.path.join(config["artifactStore"], f"{name}.json")
+        shutil.copy2(archive_path, dest_path)
+        print(f"ROLLBACK SUCCESSFUL: Restored {name} v{last_v['version']}")
+        return True
+    return False
+
 def commit_artifact(name, artifact_path, confidence_score, source_phase, created_by="architecture-scheduler/8.0"):
     if not os.path.exists(artifact_path):
         print(f"Error: Artifact path not found: {artifact_path}")
@@ -114,8 +142,8 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         "hash": f"sha256:{hash_value}",
         "createdAt": datetime.now(timezone.utc).isoformat() + 'Z',
         "createdBy": created_by,
-        "sourcePhase": source_phase,
-        "confidenceScore": confidence_score,
+        "sourcePhase": int(source_phase),
+        "confidenceScore": float(confidence_score),
         "confidenceModel": "ai-arch-v8.0",
         "reviewRequired": False,
         "provenance": {"inputs": [], "tools": ["architecture-scheduler/8.0"]},
@@ -130,7 +158,8 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
             "createdAt": meta.get("createdAt")
         })
 
-    meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
+    os.makedirs(config["metadataStore"], exist_ok=True)
+    meta_path = os.path.join(config["metadataStore"], f"{name}.meta.json")
 
     if confidence_score < STATE.get("confidenceThreshold", 90):
         short_hash = hash_value[:6]
@@ -151,7 +180,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
             "artifactName": name,
             "candidatePath": quarantine_path,
             "metaPath": meta_path,
-            "confidenceScore": confidence_score,
+            "confidenceScore": float(confidence_score),
             "createdAt": meta_obj["createdAt"],
             "status": "open",
             "priority": "high" if confidence_score < 70 else "normal"
@@ -181,11 +210,9 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         json.dump(meta_obj, f, indent=2, ensure_ascii=False)
 
     print(f"COMMITTED: {dest_path}")
-    print(f"ARCHIVED: {archive_path}")
     return "committed"
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
-        print("Uso: python commit_artifact.py <artifact_name> <artifact_path> <confidence_score> <source_phase>")
         sys.exit(1)
     commit_artifact(sys.argv[1], sys.argv[2], float(sys.argv[3]), int(sys.argv[4]))
