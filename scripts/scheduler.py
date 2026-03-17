@@ -129,6 +129,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
         script_map = {
             1: "scripts/phase_1_discovery.py",
             3: "scripts/phase_3_dependency_graph.py",
+            4: "scripts/phase_4_git_intelligence.py",
             2: "scripts/maintenance/domain_classifier.py",
             13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py"
@@ -140,7 +141,9 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             print(res.stdout)
             if res.stderr: print(res.stderr, file=sys.stderr)
 
-            if "QUARANTINED" in res.stdout:
+            if "TRIGGER_RE_EXECUTION" in res.stdout:
+                status = "re_execute"
+            elif "QUARANTINED" in res.stdout:
                 status = "quarantined"
             elif res.returncode != 0:
                 status = "failed"
@@ -213,7 +216,12 @@ def main():
         status = execute_phase(current_phase, phase_def, cycle, dry_run=dry_run)
 
         if not dry_run:
-            if status in ["success", "quarantined"]:
+            if status == "re_execute":
+                print("Major change detected. Resetting to Phase 1.")
+                state["currentPhase"] = 1
+                state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                save_state(state)
+            elif status in ["success", "quarantined"]:
                 state["currentPhase"] = current_phase + 1
                 state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
                 save_state(state)

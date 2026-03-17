@@ -6,10 +6,10 @@ archiveStore: public/_archive/
 artefactoTienda: public/
 confianzaUmbral: 90
 cuarentenaRuta: docs/automation/quarantine/
-currentPhase: 4
+currentPhase: 1
 cycle: 1
 humanFeedbackStore: docs/automation/human_feedback.json
-lastExecution: 2026-03-17T22:36:40.081202+00:00Z
+lastExecution: 2026-03-17T23:20:29.147629+00:00Z
 metadataTienda: public/_meta/
 pipelineVersion: 8.0.0
 reviewQueue: docs/automation/review_queue.json

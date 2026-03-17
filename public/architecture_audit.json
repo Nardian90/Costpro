@@ -62,12 +62,24 @@
         "architecture_graph"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 4,
+      "phaseName": "Git Change Intelligence",
+      "startTime": "2026-03-17T23:20:29.044823+00:00Z",
+      "endTime": "2026-03-17T23:20:29.146877+00:00Z",
+      "durationMs": 102,
+      "status": "re_execute",
+      "artifactsGenerated": [
+        "architecture_changes"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 5004,
+    "averagePhaseDurationMs": 4187,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 25024
+    "lastCycleDurationMs": 25126
   }
 }
