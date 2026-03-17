@@ -71,37 +71,24 @@ def extract_all_dependencies_ast(file_paths):
     for i in range(0, len(file_paths), batch_size):
         batch = file_paths[i:i + batch_size]
         try:
-            # Explicitly find bun to avoid PATH issues
-            bun_path = shutil.which("bun") or "bun"
             result = subprocess.run(
-                [bun_path, "scripts/extract_imports.ts"] + batch,
+                ["bun", "scripts/extract_imports.ts"] + batch,
                 capture_output=True, text=True
             )
             if result.returncode == 0:
                 lines = result.stdout.strip().split('\n')
-                found = False
                 for line in reversed(lines):
                     if line.startswith('{') and line.endswith('}'):
-                        try:
-                            batch_results = json.loads(line)
-                            all_imports.update(batch_results)
-                            found = True
-                            break
-                        except json.JSONDecodeError:
-                            continue
-                if not found:
-                    print(f"Warning: No valid JSON found in batch output for files: {batch[0]}...")
-            else:
-                print(f"Error: Bun failed with return code {result.returncode}. Stderr: {result.stderr}")
+                        batch_results = json.loads(line)
+                        all_imports.update(batch_results)
+                        break
         except Exception as e:
-            print(f"Error in batch starting with {batch[0] if batch else 'N/A'}: {e}")
+            print(f"Error in batch: {e}")
     return all_imports
 
 def path_to_id(path):
     """Generates a unique ID from the relative path"""
     return path.replace("/", "_").replace(".", "_")
-
-import shutil
 
 def execute_phase_1():
     print("Executing Phase 1: Architecture Discovery (AST-based)...")
@@ -125,10 +112,7 @@ def execute_phase_1():
                     nodes[rel_path] = {"id": node_id, "type": itype, "path": rel_path}
                     file_list.append(rel_path)
 
-    print(f"Found {len(file_list)} files. Extracting imports...")
     raw_imports = extract_all_dependencies_ast(file_list)
-    print(f"Extracted imports for {len(raw_imports)} files.")
-
     arch_components = []
     for path, node in nodes.items():
         imports = raw_imports.get(path, [])
@@ -136,17 +120,20 @@ def execute_phase_1():
         for imp in imports:
             resolved = resolve_import(imp, path)
             if resolved:
-                # Ensure it's relative to root
-                rel_resolved = os.path.normpath(os.path.relpath(resolved, start=os.getcwd()))
+                rel_resolved = os.path.relpath(resolved, start=os.getcwd())
+                rel_resolved = os.path.normpath(rel_resolved)
                 if rel_resolved in nodes:
                     resolved_deps.append(nodes[rel_resolved]['id'])
+                else:
+                    # Maybe it's src/store resolving to src/store/index.ts
+                    pass
 
         arch_components.append({
             "id": node["id"],
             "type": node["type"],
             "filePath": node["path"],
             "layer": get_layer(node["path"]),
-            "dependencies": sorted(list(set(resolved_deps)))
+            "dependencies": list(set(resolved_deps))
         })
 
     # Save and commit
