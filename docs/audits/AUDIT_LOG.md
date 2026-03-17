@@ -355,7 +355,7 @@ Iteración de hardening técnica exitosa. Se ha reducido la deuda técnica en la
 
 El score global **subió** (+0.19). La estabilidad y observabilidad del sistema se han reforzado significativamente, cumpliendo con los estándares de madurez Enterprise.
 
-## Version: 5.7.25 (Express Generation & Quick Mode)
+## Version: 5.8.6 (Express Generation & Quick Mode)
 - **Date:** 2026-03-14
 - **Global Technical Score:** 9.55 / 10.0
 - **System Status:** 🟩 Saludable
@@ -386,7 +386,7 @@ Esta iteración introduce una mejora sustancial en la eficiencia operativa de la
 
 ### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.24)
 
-| Dominio | v5.7.24 | v5.7.25 | Variación | Causa Concreta del Cambio |
+| Dominio | v5.7.24 | v5.8.6 | Variación | Causa Concreta del Cambio |
 | :--- | :---: | :---: | :---: | :--- |
 | UX / Mobile | 9.5 | 9.6 | **(+0.1)** | Implementación de Modo Rápido para entrada express de datos. |
 | DX | 9.0 | 9.2 | **(+0.2)** | Nueva documentación didáctica y diagramas SVG de flujo. |
@@ -415,7 +415,7 @@ Esta iteración introduce una mejora sustancial en la eficiencia operativa de la
 
 ### 5. REGISTRO DE MADUREZ DEL SISTEMA
 
--   **Versión del sistema:** 5.7.25
+-   **Versión del sistema:** 5.8.6
 -   **Fecha:** 2026-03-14
 -   **Score global:** 9.55
 -   **Top 3 Avances:**
@@ -513,9 +513,9 @@ El sistema ahora no solo es técnicamente robusto, sino comercialmente atractivo
 
 ---
 
-### 7. ACTUALIZACIÓN POST-AUDITORÍA INTEGRAL (v5.7.25)
+### 7. ACTUALIZACIÓN POST-AUDITORÍA INTEGRAL (v5.8.6)
 
-- **Versión del sistema:** 5.7.25
+- **Versión del sistema:** 5.8.6
 - **Fecha:** 2026-03-08
 - **Score global:** 9.65 (+0.20)
 - **Hito principal:** Implementación de Auditoría Estructural y Validación de Coeficientes de Gastos Indirectos (1.5/1.0).

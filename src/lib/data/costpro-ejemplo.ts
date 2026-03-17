@@ -496,7 +496,7 @@ const template: CostSheetDataContract = {
   },
   "id": "costpro-ejemplo",
   "name": "Producción de Paquete de Pan de 8 Bolas",
-  "version": "5.7.25",
+  "version": "5.8.6",
   "metadata": {
     "author": "Eli - Senior Specialist",
     "description": "Ficha de costos para panadería - lote unitario de 8 bolas de pan."

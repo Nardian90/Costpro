@@ -1,4 +1,4 @@
-# Informe de Auditoría Integral - CostPro v5.7.25
+# Informe de Auditoría Integral - CostPro v5.8.6
 
 **Fecha:** 2026-03-08
 **Auditor:** Jules (Senior Software Engineer)
@@ -20,7 +20,7 @@
 
 ---
 
-## 2. Análisis de Madurez Técnica (v5.7.25)
+## 2. Análisis de Madurez Técnica (v5.8.6)
 
 ### A. Capa de Auditoría y Validación (Novedad Crítica)
 Se ha implementado una capa de auditoría en tiempo real en la vista de Fichas de Costo que detecta:
@@ -43,7 +43,7 @@ El motor de exportación PDF ha migrado a un modelo basado en servidor (`/api/co
 ## 3. Hallazgos y Observaciones
 
 ### ✅ Fortalezas
-1.  **Sincronización de Versiones:** La aplicación mantiene una consistencia total de versionado (v5.7.25) en UI, metadatos y documentación.
+1.  **Sincronización de Versiones:** La aplicación mantiene una consistencia total de versionado (v5.8.6) en UI, metadatos y documentación.
 2.  **UX Mobile de Alta Fidelidad:** Componentes como `CircularProgress` y el `ActionMenu` estilo pill proporcionan una experiencia premium en dispositivos pequeños.
 3.  **Motor de Fórmulas Robusto:** El Formula Editor cuenta ahora con protección contra bucles infinitos de actualización.
 

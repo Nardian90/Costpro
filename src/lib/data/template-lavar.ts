@@ -712,7 +712,7 @@ const template: any = {
   },
   "id": "costpro-lavar",
   "name": "Lavar",
-  "version": "5.7.25",
+  "version": "5.8.6",
   "metadata": {
     "author": "Jules",
     "description": "Plantilla para servicios de lavado con carga dinámica.",

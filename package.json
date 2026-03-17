@@ -1,6 +1,6 @@
 {
   "name": "nextjs_tailwind_shadcn_ts",
-  "version": "5.8.5",
+  "version": "5.8.6",
   "private": true,
   "engines": {
     "node": ">=20.0.0"

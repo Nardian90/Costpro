@@ -80,7 +80,7 @@ export function calculateMRI(domains: MRIDomain[], hardStops: HardStop[]): MRIRe
   };
 }
 
-// Default mock data for v5.7.25
+// Default mock data for v5.8.6
 export const DEFAULT_MRI_DATA: MRIResult = {
   score: 8.8,
   status: 'GO',

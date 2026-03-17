@@ -593,7 +593,7 @@ function UpdatesSection() {
             score: "9.80"
           },
           {
-            version: "v5.7.25",
+            version: "v5.8.6",
             date: "14 de Marzo, 2026",
             title: "Express Generation & Quick Mode",
             description: "Optimización drástica en la eficiencia operativa de la ingeniería de costos.",

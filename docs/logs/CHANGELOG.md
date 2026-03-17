@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.7.25] - 2026-03-14
+## [5.8.6] - 2026-03-14
 
 ### Added
 - **Integración de Modo Rápido con Generación Masiva**: Nueva funcionalidad que permite la creación express de múltiples fichas de costo desde una tabla simplificada.

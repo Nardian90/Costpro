@@ -558,7 +558,7 @@ const template: any = {
   "signature": { "prepared_by": "Elaborado por:", "approved_by": "Aprobado por:" },
   "id": "costpro-reinicio",
   "name": "Plantilla de Reinicio",
-  "version": "5.7.25",
+  "version": "5.8.6",
   "metadata": {
     "author": "Jules",
     "description": "Plantilla base con metodología de 16 secciones y carga dinámica de encabezado desde Anexo I.",

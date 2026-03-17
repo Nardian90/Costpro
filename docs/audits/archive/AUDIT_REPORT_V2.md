@@ -1,4 +1,4 @@
-# Informe de Auditoría Contable y Técnica - CostPro v5.7.25
+# Informe de Auditoría Contable y Técnica - CostPro v5.8.6
 
 ## 1. Hallazgos Críticos Identificados
 

@@ -571,7 +571,7 @@
         "description": "Actualización mayor: Inclusión de flujos Multi-Sucursal, Modo Rápido de Fichas y refinamiento de TPV y conciliación IPV."
       },
       {
-        "version": "5.7.25",
+        "version": "5.8.6",
         "date": "2026-03-13",
         "description": "Integración de Modo Rápido con Generación Masiva para fichas de costo."
       },
