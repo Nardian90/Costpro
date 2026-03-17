@@ -1304,3 +1304,32 @@
 .animate-darian-glow {
     animation: darian-glow 2s ease-in-out infinite;
 }
+
+/* Health View Dashboard v8.0 Mobile Hardening */
+@media (max-width: 420px) {
+  .health-view-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 2.5rem) !important;
+  }
+
+  .text-6xl {
+    font-size: clamp(2.5rem, 8vw, 3.75rem) !important;
+  }
+
+  /* Force horizontal scroll for tables on small screens */
+  .overflow-x-auto {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure 44px touch targets */
+  button, select, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

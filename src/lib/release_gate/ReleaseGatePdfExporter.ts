@@ -14,7 +14,7 @@ export class ReleaseGatePdfExporter {
 
     try {
       const doc = new jsPDF();
-      const dateStr = format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: es });
+      const dateStr = format(new Date(timestamp || new Date()), 'dd/MM/yyyy HH:mm', { locale: es });
 
       // Header
       doc.setFillColor(30, 41, 59); // Slate-800
@@ -61,9 +61,8 @@ export class ReleaseGatePdfExporter {
         startY: finalY + 10,
         head: [['Categoría: Seguridad & GRC', 'Estado']],
         body: [
-          ['Violaciones RLS', shi.metrics?.rls_violations === 0 ? 'LIMPIO' : `${shi.metrics?.rls_violations ?? 0} VIOLACIONES`],
-          ['Alertas RBAC', shi.metrics?.rbac_alerts === 0 ? 'SIN ALERTAS' : `${shi.metrics?.rbac_alerts ?? 0} ALERTAS`],
-          ['Logins Fallidos (1h)', `${shi.metrics?.failed_logins_last_hour ?? 0}`],
+          ['Amenazas Activas', `${shi.metrics?.active_threats ?? 0}`],
+          ['Logins Fallidos (1h)', `${shi.metrics?.failed_logins_1h ?? 0}`],
         ],
         theme: 'grid',
         headStyles: { fillColor: [244, 63, 94] }, // Rose-500
@@ -71,17 +70,21 @@ export class ReleaseGatePdfExporter {
 
       finalY = (doc as any).lastAutoTable?.finalY || finalY + 40;
 
-      // Release Gate (MRI) Table
-      if (mri.domains && mri.domains.length > 0) {
-        (doc as any).autoTable({
-          startY: finalY + 10,
-          head: [['Dominio MRI', 'Score', 'Observación']],
-          body: mri.domains.map((d: any) => [d.name, d.score, d.observations?.[0] || '']),
-          theme: 'striped',
-          headStyles: { fillColor: [139, 92, 246] }, // Violet-500
-        });
-        finalY = (doc as any).lastAutoTable?.finalY || finalY + 60;
-      }
+      // MRI Breakdown
+      (doc as any).autoTable({
+        startY: finalY + 10,
+        head: [['Métrica MRI', 'Valor']],
+        body: [
+          ['Arquitectura', `${mri.architectureHealth?.toFixed(1) ?? 'N/A'}`],
+          ['Documentación', `${mri.documentationCoverage?.toFixed(1) ?? 'N/A'}`],
+          ['Testing', `${mri.testCoverage?.toFixed(1) ?? 'N/A'}`],
+          ['Seguridad', `${mri.securityCompliance?.toFixed(1) ?? 'N/A'}`],
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [139, 92, 246] }, // Violet-500
+      });
+
+      finalY = (doc as any).lastAutoTable?.finalY || finalY + 40;
 
       // Hard Stops Status
       if (mri.hardStops && mri.hardStops.length > 0) {
