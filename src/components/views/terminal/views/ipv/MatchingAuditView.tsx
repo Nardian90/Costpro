@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { MatchingLogService } from '@/services/matching-log-service';
+import { db } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
 } from 'recharts';
 import {
   CheckCircle2,
+  UserCheck,
   Clock,
   AlertCircle,
   TrendingUp,
@@ -47,31 +49,46 @@ export function MatchingAuditView() {
     [selectedDate]
   );
 
+  const transactions = useLiveQuery(() => db.bank_statements.where('fecha').equals(selectedDate).toArray(), [selectedDate]);
+
   const txHistory = useLiveQuery(
     () => selectedTx ? MatchingLogService.getTransactionHistory(selectedTx) : Promise.resolve([]),
     [selectedTx]
   );
 
   const stats = useMemo(() => {
-    if (!logs || logs.length === 0) return null;
+    if (!logs || !transactions) return null;
+
+    // Transacciones cuadradas reales en la DB
+    const realComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
+    const realPartial = transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length;
+    const realPending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length;
+
+    // Diferenciar entre automático (en logs) y manual
+    const autoCompleteRefs = new Set(logs.filter(l => l.resultado_estado === 'COMPLETO').map(l => l.transaction_ref));
+    const manualComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO' && !autoCompleteRefs.has(t.referencia_origen)).length;
+
     return {
-      total: logs.length,
-      completo: logs.filter(l => l.resultado_estado === 'COMPLETO').length,
-      parcial: logs.filter(l => l.resultado_estado === 'PARCIAL').length,
-      pendiente: logs.filter(l => l.resultado_estado === 'PENDIENTE').length,
-      avgConfidence: logs.reduce((sum, l) => sum + l.matching_confidence, 0) / logs.length,
-      successRate: (logs.filter(l => l.resultado_estado === 'COMPLETO').length / logs.length) * 100
+      total: transactions.length,
+      completo: realComplete,
+      manualCompleto: manualComplete,
+      autoCompleto: autoCompleteRefs.size,
+      parcial: realPartial,
+      pendiente: realPending,
+      avgConfidence: logs.length > 0 ? logs.reduce((sum, l) => sum + l.matching_confidence, 0) / logs.length : 0,
+      successRate: transactions.length > 0 ? (realComplete / transactions.length) * 100 : 0
     };
-  }, [logs]);
+  }, [logs, transactions]);
 
   const chartData = useMemo(() => {
-    if (!logs || !stats) return [];
+    if (!stats) return [];
     return [
-      { name: 'COMPLETO', value: stats.completo, color: '#22c55e' },
+      { name: 'AUTO', value: stats.autoCompleto, color: '#22c55e' },
+      { name: 'MANUAL', value: stats.manualCompleto, color: '#3b82f6' },
       { name: 'PARCIAL', value: stats.parcial, color: '#f97316' },
       { name: 'PENDIENTE', value: stats.pendiente, color: '#ef4444' }
     ];
-  }, [logs, stats]);
+  }, [stats]);
 
   if (!logs) return <div className="p-8 text-center font-bold animate-pulse">Cargando auditoría...</div>;
 
@@ -98,8 +115,12 @@ export function MatchingAuditView() {
           <Card className="p-4 bg-green-500/5 border-green-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUADRADAS</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUADRADAS (TOTAL)</p>
                 <p className="text-2xl font-black text-green-600">{stats.completo}</p>
+                <div className="flex gap-2 mt-1">
+                    <span className="text-[9px] font-bold text-green-700 bg-green-500/10 px-1 rounded">AUTO: {stats.autoCompleto}</span>
+                    <span className="text-[9px] font-bold text-blue-700 bg-blue-500/10 px-1 rounded">MANUAL: {stats.manualCompleto}</span>
+                </div>
               </div>
               <CheckCircle2 className="w-6 h-6 text-green-600 opacity-20" />
             </div>
