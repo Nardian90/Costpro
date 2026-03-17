@@ -49,9 +49,8 @@ import { IPVRightSidebar } from './IPVRightSidebar';
 import { IncomeReceiptSection } from './IncomeReceiptSection';
 import { TransferQRReportView } from './TransferQRReportView';
 import { IPVReportsDropdown } from './IPVReportsDropdown';
-import { MatchingEngine } from '@/lib/ipv/engine';
-import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
 import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
@@ -75,6 +74,12 @@ export default function IPVView() {
   const products = useLiveQuery(() => db.products.toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
+  const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+  React.useEffect(() => {
+    if (rules && rules.length === 0) {
+      db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
+    }
+  }, [rules]);
 
   // Mapa de stock actual para el motor de matching y simulación
   const currentStockMap = useMemo(() => {
@@ -243,7 +248,7 @@ export default function IPVView() {
       type: 'RECONCILE_BATCH',
       transactions: transactionsToProcess,
       products: products,
-      rules,
+      rules: settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules,
       stockMap: currentStockMap
     });
 
@@ -292,7 +297,7 @@ export default function IPVView() {
       worker.terminate();
       setIsMatching(false);
     };
-  }, [transactions, products, currentStockMap, rules]);
+  }, [transactions, products, currentStockMap, rules, settings]);
 
   const handleForceMatch = React.useCallback(async (tx: BankTransaction) => {
     if (!products || !rules) return;
@@ -300,7 +305,7 @@ export default function IPVView() {
     const loadingToast = toast.loading(`Forzando matching para ${tx.referencia_origen}...`);
 
     try {
-        const engine = new MatchingEngine(products, rules);
+        const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
         const currentReconciled = txTotals[tx.referencia_origen] || 0;
 
         const result = await engine.matchTransaction(tx, currentReconciled);
@@ -335,7 +340,7 @@ export default function IPVView() {
         console.error('Error in force match:', error);
         toast.error('Error al ejecutar el matching', { id: loadingToast });
     }
-  }, [products, rules, txTotals]);
+  }, [products, rules, settings, txTotals]);
 
   const topActions: Action[] = useMemo(() => [
     {
@@ -616,7 +621,7 @@ export default function IPVView() {
 
           {activeTab === 'sim' && (
             <div className="m-0 animate-in fade-in duration-500">
-                <MatchingSimulation products={products || []} rules={rules || []} />
+                <MatchingSimulation products={products || []} rules={settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : (rules || [])} />
             </div>
           )}
 
