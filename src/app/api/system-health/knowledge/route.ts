@@ -8,6 +8,7 @@ export async function GET() {
   try {
     const knowledgeDir = path.join(process.cwd(), 'knowledge');
     const publicDir = path.join(process.cwd(), 'public');
+    const automationDir = path.join(process.cwd(), 'docs/automation');
 
     const readJson = (dir: string, file: string) => {
       const fullPath = path.join(dir, file);
@@ -22,21 +23,18 @@ export async function GET() {
       return null;
     };
 
-    return NextResponse.json({
-      // Knowledge files
-      components: readJson(knowledgeDir, 'components.json'),
-      views: readJson(knowledgeDir, 'views.json'),
-      workflows: readJson(knowledgeDir, 'workflows.json'),
-      master_manual: readJson(knowledgeDir, 'master_user_manual.json'),
-      user_help: readJson(knowledgeDir, 'user_help.json'),
-      knowledge_graph: readJson(knowledgeDir, 'knowledge_graph.json'),
-      ai_context: readJson(knowledgeDir, 'ai_context_index.json'),
+    // Load components metadata from public/_meta/ if needed, but components.json usually has the core info
+    const components = readJson(knowledgeDir, 'components.json');
+    const views = readJson(knowledgeDir, 'views.json');
+    const graph = readJson(publicDir, 'architecture_graph.json');
+    const reviewQueue = readJson(automationDir, 'review_queue.json');
 
-      // Public files
-      manifest: readJson(publicDir, 'architecture_manifest.json'),
-      arch: readJson(publicDir, 'system_architecture.json'),
-      graph: readJson(publicDir, 'architecture_graph.json'),
-      audit: readJson(publicDir, 'architecture_audit.json'),
+    return NextResponse.json({
+      components,
+      views,
+      graph,
+      reviewQueue,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error reading knowledge files:', error);
