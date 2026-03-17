@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,9 +29,7 @@ import {
   FileSearch,
   Receipt,
   ArrowRightLeft,
-  QrCode,
-  ChevronDown,
-  RefreshCw
+  QrCode
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
@@ -39,54 +38,63 @@ import { CatalogTable } from './CatalogTable';
 import MovementsView from './MovementsView';
 import { MatchingSimulation } from './MatchingSimulation';
 import { TransactionBreakdown } from './TransactionBreakdown';
-import { PivotStatementView } from './PivotStatementView';
-import { ManualReconciliationView } from './ManualReconciliationView';
-import { IPVReportsDropdown } from './IPVReportsDropdown';
 import { IPVReportView } from './IPVReportView';
+import { MatchingRulesEditor } from './MatchingRulesEditor';
+import { PivotStatementView } from './PivotStatementView';
+import { IngestionErrorsTable } from './IngestionErrorsTable';
+import { ManualReconciliationView } from './ManualReconciliationView';
+import { IPVControlPanel } from './IPVControlPanel';
 import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
-import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { MatchingEngine } from '@/lib/ipv/engine';
+import { IPVRightSidebar } from './IPVRightSidebar';
+import { IncomeReceiptSection } from './IncomeReceiptSection';
+import { TransferQRReportView } from './TransferQRReportView';
+import { IPVReportsDropdown } from './IPVReportsDropdown';
+import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
+import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
+import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import ActionMenu, { Action } from "@/components/ui/ActionMenu";
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isStarted, setIsStarted] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
-  const [matchProgress, setMatchProgress] = useState(0);
   const [matchMessage, setMatchMessage] = useState('');
+  const [matchProgress, setMatchProgress] = useState(0);
+  const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
   const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isStarted, setIsStarted] = useState(true);
 
-  const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').reverse().toArray());
+  const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
+  const rules = useLiveQuery(() => db.matching_rules.toArray());
   const products = useLiveQuery(() => db.products.toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
-  const productMovements = useLiveQuery(() => db.product_movements.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
-  const rules = useLiveQuery(() => db.matching_rules.where('activo').equals(1).toArray());
+  const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+  React.useEffect(() => {
+    if (rules && rules.length === 0) {
+      db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
+    }
+  }, [rules]);
 
   // Mapa de stock actual para el motor de matching y simulación
   const currentStockMap = useMemo(() => {
     const map = new Map<string, number>();
-    if (!products || !reconciliationLines || !productMovements) return map;
+    if (!products || !reconciliationLines) return map;
 
     products.forEach(p => {
         const sold = reconciliationLines
             .filter(l => l.product_cod === p.cod)
-            .reduce((sum, l) => sum + (l.cantidad || 0), 0);
-
-        const entrances = productMovements
-            .filter(m => m.producto_destino_cod === p.cod && m.tipo === 'DECOMPOSITION')
-            .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
-
-        const exits = productMovements
-            .filter(m => m.producto_origen_cod === p.cod && m.tipo === 'DECOMPOSITION')
-            .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
-
-        map.set(p.cod, (p.stock_inicial_manual || 0) + entrances - exits - sold);
+            .reduce((sum, l) => sum + l.cantidad, 0);
+        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
     });
     return map;
-  }, [products, reconciliationLines, productMovements]);
+  }, [products, reconciliationLines]);
 
   // Optimización: Cálculos pesados de conciliación movidos a useMemo con dependencias granulares
   const txTotals = useMemo(() => {
@@ -106,28 +114,57 @@ export default function IPVView() {
     let inProcess = 0;
     let pending = 0;
     let activeTotal = 0;
-    let totalSales = 0;
     let totalTransferencias = 0;
     let totalEfectivo = 0;
+    const checkedTxRefs = new Set<string>();
 
-    transactions.forEach(t => {
-      if (t.excluido) return;
-      activeTotal++;
+    // 1. Procesar transacciones bancarias (Transferencias)
+    for (let i = 0; i < transactions.length; i++) {
+        const t = transactions[i];
 
-      const reconciledCents = txTotals[t.referencia_origen] || 0;
-      totalSales += reconciledCents;
+        // Omitir excluidas de las estadísticas de KPI
+        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
 
-      if (t.estado_conciliacion === 'COMPLETO') squared++;
-      else if (t.estado_conciliacion === 'PARCIAL') inProcess++;
-      else pending++;
-    });
+        checkedTxRefs.add(t.referencia_origen);
+        activeTotal++;
 
-    // Calcular montos por tipo de las líneas directamente
+        const target = t.importe_venta_cents || t.importe_cents;
+        const matched = txTotals[t.referencia_origen] || 0;
+        const diff = target - matched;
+
+        // Si es un ingreso (Cr), lo sumamos como transferencia base
+        if (t.tipo === 'Cr') {
+            totalTransferencias += target;
+        }
+
+        if (matched === 0) {
+            pending++;
+        } else if (Math.abs(diff) < 0.001) {
+            squared++;
+        } else {
+            inProcess++;
+        }
+    }
+
+    // 2. Procesar líneas de reconciliación para capturar Efectivo (incluyendo CASH_FILLER)
     if (reconciliationLines) {
-        reconciliationLines.forEach(l => {
-            if (l.clasificacion === 'Efectivo') totalEfectivo += l.importe_linea_cents;
-            else totalTransferencias += l.importe_linea_cents;
-        });
+        for (let i = 0; i < reconciliationLines.length; i++) {
+            const l = reconciliationLines[i];
+
+            // Si la línea NO pertenece a una transacción bancaria activa, es venta en efectivo independiente
+            if (!checkedTxRefs.has(l.transaction_ref)) {
+                if (l.importe_linea_cents > 0) {
+                    totalEfectivo += l.importe_linea_cents;
+                }
+            } else {
+                // Si pertenece a una transacción bancaria, pero está clasificada como Efectivo (ej: Cash Fill de una transferencia)
+                // Restamos del total de transferencias y sumamos a efectivo para el desglose real
+                if (l.clasificacion === 'Efectivo') {
+                    totalEfectivo += l.importe_linea_cents;
+                    totalTransferencias -= l.importe_linea_cents;
+                }
+            }
+        }
     }
 
     return {
@@ -136,20 +173,36 @@ export default function IPVView() {
       inProcess,
       pending,
       percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0,
-      totalSales,
+      totalSales: totalTransferencias + totalEfectivo,
       totalTransferencias,
       totalEfectivo
     };
   }, [transactions, txTotals, reconciliationLines]);
 
-  const handleGlobalRecalculate = React.useCallback(async () => {
-    const loadingToast = toast.loading('Recalculando sistema...');
+
+  async function handleImportBackup(file: File) {
+    const loadingToast = toast.loading('Restaurando base de datos...');
     try {
-        const { recalculateIPVReportsChain } = await import('@/lib/ipv/utils');
-        await recalculateIPVReportsChain(db);
-        toast.success('Sistema recalculado correctamente', { id: loadingToast });
+      await importFullBackup(db, file);
+      toast.success('Base de datos restaurada correctamente', { id: loadingToast });
+      // Reload page to refresh all live queries and state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
-        toast.error('Error al recalcular', { id: loadingToast });
+      console.error('Error importing backup:', error);
+      toast.error('Error al restaurar la base de datos', { id: loadingToast });
+    }
+  }
+
+  const handleGlobalRecalculate = React.useCallback(async () => {
+    const loadingToast = toast.loading('Sincronizando datos del sistema...');
+    try {
+        await recalculateIPVReportsChain(db);
+        toast.success('Sincronización completa: IPV, Desglose y Catálogo alineados.', { id: loadingToast });
+    } catch (error) {
+        console.error('Error in global recalculate:', error);
+        toast.error('Error al sincronizar datos', { id: loadingToast });
     }
   }, []);
 
@@ -204,51 +257,116 @@ export default function IPVView() {
       if (e.data.type === 'PROGRESS') {
           setMatchProgress(e.data.percentage);
           setMatchMessage(`Procesando: ${e.data.percentage}%`);
-      } else if (e.data.type === 'SUCCESS') {
-          const { results } = e.data;
+      }
 
-          let completedCount = 0;
-          for (const res of results) {
-              if (res.status === 'COMPLETO' || res.status === 'PARCIAL') {
-                  if (res.lines.length > 0) {
-                      await db.reconciliation_lines.bulkPut(res.lines);
-                  }
-                  if (res.movements && res.movements.length > 0) {
-                      await db.product_movements.bulkPut(res.movements);
-                  }
-                  await db.bank_statements.update(res.transactionId, {
-                      estado_conciliacion: res.status
-                  });
-                  completedCount++;
-              }
+      if (e.data.type === 'BATCH_COMPLETE') {
+        const { results } = e.data;
+
+        // Persistir resultados
+        for (const res of results) {
+          if (res.lines.length > 0) {
+            await db.reconciliation_lines.bulkAdd(res.lines);
           }
 
-          toast.success(`Proceso finalizado: ${completedCount} transacciones conciliadas.`);
-          setIsMatching(false);
-          setMatchProgress(0);
-          worker.terminate();
-      } else if (e.data.type === 'ERROR') {
-          toast.error(`Error en el motor: ${e.data.error}`);
-          setIsMatching(false);
-          setMatchProgress(0);
-          worker.terminate();
+          if (res.movements && res.movements.length > 0) {
+              await db.product_movements.bulkAdd(res.movements.map((m: any) => ({
+                  ...m,
+                  referencia_transaccion: res.transactionId
+              })));
+          }
+
+          // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
+          await db.bank_statements.update(res.transactionId, {
+            estado_conciliacion: res.status,
+            fail_reason: res.failReason,
+            matching_trace: res.trace,
+            applied_rules: res.appliedRules,
+            matching_confidence: res.matchingConfidence
+          });
+        }
+
+        toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
+        worker.terminate();
+        setIsMatching(false);
+        setMatchProgress(0);
       }
     };
 
     worker.onerror = (err) => {
-        console.error('Worker error:', err);
-        toast.error('Error crítico en el proceso de matching');
-        setIsMatching(false);
-        worker.terminate();
+      console.error('Worker error:', err);
+      toast.error('Error en el motor de matching');
+      worker.terminate();
+      setIsMatching(false);
     };
+  }, [transactions, products, currentStockMap, rules, settings]);
 
-  }, [transactions, products, currentStockMap, rules]);
+  const handleForceMatch = React.useCallback(async (tx: BankTransaction) => {
+    if (!products || !rules) return;
 
-  const ipvActions: Action[] = useMemo(() => [
-    { id: "recalculate", label: "Recalcular", icon: RefreshCw, onClick: handleGlobalRecalculate },
+    const loadingToast = toast.loading(`Forzando matching para ${tx.referencia_origen}...`);
+
+    try {
+        const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
+        const currentReconciled = txTotals[tx.referencia_origen] || 0;
+
+        const result = await engine.matchTransaction(tx, currentReconciled);
+
+        if (result.lines.length > 0) {
+            await db.reconciliation_lines.bulkAdd(result.lines);
+        }
+
+        if (result.movements && result.movements.length > 0) {
+            await db.product_movements.bulkAdd(result.movements.map(m => ({
+                ...m,
+                referencia_transaccion: tx.referencia_origen
+            })));
+        }
+
+        await db.bank_statements.update(tx.referencia_origen, {
+            estado_conciliacion: result.status,
+            fail_reason: result.failReason,
+            matching_trace: result.trace,
+            applied_rules: result.appliedRules,
+            matching_confidence: result.matchingConfidence
+        });
+
+        if (result.status === 'COMPLETO') {
+            toast.success('¡Transacción cuadradada exitosamente!', { id: loadingToast });
+        } else if (result.status === 'PARCIAL') {
+            toast.info('Matching parcial aplicado. Aún queda una diferencia.', { id: loadingToast });
+        } else {
+            toast.error('No se encontraron coincidencias automáticas para esta transacción.', { id: loadingToast });
+        }
+    } catch (error) {
+        console.error('Error in force match:', error);
+        toast.error('Error al ejecutar el matching', { id: loadingToast });
+    }
+  }, [products, rules, settings, txTotals]);
+
+  const topActions: Action[] = useMemo(() => [
     {
-        id: "run-matching",
-        label: "Analizar Todo",
+        id: 'sync',
+        label: 'Sincronizar IPV',
+        icon: History,
+        onClick: handleGlobalRecalculate,
+        variant: 'outline' as const,
+        tooltip: (
+            <div className="space-y-1">
+                <p className="font-bold text-primary">Sincronizar IPV</p>
+                <p className="text-xs leading-relaxed">Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.</p>
+            </div>
+        )
+    },
+    {
+        id: 'rules',
+        label: 'Reglas',
+        icon: Settings,
+        onClick: () => setActiveTab('rules'),
+        variant: 'outline' as const
+    },
+    {
+        id: 'matching',
+        label: 'Ejecutar Matching',
         icon: Play,
         onClick: handleRunMatching,
         variant: 'primary' as const,
@@ -287,7 +405,7 @@ export default function IPVView() {
         onClick: () => {},
         component: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />
     }
-  ], [activeTab, activeTab]);
+  ], [activeTab]);
 
   if (!isStarted) {
     return (
@@ -317,49 +435,174 @@ export default function IPVView() {
                     onClick={() => setActiveTab('dashboard')}
                     className="h-11 w-11 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm active:scale-95"
                 >
-                    <ChevronDown className="w-5 h-5 rotate-90" />
+                    <Settings className="w-5 h-5 rotate-180" />
                 </Button>
             )}
             <div>
-                <h1 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-2">
-                    Conciliación Inteligente <Badge variant="outline" className="text-[10px] h-5 bg-primary/5 border-primary/20 text-primary">V8.0</Badge>
-                </h1>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">Motor de interpretación bancaria y arqueo de caja</p>
+                <div className="flex items-center gap-2">
+                    <h1 className="text-[clamp(2rem,8vw,3rem)] font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+                    <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
             </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-            <ActionMenu actions={menuActions} />
+        <div className="w-full lg:w-auto">
+            <ActionMenu actions={topActions} sticky={false} className="shadow-none bg-transparent" />
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Venta Total"
+                        value={stats.totalSales}
+                        icon={<FileText className="text-primary" />}
+                        subtitle={`T: ${formatCurrency(stats.totalTransferencias)} | E: ${formatCurrency(stats.totalEfectivo)}`}
+                        active={false}
+                        isCurrency={true}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
+                <div className="space-y-1">
+                    <p className="text-xs"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
+                    <p className="text-xs"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
+                </div>
+                <p className="text-xs mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
+            </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Total"
+                        value={stats.total}
+                        icon={<History className="text-blue-500" />}
+                        subtitle="Transacciones"
+                        active={kpiFilter === 'ALL'}
+                        onClick={() => {
+                            setKpiFilter('ALL');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
+            </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Cuadradas"
+                        value={stats.squared}
+                        icon={<CheckCircle2 className="text-green-500" />}
+                        trend={`${stats.percentage}%`}
+                        subtitle="Completadas"
+                        active={kpiFilter === 'CUADRADAS'}
+                        onClick={() => {
+                            setKpiFilter('CUADRADAS');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold">Transacciones cuyo desglose de productos coincide exactamente con el importe neto.</p>
+            </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="En Proceso"
+                        value={stats.inProcess}
+                        icon={<AlertCircle className="text-yellow-500" />}
+                        subtitle="Con Diferencia"
+                        active={kpiFilter === 'EN_PROCESO'}
+                        onClick={() => {
+                            setKpiFilter('EN_PROCESO');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold">Transacciones con productos asociados pero que aún tienen una diferencia pendiente por cuadrar.</p>
+            </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Pendientes"
+                        value={stats.pending}
+                        icon={<Clock className="text-orange-500" />}
+                        subtitle="Sin Matching"
+                        active={kpiFilter === 'PENDIENTES'}
+                        onClick={() => {
+                            setKpiFilter('PENDIENTES');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold">Transacciones que no han sido procesadas o no encontraron coincidencias automáticas.</p>
+            </TooltipContent>
+        </Tooltip>
+      </div>
+
+      <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
+
       <div className="w-full">
+            <ActionMenu
+                actions={menuActions}
+                sticky={true}
+                topOffset="sticky top-[60px] sm:top-[92px]"
+                className="mb-6 !-mx-4 px-4 py-2"
+            />
+
+        <div className={(activeTab === 'dashboard' || activeTab === 'analytics') ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
+          {activeTab === 'analytics' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IPVInstitutionalDashboard transactions={transactions || []} reconciliationLines={reconciliationLines || []} />
+            </div>
+          )}
           {activeTab === 'dashboard' && (
-            <div className="m-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <IPVInstitutionalDashboard
-                    transactions={transactions || []}
-                    reconciliationLines={reconciliationLines || []}
-                    onStart={() => setActiveTab('ingestion')}
+            <div className="m-0 animate-in fade-in duration-500">
+                <IPVControlPanel
+                onSelect={(id) => {
+                    if (id === 'help') setIsHelpOpen(true);
+                    else setActiveTab(id);
+                }}
+                onExportBackup={() => exportFullBackup(db)}
+                onImportBackup={handleImportBackup}
+                hasTransactions={!!transactions && transactions.length > 0}
+                hasProducts={!!products && products.length > 0}
                 />
             </div>
           )}
-
-          {activeTab === 'ingestion' && (
-            <div className="m-0 animate-in fade-in duration-500">
-                <BankIngestion />
-            </div>
-          )}
-
           {activeTab === 'transactions' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <TransactionTable
                 transactions={transactions || []}
-                kpiFilter="ALL"
+                kpiFilter={kpiFilter}
                 txReconciliationTotals={txTotals}
                 onReconcile={(tx) => {
                     setSelectedReconTx(tx);
                     setActiveTab('manual-recon');
                 }}
+                onForceMatch={handleForceMatch}
                 onAnalyzeAll={handleRunMatching}
                 />
             </div>
@@ -368,7 +611,7 @@ export default function IPVView() {
           {activeTab === 'manual-recon' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <ManualReconciliationView
-                    transaction={selectedReconTx as BankTransaction}
+                    transaction={selectedReconTx}
                     onBack={() => {
                         setActiveTab('transactions');
                         setSelectedReconTx(null);
@@ -412,31 +655,84 @@ export default function IPVView() {
             </div>
           )}
 
+          {activeTab === 'ingestion' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <BankIngestion />
+            </div>
+          )}
+
           {activeTab === 'reports' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <IPVReportView />
             </div>
           )}
 
-          {activeTab === 'rules' && (
-            <div className="m-0 animate-in fade-in duration-500 p-6 bg-card rounded-2xl border shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-xl font-black uppercase tracking-widest">Configuración de Reglas</h2>
-                        <p className="text-sm text-muted-foreground font-medium">Define el comportamiento del motor de matching</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="p-12 flex flex-col items-center justify-center border-dashed text-center opacity-50">
-                        <Settings className="w-12 h-12 mb-4 text-primary/20" />
-                        <p className="font-black uppercase text-xs tracking-widest">Módulo de Reglas v8.0</p>
-                        <p className="text-xs font-medium mt-1">El editor de reglas se encuentra en mantenimiento.</p>
-                    </Card>
-                </div>
+          {activeTab === 'receipts' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <IncomeReceiptSection />
             </div>
           )}
+
+          {activeTab === 'transfers' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <TransferQRReportView type="TRANSFER" />
+            </div>
+          )}
+
+          {activeTab === 'qr' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <TransferQRReportView type="QR" />
+            </div>
+          )}
+
+          {activeTab === 'rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MatchingRulesEditor />
+            </div>
+          )}
+
+          {activeTab === 'errors' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IngestionErrorsTable />
+            </div>
+          )}
+        </div>
       </div>
     </div>
     </TooltipProvider>
+  );
+}
+
+
+function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean }) {
+  const formattedValue = React.useMemo(() => {
+    if (!isCurrency) return value.toString();
+    if (value > 9999) {
+        return `${(value / 1000).toFixed(1)} MP`;
+    }
+    return formatCurrency(value);
+  }, [value, isCurrency]);
+
+  return (
+    <Card
+        onClick={onClick}
+        className={`p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2 ${active ? 'border-primary bg-primary/5 shadow-lg scale-[1.02]' : 'border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20'}`}
+    >
+      <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1 overflow-hidden w-full">
+        <p className="text-xs sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate w-full text-center sm:text-left">{title}</p>
+        <div className="flex items-baseline justify-center sm:justify-start gap-1.5 sm:gap-2 w-full overflow-hidden">
+            <h3 className="text-[clamp(1.2rem,5vw,2.2rem)] font-black truncate">{formattedValue}</h3>
+            {trend && (
+                <Badge variant="outline" className="text-[9px] h-3.5 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20 flex-shrink-0">
+                    {trend}
+                </Badge>
+            )}
+        </div>
+        {subtitle && <p className="text-[10px] sm:text-[9px] text-muted-foreground font-bold uppercase opacity-60 truncate w-full text-center sm:text-left tracking-tighter">{subtitle}</p>}
+      </div>
+      <div className="p-2 sm:p-2.5 bg-background rounded-xl sm:rounded-2xl shadow-inner flex-shrink-0">
+        {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-3.5 h-3.5 sm:w-4 sm:h-4' })}
+      </div>
+    </Card>
   );
 }
