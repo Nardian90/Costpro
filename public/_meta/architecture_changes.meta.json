@@ -1,0 +1,19 @@
+{
+  "artifactName": "architecture_changes",
+  "version": "1.0.0",
+  "hash": "sha256:c52b1fc02b99ada196bc9c912ccc3b5a698e63eb53f2fccddd232d4b8fec1d31",
+  "confidenceScore": 95.0,
+  "reviewRequired": false,
+  "createdAt": "2026-03-17T16:35:11.653944+00:00Z",
+  "sourcePhase": 4,
+  "createdBy": "architecture-scheduler/8.0",
+  "confidenceModel": "ai-arch-v8.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/8.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 4",
+  "previousVersions": []
+}
