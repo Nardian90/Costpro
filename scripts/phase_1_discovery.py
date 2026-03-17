@@ -9,7 +9,7 @@ import sys
 sys.path.append('scripts')
 from commit_artifact import commit_artifact
 
-BASE_PATHS = ["src/app", "src/components", "src/lib"]
+BASE_PATHS = ["src/app", "src/components", "src/lib", "src/services", "src/store", "src/types", "src/hooks"]
 
 def get_type(path):
     if "components/views/terminal/views" in path:
@@ -21,6 +21,10 @@ def get_type(path):
         return "hook"
     if "services" in path:
         return "service"
+    if "store" in path:
+        return "store"
+    if "types" in path:
+        return "type"
     if "lib" in path:
         return "utility"
     return "unknown"
@@ -38,6 +42,9 @@ def get_layer(path):
     return "Infrastructure"
 
 def resolve_import(import_path, current_file_path):
+    # Normalize paths for comparison
+    current_file_path = os.path.normpath(current_file_path)
+
     if import_path.startswith("@/"):
         resolved = import_path.replace("@/", "src/")
     elif import_path.startswith("."):
@@ -45,6 +52,8 @@ def resolve_import(import_path, current_file_path):
         resolved = os.path.normpath(os.path.join(dir_name, import_path))
     else:
         return None
+
+    resolved = os.path.normpath(resolved)
 
     for ext in [".tsx", ".ts", ".jsx", ".js", ""]:
         full_path = resolved + ext
@@ -63,7 +72,7 @@ def extract_all_dependencies_ast(file_paths):
         batch = file_paths[i:i + batch_size]
         try:
             result = subprocess.run(
-                ["npx", "ts-node", "--transpile-only", "scripts/extract_imports.ts"] + batch,
+                ["bun", "scripts/extract_imports.ts"] + batch,
                 capture_output=True, text=True
             )
             if result.returncode == 0:
@@ -95,8 +104,9 @@ def execute_phase_1():
                         continue
                     full_path = os.path.join(root, file)
                     rel_path = os.path.relpath(full_path, start=os.getcwd())
+                    # Normalize for cross-platform and consistency
+                    rel_path = os.path.normpath(rel_path)
                     itype = get_type(rel_path)
-                    if itype == "unknown": continue
 
                     node_id = path_to_id(rel_path)
                     nodes[rel_path] = {"id": node_id, "type": itype, "path": rel_path}
@@ -111,8 +121,12 @@ def execute_phase_1():
             resolved = resolve_import(imp, path)
             if resolved:
                 rel_resolved = os.path.relpath(resolved, start=os.getcwd())
+                rel_resolved = os.path.normpath(rel_resolved)
                 if rel_resolved in nodes:
                     resolved_deps.append(nodes[rel_resolved]['id'])
+                else:
+                    # Maybe it's src/store resolving to src/store/index.ts
+                    pass
 
         arch_components.append({
             "id": node["id"],

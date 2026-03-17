@@ -117,6 +117,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
     if not dry_run:
         script_map = {
             1: "scripts/phase_1_discovery.py",
+            3: "scripts/phase_3_dependency_graph.py",
             2: "scripts/maintenance/domain_classifier.py",
             13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py"
