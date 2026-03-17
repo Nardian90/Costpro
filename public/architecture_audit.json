@@ -3685,13 +3685,46 @@
         "system_architecture",
         "architecture_manifest"
       ]
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T14:11:37.149193+00:00Z",
+      "endTime": "2026-03-17T14:11:49.303962+00:00Z",
+      "durationMs": 12154,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ]
+    },
+    {
+      "phase": 2,
+      "phaseName": "Domain Classification",
+      "startTime": "2026-03-17T14:13:08.299443+00:00Z",
+      "endTime": "2026-03-17T14:13:08.299482+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "components"
+      ]
+    },
+    {
+      "phase": 2,
+      "phaseName": "Domain Classification",
+      "startTime": "2026-03-17T14:13:08.712262+00:00Z",
+      "endTime": "2026-03-17T14:13:08.782978+00:00Z",
+      "durationMs": 70,
+      "status": "success",
+      "artifactsGenerated": [
+        "components"
+      ]
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 16120,
-    "slowestPhase": 24234,
-    "fastestPhase": 0,
-    "lastCycleDurationMs": 48361,
-    "lastUpdated": "2026-03-17T13:42:54.610816+00:00Z"
+    "averagePhaseDurationMs": 10097,
+    "slowestPhase": 1,
+    "fastestPhase": 1,
+    "lastCycleDurationMs": 60585
   }
 }
