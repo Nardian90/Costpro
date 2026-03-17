@@ -13,8 +13,8 @@ export default defineConfig({
     },
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/setup.ts', 'e2e/**'],
+      exclude: ['node_modules/', 'src/test/setup.ts', 'e2e/**', '.next/**'],
     },
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', 'e2e/**'],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', 'e2e/**', '.next/**'],
   },
 });
