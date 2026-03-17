@@ -41,9 +41,23 @@ def load_state():
     if not os.path.exists(STATE_PATH):
         raise FileNotFoundError(f"State file not found: {STATE_PATH}")
     with open(STATE_PATH, 'r', encoding='utf-8') as f:
-        return yaml.safe_load(f)
+        raw = yaml.safe_load(f)
+
+    # Normalization of v8.0 Enterprise keys
+    mapping = {
+        "artefactoTienda": "artifactStore",
+        "metadataTienda": "metadataStore",
+        "cuarentenaRuta": "quarantinePath",
+        "confianzaUmbral": "confidenceThreshold",
+        "Umbral": "repairThreshold"
+    }
+    for new_key, old_key in mapping.items():
+        if new_key in raw:
+            raw[old_key] = raw[new_key]
+    return raw
 
 def save_state(state):
+    # We want to preserve the original keys if they existed, but for now we just dump
     with open(STATE_PATH, 'w', encoding='utf-8') as f:
         yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
 
