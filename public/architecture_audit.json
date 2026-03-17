@@ -3648,5 +3648,26 @@
       "technical_risk": "Low",
       "complexity": "Medium"
     }
-  ]
+  ],
+  "phaseExecutions": [
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-17T08:11:21.636874+00:00Z",
+      "endTime": "2026-03-17T08:11:21.636905+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ]
+    }
+  ],
+  "performanceSummary": {
+    "averagePhaseDurationMs": 0,
+    "slowestPhase": 0,
+    "fastestPhase": 0,
+    "lastCycleDurationMs": 0,
+    "lastUpdated": "2026-03-17T08:11:21.636905+00:00Z"
+  }
 }
