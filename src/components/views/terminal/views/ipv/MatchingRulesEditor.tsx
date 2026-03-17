@@ -172,7 +172,23 @@ export function MatchingRulesEditor() {
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
 
   const toggleCopiloto = async (active: boolean) => {
-    await db.ipv_settings.update("current", { copiloto_activo: active });
+    const exists = await db.ipv_settings.get("current");
+    if (!exists) {
+      await db.ipv_settings.put({
+        id: 'current',
+        updated_at: new Date().toISOString(),
+        paper_size: 'LETTER',
+        entidad_nombre: 'ENTIDAD POR DEFECTO',
+        entidad_codigo: '0000',
+        persona_entrega: 'RESPONSABLE',
+        consecutivo_inicio: 1,
+        agrupacion_modo: 'GLOBAL',
+        desglose_modo: 'TRANSACCION',
+        copiloto_activo: active
+      });
+    } else {
+      await db.ipv_settings.update("current", { copiloto_activo: active });
+    }
     toast.success(active ? "Copiloto activado: El sistema usará la lógica optimizada (>90% mismatch)." : "Copiloto desactivado: Se aplicará su configuración manual.");
   };
 
@@ -263,7 +279,7 @@ export function MatchingRulesEditor() {
               </Label>
               <Switch
                 id="copiloto-mode"
-                checked={settings?.copiloto_activo ?? true}
+                checked={settings?.copiloto_activo ?? false}
                 onCheckedChange={toggleCopiloto}
                 className="data-[state=checked]:bg-primary"
               />
