@@ -31,6 +31,24 @@ def load_config():
 
 STATE = load_config()
 
+def get_destination_base(name, source_phase):
+    # Mapping based on v8.0 structure
+    if name in ["system_architecture", "architecture_manifest", "architecture_graph", "architecture_audit", "architecture_changes", "architecture_metrics"]:
+        return "public/"
+    if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
+        return "knowledge/"
+    if name == "knowledge_graph":
+        return "./" # Root as per 3.4
+    if name.startswith("docs/") or name == "iso_manual":
+        return "knowledge/"
+    if name.startswith("ai_context") or name == "vector_index":
+        return "ai_context/"
+
+    # Fallback based on phase
+    if source_phase <= 6: return "public/"
+    if source_phase <= 13: return "knowledge/"
+    return "public/"
+
 def canonical_json(obj):
     return json.dumps(obj, separators=(',', ':'), sort_keys=True, ensure_ascii=False)
 
@@ -71,7 +89,7 @@ def get_file_hash(path):
     return hasher.hexdigest()
 
 def load_meta(name):
-    meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
+    meta_path = os.path.join(STATE["metadataStore"], f"{name.replace('/', '_')}.meta.json")
     if os.path.exists(meta_path):
         with open(meta_path, 'r', encoding='utf-8') as f:
             try:
@@ -136,14 +154,14 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         })
 
     os.makedirs(STATE["metadataStore"], exist_ok=True)
-    meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
+    meta_path = os.path.join(STATE["metadataStore"], f"{name.replace('/', '_')}.meta.json")
 
     confidence_threshold = STATE.get("confidenceThreshold", 90)
 
     if confidence_score < confidence_threshold:
         short_hash = hash_value[:6]
         ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
-        quarantine_name = f"{name}-{version}+{short_hash}{ext}"
+        quarantine_name = f"{name.replace('/', '_')}-{version}+{short_hash}{ext}"
         quarantine_path = os.path.join(STATE["quarantinePath"], quarantine_name)
         os.makedirs(os.path.dirname(quarantine_path), exist_ok=True)
         if os.path.isdir(artifact_path):
@@ -156,7 +174,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
             json.dump(meta_obj, f, indent=2, ensure_ascii=False)
 
         append_review_queue({
-            "id": f"rq-{name}-{version}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+            "id": f"rq-{name.replace('/', '_')}-{version}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             "artifactName": name,
             "candidatePath": quarantine_path,
             "metaPath": meta_path,
@@ -168,15 +186,19 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         print(f"QUARANTINED: {quarantine_path}")
         return "quarantined"
 
+    # Deterministic destination base
+    dest_base = get_destination_base(name, source_phase)
+
     # Deterministic destination extension
     ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
     # If name already has extension, don't append it
     dest_filename = name if name.endswith(ext) else name + ext
-    dest_path = os.path.join(STATE["artifactStore"], dest_filename)
+    dest_path = os.path.normpath(os.path.join(dest_base, dest_filename))
 
     if os.path.isdir(artifact_path):
         if os.path.exists(dest_path):
             shutil.rmtree(dest_path)
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         shutil.copytree(artifact_path, dest_path)
     else:
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
@@ -184,7 +206,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
 
     # Archive
     short_hash = hash_value[:6]
-    archive_name = f"{name}-{version}+{short_hash}{ext}"
+    archive_name = f"{name.replace('/', '_')}-{version}+{short_hash}{ext}"
     archive_path = os.path.join(STATE["archiveStore"], archive_name)
     os.makedirs(STATE["archiveStore"], exist_ok=True)
     if os.path.isdir(artifact_path):
