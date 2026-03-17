@@ -1,83 +1,11 @@
 {
-  "audit": [
-  
   "phaseExecutions": [
     {
       "phase": 1,
       "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T08:11:21.636874+00:00Z",
-      "endTime": "2026-03-17T08:11:21.636905+00:00Z",
-      "durationMs": 0,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ]
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T13:42:30.458282+00:00",
-      "endTime": "2026-03-17T13:42:54.586000+00:00",
-      "durationMs": 24127,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture.json",
-        "architecture_manifest.json"
-      ]
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T13:42:30.375868+00:00Z",
-      "endTime": "2026-03-17T13:42:54.610816+00:00Z",
-      "durationMs": 24234,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ]
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T14:11:37.149193+00:00Z",
-      "endTime": "2026-03-17T14:11:49.303962+00:00Z",
-      "durationMs": 12154,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ]
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T14:13:08.299443+00:00Z",
-      "endTime": "2026-03-17T14:13:08.299482+00:00Z",
-      "durationMs": 0,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
-      ]
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T14:13:08.712262+00:00Z",
-      "endTime": "2026-03-17T14:13:08.782978+00:00Z",
-      "durationMs": 70,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
-      ]
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T16:02:26.394889+00:00Z",
-      "endTime": "2026-03-17T16:02:51.680453+00:00Z",
-      "durationMs": 25285,
+      "startTime": "2026-03-17T22:15:05.949831+00:00Z",
+      "endTime": "2026-03-17T22:15:12.519562+00:00Z",
+      "durationMs": 6569,
       "status": "success",
       "artifactsGenerated": [
         "system_architecture",
@@ -88,70 +16,9 @@
     {
       "phase": 2,
       "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T16:06:15.589661+00:00Z",
-      "endTime": "2026-03-17T16:06:15.647129+00:00Z",
-      "durationMs": 57,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T16:08:21.919275+00:00Z",
-      "endTime": "2026-03-17T16:08:22.044259+00:00Z",
-      "durationMs": 124,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 3,
-      "phaseName": "Dependency Graph",
-      "startTime": "2026-03-17T16:27:03.887967+00:00Z",
-      "endTime": "2026-03-17T16:27:04.101985+00:00Z",
-      "durationMs": 214,
-      "status": "success",
-      "artifactsGenerated": [
-        "architecture_graph"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 4,
-      "phaseName": "Git Change Intelligence",
-      "startTime": "2026-03-17T16:35:11.576673+00:00Z",
-      "endTime": "2026-03-17T16:35:11.664041+00:00Z",
-      "durationMs": 87,
-      "status": "success",
-      "artifactsGenerated": [
-        "architecture_changes"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T17:59:33.801646+00:00Z",
-      "endTime": "2026-03-17T17:59:40.392682+00:00Z",
-      "durationMs": 6591,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T18:05:48.088882+00:00Z",
-      "endTime": "2026-03-17T18:05:48.357000+00:00Z",
-      "durationMs": 268,
+      "startTime": "2026-03-17T22:18:15.557050+00:00Z",
+      "endTime": "2026-03-17T22:18:15.660476+00:00Z",
+      "durationMs": 103,
       "status": "success",
       "artifactsGenerated": [
         "components"
@@ -161,71 +28,21 @@
     {
       "phase": 1,
       "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T18:06:02.375352+00:00Z",
-      "endTime": "2026-03-17T18:06:07.248460+00:00Z",
-      "durationMs": 4873,
+      "startTime": "2026-03-17T22:18:21.693593+00:00Z",
+      "endTime": "2026-03-17T22:18:28.109066+00:00Z",
+      "durationMs": 6415,
       "status": "success",
       "artifactsGenerated": [
         "system_architecture",
         "architecture_manifest"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T18:06:24.969303+00:00Z",
-      "endTime": "2026-03-17T18:06:29.870793+00:00Z",
-      "durationMs": 4901,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T18:06:30.221278+00:00Z",
-      "endTime": "2026-03-17T18:06:30.314442+00:00Z",
-      "durationMs": 93,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T18:11:12.311027+00:00Z",
-      "endTime": "2026-03-17T18:11:19.557209+00:00Z",
-      "durationMs": 7246,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-17T18:50:15.297426+00:00Z",
-      "endTime": "2026-03-17T18:50:15.461574+00:00Z",
-      "durationMs": 164,
-      "status": "success",
-      "artifactsGenerated": [
-        "components"
       ],
       "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 6138,
+    "averagePhaseDurationMs": 4362,
     "slowestPhase": 1,
-    "fastestPhase": 1,
-    "lastCycleDurationMs": 49903
+    "fastestPhase": 2,
+    "lastCycleDurationMs": 13087
   }
 }

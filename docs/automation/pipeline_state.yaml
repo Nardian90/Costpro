@@ -1,5 +1,5 @@
-currentPhase: 3
-lastExecution: 2026-03-17T18:50:15.476084+00:00Z
+currentPhase: 2
+lastExecution: '2026-03-17T22:18:28.109722+00:00Z'
 pipelineVersion: 8.0.0
 cycle: 1
 schedulerMode: normal # normal | repair | documentación ligera

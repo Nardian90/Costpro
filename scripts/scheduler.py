@@ -41,23 +41,9 @@ def load_state():
     if not os.path.exists(STATE_PATH):
         raise FileNotFoundError(f"State file not found: {STATE_PATH}")
     with open(STATE_PATH, 'r', encoding='utf-8') as f:
-        raw = yaml.safe_load(f)
-
-    # Normalization of v8.0 Enterprise keys
-    mapping = {
-        "artefactoTienda": "artifactStore",
-        "metadataTienda": "metadataStore",
-        "cuarentenaRuta": "quarantinePath",
-        "confianzaUmbral": "confidenceThreshold",
-        "Umbral": "repairThreshold"
-    }
-    for new_key, old_key in mapping.items():
-        if new_key in raw:
-            raw[old_key] = raw[new_key]
-    return raw
+        return yaml.safe_load(f)
 
 def save_state(state):
-    # We want to preserve the original keys if they existed, but for now we just dump
     with open(STATE_PATH, 'w', encoding='utf-8') as f:
         yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
 
@@ -101,15 +87,12 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
         audit["phaseExecutions"] = []
     audit["phaseExecutions"].append(execution_record)
 
-    # Performance Summary logic
     executions = audit["phaseExecutions"]
     durations = [e["durationMs"] for e in executions]
 
-    # Find phase numbers for slowest/fastest
     slowest_exec = max(executions, key=lambda x: x["durationMs"])
     fastest_exec = min(executions, key=lambda x: x["durationMs"])
 
-    # Calculate last cycle duration (sum of durations for the cycle of the last execution)
     current_cycle_durations = [e["durationMs"] for e in executions if e.get("cycle") == cycle]
 
     audit["performanceSummary"] = {
@@ -174,8 +157,6 @@ def main():
         state = load_state()
         current_phase = state.get("currentPhase", 1)
         cycle = state.get("cycle", 1)
-
-        # Scheduler Modes logic
         mode = state.get("schedulerMode", "normal")
 
         if current_phase > 18:
@@ -189,20 +170,17 @@ def main():
             print(f"Error: Fase {current_phase} no válida.")
             return
 
-        # Special Mode Handling
-        if mode == "repair":
-            if current_phase not in [1, 3, 6, 13, 16]:
-                print(f"Modo REPAIR: Saltando Fase {current_phase}")
-                state["currentPhase"] = current_phase + 1
-                save_state(state)
-                return
+        if mode == "repair" and current_phase not in [1, 3, 6, 13, 16]:
+            print(f"Modo REPAIR: Saltando Fase {current_phase}")
+            state["currentPhase"] = current_phase + 1
+            save_state(state)
+            return
 
-        if mode == "light":
-            if current_phase not in [4, 6, 15, 16]:
-                print(f"Modo LIGHT: Saltando Fase {current_phase}")
-                state["currentPhase"] = current_phase + 1
-                save_state(state)
-                return
+        if mode == "light" and current_phase not in [4, 6, 15, 16]:
+            print(f"Modo LIGHT: Saltando Fase {current_phase}")
+            state["currentPhase"] = current_phase + 1
+            save_state(state)
+            return
 
         status = execute_phase(current_phase, phase_def, cycle, dry_run=dry_run)
 
