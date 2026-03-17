@@ -17,10 +17,17 @@ from datetime import datetime, timezone
 STATE_PATH = "docs/automation/pipeline_state.yaml"
 
 def load_config():
+    config = {
+        "artifactStore": "public/",
+        "metadataStore": "public/_meta/",
+        "archiveStore": "public/_archive/",
+        "quarantinePath": "docs/automation/quarantine/",
+        "reviewQueue": "docs/automation/review_queue.json",
+        "confidenceThreshold": 90
+    }
     if os.path.exists(STATE_PATH):
         with open(STATE_PATH, 'r', encoding='utf-8') as f:
             raw = yaml.safe_load(f)
-            # Normalization mapping (internal English names)
             mapping = {
                 "artefactoTienda": "artifactStore",
                 "metadataTienda": "metadataStore",
@@ -30,30 +37,13 @@ def load_config():
                 "archiveStore": "archiveStore",
                 "reviewQueue": "reviewQueue"
             }
-            config = {
-                "artifactStore": "public/",
-                "metadataStore": "public/_meta/",
-                "archiveStore": "public/_archive/",
-                "quarantinePath": "docs/automation/quarantine/",
-                "reviewQueue": "docs/automation/review_queue.json",
-                "confidenceThreshold": 90
-            }
             for yaml_key, internal_key in mapping.items():
                 if yaml_key in raw:
                     config[internal_key] = raw[yaml_key]
-            # Also support direct English keys if present
             for internal_key in config.keys():
                 if internal_key in raw:
                     config[internal_key] = raw[internal_key]
-            return config
-    return {
-        "artifactStore": "public/",
-        "metadataStore": "public/_meta/",
-        "archiveStore": "public/_archive/",
-        "quarantinePath": "docs/automation/quarantine/",
-        "reviewQueue": "docs/automation/review_queue.json",
-        "confidenceThreshold": 90
-    }
+    return config
 
 STATE = load_config()
 
@@ -121,9 +111,13 @@ def load_meta(name):
                 return None
     return None
 
-def bump_version(meta):
+def bump_version(meta, current_hash):
     if not meta:
         return "1.0.0"
+
+    if meta.get("hash") == f"sha256:{current_hash}":
+        return meta.get("version", "1.0.0")
+
     version = meta.get("version", "1.0.0").split('.')
     while len(version) < 3: version.append("0")
     major, minor, patch = map(int, version)
@@ -152,7 +146,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
 
     hash_value = get_file_hash(artifact_path)
     meta = load_meta(name)
-    version = bump_version(meta)
+    version = bump_version(meta, hash_value)
 
     meta_obj = {
         "artifactName": name,
@@ -169,7 +163,7 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         "previousVersions": meta.get("previousVersions", []) if meta else []
     }
 
-    if meta:
+    if meta and meta.get("hash") != f"sha256:{hash_value}":
         meta_obj["previousVersions"].append({
             "version": meta.get("version"),
             "hash": meta.get("hash"),
