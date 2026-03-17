@@ -1,10 +1,10 @@
 {
   "artifactName": "architecture_manifest",
-  "version": "1.0.3",
-  "hash": "sha256:0c3f5cbe50716620ff2e9f4e9341d63c8f0a499adb3af7a11bec40fdb2d9dbc8",
+  "version": "1.0.10",
+  "hash": "sha256:53642d27b8bf059d7a20f75792bc9224f3fa64a8ab0ad568829356e9d025971a",
   "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-03-17T16:02:51.665724+00:00Z",
+  "createdAt": "2026-03-17T16:34:57.117966+00:00Z",
   "sourcePhase": 1,
   "createdBy": "architecture-scheduler/8.0",
   "confidenceModel": "ai-arch-v8.0",
@@ -30,6 +30,41 @@
       "version": "1.0.2",
       "hash": "sha256:81d7f7c326cef6ec2fe388b0bcde1faaba73b1bfb057740d76ab61899b2bdbdf",
       "createdAt": "2026-03-17T14:11:49.290152+00:00Z"
+    },
+    {
+      "version": "1.0.3",
+      "hash": "sha256:0c3f5cbe50716620ff2e9f4e9341d63c8f0a499adb3af7a11bec40fdb2d9dbc8",
+      "createdAt": "2026-03-17T16:02:51.665724+00:00Z"
+    },
+    {
+      "version": "1.0.4",
+      "hash": "sha256:1d6bd133bfc7ee5aa1434c978b1479e1f52e0b6b1897eef0ae187d592f1367b7",
+      "createdAt": "2026-03-17T16:27:57.331308+00:00Z"
+    },
+    {
+      "version": "1.0.5",
+      "hash": "sha256:7d3c4d9edcad52e326e557fbdfa86c3df153af5732dd03e58a86eeb240c6d2ae",
+      "createdAt": "2026-03-17T16:28:29.241947+00:00Z"
+    },
+    {
+      "version": "1.0.6",
+      "hash": "sha256:81fcea6a906720f0b3b0e5cf8d3dcb38280e8f0a17b3a79c4dd8406487339853",
+      "createdAt": "2026-03-17T16:28:46.008776+00:00Z"
+    },
+    {
+      "version": "1.0.7",
+      "hash": "sha256:405a33eebe5814574f08bb96aed96f81bb099516830c12a06c0fc115006abcac",
+      "createdAt": "2026-03-17T16:29:14.059535+00:00Z"
+    },
+    {
+      "version": "1.0.8",
+      "hash": "sha256:316af99aea140ce91cedaf4442ac716fdc5d871354285cec0a2f0e490e269152",
+      "createdAt": "2026-03-17T16:30:31.650130+00:00Z"
+    },
+    {
+      "version": "1.0.9",
+      "hash": "sha256:b8789e6344fba3b9f87179fb3052460a8c555c6d8dd9df66b5b694b0a218da03",
+      "createdAt": "2026-03-17T16:31:16.595770+00:00Z"
     }
   ]
 }
