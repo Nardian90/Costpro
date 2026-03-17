@@ -17,12 +17,12 @@
       "filePath": "src/app/layout.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_GlobalSessionManager_tsx",
-        "src_components_IntelligentThemeHandler_tsx",
-        "src_components_providers_QueryProvider_tsx",
         "src_components_theme-provider_tsx",
-        "src_components_providers_SyncProvider_tsx",
-        "src_components_ServiceWorkerRegister_tsx"
+        "src_components_GlobalSessionManager_tsx",
+        "src_components_providers_QueryProvider_tsx",
+        "src_components_IntelligentThemeHandler_tsx",
+        "src_components_ServiceWorkerRegister_tsx",
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -54,10 +54,10 @@
       "filePath": "src/app/api/cost-sheets/save/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_cost-engine_index_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_data_costpro-reinicio_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_lib_cost-engine_index_ts",
+        "src_lib_data_costpro-reinicio_ts"
       ]
     },
     {
@@ -82,8 +82,8 @@
       "filePath": "src/app/api/cost-sheets/ai/chat/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_ai_orchestrator_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_lib_ai_orchestrator_ts"
       ]
     },
     {
@@ -102,8 +102,8 @@
       "filePath": "src/app/api/system-health/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_release_gate_mri-engine_ts",
-        "src_lib_observability_health-engine_ts"
+        "src_lib_observability_health-engine_ts",
+        "src_lib_release_gate_mri-engine_ts"
       ]
     },
     {
@@ -139,8 +139,8 @@
       "filePath": "src/app/api/academy/review/[cardId]/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_academy_sm2_ts",
         "src_lib_supabaseClient_ts",
+        "src_lib_academy_sm2_ts",
         "src_lib_auth_ts"
       ]
     },
@@ -150,8 +150,8 @@
       "filePath": "src/app/api/academy/generate/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_ai_orchestrator_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_lib_ai_orchestrator_ts"
       ]
     },
     {
@@ -160,9 +160,9 @@
       "filePath": "src/app/api/inventory/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_types_inventory_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_types_inventory_ts"
       ]
     },
     {
@@ -171,8 +171,8 @@
       "filePath": "src/app/api/inventory/adjust/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_types_inventory_ts",
         "src_lib_supabaseClient_ts",
+        "src_types_inventory_ts",
         "src_lib_auth_ts"
       ]
     },
@@ -182,9 +182,9 @@
       "filePath": "src/app/api/inventory/[productId]/history/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_types_inventory_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_types_inventory_ts"
       ]
     },
     {
@@ -213,8 +213,8 @@
       "filePath": "src/app/api/bot/chat/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_ai_orchestrator_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_lib_ai_orchestrator_ts"
       ]
     },
     {
@@ -282,8 +282,8 @@
       "filePath": "src/app/verify-dashboard/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_views_terminal_views_dashboard_ExecutiveKpiCards_tsx",
-        "src_components_views_terminal_views_dashboard_ConcentricDashboardRing_tsx"
+        "src_components_views_terminal_views_dashboard_ConcentricDashboardRing_tsx",
+        "src_components_views_terminal_views_dashboard_ExecutiveKpiCards_tsx"
       ]
     },
     {
@@ -292,13 +292,13 @@
       "filePath": "src/app/system/health/page.tsx",
       "layer": "Application",
       "dependencies": [
+        "src_components_ui_badge_tsx",
+        "src_components_views_terminal_views_health_ArchitectureAuditTable_tsx",
         "src_components_ui_progress_tsx",
         "src_components_ui_button_tsx",
-        "src_components_ui_badge_tsx",
-        "src_components_ui_tabs_tsx",
-        "src_components_ui_card_tsx",
         "src_components_ui_scroll-area_tsx",
-        "src_components_views_terminal_views_health_ArchitectureAuditTable_tsx"
+        "src_components_ui_card_tsx",
+        "src_components_ui_tabs_tsx"
       ]
     },
     {
@@ -314,13 +314,13 @@
       "filePath": "src/app/cashier/close-session/page.tsx",
       "layer": "Application",
       "dependencies": [
+        "src_store_index_ts",
+        "src_components_ui_input_tsx",
         "src_components_ui_button_tsx",
         "src_types_index_ts",
-        "src_components_ui_BaseModal_tsx",
-        "src_components_ui_input_tsx",
         "src_components_ui_card_tsx",
         "src_store_cart_ts",
-        "src_store_index_ts"
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -338,14 +338,14 @@
       "filePath": "src/app/demo/calculate/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_lib_cost-engine_types_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
+        "src_components_ui_select_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
-        "src_components_ui_table_tsx",
         "src_hooks_logic_useCostEngine_ts",
-        "src_components_ui_select_tsx"
+        "src_components_ui_table_tsx",
+        "src_lib_cost-engine_types_ts"
       ]
     },
     {
@@ -355,8 +355,8 @@
       "layer": "Application",
       "dependencies": [
         "src_components_SplashScreen_tsx",
-        "src_components_auth_WelcomeLandingView_tsx",
         "src_components_CostProLogo_tsx",
+        "src_components_auth_WelcomeLandingView_tsx",
         "src_components_auth_LoginForm_tsx"
       ]
     },
@@ -375,8 +375,8 @@
       "filePath": "src/components/GlobalSessionManager.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_store_session-store_ts",
-        "src_hooks_logic_useSessionManager_ts"
+        "src_hooks_logic_useSessionManager_ts",
+        "src_store_session-store_ts"
       ]
     },
     {
@@ -401,9 +401,9 @@
       "filePath": "src/components/ThemeToggle.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -426,10 +426,10 @@
       "filePath": "src/components/modals/SyncConflictModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_providers_SyncProvider_tsx",
+        "src_lib_sync_offline-storage_ts",
         "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_lib_sync_offline-storage_ts"
+        "src_components_providers_SyncProvider_tsx",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -438,10 +438,10 @@
       "filePath": "src/components/modals/CreateProductModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useProducts_ts",
         "src_components_ui_atomic_index_tsx",
+        "src_store_index_ts",
         "src_components_ui_BaseModal_tsx",
-        "src_store_index_ts"
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -470,10 +470,10 @@
       "filePath": "src/components/modals/PriceSelectorModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
         "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_types_index_ts"
+        "src_lib_utils_ts",
+        "src_types_index_ts",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -498,24 +498,24 @@
       "filePath": "src/components/views/TerminalShell.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useStores_ts",
+        "src_components_views_terminal_Sidebar_tsx",
+        "src_store_index_ts",
+        "src_hooks_ui_useTerminalNavigation_ts",
         "src_components_views_terminal_Header_tsx",
         "src_services_user-service_ts",
-        "src_components_views_terminal_Sidebar_tsx",
-        "src_hooks_api_useProducts_ts",
+        "src_lib_utils_ts",
+        "src_hooks_api_useStores_ts",
+        "src_hooks_api_useTransactions_ts",
+        "src_components_ui_CostProLoader_tsx",
         "src_components_ui_FloatingCalculator_tsx",
+        "src_hooks_api_useReceptions_ts",
+        "src_hooks_api_useDashboard_ts",
         "src_components_ui_ChatBot_tsx",
+        "src_hooks_ui_useMobile_ts",
         "src_hooks_api_useAuditLogs_ts",
         "src_components_modals_CreateProductModal_tsx",
-        "src_hooks_api_useDashboard_ts",
-        "src_hooks_api_useReceptions_ts",
         "src_components_ui_MobileSafeContainer_tsx",
-        "src_components_ui_CostProLoader_tsx",
-        "src_hooks_ui_useMobile_ts",
-        "src_hooks_api_useTransactions_ts",
-        "src_hooks_ui_useTerminalNavigation_ts",
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -524,13 +524,13 @@
       "filePath": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_progress_tsx",
         "src_components_ui_badge_tsx",
-        "src_lib_data_demo-products_ts",
-        "src_components_ui_card_tsx",
+        "src_lib_utils_ts",
+        "src_components_ui_progress_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_CostProLoader_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_card_tsx",
+        "src_lib_data_demo-products_ts"
       ]
     },
     {
@@ -540,8 +540,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_CostProLogo_tsx",
-        "src_lib_utils_ts",
         "src_hooks_ui_useTerminalNavigation_ts",
+        "src_lib_utils_ts",
         "src_store_index_ts"
       ]
     },
@@ -551,14 +551,14 @@
       "filePath": "src/components/views/terminal/Header.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
-        "src_components_ui_popover_tsx",
-        "src_components_ui_SyncStatusBadge_tsx",
-        "src_hooks_ui_useTerminalNavigation_ts",
-        "src_components_modals_SyncConflictModal_tsx",
         "src_components_ThemeToggle_tsx",
+        "src_hooks_ui_useTerminalNavigation_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_dropdown-menu_tsx",
+        "src_components_ui_SyncStatusBadge_tsx",
+        "src_components_ui_popover_tsx",
+        "src_components_modals_SyncConflictModal_tsx"
       ]
     },
     {
@@ -601,23 +601,23 @@
       "filePath": "src/components/views/terminal/views/health/SystemHealthView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_HealthDashboard_hooks_useHealthIndex_ts",
-        "src_components_HealthDashboard_SecurityGRCPanel_tsx",
-        "src_components_HealthDashboard_IntelligenceMap_tsx",
         "src_components_HealthDashboard_ReleaseGateGovernance_tsx",
-        "src_components_HealthDashboard_GlobalMetricsCards_tsx",
         "src_components_HealthDashboard_hooks_useLiveScan_ts",
-        "src_components_HealthDashboard_hooks_useComponentHealth_ts",
-        "src_components_HealthDashboard_IntelligenceConsole_tsx",
-        "src_components_HealthDashboard_AuditResults_tsx",
-        "src_components_HealthDashboard_MetricsGuide_tsx",
-        "src_components_HealthDashboard_ViewNavigation_tsx",
-        "src_components_HealthDashboard_ApplicationDataPanel_tsx",
-        "src_components_ui_CostProLoader_tsx",
-        "src_components_HealthDashboard_AISystemObserver_tsx",
         "src_components_HealthDashboard_InfrastructurePanel_tsx",
+        "src_components_HealthDashboard_MetricsGuide_tsx",
+        "src_components_HealthDashboard_hooks_useComponentHealth_ts",
+        "src_components_HealthDashboard_AuditResults_tsx",
+        "src_components_ui_CostProLoader_tsx",
         "src_components_HealthDashboard_ObservabilityHeader_tsx",
-        "src_lib_release_gate_ReleaseGatePdfExporter_ts"
+        "src_components_HealthDashboard_GlobalMetricsCards_tsx",
+        "src_components_HealthDashboard_IntelligenceConsole_tsx",
+        "src_components_HealthDashboard_AISystemObserver_tsx",
+        "src_lib_release_gate_ReleaseGatePdfExporter_ts",
+        "src_components_HealthDashboard_ViewNavigation_tsx",
+        "src_components_HealthDashboard_IntelligenceMap_tsx",
+        "src_components_HealthDashboard_SecurityGRCPanel_tsx",
+        "src_components_HealthDashboard_ApplicationDataPanel_tsx",
+        "src_components_HealthDashboard_hooks_useHealthIndex_ts"
       ]
     },
     {
@@ -626,11 +626,11 @@
       "filePath": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_sheet_tsx",
         "src_components_ui_input_tsx",
         "src_components_ui_table_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_sheet_tsx"
       ]
     },
     {
@@ -657,11 +657,11 @@
       "filePath": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_supabaseClient_ts",
+        "src_lib_utils_ts",
         "src_lib_observability_system-health_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_card_tsx",
-        "src_lib_utils_ts",
-        "src_lib_supabaseClient_ts"
+        "src_components_ui_card_tsx"
       ]
     },
     {
@@ -670,8 +670,8 @@
       "filePath": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_badge_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_badge_tsx"
       ]
     },
     {
@@ -699,13 +699,13 @@
       "filePath": "src/components/views/terminal/views/wallet/WalletView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
         "src_lib_wallet_types_ts",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
-        "src_lib_wallet_parser_ts",
-        "src_lib_utils_ts"
+        "src_lib_wallet_parser_ts"
       ]
     },
     {
@@ -724,11 +724,11 @@
       "filePath": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_components_ui_atomic_index_tsx",
+        "src_lib_utils_ts",
         "src_types_index_ts",
         "src_components_ui_ProductImage_tsx",
-        "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -737,20 +737,20 @@
       "filePath": "src/components/views/terminal/views/catalog/CatalogView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_QueryInspector_tsx",
-        "src_hooks_api_useProducts_ts",
-        "src_components_views_terminal_views_catalog_CatalogModals_tsx",
-        "src_types_index_ts",
-        "src_components_ui_ViewSwitcher_tsx",
-        "src_components_ui_ProductImage_tsx",
+        "src_store_index_ts",
         "src_components_ui_atomic_index_tsx",
         "src_lib_utils_ts",
-        "src_components_ui_CostProLoader_tsx",
-        "src_hooks_ui_useMobile_ts",
-        "src_store_index_ts",
-        "src_services_catalog-service_ts",
+        "src_components_ui_QueryInspector_tsx",
         "src_hooks_ui_useCatalogModals_ts",
-        "src_components_ui_ActionMenu_tsx"
+        "src_components_ui_CostProLoader_tsx",
+        "src_types_index_ts",
+        "src_components_ui_ProductImage_tsx",
+        "src_services_catalog-service_ts",
+        "src_components_ui_ViewSwitcher_tsx",
+        "src_components_views_terminal_views_catalog_CatalogModals_tsx",
+        "src_hooks_ui_useMobile_ts",
+        "src_components_ui_ActionMenu_tsx",
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -759,10 +759,10 @@
       "filePath": "src/components/views/terminal/views/settings/SettingsView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useTaxes_ts",
-        "src_lib_utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_hooks_api_useTaxes_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -771,15 +771,15 @@
       "filePath": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useProducts_ts",
-        "src_types_index_ts",
+        "src_store_index_ts",
+        "src_lib_utils_ts",
         "src_components_ui_StateRenderer_tsx",
         "src_components_ui_calendar_tsx",
-        "src_components_ui_popover_tsx",
+        "src_types_index_ts",
         "src_components_views_terminal_views_dashboard_useDashboardView_ts",
         "src_components_ui_toggle-group_tsx",
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_components_ui_popover_tsx",
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -816,10 +816,10 @@
       "filePath": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useCostSheets_ts",
         "src_store_cost-sheet-store_ts",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_hooks_api_useCostSheets_ts"
       ]
     },
     {
@@ -828,19 +828,19 @@
       "filePath": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_store_index_ts",
         "src_hooks_api_useStores_ts",
-        "src_components_ui_button_tsx",
-        "src_hooks_api_useProducts_ts",
-        "src_types_index_ts",
-        "src_components_ui_command_tsx",
+        "src_lib_utils_ts",
+        "src_components_ui_select_tsx",
         "src_components_ui_input_tsx",
+        "src_types_index_ts",
+        "src_components_ui_button_tsx",
+        "src_components_ui_card_tsx",
         "src_components_ui_label_tsx",
         "src_components_ui_popover_tsx",
-        "src_lib_utils_ts",
-        "src_components_ui_card_tsx",
         "src_components_ui_checkbox_tsx",
-        "src_components_ui_select_tsx",
-        "src_store_index_ts"
+        "src_components_ui_command_tsx",
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -849,10 +849,10 @@
       "filePath": "src/components/views/terminal/views/reports/ReportPreview.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_card_tsx",
         "src_components_ui_CostProLoader_tsx",
-        "src_store_index_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_components_ui_card_tsx",
+        "src_store_index_ts"
       ]
     },
     {
@@ -861,15 +861,15 @@
       "filePath": "src/components/views/terminal/views/reports/ReportsView.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_store_index_ts",
+        "src_components_ui_CostProLoader_tsx",
         "src_components_ui_button_tsx",
         "src_types_index_ts",
-        "src_components_ui_ActionMenu_tsx",
-        "src_components_views_terminal_views_reports_ReportConfigPanel_tsx",
-        "src_components_views_terminal_views_reports_AuditLogsModal_tsx",
         "src_components_ui_card_tsx",
-        "src_components_ui_CostProLoader_tsx",
+        "src_components_views_terminal_views_reports_AuditLogsModal_tsx",
+        "src_components_views_terminal_views_reports_ReportConfigPanel_tsx",
         "src_components_views_terminal_views_reports_ReportPreview_tsx",
-        "src_store_index_ts"
+        "src_components_ui_ActionMenu_tsx"
       ]
     },
     {
@@ -878,11 +878,11 @@
       "filePath": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_audit_AuditTimeline_tsx",
         "src_components_ui_StateRenderer_tsx",
+        "src_components_views_terminal_views_audit_AuditTimeline_tsx",
         "src_components_ui_dialog_tsx",
-        "src_hooks_api_useAuditLogs_ts",
-        "src_components_ui_skeleton_tsx"
+        "src_components_ui_skeleton_tsx",
+        "src_hooks_api_useAuditLogs_ts"
       ]
     },
     {
@@ -891,10 +891,10 @@
       "filePath": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_stores_StoreModals_tsx",
+        "src_lib_utils_ts",
         "src_components_views_terminal_views_stores_useStoresView_ts",
         "src_components_ui_SearchBar_tsx",
-        "src_lib_utils_ts",
+        "src_components_views_terminal_views_stores_StoreModals_tsx",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -904,12 +904,12 @@
       "filePath": "src/components/views/terminal/views/stores/useStoresView.ts",
       "layer": "UI Components",
       "dependencies": [
+        "src_store_index_ts",
         "src_hooks_api_useStores_ts",
         "src_services_user-service_ts",
         "src_types_index_ts",
-        "src_lib_logger_ts",
         "src_services_store-service_ts",
-        "src_store_index_ts"
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -918,13 +918,13 @@
       "filePath": "src/components/views/terminal/views/stores/StoreModals.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_supabaseClient_ts",
+        "src_components_ui_input_tsx",
         "src_components_ui_button_tsx",
         "src_types_index_ts",
-        "src_components_ui_input_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_components_views_terminal_views_stores_useStoresView_ts",
         "src_components_ui_label_tsx",
-        "src_lib_supabaseClient_ts"
+        "src_components_views_terminal_views_stores_useStoresView_ts",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -933,10 +933,10 @@
       "filePath": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_progress_tsx",
-        "src_components_ui_card_tsx",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_card_tsx",
+        "src_components_ui_progress_tsx"
       ]
     },
     {
@@ -945,12 +945,12 @@
       "filePath": "src/components/views/terminal/views/academy/AcademyView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_store_useAcademyStore_ts",
-        "src_components_ui_CostProLoader_tsx",
-        "src_components_views_terminal_views_academy_Flashcard_tsx",
         "src_store_index_ts",
-        "src_components_views_terminal_views_academy_MasteryDashboard_tsx"
+        "src_components_views_terminal_views_academy_MasteryDashboard_tsx",
+        "src_components_ui_CostProLoader_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_academy_Flashcard_tsx",
+        "src_store_useAcademyStore_ts"
       ]
     },
     {
@@ -971,12 +971,12 @@
       "filePath": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_ui_useDebounce_ts",
-        "src_components_ui_BaseModal_tsx",
-        "src_hooks_api_useInventory_ts",
-        "src_hooks_api_useTransfers_ts",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_hooks_ui_useDebounce_ts",
+        "src_hooks_api_useTransfers_ts",
+        "src_components_ui_BaseModal_tsx",
+        "src_hooks_api_useInventory_ts"
       ]
     },
     {
@@ -985,12 +985,12 @@
       "filePath": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_StateRenderer_tsx",
-        "src_components_views_terminal_views_transfers_TransferDetailsModal_tsx",
-        "src_hooks_api_useTransfers_ts",
         "src_store_index_ts",
-        "src_components_views_terminal_views_transfers_CreateTransferModal_tsx",
+        "src_components_views_terminal_views_transfers_TransferDetailsModal_tsx",
+        "src_components_ui_StateRenderer_tsx",
         "src_lib_utils_ts",
+        "src_hooks_api_useTransfers_ts",
+        "src_components_views_terminal_views_transfers_CreateTransferModal_tsx",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -1000,11 +1000,11 @@
       "filePath": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_store_index_ts",
         "src_components_ui_StateRenderer_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_hooks_api_useTransfers_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_hooks_api_useTransfers_ts",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -1013,26 +1013,26 @@
       "filePath": "src/components/views/terminal/views/help/HelpView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_help_help_StickyCartFlowDiagram_tsx",
-        "src_components_views_terminal_views_help_help_IpvFlowDiagram_tsx",
-        "src_components_ui_button_tsx",
-        "src_components_views_terminal_views_help_help_OfflineSyncDiagram_tsx",
         "src_components_ui_badge_tsx",
-        "src_store_index_ts",
-        "src_components_views_terminal_views_help_help_SalesFlowDiagram_tsx",
-        "src_components_views_terminal_views_help_help_SecurityFlowDiagram_tsx",
-        "src_components_views_terminal_views_help_help_DarianDiagram_tsx",
-        "src_components_views_terminal_views_help_help_KidsOnboarding_tsx",
-        "src_components_ThemeToggle_tsx",
-        "src_components_ui_accordion_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_help_help_StoreSkuDiagram_tsx",
         "src_components_views_terminal_views_help_help_InventoryFlowDiagram_tsx",
-        "src_components_views_terminal_views_help_help_RolesDiagram_tsx",
-        "src_components_views_terminal_views_help_help_QuickModeMassiveDiagram_tsx",
-        "src_components_views_terminal_views_help_help_MobilePosDiagram_tsx",
         "src_components_views_terminal_views_help_help_InventoryAdjustmentFlowDiagram_tsx",
         "src_components_views_terminal_views_help_help_CostFlowDiagram_tsx",
-        "src_components_views_terminal_views_help_help_StoreSkuDiagram_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_help_help_SalesFlowDiagram_tsx",
+        "src_components_views_terminal_views_help_help_SecurityFlowDiagram_tsx",
+        "src_components_ThemeToggle_tsx",
+        "src_components_views_terminal_views_help_help_StickyCartFlowDiagram_tsx",
+        "src_components_views_terminal_views_help_help_QuickModeMassiveDiagram_tsx",
+        "src_components_views_terminal_views_help_help_OfflineSyncDiagram_tsx",
+        "src_store_index_ts",
+        "src_components_ui_accordion_tsx",
+        "src_components_views_terminal_views_help_help_DarianDiagram_tsx",
+        "src_components_views_terminal_views_help_help_IpvFlowDiagram_tsx",
+        "src_components_views_terminal_views_help_help_KidsOnboarding_tsx",
+        "src_components_views_terminal_views_help_help_RolesDiagram_tsx",
+        "src_components_views_terminal_views_help_help_MobilePosDiagram_tsx"
       ]
     },
     {
@@ -1161,9 +1161,9 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_CostProLoader_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_components_ui_atomic_index_tsx",
-        "src_types_index_ts"
+        "src_components_ui_atomic_index_tsx"
       ]
     },
     {
@@ -1174,8 +1174,8 @@
       "dependencies": [
         "src_components_ui_QueryInspector_tsx",
         "src_store_index_ts",
-        "src_components_ui_SearchBar_tsx",
         "src_lib_utils_ts",
+        "src_components_ui_SearchBar_tsx",
         "src_hooks_api_useStockMovements_ts",
         "src_components_ui_ActionMenu_tsx"
       ]
@@ -1186,11 +1186,11 @@
       "filePath": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_utils_ts",
+        "src_lib_inventory-logic_ts",
         "src_types_index_ts",
         "src_hooks_ui_useMobile_ts",
-        "src_lib_inventory-logic_ts",
-        "src_components_ui_drawer_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_drawer_tsx"
       ]
     },
     {
@@ -1199,17 +1199,17 @@
       "filePath": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_SecurityScrollContainer_tsx",
-        "src_hooks_ui_useDebounce_ts",
-        "src_types_index_ts",
-        "src_components_ui_ActionMenu_tsx",
-        "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_hooks_api_useInventory_ts",
-        "src_services_import-service_ts",
-        "src_lib_utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_atomic_index_tsx",
+        "src_lib_utils_ts",
+        "src_types_index_ts",
+        "src_hooks_ui_useDebounce_ts",
+        "src_services_import-service_ts",
+        "src_components_ui_BaseModal_tsx",
+        "src_components_ui_SecurityScrollContainer_tsx",
+        "src_hooks_api_useInventory_ts",
+        "src_components_ui_ActionMenu_tsx"
       ]
     },
     {
@@ -1218,10 +1218,10 @@
       "filePath": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_ProductImage_tsx",
         "src_components_ui_CostProLoader_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_components_ui_ProductImage_tsx"
       ]
     },
     {
@@ -1230,21 +1230,21 @@
       "filePath": "src/components/views/terminal/views/inventory/InventoryView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_inventory_InventoryCardView_tsx",
-        "src_components_ui_QueryInspector_tsx",
-        "src_components_views_terminal_views_inventory_ProductReceptionView_tsx",
-        "src_types_index_ts",
-        "src_components_ui_StateRenderer_tsx",
-        "src_components_ui_ActionMenu_tsx",
-        "src_components_ui_atomic_index_tsx",
-        "src_components_views_terminal_views_inventory_InventoryAdjustmentModal_tsx",
-        "src_hooks_api_useInventory_ts",
-        "src_hooks_ui_useMobile_ts",
         "src_store_index_ts",
-        "src_components_ui_skeleton_tsx",
-        "src_components_ui_SearchBar_tsx",
+        "src_components_ui_atomic_index_tsx",
+        "src_components_ui_StateRenderer_tsx",
         "src_lib_utils_ts",
-        "src_components_views_terminal_views_inventory_InventoryTableView_tsx"
+        "src_components_ui_QueryInspector_tsx",
+        "src_types_index_ts",
+        "src_components_views_terminal_views_inventory_InventoryTableView_tsx",
+        "src_components_views_terminal_views_inventory_InventoryCardView_tsx",
+        "src_components_views_terminal_views_inventory_InventoryAdjustmentModal_tsx",
+        "src_components_ui_SearchBar_tsx",
+        "src_components_ui_skeleton_tsx",
+        "src_components_views_terminal_views_inventory_ProductReceptionView_tsx",
+        "src_hooks_ui_useMobile_ts",
+        "src_hooks_api_useInventory_ts",
+        "src_components_ui_ActionMenu_tsx"
       ]
     },
     {
@@ -1253,9 +1253,9 @@
       "filePath": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useCashClosures_ts",
-        "src_lib_utils_ts",
         "src_store_index_ts",
+        "src_lib_utils_ts",
+        "src_hooks_api_useCashClosures_ts",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -1265,11 +1265,11 @@
       "filePath": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useTaxes_ts",
-        "src_types_index_ts",
-        "src_components_ui_dialog_tsx",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_types_index_ts",
+        "src_hooks_api_useTaxes_ts",
+        "src_components_ui_dialog_tsx"
       ]
     },
     {
@@ -1278,13 +1278,13 @@
       "filePath": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_sales_TransactionDetailsModal_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_StateRenderer_tsx",
-        "src_components_views_terminal_views_sales_useSalesHistoryView_ts",
+        "src_components_views_terminal_views_sales_TransactionDetailsModal_tsx",
+        "src_components_ui_SearchBar_tsx",
         "src_components_views_terminal_views_sales_TaxCalculationModal_tsx",
         "src_components_ui_skeleton_tsx",
-        "src_components_ui_SearchBar_tsx",
-        "src_lib_utils_ts"
+        "src_components_views_terminal_views_sales_useSalesHistoryView_ts"
       ]
     },
     {
@@ -1293,14 +1293,14 @@
       "filePath": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useTaxes_ts",
-        "src_types_index_ts",
-        "src_components_ui_badge_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_components_ui_table_tsx",
-        "src_lib_utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_utils_ts",
+        "src_components_ui_badge_tsx",
+        "src_types_index_ts",
+        "src_hooks_api_useTaxes_ts",
+        "src_components_ui_table_tsx",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -1309,10 +1309,10 @@
       "filePath": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useDocumentActions_ts",
+        "src_store_index_ts",
         "src_types_index_ts",
-        "src_hooks_api_useTransactions_ts",
-        "src_store_index_ts"
+        "src_hooks_api_useDocumentActions_ts",
+        "src_hooks_api_useTransactions_ts"
       ]
     },
     {
@@ -1321,10 +1321,10 @@
       "filePath": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_components_ui_BaseModal_tsx",
         "src_components_ui_skeleton_tsx",
-        "src_types_index_ts"
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -1334,12 +1334,12 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_QueryInspector_tsx",
-        "src_components_views_terminal_views_receptions_ReceptionDetailsModal_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_StateRenderer_tsx",
-        "src_components_views_terminal_views_receptions_useReceptionsHistoryView_ts",
-        "src_components_ui_skeleton_tsx",
+        "src_components_views_terminal_views_receptions_ReceptionDetailsModal_tsx",
         "src_components_ui_SearchBar_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_skeleton_tsx",
+        "src_components_views_terminal_views_receptions_useReceptionsHistoryView_ts"
       ]
     },
     {
@@ -1349,9 +1349,9 @@
       "layer": "UI Components",
       "dependencies": [
         "src_hooks_api_useDocumentActions_ts",
+        "src_store_index_ts",
         "src_types_index_ts",
-        "src_hooks_api_useReceptions_ts",
-        "src_store_index_ts"
+        "src_hooks_api_useReceptions_ts"
       ]
     },
     {
@@ -1362,8 +1362,8 @@
       "dependencies": [
         "src_components_ui_QueryInspector_tsx",
         "src_store_index_ts",
-        "src_components_ui_SearchBar_tsx",
         "src_lib_utils_ts",
+        "src_components_ui_SearchBar_tsx",
         "src_hooks_api_useStockMovements_ts",
         "src_components_ui_ActionMenu_tsx"
       ]
@@ -1374,38 +1374,38 @@
       "filePath": "src/components/views/terminal/views/ipv/IPVView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_ipv_TransferQRReportView_tsx",
-        "src_components_views_terminal_views_ipv_MovementsView_tsx",
-        "src_components_views_terminal_views_ipv_IncomeReceiptSection_tsx",
-        "src_lib_ipv_utils_ts",
-        "src_lib_utils_ts",
         "src_components_views_terminal_views_ipv_BankIngestion_tsx",
-        "src_components_views_terminal_views_ipv_IPVReportView_tsx",
-        "src_components_ui_button_tsx",
-        "src_components_views_terminal_views_ipv_ManualReconciliationView_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_views_terminal_views_ipv_MatchingRulesEditor_tsx",
-        "src_components_views_terminal_views_ipv_IPVReportsDropdown_tsx",
-        "src_components_ui_tooltip_tsx",
-        "src_components_views_terminal_views_ipv_TransactionBreakdown_tsx",
-        "src_lib_ipv_engine_ts",
-        "src_components_views_terminal_views_ipv_PivotStatementView_tsx",
-        "src_components_ui_LoadingOverlay_tsx",
         "src_components_views_terminal_views_ipv_IPVHelpDialog_tsx",
-        "src_components_views_terminal_views_ipv_CatalogTable_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_ipv_PivotStatementView_tsx",
+        "src_components_views_terminal_views_ipv_IPVRightSidebar_tsx",
+        "src_components_views_terminal_views_ipv_IPVControlPanel_tsx",
         "src_components_ui_ActionMenu_tsx",
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_ipv_IPVReportView_tsx",
+        "src_components_views_terminal_views_ipv_MatchingAuditView_tsx",
+        "src_components_ui_tooltip_tsx",
+        "src_components_ui_card_tsx",
+        "src_components_views_terminal_views_ipv_CatalogTable_tsx",
+        "src_lib_ipv_backup_ts",
+        "src_components_ui_HorizontalScroll_tsx",
+        "src_components_ui_tabs_tsx",
+        "src_components_views_terminal_views_ipv_IPVReportsDropdown_tsx",
         "src_components_views_terminal_views_ipv_IPVInstitutionalDashboard_tsx",
         "src_components_views_terminal_views_ipv_MatchingSimulation_tsx",
-        "src_components_views_terminal_views_ipv_MatchingAuditView_tsx",
-        "src_components_views_terminal_views_ipv_IPVControlPanel_tsx",
-        "src_components_views_terminal_views_ipv_IngestionErrorsTable_tsx",
-        "src_components_ui_tabs_tsx",
-        "src_components_views_terminal_views_ipv_IPVRightSidebar_tsx",
-        "src_components_ui_card_tsx",
-        "src_lib_ipv_backup_ts",
+        "src_lib_ipv_engine_ts",
+        "src_components_views_terminal_views_ipv_TransactionBreakdown_tsx",
+        "src_components_ui_LoadingOverlay_tsx",
+        "src_components_views_terminal_views_ipv_IncomeReceiptSection_tsx",
+        "src_components_views_terminal_views_ipv_MatchingRulesEditor_tsx",
+        "src_components_views_terminal_views_ipv_MovementsView_tsx",
         "src_lib_dexie_ts",
-        "src_components_ui_HorizontalScroll_tsx",
-        "src_components_views_terminal_views_ipv_TransactionTable_tsx"
+        "src_components_views_terminal_views_ipv_IngestionErrorsTable_tsx",
+        "src_components_views_terminal_views_ipv_TransactionTable_tsx",
+        "src_components_views_terminal_views_ipv_ManualReconciliationView_tsx",
+        "src_lib_ipv_utils_ts",
+        "src_components_views_terminal_views_ipv_TransferQRReportView_tsx"
       ]
     },
     {
@@ -1424,13 +1424,13 @@
       "filePath": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_dialog_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_table_tsx",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_components_ui_dialog_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1439,9 +1439,9 @@
       "filePath": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_badge_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_tooltip_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_badge_tsx"
       ]
     },
     {
@@ -1450,25 +1450,25 @@
       "filePath": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_dialog_tsx",
         "src_components_ui_input_tsx",
-        "src_components_ui_popover_tsx",
-        "src_components_ui_tooltip_tsx",
-        "src_components_ui_table_tsx",
-        "src_lib_ipv_engine_ts",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_ipv_AddTransactionModal_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_scroll-area_tsx",
-        "src_components_ui_checkbox_tsx",
-        "src_components_views_terminal_views_ipv_ActionBadges_tsx",
-        "src_components_ui_switch_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_components_views_terminal_views_ipv_MatchingTracePopover_tsx",
         "src_components_ui_card_tsx",
-        "src_lib_dexie_ts",
+        "src_components_ui_tooltip_tsx",
+        "src_components_ui_switch_tsx",
+        "src_components_ui_popover_tsx",
+        "src_components_ui_checkbox_tsx",
+        "src_lib_ipv_engine_ts",
         "src_components_ui_label_tsx",
-        "src_components_views_terminal_views_ipv_AddTransactionModal_tsx"
+        "src_components_views_terminal_views_ipv_ActionBadges_tsx",
+        "src_components_views_terminal_views_ipv_MatchingTracePopover_tsx",
+        "src_lib_dexie_ts",
+        "src_components_ui_table_tsx",
+        "src_components_ui_dialog_tsx",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -1477,13 +1477,13 @@
       "filePath": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_dialog_tsx",
+        "src_components_ui_select_tsx",
         "src_components_ui_input_tsx",
-        "src_components_ui_label_tsx",
+        "src_components_ui_button_tsx",
         "src_lib_ipv_engine_ts",
-        "src_lib_dexie_ts",
-        "src_components_ui_select_tsx"
+        "src_components_ui_label_tsx",
+        "src_components_ui_dialog_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1501,9 +1501,9 @@
       "filePath": "src/components/views/terminal/views/ipv/MovementsView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
         "src_components_ui_table_tsx",
         "src_lib_dexie_ts"
@@ -1515,12 +1515,12 @@
       "filePath": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_input_tsx",
-        "src_components_views_terminal_views_ipv_IncomeReceiptPreview_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
-        "src_lib_dexie_ts",
         "src_components_ui_label_tsx",
+        "src_components_views_terminal_views_ipv_IncomeReceiptPreview_tsx",
+        "src_lib_dexie_ts",
         "src_components_views_terminal_views_legal_LegalPdfExporter_ts"
       ]
     },
@@ -1530,15 +1530,15 @@
       "filePath": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_dialog_tsx",
         "src_lib_utils_ts",
-        "src_components_ui_table_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_scroll-area_tsx",
-        "src_lib_dexie_ts",
+        "src_components_ui_label_tsx",
+        "src_components_ui_table_tsx",
+        "src_components_ui_dialog_tsx",
         "src_components_ui_checkbox_tsx",
-        "src_components_ui_label_tsx"
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1547,11 +1547,11 @@
       "filePath": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_popover_tsx",
-        "src_lib_dexie_ts",
         "src_components_ui_scroll-area_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_popover_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1560,16 +1560,16 @@
       "filePath": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_views_terminal_views_ipv_IPVPreviewModal_tsx",
-        "src_components_ui_BaseModal_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_input_tsx",
-        "src_components_ui_LoadingOverlay_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_tooltip_tsx",
+        "src_components_views_terminal_views_ipv_IPVPreviewModal_tsx",
+        "src_components_ui_LoadingOverlay_tsx",
         "src_components_ui_table_tsx",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_components_ui_BaseModal_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1578,12 +1578,12 @@
       "filePath": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_services_matching-log-service_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
-        "src_components_ui_table_tsx"
+        "src_components_ui_table_tsx",
+        "src_services_matching-log-service_ts"
       ]
     },
     {
@@ -1592,14 +1592,14 @@
       "filePath": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_input_tsx",
-        "src_lib_ipv_utils_ts",
-        "src_components_ui_table_tsx",
+        "src_components_ui_button_tsx",
         "src_lib_ipv_engine_ts",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_components_ui_table_tsx",
+        "src_lib_ipv_utils_ts",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1608,16 +1608,16 @@
       "filePath": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_badge_tsx",
-        "src_components_ui_input_tsx",
-        "src_lib_utils_ts",
-        "src_components_ui_card_tsx",
-        "src_components_ui_table_tsx",
-        "src_lib_dexie_ts",
-        "src_components_ui_label_tsx",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_badge_tsx",
+        "src_lib_utils_ts",
+        "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_ui_card_tsx",
+        "src_components_ui_label_tsx",
+        "src_components_ui_table_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1626,14 +1626,14 @@
       "filePath": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
-        "src_lib_ipv_utils_ts",
-        "src_lib_ipv_engine_ts",
+        "src_components_ui_button_tsx",
         "src_components_ui_scroll-area_tsx",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_lib_ipv_engine_ts",
+        "src_lib_ipv_utils_ts",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1642,14 +1642,14 @@
       "filePath": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_switch_tsx",
-        "src_components_views_terminal_views_ipv_RuleMetaEditor_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_card_tsx",
+        "src_components_views_terminal_views_ipv_RuleMetaEditor_tsx",
         "src_lib_ipv_engine_ts",
-        "src_lib_dexie_ts",
-        "src_components_ui_label_tsx"
+        "src_components_ui_button_tsx",
+        "src_components_ui_card_tsx",
+        "src_components_ui_label_tsx",
+        "src_components_ui_switch_tsx",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1658,11 +1658,11 @@
       "filePath": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
-        "src_components_ui_card_tsx",
         "src_lib_ipv_engine_ts",
+        "src_components_ui_button_tsx",
+        "src_components_ui_card_tsx",
         "src_components_ui_table_tsx",
         "src_lib_dexie_ts"
       ]
@@ -1673,9 +1673,9 @@
       "filePath": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
         "src_lib_dexie_ts"
       ]
@@ -1687,8 +1687,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_button_tsx",
-        "src_components_ui_dropdown-menu_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -1697,11 +1697,11 @@
       "filePath": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_utils_ts",
         "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
         "src_components_ui_table_tsx",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1710,16 +1710,16 @@
       "filePath": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
+        "src_lib_ipv_bandecParser_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_lib_ipv_utils_ts",
-        "src_components_ui_card_tsx",
         "src_lib_ipv_engine_ts",
-        "src_lib_ipv_backup_ts",
-        "src_lib_dexie_ts",
+        "src_components_ui_button_tsx",
+        "src_components_ui_card_tsx",
         "src_lib_ipv_importUtils_ts",
-        "src_lib_ipv_bandecParser_ts"
+        "src_components_ui_BaseModal_tsx",
+        "src_lib_ipv_backup_ts",
+        "src_lib_ipv_utils_ts",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1729,11 +1729,11 @@
       "layer": "UI Components",
       "dependencies": [
         "src_lib_ipv_calculations_ts",
-        "src_components_ui_button_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_card_tsx",
-        "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -1742,26 +1742,26 @@
       "filePath": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_roles_ts",
-        "src_lib_ipv_intelligence_ts",
-        "src_lib_ipv_utils_ts",
-        "src_lib_ipv_importUtils_ts",
-        "src_components_ui_button_tsx",
+        "src_lib_supabaseClient_ts",
+        "src_hooks_api_useStores_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
-        "src_components_ui_label_tsx",
-        "src_components_ui_tooltip_tsx",
-        "src_components_ui_table_tsx",
-        "src_lib_ipv_engine_ts",
-        "src_store_index_ts",
-        "src_hooks_api_useStores_ts",
-        "src_lib_supabaseClient_ts",
+        "src_components_ui_button_tsx",
+        "src_lib_ipv_importUtils_ts",
         "src_components_ui_ActionMenu_tsx",
-        "src_components_ui_switch_tsx",
-        "src_components_ui_BaseModal_tsx",
+        "src_lib_utils_ts",
+        "src_lib_roles_ts",
+        "src_components_ui_tooltip_tsx",
         "src_components_ui_card_tsx",
+        "src_components_ui_switch_tsx",
+        "src_lib_ipv_engine_ts",
+        "src_components_ui_label_tsx",
         "src_lib_dexie_ts",
-        "src_lib_utils_ts"
+        "src_lib_ipv_intelligence_ts",
+        "src_store_index_ts",
+        "src_components_ui_table_tsx",
+        "src_components_ui_BaseModal_tsx",
+        "src_lib_ipv_utils_ts"
       ]
     },
     {
@@ -1770,11 +1770,11 @@
       "filePath": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_dialog_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_ui_scroll-area_tsx",
         "src_components_ui_tooltip_tsx",
-        "src_components_ui_scroll-area_tsx"
+        "src_components_ui_dialog_tsx"
       ]
     },
     {
@@ -1783,8 +1783,8 @@
       "filePath": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_tooltip_tsx",
         "src_components_ui_card_tsx",
         "src_lib_ipv_backup_ts",
@@ -1797,9 +1797,9 @@
       "filePath": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx"
       ]
     },
     {
@@ -1808,9 +1808,9 @@
       "filePath": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx"
       ]
     },
     {
@@ -1820,14 +1820,14 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_QueryInspector_tsx",
-        "src_components_ui_SecurityScrollContainer_tsx",
-        "src_types_index_ts",
-        "src_hooks_ui_useMobile_ts",
         "src_store_index_ts",
-        "src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx",
-        "src_components_ui_SearchBar_tsx",
         "src_lib_utils_ts",
+        "src_types_index_ts",
+        "src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx",
         "src_components_views_terminal_views_inventory_count_InventoryCountCardView_tsx",
+        "src_hooks_ui_useMobile_ts",
+        "src_components_ui_SearchBar_tsx",
+        "src_components_ui_SecurityScrollContainer_tsx",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -1846,11 +1846,11 @@
       "filePath": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_wiki_types_ts",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_scroll-area_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_button_tsx",
+        "src_components_ui_scroll-area_tsx"
       ]
     },
     {
@@ -1859,11 +1859,11 @@
       "filePath": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_wiki_types_ts",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
         "src_components_ui_input_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_button_tsx"
       ]
     },
     {
@@ -1898,18 +1898,18 @@
       "filePath": "src/components/views/terminal/views/wiki/WikiView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_wiki_types_ts",
-        "src_components_views_terminal_views_wiki_CuentasModule_tsx",
-        "src_components_views_terminal_views_wiki_WikiBreadcrumbs_tsx",
-        "src_components_views_terminal_views_wiki_AsientosModule_tsx",
-        "src_components_ui_input_tsx",
-        "src_components_views_terminal_views_wiki_ClasificadorModule_tsx",
-        "src_components_views_terminal_views_wiki_data-loader_ts",
-        "src_components_ui_scroll-area_tsx",
         "src_components_views_terminal_views_wiki_WikiSidebar_tsx",
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_wiki_data-loader_ts",
+        "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_ui_scroll-area_tsx",
         "src_components_views_terminal_views_wiki_WikiSearch_tsx",
-        "src_lib_utils_ts"
+        "src_components_views_terminal_views_wiki_CuentasModule_tsx",
+        "src_components_views_terminal_views_wiki_AsientosModule_tsx",
+        "src_components_views_terminal_views_wiki_ClasificadorModule_tsx",
+        "src_components_views_terminal_views_wiki_WikiBreadcrumbs_tsx"
       ]
     },
     {
@@ -1939,9 +1939,9 @@
       "filePath": "src/components/views/terminal/views/pos/POSTableView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_ProductImage_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_components_ui_ProductImage_tsx"
       ]
     },
     {
@@ -1950,14 +1950,14 @@
       "filePath": "src/components/views/terminal/views/pos/usePOSView.ts",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useProducts_ts",
-        "src_types_index_ts",
-        "src_lib_logger_ts",
+        "src_store_index_ts",
+        "src_lib_utils_ts",
         "src_hooks_api_useTransactions_ts",
         "src_services_audit-service_ts",
-        "src_lib_utils_ts",
+        "src_types_index_ts",
         "src_store_cart_ts",
-        "src_store_index_ts"
+        "src_lib_logger_ts",
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -1966,27 +1966,27 @@
       "filePath": "src/components/views/terminal/views/pos/POSView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_QueryInspector_tsx",
-        "src_components_ui_skeleton_tsx",
-        "src_components_views_terminal_views_pos_POSTableView_tsx",
-        "src_components_views_terminal_views_pos_usePOSView_ts",
-        "src_components_ui_SpeedDial_tsx",
-        "src_hooks_ui_useMobile_ts",
         "src_components_views_terminal_views_pos_POSCart_tsx",
         "src_components_views_terminal_views_pos_StickyCartSummary_tsx",
-        "src_components_ui_StateRenderer_tsx",
-        "src_components_ui_ViewSwitcher_tsx",
-        "src_types_index_ts",
-        "src_components_ui_atomic_index_tsx",
-        "src_hooks_logic_usePOSProducts_ts",
         "src_components_ui_SearchBar_tsx",
+        "src_components_views_terminal_views_pos_POSTableView_tsx",
+        "src_components_views_terminal_views_pos_usePOSView_ts",
         "src_components_ui_ActionMenu_tsx",
-        "src_components_ui_BaseModal_tsx",
+        "src_components_ui_atomic_index_tsx",
+        "src_lib_utils_ts",
+        "src_hooks_logic_usePOSProducts_ts",
         "src_components_ui_Portal_tsx",
+        "src_components_ui_QueryInspector_tsx",
+        "src_components_ui_StateRenderer_tsx",
+        "src_types_index_ts",
+        "src_components_ui_SpeedDial_tsx",
         "src_components_modals_PriceSelectorModal_tsx",
-        "src_components_ui_drawer_tsx",
         "src_components_modals_BarcodeScanner_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_ViewSwitcher_tsx",
+        "src_components_ui_skeleton_tsx",
+        "src_hooks_ui_useMobile_ts",
+        "src_components_ui_BaseModal_tsx",
+        "src_components_ui_drawer_tsx"
       ]
     },
     {
@@ -1995,15 +1995,15 @@
       "filePath": "src/components/views/terminal/views/pos/POSCart.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useTaxes_ts",
-        "src_types_index_ts",
-        "src_components_ui_ProductImage_tsx",
+        "src_store_index_ts",
         "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_components_ui_CostProLoader_tsx",
-        "src_hooks_ui_useMobile_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_components_ui_CostProLoader_tsx",
+        "src_types_index_ts",
+        "src_hooks_api_useTaxes_ts",
+        "src_components_ui_ProductImage_tsx",
+        "src_components_ui_BaseModal_tsx",
+        "src_hooks_ui_useMobile_ts"
       ]
     },
     {
@@ -2030,8 +2030,8 @@
       "filePath": "src/components/views/terminal/views/audit/AuditFilters.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_audit_AuditEventIcon_tsx"
       ]
     },
     {
@@ -2040,8 +2040,8 @@
       "filePath": "src/components/views/terminal/views/audit/AuditTableView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_audit_AuditEventIcon_tsx"
       ]
     },
     {
@@ -2050,9 +2050,9 @@
       "filePath": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_types_index_ts",
         "src_components_views_terminal_views_audit_AuditEventCard_tsx",
-        "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -2071,10 +2071,10 @@
       "filePath": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
+        "src_types_index_ts",
         "src_components_views_terminal_views_audit_AuditEventMeta_tsx",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_components_views_terminal_views_audit_AuditEventIcon_tsx"
       ]
     },
     {
@@ -2092,18 +2092,18 @@
       "filePath": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useStores_ts",
-        "src_components_ui_button_tsx",
-        "src_components_views_terminal_views_audit_AuditTimeline_tsx",
-        "src_components_ui_StateRenderer_tsx",
-        "src_components_ui_tabs_tsx",
-        "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
-        "src_components_ui_skeleton_tsx",
         "src_components_views_terminal_views_audit_AuditTableView_tsx",
-        "src_components_views_terminal_views_audit_AuditFilters_tsx",
+        "src_hooks_api_useStores_ts",
+        "src_components_ui_StateRenderer_tsx",
+        "src_components_views_terminal_views_audit_AuditTimeline_tsx",
+        "src_store_index_ts",
+        "src_components_ui_button_tsx",
         "src_lib_utils_pdf-export_ts",
         "src_components_views_terminal_views_audit_useAuditLogsView_ts",
-        "src_store_index_ts"
+        "src_components_views_terminal_views_audit_AuditFilters_tsx",
+        "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
+        "src_components_ui_skeleton_tsx",
+        "src_components_ui_tabs_tsx"
       ]
     },
     {
@@ -2112,12 +2112,12 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_cost_sheet_CostSheetAuditLog_tsx",
-        "src_components_ui_badge_tsx",
-        "src_components_ui_card_tsx",
-        "src_components_ui_scroll-area_tsx",
         "src_lib_cost-engine_validations_ts",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_badge_tsx",
+        "src_components_ui_scroll-area_tsx",
+        "src_components_ui_card_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetAuditLog_tsx"
       ]
     },
     {
@@ -2126,11 +2126,11 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_sheet_tsx",
-        "src_store_cost-sheet-store_ts",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_cost-sheet-store_ts",
+        "src_components_ui_button_tsx",
+        "src_components_ui_sheet_tsx"
       ]
     },
     {
@@ -2158,10 +2158,10 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_badge_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_dialog_tsx",
-        "src_components_ui_popover_tsx",
         "src_components_views_terminal_views_cost_sheet_FormulaBuilder_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_popover_tsx"
       ]
     },
     {
@@ -2188,13 +2188,13 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_api_useProducts_ts",
         "src_components_ui_atomic_index_tsx",
-        "src_components_ui_BaseModal_tsx",
+        "src_lib_utils_ts",
+        "src_components_ui_SearchBar_tsx",
         "src_components_ui_table_tsx",
         "src_components_ui_skeleton_tsx",
-        "src_components_ui_SearchBar_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_BaseModal_tsx",
+        "src_hooks_api_useProducts_ts"
       ]
     },
     {
@@ -2203,10 +2203,10 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ThemeToggle_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx"
       ]
     },
     {
@@ -2215,11 +2215,11 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_cost-engine_types_ts",
+        "src_lib_utils_ts",
         "src_components_ui_badge_tsx",
-        "src_components_ui_card_tsx",
         "src_components_ui_scroll-area_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_card_tsx",
+        "src_lib_cost-engine_types_ts"
       ]
     },
     {
@@ -2239,8 +2239,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_button_tsx",
-        "src_components_ui_ViewSwitcher_tsx",
         "src_lib_utils_ts",
+        "src_components_ui_ViewSwitcher_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx"
       ]
     },
@@ -2250,43 +2250,43 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_LazyRender_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetCardView_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetTemplateExplorer_tsx",
-        "src_hooks_logic_useCostSheetCalculator_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetNav_tsx",
-        "src_components_views_terminal_views_cost_sheet_DarianEditor_tsx",
-        "src_components_ui_skeleton_tsx",
-        "src_components_modals_UpgradeModal_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
-        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetHeaderEditor_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetAuditView_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetMassiveGenerator_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetWizard_tsx",
-        "src_services_export-service_ts",
-        "src_components_ui_SpeedDial_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetInteractiveTable_tsx",
-        "src_store_cost-sheet-store_ts",
-        "src_hooks_ui_useMobile_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetSidebarNav_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetSignatureEditor_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetSummary_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetHelpPanel_tsx",
-        "src_store_index_ts",
-        "src_components_ui_ViewSwitcher_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetBottomNav_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
-        "src_services_usage-service_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetPreview_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetNarrative_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetQuickMode_tsx",
-        "src_components_ui_ActionMenu_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetActionsPanel_tsx",
-        "src_components_ui_BaseModal_tsx",
+        "src_store_cost-sheet-store_ts",
         "src_components_views_terminal_views_cost_sheet_CostSheetFormulaGuide_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_button_tsx",
+        "src_components_modals_UpgradeModal_tsx",
+        "src_components_ui_LazyRender_tsx",
+        "src_components_ui_ActionMenu_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetWizard_tsx",
+        "src_hooks_logic_useCostSheetCalculator_ts",
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_cost_sheet_CostSheetBottomNav_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetPreview_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetAuditView_tsx",
+        "src_services_export-service_ts",
+        "src_components_views_terminal_views_cost_sheet_CostSheetHelpPanel_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetSidebarNav_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetMassiveGenerator_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetActionsPanel_tsx",
+        "src_components_ui_SpeedDial_tsx",
+        "src_components_ui_ViewSwitcher_tsx",
+        "src_components_ui_skeleton_tsx",
+        "src_hooks_ui_useMobile_ts",
+        "src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetSummary_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetSignatureEditor_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetNav_tsx",
+        "src_store_index_ts",
+        "src_components_views_terminal_views_cost_sheet_CostSheetNarrative_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetTemplateExplorer_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetQuickMode_tsx",
+        "src_components_views_terminal_views_cost_sheet_DarianEditor_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetInteractiveTable_tsx",
+        "src_components_ui_BaseModal_tsx",
+        "src_services_usage-service_ts"
       ]
     },
     {
@@ -2314,12 +2314,12 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_slider_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetMasterRing_tsx",
         "src_types_cost-sheet_ts",
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_cost_sheet_CostSheetMasterRing_tsx",
         "src_store_cost-sheet-store_ts",
-        "src_components_views_terminal_views_cost_sheet_HealthBattery_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_slider_tsx",
+        "src_components_views_terminal_views_cost_sheet_HealthBattery_tsx"
       ]
     },
     {
@@ -2328,12 +2328,12 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_cost_sheet_CostSheetFCDropdown_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetHelpDropdown_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetGenerateDropdown_tsx",
         "src_lib_utils_ts",
         "src_components_views_terminal_views_cost_sheet_CostSheetOptionsDropdown_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetHelpDropdown_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetFCDropdown_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetGenerateDropdown_tsx",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -2343,8 +2343,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -2363,8 +2363,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_button_tsx",
-        "src_components_ui_input_tsx",
-        "src_components_ui_select_tsx"
+        "src_components_ui_select_tsx",
+        "src_components_ui_input_tsx"
       ]
     },
     {
@@ -2373,9 +2373,9 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -2401,11 +2401,11 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_button_tsx",
+        "src_components_ui_scroll-area_tsx",
+        "src_components_ui_label_tsx",
         "src_components_ui_switch_tsx",
         "src_components_ui_dialog_tsx",
-        "src_components_ui_scroll-area_tsx",
-        "src_components_ui_checkbox_tsx",
-        "src_components_ui_label_tsx"
+        "src_components_ui_checkbox_tsx"
       ]
     },
     {
@@ -2423,24 +2423,24 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_lib_data_template-furniture_ts",
-        "src_lib_data_template-industrial_ts",
-        "src_lib_data_template-pastry_ts",
-        "src_components_ui_input_tsx",
-        "src_lib_data_costpro-ejemplo_ts",
-        "src_lib_data_costpro-reinicio_ts",
-        "src_lib_data_template-shoes_ts",
-        "src_lib_data_template-lavar_ts",
-        "src_lib_data_template-pizza_ts",
-        "src_lib_data_template-consultancy_ts",
-        "src_lib_data_template-repair_ts",
-        "src_lib_data_template-icecream_ts",
-        "src_lib_data_template-juice_ts",
-        "src_lib_data_template-logistics_ts",
-        "src_lib_utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_data_costpro-reinicio_ts",
+        "src_lib_utils_ts",
+        "src_lib_data_template-furniture_ts",
+        "src_lib_data_template-logistics_ts",
+        "src_components_ui_input_tsx",
+        "src_lib_data_template-icecream_ts",
+        "src_components_ui_button_tsx",
+        "src_lib_data_template-consultancy_ts",
+        "src_lib_data_costpro-ejemplo_ts",
+        "src_lib_data_template-pastry_ts",
+        "src_lib_data_template-industrial_ts",
+        "src_lib_data_template-shoes_ts",
+        "src_lib_data_template-pizza_ts",
+        "src_lib_data_template-repair_ts",
+        "src_lib_data_template-lavar_ts",
+        "src_lib_data_template-juice_ts"
       ]
     },
     {
@@ -2449,12 +2449,12 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_input_tsx",
         "src_lib_utils_ts",
+        "src_components_ui_input_tsx",
         "src_store_cost-sheet-store_ts",
-        "src_components_ui_table_tsx",
-        "src_components_ui_label_tsx"
+        "src_components_ui_button_tsx",
+        "src_components_ui_label_tsx",
+        "src_components_ui_table_tsx"
       ]
     },
     {
@@ -2463,9 +2463,9 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_components_ui_scroll-area_tsx",
         "src_lib_utils_ts",
         "src_components_ui_HorizontalScroll_tsx",
-        "src_components_ui_scroll-area_tsx",
         "src_components_ui_tabs_tsx"
       ]
     },
@@ -2475,16 +2475,16 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_LazyRender_tsx",
-        "src_components_views_terminal_views_cost_sheet_CircularProgress_tsx",
-        "src_types_cost-sheet_ts",
-        "src_components_ui_input_tsx",
         "src_components_ui_popover_tsx",
-        "src_services_excel-service_ts",
-        "src_store_cost-sheet-store_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetSectionActionsPanel_tsx",
+        "src_types_cost-sheet_ts",
         "src_lib_utils_ts",
+        "src_components_views_terminal_views_cost_sheet_CircularProgress_tsx",
+        "src_store_cost-sheet-store_ts",
+        "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetSectionActionsPanel_tsx",
+        "src_services_excel-service_ts",
+        "src_components_ui_LazyRender_tsx",
         "src_components_views_terminal_views_cost_sheet_FormulaEditor_tsx"
       ]
     },
@@ -2494,24 +2494,24 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
+        "src_store_index_ts",
+        "src_lib_utils_ts",
+        "src_components_ui_checkbox_tsx",
+        "src_store_cost-sheet-store_ts",
         "src_components_ui_progress_tsx",
-        "src_lib_cost-engine_types_ts",
-        "src_components_ui_switch_tsx",
-        "src_services_export-service_ts",
-        "src_components_ui_dialog_tsx",
+        "src_components_ui_button_tsx",
+        "src_components_ui_CostProLoader_tsx",
         "src_components_ui_label_tsx",
-        "src_components_ui_tabs_tsx",
+        "src_components_ui_switch_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
+        "src_components_ui_table_tsx",
+        "src_components_ui_dialog_tsx",
         "src_lib_cost-engine_index_ts",
         "src_services_excel-service_ts",
-        "src_store_cost-sheet-store_ts",
-        "src_components_ui_table_tsx",
+        "src_services_export-service_ts",
+        "src_lib_cost-engine_types_ts",
         "src_hooks_api_useInventory_ts",
-        "src_components_ui_CostProLoader_tsx",
-        "src_components_ui_checkbox_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_components_ui_tabs_tsx"
       ]
     },
     {
@@ -2520,10 +2520,10 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_cost_sheet_DarianEditor_tsx",
+        "src_hooks_ui_useMobile_ts",
         "src_lib_utils_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetCalculator_tsx",
-        "src_hooks_ui_useMobile_ts"
+        "src_components_views_terminal_views_cost_sheet_DarianEditor_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetCalculator_tsx"
       ]
     },
     {
@@ -2541,8 +2541,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -2551,11 +2551,11 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_utils_ts",
         "src_components_ui_input_tsx",
-        "src_components_ui_label_tsx",
         "src_store_cost-sheet-store_ts",
         "src_components_ui_card_tsx",
-        "src_lib_utils_ts"
+        "src_components_ui_label_tsx"
       ]
     },
     {
@@ -2564,8 +2564,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -2574,11 +2574,11 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetHeaderEditor_tsx",
         "src_components_ui_progress_tsx",
+        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetInteractiveTable_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetSidebarNav_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetSignatureEditor_tsx"
       ]
@@ -2589,18 +2589,18 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_LazyRender_tsx",
-        "src_types_cost-sheet_ts",
-        "src_components_ui_input_tsx",
-        "src_components_ui_popover_tsx",
         "src_lib_data_costpro-reinicio_ts",
+        "src_types_cost-sheet_ts",
+        "src_components_ui_LazyRender_tsx",
         "src_lib_utils_ts",
-        "src_services_excel-service_ts",
-        "src_store_cost-sheet-store_ts",
-        "src_components_ui_table_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetSectionActionsPanel_tsx",
         "src_components_ui_select_tsx",
+        "src_components_ui_input_tsx",
+        "src_store_cost-sheet-store_ts",
+        "src_components_ui_button_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetSectionActionsPanel_tsx",
+        "src_components_ui_table_tsx",
+        "src_services_excel-service_ts",
+        "src_components_ui_popover_tsx",
         "src_components_views_terminal_views_cost_sheet_FormulaEditor_tsx"
       ]
     },
@@ -2610,17 +2610,17 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_ViewSwitcher_tsx",
+        "src_store_index_ts",
         "src_types_cost-sheet_ts",
-        "src_components_ui_input_tsx",
         "src_hooks_logic_useCostSheetCalculator_ts",
         "src_lib_utils_ts",
-        "src_services_excel-service_ts",
+        "src_components_ui_input_tsx",
         "src_store_cost-sheet-store_ts",
-        "src_components_ui_table_tsx",
+        "src_components_ui_button_tsx",
         "src_components_views_terminal_views_cost_sheet_ProductInventoryPicker_tsx",
-        "src_store_index_ts"
+        "src_components_ui_table_tsx",
+        "src_components_ui_ViewSwitcher_tsx",
+        "src_services_excel-service_ts"
       ]
     },
     {
@@ -2629,8 +2629,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_components_ui_sheet_tsx",
+        "src_components_ui_button_tsx",
         "src_lib_utils_ts"
       ]
     },
@@ -2640,11 +2640,11 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_SecurityScrollContainer_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetHeader_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetBody_tsx",
         "src_components_views_terminal_views_cost_sheet_CostSheetSignature_tsx",
-        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexes_tsx"
+        "src_components_views_terminal_views_cost_sheet_CostSheetBody_tsx",
+        "src_components_views_terminal_views_cost_sheet_CostSheetAnnexes_tsx",
+        "src_components_ui_SecurityScrollContainer_tsx"
       ]
     },
     {
@@ -2653,8 +2653,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_store_cost-sheet-store_ts",
-        "src_components_ui_input_tsx"
+        "src_components_ui_input_tsx",
+        "src_store_cost-sheet-store_ts"
       ]
     },
     {
@@ -2663,8 +2663,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dropdown-menu_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dropdown-menu_tsx"
       ]
     },
     {
@@ -2673,8 +2673,8 @@
       "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_components_views_terminal_views_cost_sheet_CostSheetFormulaGuide_tsx"
+        "src_components_views_terminal_views_cost_sheet_CostSheetFormulaGuide_tsx",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -2684,8 +2684,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_views_terminal_views_users_UserForm_tsx",
-        "src_components_ui_BaseModal_tsx",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_components_ui_BaseModal_tsx"
       ]
     },
     {
@@ -2694,13 +2694,13 @@
       "filePath": "src/components/views/terminal/views/users/useUsersView.ts",
       "layer": "UI Components",
       "dependencies": [
+        "src_lib_supabaseClient_ts",
+        "src_store_index_ts",
         "src_hooks_api_useStores_ts",
-        "src_types_index_ts",
         "src_components_views_terminal_views_users_UserForm_tsx",
         "src_hooks_api_useUsers_ts",
         "src_lib_roles_ts",
-        "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_types_index_ts"
       ]
     },
     {
@@ -2709,13 +2709,13 @@
       "filePath": "src/components/views/terminal/views/users/UsersManagementView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_switch_tsx",
+        "src_components_views_terminal_views_users_useUsersView_ts",
+        "src_lib_utils_ts",
         "src_components_views_terminal_views_users_UserFormModal_tsx",
         "src_components_ui_select_tsx",
-        "src_components_views_terminal_views_users_useUsersView_ts",
+        "src_components_ui_button_tsx",
+        "src_components_ui_switch_tsx",
         "src_components_ui_SearchBar_tsx",
-        "src_lib_utils_ts",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -2725,8 +2725,8 @@
       "filePath": "src/components/views/terminal/views/users/RoleForm.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -2736,11 +2736,11 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_views_terminal_views_users_RoleForm_tsx",
-        "src_types_index_ts",
-        "src_components_ui_BaseModal_tsx",
-        "src_hooks_api_useRoles_ts",
-        "src_components_ui_SearchBar_tsx",
         "src_lib_utils_ts",
+        "src_hooks_api_useRoles_ts",
+        "src_types_index_ts",
+        "src_components_ui_SearchBar_tsx",
+        "src_components_ui_BaseModal_tsx",
         "src_components_ui_ActionMenu_tsx"
       ]
     },
@@ -2750,8 +2750,8 @@
       "filePath": "src/components/views/terminal/views/users/UserForm.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -2772,8 +2772,8 @@
       "layer": "UI Components",
       "dependencies": [
         "src_hooks_api_useRSS_ts",
-        "src_types_index_ts",
         "src_lib_utils_ts",
+        "src_types_index_ts",
         "src_components_ui_StateRenderer_tsx"
       ]
     },
@@ -2791,10 +2791,10 @@
       "layer": "UI Components",
       "dependencies": [
         "src_lib_supabaseClient_ts",
-        "src_lib_utils_number-to-words-es_ts",
+        "src_store_index_ts",
         "src_lib_utils_ts",
-        "src_components_views_terminal_views_legal_LegalPdfExporter_ts",
-        "src_store_index_ts"
+        "src_lib_utils_number-to-words-es_ts",
+        "src_components_views_terminal_views_legal_LegalPdfExporter_ts"
       ]
     },
     {
@@ -2812,10 +2812,10 @@
       "filePath": "src/components/views/terminal/views/legal/LegalView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_views_terminal_views_legal_LegalModelForm_tsx",
-        "src_lib_utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_components_views_terminal_views_legal_LegalConsultant_tsx"
+        "src_lib_utils_ts",
+        "src_components_views_terminal_views_legal_LegalConsultant_tsx",
+        "src_components_views_terminal_views_legal_LegalModelForm_tsx"
       ]
     },
     {
@@ -2874,8 +2874,8 @@
       "filePath": "src/components/ui/command.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dialog_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dialog_tsx"
       ]
     },
     {
@@ -2893,8 +2893,8 @@
       "filePath": "src/components/ui/QueryInspector.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -3045,8 +3045,8 @@
       "filePath": "src/components/ui/PWAInstallModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dialog_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dialog_tsx"
       ]
     },
     {
@@ -3080,8 +3080,8 @@
       "filePath": "src/components/ui/toggle-group.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_toggle_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_toggle_tsx"
       ]
     },
     {
@@ -3117,14 +3117,14 @@
       "filePath": "src/components/ui/sidebar.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_button_tsx",
-        "src_components_ui_separator_tsx",
-        "src_components_ui_sheet_tsx",
+        "src_lib_utils_ts",
         "src_components_ui_input_tsx",
+        "src_components_ui_button_tsx",
         "src_components_ui_tooltip_tsx",
-        "src_hooks_ui_useMobile_ts",
         "src_components_ui_skeleton_tsx",
-        "src_lib_utils_ts"
+        "src_hooks_ui_useMobile_ts",
+        "src_components_ui_separator_tsx",
+        "src_components_ui_sheet_tsx"
       ]
     },
     {
@@ -3142,8 +3142,8 @@
       "filePath": "src/components/ui/BaseModal.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_dialog_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_dialog_tsx"
       ]
     },
     {
@@ -3254,8 +3254,8 @@
       "filePath": "src/components/ui/FloatingCalculator.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -3355,8 +3355,8 @@
       "filePath": "src/components/ui/SpeedDial.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_Portal_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_ui_Portal_tsx"
       ]
     },
     {
@@ -3365,9 +3365,9 @@
       "filePath": "src/components/ui/ChatBot.tsx",
       "layer": "UI Components",
       "dependencies": [
+        "src_store_index_ts",
         "src_services_user-service_ts",
-        "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_lib_utils_ts"
       ]
     },
     {
@@ -3445,8 +3445,8 @@
       "filePath": "src/components/ui/SyncStatusBadge.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_providers_SyncProvider_tsx",
-        "src_lib_utils_ts"
+        "src_lib_utils_ts",
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -3464,10 +3464,10 @@
       "filePath": "src/components/ui/atomic/index.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_ProductImage_tsx",
+        "src_types_index_ts",
         "src_lib_utils_ts",
         "src_components_ui_HorizontalScroll_tsx",
-        "src_types_index_ts"
+        "src_components_ui_ProductImage_tsx"
       ]
     },
     {
@@ -3593,9 +3593,9 @@
       "filePath": "src/components/auth/RegisterForm.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_components_ui_input_tsx",
         "src_lib_supabaseClient_ts",
-        "src_lib_logger_ts"
+        "src_lib_logger_ts",
+        "src_components_ui_input_tsx"
       ]
     },
     {
@@ -3604,13 +3604,13 @@
       "filePath": "src/components/auth/LoginForm.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_services_user-service_ts",
-        "src_components_auth_RegisterForm_tsx",
-        "src_components_ui_input_tsx",
-        "src_lib_logger_ts",
-        "src_lib_navigation_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_components_auth_RegisterForm_tsx",
+        "src_services_user-service_ts",
+        "src_components_ui_input_tsx",
+        "src_lib_navigation_ts",
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -3619,14 +3619,14 @@
       "filePath": "src/components/auth/WelcomeLandingView.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_hooks_ui_usePWA_ts",
-        "src_components_auth_diagrams_AutomationWorkflowDiagram_tsx",
-        "src_components_auth_diagrams_SpeedScaleDiagram_tsx",
-        "src_components_CostProLogo_tsx",
-        "src_components_ui_PWAInstallModal_tsx",
         "src_components_ThemeToggle_tsx",
+        "src_components_CostProLogo_tsx",
         "src_lib_utils_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_hooks_ui_usePWA_ts",
+        "src_components_ui_PWAInstallModal_tsx",
+        "src_components_auth_diagrams_SpeedScaleDiagram_tsx",
+        "src_components_auth_diagrams_AutomationWorkflowDiagram_tsx"
       ]
     },
     {
@@ -3830,8 +3830,8 @@
       "filePath": "src/lib/observability/health-alerts.ts",
       "layer": "Business Logic",
       "dependencies": [
-        "src_lib_observability_health-engine_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_supabaseClient_ts",
+        "src_lib_observability_health-engine_ts"
       ]
     },
     {
@@ -4011,8 +4011,8 @@
       "layer": "Business Logic",
       "dependencies": [
         "src_lib_ipv_engine_ts",
-        "src_lib_dexie_ts",
-        "src_lib_ipv_utils_ts"
+        "src_lib_ipv_utils_ts",
+        "src_lib_dexie_ts"
       ]
     },
     {
@@ -4046,13 +4046,13 @@
       "filePath": "src/lib/ai/orchestrator.ts",
       "layer": "Business Logic",
       "dependencies": [
-        "src_lib_ai_adapters_gpt-adapter_ts",
+        "src_lib_ai_adapters_fallback-adapter_ts",
+        "src_lib_ai_adapters_deepseek-adapter_ts",
         "src_lib_ai_adapters_gemini-adapter_ts",
-        "src_lib_ai_adapters_qwen-adapter_ts",
         "src_lib_ai_adapters_kimi-adapter_ts",
         "src_lib_ai_types_ts",
-        "src_lib_ai_adapters_fallback-adapter_ts",
-        "src_lib_ai_adapters_deepseek-adapter_ts"
+        "src_lib_ai_adapters_qwen-adapter_ts",
+        "src_lib_ai_adapters_gpt-adapter_ts"
       ]
     },
     {
@@ -4140,8 +4140,8 @@
       "filePath": "src/lib/ai/tools/registry.ts",
       "layer": "Business Logic",
       "dependencies": [
-        "src_lib_observability_system-health_ts",
-        "src_lib_ai_tools_definitions_ts"
+        "src_lib_ai_tools_definitions_ts",
+        "src_lib_observability_system-health_ts"
       ]
     },
     {
@@ -4158,8 +4158,8 @@
       "layer": "Services",
       "dependencies": [
         "src_lib_supabaseClient_ts",
-        "src_lib_logger_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4194,9 +4194,9 @@
       "filePath": "src/services/transfer-service.ts",
       "layer": "Services",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
         "src_lib_supabaseClient_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4214,10 +4214,10 @@
       "filePath": "src/services/bot-service.ts",
       "layer": "Services",
       "dependencies": [
-        "src_lib_ai_types_ts",
-        "src_lib_ai_tools_registry_ts",
         "src_lib_ai_tools_definitions_ts",
-        "src_lib_ai_orchestrator_ts"
+        "src_lib_ai_types_ts",
+        "src_lib_ai_orchestrator_ts",
+        "src_lib_ai_tools_registry_ts"
       ]
     },
     {
@@ -4262,10 +4262,10 @@
       "filePath": "src/services/user-service.ts",
       "layer": "Services",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_logger_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_rpc-validator_ts",
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4283,9 +4283,9 @@
       "filePath": "src/services/catalog-service.ts",
       "layer": "Services",
       "dependencies": [
-        "src_services_import-service_ts",
         "src_lib_supabaseClient_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_services_import-service_ts"
       ]
     },
     {
@@ -4327,10 +4327,10 @@
       "filePath": "src/store/index.ts",
       "layer": "State Management",
       "dependencies": [
-        "src_store_cost-sheet-store_ts",
+        "src_store_cart_ts",
         "src_store_session-store_ts",
         "src_store_useAcademyStore_ts",
-        "src_store_cart_ts"
+        "src_store_cost-sheet-store_ts"
       ]
     },
     {
@@ -4395,9 +4395,9 @@
       "filePath": "src/hooks/logic/useCostSheetCalculator.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_cost-engine_validations_ts",
         "src_types_cost-sheet_ts",
         "src_lib_cost-engine_types_ts",
+        "src_lib_cost-engine_validations_ts",
         "src_lib_cost-engine_index_ts"
       ]
     },
@@ -4416,12 +4416,12 @@
       "filePath": "src/hooks/logic/useSessionManager.ts",
       "layer": "Hooks",
       "dependencies": [
+        "src_lib_supabaseClient_ts",
+        "src_store_index_ts",
         "src_services_user-service_ts",
-        "src_store_session-store_ts",
         "src_types_index_ts",
         "src_lib_navigation_ts",
-        "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_session-store_ts"
       ]
     },
     {
@@ -4440,8 +4440,8 @@
       "layer": "Hooks",
       "dependencies": [
         "src_hooks_api_base_ts",
-        "src_components_providers_SyncProvider_tsx",
-        "src_services_transfer-service_ts"
+        "src_services_transfer-service_ts",
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -4450,9 +4450,9 @@
       "filePath": "src/hooks/api/useDocumentActions.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_hooks_api_base_ts",
         "src_lib_supabaseClient_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_hooks_api_base_ts"
       ]
     },
     {
@@ -4470,10 +4470,10 @@
       "filePath": "src/hooks/api/useTaxes.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
-        "src_hooks_api_base_ts",
         "src_lib_supabaseClient_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_hooks_api_base_ts",
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4482,11 +4482,11 @@
       "filePath": "src/hooks/api/useProducts.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_types_index_ts",
-        "src_hooks_api_base_ts",
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_lib_utils_ts",
-        "src_lib_supabaseClient_ts"
+        "src_hooks_api_base_ts",
+        "src_types_index_ts",
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4495,10 +4495,10 @@
       "filePath": "src/hooks/api/useTransactions.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_components_providers_SyncProvider_tsx",
-        "src_lib_supabaseClient_ts"
+        "src_lib_rpc-validator_ts",
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -4507,9 +4507,9 @@
       "filePath": "src/hooks/api/useStockMovements.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4519,8 +4519,8 @@
       "layer": "Hooks",
       "dependencies": [
         "src_hooks_api_base_ts",
-        "src_services_cash-service_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_services_cash-service_ts"
       ]
     },
     {
@@ -4529,11 +4529,11 @@
       "filePath": "src/hooks/api/useStores.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_types_index_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_lib_logger_ts",
+        "src_types_index_ts",
         "src_lib_rpc-validator_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4542,10 +4542,10 @@
       "filePath": "src/hooks/api/useDashboard.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
-        "src_hooks_api_base_ts",
         "src_lib_supabaseClient_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_hooks_api_base_ts",
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4554,11 +4554,11 @@
       "filePath": "src/hooks/api/useUsers.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_types_index_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_lib_logger_ts",
+        "src_types_index_ts",
         "src_lib_rpc-validator_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4567,10 +4567,10 @@
       "filePath": "src/hooks/api/useInventory.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_components_providers_SyncProvider_tsx",
-        "src_lib_supabaseClient_ts"
+        "src_lib_rpc-validator_ts",
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -4579,10 +4579,10 @@
       "filePath": "src/hooks/api/useRoles.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_hooks_api_base_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_logger_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_hooks_api_base_ts",
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4591,9 +4591,9 @@
       "filePath": "src/hooks/api/useAuditLogs.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4602,10 +4602,10 @@
       "filePath": "src/hooks/api/base.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_query-inspector-utils_ts",
         "src_lib_supabaseClient_ts",
-        "src_lib_logger_ts",
-        "src_store_index_ts"
+        "src_store_index_ts",
+        "src_lib_query-inspector-utils_ts",
+        "src_lib_logger_ts"
       ]
     },
     {
@@ -4614,9 +4614,9 @@
       "filePath": "src/hooks/api/useReceptions.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_rpc-validator_ts",
+        "src_lib_supabaseClient_ts",
         "src_hooks_api_base_ts",
-        "src_lib_supabaseClient_ts"
+        "src_lib_rpc-validator_ts"
       ]
     },
     {
@@ -4625,8 +4625,8 @@
       "filePath": "src/hooks/api/useRSS.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_services_rss-service_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_services_rss-service_ts"
       ]
     },
     {
@@ -4642,8 +4642,8 @@
       "filePath": "src/hooks/ui/useTerminalNavigation.ts",
       "layer": "Hooks",
       "dependencies": [
-        "src_lib_roles_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_lib_roles_ts"
       ]
     },
     {
