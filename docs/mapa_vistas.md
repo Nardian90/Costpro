@@ -2,18 +2,12 @@
 
 | Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |
 | ------ | ---- | ---- | ------------ | ------------ | ---------------- |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | AISystemObserver | src/components/HealthDashboard/AISystemObserver.tsx | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | ActionBadges | src/components/views/terminal/views/ipv/ActionBadges.tsx | component | Óptimo | badge, tooltip, utils | 2026-03-17 |
 | ActionMenu | src/components/ui/ActionMenu.tsx | component | Advertencia | tooltip, utils | 2026-03-17 |
 | AddTransactionModal | src/components/views/terminal/views/ipv/AddTransactionModal.tsx | component | Óptimo | button, dexie, dialog, engine, input, label, select | 2026-03-17 |
 | AnalyticsDashboard | src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx | component | Óptimo | card, types | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | ApplicationDataPanel | src/components/HealthDashboard/ApplicationDataPanel.tsx | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | ApplicationMetrics | src/components/views/terminal/views/health/ApplicationMetrics.tsx | component | Óptimo | utils | 2026-03-17 |
 | ArchitectureAuditTable | src/components/views/terminal/views/health/ArchitectureAuditTable.tsx | component | Advertencia | badge, input, sheet, table, utils | 2026-03-17 |
 | AsientosModule | src/components/views/terminal/views/wiki/AsientosModule.tsx | component | Óptimo | badge, button, input, types, utils | 2026-03-17 |
@@ -22,10 +16,7 @@
 | AuditEventMeta | src/components/views/terminal/views/audit/AuditEventMeta.tsx | component | Óptimo | utils | 2026-03-17 |
 | AuditFilters | src/components/views/terminal/views/audit/AuditFilters.tsx | component | Óptimo | AuditEventIcon, utils | 2026-03-17 |
 | AuditLogsModal | src/components/views/terminal/views/reports/AuditLogsModal.tsx | component | Óptimo | AuditTimeline, StateRenderer, dialog, skeleton | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | AuditResults | src/components/HealthDashboard/AuditResults.tsx | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | AuditSummary | src/components/views/terminal/views/health/AuditSummary.tsx | component | Óptimo |  | 2026-03-17 |
 | AuditTimeline | src/components/views/terminal/views/audit/AuditTimeline.tsx | component | Óptimo | AuditEventCard, utils | 2026-03-17 |
 | AutomationWorkflowDiagram | src/components/auth/diagrams/AutomationWorkflowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
@@ -88,10 +79,7 @@
 | FloatingCalculator | src/components/ui/FloatingCalculator.tsx | component | Óptimo | utils | 2026-03-17 |
 | FormulaBuilder | src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx | component | Óptimo | HorizontalScroll, scroll-area, tabs, utils | 2026-03-17 |
 | FormulaEditor | src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx | component | Óptimo | FormulaBuilder, badge, dialog, popover, utils | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | GlobalMetricsCards | src/components/HealthDashboard/GlobalMetricsCards.tsx | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | GlobalSessionManager | src/components/GlobalSessionManager.tsx | component | Óptimo |  | 2026-03-17 |
 | Header | src/components/views/terminal/Header.tsx | component | Óptimo | SyncConflictModal, SyncStatusBadge, ThemeToggle, dropdown-menu, popover, utils | 2026-03-17 |
 | HealthAgentLogs | src/components/views/terminal/views/health/HealthAgentLogs.tsx | component | Óptimo | badge, card, supabaseClient, system-health, utils | 2026-03-17 |
@@ -107,14 +95,10 @@
 | IncomeReceiptPreview | src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx | component | Óptimo | utils | 2026-03-17 |
 | IncomeReceiptSection | src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx | component | Óptimo | IncomeReceiptPreview, LegalPdfExporter, button, card, dexie, input, label | 2026-03-17 |
 | InfrastructureMetrics | src/components/views/terminal/views/health/InfrastructureMetrics.tsx | component | Óptimo | progress, utils | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-| IngestionErrorsTable | src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx | component | Óptimo | badge, button, dexie, engine, input, table, utils, utils | 2026-03-17 |
-=======
 | InfrastructurePanel | src/components/HealthDashboard/InfrastructurePanel.tsx | component | Óptimo |  | 2026-03-17 |
 | IngestionErrorsTable | src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx | component | Óptimo | badge, button, dexie, engine, input, table, utils, utils | 2026-03-17 |
 | IntelligenceConsole | src/components/HealthDashboard/IntelligenceConsole.tsx | component | Óptimo | utils | 2026-03-17 |
 | IntelligenceMap | src/components/HealthDashboard/IntelligenceMap.tsx | component | Óptimo | utils | 2026-03-17 |
->>>>>>> main
 | IntelligentThemeHandler | src/components/IntelligentThemeHandler.tsx | component | Óptimo |  | 2026-03-17 |
 | InventoryAdjustmentFlowDiagram | src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | InventoryAdjustmentModal | src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx | component | Óptimo | drawer, inventory-logic, utils | 2026-03-17 |
@@ -131,17 +115,11 @@
 | MatchingRulesEditor | src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx | component | Advertencia | RuleMetaEditor, badge, button, card, dexie, engine, label, switch | 2026-03-17 |
 | MatchingSimulation | src/components/views/terminal/views/ipv/MatchingSimulation.tsx | component | Óptimo | badge, button, card, dexie, engine, input, table | 2026-03-17 |
 | MatchingTracePopover | src/components/views/terminal/views/ipv/MatchingTracePopover.tsx | component | Óptimo | badge, dexie, popover, scroll-area, utils | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-| MobileFlowDiagram | src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
-| MobilePosDiagram | src/components/views/terminal/views/help/help/MobilePosDiagram.tsx | component | Óptimo |  | 2026-03-17 |
-| MobileSafeContainer | src/components/ui/MobileSafeContainer.tsx | component | Óptimo | utils | 2026-03-17 |
-=======
 | MetricsGuide | src/components/HealthDashboard/MetricsGuide.tsx | component | Óptimo | accordion | 2026-03-17 |
 | MobileFlowDiagram | src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | MobilePosDiagram | src/components/views/terminal/views/help/help/MobilePosDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | MobileSafeContainer | src/components/ui/MobileSafeContainer.tsx | component | Óptimo | utils | 2026-03-17 |
 | ObservabilityHeader | src/components/HealthDashboard/ObservabilityHeader.tsx | component | Óptimo | utils | 2026-03-17 |
->>>>>>> main
 | OfflineSyncDiagram | src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | POSCart | src/components/views/terminal/views/pos/POSCart.tsx | component | Advertencia | BaseModal, CostProLoader, ProductImage, index, utils | 2026-03-17 |
 | PWAInstallModal | src/components/ui/PWAInstallModal.tsx | component | Óptimo | dialog, utils | 2026-03-17 |
@@ -154,10 +132,7 @@
 | QuickModeMassiveDiagram | src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | ReceptionDetailsModal | src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx | component | Óptimo | BaseModal, skeleton, utils | 2026-03-17 |
 | RegisterForm | src/components/auth/RegisterForm.tsx | component | Óptimo | input, logger, supabaseClient | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | ReleaseGateGovernance | src/components/HealthDashboard/ReleaseGateGovernance.tsx | component | Óptimo | utils | 2026-03-17 |
->>>>>>> main
 | ReleaseGateStatus | src/components/views/terminal/views/health/ReleaseGateStatus.tsx | component | Óptimo | utils | 2026-03-17 |
 | ReportConfigPanel | src/components/views/terminal/views/reports/ReportConfigPanel.tsx | component | Óptimo | button, card, checkbox, command, input, label, popover, select, utils | 2026-03-17 |
 | ReportPreview | src/components/views/terminal/views/reports/ReportPreview.tsx | component | Óptimo | CostProLoader, card | 2026-03-17 |
@@ -168,10 +143,7 @@
 | ScrollToTop | src/components/ui/ScrollToTop.tsx | component | Óptimo | utils | 2026-03-17 |
 | SearchBar | src/components/ui/SearchBar.tsx | component | Óptimo | utils | 2026-03-17 |
 | SecurityFlowDiagram | src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | SecurityGRCPanel | src/components/HealthDashboard/SecurityGRCPanel.tsx | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | SecurityMetrics | src/components/views/terminal/views/health/SecurityMetrics.tsx | component | Óptimo | utils | 2026-03-17 |
 | SecurityScrollContainer | src/components/ui/SecurityScrollContainer.tsx | component | Óptimo | utils | 2026-03-17 |
 | ServiceWorkerRegister | src/components/ServiceWorkerRegister.tsx | component | Óptimo |  | 2026-03-17 |
@@ -199,10 +171,7 @@
 | UserFlowDiagram | src/components/views/terminal/views/help/help/UserFlowDiagram.tsx | component | Óptimo |  | 2026-03-17 |
 | UserForm | src/components/views/terminal/views/users/UserForm.tsx | component | Óptimo | utils | 2026-03-17 |
 | UserFormModal | src/components/views/terminal/views/users/UserFormModal.tsx | component | Óptimo | BaseModal, UserForm | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | ViewNavigation | src/components/HealthDashboard/ViewNavigation.tsx | component | Óptimo | utils | 2026-03-17 |
->>>>>>> main
 | ViewNavigator | src/components/views/terminal/views/health/ViewNavigator.tsx | component | Óptimo |  | 2026-03-17 |
 | ViewSwitcher | src/components/ui/ViewSwitcher.tsx | component | Óptimo | utils | 2026-03-17 |
 | WelcomeLandingView | src/components/auth/WelcomeLandingView.tsx | component | Óptimo | AutomationWorkflowDiagram, CostProLogo, PWAInstallModal, SpeedScaleDiagram, ThemeToggle, utils | 2026-03-17 |
@@ -262,12 +231,9 @@
 | tooltip | src/components/ui/tooltip.tsx | component | Óptimo | utils | 2026-03-17 |
 | types | src/components/views/terminal/views/wiki/types.ts | component | Óptimo |  | 2026-03-17 |
 | useAuditLogsView | src/components/views/terminal/views/audit/useAuditLogsView.ts | component | Óptimo |  | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-=======
 | useComponentHealth | src/components/HealthDashboard/hooks/useComponentHealth.ts | component | Óptimo |  | 2026-03-17 |
 | useHealthIndex | src/components/HealthDashboard/hooks/useHealthIndex.ts | component | Óptimo |  | 2026-03-17 |
 | useLiveScan | src/components/HealthDashboard/hooks/useLiveScan.ts | component | Óptimo |  | 2026-03-17 |
->>>>>>> main
 | usePOSView | src/components/views/terminal/views/pos/usePOSView.ts | component | Óptimo | logger, utils | 2026-03-17 |
 | useReceptionsHistoryView | src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts | component | Óptimo |  | 2026-03-17 |
 | useSalesHistoryView | src/components/views/terminal/views/sales/useSalesHistoryView.ts | component | Óptimo |  | 2026-03-17 |
@@ -375,11 +341,7 @@
 | SettingsView | src/components/views/terminal/views/settings/SettingsView.tsx | view | Óptimo | supabaseClient, utils | 2026-03-17 |
 | StockHistoryView | src/components/views/terminal/views/stock_history/StockHistoryView.tsx | view | Óptimo | ActionMenu, QueryInspector, SearchBar, utils | 2026-03-17 |
 | StoresManagementView | src/components/views/terminal/views/stores/StoresManagementView.tsx | view | Óptimo | ActionMenu, SearchBar, StoreModals, useStoresView, utils | 2026-03-17 |
-<<<<<<< doc-audit-sanitization-mar-2026-636324976350228115
-| SystemHealthView | src/components/views/terminal/views/health/SystemHealthView.tsx | view | Advertencia | ApplicationMetrics, ArchitectureAuditTable, AuditSummary, CostProLoader, HealthAgentLogs, HealthStatusHeader, InfrastructureMetrics, ReleaseGatePdfExporter, ReleaseGateStatus, SecurityMetrics, ViewNavigator, accordion, dropdown-menu, utils | 2026-03-17 |
-=======
 | SystemHealthView | src/components/views/terminal/views/health/SystemHealthView.tsx | view | Advertencia | AISystemObserver, ApplicationDataPanel, AuditResults, CostProLoader, GlobalMetricsCards, InfrastructurePanel, IntelligenceConsole, IntelligenceMap, MetricsGuide, ObservabilityHeader, ReleaseGateGovernance, ReleaseGatePdfExporter, SecurityGRCPanel, ViewNavigation, useComponentHealth, useHealthIndex, useLiveScan | 2026-03-17 |
->>>>>>> main
 | TransferQRReportView | src/components/views/terminal/views/ipv/TransferQRReportView.tsx | view | Óptimo | badge, button, card, dexie, input, label, supabaseClient, table, utils | 2026-03-17 |
 | TransferenciasView | src/components/views/terminal/views/transfers/TransferenciasView.tsx | view | Óptimo | ActionMenu, CreateTransferModal, StateRenderer, TransferDetailsModal, utils | 2026-03-17 |
 | UsersManagementView | src/components/views/terminal/views/users/UsersManagementView.tsx | view | Óptimo | ActionMenu, SearchBar, UserFormModal, button, select, switch, useUsersView, utils | 2026-03-17 |

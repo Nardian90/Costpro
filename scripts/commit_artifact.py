@@ -15,7 +15,6 @@ from datetime import datetime, timezone
 
 # Configuration
 STATE_PATH = "docs/automation/pipeline_state.yaml"
-AUDIT_PATH = "public/architecture_audit.json"
 
 def load_config():
     if os.path.exists(STATE_PATH):
@@ -42,7 +41,6 @@ def sha256_hex(s):
 
 def get_file_hash(path):
     if os.path.isdir(path):
-        # Hash de directorio (basado en nombres y hashes de archivos)
         hasher = hashlib.sha256()
         for root, dirs, files in os.walk(path):
             for names in sorted(files):
@@ -57,10 +55,12 @@ def get_file_hash(path):
 
     if path.endswith('.json'):
         with open(path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return sha256_hex(canonical_json(data))
+            try:
+                data = json.load(f)
+                return sha256_hex(canonical_json(data))
+            except json.JSONDecodeError:
+                pass # Fallback to binary hash if invalid JSON
 
-    # Otros archivos (binario)
     hasher = hashlib.sha256()
     with open(path, 'rb') as f:
         while True:
@@ -104,25 +104,6 @@ def append_review_queue(entry):
     with open(queue_path, 'w', encoding='utf-8') as f:
         json.dump(queue, f, indent=2, ensure_ascii=False)
 
-def rollback_artifact(name):
-    """Restores the last version from archive if integrity fails"""
-    meta = load_meta(name)
-    if not meta or not meta.get("previousVersions"):
-        print(f"ROLLBACK FAILED: No previous version for {name}")
-        return False
-
-    last_v = meta["previousVersions"][-1]
-    short_hash = last_v["hash"].replace("sha256:", "")[:6]
-    archive_name = f"{name}-{last_v['version']}+{short_hash}.json"
-    archive_path = os.path.join(STATE["archiveStore"], archive_name)
-
-    if os.path.exists(archive_path):
-        dest_path = os.path.join(STATE["artifactStore"], f"{name}.json")
-        shutil.copy2(archive_path, dest_path)
-        print(f"ROLLBACK SUCCESSFUL: Restored {name} v{last_v['version']}")
-        return True
-    return False
-
 def commit_artifact(name, artifact_path, confidence_score, source_phase, created_by="architecture-scheduler/8.0"):
     if not os.path.exists(artifact_path):
         print(f"Error: Artifact path not found: {artifact_path}")
@@ -136,12 +117,12 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         "artifactName": name,
         "version": version,
         "hash": f"sha256:{hash_value}",
-        "createdAt": datetime.now(timezone.utc).isoformat() + 'Z',
-        "createdBy": created_by,
-        "sourcePhase": int(source_phase),
         "confidenceScore": float(confidence_score),
-        "confidenceModel": "ai-arch-v8.0",
         "reviewRequired": False,
+        "createdAt": datetime.now(timezone.utc).isoformat() + 'Z',
+        "sourcePhase": int(source_phase),
+        "createdBy": created_by,
+        "confidenceModel": "ai-arch-v8.0",
         "provenance": {"inputs": [], "tools": ["architecture-scheduler/8.0"]},
         "explainabilitySummary": f"Generado automáticamente en Fase {source_phase}",
         "previousVersions": meta.get("previousVersions", []) if meta else []
@@ -157,7 +138,9 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
     os.makedirs(STATE["metadataStore"], exist_ok=True)
     meta_path = os.path.join(STATE["metadataStore"], f"{name}.meta.json")
 
-    if confidence_score < STATE.get("confidenceThreshold", 90):
+    confidence_threshold = STATE.get("confidenceThreshold", 90)
+
+    if confidence_score < confidence_threshold:
         short_hash = hash_value[:6]
         ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
         quarantine_name = f"{name}-{version}+{short_hash}{ext}"
@@ -167,10 +150,11 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
             shutil.copytree(artifact_path, quarantine_path, dirs_exist_ok=True)
         else:
             shutil.copy2(artifact_path, quarantine_path)
+
         meta_obj["reviewRequired"] = True
-        os.makedirs(os.path.dirname(meta_path), exist_ok=True)
         with open(meta_path, 'w', encoding='utf-8') as f:
             json.dump(meta_obj, f, indent=2, ensure_ascii=False)
+
         append_review_queue({
             "id": f"rq-{name}-{version}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             "artifactName": name,
@@ -184,24 +168,33 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         print(f"QUARANTINED: {quarantine_path}")
         return "quarantined"
 
-    dest_path = os.path.join(STATE["artifactStore"], name + (os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""))
+    # Deterministic destination extension
+    ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
+    # If name already has extension, don't append it
+    dest_filename = name if name.endswith(ext) else name + ext
+    dest_path = os.path.join(STATE["artifactStore"], dest_filename)
+
     if os.path.isdir(artifact_path):
-        shutil.copytree(artifact_path, dest_path, dirs_exist_ok=True)
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+        shutil.copytree(artifact_path, dest_path)
     else:
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         shutil.copy2(artifact_path, dest_path)
 
-    ext = os.path.splitext(artifact_path)[1] if not os.path.isdir(artifact_path) else ""
-    archive_name = f"{name}-{version}+{hash_value[:6]}{ext}"
+    # Archive
+    short_hash = hash_value[:6]
+    archive_name = f"{name}-{version}+{short_hash}{ext}"
     archive_path = os.path.join(STATE["archiveStore"], archive_name)
     os.makedirs(STATE["archiveStore"], exist_ok=True)
     if os.path.isdir(artifact_path):
-        shutil.copytree(artifact_path, archive_path, dirs_exist_ok=True)
+        if os.path.exists(archive_path):
+            shutil.rmtree(archive_path)
+        shutil.copytree(artifact_path, archive_path)
     else:
         shutil.copy2(artifact_path, archive_path)
 
     meta_obj["reviewRequired"] = False
-    os.makedirs(os.path.dirname(meta_path), exist_ok=True)
     with open(meta_path, 'w', encoding='utf-8') as f:
         json.dump(meta_obj, f, indent=2, ensure_ascii=False)
 
@@ -210,5 +203,6 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
+        print("Usage: commit_artifact.py <name> <artifact_path> <confidence_score> <source_phase>")
         sys.exit(1)
     commit_artifact(sys.argv[1], sys.argv[2], float(sys.argv[3]), int(sys.argv[4]))

@@ -63,7 +63,7 @@ def unlock_state(lock_file):
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
     lock_file.close()
 
-def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, status, artifacts):
+def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, status, artifacts, cycle):
     audit = {}
 
     if os.path.exists(AUDIT_PATH):
@@ -79,7 +79,8 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
         "endTime": end_time,
         "durationMs": duration_ms,
         "status": status,
-        "artifactsGenerated": artifacts
+        "artifactsGenerated": artifacts,
+        "cycle": cycle
     }
 
     if "phaseExecutions" not in audit:
@@ -94,17 +95,20 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
     slowest_exec = max(executions, key=lambda x: x["durationMs"])
     fastest_exec = min(executions, key=lambda x: x["durationMs"])
 
+    # Calculate last cycle duration (sum of durations for the cycle of the last execution)
+    current_cycle_durations = [e["durationMs"] for e in executions if e.get("cycle") == cycle]
+
     audit["performanceSummary"] = {
         "averagePhaseDurationMs": sum(durations) // len(durations),
         "slowestPhase": slowest_exec["phase"],
         "fastestPhase": fastest_exec["phase"],
-        "lastCycleDurationMs": sum(durations) # This should ideally be for the current cycle
+        "lastCycleDurationMs": sum(current_cycle_durations)
     }
 
     with open(AUDIT_PATH, 'w', encoding='utf-8') as f:
         json.dump(audit, f, indent=2, ensure_ascii=False)
 
-def execute_phase(phase_num, phase_def, dry_run=False):
+def execute_phase(phase_num, phase_def, cycle, dry_run=False):
     print(f"--- Iniciando Fase {phase_num}: {phase_def['name']} ---")
     start_time = datetime.now(timezone.utc).isoformat() + 'Z'
     start_ms = datetime.now(timezone.utc).timestamp() * 1000
@@ -120,7 +124,14 @@ def execute_phase(phase_num, phase_def, dry_run=False):
 
         script = script_map.get(phase_num)
         if script and os.path.exists(script):
-            subprocess.run(["python3" if script.endswith('.py') else "bun", script])
+            res = subprocess.run(["python3" if script.endswith('.py') else "bun", script], capture_output=True, text=True)
+            print(res.stdout)
+            if res.stderr: print(res.stderr, file=sys.stderr)
+
+            if "QUARANTINED" in res.stdout:
+                status = "quarantined"
+            elif res.returncode != 0:
+                status = "failed"
         else:
             print(f"Aviso: Script para Fase {phase_num} no encontrado, usando simulación.")
             for art in phase_def["outputs"]:
@@ -129,12 +140,16 @@ def execute_phase(phase_num, phase_def, dry_run=False):
                 if not os.path.exists(temp_path):
                     os.makedirs("/tmp", exist_ok=True)
                     with open(temp_path, 'w') as f: json.dump({"simulated": True, "phase": phase_num}, f)
-                subprocess.run(["python3", "scripts/commit_artifact.py", art, temp_path, "95.0", str(phase_num)])
+
+                res = subprocess.run(["python3", "scripts/commit_artifact.py", art, temp_path, "95.0", str(phase_num)], capture_output=True, text=True)
+                print(res.stdout)
+                if "QUARANTINED" in res.stdout:
+                    status = "quarantined"
 
     end_time = datetime.now(timezone.utc).isoformat() + 'Z'
     end_ms = datetime.now(timezone.utc).timestamp() * 1000
     duration_ms = int(end_ms - start_ms)
-    update_audit(phase_num, phase_def["name"], start_time, end_time, duration_ms, status, phase_def["outputs"])
+    update_audit(phase_num, phase_def["name"], start_time, end_time, duration_ms, status, phase_def["outputs"], cycle)
     return status
 
 def main():
@@ -143,13 +158,16 @@ def main():
     try:
         state = load_state()
         current_phase = state.get("currentPhase", 1)
+        cycle = state.get("cycle", 1)
 
         # Scheduler Modes logic
         mode = state.get("schedulerMode", "normal")
 
         if current_phase > 18:
             current_phase = 1
-            state["cycle"] = state.get("cycle", 1) + 1
+            cycle += 1
+            state["cycle"] = cycle
+            state["currentPhase"] = current_phase
 
         phase_def = PHASE_DEFINITIONS.get(current_phase)
         if not phase_def:
@@ -171,13 +189,16 @@ def main():
                 save_state(state)
                 return
 
-        status = execute_phase(current_phase, phase_def, dry_run=dry_run)
+        status = execute_phase(current_phase, phase_def, cycle, dry_run=dry_run)
 
-        if not dry_run and status == "success":
-            state["currentPhase"] = current_phase + 1
-            state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
-            save_state(state)
-            print(f"Fase {current_phase} completada.")
+        if not dry_run:
+            if status in ["success", "quarantined"]:
+                state["currentPhase"] = current_phase + 1
+                state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                save_state(state)
+                print(f"Fase {current_phase} completada con estado: {status}")
+            else:
+                print(f"Fase {current_phase} falló. No se incrementa currentPhase.")
     except Exception as e:
         print(f"Error: {e}")
         import traceback; traceback.print_exc()
