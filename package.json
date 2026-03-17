@@ -10,7 +10,7 @@
     "dev": "next dev -p 3000",
     "postinstall": "npx prisma generate",
     "prebuild": "npx prisma generate",
-    "build": "pip install -r requirements.txt && npx prisma generate && npx next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge",
+    "build": "pip install --user -r requirements.txt && npx prisma generate && npx next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
