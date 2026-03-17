@@ -3856,38 +3856,12 @@
         "architecture_manifest"
       ],
       "cycle": 1
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T18:17:02.647239+00:00Z",
-      "endTime": "2026-03-17T18:17:08.320170+00:00Z",
-      "durationMs": 5672,
-      "status": "failed",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 1,
-      "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-17T18:18:49.013220+00:00Z",
-      "endTime": "2026-03-17T18:18:54.182370+00:00Z",
-      "durationMs": 5169,
-      "status": "success",
-      "artifactsGenerated": [
-        "system_architecture",
-        "architecture_manifest"
-      ],
-      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 6377,
+    "averagePhaseDurationMs": 6489,
     "slowestPhase": 1,
     "fastestPhase": 1,
-    "lastCycleDurationMs": 60580
+    "lastCycleDurationMs": 49739
   }
 }

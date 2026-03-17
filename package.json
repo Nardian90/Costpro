@@ -58,7 +58,7 @@
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query": "^5.82.0",
     "@tanstack/react-table": "^8.21.3",
-    "@types/node": "25.2.0",
+    "@types/node": "^20.11.0",
     "@types/papaparse": "^5.5.2",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
