@@ -49,7 +49,6 @@ def save_state(state):
 
 def lock_state():
     if os.name == 'nt':
-        # Mock para Windows si fuera necesario, pero mantenemos fcntl para Unix
         return open(STATE_PATH + '.lock', 'w+')
     lock_file = open(STATE_PATH + '.lock', 'w+')
     try:
@@ -65,7 +64,7 @@ def unlock_state(lock_file):
     lock_file.close()
 
 def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, status, artifacts):
-    audit = {"audit": []} # Estructura original
+    audit = {}
 
     if os.path.exists(AUDIT_PATH):
         try:
@@ -87,13 +86,19 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
         audit["phaseExecutions"] = []
     audit["phaseExecutions"].append(execution_record)
 
-    durations = [e["durationMs"] for e in audit["phaseExecutions"]]
+    # Performance Summary logic
+    executions = audit["phaseExecutions"]
+    durations = [e["durationMs"] for e in executions]
+
+    # Find phase numbers for slowest/fastest
+    slowest_exec = max(executions, key=lambda x: x["durationMs"])
+    fastest_exec = min(executions, key=lambda x: x["durationMs"])
+
     audit["performanceSummary"] = {
         "averagePhaseDurationMs": sum(durations) // len(durations),
-        "slowestPhase": max(durations),
-        "fastestPhase": min(durations),
-        "lastCycleDurationMs": sum(durations),
-        "lastUpdated": end_time
+        "slowestPhase": slowest_exec["phase"],
+        "fastestPhase": fastest_exec["phase"],
+        "lastCycleDurationMs": sum(durations) # This should ideally be for the current cycle
     }
 
     with open(AUDIT_PATH, 'w', encoding='utf-8') as f:
@@ -106,10 +111,10 @@ def execute_phase(phase_num, phase_def, dry_run=False):
     status = "success"
 
     if not dry_run:
-        # Aquí llamaríamos a los engines reales. Por ahora, si no existen los scripts, simulamos.
         script_map = {
             1: "scripts/phase_1_discovery.py",
             2: "scripts/maintenance/domain_classifier.py",
+            13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py"
         }
 
@@ -138,14 +143,36 @@ def main():
     try:
         state = load_state()
         current_phase = state.get("currentPhase", 1)
+
+        # Scheduler Modes logic
+        mode = state.get("schedulerMode", "normal")
+
         if current_phase > 18:
             current_phase = 1
             state["cycle"] = state.get("cycle", 1) + 1
+
         phase_def = PHASE_DEFINITIONS.get(current_phase)
         if not phase_def:
             print(f"Error: Fase {current_phase} no válida.")
             return
+
+        # Special Mode Handling
+        if mode == "repair":
+            if current_phase not in [1, 3, 6, 13, 16]:
+                print(f"Modo REPAIR: Saltando Fase {current_phase}")
+                state["currentPhase"] = current_phase + 1
+                save_state(state)
+                return
+
+        if mode == "light":
+            if current_phase not in [4, 6, 15, 16]:
+                print(f"Modo LIGHT: Saltando Fase {current_phase}")
+                state["currentPhase"] = current_phase + 1
+                save_state(state)
+                return
+
         status = execute_phase(current_phase, phase_def, dry_run=dry_run)
+
         if not dry_run and status == "success":
             state["currentPhase"] = current_phase + 1
             state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
