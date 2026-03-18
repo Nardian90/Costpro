@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
 import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -64,6 +66,22 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
     setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+  const exportToExcel = () => {
+    const data = filtered.map(t => ({
+        "Fecha": t.fecha,
+        "Referencia": t.referencia_origen,
+        "Observaciones": t.observaciones,
+        "Importe": (t.importe_venta_cents || t.importe_cents) / 100,
+        "Tipo": t.tipo,
+        "Estado": t.estado_conciliacion,
+        "Conciliado": (txReconciliationTotals[t.referencia_origen] || 0) / 100
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
+    XLSX.writeFile(wb, `transacciones_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast.success("Excel de transacciones exportado");
   };
 
   const filtered = React.useMemo(() => {
@@ -157,6 +175,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                       <Button variant="ghost" size="sm" onClick={bulkResetMatching} className="h-7 text-xs font-black uppercase text-orange-600 hover:bg-orange-500/10"><RotateCcw className="w-3 h-3 mr-1" /> Reset</Button>
                       <Button variant="ghost" size="sm" onClick={onAnalyzeAll} className="h-7 text-xs font-black uppercase text-primary hover:bg-primary/10"><Wand2 className="w-3 h-3 mr-1" /> Analizar todo</Button>
                   </div>
+                  <Button variant="outline" size="sm" onClick={exportToExcel} className="h-7 text-xs font-black uppercase text-green-600 border-green-200 hover:bg-green-50"><FileSpreadsheet className="w-3 h-3 mr-1" /> Excel</Button>
               </div>
               <Button variant="default" size="sm" onClick={() => setIsAddTxOpen(true)} className="h-10 px-4 neu-btn-primary text-xs font-black uppercase italic"><Plus className="w-4 h-4 mr-2" /> Nueva Transacción</Button>
               <div className="flex bg-muted/50 p-1 rounded-lg border">
