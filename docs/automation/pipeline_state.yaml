@@ -1,16 +1,10 @@
-Modelo: ISO_26514 + Reparación de diataxis
-Umbral: 80
 ai_embeddings_path: ai_context/ai_embeddings/
 ai_vector_index_path: ai_context/ai_vector_index/
 archiveStore: public/_archive/
-artefactoTienda: public/
-confianzaUmbral: 90
-cuarentenaRuta: docs/automation/quarantine/
 currentPhase: 2
 cycle: 1
 humanFeedbackStore: docs/automation/human_feedback.json
-lastExecution: 2026-03-18T00:28:50.274825+00:00Z
-metadataTienda: public/_meta/
+lastExecution: 2026-03-18T13:15:36.745972+00:00Z
 pipelineVersion: 8.0.0
 reviewQueue: docs/automation/review_queue.json
 schedulerMode: normal
