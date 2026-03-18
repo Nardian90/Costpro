@@ -1,10 +1,10 @@
 {
   "artifactName": "system_architecture",
-  "version": "1.0.17",
-  "hash": "sha256:f957ac2bcd7037b93848124018cf36b26cb1bda2ef641dc36ae9599befb723e9",
+  "version": "1.0.18",
+  "hash": "sha256:67d99ae054bf5837d70b9ffc4f5cc9d2020db00626952ba97da6df58d15f605f",
   "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-03-17T22:35:40.001272+00:00Z",
+  "createdAt": "2026-03-18T00:28:50.253490+00:00Z",
   "sourcePhase": 1,
   "createdBy": "architecture-scheduler/8.0",
   "confidenceModel": "ai-arch-v8.0",
@@ -100,6 +100,11 @@
       "version": "1.0.16",
       "hash": "sha256:c5d5b869484901c9990d12aff0785eb9c638825bbe94486dadf6f322dc0e3fe2",
       "createdAt": "2026-03-17T22:18:28.095029+00:00Z"
+    },
+    {
+      "version": "1.0.17",
+      "hash": "sha256:f957ac2bcd7037b93848124018cf36b26cb1bda2ef641dc36ae9599befb723e9",
+      "createdAt": "2026-03-17T22:35:40.001272+00:00Z"
     }
   ]
 }
