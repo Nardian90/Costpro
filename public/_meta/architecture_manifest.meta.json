@@ -1,10 +1,10 @@
 {
   "artifactName": "architecture_manifest",
   "version": "1.0.19",
-  "hash": "sha256:43cd704c5389a35278c46c8f0365bbc50c403416455a485695da1880c7faf42c",
+  "hash": "sha256:2c13ad506aecea2cba6bc1e0ed59664f3a5c86fa18433a102527c66c01a0a5a6",
   "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-03-18T13:52:54.319140+00:00Z",
+  "createdAt": "2026-03-18T13:15:36.733450+00:00Z",
   "sourcePhase": 1,
   "createdBy": "architecture-scheduler/8.0",
   "confidenceModel": "ai-arch-v8.0",
