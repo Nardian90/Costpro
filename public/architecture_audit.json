@@ -91,9 +91,9 @@
     {
       "phase": 1,
       "phaseName": "Architecture Discovery",
-      "startTime": "2026-03-18T13:52:46.384740+00:00Z",
-      "endTime": "2026-03-18T13:52:54.343383+00:00Z",
-      "durationMs": 7958,
+      "startTime": "2026-03-18T13:15:30.720969+00:00Z",
+      "endTime": "2026-03-18T13:15:36.745192+00:00Z",
+      "durationMs": 6024,
       "status": "success",
       "artifactsGenerated": [
         "system_architecture",
@@ -103,9 +103,9 @@
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 5526,
+    "averagePhaseDurationMs": 5285,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 44214
+    "lastCycleDurationMs": 42280
   }
 }
