@@ -28,14 +28,21 @@ def load_config():
     if os.path.exists(STATE_PATH):
         with open(STATE_PATH, 'r', encoding='utf-8') as f:
             raw = yaml.safe_load(f)
-            if raw:
-                for key in config.keys():
-                    if key in raw:
-                        config[key] = raw[key]
-                # Also capture any other keys from raw that might be needed
-                for key, value in raw.items():
-                    if key not in config:
-                        config[key] = value
+            mapping = {
+                "artefactoTienda": "artifactStore",
+                "metadataTienda": "metadataStore",
+                "cuarentenaRuta": "quarantinePath",
+                "confianzaUmbral": "confidenceThreshold",
+                "Umbral": "repairThreshold",
+                "archiveStore": "archiveStore",
+                "reviewQueue": "reviewQueue"
+            }
+            for yaml_key, internal_key in mapping.items():
+                if yaml_key in raw:
+                    config[internal_key] = raw[yaml_key]
+            for internal_key in config.keys():
+                if internal_key in raw:
+                    config[internal_key] = raw[internal_key]
     return config
 
 STATE = load_config()
