@@ -41,6 +41,7 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
   const [result, setResult] = useState<MatchingResult | null>(null);
   const [globalTarget, setGlobalTarget] = useState<number>(0);
   const [isDistributing, setIsDistributing] = useState(false);
+  const [globalStrategy, setGlobalStrategy] = useState<"MIN_STOCK" | "MAX_VALUE">("MIN_STOCK");
 
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
 
@@ -87,7 +88,7 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
         }
 
         const engine = new MatchingEngine(products, rules);
-        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates);
+        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { strategy: globalStrategy });
 
         if (extraLines.length === 0) {
             toast.warning('No se generaron nuevas líneas de ajuste o el objetivo ya se alcanzó');
@@ -166,6 +167,17 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                 <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
                     Reparte la diferencia entre el total actual y tu meta mensual usando productos comodín.
                 </p>
+                <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Estrategia de Distribución</label>
+                    <select
+                        value={globalStrategy}
+                        onChange={(e) => setGlobalStrategy(e.target.value as "MIN_STOCK" | "MAX_VALUE")}
+                        className="w-full h-10 rounded-md border border-input bg-background px-3 py-1 text-sm font-bold uppercase"
+                    >
+                        <option value="MIN_STOCK">MIN EXISTENCIA (Priorizar agotados)</option>
+                        <option value="MAX_VALUE">MAX SALDO (Priorizar más caros)</option>
+                    </select>
+                </div>
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-muted-foreground">Meta Mensual ($)</label>
                     <Input
