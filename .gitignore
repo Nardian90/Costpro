@@ -38,3 +38,7 @@ next-env.d.ts
 dev_server.log
 playwright-report/
 test-results/
+
+# Python
+__pycache__/
+*.pyc
