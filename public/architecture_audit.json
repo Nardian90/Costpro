@@ -89,22 +89,23 @@
       "cycle": 1
     },
     {
-      "phase": 2,
-      "phaseName": "Domain Classification",
-      "startTime": "2026-03-18T14:50:39.852663+00:00Z",
-      "endTime": "2026-03-18T14:50:39.965784+00:00Z",
-      "durationMs": 113,
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-18T13:15:30.720969+00:00Z",
+      "endTime": "2026-03-18T13:15:36.745192+00:00Z",
+      "durationMs": 6024,
       "status": "success",
       "artifactsGenerated": [
-        "components"
+        "system_architecture",
+        "architecture_manifest"
       ],
       "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 4546,
+    "averagePhaseDurationMs": 5285,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 36369
+    "lastCycleDurationMs": 42280
   }
 }
