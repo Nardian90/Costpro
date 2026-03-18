@@ -697,20 +697,20 @@ const handleExportCatalog = () => {
               <TableHeader>
                   <TableRow>
                   <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
-                  <TableHead className="sticky-column-1"><SortButton column="cod" label="Código" /></TableHead>
-                  <TableHead><SortButton column="descripcion" label="Descripción" /></TableHead>
-                  <TableHead><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
-                  <TableHead>Sugerencia</TableHead>
-                  <TableHead className="text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
-                  <TableHead className="text-center">Comodín</TableHead>
-                  <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="sticky top-0 left-0 bg-background z-30"><SortButton column="cod" label="Código" /></TableHead>
+                  <TableHead className="sticky top-0 left-[100px] bg-background z-30"><SortButton column="descripcion" label="Descripción" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20"><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20">Sugerencia</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center">Comodín</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center">Estado</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right">Acciones</TableHead>
                   </TableRow>
               </TableHeader>
               <TableBody>
@@ -739,7 +739,7 @@ const handleExportCatalog = () => {
                       return (
                       <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
                           <TableCell><input type="checkbox" checked={isSelected} onChange={(e) => { if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]); else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod)); }} /></TableCell>
-                          <TableCell className="sticky-column-1 font-mono text-xs font-bold text-primary">
+                          <TableCell className="sticky left-0 bg-background z-10 font-mono text-xs font-bold text-primary">
                               <div className="flex flex-col">
                                   <div className="flex items-center gap-1">
                                     <span>{p.cod}</span>
@@ -757,7 +757,7 @@ const handleExportCatalog = () => {
                                   {p.id_grupo && <span className="text-[10px] text-muted-foreground opacity-70">G: {p.id_grupo}</span>}
                               </div>
                           </TableCell>
-                          <TableCell>{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
+                          <TableCell className="sticky left-[100px] bg-background z-10">{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
                           <TableCell>{!isEditing && p.priceEffectivenessScore !== undefined && (<div className="flex items-center gap-2"><div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden"><div className={`h-full ${p.priceEffectivenessScore > 70 ? 'bg-green-500' : p.priceEffectivenessScore > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${p.priceEffectivenessScore}%` }} /></div><span className="text-xs font-black">{p.priceEffectivenessScore}</span></div>)}</TableCell>
                           <TableCell>{!isEditing && p.suggestedPrice && (<Tooltip><TooltipTrigger asChild><Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help"><Sparkles className="w-3 h-3" />{p.suggestedPrice}</Badge></TooltipTrigger><TooltipContent className="bg-popover text-popover-foreground border shadow-xl"><p className="text-xs max-w-xs">{p.suggestionReason}</p></TooltipContent></Tooltip>)}</TableCell>
                           <TableCell className="text-right">{isEditing ? (<Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" />) : (<div className="flex flex-col items-end"><span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>{p.precio_base_cents && (<span className="text-xs text-muted-foreground line-through">Base: {p.precio_base_cents}</span>)}</div>)}</TableCell>
@@ -792,6 +792,15 @@ const handleExportCatalog = () => {
               )}
           </div>
         )}
+        <div className="flex items-center justify-between p-4 bg-background/50 border-t">
+            <div className="text-xs font-bold text-muted-foreground uppercase">
+                Página {currentPage} de {totalPages} ({sortedAndFiltered.length} productos)
+            </div>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="h-8 text-xs font-black uppercase tracking-widest">Anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="h-8 text-xs font-black uppercase tracking-widest">Siguiente</Button>
+            </div>
+        </div>
       </div>
       <BaseModal
         open={confirmation.open}

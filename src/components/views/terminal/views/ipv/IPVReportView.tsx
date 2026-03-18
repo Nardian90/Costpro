@@ -620,6 +620,11 @@ export function IPVReportView() {
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button onClick={exportToExcel} variant="outline" className="h-9 text-xs font-black uppercase border-green-200 text-green-600 hover:bg-green-50">Exportar a Excel</Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Genera un archivo Excel con múltiples pestañas (Catálogo, Transacciones, Desglose, Trazabilidad).</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                  <TooltipTrigger asChild>
                       <Button onClick={exportRangePDF} variant="outline" className="h-9 text-xs font-black uppercase border-primary/20 text-primary hover:bg-primary/5">Exportar PDF (Rango)</Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Genera un único archivo PDF que contiene todos los reportes individuales del rango seleccionado.</TooltipContent>
