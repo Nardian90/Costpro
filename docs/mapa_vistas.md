@@ -25,7 +25,7 @@
 | BaseModal | src/components/ui/BaseModal.tsx | component | Óptimo | dialog, utils | 2026-03-18 |
 | CashFlowDiagram | src/components/views/terminal/views/help/help/CashFlowDiagram.tsx | component | Óptimo |  | 2026-03-18 |
 | CatalogModals | src/components/views/terminal/views/catalog/CatalogModals.tsx | component | Advertencia | BaseModal, ProductImage, index, utils | 2026-03-18 |
-| CatalogTable | src/components/views/terminal/views/ipv/CatalogTable.tsx | component | Advertencia | ActionMenu, BaseModal, badge, button, card, dexie, engine, importUtils, input, intelligence, label, roles, supabaseClient, switch, table, tooltip, utils, utils | 2026-03-18 |
+| CatalogTable | src/components/views/terminal/views/ipv/CatalogTable.tsx | component | Advertencia | ActionMenu, BaseModal, badge, button, card, dexie, engine, importUtils, input, intelligence, label, roles, select, supabaseClient, switch, table, tooltip, utils, utils | 2026-03-18 |
 | ChatBot | src/components/ui/ChatBot.tsx | component | Advertencia | utils | 2026-03-18 |
 | CircularProgress | src/components/views/terminal/views/cost_sheet/CircularProgress.tsx | component | Óptimo | utils | 2026-03-18 |
 | ClasificadorModule | src/components/views/terminal/views/wiki/ClasificadorModule.tsx | component | Óptimo | accordion, types, utils | 2026-03-18 |
@@ -71,7 +71,7 @@
 | CuentasModule | src/components/views/terminal/views/wiki/CuentasModule.tsx | component | Óptimo | badge, button, scroll-area, types, utils | 2026-03-18 |
 | CyberShell | src/components/ui/CyberShell.tsx | component | Óptimo |  | 2026-03-18 |
 | DarianDiagram | src/components/views/terminal/views/help/help/DarianDiagram.tsx | component | Óptimo |  | 2026-03-18 |
-| DarianEditor | src/components/views/terminal/views/cost_sheet/DarianEditor.tsx | component | Óptimo | utils | 2026-03-18 |
+| DarianEditor | src/components/views/terminal/views/cost_sheet/DarianEditor.tsx | component | Advertencia | utils | 2026-03-18 |
 | DataDecryption | src/components/ui/DataDecryption.tsx | component | Óptimo |  | 2026-03-18 |
 | DetailedRelationshipGraph | src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx | component | Óptimo | badge, utils | 2026-03-18 |
 | ExecutiveDemoView | src/components/views/executive-demo/ExecutiveDemoView.tsx | component | Óptimo | CostProLoader, badge, button, card, demo-products, progress, utils | 2026-03-18 |
@@ -138,7 +138,7 @@
 | ReportPreview | src/components/views/terminal/views/reports/ReportPreview.tsx | component | Óptimo | CostProLoader, card | 2026-03-18 |
 | RoleForm | src/components/views/terminal/views/users/RoleForm.tsx | component | Óptimo | utils | 2026-03-18 |
 | RolesDiagram | src/components/views/terminal/views/help/help/RolesDiagram.tsx | component | Óptimo |  | 2026-03-18 |
-| RuleMetaEditor | src/components/views/terminal/views/ipv/RuleMetaEditor.tsx | component | Óptimo | badge, button, card, dexie, input | 2026-03-18 |
+| RuleMetaEditor | src/components/views/terminal/views/ipv/RuleMetaEditor.tsx | component | Óptimo | badge, button, card, dexie, input, switch | 2026-03-18 |
 | SalesFlowDiagram | src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx | component | Óptimo |  | 2026-03-18 |
 | ScrollToTop | src/components/ui/ScrollToTop.tsx | component | Óptimo | utils | 2026-03-18 |
 | SearchBar | src/components/ui/SearchBar.tsx | component | Óptimo | utils | 2026-03-18 |
