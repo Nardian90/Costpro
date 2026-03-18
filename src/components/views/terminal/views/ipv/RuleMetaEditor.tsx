@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   ChevronDown,
   Save,
@@ -26,6 +27,17 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
 
   const getRuleParams = (tipo: string) => {
     const configs: Record<string, any> = {
+      STOCK_LIMIT: {
+        fields: [
+          {
+            key: 'allow_negative',
+            label: 'Permitir Stock Negativo',
+            type: 'boolean',
+            help: 'Si se desactiva, el algoritmo no usará productos sin existencia.',
+            default: true
+          }
+        ]
+      },
       TOLERANCE: {
         fields: [
           {
@@ -34,7 +46,7 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
             type: 'number',
             min: 0,
             max: 10000,
-            help: 'Diferencia máxima permitida en el cuadre (ej: 100 = )',
+            help: 'Diferencia máxima permitida en el cuadre (ej: 100 = .00)',
             default: 100
           }
         ]
@@ -153,15 +165,24 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
                   <Info className="w-3 h-3 text-muted-foreground opacity-50" />
                 </div>
                 <p className="text-xs text-muted-foreground">{field.help}</p>
-                <Input
-                  type={field.type}
-                  min={field.min}
-                  max={field.max}
-                  step={field.step || 1}
-                  value={meta[field.key] ?? field.default}
-                  onChange={(e) => handleChange(field.key, Number(e.target.value))}
-                  className="text-sm font-mono"
-                />
+                {field.type === 'boolean' ? (
+                  <div className="flex items-center pt-1">
+                    <Switch
+                      checked={meta[field.key] ?? field.default}
+                      onCheckedChange={(checked) => handleChange(field.key, checked)}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    type={field.type}
+                    min={field.min}
+                    max={field.max}
+                    step={field.step || 1}
+                    value={meta[field.key] ?? field.default}
+                    onChange={(e) => handleChange(field.key, Number(e.target.value))}
+                    className="text-sm font-mono"
+                  />
+                )}
               </div>
             ))}
           </div>

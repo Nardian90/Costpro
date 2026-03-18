@@ -55,6 +55,7 @@ export class MatchingEngine {
   private rules: MatchingRule[];
   private stockMap: Map<string, number> = new Map();
   private useStockLimit: boolean = false;
+  private allowNegativeStock: boolean = true;
   private pendingMovements: any[] = [];
   private dailyAdjustedPrices: Map<string, number> = new Map();
 
@@ -62,6 +63,8 @@ export class MatchingEngine {
     this.products = products.filter(p => p.activo);
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
+    const stockLimitRule = this.rules.find(r => r.tipo === 'STOCK_LIMIT');
+    this.allowNegativeStock = stockLimitRule?.meta?.allow_negative !== false;
     this.pendingMovements = [];
     this.dailyAdjustedPrices = new Map();
 
@@ -144,7 +147,7 @@ export class MatchingEngine {
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
       const matchedProduct = this.products.find(p => {
-        if (this.useStockLimit && this.getVirtualStock(p.cod) <= 0) return false;
+        if (this.useStockLimit && !this.allowNegativeStock && this.getVirtualStock(p.cod) <= 0) return false;
         return transaction.observaciones.includes(p.cod) ||
                transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase());
       });
@@ -153,7 +156,7 @@ export class MatchingEngine {
         let qty = Math.floor(remaining_cents / matchedProduct.precio_cents);
         if (this.useStockLimit) {
             const available = this.getVirtualStock(matchedProduct.cod);
-            qty = Math.min(qty, available);
+            if (!this.allowNegativeStock) qty = Math.min(qty, available);
         }
 
         if (qty > 0) {
@@ -203,7 +206,7 @@ export class MatchingEngine {
         const maxPercent = priceFlexRule.meta?.max_variation_percent ?? 20;
 
         const flexProduct = this.products.find(p => {
-            if (this.useStockLimit && this.getVirtualStock(p.cod) <= 0) return false;
+            if (this.useStockLimit && !this.allowNegativeStock && this.getVirtualStock(p.cod) <= 0) return false;
             const lockedPrice = this.dailyAdjustedPrices.get(p.cod);
             if (lockedPrice !== undefined) {
                 return lockedPrice === remaining_cents;
@@ -260,7 +263,7 @@ export class MatchingEngine {
     if (wildcardsRule && remaining_cents > 0) {
         const wildcards = this.products
             .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
+            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
             .sort((a,b) => b.precio_cents - a.precio_cents);
 
         let addedCount = 0;
@@ -269,7 +272,7 @@ export class MatchingEngine {
                 let qty = Math.floor(remaining_cents / p.precio_cents);
                 if (this.useStockLimit) {
                     const available = this.getVirtualStock(p.cod);
-                    qty = Math.min(qty, available);
+                    if (!this.allowNegativeStock) qty = Math.min(qty, available);
                 }
 
                 if (qty > 0) {
@@ -296,7 +299,7 @@ export class MatchingEngine {
 
       if (toleranceCents > 0) {
           const candidateProducts = this.products
-            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
+            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
             .sort((a,b) => b.precio_cents - a.precio_cents);
 
           let found = false;
@@ -306,7 +309,7 @@ export class MatchingEngine {
             if (qty <= 0) qty = 1;
             if (this.useStockLimit) {
                 const available = this.getVirtualStock(product.cod);
-                qty = Math.min(qty, available);
+                if (!this.allowNegativeStock) qty = Math.min(qty, available);
             }
             if (qty <= 0) continue;
 
@@ -348,7 +351,7 @@ export class MatchingEngine {
       } else {
         const wildcards = this.products
             .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || this.getVirtualStock(p.cod) > 0)
+            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
             .sort((a,b) => b.precio_cents - a.precio_cents);
 
         let cashMatched = 0;
@@ -357,7 +360,7 @@ export class MatchingEngine {
             let qty = Math.floor(remaining_cents / p.precio_cents);
             if (this.useStockLimit) {
                 const available = this.getVirtualStock(p.cod);
-                qty = Math.min(qty, available);
+                if (!this.allowNegativeStock) qty = Math.min(qty, available);
             }
             if (qty > 0) {
                 const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
@@ -475,7 +478,7 @@ export class MatchingEngine {
     targetTotal: number,
     currentTotal: number,
     dates: string[],
-    options?: { dayVolumes?: Record<string, number> }
+    options?: { dayVolumes?: Record<string, number>; strategy?: "MIN_STOCK" | "MAX_VALUE" }
   ): Promise<ReconciliationLine[]> {
     let remainingDiff = targetTotal - currentTotal;
     if (remainingDiff <= 0 || dates.length === 0) return [];
@@ -498,14 +501,18 @@ export class MatchingEngine {
         .sort((a, b) => {
           const sA = this.stockMap.get(a.cod) || 0;
           const sB = this.stockMap.get(b.cod) || 0;
+          if (options?.strategy === "MAX_VALUE") {
+              return b.precio_cents - a.precio_cents;
+          }
           if (sA !== sB) return sA - sB;
           return b.precio_cents - a.precio_cents;
         });
 
       for (const p of candidates) {
         if (remainingDiff <= 0) break;
-        let availableStock = this.stockMap.get(p.cod) || 0;
-        if (!this.useStockLimit) availableStock = 999999;
+        let availableStock = this.getVirtualStock(p.cod);
+
+
         if (availableStock <= 0) continue;
         const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
         if (maxQtyPossible <= 0) continue;
@@ -578,7 +585,7 @@ export class MatchingEngine {
     const importe = product.precio_cents * qty;
     if (this.useStockLimit) {
         const current = this.stockMap.get(product.cod) || 0;
-        this.stockMap.set(product.cod, Math.max(0, current - qty));
+        this.stockMap.set(product.cod, this.allowNegativeStock ? current - qty : Math.max(0, current - qty));
     }
 
     return {

@@ -17,7 +17,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight } from 'lucide-react';
+import { ShieldCheck, Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -246,6 +246,37 @@ export function CatalogTable() {
       };
       setEditingId('NEW');
       setEditForm(newProd);
+  };
+  const handleCleanupNegative = async () => {
+    const negativeProducts = products?.filter(p => {
+        const stats = inventoryStats[p.cod] || { final: 0 };
+        return stats.final < 0;
+    });
+    if (!negativeProducts || negativeProducts.length === 0) {
+        toast.info("No hay productos con existencias negativas");
+        return;
+    }
+    askConfirmation("Limpiar Stock Negativo", `¿Deseas eliminar las transacciones de los ${negativeProducts.length} productos con stock negativo? Esto pondrá sus existencias en cero y dejará las facturas correspondientes en proceso.`, async () => {
+        try {
+            for (const p of negativeProducts) {
+                const lines = reconciliationLines?.filter(l => l.product_cod === p.cod) || [];
+                if (lines.length > 0) {
+                    await db.reconciliation_lines.bulkDelete(lines.map(l => l.id));
+                    // Marcar transacciones como PENDIENTE si quedaron sin líneas
+                    const txRefs = Array.from(new Set(lines.map(l => l.transaction_ref)));
+                    for (const ref of txRefs) {
+                        const remaining = await db.reconciliation_lines.where("transaction_ref").equals(ref).count();
+                        if (remaining === 0) {
+                            await db.bank_statements.where("referencia_origen").equals(ref).modify({ estado_conciliacion: "PENDIENTE" });
+                        }
+                    }
+                }
+            }
+            toast.success("Limpieza de stock negativo completada");
+        } catch (error) {
+            toast.error("Error al limpiar stock negativo");
+        }
+    });
   };
 
   const handleNormalizeNegatives = async () => {
@@ -720,11 +751,12 @@ const handleExportCatalog = () => {
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
     { id: "intel", label: "Inteligencia", icon: Brain, onClick: handleRecalculateIntelligence, disabled: isSyncing, variant: "outline", className: "text-purple-500" },
+    { id: "cleanup", label: "Saneamiento", icon: ShieldCheck, onClick: handleCleanupNegative, variant: "warning" },
     { id: "normalize", label: "Normalizar", icon: AlertTriangle, onClick: handleNormalizeNegatives, variant: "danger" },
     { id: "export", label: "Exportar", icon: Download, onClick: handleExportCatalog },
     { id: "import", label: "Importar", icon: Upload, onClick: () => document.getElementById("catalog-import-input")?.click() },
     { id: "clear", label: "Vaciar", icon: Trash2, onClick: clearCatalog, variant: "danger" }
-  ], [isSyncing, handleAddNew, syncWithSystemCatalog, handleRecalculateReportsChain, handleRecalculateIntelligence, handleNormalizeNegatives, handleExportCatalog, clearCatalog]);
+  ], [isSyncing, handleAddNew, syncWithSystemCatalog, handleRecalculateReportsChain, handleRecalculateIntelligence, handleCleanupNegative, handleNormalizeNegatives, handleExportCatalog, clearCatalog]);
 
   return (
     <>
