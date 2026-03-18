@@ -87,12 +87,25 @@
         "architecture_manifest"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-18T13:52:46.384740+00:00Z",
+      "endTime": "2026-03-18T13:52:54.343383+00:00Z",
+      "durationMs": 7958,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 5179,
+    "averagePhaseDurationMs": 5526,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 36256
+    "lastCycleDurationMs": 44214
   }
 }

@@ -44,12 +44,12 @@ def load_state():
         return yaml.safe_load(f)
 
 def save_state(state):
-    # Preserve the original structure and localized keys from the spec
+    # Preserve the original structure and keys from the v8.0 spec
     spec_keys = [
         "currentPhase", "lastExecution", "pipelineVersion", "cycle", "schedulerMode",
-        "Modelo", "Umbral", "confianzaUmbral", "cuarentenaRuta", "artefactoTienda",
-        "metadataTienda", "archiveStore", "reviewQueue", "ai_embeddings_path",
-        "ai_vector_index_path", "humanFeedbackStore"
+        "documentationModel", "repairThreshold", "confidenceThreshold", "quarantinePath",
+        "artifactStore", "metadataStore", "archiveStore", "reviewQueue",
+        "ai_embeddings_path", "ai_vector_index_path", "humanFeedbackStore"
     ]
 
     clean_state = {}
@@ -172,18 +172,6 @@ def main():
     lock_file = lock_state()
     try:
         state = load_state()
-
-        # Internal normalization for logic
-        mapping = {
-            "artefactoTienda": "artifactStore",
-            "metadataTienda": "metadataStore",
-            "cuarentenaRuta": "quarantinePath",
-            "confianzaUmbral": "confidenceThreshold",
-            "Umbral": "repairThreshold"
-        }
-        for yaml_key, internal_key in mapping.items():
-            if yaml_key in state:
-                state[internal_key] = state[yaml_key]
 
         current_phase = state.get("currentPhase", 1)
         cycle = state.get("cycle", 1)
