@@ -13,6 +13,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -48,9 +49,11 @@ export function CatalogTable() {
   const [editForm, setEditForm] = useState<Partial<Product>>({});
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_layoutMode') as 'table' | 'cards') || 'table' : 'table'));
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_selectedProductIds') || '[]') : []));
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_sortConfig') || 'null') : null));
   const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_stockFilter') as any) || 'all' : 'all'));
+  const [pageSize, setPageSize] = useState(() => (typeof window !== "undefined" ? Number(localStorage.getItem("catalog_pageSize")) || 15 : 15));
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -75,6 +78,7 @@ export function CatalogTable() {
     localStorage.setItem('catalog_layoutMode', layoutMode);
     localStorage.setItem('catalog_sortConfig', JSON.stringify(sortConfig));
     localStorage.setItem('catalog_stockFilter', stockFilter);
+    localStorage.setItem('catalog_selectedProductIds', JSON.stringify(selectedProductIds));
   }, [searchTerm, layoutMode, sortConfig, stockFilter]);
 
   const user = useAuthStore(state => state.user);
@@ -86,7 +90,7 @@ export function CatalogTable() {
 
   React.useEffect(() => {
     if (products && products.length > 0 && selectedProductIds.length === 0) {
-        setSelectedProductIds(products.map(p => p.cod));
+        setSelectedProductIds(products.filter(p => p.stock_inicial_manual > 0).map(p => p.cod));
     }
   }, [products]);
 
@@ -136,16 +140,19 @@ export function CatalogTable() {
     return stats;
   }, [products, reports, reconciliationLines, productMovements]);
 
-  const sortedAndFiltered = React.useMemo(() => {
+    const sortedAndFiltered = React.useMemo(() => {
     let result = products?.filter(p =>
       p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.cod.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-    if (stockFilter !== 'all') {
+    if (stockFilter !== "all") {
         result = result.filter(p => {
             const stats = inventoryStats[p.cod] || { final: 0 };
-            return stockFilter === 'with_stock' ? stats.final > 0 : stats.final <= 0;
+            if (stockFilter === "with_stock") return stats.final > 0;
+            if (stockFilter === "without_stock") return stats.final === 0;
+            if (stockFilter === "negative_stock") return stats.final < 0;
+            return true;
         });
     }
 
@@ -153,7 +160,7 @@ export function CatalogTable() {
         result.sort((a, b) => {
             let aValue: any;
             let bValue: any;
-                        if (sortConfig.key === 'final_stock') {
+            if (sortConfig.key === 'final_stock') {
                 aValue = inventoryStats[a.cod]?.final || 0;
                 bValue = inventoryStats[b.cod]?.final || 0;
             } else if (sortConfig.key === 'sales') {
@@ -181,6 +188,13 @@ export function CatalogTable() {
     }
     return result;
   }, [products, searchTerm, stockFilter, sortConfig, inventoryStats]);
+
+  const paginatedResult = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedAndFiltered.slice(start, start + pageSize);
+  }, [sortedAndFiltered, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sortedAndFiltered.length / pageSize);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -295,7 +309,10 @@ export function CatalogTable() {
                 const currentNegative = stats.final;
                 const adjustment = Math.abs(currentNegative);
                 const newInitial = (p.stock_inicial_manual || 0) + adjustment;
-                await db.products.update(p.cod, { stock_inicial_manual: newInitial });
+                await db.products.update(p.cod, {
+                    stock_inicial_manual: newInitial,
+                    updated_at: new Date().toISOString()
+                });
             }
             toast.success('Existencias normalizadas exitosamente');
         } catch (error) {
@@ -433,7 +450,8 @@ export function CatalogTable() {
             const autoPriority = calculateDynamicPriority(p, { stock: stats.final, salesQty: stats.sales, salesValue: stats.sales * p.precio_cents });
             await db.products.update(p.cod, {
                 priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
-                prioridad_algoritmo: p.priorityMode === 'auto' || p.priorityMode === 'hybrid' ? autoPriority : p.prioridad_algoritmo,
+                prioridad_algoritmo: autoPriority,
+                priorityMode: "auto",
                 ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
             });
         }
@@ -627,126 +645,7 @@ const handleExportCatalog = () => {
   };
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
-    { id: "seed", label: "BIG BON Simulation", icon: Sparkles, onClick: async () => {
-        // 1. Reset Total
-        await db.bank_statements.clear();
-        await db.products.clear();
-        await db.matching_rules.clear();
-        await db.reconciliation_lines.clear();
-        await db.product_movements.clear();
 
-        // 2. Seed Big Bon Hierarchy
-        const products = [
-            {
-                cod: "2",
-                descripcion: "BIG BON CAJA",
-                id_grupo: "BIGBON",
-                cod_hijo: "3",
-                um: "CAJA",
-                precio_cents: 13825,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: true,
-                contenido_paquete: 8,
-                stock_inicial_manual: 5, // 5 Cajas iniciales
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            },
-            {
-                cod: "3",
-                descripcion: "BIG BON PQT",
-                id_grupo: "BIGBON",
-                cod_hijo: "4",
-                um: "PAQUETE",
-                precio_cents: 1730,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: true,
-                contenido_paquete: 40,
-                stock_inicial_manual: 0,
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            },
-            {
-                cod: "4",
-                descripcion: "BOMBON",
-                id_grupo: "BIGBON",
-                um: "UNIDADES",
-                precio_cents: 45,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: false,
-                contenido_paquete: 1,
-                stock_inicial_manual: 0,
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            }
-        ];
-        await db.products.bulkPut(products as any);
-
-        // 3. Seed Matching Rules
-        await db.matching_rules.bulkPut([
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
-            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
-        ]);
-
-        // 4. Generate Pending Transactions that require decomposition
-        // Venta de 50 Bombones (necesita 1 PQT + 10 unidades, o 2 PQTs)
-        // Venta de 200 Bombones (necesita 5 PQTs)
-        const txs = [
-            {
-                referencia_origen: "TX-BIGBON-001",
-                fecha: new Date().toISOString().split('T')[0],
-                referencia_corta: "VENTA 50",
-                observaciones: "VENTA BOMBON X50",
-                importe_cents: 2250, // 50 * 45
-                tipo: 'Cr',
-                estado_conciliacion: 'PENDIENTE',
-                created_at: new Date().toISOString(),
-                ingestion_hash: 'hash1'
-            },
-            {
-                referencia_origen: "TX-BIGBON-002",
-                fecha: new Date().toISOString().split('T')[0],
-                referencia_corta: "VENTA 200",
-                observaciones: "VENTA BOMBON X200",
-                importe_cents: 9000, // 200 * 45
-                tipo: 'Cr',
-                estado_conciliacion: 'PENDIENTE',
-                created_at: new Date().toISOString(),
-                ingestion_hash: 'hash2'
-            }
-        ];
-        await db.bank_statements.bulkPut(txs as any);
-
-        // 5. Run Matching Engine
-        const engine = new MatchingEngine(products as any, [
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
-            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
-        ] as any);
-
-        const results = await engine.reconcileAll(txs as any);
-
-        // 6. Persist results
-        for (const res of results) {
-            if (res.status === 'COMPLETO' || res.status === 'PARCIAL') {
-                if (res.lines.length > 0) {
-                    await db.reconciliation_lines.bulkPut(res.lines);
-                }
-                if (res.movements && res.movements.length > 0) {
-                    await db.product_movements.bulkPut(res.movements);
-                }
-                await db.bank_statements.update(res.transactionId, {
-                    estado_conciliacion: res.status
-                });
-            }
-        }
-
-        toast.success("Simulación Big Bon completada: Datos reseteados, jerarquía creada y ventas procesadas con descomposiciones.");
-        }, variant: "outline", className: "text-amber-500" },
     { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
@@ -775,7 +674,7 @@ const handleExportCatalog = () => {
                   <Input placeholder="Buscar..." className="pl-10 h-10 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
               <div className="flex bg-muted/50 p-1 rounded-xl border w-full sm:w-auto overflow-x-auto no-scrollbar">
-                  {[{ id: 'all', label: 'Todos' }, { id: 'with_stock', label: 'Con Stock' }, { id: 'without_stock', label: 'Sin Stock' }].map((f) => (
+                  {[{ id: 'all', label: 'Todos' }, { id: 'with_stock', label: 'Con Stock' }, { id: 'without_stock', label: 'Sin Stock' }, { id: 'negative_stock', label: 'Negativo' }].map((f) => (
                       <button key={f.id} onClick={() => setStockFilter(f.id as any)} className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${stockFilter === f.id ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{f.label}</button>
                   ))}
               </div>
@@ -797,25 +696,25 @@ const handleExportCatalog = () => {
               <Table className="data-table">
               <TableHeader>
                   <TableRow>
-                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(sortedAndFiltered.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
-                  <TableHead className="sticky-column-1"><SortButton column="cod" label="Código" /></TableHead>
-                  <TableHead><SortButton column="descripcion" label="Descripción" /></TableHead>
-                  <TableHead><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
-                  <TableHead>Sugerencia</TableHead>
-                  <TableHead className="text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
-                  <TableHead className="text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
-                  <TableHead className="text-center">Comodín</TableHead>
-                  <TableHead className="text-center">Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
+                  <TableHead className="sticky top-0 left-0 bg-background z-30"><SortButton column="cod" label="Código" /></TableHead>
+                  <TableHead className="sticky top-0 left-[100px] bg-background z-30"><SortButton column="descripcion" label="Descripción" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20"><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20">Sugerencia</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center">Comodín</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center">Estado</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right">Acciones</TableHead>
                   </TableRow>
               </TableHeader>
               <TableBody>
-                  {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
+                  {paginatedResult.length === 0 && editingId !== 'NEW' ? (
                   <TableRow><TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">No hay productos.</TableCell></TableRow>
                   ) : (
                   <>
@@ -833,14 +732,14 @@ const handleExportCatalog = () => {
                           <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}><Check className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}><X className="w-4 h-4" /></Button></div></TableCell>
                       </TableRow>
                   )}
-                  {sortedAndFiltered.map((p) => {
+                  {paginatedResult.map((p) => {
                       const isEditing = editingId === p.cod;
                       const stats = inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
                       const isSelected = selectedProductIds.includes(p.cod);
                       return (
                       <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
                           <TableCell><input type="checkbox" checked={isSelected} onChange={(e) => { if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]); else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod)); }} /></TableCell>
-                          <TableCell className="sticky-column-1 font-mono text-xs font-bold text-primary">
+                          <TableCell className="sticky left-0 bg-background z-10 font-mono text-xs font-bold text-primary">
                               <div className="flex flex-col">
                                   <div className="flex items-center gap-1">
                                     <span>{p.cod}</span>
@@ -858,7 +757,7 @@ const handleExportCatalog = () => {
                                   {p.id_grupo && <span className="text-[10px] text-muted-foreground opacity-70">G: {p.id_grupo}</span>}
                               </div>
                           </TableCell>
-                          <TableCell>{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
+                          <TableCell className="sticky left-[100px] bg-background z-10">{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
                           <TableCell>{!isEditing && p.priceEffectivenessScore !== undefined && (<div className="flex items-center gap-2"><div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden"><div className={`h-full ${p.priceEffectivenessScore > 70 ? 'bg-green-500' : p.priceEffectivenessScore > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${p.priceEffectivenessScore}%` }} /></div><span className="text-xs font-black">{p.priceEffectivenessScore}</span></div>)}</TableCell>
                           <TableCell>{!isEditing && p.suggestedPrice && (<Tooltip><TooltipTrigger asChild><Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help"><Sparkles className="w-3 h-3" />{p.suggestedPrice}</Badge></TooltipTrigger><TooltipContent className="bg-popover text-popover-foreground border shadow-xl"><p className="text-xs max-w-xs">{p.suggestionReason}</p></TooltipContent></Tooltip>)}</TableCell>
                           <TableCell className="text-right">{isEditing ? (<Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" />) : (<div className="flex flex-col items-end"><span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>{p.precio_base_cents && (<span className="text-xs text-muted-foreground line-through">Base: {p.precio_base_cents}</span>)}</div>)}</TableCell>
@@ -881,18 +780,27 @@ const handleExportCatalog = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-              {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
+              {paginatedResult.length === 0 && editingId !== 'NEW' ? (
                   <div className="h-24 flex items-center justify-center text-muted-foreground uppercase font-black text-xs">No hay productos</div>
               ) : (
                   <>
                   {editingId === 'NEW' && <NewProductCard editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} />}
-                  {sortedAndFiltered.map(p => (
+                  {paginatedResult.map(p => (
                       <ProductCard key={p.cod} product={p} stats={inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 }} isEditing={editingId === p.cod} editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} onEdit={() => startEditing(p)} onDelete={() => handleDelete(p.cod)} />
                   ))}
                   </>
               )}
           </div>
         )}
+        <div className="flex items-center justify-between p-4 bg-background/50 border-t">
+            <div className="text-xs font-bold text-muted-foreground uppercase">
+                Página {currentPage} de {totalPages} ({sortedAndFiltered.length} productos)
+            </div>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="h-8 text-xs font-black uppercase tracking-widest">Anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="h-8 text-xs font-black uppercase tracking-widest">Siguiente</Button>
+            </div>
+        </div>
       </div>
       <BaseModal
         open={confirmation.open}
