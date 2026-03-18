@@ -6,9 +6,9 @@
       "filePath": "src/app/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_ui_DataDecryption_tsx",
         "src_components_views_TerminalShell_tsx",
-        "src_components_ui_CyberShell_tsx"
+        "src_components_ui_CyberShell_tsx",
+        "src_components_ui_DataDecryption_tsx"
       ]
     },
     {
@@ -17,14 +17,12 @@
       "filePath": "src/app/layout.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_providers_QueryProvider_tsx",
-        "src_components_providers_SyncProvider_tsx",
+        "src_components_theme-provider_tsx",
         "src_components_GlobalSessionManager_tsx",
         "src_components_providers_QueryProvider_tsx",
         "src_components_providers_SyncProvider_tsx",
         "src_components_ServiceWorkerRegister_tsx",
-        "src_components_IntelligentThemeHandler_tsx",
-        "src_components_theme-provider_tsx"
+        "src_components_IntelligentThemeHandler_tsx"
       ]
     },
     {
@@ -57,9 +55,9 @@
       "layer": "Application",
       "dependencies": [
         "src_lib_supabaseClient_ts",
-        "src_lib_cost-engine_index_ts",
         "src_lib_auth_ts",
-        "src_lib_data_costpro-reinicio_ts"
+        "src_lib_data_costpro-reinicio_ts",
+        "src_lib_cost-engine_index_ts"
       ]
     },
     {
@@ -142,8 +140,8 @@
       "layer": "Application",
       "dependencies": [
         "src_lib_supabaseClient_ts",
-        "src_lib_academy_sm2_ts",
-        "src_lib_auth_ts"
+        "src_lib_auth_ts",
+        "src_lib_academy_sm2_ts"
       ]
     },
     {
@@ -294,13 +292,13 @@
       "filePath": "src/app/system/health/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_ui_tabs_tsx",
-        "src_components_ui_progress_tsx",
+        "src_components_ui_scroll-area_tsx",
         "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_components_ui_scroll-area_tsx",
-        "src_components_ui_card_tsx",
-        "src_components_views_terminal_views_health_ArchitectureAuditTable_tsx"
+        "src_components_ui_progress_tsx",
+        "src_components_views_terminal_views_health_ArchitectureAuditTable_tsx",
+        "src_components_ui_tabs_tsx",
+        "src_components_ui_card_tsx"
       ]
     },
     {
@@ -316,11 +314,10 @@
       "filePath": "src/app/cashier/close-session/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_ui_BaseModal_tsx",
         "src_components_ui_button_tsx",
+        "src_components_ui_BaseModal_tsx",
         "src_store_index_ts",
-        "src_store_cart_ts",
-        "src_components_ui_card_tsx",
+        "src_components_ui_input_tsx",
         "src_types_index_ts",
         "src_components_ui_card_tsx",
         "src_store_cart_ts"
@@ -341,14 +338,13 @@
       "filePath": "src/app/demo/calculate/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_ui_button_tsx",
         "src_lib_cost-engine_types_ts",
         "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
-        "src_hooks_logic_useCostEngine_ts",
-        "src_components_ui_card_tsx",
-        "src_components_ui_table_tsx",
         "src_components_ui_input_tsx",
+        "src_hooks_logic_useCostEngine_ts",
+        "src_components_ui_table_tsx",
+        "src_components_ui_card_tsx",
         "src_components_ui_select_tsx"
       ]
     },
@@ -358,10 +354,10 @@
       "filePath": "src/app/login/page.tsx",
       "layer": "Application",
       "dependencies": [
-        "src_components_SplashScreen_tsx",
         "src_components_auth_WelcomeLandingView_tsx",
-        "src_components_CostProLogo_tsx",
-        "src_components_auth_LoginForm_tsx"
+        "src_components_auth_LoginForm_tsx",
+        "src_components_SplashScreen_tsx",
+        "src_components_CostProLogo_tsx"
       ]
     },
     {
@@ -379,8 +375,8 @@
       "filePath": "src/components/GlobalSessionManager.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_store_session-store_ts",
-        "src_hooks_logic_useSessionManager_ts"
+        "src_hooks_logic_useSessionManager_ts",
+        "src_store_session-store_ts"
       ]
     },
     {
@@ -405,8 +401,8 @@
       "filePath": "src/components/ThemeToggle.tsx",
       "layer": "UI Components",
       "dependencies": [
-        "src_store_index_ts",
         "src_components_ui_dropdown-menu_tsx",
+        "src_store_index_ts",
         "src_lib_utils_ts"
       ]
     },
@@ -431,7 +427,6 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_BaseModal_tsx",
-        "src_components_ui_atomic_index_tsx",
         "src_lib_sync_offline-storage_ts",
         "src_components_providers_SyncProvider_tsx",
         "src_components_ui_atomic_index_tsx"
@@ -444,7 +439,7 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_BaseModal_tsx",
-        "src_components_ui_atomic_index_tsx",
+        "src_store_index_ts",
         "src_hooks_api_useProducts_ts",
         "src_components_ui_atomic_index_tsx"
       ]
@@ -476,9 +471,9 @@
       "layer": "UI Components",
       "dependencies": [
         "src_components_ui_BaseModal_tsx",
-        "src_components_ui_atomic_index_tsx",
         "src_lib_utils_ts",
-        "src_types_index_ts"
+        "src_types_index_ts",
+        "src_components_ui_atomic_index_tsx"
       ]
     },
     {

@@ -27,21 +27,24 @@ const AnnexPreview = ({ data, isDark }: { data: any, isDark: boolean }) => {
     return (
         <div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-                {data.annexes.map((annex: any, idx: number) => (
-                    <div key={idx} className={cn("p-3 rounded-xl border flex flex-col gap-2", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
-                        <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-primary/20 rounded-md flex items-center justify-center text-[10px] font-bold text-primary">
-                                {annex.id}
+                {data.annexes.map((annex: any, idx: number) => {
+                    const items = annex.data || annex.items || [];
+                    return (
+                        <div key={idx} className={cn("p-3 rounded-xl border flex flex-col gap-2", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-primary/20 rounded-md flex items-center justify-center text-[10px] font-bold text-primary">
+                                    {annex.id}
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-tight opacity-80 truncate">
+                                    {annex.title || 'Desglose'}
+                                </p>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-tight opacity-80 truncate">
-                                {annex.title || 'Desglose'}
+                            <p className="text-[10px] font-bold text-primary">
+                                {items.length} ítems propuestos
                             </p>
                         </div>
-                        <p className="text-[10px] font-bold text-primary">
-                            {annex.data?.length || 0} ítems propuestos
-                        </p>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -72,12 +75,25 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
     };
 
     const extractUpdateData = (text: string) => {
-        const match = text.match(/(\`\`\`json_annex_update|\`\`\`json)\s*([\s\S]*?)(\`\`\`|$)/);
-        if (match && match[2]) {
-            try { return JSON.parse(match[2].trim()); } catch (e) { return repairJson(match[2].trim()); }
+        // Try multiple markers including common markdown variations
+        const markers = [/```json_annex_update\s*([\s\S]*?)```/, /```json\s*([\s\S]*?)```/, /```\s*([\s\S]*?)```/];
+
+        for (const marker of markers) {
+            const match = text.match(marker);
+            if (match && match[1]) {
+                const parsed = repairJson(match[1].trim());
+                if (parsed) return parsed;
+            }
         }
-        const jsonMatch = text.match(/\{[\s\S]*/);
-        if (jsonMatch) return repairJson(jsonMatch[0]);
+
+        // Fallback: search for first { and last }
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            const possibleJson = text.substring(firstBrace, lastBrace + 1);
+            return repairJson(possibleJson);
+        }
+
         return null;
     };
 
