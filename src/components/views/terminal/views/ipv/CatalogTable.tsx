@@ -140,16 +140,19 @@ export function CatalogTable() {
     return stats;
   }, [products, reports, reconciliationLines, productMovements]);
 
-  const sortedAndFiltered = React.useMemo(() => {
+    const sortedAndFiltered = React.useMemo(() => {
     let result = products?.filter(p =>
       p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.cod.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-    if (stockFilter !== 'all') {
+    if (stockFilter !== "all") {
         result = result.filter(p => {
             const stats = inventoryStats[p.cod] || { final: 0 };
-            return stockFilter === 'with_stock' ? stats.final > 0 : stats.final <= 0;
+            if (stockFilter === "with_stock") return stats.final > 0;
+            if (stockFilter === "without_stock") return stats.final === 0;
+            if (stockFilter === "negative_stock") return stats.final < 0;
+            return true;
         });
     }
 
@@ -157,7 +160,7 @@ export function CatalogTable() {
         result.sort((a, b) => {
             let aValue: any;
             let bValue: any;
-                        if (sortConfig.key === 'final_stock') {
+            if (sortConfig.key === 'final_stock') {
                 aValue = inventoryStats[a.cod]?.final || 0;
                 bValue = inventoryStats[b.cod]?.final || 0;
             } else if (sortConfig.key === 'sales') {
@@ -182,15 +185,16 @@ export function CatalogTable() {
             if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
+    }
+    return result;
+  }, [products, searchTerm, stockFilter, sortConfig, inventoryStats]);
+
   const paginatedResult = React.useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return sortedAndFiltered.slice(start, start + pageSize);
   }, [sortedAndFiltered, currentPage, pageSize]);
 
   const totalPages = Math.ceil(sortedAndFiltered.length / pageSize);
-    }
-    return result;
-  }, [products, searchTerm, stockFilter, sortConfig, inventoryStats]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -306,11 +310,9 @@ export function CatalogTable() {
                 const adjustment = Math.abs(currentNegative);
                 const newInitial = (p.stock_inicial_manual || 0) + adjustment;
                 await db.products.update(p.cod, {
-                priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
-                prioridad_algoritmo: autoPriority,
-                priorityMode: "auto",
-                ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
-            });
+                    stock_inicial_manual: newInitial,
+                    updated_at: new Date().toISOString()
+                });
             }
             toast.success('Existencias normalizadas exitosamente');
         } catch (error) {
@@ -516,11 +518,10 @@ export function CatalogTable() {
                     .reduce((sum, l) => sum + (l.cantidad || 0), 0);
 
                 await db.products.update(p.cod, {
-                priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
-                prioridad_algoritmo: autoPriority,
-                priorityMode: "auto",
-                ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
-            });
+                    ventas_qty_historico: sales,
+                    ventas_valor_historico: sales * p.precio_cents,
+                    updated_at: new Date().toISOString()
+                });
             }
 
             toast.success('Sincronización completa: Catálogo, Conciliaciones e IPV alineados.', { id: loadingToast });
