@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../../../../lib/dexie';
@@ -45,6 +47,22 @@ export default function MovementsView() {
     m.referencia_transaccion?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const exportToExcel = () => {
+    const data = filteredMovements?.map(m => ({
+        "Fecha": m.fecha,
+        "Producto Origen": m.producto_origen_cod,
+        "Producto Destino": m.producto_destino_cod,
+        "Cantidad Origen": m.cantidad_origen,
+        "Cantidad Destino": m.cantidad_destino,
+        "Tipo": m.tipo,
+        "Referencia": m.referencia_transaccion || ""
+    })) || [];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+    XLSX.writeFile(wb, `movimientos_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast.success("Excel de movimientos exportado");
+  };
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-background/50 p-4 border-b">
@@ -58,6 +76,9 @@ export default function MovementsView() {
           />
         </div>
         <div className="flex gap-2">
+           <Button variant="outline" size="sm" onClick={exportToExcel} className="text-green-600 border-green-200 hover:bg-green-50">
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar Excel
+           </Button>
            <Button variant="outline" size="sm" onClick={clearMovements} className="text-destructive border-destructive/20 hover:bg-destructive/10">
               <Trash2 className="w-4 h-4 mr-2" /> Vaciar Historial
            </Button>

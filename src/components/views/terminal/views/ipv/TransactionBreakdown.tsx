@@ -1,5 +1,7 @@
 'use client';
 
+import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/dexie';
@@ -56,6 +58,26 @@ export function TransactionBreakdown() {
       return matchesSearch && matchesClassification;
     }).sort((a, b) => b.fecha_operacion.localeCompare(a.fecha_operacion));
   }, [lines, txMap, productMap, searchTerm]);
+  const exportToExcel = () => {
+    const data = filteredLines.map(l => {
+        const prod = productMap.get(l.product_cod);
+        return {
+            "Fecha": l.fecha_operacion,
+            "Transacción Ref": l.transaction_ref,
+            "Producto": l.product_cod,
+            "Descripción": prod?.descripcion || "",
+            "Cantidad": l.cantidad,
+            "Precio Unit": l.precio_unitario_cents,
+            "Importe": l.importe_linea_cents,
+            "Tipo": l.clasificacion
+        };
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Desglose");
+    XLSX.writeFile(wb, `desglose_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast.success("Excel de desglose exportado");
+  };
 
   const total = useMemo(() => {
       return filteredLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
@@ -243,6 +265,7 @@ export function TransactionBreakdown() {
                         <span className="text-xs font-black text-muted-foreground uppercase leading-none">Total Filtrado</span>
                         <span className="text-sm font-black text-primary">{formatCurrency(total)}</span>
                     </div>
+                <Button variant="outline" size="sm" onClick={exportToExcel} className="h-11 px-4 rounded-xl border-green-500/20 bg-green-500/5 text-green-600 font-black uppercase tracking-widest text-xs gap-2 hover:bg-green-500 hover:text-foreground transition-all shadow-sm active:scale-95"><FileSpreadsheet className="w-4 h-4" /> Exportar Excel</Button>
                 </Badge>
             </div>
         </div>

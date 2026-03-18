@@ -13,6 +13,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -48,9 +49,11 @@ export function CatalogTable() {
   const [editForm, setEditForm] = useState<Partial<Product>>({});
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_layoutMode') as 'table' | 'cards') || 'table' : 'table'));
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_selectedProductIds') || '[]') : []));
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_sortConfig') || 'null') : null));
   const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_stockFilter') as any) || 'all' : 'all'));
+  const [pageSize, setPageSize] = useState(() => (typeof window !== "undefined" ? Number(localStorage.getItem("catalog_pageSize")) || 15 : 15));
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -75,6 +78,7 @@ export function CatalogTable() {
     localStorage.setItem('catalog_layoutMode', layoutMode);
     localStorage.setItem('catalog_sortConfig', JSON.stringify(sortConfig));
     localStorage.setItem('catalog_stockFilter', stockFilter);
+    localStorage.setItem('catalog_selectedProductIds', JSON.stringify(selectedProductIds));
   }, [searchTerm, layoutMode, sortConfig, stockFilter]);
 
   const user = useAuthStore(state => state.user);
@@ -86,7 +90,7 @@ export function CatalogTable() {
 
   React.useEffect(() => {
     if (products && products.length > 0 && selectedProductIds.length === 0) {
-        setSelectedProductIds(products.map(p => p.cod));
+        setSelectedProductIds(products.filter(p => p.stock_inicial_manual > 0).map(p => p.cod));
     }
   }, [products]);
 
@@ -178,6 +182,12 @@ export function CatalogTable() {
             if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
+  const paginatedResult = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedAndFiltered.slice(start, start + pageSize);
+  }, [sortedAndFiltered, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sortedAndFiltered.length / pageSize);
     }
     return result;
   }, [products, searchTerm, stockFilter, sortConfig, inventoryStats]);
@@ -295,7 +305,12 @@ export function CatalogTable() {
                 const currentNegative = stats.final;
                 const adjustment = Math.abs(currentNegative);
                 const newInitial = (p.stock_inicial_manual || 0) + adjustment;
-                await db.products.update(p.cod, { stock_inicial_manual: newInitial });
+                await db.products.update(p.cod, {
+                priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
+                prioridad_algoritmo: autoPriority,
+                priorityMode: "auto",
+                ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
+            });
             }
             toast.success('Existencias normalizadas exitosamente');
         } catch (error) {
@@ -433,7 +448,8 @@ export function CatalogTable() {
             const autoPriority = calculateDynamicPriority(p, { stock: stats.final, salesQty: stats.sales, salesValue: stats.sales * p.precio_cents });
             await db.products.update(p.cod, {
                 priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
-                prioridad_algoritmo: p.priorityMode === 'auto' || p.priorityMode === 'hybrid' ? autoPriority : p.prioridad_algoritmo,
+                prioridad_algoritmo: autoPriority,
+                priorityMode: "auto",
                 ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
             });
         }
@@ -500,10 +516,11 @@ export function CatalogTable() {
                     .reduce((sum, l) => sum + (l.cantidad || 0), 0);
 
                 await db.products.update(p.cod, {
-                    ventas_qty_historico: sales,
-                    ventas_valor_historico: sales * p.precio_cents,
-                    updated_at: new Date().toISOString()
-                });
+                priceEffectivenessScore: score, suggestedPrice: suggestion.price, suggestionReason: suggestion.reason, isWildcardCandidate: isWildcard,
+                prioridad_algoritmo: autoPriority,
+                priorityMode: "auto",
+                ventas_qty_historico: stats.sales, ventas_valor_historico: stats.sales * p.precio_cents
+            });
             }
 
             toast.success('Sincronización completa: Catálogo, Conciliaciones e IPV alineados.', { id: loadingToast });
@@ -627,126 +644,7 @@ const handleExportCatalog = () => {
   };
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
-    { id: "seed", label: "BIG BON Simulation", icon: Sparkles, onClick: async () => {
-        // 1. Reset Total
-        await db.bank_statements.clear();
-        await db.products.clear();
-        await db.matching_rules.clear();
-        await db.reconciliation_lines.clear();
-        await db.product_movements.clear();
 
-        // 2. Seed Big Bon Hierarchy
-        const products = [
-            {
-                cod: "2",
-                descripcion: "BIG BON CAJA",
-                id_grupo: "BIGBON",
-                cod_hijo: "3",
-                um: "CAJA",
-                precio_cents: 13825,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: true,
-                contenido_paquete: 8,
-                stock_inicial_manual: 5, // 5 Cajas iniciales
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            },
-            {
-                cod: "3",
-                descripcion: "BIG BON PQT",
-                id_grupo: "BIGBON",
-                cod_hijo: "4",
-                um: "PAQUETE",
-                precio_cents: 1730,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: true,
-                contenido_paquete: 40,
-                stock_inicial_manual: 0,
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            },
-            {
-                cod: "4",
-                descripcion: "BOMBON",
-                id_grupo: "BIGBON",
-                um: "UNIDADES",
-                precio_cents: 45,
-                prioridad_algoritmo: 1,
-                activo: true,
-                es_paquete: false,
-                contenido_paquete: 1,
-                stock_inicial_manual: 0,
-                created_at: new Date().toISOString(),
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            }
-        ];
-        await db.products.bulkPut(products as any);
-
-        // 3. Seed Matching Rules
-        await db.matching_rules.bulkPut([
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
-            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
-        ]);
-
-        // 4. Generate Pending Transactions that require decomposition
-        // Venta de 50 Bombones (necesita 1 PQT + 10 unidades, o 2 PQTs)
-        // Venta de 200 Bombones (necesita 5 PQTs)
-        const txs = [
-            {
-                referencia_origen: "TX-BIGBON-001",
-                fecha: new Date().toISOString().split('T')[0],
-                referencia_corta: "VENTA 50",
-                observaciones: "VENTA BOMBON X50",
-                importe_cents: 2250, // 50 * 45
-                tipo: 'Cr',
-                estado_conciliacion: 'PENDIENTE',
-                created_at: new Date().toISOString(),
-                ingestion_hash: 'hash1'
-            },
-            {
-                referencia_origen: "TX-BIGBON-002",
-                fecha: new Date().toISOString().split('T')[0],
-                referencia_corta: "VENTA 200",
-                observaciones: "VENTA BOMBON X200",
-                importe_cents: 9000, // 200 * 45
-                tipo: 'Cr',
-                estado_conciliacion: 'PENDIENTE',
-                created_at: new Date().toISOString(),
-                ingestion_hash: 'hash2'
-            }
-        ];
-        await db.bank_statements.bulkPut(txs as any);
-
-        // 5. Run Matching Engine
-        const engine = new MatchingEngine(products as any, [
-            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
-            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
-        ] as any);
-
-        const results = await engine.reconcileAll(txs as any);
-
-        // 6. Persist results
-        for (const res of results) {
-            if (res.status === 'COMPLETO' || res.status === 'PARCIAL') {
-                if (res.lines.length > 0) {
-                    await db.reconciliation_lines.bulkPut(res.lines);
-                }
-                if (res.movements && res.movements.length > 0) {
-                    await db.product_movements.bulkPut(res.movements);
-                }
-                await db.bank_statements.update(res.transactionId, {
-                    estado_conciliacion: res.status
-                });
-            }
-        }
-
-        toast.success("Simulación Big Bon completada: Datos reseteados, jerarquía creada y ventas procesadas con descomposiciones.");
-        }, variant: "outline", className: "text-amber-500" },
     { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
@@ -775,7 +673,7 @@ const handleExportCatalog = () => {
                   <Input placeholder="Buscar..." className="pl-10 h-10 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
               <div className="flex bg-muted/50 p-1 rounded-xl border w-full sm:w-auto overflow-x-auto no-scrollbar">
-                  {[{ id: 'all', label: 'Todos' }, { id: 'with_stock', label: 'Con Stock' }, { id: 'without_stock', label: 'Sin Stock' }].map((f) => (
+                  {[{ id: 'all', label: 'Todos' }, { id: 'with_stock', label: 'Con Stock' }, { id: 'without_stock', label: 'Sin Stock' }, { id: 'negative_stock', label: 'Negativo' }].map((f) => (
                       <button key={f.id} onClick={() => setStockFilter(f.id as any)} className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${stockFilter === f.id ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{f.label}</button>
                   ))}
               </div>
@@ -797,7 +695,7 @@ const handleExportCatalog = () => {
               <Table className="data-table">
               <TableHeader>
                   <TableRow>
-                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(sortedAndFiltered.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
+                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
                   <TableHead className="sticky-column-1"><SortButton column="cod" label="Código" /></TableHead>
                   <TableHead><SortButton column="descripcion" label="Descripción" /></TableHead>
                   <TableHead><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
@@ -815,7 +713,7 @@ const handleExportCatalog = () => {
                   </TableRow>
               </TableHeader>
               <TableBody>
-                  {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
+                  {paginatedResult.length === 0 && editingId !== 'NEW' ? (
                   <TableRow><TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">No hay productos.</TableCell></TableRow>
                   ) : (
                   <>
@@ -833,7 +731,7 @@ const handleExportCatalog = () => {
                           <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}><Check className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}><X className="w-4 h-4" /></Button></div></TableCell>
                       </TableRow>
                   )}
-                  {sortedAndFiltered.map((p) => {
+                  {paginatedResult.map((p) => {
                       const isEditing = editingId === p.cod;
                       const stats = inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
                       const isSelected = selectedProductIds.includes(p.cod);
@@ -881,12 +779,12 @@ const handleExportCatalog = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-              {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
+              {paginatedResult.length === 0 && editingId !== 'NEW' ? (
                   <div className="h-24 flex items-center justify-center text-muted-foreground uppercase font-black text-xs">No hay productos</div>
               ) : (
                   <>
                   {editingId === 'NEW' && <NewProductCard editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} />}
-                  {sortedAndFiltered.map(p => (
+                  {paginatedResult.map(p => (
                       <ProductCard key={p.cod} product={p} stats={inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 }} isEditing={editingId === p.cod} editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} onEdit={() => startEditing(p)} onDelete={() => handleDelete(p.cod)} />
                   ))}
                   </>
