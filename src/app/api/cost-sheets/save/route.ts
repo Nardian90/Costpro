@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     // Apply updates from AI with robust matching
     if (updateData.annexes && Array.isArray(updateData.annexes)) {
       updateData.annexes.forEach((update: any, updateIdx: number) => {
-        if (!update || !update.data) return;
+        const updateItems = update.data || update.items;
+        if (!update || !updateItems || !Array.isArray(updateItems)) return;
 
         const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
         const arabicToRoman: Record<string, string> = { "1": "I", "2": "II", "3": "III", "4": "IV", "5": "V" };
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
 
         if (annex) {
             // Normalize data items to ensure keys match UI expectations
-            annex.data = update.data.map((item: any) => {
+            annex.data = updateItems.map((item: any) => {
                 const normalized: any = { ...item };
 
                 // Common aliases mapping
