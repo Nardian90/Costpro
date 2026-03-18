@@ -20,8 +20,6 @@
         "src_components_providers_QueryProvider_tsx",
         "src_components_providers_SyncProvider_tsx",
         "src_components_GlobalSessionManager_tsx",
-        "src_components_providers_QueryProvider_tsx",
-        "src_components_providers_SyncProvider_tsx",
         "src_components_ServiceWorkerRegister_tsx",
         "src_components_IntelligentThemeHandler_tsx",
         "src_components_theme-provider_tsx"
@@ -94,8 +92,8 @@
       "filePath": "src/app/api/cost-sheets/calculate/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_cost-engine_schemas_ts",
-        "src_lib_cost-engine_index_ts"
+        "src_lib_cost-engine_index_ts",
+        "src_lib_cost-engine_schemas_ts"
       ]
     },
     {
@@ -104,8 +102,8 @@
       "filePath": "src/app/api/system-health/route.ts",
       "layer": "Application",
       "dependencies": [
-        "src_lib_release_gate_mri-engine_ts",
-        "src_lib_observability_health-engine_ts"
+        "src_lib_observability_health-engine_ts",
+        "src_lib_release_gate_mri-engine_ts"
       ]
     },
     {
@@ -322,8 +320,7 @@
         "src_store_cart_ts",
         "src_components_ui_card_tsx",
         "src_types_index_ts",
-        "src_components_ui_card_tsx",
-        "src_store_cart_ts"
+        "src_components_ui_input_tsx"
       ]
     },
     {
@@ -343,7 +340,6 @@
       "dependencies": [
         "src_components_ui_button_tsx",
         "src_lib_cost-engine_types_ts",
-        "src_components_ui_button_tsx",
         "src_components_ui_badge_tsx",
         "src_hooks_logic_useCostEngine_ts",
         "src_components_ui_card_tsx",
@@ -433,8 +429,7 @@
         "src_components_ui_BaseModal_tsx",
         "src_components_ui_atomic_index_tsx",
         "src_lib_sync_offline-storage_ts",
-        "src_components_providers_SyncProvider_tsx",
-        "src_components_ui_atomic_index_tsx"
+        "src_components_providers_SyncProvider_tsx"
       ]
     },
     {
@@ -446,7 +441,7 @@
         "src_components_ui_BaseModal_tsx",
         "src_components_ui_atomic_index_tsx",
         "src_hooks_api_useProducts_ts",
-        "src_components_ui_atomic_index_tsx"
+        "src_store_index_ts"
       ]
     },
     {
