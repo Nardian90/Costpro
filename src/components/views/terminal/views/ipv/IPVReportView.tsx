@@ -424,43 +424,61 @@ export function IPVReportView() {
     try {
         const wb = XLSX.utils.book_new();
 
-        const summaryData = reports.map(r => ({
-            "Fecha": r.fecha_reporte,
-            "Total Ventas": r.total_ventas_cents / 100,
-            "Efectivo": r.resumen_efectivo_cents / 100,
-            "Transferencias": r.resumen_transferencia_cents / 100,
-            "Estado": r.estado
+        // 1. Catalogo
+        const products = await db.products.toArray();
+        const catalogData = products.map(p => ({
+            "Código": p.cod,
+            "Descripción": p.descripcion,
+            "UM": p.um,
+            "Precio": p.precio_cents,
+            "Prioridad": p.prioridad_algoritmo,
+            "ID Grupo": p.id_grupo || "",
+            "Cód Hijo": p.cod_hijo || "",
+            "Activo": p.activo ? "SÍ" : "NO"
         }));
-        const wsSummary = XLSX.utils.json_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen de Reportes");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catalogData), "Catálogo");
 
-        const detailData: any[] = [];
-        reports.forEach(r => {
-            r.filas.forEach(f => {
-                detailData.push({
-                    "Fecha Reporte": r.fecha_reporte,
-                    "Código": f.cod,
-                    "Descripción": f.descripcion,
-                    "UM": f.um,
-                    "Saldo Inicial": f.saldo_inicial_qty,
-                    "Entradas": f.entrada_qty || 0,
-                    "Salidas": f.salida_qty || 0,
-                    "Ventas (Cant)": f.venta_cantidad_qty,
-                    "Precio Unitario": f.precio_unitario_cents / 100,
-                    "Importe Total": f.importe_cents / 100,
-                    "Existencia Final": f.existencia_final_qty
-                });
-            });
-        });
+        // 2. Transacciones
+        const transactions = await db.bank_statements.toArray();
+        const txData = transactions.map(t => ({
+            "Fecha": t.fecha,
+            "Referencia": t.referencia_origen,
+            "Observaciones": t.observaciones,
+            "Importe": t.importe_cents,
+            "Tipo": t.tipo,
+            "Estado": t.estado_conciliacion
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txData), "Transacciones");
 
-        if (detailData.length > 0) {
-            const wsDetail = XLSX.utils.json_to_sheet(detailData);
-            XLSX.utils.book_append_sheet(wb, wsDetail, "Detalle de Productos");
-        }
+        // 3. Desglose (Reconciliation Lines)
+        const lines = await db.reconciliation_lines.toArray();
+        const breakdownData = lines.map(l => ({
+            "Fecha": l.fecha_operacion,
+            "Transacción Ref": l.transaction_ref,
+            "Producto": l.product_cod,
+            "Cantidad": l.cantidad,
+            "Precio Unit": l.precio_unitario_cents,
+            "Importe": l.importe_linea_cents,
+            "Tipo": l.clasificacion
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(breakdownData), "Desglose");
+
+        // 4. Trazabilidad (Movements)
+        const movements = await db.product_movements.toArray();
+        const movementsData = movements.map(m => ({
+            "Fecha": m.fecha,
+            "Origen": m.producto_origen_cod,
+            "Destino": m.producto_destino_cod,
+            "Cant Origen": m.cantidad_origen,
+            "Cant Destino": m.cantidad_destino,
+            "Tipo": m.tipo,
+            "Referencia": m.referencia_transaccion || ""
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movementsData), "Trazabilidad");
 
         const timestamp = new Date().toISOString().split("T")[0];
-        XLSX.writeFile(wb, `IPV_REPORTES_INTEGRAL_${timestamp}.xlsx`);
-        toast.success("Excel integral exportado correctamente");
+        XLSX.writeFile(wb, `IPV_REPORTE_COMPLETO_${timestamp}.xlsx`);
+        toast.success("Reporte Excel Completo exportado correctamente");
     } catch (error) {
         console.error("Excel export error:", error);
         toast.error("Error al exportar a Excel");
@@ -602,6 +620,11 @@ export function IPVReportView() {
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button onClick={exportToExcel} variant="outline" className="h-9 text-xs font-black uppercase border-green-200 text-green-600 hover:bg-green-50">Exportar a Excel</Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Genera un archivo Excel con múltiples pestañas (Catálogo, Transacciones, Desglose, Trazabilidad).</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                  <TooltipTrigger asChild>
                       <Button onClick={exportRangePDF} variant="outline" className="h-9 text-xs font-black uppercase border-primary/20 text-primary hover:bg-primary/5">Exportar PDF (Rango)</Button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Genera un único archivo PDF que contiene todos los reportes individuales del rango seleccionado.</TooltipContent>
