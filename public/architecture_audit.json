@@ -112,12 +112,24 @@
         "components"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 3,
+      "phaseName": "Dependency Graph",
+      "startTime": "2026-03-19T08:09:21.022231+00:00Z",
+      "endTime": "2026-03-19T08:09:21.137109+00:00Z",
+      "durationMs": 114,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_graph"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 4721,
+    "averagePhaseDurationMs": 4261,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 42497
+    "lastCycleDurationMs": 42611
   }
 }
