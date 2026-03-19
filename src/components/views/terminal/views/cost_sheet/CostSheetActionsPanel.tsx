@@ -7,7 +7,7 @@ import {
   Download, Settings, Table2, LayoutGrid, ChevronDown,
   BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
   BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator,
-  LifeBuoy, GraduationCap
+  LifeBuoy, GraduationCap, Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -316,13 +316,14 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
               <AccordionGroup
                 title="Soporte y Herramientas"
-                isVisible={hasMatchingActions(['Calculadora Pro', 'Ayuda de esta vista', 'Ayuda del sistema', 'Academia'])}
+                isVisible={hasMatchingActions(['Calculadora Pro', 'Calculadora Estructura', 'Ayuda de esta vista', 'Ayuda del sistema', 'Academia'])}
                 isSearchActive={!!searchTerm}
                 icon={HelpCircle}
                 isOpen={openGroups.includes('soporte')}
                 onToggle={() => toggleGroup('soporte')}
               >
                 {('Calculadora Pro'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('calculator', 'Calculadora Pro', Calculator)}
+                {('Calculadora Estructura'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('steel-calculator', 'Calculadora Estructura', Scale, () => setActiveSection?.('steel-calculator'), 'outline', activeSection === 'steel-calculator')}
                 {('Ayuda de esta vista'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('help', 'Ayuda de esta vista', HelpCircle, onOpenHelp)}
                 {('Ayuda del sistema'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('system-help', 'Ayuda del sistema', LifeBuoy, onOpenSystemHelp)}
                 {('Academia'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('academy', 'Academia', GraduationCap, onOpenAcademy)}

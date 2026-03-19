@@ -19,6 +19,7 @@ import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { BaseModal } from "@/components/ui/BaseModal";
+import { SteelStructureCalculator } from './SteelStructureCalculator';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
 import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
@@ -777,6 +778,11 @@ const CostSheetView = () => {
                     {activeSection === 'massive-gen' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                              <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} />
+                        </div>
+                    )}
+                    {activeSection === 'steel-calculator' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <SteelStructureCalculator />
                         </div>
                     )}
                     </div>
