@@ -48,7 +48,7 @@ export function CostSheetFCDropdown({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "group relative flex items-center gap-2 px-4 h-11 rounded-xl transition-all outline-none shrink-0",
+            "group relative flex items-center gap-2 px-4 h-11 rounded-xl transition-all outline-none shrink-0 whitespace-nowrap",
             isAnyOptionActive
               ? "neu-inset-sm font-bold text-primary border-primary/40 shadow-none"
               : "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"

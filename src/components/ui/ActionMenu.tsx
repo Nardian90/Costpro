@@ -161,7 +161,9 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
             {actions.map((action) => (
               <React.Fragment key={action.id}>
                 {action.component ? (
-                    action.component
+                    <div className="shrink-0 flex items-center justify-center">
+                        {action.component}
+                    </div>
                 ) : (
                   <Tooltip delayDuration={300}>
                     <TooltipTrigger asChild>

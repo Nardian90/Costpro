@@ -22,7 +22,7 @@ export function CostSheetGenerateDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all outline-none"
+          className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
         >
           <Sparkles className="w-3.5 h-3.5 text-primary" />
           <span className="text-[10px] font-black uppercase tracking-widest text-primary group-hover:text-primary transition-colors">
