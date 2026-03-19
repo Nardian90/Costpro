@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   // Ensure jspdf and fflate are treated as external packages to avoid Turbopack bundling issues
-  serverExternalPackages: ["jspdf", "fflate"],
+  // pdf-parse is also added to avoid unexpected filesystem tracing by Turbopack
+  serverExternalPackages: ["jspdf", "fflate", "pdf-parse"],
   async headers() {
     return [
       {
