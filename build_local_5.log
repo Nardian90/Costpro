@@ -1,0 +1,46 @@
+$ NODE_OPTIONS='--max-old-space-size=450' next build && mkdir -p .next/standalone/.next/static && (cp -r .next/static/. .next/standalone/.next/static 2>/dev/null || true) && mkdir -p .next/standalone/public && (cp -r public/. .next/standalone/public 2>/dev/null || true) && mkdir -p .next/standalone/knowledge && (cp -r knowledge/. .next/standalone/knowledge 2>/dev/null || true)
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 30.0s
+  Running TypeScript ...
+
+<--- Last few GCs --->
+
+[9908:0x6f2e000]    12077 ms: Mark-Compact (reduce) 449.6 (461.6) -> 448.4 (459.1) MB, pooled: 0 MB, 584.14 / 0.00 ms  (+ 0.2 ms in 0 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 607 ms) (average mu = 0.162, current m
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xe42d60 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 2: 0x121ddd0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 3: 0x121e0a7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 4: 0x144ba05  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 5: 0x1465299 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 6: 0x1439948 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 7: 0x143a875 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 8: 0x141354e v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 9: 0x18740bc v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+10: 0x1dd1476  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+Next.js build worker exited with code: null and signal: SIGABRT
+error: script "build" exited with code 1
