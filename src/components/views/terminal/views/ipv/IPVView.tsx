@@ -24,7 +24,7 @@ import {
   Table2,
   Cpu,
   Zap,
-  BarChart4,
+  BarChart4, Wand2,
   PackageSearch,
   FileSearch,
   Receipt,
@@ -39,6 +39,7 @@ import MovementsView from './MovementsView';
 import { MatchingSimulation } from './MatchingSimulation';
 import { TransactionBreakdown } from './TransactionBreakdown';
 import { IPVReportView } from './IPVReportView';
+import { IntelligentReceiptsSection } from './IntelligentReceipts/IntelligentReceiptsSection';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
@@ -395,6 +396,7 @@ export default function IPVView() {
     { id: 'rules', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules'), active: activeTab === 'rules' },
     { id: 'sim', label: 'Simulación', icon: Zap, onClick: () => setActiveTab('sim'), active: activeTab === 'sim' },
     { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
+    { id: 'intelligent-receipts', label: 'Recepciones', icon: Wand2, onClick: () => setActiveTab('intelligent-receipts'), active: activeTab === 'intelligent-receipts' },
     { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
     { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
@@ -664,6 +666,12 @@ export default function IPVView() {
           {activeTab === 'reports' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <IPVReportView />
+            </div>
+          )}
+
+          {activeTab === 'intelligent-receipts' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <IntelligentReceiptsSection />
             </div>
           )}
 
