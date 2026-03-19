@@ -75,7 +75,7 @@ export function IntelligentReceiptsSection() {
                         Simular
                     </Button>
                     <Button
-                        variant="success"
+                        variant="default"
                         onClick={handleApply}
                         disabled={!simulationResult || isApplying || simulationResult.receipts.length === 0}
                         className="font-bold bg-green-600 hover:bg-green-700 text-white"
