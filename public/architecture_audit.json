@@ -112,12 +112,36 @@
         "components"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 3,
+      "phaseName": "Dependency Graph",
+      "startTime": "2026-03-19T02:03:46.405156+00:00Z",
+      "endTime": "2026-03-19T02:03:46.519099+00:00Z",
+      "durationMs": 113,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_graph"
+      ],
+      "cycle": 1
+    },
+    {
+      "phase": 4,
+      "phaseName": "Git Change Intelligence",
+      "startTime": "2026-03-19T02:08:36.098129+00:00Z",
+      "endTime": "2026-03-19T02:08:36.207090+00:00Z",
+      "durationMs": 108,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_changes"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 4721,
+    "averagePhaseDurationMs": 3883,
     "slowestPhase": 1,
     "fastestPhase": 3,
-    "lastCycleDurationMs": 42497
+    "lastCycleDurationMs": 42718
   }
 }
