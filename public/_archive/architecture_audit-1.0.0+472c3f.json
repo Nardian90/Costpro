@@ -148,37 +148,13 @@
         "architecture_metrics"
       ],
       "cycle": 1
-    },
-    {
-      "phase": 6,
-      "phaseName": "Architecture Health",
-      "startTime": "2026-03-20T08:27:04.784735+00:00Z",
-      "endTime": "2026-03-20T08:27:04.932912+00:00Z",
-      "durationMs": 148,
-      "status": "success",
-      "artifactsGenerated": [
-        "architecture_audit"
-      ],
-      "cycle": 1
-    },
-    {
-      "phase": 6,
-      "phaseName": "Architecture Health",
-      "startTime": "2026-03-20T08:27:48.662063+00:00Z",
-      "endTime": "2026-03-20T08:27:48.794128+00:00Z",
-      "durationMs": 132,
-      "status": "success",
-      "artifactsGenerated": [
-        "architecture_audit"
-      ],
-      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 3078,
+    "averagePhaseDurationMs": 3567,
     "slowestPhase": 1,
     "fastestPhase": 5,
-    "lastCycleDurationMs": 43093
+    "lastCycleDurationMs": 42813
   },
   "healthMetrics": {
     "integrityScore": 73.0,
@@ -191,6 +167,6 @@
       ],
       "orphanCount": 17
     },
-    "updatedAt": "2026-03-20T08:27:48.774157+00:00Z"
+    "updatedAt": "2026-03-20T08:27:04.917793+00:00Z"
   }
 }
