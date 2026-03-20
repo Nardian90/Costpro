@@ -22,7 +22,7 @@ PHASE_DEFINITIONS = {
     3: {"name": "Dependency Graph", "engine": "static", "outputs": ["architecture_graph"]},
     4: {"name": "Git Change Intelligence", "engine": "static", "outputs": ["architecture_changes"]},
     5: {"name": "Architecture Metrics", "engine": "static", "outputs": ["architecture_metrics"]},
-    6: {"name": "Architecture Health", "engine": "static", "outputs": ["architecture_audit"]},
+    6: {"name": "Architecture Health", "engine": "static", "outputs": ["architecture_health"]},
     7: {"name": "Business Logic Extraction", "engine": "ai", "outputs": ["components"]},
     8: {"name": "View Flow Mapping", "engine": "ai", "outputs": ["views"]},
     9: {"name": "Workflow Detection", "engine": "ai", "outputs": ["workflows"]},
@@ -128,9 +128,11 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
     if not dry_run:
         script_map = {
             1: "scripts/phase_1_discovery.py",
+            2: "scripts/maintenance/domain_classifier.py",
             3: "scripts/phase_3_dependency_graph.py",
             4: "scripts/phase_4_git_intelligence.py",
-            2: "scripts/maintenance/domain_classifier.py",
+            5: "scripts/phase_5_metrics.py",
+            6: "scripts/phase_6_health.py",
             13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py"
         }

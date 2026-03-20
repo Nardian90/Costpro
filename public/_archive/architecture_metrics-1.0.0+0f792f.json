@@ -1,0 +1,4797 @@
+{
+  "timestamp": "2026-03-20T02:27:19.017488+00:00Z",
+  "summary": {
+    "totalComponents": 435,
+    "averageCoupling": 5.96,
+    "maxFanIn": 185,
+    "maxFanOut": 37,
+    "maxDepth": 8
+  },
+  "components": [
+    {
+      "id": "src_app_page_tsx",
+      "filePath": "src/app/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 8
+      }
+    },
+    {
+      "id": "src_app_layout_tsx",
+      "filePath": "src/app/layout.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 6,
+        "coupling": 6,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_app_cost-sheets_page_tsx",
+      "filePath": "src/app/cost-sheets/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_app_api_route_ts",
+      "filePath": "src/app/api/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_import-anexo_route_ts",
+      "filePath": "src/app/api/cost-sheets/import-anexo/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_save_route_ts",
+      "filePath": "src/app/api/cost-sheets/save/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_export-pdf_route_ts",
+      "filePath": "src/app/api/cost-sheets/export-pdf/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_import-json_route_ts",
+      "filePath": "src/app/api/cost-sheets/import-json/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_ai_chat_route_ts",
+      "filePath": "src/app/api/cost-sheets/ai/chat/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_api_cost-sheets_calculate_route_ts",
+      "filePath": "src/app/api/cost-sheets/calculate/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_system-health_route_ts",
+      "filePath": "src/app/api/system-health/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_app_api_system-health_knowledge_route_ts",
+      "filePath": "src/app/api/system-health/knowledge/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_api_reports_generate_route_ts",
+      "filePath": "src/app/api/reports/generate/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_app_api_academy_review_route_ts",
+      "filePath": "src/app/api/academy/review/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_academy_review_[cardId]_route_ts",
+      "filePath": "src/app/api/academy/review/[cardId]/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_academy_generate_route_ts",
+      "filePath": "src/app/api/academy/generate/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_api_inventory_route_ts",
+      "filePath": "src/app/api/inventory/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_inventory_adjust_route_ts",
+      "filePath": "src/app/api/inventory/adjust/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_inventory_[productId]_history_route_ts",
+      "filePath": "src/app/api/inventory/[productId]/history/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_inventory_products_route_ts",
+      "filePath": "src/app/api/inventory/products/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_inventory_adjustments_route_ts",
+      "filePath": "src/app/api/inventory/adjustments/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_bot_chat_route_ts",
+      "filePath": "src/app/api/bot/chat/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_api_users_reset-password_route_ts",
+      "filePath": "src/app/api/users/reset-password/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_users_toggle-status_route_ts",
+      "filePath": "src/app/api/users/toggle-status/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_users_delete_route_ts",
+      "filePath": "src/app/api/users/delete/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_users_managed-create_route_ts",
+      "filePath": "src/app/api/users/managed-create/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_app_api_sync_batch_route_ts",
+      "filePath": "src/app/api/sync/batch/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_api_rss_route_ts",
+      "filePath": "src/app/api/rss/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_app_api_logs_route_ts",
+      "filePath": "src/app/api/logs/route.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_verify-dashboard_page_tsx",
+      "filePath": "src/app/verify-dashboard/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_app_system_health_page_tsx",
+      "filePath": "src/app/system/health/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_wiki_page_tsx",
+      "filePath": "src/app/wiki/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_app_cashier_close-session_page_tsx",
+      "filePath": "src/app/cashier/close-session/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_demo_executive_page_tsx",
+      "filePath": "src/app/demo/executive/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_app_demo_calculate_page_tsx",
+      "filePath": "src/app/demo/calculate/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 8,
+        "coupling": 8,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_app_login_page_tsx",
+      "filePath": "src/app/login/page.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_IntelligentThemeHandler_tsx",
+      "filePath": "src/components/IntelligentThemeHandler.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_GlobalSessionManager_tsx",
+      "filePath": "src/components/GlobalSessionManager.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_theme-provider_tsx",
+      "filePath": "src/components/theme-provider.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_SplashScreen_tsx",
+      "filePath": "src/components/SplashScreen.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_components_ThemeToggle_tsx",
+      "filePath": "src/components/ThemeToggle.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 3,
+        "coupling": 7,
+        "instability": 0.429,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_CostProLogo_tsx",
+      "filePath": "src/components/CostProLogo.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 0,
+        "coupling": 4,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ServiceWorkerRegister_tsx",
+      "filePath": "src/components/ServiceWorkerRegister.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_modals_SyncConflictModal_tsx",
+      "filePath": "src/components/modals/SyncConflictModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_modals_CreateProductModal_tsx",
+      "filePath": "src/components/modals/CreateProductModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_modals_BarcodeScanner_tsx",
+      "filePath": "src/components/modals/BarcodeScanner.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_modals_UpgradeModal_tsx",
+      "filePath": "src/components/modals/UpgradeModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_modals_PriceSelectorModal_tsx",
+      "filePath": "src/components/modals/PriceSelectorModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_providers_SyncProvider_tsx",
+      "filePath": "src/components/providers/SyncProvider.tsx",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 1,
+        "coupling": 7,
+        "instability": 0.143,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_providers_QueryProvider_tsx",
+      "filePath": "src/components/providers/QueryProvider.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_TerminalShell_tsx",
+      "filePath": "src/components/views/TerminalShell.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 18,
+        "coupling": 19,
+        "instability": 0.947,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_executive-demo_ExecutiveDemoView_tsx",
+      "filePath": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_Sidebar_tsx",
+      "filePath": "src/components/views/terminal/Sidebar.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_Header_tsx",
+      "filePath": "src/components/views/terminal/Header.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_SystemDependencyGraph_tsx",
+      "filePath": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_AuditSummary_tsx",
+      "filePath": "src/components/views/terminal/views/health/AuditSummary.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_SecurityMetrics_tsx",
+      "filePath": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_HealthStatusHeader_tsx",
+      "filePath": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_SystemHealthView_tsx",
+      "filePath": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 17,
+        "coupling": 17,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_ArchitectureAuditTable_tsx",
+      "filePath": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_ReleaseGateStatus_tsx",
+      "filePath": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_ViewNavigator_tsx",
+      "filePath": "src/components/views/terminal/views/health/ViewNavigator.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_HealthAgentLogs_tsx",
+      "filePath": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 5,
+        "coupling": 5,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_DetailedRelationshipGraph_tsx",
+      "filePath": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_InfrastructureMetrics_tsx",
+      "filePath": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_health_ApplicationMetrics_tsx",
+      "filePath": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wallet_WalletView_tsx",
+      "filePath": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wallet_components_AnalyticsDashboard_tsx",
+      "filePath": "src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_catalog_CatalogModals_tsx",
+      "filePath": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_catalog_CatalogView_tsx",
+      "filePath": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 14,
+        "coupling": 14,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_settings_SettingsView_tsx",
+      "filePath": "src/components/views/terminal/views/settings/SettingsView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_dashboard_DashboardView_tsx",
+      "filePath": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 9,
+        "coupling": 9,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_dashboard_useDashboardView_ts",
+      "filePath": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_dashboard_ConcentricDashboardRing_tsx",
+      "filePath": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_dashboard_ExecutiveKpiCards_tsx",
+      "filePath": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_dashboard_RecentCostSheets_tsx",
+      "filePath": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_reports_ReportConfigPanel_tsx",
+      "filePath": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 13,
+        "coupling": 14,
+        "instability": 0.929,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_reports_ReportPreview_tsx",
+      "filePath": "src/components/views/terminal/views/reports/ReportPreview.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_reports_ReportsView_tsx",
+      "filePath": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 9,
+        "coupling": 9,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_reports_AuditLogsModal_tsx",
+      "filePath": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_stores_StoresManagementView_tsx",
+      "filePath": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 5,
+        "coupling": 5,
+        "instability": 1.0,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_stores_useStoresView_ts",
+      "filePath": "src/components/views/terminal/views/stores/useStoresView.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 6,
+        "coupling": 8,
+        "instability": 0.75,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_stores_StoreModals_tsx",
+      "filePath": "src/components/views/terminal/views/stores/StoreModals.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_academy_MasteryDashboard_tsx",
+      "filePath": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_academy_AcademyView_tsx",
+      "filePath": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 6,
+        "coupling": 6,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_academy_Flashcard_tsx",
+      "filePath": "src/components/views/terminal/views/academy/Flashcard.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_transfers_CreateTransferModal_tsx",
+      "filePath": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_transfers_TransferenciasView_tsx",
+      "filePath": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_transfers_TransferDetailsModal_tsx",
+      "filePath": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_HelpView_tsx",
+      "filePath": "src/components/views/terminal/views/help/HelpView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 20,
+        "coupling": 20,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_KidsOnboarding_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_StickyCartFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_MobilePosDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_IpvFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_SecurityFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_UserFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_QuickModeMassiveDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_CostFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_RolesDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_OfflineSyncDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_InventoryFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_MobileFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_CashFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_InventoryAdjustmentFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_StoreSkuDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_DarianDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_help_help_SalesFlowDiagram_tsx",
+      "filePath": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_InventoryCardView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_InventoryAdjustmentsView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 6,
+        "coupling": 6,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_InventoryAdjustmentModal_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_ProductReceptionView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 11,
+        "coupling": 12,
+        "instability": 0.917,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_InventoryTableView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_InventoryView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 15,
+        "coupling": 15,
+        "instability": 1.0,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cash_closure_CashClosureView_tsx",
+      "filePath": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_sales_TaxCalculationModal_tsx",
+      "filePath": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_sales_SalesHistoryView_tsx",
+      "filePath": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_sales_TransactionDetailsModal_tsx",
+      "filePath": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_sales_useSalesHistoryView_ts",
+      "filePath": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_receptions_ReceptionDetailsModal_tsx",
+      "filePath": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_receptions_ReceptionsHistoryView_tsx",
+      "filePath": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_receptions_useReceptionsHistoryView_ts",
+      "filePath": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_stock_history_StockHistoryView_tsx",
+      "filePath": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 6,
+        "coupling": 6,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 32,
+        "coupling": 32,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVRightSidebar_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_TransactionBreakdown_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_ActionBadges_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/ActionBadges.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_TransactionTable_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 19,
+        "coupling": 20,
+        "instability": 0.95,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_AddTransactionModal_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/AddTransactionModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IncomeReceiptPreview_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_MovementsView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/MovementsView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IncomeReceiptSection_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVPreviewModal_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 9,
+        "coupling": 10,
+        "instability": 0.9,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_MatchingTracePopover_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/MatchingTracePopover.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVReportView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 10,
+        "coupling": 11,
+        "instability": 0.909,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_MatchingAuditView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IngestionErrorsTable_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_TransferQRReportView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 10,
+        "coupling": 11,
+        "instability": 0.909,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_ManualReconciliationView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_MatchingRulesEditor_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_MatchingSimulation_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_RuleMetaEditor_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/RuleMetaEditor.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVReportsDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_PivotStatementView_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_BankIngestion_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 10,
+        "coupling": 11,
+        "instability": 0.909,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVInstitutionalDashboard_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_CatalogTable_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 21,
+        "coupling": 22,
+        "instability": 0.955,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVHelpDialog_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_ipv_IPVControlPanel_tsx",
+      "filePath": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_count_InventoryCountCardView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+      "filePath": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 10,
+        "coupling": 12,
+        "instability": 0.833,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_data-loader_ts",
+      "filePath": "src/components/views/terminal/views/wiki/data-loader.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_CuentasModule_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/CuentasModule.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_AsientosModule_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/AsientosModule.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_WikiBreadcrumbs_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/WikiBreadcrumbs.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_WikiSearch_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/WikiSearch.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_types_ts",
+      "filePath": "src/components/views/terminal/views/wiki/types.ts",
+      "metrics": {
+        "fanIn": 8,
+        "fanOut": 0,
+        "coupling": 8,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_WikiView_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/WikiView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 12,
+        "coupling": 12,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_WikiSidebar_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/WikiSidebar.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_wiki_ClasificadorModule_tsx",
+      "filePath": "src/components/views/terminal/views/wiki/ClasificadorModule.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_pos_POSTableView_tsx",
+      "filePath": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_pos_usePOSView_ts",
+      "filePath": "src/components/views/terminal/views/pos/usePOSView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_pos_POSView_tsx",
+      "filePath": "src/components/views/terminal/views/pos/POSView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 21,
+        "coupling": 21,
+        "instability": 1.0,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_pos_POSCart_tsx",
+      "filePath": "src/components/views/terminal/views/pos/POSCart.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 9,
+        "coupling": 10,
+        "instability": 0.9,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_pos_StickyCartSummary_tsx",
+      "filePath": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditEventIcon_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 1,
+        "coupling": 5,
+        "instability": 0.2,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditFilters_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditFilters.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditTableView_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditTimeline_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 3,
+        "coupling": 5,
+        "instability": 0.6,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_useAuditLogsView_ts",
+      "filePath": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditEventCard_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditEventMeta_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_audit_AuditLogsView_tsx",
+      "filePath": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 12,
+        "coupling": 12,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetAuditView_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSidebarNav_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 5,
+        "coupling": 7,
+        "instability": 0.714,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetFormulaGuide_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetGenerateDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_FormulaEditor_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 5,
+        "coupling": 7,
+        "instability": 0.714,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CircularProgress_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetCalculator_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_ProductInventoryPicker_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetBanner_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetAuditLog_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetMasterRing_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetActionsPanel_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetView_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 37,
+        "coupling": 37,
+        "instability": 1.0,
+        "dependencyDepth": 8
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetAnnexes_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetHelpDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSummary_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetNav_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetOptionsDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetHeader_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetQuickMode_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetBottomNav_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetNarrative_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSignature_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 6,
+        "coupling": 8,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_HealthBattery_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetTemplateExplorer_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 18,
+        "coupling": 19,
+        "instability": 0.947,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetForm_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 6,
+        "coupling": 6,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_FormulaBuilder_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetCardView_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 11,
+        "coupling": 12,
+        "instability": 0.917,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetMassiveGenerator_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 18,
+        "coupling": 19,
+        "instability": 0.947,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSidePanel_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetBody_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_DarianEditor_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetHeaderEditor_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 5,
+        "coupling": 7,
+        "instability": 0.714,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetFCDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetWizard_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 7
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetInteractiveTable_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 13,
+        "coupling": 15,
+        "instability": 0.867,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 11,
+        "coupling": 13,
+        "instability": 0.846,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSectionActionsPanel_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 3,
+        "coupling": 5,
+        "instability": 0.6,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetPreview_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetSignatureEditor_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetModeDropdown_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 2,
+        "coupling": 6,
+        "instability": 0.333,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_cost_sheet_CostSheetHelpPanel_tsx",
+      "filePath": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_UserFormModal_tsx",
+      "filePath": "src/components/views/terminal/views/users/UserFormModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_useUsersView_ts",
+      "filePath": "src/components/views/terminal/views/users/useUsersView.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_UsersManagementView_tsx",
+      "filePath": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 8,
+        "coupling": 8,
+        "instability": 1.0,
+        "dependencyDepth": 6
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_RoleForm_tsx",
+      "filePath": "src/components/views/terminal/views/users/RoleForm.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_RolesManagementView_tsx",
+      "filePath": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 7,
+        "coupling": 7,
+        "instability": 1.0,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_users_UserForm_tsx",
+      "filePath": "src/components/views/terminal/views/users/UserForm.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_rss_RSSManagementView_tsx",
+      "filePath": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 3,
+        "coupling": 3,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_rss_NewsView_tsx",
+      "filePath": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_legal_LegalPdfExporter_ts",
+      "filePath": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_legal_LegalModelForm_tsx",
+      "filePath": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_legal_LegalConsultant_tsx",
+      "filePath": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_views_terminal_views_legal_LegalView_tsx",
+      "filePath": "src/components/views/terminal/views/legal/LegalView.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_ui_skeleton_tsx",
+      "filePath": "src/components/ui/skeleton.tsx",
+      "metrics": {
+        "fanIn": 11,
+        "fanOut": 1,
+        "coupling": 12,
+        "instability": 0.083,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_DataDecryption_tsx",
+      "filePath": "src/components/ui/DataDecryption.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_accordion_tsx",
+      "filePath": "src/components/ui/accordion.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 1,
+        "coupling": 5,
+        "instability": 0.2,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_ViewSwitcher_tsx",
+      "filePath": "src/components/ui/ViewSwitcher.tsx",
+      "metrics": {
+        "fanIn": 5,
+        "fanOut": 1,
+        "coupling": 6,
+        "instability": 0.167,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_hover-card_tsx",
+      "filePath": "src/components/ui/hover-card.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_LazyRender_tsx",
+      "filePath": "src/components/ui/LazyRender.tsx",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_command_tsx",
+      "filePath": "src/components/ui/command.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_resizable_tsx",
+      "filePath": "src/components/ui/resizable.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_QueryInspector_tsx",
+      "filePath": "src/components/ui/QueryInspector.tsx",
+      "metrics": {
+        "fanIn": 7,
+        "fanOut": 2,
+        "coupling": 9,
+        "instability": 0.222,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_SearchBar_tsx",
+      "filePath": "src/components/ui/SearchBar.tsx",
+      "metrics": {
+        "fanIn": 11,
+        "fanOut": 1,
+        "coupling": 12,
+        "instability": 0.083,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_dropdown-menu_tsx",
+      "filePath": "src/components/ui/dropdown-menu.tsx",
+      "metrics": {
+        "fanIn": 9,
+        "fanOut": 1,
+        "coupling": 10,
+        "instability": 0.1,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_separator_tsx",
+      "filePath": "src/components/ui/separator.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_MobileSafeContainer_tsx",
+      "filePath": "src/components/ui/MobileSafeContainer.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_pagination_tsx",
+      "filePath": "src/components/ui/pagination.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_alert-dialog_tsx",
+      "filePath": "src/components/ui/alert-dialog.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_input-otp_tsx",
+      "filePath": "src/components/ui/input-otp.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_alert_tsx",
+      "filePath": "src/components/ui/alert.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_CyberShell_tsx",
+      "filePath": "src/components/ui/CyberShell.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_popover_tsx",
+      "filePath": "src/components/ui/popover.tsx",
+      "metrics": {
+        "fanIn": 8,
+        "fanOut": 1,
+        "coupling": 9,
+        "instability": 0.111,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_table_tsx",
+      "filePath": "src/components/ui/table.tsx",
+      "metrics": {
+        "fanIn": 19,
+        "fanOut": 1,
+        "coupling": 20,
+        "instability": 0.05,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_progress_tsx",
+      "filePath": "src/components/ui/progress.tsx",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 1,
+        "coupling": 7,
+        "instability": 0.143,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_select_tsx",
+      "filePath": "src/components/ui/select.tsx",
+      "metrics": {
+        "fanIn": 7,
+        "fanOut": 1,
+        "coupling": 8,
+        "instability": 0.125,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_sonner_tsx",
+      "filePath": "src/components/ui/sonner.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_LoadingOverlay_tsx",
+      "filePath": "src/components/ui/LoadingOverlay.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_textarea_tsx",
+      "filePath": "src/components/ui/textarea.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_PWAInstallModal_tsx",
+      "filePath": "src/components/ui/PWAInstallModal.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_toggle_tsx",
+      "filePath": "src/components/ui/toggle.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_StateRenderer_tsx",
+      "filePath": "src/components/ui/StateRenderer.tsx",
+      "metrics": {
+        "fanIn": 11,
+        "fanOut": 1,
+        "coupling": 12,
+        "instability": 0.083,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_Portal_tsx",
+      "filePath": "src/components/ui/Portal.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_toggle-group_tsx",
+      "filePath": "src/components/ui/toggle-group.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_scroll-area_tsx",
+      "filePath": "src/components/ui/scroll-area.tsx",
+      "metrics": {
+        "fanIn": 12,
+        "fanOut": 1,
+        "coupling": 13,
+        "instability": 0.077,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_label_tsx",
+      "filePath": "src/components/ui/label.tsx",
+      "metrics": {
+        "fanIn": 14,
+        "fanOut": 1,
+        "coupling": 15,
+        "instability": 0.067,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_chart_tsx",
+      "filePath": "src/components/ui/chart.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_sidebar_tsx",
+      "filePath": "src/components/ui/sidebar.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 8,
+        "coupling": 8,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_tabs_tsx",
+      "filePath": "src/components/ui/tabs.tsx",
+      "metrics": {
+        "fanIn": 5,
+        "fanOut": 1,
+        "coupling": 6,
+        "instability": 0.167,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_BaseModal_tsx",
+      "filePath": "src/components/ui/BaseModal.tsx",
+      "metrics": {
+        "fanIn": 23,
+        "fanOut": 2,
+        "coupling": 25,
+        "instability": 0.08,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_switch_tsx",
+      "filePath": "src/components/ui/switch.tsx",
+      "metrics": {
+        "fanIn": 7,
+        "fanOut": 1,
+        "coupling": 8,
+        "instability": 0.125,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_checkbox_tsx",
+      "filePath": "src/components/ui/checkbox.tsx",
+      "metrics": {
+        "fanIn": 5,
+        "fanOut": 1,
+        "coupling": 6,
+        "instability": 0.167,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_context-menu_tsx",
+      "filePath": "src/components/ui/context-menu.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_badge_tsx",
+      "filePath": "src/components/ui/badge.tsx",
+      "metrics": {
+        "fanIn": 34,
+        "fanOut": 1,
+        "coupling": 35,
+        "instability": 0.029,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_CostProLoader_tsx",
+      "filePath": "src/components/ui/CostProLoader.tsx",
+      "metrics": {
+        "fanIn": 13,
+        "fanOut": 1,
+        "coupling": 14,
+        "instability": 0.071,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_calendar_tsx",
+      "filePath": "src/components/ui/calendar.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_toaster_tsx",
+      "filePath": "src/components/ui/toaster.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_ui_navigation-menu_tsx",
+      "filePath": "src/components/ui/navigation-menu.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_ActionMenu_tsx",
+      "filePath": "src/components/ui/ActionMenu.tsx",
+      "metrics": {
+        "fanIn": 17,
+        "fanOut": 2,
+        "coupling": 19,
+        "instability": 0.105,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_ProductImage_tsx",
+      "filePath": "src/components/ui/ProductImage.tsx",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 1,
+        "coupling": 7,
+        "instability": 0.143,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_toast_tsx",
+      "filePath": "src/components/ui/toast.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_FloatingCalculator_tsx",
+      "filePath": "src/components/ui/FloatingCalculator.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_ScrollToTop_tsx",
+      "filePath": "src/components/ui/ScrollToTop.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_button_tsx",
+      "filePath": "src/components/ui/button.tsx",
+      "metrics": {
+        "fanIn": 59,
+        "fanOut": 1,
+        "coupling": 60,
+        "instability": 0.017,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_avatar_tsx",
+      "filePath": "src/components/ui/avatar.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_dialog_tsx",
+      "filePath": "src/components/ui/dialog.tsx",
+      "metrics": {
+        "fanIn": 13,
+        "fanOut": 1,
+        "coupling": 14,
+        "instability": 0.071,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_SecurityScrollContainer_tsx",
+      "filePath": "src/components/ui/SecurityScrollContainer.tsx",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_breadcrumb_tsx",
+      "filePath": "src/components/ui/breadcrumb.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_form_tsx",
+      "filePath": "src/components/ui/form.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_slider_tsx",
+      "filePath": "src/components/ui/slider.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_menubar_tsx",
+      "filePath": "src/components/ui/menubar.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_tooltip_tsx",
+      "filePath": "src/components/ui/tooltip.tsx",
+      "metrics": {
+        "fanIn": 10,
+        "fanOut": 1,
+        "coupling": 11,
+        "instability": 0.091,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_SpeedDial_tsx",
+      "filePath": "src/components/ui/SpeedDial.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_ChatBot_tsx",
+      "filePath": "src/components/ui/ChatBot.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_aspect-ratio_tsx",
+      "filePath": "src/components/ui/aspect-ratio.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_carousel_tsx",
+      "filePath": "src/components/ui/carousel.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_ui_card_tsx",
+      "filePath": "src/components/ui/card.tsx",
+      "metrics": {
+        "fanIn": 29,
+        "fanOut": 1,
+        "coupling": 30,
+        "instability": 0.033,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_sheet_tsx",
+      "filePath": "src/components/ui/sheet.tsx",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 1,
+        "coupling": 5,
+        "instability": 0.2,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_drawer_tsx",
+      "filePath": "src/components/ui/drawer.tsx",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_input_tsx",
+      "filePath": "src/components/ui/input.tsx",
+      "metrics": {
+        "fanIn": 32,
+        "fanOut": 1,
+        "coupling": 33,
+        "instability": 0.03,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_HorizontalScroll_tsx",
+      "filePath": "src/components/ui/HorizontalScroll.tsx",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_collapsible_tsx",
+      "filePath": "src/components/ui/collapsible.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_ui_SyncStatusBadge_tsx",
+      "filePath": "src/components/ui/SyncStatusBadge.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_components_ui_radio-group_tsx",
+      "filePath": "src/components/ui/radio-group.tsx",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_ui_atomic_index_tsx",
+      "filePath": "src/components/ui/atomic/index.tsx",
+      "metrics": {
+        "fanIn": 12,
+        "fanOut": 4,
+        "coupling": 16,
+        "instability": 0.25,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_ApplicationDataPanel_tsx",
+      "filePath": "src/components/HealthDashboard/ApplicationDataPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_IntelligenceConsole_tsx",
+      "filePath": "src/components/HealthDashboard/IntelligenceConsole.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_ObservabilityHeader_tsx",
+      "filePath": "src/components/HealthDashboard/ObservabilityHeader.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_ViewNavigation_tsx",
+      "filePath": "src/components/HealthDashboard/ViewNavigation.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_MetricsGuide_tsx",
+      "filePath": "src/components/HealthDashboard/MetricsGuide.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_GlobalMetricsCards_tsx",
+      "filePath": "src/components/HealthDashboard/GlobalMetricsCards.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_IntelligenceMap_tsx",
+      "filePath": "src/components/HealthDashboard/IntelligenceMap.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_AuditResults_tsx",
+      "filePath": "src/components/HealthDashboard/AuditResults.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_AISystemObserver_tsx",
+      "filePath": "src/components/HealthDashboard/AISystemObserver.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_ReleaseGateGovernance_tsx",
+      "filePath": "src/components/HealthDashboard/ReleaseGateGovernance.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_InfrastructurePanel_tsx",
+      "filePath": "src/components/HealthDashboard/InfrastructurePanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_SecurityGRCPanel_tsx",
+      "filePath": "src/components/HealthDashboard/SecurityGRCPanel.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_hooks_useHealthIndex_ts",
+      "filePath": "src/components/HealthDashboard/hooks/useHealthIndex.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_hooks_useComponentHealth_ts",
+      "filePath": "src/components/HealthDashboard/hooks/useComponentHealth.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_HealthDashboard_hooks_useLiveScan_ts",
+      "filePath": "src/components/HealthDashboard/hooks/useLiveScan.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_auth_RegisterForm_tsx",
+      "filePath": "src/components/auth/RegisterForm.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_components_auth_LoginForm_tsx",
+      "filePath": "src/components/auth/LoginForm.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 7,
+        "coupling": 8,
+        "instability": 0.875,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_auth_WelcomeLandingView_tsx",
+      "filePath": "src/components/auth/WelcomeLandingView.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 8,
+        "coupling": 9,
+        "instability": 0.889,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_components_auth_diagrams_SpeedScaleDiagram_tsx",
+      "filePath": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_components_auth_diagrams_AutomationWorkflowDiagram_tsx",
+      "filePath": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_db_ts",
+      "filePath": "src/lib/db.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_dexie_ts",
+      "filePath": "src/lib/dexie.ts",
+      "metrics": {
+        "fanIn": 28,
+        "fanOut": 0,
+        "coupling": 28,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_inventory-logic_ts",
+      "filePath": "src/lib/inventory-logic.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_supabaseClient_ts",
+      "filePath": "src/lib/supabaseClient.ts",
+      "metrics": {
+        "fanIn": 51,
+        "fanOut": 0,
+        "coupling": 51,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_rpc-validator_ts",
+      "filePath": "src/lib/rpc-validator.ts",
+      "metrics": {
+        "fanIn": 12,
+        "fanOut": 0,
+        "coupling": 12,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_auth_ts",
+      "filePath": "src/lib/auth.ts",
+      "metrics": {
+        "fanIn": 15,
+        "fanOut": 1,
+        "coupling": 16,
+        "instability": 0.062,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_query-inspector-utils_ts",
+      "filePath": "src/lib/query-inspector-utils.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_plan-utils_ts",
+      "filePath": "src/lib/plan-utils.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_logger_ts",
+      "filePath": "src/lib/logger.ts",
+      "metrics": {
+        "fanIn": 11,
+        "fanOut": 0,
+        "coupling": 11,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_utils_ts",
+      "filePath": "src/lib/utils.ts",
+      "metrics": {
+        "fanIn": 185,
+        "fanOut": 2,
+        "coupling": 187,
+        "instability": 0.011,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_errorHandler_ts",
+      "filePath": "src/lib/errorHandler.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_navigation_ts",
+      "filePath": "src/lib/navigation.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_roles_ts",
+      "filePath": "src/lib/roles.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_wallet_parser_ts",
+      "filePath": "src/lib/wallet/parser.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_wallet_types_ts",
+      "filePath": "src/lib/wallet/types.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_cost-engine_formula-utils_ts",
+      "filePath": "src/lib/cost-engine/formula-utils.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_cost-engine_index_ts",
+      "filePath": "src/lib/cost-engine/index.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 2,
+        "coupling": 6,
+        "instability": 0.333,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_cost-engine_types_ts",
+      "filePath": "src/lib/cost-engine/types.ts",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 0,
+        "coupling": 6,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_cost-engine_validations_ts",
+      "filePath": "src/lib/cost-engine/validations.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_cost-engine_schemas_ts",
+      "filePath": "src/lib/cost-engine/schemas.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_utils_pdf-export_ts",
+      "filePath": "src/lib/utils/pdf-export.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_utils_number-to-words-es_ts",
+      "filePath": "src/lib/utils/number-to-words-es.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_observability_health-engine_ts",
+      "filePath": "src/lib/observability/health-engine.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_observability_health-alerts_ts",
+      "filePath": "src/lib/observability/health-alerts.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_observability_system-health_ts",
+      "filePath": "src/lib/observability/system-health.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_academy_sm2_ts",
+      "filePath": "src/lib/academy/sm2.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_release_gate_ReleaseGatePdfExporter_ts",
+      "filePath": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_release_gate_mri-engine_ts",
+      "filePath": "src/lib/release_gate/mri-engine.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-repair_ts",
+      "filePath": "src/lib/data/template-repair.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_demo-products_ts",
+      "filePath": "src/lib/data/demo-products.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_costpro-ejemplo_ts",
+      "filePath": "src/lib/data/costpro-ejemplo.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-industrial_ts",
+      "filePath": "src/lib/data/template-industrial.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_costpro-reinicio_ts",
+      "filePath": "src/lib/data/costpro-reinicio.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 0,
+        "coupling": 4,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-consultancy_ts",
+      "filePath": "src/lib/data/template-consultancy.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-logistics_ts",
+      "filePath": "src/lib/data/template-logistics.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-lavar_ts",
+      "filePath": "src/lib/data/template-lavar.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-pastry_ts",
+      "filePath": "src/lib/data/template-pastry.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-icecream_ts",
+      "filePath": "src/lib/data/template-icecream.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-juice_ts",
+      "filePath": "src/lib/data/template-juice.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-shoes_ts",
+      "filePath": "src/lib/data/template-shoes.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-pizza_ts",
+      "filePath": "src/lib/data/template-pizza.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_data_template-furniture_ts",
+      "filePath": "src/lib/data/template-furniture.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_ipv_intelligence_ts",
+      "filePath": "src/lib/ipv/intelligence.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ipv_calculations_ts",
+      "filePath": "src/lib/ipv/calculations.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ipv_importUtils_ts",
+      "filePath": "src/lib/ipv/importUtils.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ipv_backup_ts",
+      "filePath": "src/lib/ipv/backup.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_ipv_matching_worker_ts",
+      "filePath": "src/lib/ipv/matching.worker.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_ipv_bandecParser_ts",
+      "filePath": "src/lib/ipv/bandecParser.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_ipv_engine_ts",
+      "filePath": "src/lib/ipv/engine.ts",
+      "metrics": {
+        "fanIn": 11,
+        "fanOut": 1,
+        "coupling": 12,
+        "instability": 0.083,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ipv_parser_ts",
+      "filePath": "src/lib/ipv/parser.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_ipv_utils_ts",
+      "filePath": "src/lib/ipv/utils.ts",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 1,
+        "coupling": 7,
+        "instability": 0.143,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_orchestrator_ts",
+      "filePath": "src/lib/ai/orchestrator.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 7,
+        "coupling": 11,
+        "instability": 0.636,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_lib_ai_types_ts",
+      "filePath": "src/lib/ai/types.ts",
+      "metrics": {
+        "fanIn": 7,
+        "fanOut": 0,
+        "coupling": 7,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_qwen-adapter_ts",
+      "filePath": "src/lib/ai/adapters/qwen-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_openai-compatible-adapter_ts",
+      "filePath": "src/lib/ai/adapters/openai-compatible-adapter.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_fallback-adapter_ts",
+      "filePath": "src/lib/ai/adapters/fallback-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_deepseek-adapter_ts",
+      "filePath": "src/lib/ai/adapters/deepseek-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_gemini-adapter_ts",
+      "filePath": "src/lib/ai/adapters/gemini-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_kimi-adapter_ts",
+      "filePath": "src/lib/ai/adapters/kimi-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_ai_adapters_gpt-adapter_ts",
+      "filePath": "src/lib/ai/adapters/gpt-adapter.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_ai_tools_definitions_ts",
+      "filePath": "src/lib/ai/tools/definitions.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_lib_ai_tools_registry_ts",
+      "filePath": "src/lib/ai/tools/registry.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_lib_sync_offline-storage_ts",
+      "filePath": "src/lib/sync/offline-storage.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_services_store-service_ts",
+      "filePath": "src/services/store-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_export-service_ts",
+      "filePath": "src/services/export-service.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_services_usage-service_ts",
+      "filePath": "src/services/usage-service.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 1,
+        "coupling": 3,
+        "instability": 0.333,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_cash-service_ts",
+      "filePath": "src/services/cash-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_transfer-service_ts",
+      "filePath": "src/services/transfer-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_excel-service_ts",
+      "filePath": "src/services/excel-service.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 1,
+        "coupling": 5,
+        "instability": 0.2,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_bot-service_ts",
+      "filePath": "src/services/bot-service.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 4,
+        "coupling": 4,
+        "instability": 1.0,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_services_report-service_ts",
+      "filePath": "src/services/report-service.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 2,
+        "coupling": 2,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_import-service_ts",
+      "filePath": "src/services/import-service.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 0,
+        "coupling": 2,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_services_matching-log-service_ts",
+      "filePath": "src/services/matching-log-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_rss-service_ts",
+      "filePath": "src/services/rss-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_user-service_ts",
+      "filePath": "src/services/user-service.ts",
+      "metrics": {
+        "fanIn": 5,
+        "fanOut": 4,
+        "coupling": 9,
+        "instability": 0.444,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_audit-service_ts",
+      "filePath": "src/services/audit-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services_catalog-service_ts",
+      "filePath": "src/services/catalog-service.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_services___mocks___matching-log-service_ts",
+      "filePath": "src/services/__mocks__/matching-log-service.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_store_cart_ts",
+      "filePath": "src/store/cart.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_store_session-store_ts",
+      "filePath": "src/store/session-store.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_store_cost-sheet-store_ts",
+      "filePath": "src/store/cost-sheet-store.ts",
+      "metrics": {
+        "fanIn": 12,
+        "fanOut": 2,
+        "coupling": 14,
+        "instability": 0.143,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_store_index_ts",
+      "filePath": "src/store/index.ts",
+      "metrics": {
+        "fanIn": 58,
+        "fanOut": 4,
+        "coupling": 62,
+        "instability": 0.065,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_store_useAcademyStore_ts",
+      "filePath": "src/store/useAcademyStore.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 1,
+        "coupling": 4,
+        "instability": 0.25,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_types_supabase-rpc_ts",
+      "filePath": "src/types/supabase-rpc.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 1,
+        "coupling": 1,
+        "instability": 1.0,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_types_index_ts",
+      "filePath": "src/types/index.ts",
+      "metrics": {
+        "fanIn": 61,
+        "fanOut": 0,
+        "coupling": 61,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_types_cost-sheet_ts",
+      "filePath": "src/types/cost-sheet.ts",
+      "metrics": {
+        "fanIn": 8,
+        "fanOut": 0,
+        "coupling": 8,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_types_react-syntax-highlighter_d_ts",
+      "filePath": "src/types/react-syntax-highlighter.d.ts",
+      "metrics": {
+        "fanIn": 0,
+        "fanOut": 0,
+        "coupling": 0,
+        "instability": 0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_types_inventory_ts",
+      "filePath": "src/types/inventory.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_hooks_useSync_ts",
+      "filePath": "src/hooks/useSync.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 2,
+        "coupling": 3,
+        "instability": 0.667,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_hooks_logic_useCostSheetCalculator_ts",
+      "filePath": "src/hooks/logic/useCostSheetCalculator.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 4,
+        "coupling": 6,
+        "instability": 0.667,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_hooks_logic_usePOSProducts_ts",
+      "filePath": "src/hooks/logic/usePOSProducts.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_hooks_logic_useSessionManager_ts",
+      "filePath": "src/hooks/logic/useSessionManager.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 6,
+        "coupling": 7,
+        "instability": 0.857,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_hooks_logic_useCostEngine_ts",
+      "filePath": "src/hooks/logic/useCostEngine.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_hooks_api_useTransfers_ts",
+      "filePath": "src/hooks/api/useTransfers.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 3,
+        "coupling": 6,
+        "instability": 0.5,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_hooks_api_useDocumentActions_ts",
+      "filePath": "src/hooks/api/useDocumentActions.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 3,
+        "coupling": 5,
+        "instability": 0.6,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useCostSheets_ts",
+      "filePath": "src/hooks/api/useCostSheets.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 1
+      }
+    },
+    {
+      "id": "src_hooks_api_useTaxes_ts",
+      "filePath": "src/hooks/api/useTaxes.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 4,
+        "coupling": 8,
+        "instability": 0.5,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useProducts_ts",
+      "filePath": "src/hooks/api/useProducts.ts",
+      "metrics": {
+        "fanIn": 7,
+        "fanOut": 5,
+        "coupling": 12,
+        "instability": 0.417,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useTransactions_ts",
+      "filePath": "src/hooks/api/useTransactions.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 4,
+        "coupling": 7,
+        "instability": 0.571,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_hooks_api_useStockMovements_ts",
+      "filePath": "src/hooks/api/useStockMovements.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 3,
+        "coupling": 5,
+        "instability": 0.6,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useCashClosures_ts",
+      "filePath": "src/hooks/api/useCashClosures.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 3,
+        "coupling": 4,
+        "instability": 0.75,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useStores_ts",
+      "filePath": "src/hooks/api/useStores.ts",
+      "metrics": {
+        "fanIn": 6,
+        "fanOut": 5,
+        "coupling": 11,
+        "instability": 0.455,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useDashboard_ts",
+      "filePath": "src/hooks/api/useDashboard.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 4,
+        "coupling": 6,
+        "instability": 0.667,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useUsers_ts",
+      "filePath": "src/hooks/api/useUsers.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 5,
+        "coupling": 6,
+        "instability": 0.833,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useInventory_ts",
+      "filePath": "src/hooks/api/useInventory.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 4,
+        "coupling": 8,
+        "instability": 0.5,
+        "dependencyDepth": 5
+      }
+    },
+    {
+      "id": "src_hooks_api_useRoles_ts",
+      "filePath": "src/hooks/api/useRoles.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 4,
+        "coupling": 5,
+        "instability": 0.8,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useAuditLogs_ts",
+      "filePath": "src/hooks/api/useAuditLogs.ts",
+      "metrics": {
+        "fanIn": 4,
+        "fanOut": 3,
+        "coupling": 7,
+        "instability": 0.429,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_base_ts",
+      "filePath": "src/hooks/api/base.ts",
+      "metrics": {
+        "fanIn": 14,
+        "fanOut": 4,
+        "coupling": 18,
+        "instability": 0.222,
+        "dependencyDepth": 3
+      }
+    },
+    {
+      "id": "src_hooks_api_useReceptions_ts",
+      "filePath": "src/hooks/api/useReceptions.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 3,
+        "coupling": 5,
+        "instability": 0.6,
+        "dependencyDepth": 4
+      }
+    },
+    {
+      "id": "src_hooks_api_useRSS_ts",
+      "filePath": "src/hooks/api/useRSS.ts",
+      "metrics": {
+        "fanIn": 2,
+        "fanOut": 2,
+        "coupling": 4,
+        "instability": 0.5,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_hooks_ui_usePWA_ts",
+      "filePath": "src/hooks/ui/usePWA.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_hooks_ui_useTerminalNavigation_ts",
+      "filePath": "src/hooks/ui/useTerminalNavigation.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 2,
+        "coupling": 5,
+        "instability": 0.4,
+        "dependencyDepth": 2
+      }
+    },
+    {
+      "id": "src_hooks_ui_useCatalogModals_ts",
+      "filePath": "src/hooks/ui/useCatalogModals.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 0,
+        "coupling": 1,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_hooks_ui_useMobile_ts",
+      "filePath": "src/hooks/ui/useMobile.ts",
+      "metrics": {
+        "fanIn": 10,
+        "fanOut": 0,
+        "coupling": 10,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_hooks_ui_useDebounce_ts",
+      "filePath": "src/hooks/ui/useDebounce.ts",
+      "metrics": {
+        "fanIn": 3,
+        "fanOut": 0,
+        "coupling": 3,
+        "instability": 0.0,
+        "dependencyDepth": 0
+      }
+    },
+    {
+      "id": "src_hooks_ui_useToast_ts",
+      "filePath": "src/hooks/ui/useToast.ts",
+      "metrics": {
+        "fanIn": 1,
+        "fanOut": 1,
+        "coupling": 2,
+        "instability": 0.5,
+        "dependencyDepth": 3
+      }
+    }
+  ]
+}

@@ -136,12 +136,36 @@
         "architecture_changes"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 5,
+      "phaseName": "Architecture Metrics",
+      "startTime": "2026-03-20T02:27:18.906996+00:00Z",
+      "endTime": "2026-03-20T02:27:19.039548+00:00Z",
+      "durationMs": 132,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_metrics"
+      ],
+      "cycle": 1
+    },
+    {
+      "phase": 6,
+      "phaseName": "Architecture Health",
+      "startTime": "2026-03-20T02:31:02.848283+00:00Z",
+      "endTime": "2026-03-20T02:31:02.926035+00:00Z",
+      "durationMs": 77,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_health"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 3883,
+    "averagePhaseDurationMs": 3302,
     "slowestPhase": 1,
-    "fastestPhase": 3,
-    "lastCycleDurationMs": 42718
+    "fastestPhase": 6,
+    "lastCycleDurationMs": 42927
   }
 }

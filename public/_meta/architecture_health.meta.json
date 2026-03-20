@@ -1,0 +1,25 @@
+{
+  "artifactName": "architecture_health",
+  "version": "1.0.1",
+  "hash": "sha256:0a8705debf30523a1b4b8e06c957d3f02e4e381477ad4244f40a995caccbae76",
+  "confidenceScore": 100.0,
+  "reviewRequired": false,
+  "createdAt": "2026-03-20T02:31:02.915922+00:00Z",
+  "sourcePhase": 6,
+  "createdBy": "architecture-scheduler/8.0",
+  "confidenceModel": "ai-arch-v8.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/8.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 6",
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:e5de36cc4c6c08169095deb6bb93fe9fc09a67c320162fd189348241a30c60a8",
+      "createdAt": "2026-03-20T02:29:59.321682+00:00Z"
+    }
+  ]
+}

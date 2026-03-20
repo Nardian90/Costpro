@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-03-20T02:29:59.321157+00:00Z",
+  "integrityScore": 81.5,
+  "metrics": {
+    "totalCycles": 2,
+    "totalOrphans": 17,
+    "averageCoupling": 5.96
+  },
+  "issues": {
+    "cycles": [
+      [
+        "src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx",
+        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+        "src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx"
+      ],
+      [
+        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+        "src_components_views_terminal_views_inventory_count_InventoryCountCardView_tsx",
+        "src_components_views_terminal_views_inventory_count_InventoryCountView_tsx"
+      ]
+    ],
+    "orphans": [
+      "src_app_api_route_ts",
+      "src_app_api_cost-sheets_import-anexo_route_ts",
+      "src_app_api_cost-sheets_export-pdf_route_ts",
+      "src_app_api_system-health_knowledge_route_ts",
+      "src_app_api_sync_batch_route_ts",
+      "src_app_api_logs_route_ts",
+      "src_app_wiki_page_tsx",
+      "src_components_views_terminal_views_health_SystemDependencyGraph_tsx",
+      "src_components_views_terminal_views_help_help_UserFlowDiagram_tsx",
+      "src_components_views_terminal_views_help_help_MobileFlowDiagram_tsx",
+      "src_components_views_terminal_views_help_help_CashFlowDiagram_tsx",
+      "src_components_ui_sonner_tsx",
+      "src_components_ui_aspect-ratio_tsx",
+      "src_components_ui_collapsible_tsx",
+      "src_lib_db_ts",
+      "src_services___mocks___matching-log-service_ts",
+      "src_types_react-syntax-highlighter_d_ts"
+    ]
+  },
+  "status": "DEGRADED"
+}
