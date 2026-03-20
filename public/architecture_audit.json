@@ -285,9 +285,9 @@
     {
       "phase": 10,
       "phaseName": "Diátaxis Documentation Layer",
-      "startTime": "2026-03-20T20:36:30.216132+00:00Z",
-      "endTime": "2026-03-20T20:36:30.450474+00:00Z",
-      "durationMs": 234,
+      "startTime": "2026-03-20T21:13:37.821269+00:00Z",
+      "endTime": "2026-03-20T21:13:38.186526+00:00Z",
+      "durationMs": 365,
       "status": "success",
       "artifactsGenerated": [
         "docs/"
@@ -296,10 +296,10 @@
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 52117,
+    "averagePhaseDurationMs": 52123,
     "slowestPhase": 7,
     "fastestPhase": 8,
-    "lastCycleDurationMs": 1250824
+    "lastCycleDurationMs": 1250955
   },
   "healthMetrics": {
     "integrityScore": 84.0,
