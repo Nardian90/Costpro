@@ -136,12 +136,24 @@
         "architecture_changes"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 5,
+      "phaseName": "Architecture Metrics",
+      "startTime": "2026-03-20T02:50:28.414704+00:00Z",
+      "endTime": "2026-03-20T02:50:28.510155+00:00Z",
+      "durationMs": 95,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_metrics"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 3883,
+    "averagePhaseDurationMs": 3567,
     "slowestPhase": 1,
-    "fastestPhase": 3,
-    "lastCycleDurationMs": 42718
+    "fastestPhase": 5,
+    "lastCycleDurationMs": 42813
   }
 }
