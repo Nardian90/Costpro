@@ -246,6 +246,8 @@ export async function aplicarRecepciones(receipts: IntelligentReceipt[]) {
                 tipo: 'INTELLIGENT_RECEIPT',
                 referencia_transaccion: r.id,
                 motivo: `Recepción inteligente (${r.level})`,
+                costo_unitario_cents: r.costo_unitario_cents,
+                costo_total_cents: r.costo_total_cents,
                 created_at: new Date().toISOString()
             } as any);
         }
