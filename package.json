@@ -9,7 +9,7 @@
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
     "postinstall": "sh scripts/postinstall.sh",
-    "build": "next build && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge",
+    "build": "next build && ( [ -d .next/static ] && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static || true ) && ( [ -d public ] && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public || true ) && ( [ -d knowledge ] && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge || true )",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
@@ -124,7 +124,8 @@
     "zod": "^4.0.2",
     "zustand": "^5.0.6",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "bun-types": "^1.3.4"
+    "bun-types": "^1.3.4",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
