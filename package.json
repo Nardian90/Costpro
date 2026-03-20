@@ -63,8 +63,10 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "4.0.17",
+    "bun-types": "^1.3.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -77,6 +79,7 @@
     "eslint-config-next": "15.3.5",
     "expr-eval": "^2.0.2",
     "fake-indexeddb": "^6.2.5",
+    "fflate": "^0.8.2",
     "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
@@ -122,10 +125,7 @@
     "xlsx": "^0.18.5",
     "z-ai-web-dev-sdk": "^0.0.15",
     "zod": "^4.0.2",
-    "zustand": "^5.0.6",
-    "@types/react-syntax-highlighter": "^15.5.13",
-    "bun-types": "^1.3.4",
-    "fflate": "^0.8.2"
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -134,5 +134,10 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2"
+  },
+  "bun": {
+    "lockfile": {
+      "print": "text"
+    }
   }
 }
