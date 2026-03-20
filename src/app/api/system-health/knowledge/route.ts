@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const knowledgeDir = path.join(process.cwd(), 'knowledge');
-    const publicDir = path.join(process.cwd(), 'public');
-    const automationDir = path.join(process.cwd(), 'docs/automation');
+    const knowledgeDir = path.join(process.cwd(), /* turbopackIgnore: true */ 'knowledge');
+    const publicDir = path.join(process.cwd(), /* turbopackIgnore: true */ 'public');
+    const automationDir = path.join(process.cwd(), /* turbopackIgnore: true */ 'docs/automation');
 
     const readJson = (dir: string, file: string) => {
       const fullPath = path.join(dir, file);

@@ -27,7 +27,7 @@ function getSupabaseAdmin() {
 }
 
 export async function GET() {
-  const manualsDir = path.join(process.cwd(), 'public', 'manuals');
+  const manualsDir = path.join(process.cwd(), /* turbopackIgnore: true */ 'public', 'manuals');
   try {
     if (!fs.existsSync(manualsDir)) {
       return NextResponse.json({ files: [] });
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), 'public', 'manuals', filename);
+    const filePath = path.join(process.cwd(), /* turbopackIgnore: true */ 'public', 'manuals', filename);
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
