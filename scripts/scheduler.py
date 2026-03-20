@@ -131,6 +131,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             3: "scripts/phase_3_dependency_graph.py",
             4: "scripts/phase_4_git_intelligence.py",
             2: "scripts/maintenance/domain_classifier.py",
+            6: "scripts/phase_6_health.py",
             13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py",
             5: "scripts/phase_5_metrics.py"
@@ -205,15 +206,21 @@ def main():
         status = execute_phase(current_phase, phase_def, cycle, dry_run=dry_run)
 
         if not dry_run:
+            # Reload state to capture any changes made by the phase script (e.g. repair mode)
+            new_state = load_state()
+            # Merge some local values that we want to keep
+            new_state["currentPhase"] = current_phase
+            new_state["cycle"] = cycle
+
             if status == "re_execute":
                 print("Major change detected. Resetting to Phase 1.")
-                state["currentPhase"] = 1
-                state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
-                save_state(state)
+                new_state["currentPhase"] = 1
+                new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                save_state(new_state)
             elif status in ["success", "quarantined"]:
-                state["currentPhase"] = current_phase + 1
-                state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
-                save_state(state)
+                new_state["currentPhase"] = current_phase + 1
+                new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                save_state(new_state)
                 print(f"Fase {current_phase} completada con estado: {status}")
             else:
                 print(f"Fase {current_phase} falló. No se incrementa currentPhase.")
