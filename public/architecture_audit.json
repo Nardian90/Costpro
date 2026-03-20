@@ -245,13 +245,25 @@
         "architecture_audit"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 7,
+      "phaseName": "Business Logic Extraction",
+      "startTime": "2026-03-20T13:30:00.000000Z",
+      "endTime": "2026-03-20T13:43:14.022721Z",
+      "durationMs": 1200000,
+      "status": "success",
+      "artifactsGenerated": [
+        "knowledge/components.json"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 2518,
-    "slowestPhase": 1,
+    "averagePhaseDurationMs": 59541,
+    "slowestPhase": 7,
     "fastestPhase": 6,
-    "lastCycleDurationMs": 50364
+    "lastCycleDurationMs": 1250364
   },
   "healthMetrics": {
     "integrityScore": 84.0,
