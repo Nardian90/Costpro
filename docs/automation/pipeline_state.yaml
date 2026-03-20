@@ -5,9 +5,9 @@ currentPhase: 7
 cycle: 1
 documentationModel: ISO_26514 + Diataxis
 humanFeedbackStore: docs/automation/human_feedback.json
-lastExecution: 2026-03-20T08:27:48.798267+00:00Z
+lastExecution: 2026-03-20T11:27:34.238482+00:00Z
 pipelineVersion: 8.0.0
 quarantinePath: docs/automation/quarantine/
 repairThreshold: 80
 reviewQueue: docs/automation/review_queue.json
-schedulerMode: repair
+schedulerMode: active
