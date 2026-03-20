@@ -63,6 +63,23 @@ export interface Product {
   ventas_valor_historico?: number;
   id_grupo?: string;           // Agrupador de variantes (ej: "BIG_BON")
   cod_hijo?: string;           // Código del producto inferior en la jerarquía
+  unit_factor?: number;        // Factor de conversión (ej: 1000 para caja de 1000)
+  unit_level?: 'BOX' | 'PACK' | 'UNIT'; // Nivel de empaque
+}
+
+export interface IntelligentReceipt {
+  id: string;
+  date: string;                // ISO Date
+  product_id: string;          // FK -> Product.cod
+  type: 'INTELLIGENT' | 'CORRECTIVE';
+  level: 'BOX' | 'PACK' | 'UNIT';
+  quantity: number;
+  total_units: number;
+  source: 'SALES' | 'ADJUSTMENT';
+  mode: 'A' | 'B' | 'C';
+  simulation_id?: string;
+  applied: boolean;
+  created_at: string;
 }
 
 export interface ProductMovement {
@@ -72,7 +89,7 @@ export interface ProductMovement {
   producto_destino_cod: string;
   cantidad_origen: number;
   cantidad_destino: number;
-  tipo: 'DECOMPOSITION' | 'MANUAL' | 'IMPORT' | 'PRICE_ADJUSTMENT';
+  tipo: 'DECOMPOSITION' | 'MANUAL' | 'IMPORT' | 'PRICE_ADJUSTMENT' | 'INTELLIGENT_RECEIPT';
   referencia_transaccion?: string; // Si viene de un matching automático
   valor_anterior?: string;
   valor_nuevo?: string;
@@ -236,10 +253,11 @@ export class IPVDatabase extends Dexie {
   ingestion_errors!: Table<IngestionError>;
   ipv_settings!: Table<IPVSettings>;
   matching_logs!: Table<MatchingLog>;
+  intelligent_receipts!: Table<IntelligentReceipt>;
 
   constructor() {
     super('IPVDB');
-    this.version(15).stores({
+    this.version(16).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad, activo',
@@ -251,7 +269,8 @@ export class IPVDatabase extends Dexie {
       matching_cache: '&importe_cents',
       ingestion_errors: 'id, fecha, referencia_origen',
       ipv_settings: 'id',
-      matching_logs: '&id, transaction_ref, fecha_ejecucion, resultado_estado'
+      matching_logs: '&id, transaction_ref, fecha_ejecucion, resultado_estado',
+      intelligent_receipts: '&id, date, product_id, type, simulation_id, applied'
     });
   }
 }

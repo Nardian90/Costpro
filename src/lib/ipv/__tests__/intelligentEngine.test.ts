@@ -1,0 +1,73 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { analizarVentas, descomponerUnidades, corregirNegativos, reconstruirRecepciones } from '../intelligentEngine';
+import { Product } from '../../dexie';
+
+// Mock Dexie
+vi.mock('../../dexie', () => ({
+  db: {
+    reconciliation_lines: {
+      where: vi.fn().mockReturnThis(),
+      between: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([])
+    },
+    products: {
+      toArray: vi.fn().mockResolvedValue([]),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
+      get: vi.fn().mockResolvedValue(null)
+    },
+    product_movements: {
+        where: vi.fn().mockReturnThis(),
+        between: vi.fn().mockReturnThis(),
+        equals: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockResolvedValue([]),
+        add: vi.fn().mockResolvedValue("mock-id")
+    },
+    intelligent_receipts: {
+        put: vi.fn().mockResolvedValue("mock-id")
+    },
+    transaction: vi.fn((type, tables, callback) => callback())
+  }
+}));
+
+describe('Intelligent Receipts Engine', () => {
+    describe('descomponerUnidades', () => {
+        const product: Product = {
+            cod: 'PROD1',
+            descripcion: 'Product 1',
+            um: 'U',
+            es_paquete: false,
+            contenido_paquete: 1,
+            precio_cents: 100,
+            prioridad_algoritmo: 1,
+            activo: true,
+            stock_inicial_manual: 0,
+            created_at: '',
+            unit_factor: 1,
+            unit_level: 'UNIT'
+        };
+
+        const hierarchy: Product[] = [
+            { ...product, cod: 'BOX', unit_factor: 1000, unit_level: 'BOX' },
+            { ...product, cod: 'PACK', unit_factor: 500, unit_level: 'PACK' },
+            { ...product, cod: 'UNIT', unit_factor: 1, unit_level: 'UNIT' }
+        ];
+
+        it('should decompose 1500 units into 1 BOX and 1 PACK', () => {
+            const result = descomponerUnidades(1500, product, hierarchy);
+            expect(result).toHaveLength(2);
+            expect(result[0]).toEqual({ level: 'BOX', quantity: 1, units: 1000 });
+            expect(result[1]).toEqual({ level: 'PACK', quantity: 1, units: 500 });
+        });
+
+        it('should decompose 1650 units into 1 BOX, 1 PACK and 150 UNITS', () => {
+            const result = descomponerUnidades(1650, product, hierarchy);
+            expect(result).toHaveLength(3);
+            expect(result[0]).toEqual({ level: 'BOX', quantity: 1, units: 1000 });
+            expect(result[1]).toEqual({ level: 'PACK', quantity: 1, units: 500 });
+            expect(result[2]).toEqual({ level: 'UNIT', quantity: 150, units: 150 });
+        });
+    });
+});
