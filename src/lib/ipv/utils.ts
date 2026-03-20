@@ -45,26 +45,24 @@ export function isProductAMedida(um: string): boolean {
 /**
  * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
  */
-
-/**
- * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
- */
-
-/**
- * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
- */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
     const product = await db.products.where('cod').equals(productCod).first();
     if (!product) return 0;
 
     const initialStock = product.stock_inicial_manual || 0;
 
-    // Sumar movimientos (ventas son positivas, entradas negativas)
-    const movements = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const netMovement = movements.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+    // Ventas (salidas reales)
+    const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+    const sales = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
 
-    // TODO: En el futuro sumar entradas reales de inventario si están disponibles en Dexie
-    return initialStock - netMovement;
+    // Entradas y salidas de inventario (incluyendo recepciones inteligentes y descomposiciones)
+    const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
+    const entries = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
+
+    const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
+    const exits = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
+
+    return initialStock + entries - exits - sales;
 }
 
 
@@ -75,13 +73,23 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 export async function getCompleteStockMap(db: any): Promise<Map<string, number>> {
     const products = await db.products.toArray();
     const lines = await db.reconciliation_lines.toArray();
+    const allMovements = await db.product_movements.toArray();
     const map = new Map<string, number>();
 
     for (const p of products) {
-        const netMovement = lines
+        const sales = lines
             .filter((l: any) => l.product_cod === p.cod)
             .reduce((sum: number, l: any) => sum + l.cantidad, 0);
-        map.set(p.cod, (p.stock_inicial_manual || 0) - netMovement);
+
+        const entries = allMovements
+            .filter((m: any) => m.producto_destino_cod === p.cod)
+            .reduce((sum: number, m: any) => sum + m.cantidad_destino, 0);
+
+        const exits = allMovements
+            .filter((m: any) => m.producto_origen_cod === p.cod)
+            .reduce((sum: number, m: any) => sum + m.cantidad_origen, 0);
+
+        map.set(p.cod, (p.stock_inicial_manual || 0) + entries - exits - sales);
     }
 
     return map;
@@ -95,27 +103,50 @@ export async function recalculateIPVReportsChain(db: any) {
     const productMap = new Map<string, Product>(allProducts.map((p) => [p.cod, p]));
     const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
 
+    // Pre-fetch all movements for the period
+    const allMovements = await db.product_movements.toArray();
+
     for (let i = 0; i < allReports.length; i++) {
         const report = allReports[i];
+        const reportDate = report.fecha_reporte;
         const prevReport = i > 0 ? allReports[i - 1] : null;
 
         const updatedFilas = report.filas.map((f: any) => {
             const product = productMap.get(f.cod);
+
+            // Entradas inteligentes para este producto en esta fecha
+            const intelligentEntries = allMovements
+                .filter((m: any) => m.producto_destino_cod === f.cod && m.fecha === reportDate && m.tipo === 'INTELLIGENT_RECEIPT')
+                .reduce((sum: number, m: any) => sum + m.cantidad_destino, 0);
+
+            // Descomposiciones (entradas como destino)
+            const decompositionEntries = allMovements
+                .filter((m: any) => m.producto_destino_cod === f.cod && m.fecha === reportDate && m.tipo === 'DECOMPOSITION')
+                .reduce((sum: number, m: any) => sum + m.cantidad_destino, 0);
+
+            // Descomposiciones (salidas como origen)
+            const decompositionExits = allMovements
+                .filter((m: any) => m.producto_origen_cod === f.cod && m.fecha === reportDate && m.tipo === 'DECOMPOSITION')
+                .reduce((sum: number, m: any) => sum + m.cantidad_origen, 0);
+
             const initial = prevReport
                 ? (prevReport.filas.find((pf: any) => pf.cod === f.cod)?.existencia_final_qty || 0)
                 : (product?.stock_inicial_manual || 0);
 
-            const entrada = f.entrada_qty || 0;
-            const salida = f.salida_qty || 0;
+            const entradaManual = f.entrada_qty || 0;
+            const entradaTotal = entradaManual + intelligentEntries + decompositionEntries;
+            const salidaManual = f.salida_qty || 0;
+            const salidaTotal = salidaManual + decompositionExits;
+
             const venta = f.venta_cantidad_qty;
-            const totalDisponible = initial + entrada;
-            const final = totalDisponible - salida - venta;
+            const totalDisponible = initial + entradaTotal;
+            const final = totalDisponible - salidaTotal - venta;
 
             return {
                 ...f,
                 saldo_inicial_qty: initial,
-                entrada_qty: entrada,
-                salida_qty: salida,
+                entrada_qty: entradaTotal,
+                salida_qty: salidaTotal,
                 total_disponible_qty: totalDisponible,
                 existencia_final_qty: final
             };
