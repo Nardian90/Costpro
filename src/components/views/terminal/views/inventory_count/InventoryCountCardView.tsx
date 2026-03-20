@@ -5,7 +5,7 @@ import { Product, ProductVariant } from '@/types';
 import { cn } from '@/lib/utils';
 import { Package, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExtendedProduct } from './InventoryCountView';
+import { ExtendedProduct } from './useInventoryCount';
 
 interface InventoryCountCardProps {
   products: ExtendedProduct[];

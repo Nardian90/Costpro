@@ -1,23 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useAuthStore, useCartStore, useUIStore } from '@/store';
+import { useState, useEffect } from 'react';
 import {
-  Package,
   Check,
   X,
-  Plus,
-  Minus,
-  Trash2,
   AlertTriangle,
   Save,
-  Search,
   ClipboardList,
   LayoutGrid,
   List,
 } from 'lucide-react';
-import { Product, ProductVariant } from '@/types';
-import { toast } from 'sonner';
 import ActionMenu from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { QueryInspector } from '@/components/ui/QueryInspector';
@@ -28,36 +20,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import InventoryCountCardView from './InventoryCountCardView';
 import InventoryCountTableView from './InventoryCountTableView';
-
-export interface ExtendedProduct extends Product {
-  product_variants: ProductVariant[];
-}
-
-interface DecomposedItem {
-  variantId: string | null;
-  name: string;
-  quantity: number;
-}
-
-interface Difference {
-  productId: string;
-  name: string;
-  expected: number;
-  counted: number;
-  diff: number;
-  variants: ProductVariant[];
-  decomposition: DecomposedItem[];
-}
+import { useInventoryCount } from './useInventoryCount';
 
 export default function InventoryCountView() {
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const isMobile = useIsMobile();
-  const [products, setProducts] = useState<ExtendedProduct[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
-  const [loading, setLoading] = useState(true);
   const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    countedQuantities,
+    loading,
+    isModalOpen,
+    setIsModalOpen,
+    differences,
+    processing,
+    filteredProducts,
+    isAdjustmentValid,
+    handleQuantityChange,
+    handleInitialSubmit,
+    handleFinalSubmit
+  } = useInventoryCount();
 
   useEffect(() => {
     if (isMobile) {
@@ -66,230 +49,6 @@ export default function InventoryCountView() {
       setLayoutMode('table');
     }
   }, [isMobile]);
-
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [differences, setDifferences] = useState<Difference[]>([]);
-  const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchProducts();
-    }
-  }, [user]);
-
-  const filteredProducts = useMemo(() => {
-    const lowerTerm = searchTerm.toLowerCase();
-    return products.filter(product =>
-      product.name.toLowerCase().includes(lowerTerm) ||
-      product.sku?.toLowerCase().includes(lowerTerm) ||
-      product.category?.toLowerCase().includes(lowerTerm)
-    );
-  }, [searchTerm, products]);
-
-  const isAdjustmentValid = useMemo(() => {
-    const shortages = differences.filter(d => d.diff < 0);
-    if (shortages.length === 0) return true;
-
-    return shortages.every(shortage => {
-      const totalDecomposed = shortage.decomposition.reduce((acc, dec) => {
-        if (!dec.variantId) return acc + dec.quantity; // Base product counts as 1:1
-        const variant = shortage.variants.find(v => v.id === dec.variantId);
-        const factor = variant?.conversion_factor || 1;
-        return acc + (dec.quantity * factor);
-      }, 0);
-      return totalDecomposed === Math.abs(shortage.diff);
-    });
-  }, [differences]);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/inventory/products', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cargar productos');
-      }
-      const data = await response.json();
-      setProducts(data);
-
-      // Initialize counted quantities with current stock
-      const initialCounted: { [key: string]: number } = {};
-      data.forEach((p: ExtendedProduct) => {
-        initialCounted[p.id] = p.stock_current;
-      });
-      setCountedQuantities(initialCounted);
-    } catch (error: any) {
-      console.error('Error fetching products:', error);
-      toast.error(error.message || 'Error al cargar productos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    setCountedQuantities(prev => ({ ...prev, [productId]: quantity }));
-  };
-
-  const calculateOptimalDecomposition = (diff: number, variants: ProductVariant[], productName: string) => {
-    let remaining = Math.abs(diff);
-    // Sort variants by conversion factor (largest first), ignoring those with factor 1 for the initial pass
-    const sortedVariants = [...variants]
-      .filter(v => v.conversion_factor > 1)
-      .sort((a, b) => b.conversion_factor - a.conversion_factor);
-
-    const decomposition: DecomposedItem[] = [];
-
-    for (const variant of sortedVariants) {
-      if (remaining >= variant.conversion_factor) {
-        const count = Math.floor(remaining / variant.conversion_factor);
-        decomposition.push({
-          variantId: variant.id,
-          name: variant.name,
-          quantity: count
-        });
-        remaining %= variant.conversion_factor;
-      }
-    }
-
-    // If there is still a remaining amount, or if there were no bulk variants
-    if (remaining > 0) {
-      // Prefer a variant with factor 1 if it exists, otherwise use base product
-      const unitVariant = variants.find(v => v.conversion_factor === 1);
-      if (unitVariant) {
-        decomposition.push({
-          variantId: unitVariant.id,
-          name: unitVariant.name,
-          quantity: remaining
-        });
-      } else {
-        decomposition.push({
-          variantId: null,
-          name: productName,
-          quantity: remaining
-        });
-      }
-    }
-
-    return decomposition;
-  };
-
-  const handleInitialSubmit = () => {
-    const diffs: Difference[] = products
-      .map((p) => {
-        const counted = countedQuantities[p.id] ?? p.stock_current;
-        const diff = counted - p.stock_current;
-        return {
-          productId: p.id,
-          name: p.name,
-          expected: p.stock_current,
-          counted: counted,
-          diff: diff,
-          variants: p.product_variants || [],
-          decomposition: diff < 0 ? calculateOptimalDecomposition(diff, p.product_variants || [], p.name) : []
-        };
-      })
-      .filter((d) => d.diff !== 0);
-
-    if (diffs.length === 0) {
-      toast.info('No hay diferencias registradas respecto al stock actual');
-      return;
-    }
-
-    setDifferences(diffs);
-    setIsModalOpen(true);
-  };
-
-  const handleFinalSubmit = async () => {
-      if (!user?.storeId) {
-      toast.error('Sesión inválida');
-      return;
-    }
-
-    setProcessing(true);
-    const toastId = toast.loading('Sincronizando inventario...'); // Fixed reference for success toast
-
-    try {
-      const shortages = differences.filter(d => d.diff < 0);
-      const surpluses = differences.filter(d => d.diff > 0);
-
-      if (shortages.length > 0) {
-        // Clear cart before adding shortages to provide a clean state for adjustment
-        useCartStore.getState().clearCart();
-
-        shortages.forEach(d => {
-          const product = products.find(p => p.id === d.productId);
-          if (!product) return;
-
-          d.decomposition.forEach(dec => {
-            if (dec.quantity <= 0) return;
-            const variant = dec.variantId
-              ? (product.product_variants || []).find(v => v.id === dec.variantId)
-              : null;
-
-            useCartStore.getState().addItem({
-              product_id: product.id,
-              variant_id: dec.variantId,
-              product: product,
-              variant: variant || null,
-              quantity: dec.quantity,
-              price: variant ? variant.price : product.price,
-              cost: product.cost_price,
-              subtotal: (variant ? variant.price : product.price) * dec.quantity,
-            });
-          });
-        });
-        toast.success(`${shortages.length} productos con faltantes cargados al punto de venta`, { id: toastId });
-      }
-
-      if (surpluses.length > 0) {
-        const itemsToSubmit = surpluses.map(d => ({
-          product_id: d.productId,
-          expected_quantity: d.expected,
-          counted_quantity: d.counted,
-          decomposition: []
-        }));
-
-        const response = await fetch('/api/inventory/adjustments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            storeId: user.storeId,
-            items: itemsToSubmit
-          }),
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.message || 'Error al procesar el ajuste de sobrantes');
-        }
-        toast.success('Sobrantes ajustados correctamente', { id: toastId });
-      } else {
-        toast.dismiss(toastId);
-      }
-
-      setIsModalOpen(false);
-
-      if (shortages.length > 0) {
-        useUIStore.getState().setCurrentView('pos');
-      } else {
-        fetchProducts();
-      }
-
-    } catch (error: any) {
-      console.error('Error in final submit:', error);
-      toast.error(error.message || 'Error al procesar el ajuste', { id: toastId });
-    } finally {
-      setProcessing(false);
-    }
-  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-0 pb-20 sm:pb-0">
@@ -396,7 +155,7 @@ export default function InventoryCountView() {
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {differences.map((d, pIdx) => (
+                {differences.map((d) => (
                   <div key={d.productId} className="neu-raised-sm !p-6 border border-white/5 bg-background/50 relative overflow-hidden group">
                     <div className={cn("absolute top-0 left-0 w-1 h-full", d.diff > 0 ? "bg-success" : "bg-danger")} />
 
