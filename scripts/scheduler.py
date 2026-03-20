@@ -132,7 +132,8 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             4: "scripts/phase_4_git_intelligence.py",
             2: "scripts/maintenance/domain_classifier.py",
             13: "scripts/generate_knowledge_graph.py",
-            14: "scripts/build_vector_index.py"
+            14: "scripts/build_vector_index.py",
+            5: "scripts/phase_5_metrics.py"
         }
 
         script = script_map.get(phase_num)
