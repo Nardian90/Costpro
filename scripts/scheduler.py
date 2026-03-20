@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-scheduler.py
-Orquestador principal del pipeline v8.0 - Ejecuta una fase por día
-"""
-
 import json
 import os
 import sys
@@ -137,7 +131,8 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             8: "scripts/phase_8_view_mapping.py",
             9: "scripts/phase_9_workflow_detection.py",
             5: "scripts/phase_5_metrics.py",
-            10: "scripts/phase_10_diataxis.py"
+            10: "scripts/phase_10_diataxis.py",
+            11: "scripts/phase_11_user_translation.py"
         }
 
         script = script_map.get(phase_num)
@@ -220,7 +215,7 @@ def main():
                 new_state["currentPhase"] = 1
                 new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
                 save_state(new_state)
-            elif status in ["success", "quarantined"]:
+            elif status in ["success", "quarantined", "committed"]:
                 new_state["currentPhase"] = current_phase + 1
                 new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
                 save_state(new_state)
