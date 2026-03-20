@@ -233,25 +233,13 @@
         "architecture_metrics"
       ],
       "cycle": 1
-    },
-    {
-      "phase": 6,
-      "phaseName": "Architecture Health",
-      "startTime": "2026-03-20T11:27:34.145242+00:00Z",
-      "endTime": "2026-03-20T11:27:34.235419+00:00Z",
-      "durationMs": 90,
-      "status": "success",
-      "artifactsGenerated": [
-        "architecture_audit"
-      ],
-      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 2518,
+    "averagePhaseDurationMs": 2646,
     "slowestPhase": 1,
-    "fastestPhase": 6,
-    "lastCycleDurationMs": 50364
+    "fastestPhase": 5,
+    "lastCycleDurationMs": 50274
   },
   "healthMetrics": {
     "integrityScore": 84.0,
