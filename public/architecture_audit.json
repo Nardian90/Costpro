@@ -257,13 +257,25 @@
         "knowledge/components.json"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 8,
+      "phaseName": "View Flow Mapping",
+      "startTime": "2026-03-20T14:51:04.901241+00:00Z",
+      "endTime": "2026-03-20T14:51:04.988464+00:00Z",
+      "durationMs": 87,
+      "status": "success",
+      "artifactsGenerated": [
+        "views"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 59541,
+    "averagePhaseDurationMs": 56838,
     "slowestPhase": 7,
-    "fastestPhase": 6,
-    "lastCycleDurationMs": 1250364
+    "fastestPhase": 8,
+    "lastCycleDurationMs": 1250451
   },
   "healthMetrics": {
     "integrityScore": 84.0,
