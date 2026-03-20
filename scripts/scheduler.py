@@ -134,6 +134,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             6: "scripts/phase_6_health.py",
             13: "scripts/generate_knowledge_graph.py",
             14: "scripts/build_vector_index.py",
+            8: "scripts/phase_8_view_mapping.py",
             5: "scripts/phase_5_metrics.py"
         }
 

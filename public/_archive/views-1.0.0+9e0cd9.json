@@ -26,9 +26,7 @@
       "HealthDashboard/hooks/useLiveScan",
       "ui/CostProLoader"
     ],
-    "servicesUsed": [
-      "release_gate/ReleaseGatePdfExporter"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/wallet/WalletView.tsx",
@@ -51,11 +49,7 @@
       "ui/card",
       "ui/input"
     ],
-    "servicesUsed": [
-      "utils",
-      "wallet/parser",
-      "wallet/types"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/catalog/CatalogView.tsx",
@@ -87,8 +81,7 @@
       "api/useProducts",
       "catalog-service",
       "ui/useCatalogModals",
-      "ui/useMobile",
-      "utils"
+      "ui/useMobile"
     ]
   },
   {
@@ -105,9 +98,7 @@
     "outputs": [],
     "components": [],
     "servicesUsed": [
-      "api/useTaxes",
-      "supabaseClient",
-      "utils"
+      "api/useTaxes"
     ]
   },
   {
@@ -129,8 +120,7 @@
       "ui/toggle-group"
     ],
     "servicesUsed": [
-      "api/useProducts",
-      "utils"
+      "api/useProducts"
     ]
   },
   {
@@ -153,9 +143,7 @@
     "inputs": [],
     "outputs": [],
     "components": [],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
@@ -167,9 +155,7 @@
       "Card List"
     ],
     "components": [],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
@@ -182,8 +168,7 @@
     "outputs": [],
     "components": [],
     "servicesUsed": [
-      "api/useCostSheets",
-      "utils"
+      "api/useCostSheets"
     ]
   },
   {
@@ -218,9 +203,7 @@
       "ui/ActionMenu",
       "ui/SearchBar"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/academy/AcademyView.tsx",
@@ -253,8 +236,7 @@
       "ui/StateRenderer"
     ],
     "servicesUsed": [
-      "api/useTransfers",
-      "utils"
+      "api/useTransfers"
     ]
   },
   {
@@ -273,9 +255,7 @@
       "ui/badge",
       "ui/button"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
@@ -290,17 +270,13 @@
       "ui/CostProLoader",
       "ui/atomic"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
     "name": "InventoryAdjustmentsView.tsx",
     "route": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-    "actions": [
-      "onRefresh"
-    ],
+    "actions": [],
     "inputs": [],
     "outputs": [],
     "components": [
@@ -309,8 +285,7 @@
       "ui/SearchBar"
     ],
     "servicesUsed": [
-      "api/useStockMovements",
-      "utils"
+      "api/useStockMovements"
     ]
   },
   {
@@ -336,9 +311,7 @@
     "servicesUsed": [
       "api/useInventory",
       "import-service",
-      "supabaseClient",
-      "ui/useDebounce",
-      "utils"
+      "ui/useDebounce"
     ]
   },
   {
@@ -354,9 +327,7 @@
       "ui/CostProLoader",
       "ui/ProductImage"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory/InventoryView.tsx",
@@ -382,8 +353,7 @@
     ],
     "servicesUsed": [
       "api/useInventory",
-      "ui/useMobile",
-      "utils"
+      "ui/useMobile"
     ]
   },
   {
@@ -403,8 +373,7 @@
       "ui/ActionMenu"
     ],
     "servicesUsed": [
-      "api/useCashClosures",
-      "utils"
+      "api/useCashClosures"
     ]
   },
   {
@@ -422,9 +391,7 @@
       "ui/StateRenderer",
       "ui/skeleton"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
@@ -446,19 +413,13 @@
       "ui/StateRenderer",
       "ui/skeleton"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
     "name": "StockHistoryView.tsx",
     "route": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-    "actions": [
-      "onDateRangeChange",
-      "onRefresh",
-      "onSearchChange"
-    ],
+    "actions": [],
     "inputs": [
       "Calendar"
     ],
@@ -469,8 +430,7 @@
       "ui/SearchBar"
     ],
     "servicesUsed": [
-      "api/useStockMovements",
-      "utils"
+      "api/useStockMovements"
     ]
   },
   {
@@ -499,13 +459,7 @@
       "ui/tabs",
       "ui/tooltip"
     ],
-    "servicesUsed": [
-      "dexie",
-      "ipv/backup",
-      "ipv/engine",
-      "ipv/utils",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/ipv/MovementsView.tsx",
@@ -547,10 +501,7 @@
       "ui/button",
       "ui/input"
     ],
-    "servicesUsed": [
-      "dexie",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
@@ -572,7 +523,6 @@
       "ui/input"
     ],
     "servicesUsed": [
-      "dexie",
       "matching-log-service"
     ]
   },
@@ -598,11 +548,7 @@
       "ui/input",
       "ui/label"
     ],
-    "servicesUsed": [
-      "dexie",
-      "supabaseClient",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
@@ -621,12 +567,7 @@
       "ui/input",
       "ui/scroll-area"
     ],
-    "servicesUsed": [
-      "dexie",
-      "ipv/engine",
-      "ipv/utils",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
@@ -644,10 +585,7 @@
       "ui/button",
       "ui/card"
     ],
-    "servicesUsed": [
-      "dexie",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
@@ -659,9 +597,7 @@
       "Table"
     ],
     "components": [],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
@@ -673,9 +609,7 @@
       "Card List"
     ],
     "components": [],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
@@ -694,8 +628,7 @@
       "ui/SecurityScrollContainer"
     ],
     "servicesUsed": [
-      "ui/useMobile",
-      "utils"
+      "ui/useMobile"
     ]
   },
   {
@@ -710,9 +643,7 @@
       "ui/input",
       "ui/scroll-area"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/pos/POSTableView.tsx",
@@ -726,9 +657,7 @@
     "components": [
       "ui/ProductImage"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/pos/POSView.tsx",
@@ -736,8 +665,7 @@
     "route": "src/components/views/terminal/views/pos/POSView.tsx",
     "actions": [
       "handleClearCart",
-      "handleScan",
-      "onAddToCart"
+      "handleScan"
     ],
     "inputs": [],
     "outputs": [
@@ -761,8 +689,7 @@
     ],
     "servicesUsed": [
       "logic/usePOSProducts",
-      "ui/useMobile",
-      "utils"
+      "ui/useMobile"
     ]
   },
   {
@@ -775,9 +702,7 @@
       "Table"
     ],
     "components": [],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
@@ -797,8 +722,7 @@
       "ui/tabs"
     ],
     "servicesUsed": [
-      "api/useStores",
-      "utils/pdf-export"
+      "api/useStores"
     ]
   },
   {
@@ -816,10 +740,7 @@
       "ui/card",
       "ui/scroll-area"
     ],
-    "servicesUsed": [
-      "cost-engine/validations",
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
@@ -833,9 +754,7 @@
       "handleImportJSON",
       "handleQuickGenerate",
       "handleSetActiveSection",
-      "handleSetViewMode",
-      "onOpenAnnexes",
-      "onOpenSections"
+      "handleSetViewMode"
     ],
     "inputs": [],
     "outputs": [
@@ -858,8 +777,7 @@
       "export-service",
       "logic/useCostSheetCalculator",
       "ui/useMobile",
-      "usage-service",
-      "utils"
+      "usage-service"
     ]
   },
   {
@@ -887,8 +805,7 @@
       "ui/popover"
     ],
     "servicesUsed": [
-      "excel-service",
-      "utils"
+      "excel-service"
     ]
   },
   {
@@ -910,9 +827,7 @@
       "ui/select",
       "ui/switch"
     ],
-    "servicesUsed": [
-      "utils"
-    ]
+    "servicesUsed": []
   },
   {
     "id": "src/components/views/terminal/views/users/RolesManagementView.tsx",
@@ -934,8 +849,7 @@
       "ui/SearchBar"
     ],
     "servicesUsed": [
-      "api/useRoles",
-      "utils"
+      "api/useRoles"
     ]
   },
   {
@@ -955,8 +869,7 @@
       "ui/StateRenderer"
     ],
     "servicesUsed": [
-      "api/useRSS",
-      "utils"
+      "api/useRSS"
     ]
   },
   {
@@ -972,8 +885,7 @@
       "ui/StateRenderer"
     ],
     "servicesUsed": [
-      "api/useRSS",
-      "utils"
+      "api/useRSS"
     ]
   },
   {
@@ -984,9 +896,6 @@
     "inputs": [],
     "outputs": [],
     "components": [],
-    "servicesUsed": [
-      "supabaseClient",
-      "utils"
-    ]
+    "servicesUsed": []
   }
 ]
