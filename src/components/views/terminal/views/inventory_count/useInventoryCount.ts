@@ -179,7 +179,7 @@ export function useInventoryCount() {
           shortage.decomposition.forEach(dec => {
             const variant = product.product_variants?.find(v => v.id === dec.variantId);
             addItem({
-              product: product,
+              product_id: product.id, variant_id: dec.variantId, product: product,
               variant: variant || null,
               quantity: dec.quantity,
               price: variant ? variant.price : product.price,
