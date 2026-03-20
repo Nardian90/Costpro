@@ -67,6 +67,13 @@ export interface Product {
   unit_level?: 'BOX' | 'PACK' | 'UNIT'; // Nivel de empaque
 }
 
+export interface CostTrace {
+  metodo: "PERCENTAGE" | "TARGET_PROFIT";
+  parametro: number;
+  timestamp: number;
+  usuario_id: string;
+}
+
 export interface IntelligentReceipt {
   id: string;
   date: string;                // ISO Date
@@ -79,6 +86,9 @@ export interface IntelligentReceipt {
   mode: 'A' | 'B' | 'C';
   simulation_id?: string;
   applied: boolean;
+  costo_unitario_cents?: number;
+  costo_total_cents?: number;
+  cost_trace?: CostTrace;
   created_at: string;
 }
 
@@ -94,6 +104,8 @@ export interface ProductMovement {
   valor_anterior?: string;
   valor_nuevo?: string;
   motivo?: string;
+  costo_unitario_cents?: number;
+  costo_total_cents?: number;
   usuario?: string;
   created_at: string;
 }
@@ -257,7 +269,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(16).stores({
+    this.version(17).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad, activo',
