@@ -269,13 +269,25 @@
         "views"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 9,
+      "phaseName": "Workflow Detection",
+      "startTime": "2026-03-20T15:15:13.294108+00:00Z",
+      "endTime": "2026-03-20T15:15:13.433550+00:00Z",
+      "durationMs": 139,
+      "status": "success",
+      "artifactsGenerated": [
+        "workflows"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 56838,
+    "averagePhaseDurationMs": 54373,
     "slowestPhase": 7,
     "fastestPhase": 8,
-    "lastCycleDurationMs": 1250451
+    "lastCycleDurationMs": 1250590
   },
   "healthMetrics": {
     "integrityScore": 84.0,
