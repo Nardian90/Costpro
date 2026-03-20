@@ -7855,18 +7855,5 @@
     ],
     "user_description": "Módulo del sistema para gestionar offline-storage.ts.",
     "domain": "Infrastructure"
-  },
-  {
-    "id": "src/lib/ipv/intelligentEngine.ts",
-    "name": "intelligentEngine.ts",
-    "technical_description": "Core logic for intelligentEngine.ts",
-    "businessRules": [
-      "Greedy unit decomposition algorithm for BOX, PACK, and UNIT levels.",
-      "Demand rounding to the nearest multiple of 10.",
-      "Inventory reconstruction modes: Mode A (Only Sales), Mode B (Sales + Existing Receipts), Mode C (Stock Goal).",
-      "Automatic generation of corrective receipts for negative stock points."
-    ],
-    "domain": "Engine",
-    "dependencies": []
   }
 ]
