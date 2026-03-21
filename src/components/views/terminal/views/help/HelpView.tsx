@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, Book, Layout, Search, BookOpen, X } from 'lucide-react';
+import { HelpCircle, Book, Layout, Search, BookOpen, X, Menu, ArrowLeft, LayoutGrid } from 'lucide-react';
 import { useUIStore } from '@/store';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import HelpLayout from './HelpLayout';
@@ -11,7 +11,7 @@ import { useHelpContent } from './hooks/useHelpContent';
 import { cn } from '@/lib/utils';
 
 export default function HelpView() {
-  const { viewQueries } = useUIStore();
+  const { viewQueries, setCurrentView, previousView, toggleSidebar } = useUIStore();
   const {
     structure,
     loading,
@@ -33,6 +33,10 @@ export default function HelpView() {
     }
   }, [structure, currentDoc, loadDocument]);
 
+  const handleReturn = () => {
+    setCurrentView(previousView || 'dashboard');
+  };
+
   return (
     <HelpLayout
         sidebar={
@@ -47,7 +51,25 @@ export default function HelpView() {
         header={
             <div className="flex items-center justify-between w-full px-6 py-4 border-b bg-card/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    {/* Hamburger for global navigation access */}
+                    <button
+                        onClick={toggleSidebar}
+                        className="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                        title="Abrir Menú Principal"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+
+                    {/* Grid icon for quick dashboard return */}
+                    <button
+                        onClick={handleReturn}
+                        className="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                        title="Volver al Dashboard"
+                    >
+                        <LayoutGrid className="w-5 h-5" />
+                    </button>
+
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center hidden sm:flex">
                         <HelpCircle className="w-6 h-6 text-primary" />
                     </div>
                     <div className="hidden sm:block">
