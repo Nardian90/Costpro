@@ -343,6 +343,11 @@ export function TransactionBreakdown() {
                       </div>
                       <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={tx?.observaciones}>
                         {tx?.observaciones || 'Ajuste Manual / Global'}
+                      {l.observaciones && (
+                        <div className="text-[10px] text-orange-600 font-bold italic mt-0.5 truncate max-w-[150px]" title={l.observaciones}>
+                          {l.observaciones}
+                        </div>
+                      )}
                       </div>
                     </TableCell>
                     <TableCell>

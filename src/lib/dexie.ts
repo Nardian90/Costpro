@@ -164,6 +164,7 @@ export interface ReconciliationLine {
   cuadre_cents: number;         // En Pesos
   clasificacion: 'Transferencia' | 'Efectivo' | 'QR';
   origen_dato: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER';
+  observaciones?: string;      // Notas de trazabilidad (ej: Pago Mixto)
   reconciliation_hash: string; // hash(transaction_ref + detalle) -> idempotencia
   created_at: string;
 }
