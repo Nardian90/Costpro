@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/dexie';
+import { db, BankTransaction } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
 import {
   Table,
@@ -30,13 +30,40 @@ interface Props {
 }
 
 
-const extractClientName = (obs: string) => {
-    const pattern = /ORDENADA POR:\s*([^\n<]+)/i;
-    const match = obs.match(pattern);
-    if (match && match[1]) {
-        return match[1].trim().split(' PAN:')[0].trim();
+const extractTransactionMetadata = (obs: string) => {
+    const result = { nombre: '', carnet: '', tarjeta: '' };
+    if (!obs) return result;
+
+    const isBandec = obs.includes("Banca Movil BANDEC");
+
+    if (isBandec) {
+        // Nombre: between "ORDENANTE NOMBRE:" and "|"
+        const nombreMatch = obs.match(/ORDENANTE NOMBRE:\s*([^|]+)/i);
+        if (nombreMatch) result.nombre = nombreMatch[1].trim();
+
+        // CI: between "CI:" and "|"
+        const ciMatch = obs.match(/CI:\s*([^|]+)/i);
+        if (ciMatch) result.carnet = ciMatch[1].trim();
+
+        // Tarjeta: Right 16 characters
+        const last16 = obs.trim().slice(-16);
+        if (/^\d+$/.test(last16)) {
+            result.tarjeta = last16;
+        }
+    } else {
+        // Standard Transfermóvil / Metropolitano
+        // Nombre: between "ORDENADA POR:" and "PAN:" or end
+        const nombreMatch = obs.match(/ORDENADA POR:\s*(.+?)(?=\s*PAN:|$)/i);
+        if (nombreMatch) result.nombre = nombreMatch[1].trim();
+
+        // In some cases CI is also present in standard transfers if they come from certain channels
+        const ciMatch = obs.match(/CI:\s*([^| \n]+)/i);
+        if (ciMatch) result.carnet = ciMatch[1].trim();
+
+        const tarjetaMatch = obs.match(/PAN:\s*(\d+)/i);
+        if (tarjetaMatch) result.tarjeta = tarjetaMatch[1].trim();
     }
-    return '';
+    return result;
 };
 
 export function TransferQRReportView({ type }: Props) {
@@ -68,7 +95,7 @@ export function TransferQRReportView({ type }: Props) {
 
     const transactions = useLiveQuery(async () => {
         const all = await db.bank_statements.orderBy('fecha').reverse().toArray();
-        const filtered = all.filter(t => {
+        return all.filter(t => {
             const isMatch = type === 'TRANSFER' ? (t.comision_cents === 0 || !t.comision_cents) : (t.comision_cents && t.comision_cents > 0);
             if (!isMatch) return false;
             if (t.excluido) return false;
@@ -80,18 +107,35 @@ export function TransferQRReportView({ type }: Props) {
 
             return matchesSearch && matchesDate;
         });
+    }, [searchTerm, dateFrom, dateTo, type]);
 
-        // Auto-extract name if not present
-        for (const t of filtered) {
-            if (!t.nombre_cliente) {
-                const extracted = extractClientName(t.observaciones);
-                if (extracted) {
-                    await db.bank_statements.update(t.referencia_origen, { nombre_cliente: extracted });
+    // Deffered side-effect for auto-extraction to avoid ReadOnlyError
+    useEffect(() => {
+        if (!transactions) return;
+
+        const updateMetadata = async () => {
+            let updated = 0;
+            for (const t of transactions) {
+                // If missing name or carnet, try to extract
+                if (!t.nombre_cliente || !t.carnet) {
+                    const extracted = extractTransactionMetadata(t.observaciones);
+                    const updates: Partial<BankTransaction> = {};
+
+                    if (!t.nombre_cliente && extracted.nombre) updates.nombre_cliente = extracted.nombre;
+                    if (!t.carnet && extracted.carnet) updates.carnet = extracted.carnet;
+                    if (!t.tarjeta_cliente && extracted.tarjeta) updates.tarjeta_cliente = extracted.tarjeta;
+
+                    if (Object.keys(updates).length > 0) {
+                        await db.bank_statements.update(t.referencia_origen, updates);
+                        updated++;
+                    }
                 }
             }
-        }
-        return filtered;
-    }, [searchTerm, dateFrom, dateTo, type]);
+            // if (updated > 0) console.log(`Auto-updated metadata for ${updated} transactions`);
+        };
+
+        updateMetadata();
+    }, [transactions]);
 
     const handleUpdateRow = async (ref: string, field: string, value: string) => {
         await db.bank_statements.update(ref, { [field]: value } as any);
@@ -270,7 +314,7 @@ export function TransferQRReportView({ type }: Props) {
                     <TableBody>
                         {!transactions || transactions.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-medium italic">
+                                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground font-medium italic">
                                     No se encontraron registros para este criterio.
                                 </TableCell>
                             </TableRow>
