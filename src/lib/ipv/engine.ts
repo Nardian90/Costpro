@@ -336,7 +336,7 @@ export class MatchingEngine {
         addTrace(5, 'TOLERANCE', 'SKIPPED', 'Regla inactiva');
     }
 
-    const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
+        const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.daily_limit ?? Infinity;
       const usedToday = await db.reconciliation_lines
@@ -349,64 +349,116 @@ export class MatchingEngine {
         logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
         addTrace(6, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
       } else {
-        const wildcards = this.products
-            .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
-            .sort((a,b) => b.precio_cents - a.precio_cents);
-
+        // --- NUEVA LÓGICA DE PAGO MIXTO (OVERAGE) ---
+        const combination = this.findMinimumOverageCombination(remaining_cents);
         let cashMatched = 0;
-        for (const p of wildcards) {
-          if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
-            let qty = Math.floor(remaining_cents / p.precio_cents);
-            if (this.useStockLimit) {
-                const available = this.getVirtualStock(p.cod);
-                if (!this.allowNegativeStock) qty = Math.min(qty, available);
-            }
-            if (qty > 0) {
-                const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
-                lines.push(line);
-                remaining_cents -= line.importe_linea_cents;
-                logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
-                cashMatched += line.importe_linea_cents;
-                if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
-                    const adj = remaining_cents;
-                    line.precio_unitario_cents += Math.floor(adj / qty);
-                    line.importe_linea_cents += adj;
-                    remaining_cents = 0;
-                    logs.push(`PASS 6 (CASH_FILL): Micro-ajuste final de ${adj} cts aplicado`);
+
+        if (combination.length > 0) {
+          let currentTarget = remaining_cents;
+
+          for (const item of combination) {
+            const totalItemValue = item.product.precio_cents * item.qty;
+
+            if (totalItemValue <= currentTarget) {
+              const line = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
+              lines.push(line);
+              currentTarget -= totalItemValue;
+              cashMatched += totalItemValue;
+            } else {
+              const transfPart = currentTarget;
+              const cashPart = totalItemValue - transfPart;
+
+              if (transfPart > 0) {
+                const lineTransf = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
+                lineTransf.importe_linea_cents = transfPart;
+                lineTransf.cuadre_cents = lineTransf.importe_linea_cents - lineTransf.venta_real_calculada_cents;
+                lines.push(lineTransf);
+                cashMatched += transfPart;
+
+                if (cashPart > 0) {
+                    const lineCash = await this.createLine(transaction, item.product, 0, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
+                    lineCash.importe_linea_cents = cashPart;
+                    lineCash.venta_real_calculada_cents = cashPart;
+                    lineCash.cuadre_cents = 0;
+                    lineCash.product_cod = 'CASH';
+                    lineCash.cantidad = 1;
+                    lineCash.ingreso_banco_cents = 0;
+                    lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-${cashPart}-MIXED`);
+                    lines.push(lineCash);
                 }
+              } else {
+                const lineCash = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
+                lineCash.ingreso_banco_cents = 0;
+                lineCash.venta_real_calculada_cents = lineCash.importe_linea_cents;
+                lineCash.cuadre_cents = 0;
+                lineCash.product_cod = 'CASH';
+                lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-${lineCash.importe_linea_cents}-MIXED-FULL`);
+                lines.push(lineCash);
+              }
+              currentTarget = 0;
             }
           }
-        }
+          remaining_cents = 0;
+          logs.push(`PASS 6 (CASH_FILL): Aplicado pago mixto con ${combination.length} productos`);
+          addTrace(6, 'CASH_FILL', 'SUCCESS', 'Combinación de pago mixto encontrada');
+        } else {
+          // Fallback a lógica anterior (completar desde abajo)
+          const wildcards = this.products
+              .filter(p => p.isWildcardCandidate)
+              .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
+              .sort((a,b) => b.precio_cents - a.precio_cents);
 
-        if (remaining_cents > 0) {
-            const line: ReconciliationLine = {
-                id: crypto.randomUUID(),
-                transaction_ref: transaction.referencia_origen,
-                fecha_operacion: transaction.fecha,
-                ingreso_banco_cents: 0,
-                venta_real_calculada_cents: remaining_cents,
-                comision_banco_cents: 0,
-                product_cod: 'CASH',
-                product_um: 'UD',
-                cantidad: 1,
-                precio_unitario_cents: remaining_cents,
-                importe_linea_cents: remaining_cents,
-                cuadre_cents: 0,
-                clasificacion: 'Efectivo',
-                origen_dato: 'CASH_FILLER',
-                reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
-                created_at: new Date().toISOString()
-            };
-            lines.push(line);
-            cashMatched += remaining_cents;
-            remaining_cents = 0;
-            logs.push(`PASS 6 (CASH_FILL): Saldo final cubierto con ajuste de efectivo directo`);
+          for (const p of wildcards) {
+            if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
+              let qty = Math.floor(remaining_cents / p.precio_cents);
+              if (this.useStockLimit) {
+                  const available = this.getVirtualStock(p.cod);
+                  if (!this.allowNegativeStock) qty = Math.min(qty, available);
+              }
+              if (qty > 0) {
+                  const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo', undefined);
+                  lines.push(line);
+                  remaining_cents -= line.importe_linea_cents;
+                  logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
+                  cashMatched += line.importe_linea_cents;
+                  if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
+                      const adj = remaining_cents;
+                      line.precio_unitario_cents += Math.floor(adj / qty);
+                      line.importe_linea_cents += adj;
+                      remaining_cents = 0;
+                      logs.push(`PASS 6 (CASH_FILL): Micro-ajuste final de ${adj} cts aplicado`);
+                  }
+              }
+            }
+          }
+
+          if (remaining_cents > 0) {
+              const line: ReconciliationLine = {
+                  id: crypto.randomUUID(),
+                  transaction_ref: transaction.referencia_origen,
+                  fecha_operacion: transaction.fecha,
+                  ingreso_banco_cents: 0,
+                  venta_real_calculada_cents: remaining_cents,
+                  comision_banco_cents: 0,
+                  product_cod: 'CASH',
+                  product_um: 'UD',
+                  cantidad: 1,
+                  precio_unitario_cents: remaining_cents,
+                  importe_linea_cents: remaining_cents,
+                  cuadre_cents: 0,
+                  clasificacion: 'Efectivo',
+                  origen_dato: 'CASH_FILLER',
+                  reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
+                  created_at: new Date().toISOString()
+              };
+              lines.push(line);
+              cashMatched += remaining_cents;
+              remaining_cents = 0;
+              logs.push(`PASS 6 (CASH_FILL): Saldo final cubierto con ajuste de efectivo directo`);
+          }
+          addTrace(6, 'CASH_FILL', 'SUCCESS', `Cubiertos ${cashMatched} cts como efectivo`);
         }
-        addTrace(6, 'CASH_FILL', 'SUCCESS', `Cubiertos ${cashMatched} cts como efectivo`);
       }
-    } else if (!cashFillRule) {
-        addTrace(6, 'CASH_FILL', 'SKIPPED', 'Regla inactiva');
     }
 
     const isComplete = Math.abs(remaining_cents) < 0.001;
@@ -510,16 +562,14 @@ export class MatchingEngine {
 
       for (const p of candidates) {
         if (remainingDiff <= 0) break;
-        let availableStock = this.getVirtualStock(p.cod);
-
-
+        let availableStock = this.useStockLimit ? this.getVirtualStock(p.cod) : 999999;
         if (availableStock <= 0) continue;
         const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
         if (maxQtyPossible <= 0) continue;
         const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
         const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
         if (qtyToPick > 0) {
-          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo');
+          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo', undefined);
           line.id = crypto.randomUUID();
           line.cuadre_cents = 0;
           line.importe_linea_cents = p.precio_cents * qtyToPick;
@@ -571,7 +621,8 @@ export class MatchingEngine {
     product: Product,
     qty: number,
     origen: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER',
-    clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
+    clasificacion: 'Transferencia' | 'Efectivo' | 'QR',
+    observaciones?: string
   ): Promise<ReconciliationLine> {
     if (this.useStockLimit) {
         let currentStock = this.stockMap.get(product.cod) || 0;
@@ -603,6 +654,7 @@ export class MatchingEngine {
       cuadre_cents: 0,
       clasificacion,
       origen_dato: origen,
+      observaciones,
       reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${product.cod}-${qty}-${origen}`),
       created_at: new Date().toISOString()
     };
@@ -672,6 +724,106 @@ export class MatchingEngine {
       return solve(remaining, index + 1, depth);
     };
     return solve(target, 0, 0) || [];
+  }
+
+  private findMinimumOverageCombination(target: number): { product: Product, qty: number }[] {
+    const wildcards = this.products
+      .filter(p => p.isWildcardCandidate)
+      .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
+      .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    if (wildcards.length === 0) return [];
+
+    let bestCombination: { product: Product, qty: number }[] | null = null;
+    let minOverage = Infinity;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 1000;
+
+    const solve = (remaining: number, index: number, current: { product: Product, qty: number }[]) => {
+      if (Date.now() - startTime > TIMEOUT_MS || minOverage === 0) return;
+
+      if (remaining <= 0) {
+        const overage = Math.abs(remaining);
+        if (overage < minOverage) {
+          minOverage = overage;
+          bestCombination = [...current];
+        }
+        return;
+      }
+
+      if (index >= wildcards.length || current.length >= 6) return;
+
+      const p = wildcards[index];
+      const needed = Math.ceil(remaining / p.precio_cents);
+
+      for (let qty = needed; qty >= 0; qty--) {
+          if (qty > 0) {
+              const available = this.useStockLimit && !this.allowNegativeStock ? this.getVirtualStock(p.cod) : 999;
+              const actualQty = Math.min(qty, available);
+              if (actualQty > 0) {
+                  current.push({ product: p, qty: actualQty });
+                  solve(remaining - (actualQty * p.precio_cents), index + 1, current);
+                  current.pop();
+              }
+          } else {
+              solve(remaining, index + 1, current);
+          }
+          if (minOverage === 0) return;
+      }
+    };
+
+    solve(target, 0, []);
+    return bestCombination || [];
+  }
+
+  private findMinimumOverageCombination(target: number): { product: Product, qty: number }[] {
+    const wildcards = this.products
+      .filter(p => p.isWildcardCandidate)
+      .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
+      .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    if (wildcards.length === 0) return [];
+
+    let bestCombination: { product: Product, qty: number }[] | null = null;
+    let minOverage = Infinity;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 1000;
+
+    const solve = (remaining: number, index: number, current: { product: Product, qty: number }[]) => {
+      if (Date.now() - startTime > TIMEOUT_MS || minOverage === 0) return;
+
+      if (remaining <= 0) {
+        const overage = Math.abs(remaining);
+        if (overage < minOverage) {
+          minOverage = overage;
+          bestCombination = [...current];
+        }
+        return;
+      }
+
+      if (index >= wildcards.length || current.length >= 6) return;
+
+      const p = wildcards[index];
+      const needed = Math.ceil(remaining / p.precio_cents);
+
+      for (let qty = needed; qty >= 0; qty--) {
+          if (qty > 0) {
+              const available = this.useStockLimit && !this.allowNegativeStock ? this.getVirtualStock(p.cod) : 999;
+              const actualQty = Math.min(qty, available);
+              if (actualQty > 0) {
+                  current.push({ product: p, qty: actualQty });
+                  solve(remaining - (actualQty * p.precio_cents), index + 1, current);
+                  current.pop();
+              }
+          } else {
+              solve(remaining, index + 1, current);
+          }
+          if (minOverage === 0) return;
+      }
+    };
+
+    solve(target, 0, []);
+    return bestCombination || [];
   }
 
   async reconcileAll(
