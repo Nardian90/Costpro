@@ -10,19 +10,25 @@ import {
     Save,
     PlayCircle,
     Target,
-    BarChart3
+    BarChart3,
+    Database,
+    Package
 } from 'lucide-react';
 import { useFinancialPlanning } from '@/hooks/logic/useFinancialPlanning';
 import { useSimulationConfig } from '@/hooks/logic/useSimulationConfig';
 import { formatCurrency } from '@/lib/utils';
+import { db, type Product, type MatchingRule } from '@/lib/dexie';
+import { MatchingEngine } from '@/lib/ipv/engine';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { toast } from 'sonner';
 
 export const FinancialPlanningView: React.FC = () => {
     const currentYear = new Date().getFullYear();
     const [year, setYear] = useState(currentYear);
     const { goals, initYear, updateMonthlyGoal } = useFinancialPlanning(year);
-    const { setSimulatedAmount } = useSimulationConfig();
-    const [editingGoal, setEditingGoal] = useState<{month: string, amount: string} | null>(null);
+    const products = useLiveQuery(() => db.products.toArray());
+    const rules = useLiveQuery(() => db.matching_rules.toArray());
+    const [editingGoal, setEditingGoal] = useState<{month: string, amount: string, strategy: "MIN_STOCK" | "MAX_VALUE"} | null>(null);
 
     useEffect(() => {
         initYear();
@@ -31,7 +37,7 @@ export const FinancialPlanningView: React.FC = () => {
     const handleSaveGoal = async (month: string) => {
         if (!editingGoal) return;
         try {
-            await updateMonthlyGoal(month, Number(editingGoal.amount));
+            await updateMonthlyGoal(month, Number(editingGoal.amount), editingGoal.strategy);
             setEditingGoal(null);
             toast.success('Objetivo actualizado');
         } catch (error) {
@@ -39,9 +45,37 @@ export const FinancialPlanningView: React.FC = () => {
         }
     };
 
-    const handleUseAsSimulation = (amount: number) => {
-        setSimulatedAmount(amount);
-        toast.success(`Monto de simulación actualizado a ${formatCurrency(amount)}`);
+    const handleSimulateMonthGoal = async (month: string, amount: number, strategy: "MIN_STOCK" | "MAX_VALUE" = "MIN_STOCK") => {
+        if (!products || amount <= 0) return;
+
+        toast.loading('Ejecutando simulación global para el mes...', { id: 'month-sim' });
+        try {
+            const engine = new MatchingEngine(products as any, rules || []);
+            // Encontrar días del mes con transferencias
+            const transactions = await db.bank_statements
+                .where('fecha')
+                .startsWith(month)
+                .toArray();
+
+            const dates = Array.from(new Set(transactions.map(t => t.fecha)));
+            if (dates.length === 0) {
+                toast.error('No hay transacciones en el periodo para simular', { id: 'month-sim' });
+                return;
+            }
+
+            const currentTotal = 0; // Se puede mejorar calculando el total actual conciliado del mes
+            const extraLines = await engine.distributeGlobalGoal(amount, currentTotal, dates, { strategy });
+
+            if (extraLines.length > 0) {
+                await db.reconciliation_lines.bulkAdd(extraLines);
+                toast.success(`${extraLines.length} líneas generadas para cuadrar el mes`, { id: 'month-sim' });
+            } else {
+                toast.warning('No se pudo distribuir el objetivo', { id: 'month-sim' });
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Error en simulación global', { id: 'month-sim' });
+        }
     };
 
     const totalYearly = goals.reduce((acc, g) => acc + g.goalAmount, 0);
@@ -106,31 +140,44 @@ export const FinancialPlanningView: React.FC = () => {
                                                 type="number"
                                                 value={editingGoal.amount}
                                                 onChange={(e) => setEditingGoal({...editingGoal, amount: e.target.value})}
-                                                className="h-8 text-xs font-black"
+                                                className="h-8 text-[10px] font-black"
                                                 autoFocus
                                             />
+                                            <select
+                                                value={editingGoal.strategy}
+                                                onChange={(e) => setEditingGoal({...editingGoal, strategy: e.target.value as any})}
+                                                className="w-full h-8 rounded-md border border-input bg-background px-2 py-1 text-[10px] font-bold uppercase"
+                                            >
+                                                <option value="MIN_STOCK">MIN EXISTENCIA</option>
+                                                <option value="MAX_VALUE">MAX SALDO</option>
+                                            </select>
                                             <div className="flex gap-1">
-                                                <Button size="sm" className="h-6 flex-1 text-[10px] font-black uppercase" onClick={() => handleSaveGoal(g.month)}>
+                                                <Button size="sm" className="h-6 flex-1 text-[9px] font-black uppercase" onClick={() => handleSaveGoal(g.month)}>
                                                     <Save className="w-3 h-3 mr-1" /> Guardar
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="h-6 flex-1 text-[10px] font-black uppercase" onClick={() => setEditingGoal(null)}>
+                                                <Button size="sm" variant="outline" className="h-6 flex-1 text-[9px] font-black uppercase" onClick={() => setEditingGoal(null)}>
                                                     X
                                                 </Button>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <p className="text-sm font-black" onClick={() => setEditingGoal({month: g.month, amount: g.goalAmount.toString()})}>
+                                            <p className="text-sm font-black cursor-pointer" onClick={() => setEditingGoal({month: g.month, amount: g.goalAmount.toString(), strategy: g.strategy || "MIN_STOCK"})}>
                                                 {formatCurrency(g.goalAmount)}
                                             </p>
-                                            <Button
-                                                variant="ghost"
-                                                className="w-full h-7 text-[10px] font-black uppercase gap-1 hover:bg-primary/10 text-primary"
-                                                onClick={() => handleUseAsSimulation(g.goalAmount)}
-                                                disabled={g.goalAmount <= 0}
-                                            >
-                                                <PlayCircle className="w-3 h-3" /> Simular
-                                            </Button>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60">
+                                                    {g.strategy === 'MAX_VALUE' ? 'MAX SALDO' : 'MIN EXISTENCIA'}
+                                                </span>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full h-7 text-[10px] font-black uppercase gap-1 hover:bg-primary/10 text-primary"
+                                                    onClick={() => handleSimulateMonthGoal(g.month, g.goalAmount, g.strategy)}
+                                                    disabled={g.goalAmount <= 0}
+                                                >
+                                                    <PlayCircle className="w-3 h-3" /> Simular
+                                                </Button>
+                                            </div>
                                         </div>
                                     )}
                                 </Card>
@@ -148,7 +195,7 @@ export const FinancialPlanningView: React.FC = () => {
                     <h3 className="font-black uppercase text-sm">Integridad Predictiva</h3>
                     <p className="text-xs text-muted-foreground font-medium">
                         Define tus objetivos mensuales para alimentar el motor de simulación.
-                        Cada cambio queda registrado para asegurar la trazabilidad financiera del sistema.
+                        La simulación se aplicará al periodo de transacciones correspondiente.
                     </p>
                 </div>
             </Card>

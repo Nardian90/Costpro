@@ -15,17 +15,19 @@ export const useFinancialPlanning = (year: number) => {
       return {
         month,
         goalAmount: 0,
+        strategy: "MIN_STOCK"
       };
     });
 
-    await db.yearly_goals.add({ year, months });
+    // Use put to avoid constraint errors
+    await db.yearly_goals.put({ year, months });
   };
 
-  const updateMonthlyGoal = async (month: string, amount: number) => {
+  const updateMonthlyGoal = async (month: string, amount: number, strategy?: "MIN_STOCK" | "MAX_VALUE") => {
     if (!yearlyGoals) return;
 
     const updatedMonths = yearlyGoals.months.map(m =>
-      m.month === month ? { ...m, goalAmount: amount } : m
+      m.month === month ? { ...m, goalAmount: amount, strategy: strategy || m.strategy } : m
     );
 
     await db.yearly_goals.update(yearlyGoals.year, { months: updatedMonths });

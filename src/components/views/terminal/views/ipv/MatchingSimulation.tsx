@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db, type Product, type MatchingRule } from '@/lib/dexie';
 import { MatchingEngine, type MatchingResult } from '@/lib/ipv/engine';
 import { useSimulationConfig } from '@/hooks/logic/useSimulationConfig';
+import { useFinancialPlanning } from '@/hooks/logic/useFinancialPlanning';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,9 @@ import {
   Workflow,
   AlertTriangle,
   Calendar,
-  Save
+  Save,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -38,10 +41,38 @@ interface MatchingSimulationProps {
 
 export function MatchingSimulation({ products, rules }: MatchingSimulationProps) {
   const { simulatedAmount: target, setSimulatedAmount: setTarget } = useSimulationConfig();
+
+  // Determinamos el último mes con transacciones para el valor por defecto
+  const lastTxDate = useLiveQuery(() =>
+    db.bank_statements.orderBy('fecha').last().then(tx => tx?.fecha || new Date().toISOString().slice(0, 10))
+  );
+
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+
+  useEffect(() => {
+    if (lastTxDate && !selectedMonth) {
+      setSelectedMonth(lastTxDate.slice(0, 7));
+    }
+  }, [lastTxDate]);
+
+  const year = selectedMonth ? parseInt(selectedMonth.split('-')[0]) : new Date().getFullYear();
+  const { goals } = useFinancialPlanning(year);
+  const currentMonthGoal = goals.find(g => g.month === selectedMonth);
+
   const [isSimulating, setIsSimulating] = useState(false);
   const [result, setResult] = useState<MatchingResult | null>(null);
+
+  // Sincronizamos con el objetivo planeado si el usuario lo desea
   const [globalTarget, setGlobalTarget] = useState<number>(0);
   const [globalStrategy, setGlobalStrategy] = useState<"MIN_STOCK" | "MAX_VALUE">("MIN_STOCK");
+
+  useEffect(() => {
+    if (currentMonthGoal) {
+      setGlobalTarget(currentMonthGoal.goalAmount);
+      setGlobalStrategy(currentMonthGoal.strategy || "MIN_STOCK");
+    }
+  }, [currentMonthGoal]);
+
   const [isDistributing, setIsDistributing] = useState(false);
 
   const handleSimulate = async () => {
@@ -73,15 +104,28 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
     setIsDistributing(true);
     try {
         const engine = new MatchingEngine(products, rules);
-        const currentKpiTotal = 0; // Simplified for now
-        const dates = [new Date().toISOString().slice(0, 10)]; // Today
+
+        // Obtenemos las fechas del mes seleccionado que tienen transacciones
+        const transactions = await db.bank_statements
+            .where('fecha')
+            .startsWith(selectedMonth)
+            .toArray();
+
+        const dates = Array.from(new Set(transactions.map(t => t.fecha)));
+
+        if (dates.length === 0) {
+            toast.error('No hay transacciones en el periodo seleccionado para cuadrar');
+            return;
+        }
+
+        const currentKpiTotal = 0;
         const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { strategy: globalStrategy });
 
         if (extraLines.length > 0) {
             await db.reconciliation_lines.bulkAdd(extraLines);
-            toast.success(`${extraLines.length} líneas de ajuste generadas`);
+            toast.success(`${extraLines.length} líneas de ajuste generadas para ${selectedMonth}`);
         } else {
-            toast.warning('No se pudo distribuir el objetivo con los productos disponibles');
+            toast.warning('No se pudo distribuir el objetivo');
         }
     } catch (error) {
         console.error(error);
@@ -92,8 +136,13 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
   };
 
   const handleResetGlobalGoal = () => {
-      setGlobalTarget(0);
-      setGlobalStrategy("MIN_STOCK");
+      if (currentMonthGoal) {
+        setGlobalTarget(currentMonthGoal.goalAmount);
+        setGlobalStrategy(currentMonthGoal.strategy || "MIN_STOCK");
+      } else {
+        setGlobalTarget(0);
+        setGlobalStrategy("MIN_STOCK");
+      }
   };
 
   return (
@@ -107,6 +156,16 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
           <p className="text-muted-foreground font-bold uppercase text-xs tracking-widest">
             Encuentra combinaciones óptimas de productos para cuadrar ingresos
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-xl border">
+            <span className="text-[10px] font-black uppercase text-muted-foreground px-2">Periodo:</span>
+            <Input
+                type="month"
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(e.target.value)}
+                className="h-8 w-40 text-xs font-black uppercase bg-transparent border-none"
+            />
         </div>
       </div>
 
@@ -146,18 +205,18 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                 </div>
             </Card>
 
-            <Card className="p-6 border-purple-100 bg-purple-50/30 relative">
+            <Card className="p-6 border-purple-100 bg-purple-50/30 relative shadow-lg">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-sm font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Objetivo Global (Mes)
+                      Objetivo Global ({selectedMonth})
                   </h3>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleResetGlobalGoal}
                     className="h-6 w-6 text-purple-600 hover:bg-purple-100"
-                    title="Reiniciar objetivo global"
+                    title="Cargar desde planeación"
                   >
                     <RotateCcw className="w-3 h-3" />
                   </Button>
@@ -189,7 +248,7 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                     </div>
                     <Button onClick={handleGlobalGoal} disabled={isDistributing} className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-foreground uppercase font-black text-xs tracking-widest rounded-xl gap-2 shadow-lg">
                         <Save className="w-4 h-4" />
-                        Distribuir y Aplicar
+                        Ejecutar Simulación Global
                     </Button>
                 </div>
             </Card>
