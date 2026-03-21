@@ -1,9 +1,0 @@
-<<<<<<< SEARCH
-    const history = useLiveQuery(() =>
-        db.intelligent_receipts.where('applied').equals(1).reverse().sortBy('created_at')
-    );
-=======
-    const history = useLiveQuery(() =>
-        db.intelligent_receipts.where('applied').equals(true).reverse().sortBy('created_at')
-    );
->>>>>>> REPLACE

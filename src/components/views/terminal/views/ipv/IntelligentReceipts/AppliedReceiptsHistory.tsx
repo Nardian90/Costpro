@@ -9,7 +9,7 @@ import { History, FileText } from 'lucide-react';
 
 export function AppliedReceiptsHistory() {
     const history = useLiveQuery(() =>
-        db.intelligent_receipts.where('applied').equals(true).reverse().sortBy('created_at')
+        db.intelligent_receipts.where('applied').equals(1).reverse().sortBy('created_at')
     );
 
     if (!history || history.length === 0) {
