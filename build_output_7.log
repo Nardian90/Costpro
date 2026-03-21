@@ -1,0 +1,38 @@
+$ next build && sh scripts/bundle_standalone.sh
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 25.5s
+  Running TypeScript ...
+Failed to type check.
+
+./src/services/matching-log-service.ts:85:50
+Type error: 'l.duration_ms' is possibly 'undefined'.
+
+  [90m83 |[0m ...pendiente: logs.filter(l => l.resultado_estado === [32m'PENDIENTE'[0m).length,
+  [90m84 |[0m ...avgConfidence: logs.reduce((sum, l) => sum + (l.matching_confidence || [35m0[0m), [35m0[0m) / logs.le...
+[31m[1m>[0m [90m85 |[0m ...avgDuration: logs.reduce((sum, l) => sum + l.duration_ms, [35m0[0m) / logs.length,
+  [90m   |[0m                                               [31m[1m^[0m
+  [90m86 |[0m ...rulesFrequency: [36mthis[0m.calculateRuleFrequency(logs)
+  [90m87 |[0m ...
+  [90m88 |[0m ...
+Next.js build worker exited with code: 1 and signal: null
+error: script "build" exited with code 1

@@ -82,7 +82,7 @@ export class MatchingLogService {
       parcial: logs.filter(l => l.resultado_estado === 'PARCIAL').length,
       pendiente: logs.filter(l => l.resultado_estado === 'PENDIENTE').length,
       avgConfidence: logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length,
-      avgDuration: logs.reduce((sum, l) => sum + l.duration_ms, 0) / logs.length,
+      avgDuration: logs.reduce((sum, l) => sum + (l.duration_ms || 0), 0) / logs.length,
       rulesFrequency: this.calculateRuleFrequency(logs)
     };
   }
@@ -90,7 +90,7 @@ export class MatchingLogService {
   private static calculateRuleFrequency(logs: MatchingLog[]) {
     const freq: Record<string, number> = {};
     logs.forEach(log => {
-      log.applied_rules.forEach(rule => {
+      log.applied_rules?.forEach(rule => {
         freq[rule] = (freq[rule] || 0) + 1;
       });
     });
