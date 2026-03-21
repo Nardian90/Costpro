@@ -6,10 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const root = /*turbopackIgnore:true*/process.cwd();
-
     const readFile = (relPath: string) => {
-      const fullPath = path.join(root, relPath);
+      const fullPath = path.join(/*turbopackIgnore:true*/process.cwd(), relPath);
       if (fs.existsSync(fullPath)) {
         return fs.readFileSync(fullPath, 'utf8');
       }
@@ -60,8 +58,8 @@ export async function GET() {
       views: readJson('knowledge/views.json'),
       workflows: readJson('knowledge/workflows.json'),
       components: readJson('knowledge/components.json'),
-      docsList: fs.existsSync(path.join(root, 'knowledge/docs'))
-        ? fs.readdirSync(path.join(root, 'knowledge/docs'), { recursive: true })
+      docsList: fs.existsSync(path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge/docs'))
+        ? fs.readdirSync(path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge/docs'), { recursive: true })
             .filter(f => (f as any).endsWith('.md'))
         : []
     };
