@@ -29,7 +29,8 @@ import {
   FileSearch, Target,
   Receipt,
   ArrowRightLeft,
-  QrCode
+  QrCode,
+  ListFilter
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
@@ -51,6 +52,8 @@ import { IPVRightSidebar } from './IPVRightSidebar';
 import { IncomeReceiptSection } from './IncomeReceiptSection';
 import { TransferQRReportView } from './TransferQRReportView';
 import { IPVReportsDropdown } from './IPVReportsDropdown';
+import { seedMappingRules } from '@/lib/ipv/seedMappingRules';
+import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
 import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
@@ -81,6 +84,7 @@ export default function IPVView() {
   React.useEffect(() => {
     if (rules && rules.length === 0) {
       db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
+      seedMappingRules();
     }
   }, [rules]);
 
@@ -403,6 +407,7 @@ export default function IPVView() {
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
     { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
+    { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
     {
         id: 'reports-dropdown',
         label: '',
@@ -710,6 +715,11 @@ export default function IPVView() {
           {activeTab === 'errors' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <IngestionErrorsTable />
+            </div>
+          )}
+          {activeTab === 'mapping-rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MappingRulesManager />
             </div>
           )}
         </div>

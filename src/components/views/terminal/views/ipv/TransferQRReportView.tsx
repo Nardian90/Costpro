@@ -20,6 +20,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Download, FileText, Calendar, Filter, Building, User, Phone, IdCard, Hash } from 'lucide-react';
+import { useColumnMapping } from '@/hooks/useColumnMapping';
+import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
+import { MappingStatsPanel } from '@/components/views/shared/MappingStatsPanel';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { Settings2, UploadCloud } from 'lucide-react';
 import { formatCurrency, formatDate, getStoreLogoUrl } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -67,6 +72,8 @@ const extractTransactionMetadata = (obs: string) => {
 };
 
 export function TransferQRReportView({ type }: Props) {
+    const [isRulesOpen, setIsRulesOpen] = useState(false);
+    const { applyMapping, lastStats, isProcessing } = useColumnMapping(type);
     const { user } = useAuthStore();
     const activeStoreId = user?.activeStoreId;
 
@@ -280,6 +287,30 @@ export function TransferQRReportView({ type }: Props) {
                 </div>
             </div>
 
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-card p-4 rounded-3xl border shadow-sm">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsRulesOpen(true)} className="h-10 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-primary/20 hover:bg-primary/5"><Settings2 className="w-4 h-4 text-primary" /> Configurar Mapeo</Button>
+                    <input type="file" id="dataset-upload" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                            const text = event.target?.result as string;
+                            const lines = text.split('\n').filter(line => line.trim());
+                            if (lines.length < 2) return;
+                            const headers = lines[0].split(',').map((h: string) => h.trim());
+                            const data = lines.slice(1).map((line: string) => {
+                                const values = line.split(',');
+                                return headers.reduce((obj, header, i) => { obj[header] = values[i]?.trim(); return obj; }, {} as any);
+                            });
+                            await applyMapping(data);
+                        };
+                        reader.readAsText(file);
+                    }} accept=".csv" />
+                    <Button variant="outline" onClick={() => document.getElementById('dataset-upload')?.click()} disabled={isProcessing} className="h-10 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-purple-500/20 hover:bg-purple-500/5 text-purple-600"><UploadCloud className="w-4 h-4" /> Dataset</Button>
+                </div>
+            </div>
+            {lastStats && <div className="animate-in slide-in-from-top duration-500"><MappingStatsPanel stats={lastStats} /></div>}
             <div className="flex flex-col lg:flex-row gap-4 items-center bg-card/50 p-4 rounded-3xl border border-border/50">
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -359,6 +390,7 @@ export function TransferQRReportView({ type }: Props) {
                     </TableBody>
                 </Table>
             </div>
+            <BaseModal open={isRulesOpen} onOpenChange={setIsRulesOpen} title="Reglas de Mapeo" maxWidth="4xl"><div className="py-4"><MappingRulesManager reportType={type} /></div></BaseModal>
         </div>
     );
 }

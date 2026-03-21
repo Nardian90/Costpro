@@ -16,9 +16,11 @@ import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
+import { useColumnMapping } from '@/hooks/useColumnMapping';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 
 export function BankIngestion() {
+  const { applyMapping } = useColumnMapping('TRANSFER');
   const fileBackupRef = React.useRef<HTMLInputElement>(null);
   const handleBackupImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -181,13 +183,15 @@ export function BankIngestion() {
   };
 
   const processBankData = async (data: any[]) => {
+    const { mappedData: mappedRows } = await applyMapping(data);
+    const processingRows = (mappedRows || data).map((r: any) => ({ ...r, fecha: r.date || r.fecha, importe_cents: r.amount || r.importe_cents, referencia_origen: r.reference || r.transaction_id || r.referencia_origen, observaciones: r.description || r.observaciones, nombre_cliente: r.customer_name || r.nombre_cliente, carnet: r.customer_id || r.carnet }));
     let imported = 0;
     let errorsCount = 0;
 
     const lastTx = await db.bank_statements.orderBy('fecha').last();
     const lastDate = lastTx ? lastTx.fecha : null;
 
-    for (const row of data) {
+    for (const row of processingRows) {
       try {
         const fecha = row.fecha || standardizeDate(row['Fecha'] || row['fecha']);
         const ref_origen_raw = String(row.referencia_origen || row['Ref_Origen'] || row['referencia_origen'] || '').trim();
