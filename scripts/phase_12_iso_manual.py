@@ -84,7 +84,6 @@ Este documento está dirigido a administradores de negocios, contadores y person
     proc_content = "# Procedimientos Paso a Paso\n\n"
 
     for help_item in user_help:
-        # We use user_help for more "user-friendly" descriptions if available
         feature = help_item.get('feature')
         desc = help_item.get('descripcion_usuario')
         actions = help_item.get('acciones', [])
@@ -130,26 +129,20 @@ Este documento está dirigido a administradores de negocios, contadores y person
 
     # 6. glossary.md
     glossary_content = "# Glosario de Términos\n\n"
-    glossary_content += "| Término Técnico | Término de Usuario | Definición Contextual |\n"
-    glossary_content += "| :--- | :--- | :--- |\n"
+    glossary_content += "| Término | Descripción |\n"
+    glossary_content += "| :--- | :--- |\n"
 
-    # Using some common translations from Phase 11 logic
-    common_terms = {
-        "Matching Engine": "Conciliador Inteligente",
-        "IPV": "Control de Inventario y Ventas",
-        "Cost Sheet": "Ficha de Costo",
-        "Inventory Count": "Conteo de Inventario",
-        "Bank Ingestion": "Carga de Extractos Bancarios"
-    }
-
-    for tech, user in common_terms.items():
-        glossary_content += f"| {tech} | {user} | Herramienta de {user.lower()} en CostPro. |\n"
+    for help_item in user_help:
+        feature = help_item.get('feature')
+        desc = help_item.get('descripcion_usuario')
+        if feature and desc:
+            short_desc = desc.split('.')[0] + '.'
+            glossary_content += f"| {feature} | {short_desc} |\n"
 
     with open(os.path.join(output_dir, "glossary.md"), 'w', encoding='utf-8') as f:
         f.write(glossary_content)
 
     # Commit artifact
-    # Phase 12 artifacts have high confidence as they are generated from internal knowledge base
     res = commit_artifact("iso_manual", output_dir, 98.0, 12)
     print(f"Phase 12 result: {res}")
 

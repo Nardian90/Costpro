@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 // @ts-ignore
-import pdf from 'pdf-parse/lib/pdf-parse.js';
+import pdf from 'pdf-parse';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    const filePath = path.join(/*turbopackIgnore:true*/ process.cwd(), 'public', 'manuals', filename);
+    const manualsDir = path.join(/*turbopackIgnore:true*/ process.cwd(), 'public', 'manuals');
+    const filePath = path.join(manualsDir, filename);
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
@@ -64,7 +65,6 @@ export async function POST(req: NextRequest) {
 
     // Search for companion JSON file
     const baseName = filename.replace(/\.pdf$/i, '');
-    const manualsDir = path.dirname(filePath);
     const jsonPaths = [
         path.join(manualsDir, `${baseName}.json`),
         path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),

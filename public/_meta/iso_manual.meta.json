@@ -1,10 +1,10 @@
 {
   "artifactName": "iso_manual",
   "version": "1.0.0",
-  "hash": "sha256:b421e1f9d92d565a31337667ebb12a72685dd515b75e7a9002c913baa89ddbf8",
+  "hash": "sha256:70ef2c8b61078729f683a13f47d5b7f83b3cf27c47823f6727f0dc8b533a028d",
   "confidenceScore": 98.0,
   "reviewRequired": false,
-  "createdAt": "2026-03-21T08:18:06.306476+00:00Z",
+  "createdAt": "2026-03-21T09:11:50.895590+00:00Z",
   "sourcePhase": 12,
   "createdBy": "architecture-scheduler/8.0",
   "confidenceModel": "ai-arch-v8.0",

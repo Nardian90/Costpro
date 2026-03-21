@@ -309,21 +309,69 @@
     {
       "phase": 12,
       "phaseName": "ISO/IEC 26514 Manual Generation",
-      "startTime": "2026-03-21T08:18:06.219027+00:00Z",
-      "endTime": "2026-03-21T08:18:06.320070+00:00Z",
-      "durationMs": 101,
+      "startTime": "2026-03-21T09:09:35.452353+00:00Z",
+      "endTime": "2026-03-21T09:09:35.452388+00:00Z",
+      "durationMs": 0,
       "status": "success",
       "artifactsGenerated": [
         "iso_manual/"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 13,
+      "phaseName": "Knowledge Graph Generation",
+      "startTime": "2026-03-21T09:10:31.250191+00:00Z",
+      "endTime": "2026-03-21T09:10:31.328281+00:00Z",
+      "durationMs": 78,
+      "status": "success",
+      "artifactsGenerated": [
+        "knowledge_graph"
+      ],
+      "cycle": 1
+    },
+    {
+      "phase": 14,
+      "phaseName": "AI Retrieval Context System",
+      "startTime": "2026-03-21T09:10:49.157823+00:00Z",
+      "endTime": "2026-03-21T09:10:49.200257+00:00Z",
+      "durationMs": 42,
+      "status": "success",
+      "artifactsGenerated": [
+        "ai_context/"
+      ],
+      "cycle": 1
+    },
+    {
+      "phase": 12,
+      "phaseName": "ISO/IEC 26514 Manual Generation",
+      "startTime": "2026-03-21T09:11:50.756378+00:00Z",
+      "endTime": "2026-03-21T09:11:50.909209+00:00Z",
+      "durationMs": 152,
+      "status": "success",
+      "artifactsGenerated": [
+        "iso_manual/"
+      ],
+      "cycle": 1
+    },
+    {
+      "phase": 13,
+      "phaseName": "Knowledge Graph Generation",
+      "startTime": "2026-03-21T09:12:17.455275+00:00Z",
+      "endTime": "2026-03-21T09:12:17.455303+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "knowledge_graph"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 48121,
+    "averagePhaseDurationMs": 41711,
     "slowestPhase": 7,
-    "fastestPhase": 8,
-    "lastCycleDurationMs": 1251165
+    "fastestPhase": 12,
+    "lastCycleDurationMs": 1251336
   },
   "healthMetrics": {
     "integrityScore": 84.0,
