@@ -35,7 +35,7 @@ export function MappingStatsPanel({ stats, className }: { stats: MappingStats, c
         <div className="space-y-3">
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Columnas No Mapeadas</p>
           <div className="flex flex-wrap gap-1.5">
-            {stats.unmappedColumns.map(col => <Badge key={col} variant="secondary" className="text-[9px] font-bold bg-muted/50">{col}</Badge>)}
+            {stats.unmappedColumns.map((col: string) => <Badge key={col} variant="secondary" className="text-[9px] font-bold bg-muted/50">{col}</Badge>)}
           </div>
         </div>
       </div>

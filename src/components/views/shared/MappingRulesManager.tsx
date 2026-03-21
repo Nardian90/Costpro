@@ -69,7 +69,7 @@ export function MappingRulesManager({ reportType }: { reportType?: ReportType })
       <Table>
         <TableHeader><TableRow><TableHead>Reporte</TableHead><TableHead>Origen</TableHead><TableHead>Destino</TableHead><TableHead>Estado</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {rules?.map(r => (
+          {rules?.map((r: MappingRule) => (
             <TableRow key={r.id}>
               <TableCell><Badge variant="outline">{r.reportType}</Badge></TableCell>
               <TableCell className="font-bold">{r.sourceColumn}</TableCell>

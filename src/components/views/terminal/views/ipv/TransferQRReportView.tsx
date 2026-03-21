@@ -298,8 +298,8 @@ export function TransferQRReportView({ type }: Props) {
                             const text = event.target?.result as string;
                             const lines = text.split('\n').filter(line => line.trim());
                             if (lines.length < 2) return;
-                            const headers = lines[0].split(',').map(h => h.trim());
-                            const data = lines.slice(1).map(line => {
+                            const headers = lines[0].split(',').map((h: string) => h.trim());
+                            const data = lines.slice(1).map((line: string) => {
                                 const values = line.split(',');
                                 return headers.reduce((obj, header, i) => { obj[header] = values[i]?.trim(); return obj; }, {} as any);
                             });
