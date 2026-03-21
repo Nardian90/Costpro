@@ -9,6 +9,7 @@ import { getServerSession } from "@/lib/auth";
 
 // Use standard Node runtime because pdf-parse needs fs and Buffer
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +28,7 @@ function getSupabaseAdmin() {
 }
 
 export async function GET() {
-  const manualsDir = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals');
+  const manualsDir = path.join(/*turbopackIgnore:true*/process.cwd(), 'public', 'manuals');
   try {
     if (!fs.existsSync(manualsDir)) {
       return NextResponse.json({ files: [] });
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals', filename);
+    const filePath = path.join(/*turbopackIgnore:true*/process.cwd(), 'public', 'manuals', filename);
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
