@@ -1,0 +1,39 @@
+$ next build && sh scripts/bundle_standalone.sh
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 34.6s
+  Running TypeScript ...
+Failed to type check.
+
+./src/components/views/terminal/views/ipv/MatchingAuditView.tsx:251:50
+Type error: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string | null>'.
+
+  [90m249 |[0m ...              key={log.id}
+  [90m250 |[0m ...              className={[32m`cursor-pointer transition-colors [0m${selectedTx === log.transa...
+[31m[1m>[0m [90m251 |[0m ...              onClick={() => setSelectedTx(log.transaction_ref)}
+  [90m    |[0m                                               [31m[1m^[0m
+  [90m252 |[0m ...              >
+  [90m253 |[0m ...              <[33mTableCell[0m className=[32m"font-mono text-[10px]"[0m>
+  [90m254 |[0m ...                  {log.transaction_ref.slice(-[35m12[0m)}
+Next.js build worker exited with code: 1 and signal: null
+error: script "build" exited with code 1

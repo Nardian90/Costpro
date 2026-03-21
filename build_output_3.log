@@ -1,0 +1,44 @@
+$ next build && sh scripts/bundle_standalone.sh
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 22.9s
+  Running TypeScript ...
+Failed to type check.
+
+./src/components/views/terminal/views/ipv/MatchingAuditView.tsx:325:71
+Type error: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | Date'.
+      Type 'undefined' is not assignable to type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number'.
+      Type 'undefined' is not assignable to type 'string | number'.
+
+  [90m323 |[0m ...ame=[32m"flex items-center justify-between mb-2"[0m>
+  [90m324 |[0m ...lassName=[32m"font-mono text-muted-foreground bg-muted px-1 rounded text-[9px]"[0m>[33mINTENTO[0m #{...
+[31m[1m>[0m [90m325 |[0m ...lassName=[32m"text-muted-foreground"[0m>{[36mnew[0m [33mDate[0m(log.fecha_ejecucion).toLocaleString()}</span>
+  [90m    |[0m                                               [31m[1m^[0m
+  [90m326 |[0m ...variant=[32m"outline"[0m className=[32m"font-black text-[9px]"[0m>{log.resultado_estado}</[33mBadge[0m>
+  [90m327 |[0m ...
+  [90m328 |[0m ...
+Next.js build worker exited with code: 1 and signal: null
+error: script "build" exited with code 1

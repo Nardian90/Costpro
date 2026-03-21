@@ -16,16 +16,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet, ChevronRight, ChevronDown, Calendar, Filter, CreditCard, Banknote, QrCode } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { useConsolidatedBalance, usePeriodClosure } from '@/hooks/logic/useConsolidatedBalance';
+import { Input } from '@/components/ui/input';
+import { AlertTriangle, Lock, Unlock, CheckCircle2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
 
 export function PivotStatementView() {
+    const [selectedPeriod, setSelectedPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
     const transactions = useLiveQuery(() => db.bank_statements.toArray());
     const reconLines = useLiveQuery(() => db.reconciliation_lines.toArray());
     const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     const [filterType, setFilterType] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
     const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('month');
+    const { account, isClosed, updateOpeningBalance, updateBankBalance } = useConsolidatedBalance(selectedPeriod);
+    const { status: closureStatus, toggleClosure } = usePeriodClosure(selectedPeriod);
 
     const pivotData = useMemo(() => {
         if (!transactions) return [];
@@ -153,7 +159,18 @@ export function PivotStatementView() {
                         <FileSpreadsheet className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                        <h3 className="font-black uppercase text-sm tracking-widest text-primary">Consolidado Dinámico</h3>
+                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                            <h3 className="font-black uppercase text-sm tracking-widest text-primary">Consolidado Dinámico</h3>
+
+                        </div>
+                        <Input
+                            type="month"
+                            value={selectedPeriod}
+                            onChange={(e) => setSelectedPeriod(e.target.value)}
+                            className="w-40 h-8 text-xs font-black uppercase"
+                        />
+                    </div>
                         <p className="text-xs text-muted-foreground font-bold uppercase">Agrupación Mensual de Movimientos</p>
                     </div>
                 </div>
@@ -203,7 +220,67 @@ export function PivotStatementView() {
             </div>
 
             <div className="px-4 pb-6">
-                <div className="rounded-2xl border overflow-hidden">
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <Card className="p-4 bg-muted/30 border-none relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                            {closureStatus === 'CLOSED' ? <Lock className="w-8 h-8 text-red-500" /> : <Unlock className="w-8 h-8 text-green-500" />}
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Saldo Inicial (Periodo)</p>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                value={account?.openingBalance || 0}
+                                onChange={(e) => updateOpeningBalance(Number(e.target.value))}
+                                disabled={isClosed}
+                                className="h-8 font-black text-sm bg-transparent border-none p-0 focus-visible:ring-0 w-32"
+                            />
+                            {isClosed && <Lock className="w-3 h-3 text-red-500" />}
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 mt-2 text-[9px] font-black uppercase tracking-tighter"
+                            onClick={toggleClosure}
+                        >
+                            {closureStatus === 'CLOSED' ? 'Abrir Periodo' : 'Cerrar Periodo'}
+                        </Button>
+                    </Card>
+
+                    <Card className="p-4 bg-primary/5 border-none">
+                        <p className="text-[10px] font-black uppercase text-primary/60 mb-1">Saldo Final Calculado</p>
+                        <h4 className="text-xl font-black">
+                            {formatCurrency((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0))}
+                        </h4>
+                    </Card>
+
+                    <Card className="p-4 bg-blue-500/5 border-none">
+                        <p className="text-[10px] font-black uppercase text-blue-600/60 mb-1">Extracto Bancario (Real)</p>
+                        <Input
+                            type="number"
+                            value={account?.bankStatementBalance || 0}
+                            onChange={(e) => updateBankBalance(Number(e.target.value))}
+                            className="h-8 font-black text-sm bg-transparent border-none p-0 focus-visible:ring-0 w-full"
+                        />
+                    </Card>
+
+                    <Card className={`p-4 border-none ${
+                        Math.abs(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0)) < 0.01
+                        ? 'bg-green-500/10 text-green-600'
+                        : 'bg-red-500/10 text-red-600'
+                    }`}>
+                        <p className="text-[10px] font-black uppercase mb-1">Diferencia de Conciliación</p>
+                        <div className="flex items-center gap-2">
+                            <h4 className="text-xl font-black">
+                                {formatCurrency(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0))}
+                            </h4>
+                            {Math.abs(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0)) < 0.01
+                                ? <CheckCircle2 className="w-5 h-5" />
+                                : <AlertTriangle className="w-5 h-5 animate-pulse" />}
+                        </div>
+                    </Card>
+                </div>
+<div className="rounded-2xl border overflow-hidden">
                     <Table>
                         <TableHeader className="bg-muted/50">
                             <TableRow>
