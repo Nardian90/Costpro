@@ -36,7 +36,7 @@ interface MatchingSimulationProps {
 }
 
 export function MatchingSimulation({ products, rules }: MatchingSimulationProps) {
-  const [target, setTarget] = useState<number>(0);
+  const { simulatedAmount: target, setSimulatedAmount: setTarget } = useSimulationConfig();
   const [isSimulating, setIsSimulating] = useState(false);
   const [result, setResult] = useState<MatchingResult | null>(null);
   const [globalTarget, setGlobalTarget] = useState<number>(0);

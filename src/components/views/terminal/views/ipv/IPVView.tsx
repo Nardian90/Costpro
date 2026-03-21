@@ -26,7 +26,7 @@ import {
   Zap,
   BarChart4, Wand2,
   PackageSearch,
-  FileSearch,
+  FileSearch, Target,
   Receipt,
   ArrowRightLeft,
   QrCode
@@ -42,6 +42,7 @@ import { IPVReportView } from './IPVReportView';
 import { IntelligentReceiptsSection } from './IntelligentReceipts/IntelligentReceiptsSection';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { PivotStatementView } from './PivotStatementView';
+import { FinancialPlanningView } from './FinancialPlanningView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
@@ -398,6 +399,7 @@ export default function IPVView() {
     { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
     { id: 'intelligent-receipts', label: 'Recepciones', icon: Wand2, onClick: () => setActiveTab('intelligent-receipts'), active: activeTab === 'intelligent-receipts' },
     { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
+    { id: 'planning', label: 'Planeación', icon: Target, onClick: () => setActiveTab('planning'), active: activeTab === 'planning' },
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
     { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
@@ -640,7 +642,13 @@ export default function IPVView() {
             </div>
           )}
 
-          {activeTab === 'catalog' && (
+                    {activeTab === 'planning' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <FinancialPlanningView />
+            </div>
+          )}
+
+{activeTab === 'catalog' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <CatalogTable />
             </div>
