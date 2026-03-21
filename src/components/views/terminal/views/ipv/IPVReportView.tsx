@@ -74,6 +74,7 @@ export function IPVReportView() {
 
   const createReportForDate = async (dateStr: string, products: any[], lastReport: DailyIPVReport | null) => {
     const lines = await db.reconciliation_lines.where('fecha_operacion').equals(dateStr).toArray();
+    const movements = await db.product_movements.where('fecha').equals(dateStr).toArray();
     const productGroups: Record<string, any> = {};
     let totalVentas = 0;
     let totalEfectivo = 0;
@@ -101,20 +102,27 @@ export function IPVReportView() {
         const ventaInfo = productGroups[p.cod] || { venta_cantidad_qty: 0, precio_unitario_cents: p.precio_cents, importe_cents: 0 };
         const prevRow = lastReport?.filas.find((pr: any) => pr.cod === p.cod);
         const initial = prevRow ? prevRow.existencia_final_qty : (p.stock_inicial_manual || 0);
-        const entrada = 0;
-        const salida = 0;
+
+        const entries = movements
+            .filter(m => m.producto_destino_cod === p.cod && (m.tipo === 'INTELLIGENT_RECEIPT' || m.tipo === 'DECOMPOSITION'))
+            .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
+
+        const exits = movements
+            .filter(m => m.producto_origen_cod === p.cod && m.tipo === 'DECOMPOSITION')
+            .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
+
         const venta = ventaInfo.venta_cantidad_qty;
-        const totalDisponible = initial + entrada;
-        const final = totalDisponible - salida - venta;
+        const totalDisponible = initial + entries;
+        const final = totalDisponible - exits - venta;
 
         return {
             cod: p.cod,
             descripcion: p.descripcion,
             um: p.um,
             saldo_inicial_qty: initial,
-            entrada_qty: entrada,
-            salida_qty: salida,
-            entrada_salida_qty: 0,
+            entrada_qty: entries,
+            salida_qty: exits,
+            entrada_salida_qty: entries - exits,
             total_disponible_qty: totalDisponible,
             venta_cantidad_qty: venta,
             precio_unitario_cents: ventaInfo.precio_unitario_cents,
