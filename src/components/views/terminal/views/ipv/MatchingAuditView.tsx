@@ -206,7 +206,7 @@ export function MatchingAuditView() {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={logs.slice(0, 50).map((l, idx) => ({
                     idx,
-                    confidence: Number((l.matching_confidence * 100).toFixed(0))
+                    confidence: Number(((l.matching_confidence || 0) * 100).toFixed(0))
                     }))}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                     <XAxis dataKey="idx" hide />
@@ -248,13 +248,13 @@ export function MatchingAuditView() {
                     <TableRow
                     key={log.id}
                     className={`cursor-pointer transition-colors ${selectedTx === log.transaction_ref ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                    onClick={() => setSelectedTx(log.transaction_ref)}
+                    onClick={() => log.transaction_ref && setSelectedTx(log.transaction_ref)}
                     >
                     <TableCell className="font-mono text-[10px]">
-                        {log.transaction_ref.slice(-12)}
+                        {log.transaction_ref?.slice(-12) || "N/A"}
                     </TableCell>
                     <TableCell className="text-xs font-medium">
-                        {new Date(log.fecha_ejecucion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {new Date(log.fecha_ejecucion || "").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </TableCell>
                     <TableCell>
                         <Badge
@@ -272,24 +272,24 @@ export function MatchingAuditView() {
                             <div className="w-12 bg-muted rounded-full h-1.5 overflow-hidden">
                                 <div
                                     className="bg-primary h-full"
-                                    style={{ width: `${log.matching_confidence * 100}%` }}
+                                    style={{ width: `${(log.matching_confidence || 0) * 100}%` }}
                                 />
                             </div>
                             <span className="font-black text-xs">
-                                {(log.matching_confidence * 100).toFixed(0)}%
+                                {((log.matching_confidence || 0) * 100).toFixed(0)}%
                             </span>
                         </div>
                     </TableCell>
                     <TableCell>
                         <div className="flex gap-1 flex-wrap">
-                        {log.applied_rules.slice(0, 3).map((rule) => (
+                        {log.applied_rules?.slice(0, 3).map((rule) => (
                             <Badge key={rule} variant="outline" className="text-[8px] font-bold px-1 h-3.5 bg-background">
                             {rule}
                             </Badge>
                         ))}
-                        {log.applied_rules.length > 3 && (
+                        {log.applied_rules && log.applied_rules.length > 3 && (
                             <Badge variant="outline" className="text-[8px] font-bold px-1 h-3.5">
-                            +{log.applied_rules.length - 3}
+                            +{(log.applied_rules?.length || 0) - 3}
                             </Badge>
                         )}
                         </div>
@@ -322,7 +322,7 @@ export function MatchingAuditView() {
               <div key={log.id} className="p-3 bg-card rounded-lg border border-border/50 text-[11px]">
                 <div className="flex items-center justify-between mb-2">
                     <span className="font-mono text-muted-foreground bg-muted px-1 rounded text-[9px]">INTENTO #{txHistory.length - idx}</span>
-                    <span className="text-muted-foreground">{new Date(log.fecha_ejecucion).toLocaleString()}</span>
+                    <span className="text-muted-foreground">{log.fecha_ejecucion ? new Date(log.fecha_ejecucion).toLocaleString() : "N/A"}</span>
                     <Badge variant="outline" className="font-black text-[9px]">{log.resultado_estado}</Badge>
                 </div>
 
@@ -330,8 +330,8 @@ export function MatchingAuditView() {
                     <div>
                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Reglas Ejecutadas</p>
                         <div className="flex flex-wrap gap-1">
-                            {log.reglas_activas.map(r => (
-                                <span key={r} className={`px-1 rounded text-[9px] ${log.applied_rules.includes(r) ? 'bg-green-500/20 text-green-700 font-bold' : 'bg-muted text-muted-foreground'}`}>
+                            {log.reglas_activas?.map(r => (
+                                <span key={r} className={`px-1 rounded text-[9px] ${log.applied_rules?.includes(r) ? 'bg-green-500/20 text-green-700 font-bold' : 'bg-muted text-muted-foreground'}`}>
                                     {r}
                                 </span>
                             ))}
@@ -351,11 +351,11 @@ export function MatchingAuditView() {
                     </div>
                 )}
 
-                {log.trace.length > 0 && (
+                {log.trace && log.trace.length > 0 && (
                     <div className="mt-2">
                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Pipeline Trace</p>
                         <div className="space-y-1">
-                            {log.trace.map((t, i) => (
+                            {log.trace?.map((t, i) => (
                                 <div key={i} className="flex items-center gap-2 font-mono text-[9px]">
                                     <span className="w-4 text-center">{t.pass}</span>
                                     <span className="flex-1 truncate">{t.rule}</span>
