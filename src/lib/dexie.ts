@@ -277,6 +277,7 @@ export interface PeriodClosure {
 export interface MonthlyGoal {
   month: string; // YYYY-MM
   goalAmount: number;
+  strategy?: "MIN_STOCK" | "MAX_VALUE";
 }
 
 export interface YearlyGoals {
@@ -304,7 +305,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(18).stores({
+    this.version(19).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad, activo',
