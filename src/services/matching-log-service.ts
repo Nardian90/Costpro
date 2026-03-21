@@ -81,7 +81,7 @@ export class MatchingLogService {
       completo: logs.filter(l => l.resultado_estado === 'COMPLETO').length,
       parcial: logs.filter(l => l.resultado_estado === 'PARCIAL').length,
       pendiente: logs.filter(l => l.resultado_estado === 'PENDIENTE').length,
-      avgConfidence: logs.reduce((sum, l) => sum + l.matching_confidence, 0) / logs.length,
+      avgConfidence: logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length,
       avgDuration: logs.reduce((sum, l) => sum + l.duration_ms, 0) / logs.length,
       rulesFrequency: this.calculateRuleFrequency(logs)
     };
