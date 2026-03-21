@@ -9,7 +9,7 @@
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
     "postinstall": "sh scripts/postinstall.sh",
-    "build": "next build && ( [ -d .next/static ] && mkdir -p .next/standalone/.next/static && cp -r .next/static/* .next/standalone/.next/static || true ) && ( [ -d public ] && mkdir -p .next/standalone/public && cp -r public/* .next/standalone/public || true ) && ( [ -d knowledge ] && mkdir -p .next/standalone/knowledge && cp -r knowledge/* .next/standalone/knowledge || true )",
+    "build": "next build && sh scripts/bundle_standalone.sh",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
