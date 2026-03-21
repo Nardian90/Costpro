@@ -1,0 +1,65 @@
+import React from 'react';
+import { GraphViewer } from '../components/GraphViewer';
+import { JsonViewer } from '../components/JsonViewer';
+import { HealthData } from '../hooks/useHealthData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+interface ArchitectureTabProps {
+  data: HealthData;
+}
+
+export const ArchitectureTab: React.FC<ArchitectureTabProps> = ({ data }) => {
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <Tabs defaultValue="graph" className="w-full">
+        <div className="flex items-center justify-between mb-8">
+           <h2 className="text-sm font-black uppercase tracking-[0.2em]">Architecture Intelligence</h2>
+           <TabsList className="bg-muted/30 border border-border/50 p-1 h-auto rounded-2xl overflow-hidden">
+             <TabsTrigger value="graph" className="px-6 py-2 rounded-xl data-[state=active]:bg-background transition-all">
+                <span className="text-[10px] font-black uppercase tracking-widest">Dependency Graph</span>
+             </TabsTrigger>
+             <TabsTrigger value="metrics" className="px-6 py-2 rounded-xl data-[state=active]:bg-background transition-all">
+                <span className="text-[10px] font-black uppercase tracking-widest">Deep Metrics</span>
+             </TabsTrigger>
+             <TabsTrigger value="manifest" className="px-6 py-2 rounded-xl data-[state=active]:bg-background transition-all">
+                <span className="text-[10px] font-black uppercase tracking-widest">Manifest</span>
+             </TabsTrigger>
+           </TabsList>
+        </div>
+
+        <TabsContent value="graph" className="mt-0">
+          <GraphViewer data={data.graph} title="Sistema de Dependencias de CostPro" />
+        </TabsContent>
+
+        <TabsContent value="metrics" className="mt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <JsonViewer data={data.metrics} title="Métricas Estáticas & Dinámicas" />
+            <div className="p-8 rounded-[40px] bg-card border border-border/50 space-y-8">
+               <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 italic">Definición de Métricas</h4>
+                  <ul className="space-y-4">
+                     <li className="space-y-1">
+                        <div className="text-xs font-black uppercase tracking-tight">Fan-In</div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">Cantidad de componentes que dependen de un nodo específico.</p>
+                     </li>
+                     <li className="space-y-1">
+                        <div className="text-xs font-black uppercase tracking-tight">Instability</div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">Ratio entre Fan-Out y acoplamiento total (Cerrado a cambios vs Abierto).</p>
+                     </li>
+                     <li className="space-y-1">
+                        <div className="text-xs font-black uppercase tracking-tight">Complexity</div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest">Densidad de enlaces por nodo y profundidad de dependencias.</p>
+                     </li>
+                  </ul>
+               </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manifest" className="mt-0">
+          <JsonViewer data={data.system} title="Architecture Manifest (Source of Truth)" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
