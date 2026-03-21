@@ -179,7 +179,6 @@ export default function TerminalShell() {
         case 'academy': return <AcademyView />;
         case 'inventory_adjustments': return <InventoryAdjustmentsView />;
         case 'legal': return <LegalView />;
-        case 'support_doc': return <HelpView />;
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
         case 'wiki': return <WikiView />;
