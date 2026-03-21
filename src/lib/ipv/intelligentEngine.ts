@@ -82,8 +82,9 @@ export async function corregirNegativos(
         hierarchy = [product];
     }
 
-    // Apply rounding to the needed amount
-    const roundedNeeded = aplicarRedondeo(needed);
+    // Apply rounding to the needed amount (except for products 'A Medida')
+    const { isProductAMedida } = await import('./utils');
+    const roundedNeeded = isProductAMedida(product.um) ? needed : aplicarRedondeo(needed);
 
     // Decompose into levels
     const decomposition = descomponerUnidades(roundedNeeded, product, hierarchy);
