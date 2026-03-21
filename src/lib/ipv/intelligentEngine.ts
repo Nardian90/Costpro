@@ -99,7 +99,7 @@ export async function corregirNegativos(
         source: 'ADJUSTMENT',
         mode,
         simulation_id: simulationId,
-        applied: false,
+        applied: 0,
         created_at: new Date().toISOString()
     }));
 
@@ -232,7 +232,7 @@ export async function aplicarRecepciones(receipts: IntelligentReceipt[]) {
     await db.transaction('rw', [db.intelligent_receipts, db.product_movements], async () => {
         for (const r of receipts) {
             // 1. Marcar como aplicada
-            r.applied = true;
+            r.applied = 1;
             await db.intelligent_receipts.put(r);
 
             // 2. Crear movimiento de producto
