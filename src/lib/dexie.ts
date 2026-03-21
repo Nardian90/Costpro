@@ -86,7 +86,7 @@ export interface IntelligentReceipt {
   source: 'SALES' | 'ADJUSTMENT';
   mode: 'A' | 'B' | 'C';
   simulation_id?: string;
-  applied: boolean;
+  applied: boolean | number;
   costo_unitario_cents?: number;
   costo_total_cents?: number;
   cost_trace?: CostTrace;
