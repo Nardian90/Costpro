@@ -51,7 +51,7 @@ const IPVView = lazy(() => import('./terminal/views/ipv/IPVView'));
 const AcademyView = lazy(() => import('./terminal/views/academy/AcademyView'));
 const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
 const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
-const SystemHealthView = lazy(() => import('./terminal/views/health/SystemHealthView'));
+const HealthView = lazy(() => import('./health/HealthView'));
 const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
 const SettingsView = lazy(() => import("./terminal/views/settings/SettingsView"));
 
@@ -186,7 +186,7 @@ export default function TerminalShell() {
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
         case 'reception_list': return <ReceptionsHistoryView />;
         case 'transferencias': return <TransferenciasView />;
-        case 'health': return <SystemHealthView />;
+        case 'health': return <HealthView />;
         default: return <div>Default View Placeholder</div>;
     }
   };
