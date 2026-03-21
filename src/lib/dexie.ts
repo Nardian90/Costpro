@@ -32,6 +32,7 @@ export interface BankTransaction {
   carnet?: string;
   nombre_cliente?: string;
   telefono_cliente?: string;
+  tarjeta_cliente?: string;
   // Matching Engine traceability
   matching_trace?: MatchingTrace[];
   applied_rules?: string[];
