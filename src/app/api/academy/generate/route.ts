@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     // Search for companion JSON file
     const baseName = filename.replace(/\.pdf$/i, '');
-    const manualsDir = path.dirname(filePath);
+    const manualsDir = path.join(/*turbopackIgnore:true*/process.cwd(), "public", "manuals");
     const jsonPaths = [
         path.join(manualsDir, `${baseName}.json`),
         path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),
