@@ -58,8 +58,9 @@ export async function GET() {
       views: readJson('knowledge/views.json'),
       workflows: readJson('knowledge/workflows.json'),
       components: readJson('knowledge/components.json'),
+      // Removed recursion to avoid Turbopack tracing issues
       docsList: fs.existsSync(path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge/docs'))
-        ? fs.readdirSync(path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge/docs'), { recursive: true })
+        ? fs.readdirSync(path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge/docs'))
             .filter(f => (f as any).endsWith('.md'))
         : []
     };

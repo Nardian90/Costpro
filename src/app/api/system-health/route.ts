@@ -8,19 +8,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const publicDir = path.join(/*turbopackIgnore:true*/process.cwd(), 'public');
-    const automationDir = path.join(/*turbopackIgnore:true*/process.cwd(), 'docs/automation');
-
-    const readJson = (dir: string, file: string) => {
-      const fullPath = path.join(dir, file);
+    const readJson = (relPath: string) => {
+      const fullPath = path.join(/*turbopackIgnore:true*/process.cwd(), relPath);
       if (fs.existsSync(fullPath)) {
         return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
       }
       return null;
     };
 
-    const audit = readJson(publicDir, 'architecture_audit.json');
-    const reviewQueue = readJson(automationDir, 'review_queue.json');
+    const audit = readJson('public/architecture_audit.json');
+    const reviewQueue = readJson('docs/automation/review_queue.json');
 
     const architectureHealth = audit?.healthScore || 9.0;
     const documentationCoverage = audit?.documentationScore || 8.5;
