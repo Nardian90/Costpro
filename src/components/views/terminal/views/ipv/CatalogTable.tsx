@@ -116,11 +116,11 @@ export function CatalogTable() {
 
         // Entradas y Salidas de trazabilidad (descomposiciones)
         const entradas = productMovements
-            .filter(m => m.producto_destino_cod === p.cod && m.tipo === 'DECOMPOSITION')
+            .filter(m => m.producto_destino_cod === p.cod &&  (m.tipo === 'DECOMPOSITION' || m.tipo === 'INTELLIGENT_RECEIPT'))
             .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
 
         const salidas = productMovements
-            .filter(m => m.producto_origen_cod === p.cod && m.tipo === 'DECOMPOSITION')
+            .filter(m => m.producto_origen_cod === p.cod &&  (m.tipo === 'DECOMPOSITION' || m.tipo === 'INTELLIGENT_RECEIPT'))
             .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
 
         // Ventas: Todas las líneas de reconciliación desde el inicio
