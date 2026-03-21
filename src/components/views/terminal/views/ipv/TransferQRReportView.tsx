@@ -296,8 +296,7 @@ export function TransferQRReportView({ type }: Props) {
                         const reader = new FileReader();
                         reader.onload = async (event) => {
                             const text = event.target?.result as string;
-                            const lines = text.split('
-').filter(line => line.trim());
+                            const lines = text.split('\n').filter(line => line.trim());
                             if (lines.length < 2) return;
                             const headers = lines[0].split(',').map(h => h.trim());
                             const data = lines.slice(1).map(line => {
