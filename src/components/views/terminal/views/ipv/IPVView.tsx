@@ -1,3 +1,5 @@
+import { MappingRulesManager } from "../../shared/MappingRulesManager";
+import { seedMappingRules } from "@/lib/ipv/seedMappingRules";
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -29,6 +31,7 @@ import {
   FileSearch, Target,
   Receipt,
   ArrowRightLeft,
+  ListFilter,
   QrCode
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
@@ -82,7 +85,8 @@ export default function IPVView() {
     if (rules && rules.length === 0) {
       db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
     }
-  }, [rules]);
+
+    seedMappingRules();}, [rules]);
 
   // Mapa de stock actual para el motor de matching y simulación
   const currentStockMap = useMemo(() => {
@@ -403,6 +407,7 @@ export default function IPVView() {
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
     { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
+    { id: 'mapping-rules', label: 'Mapeo Reglas', icon: <ListFilter className="w-4 h-4 text-purple-500" />, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
     {
         id: 'reports-dropdown',
         label: '',
@@ -710,6 +715,11 @@ export default function IPVView() {
           {activeTab === 'errors' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <IngestionErrorsTable />
+            </div>
+          )}
+          {activeTab === 'mapping-rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MappingRulesManager />
             </div>
           )}
         </div>
