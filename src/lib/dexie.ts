@@ -1,3 +1,4 @@
+import { MappingRule as MappingRuleType, MappingExecution } from "../core/mapping/mapping.types";
 import Dexie, { type Table } from 'dexie';
 
 // --- Interfaces ---
@@ -286,7 +287,9 @@ export interface YearlyGoals {
   months: MonthlyGoal[];
 }
 
-export class IPVDatabase extends Dexie {
+export class IPVDatabase extends Dexie {  mapping_rules!: Table<MappingRuleType>;
+  mapping_executions!: Table<MappingExecution>;
+
   bank_statements!: Table<BankTransaction>;
   products!: Table<Product>;
   matching_rules!: Table<MatchingRule>;
@@ -306,7 +309,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(19).stores({
+    this.version(20).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad, activo',
@@ -322,7 +325,9 @@ export class IPVDatabase extends Dexie {
       intelligent_receipts: '&id, date, product_id, type, simulation_id, applied',
       consolidated_accounts: '++id, accountId, period',
       period_closures: '++id, period, status',
-      yearly_goals: '&year'
+      yearly_goals: '&year',
+      mapping_rules: "id, reportType, provider, sourceColumn, targetField, active, priority",
+      mapping_executions: "id, reportType, timestamp, successRate"
     });
   }
 }
