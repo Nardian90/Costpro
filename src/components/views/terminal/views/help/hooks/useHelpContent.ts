@@ -26,14 +26,22 @@ export interface HelpStructure {
   user_help: boolean;
 }
 
+export interface SearchResult {
+  path: string;
+  title: string;
+  excerpt: string;
+  type: HelpDoc['type'];
+}
+
 export const useHelpContent = () => {
   const [structure, setStructure] = useState<HelpStructure | null>(null);
   const [currentDoc, setCurrentDoc] = useState<HelpDoc | null>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<HelpDoc[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [glossary, setGlossary] = useState<Record<string, string>>({});
+  const [isReadingMode, setIsReadingMode] = useState(false);
 
   const fetchStructure = useCallback(async () => {
     try {
@@ -48,11 +56,11 @@ export const useHelpContent = () => {
   const fetchGlossary = useCallback(async () => {
     try {
       const res = await fetch('/api/help-docs?path=iso_manual/glossary.md');
-      const { content } = await res.json();
+      const data = await res.json();
+      const content = data.content || '';
 
       const lines = content.split('\n');
       const terms: Record<string, string> = {};
-      let currentTerm = '';
 
       lines.forEach((line: string) => {
         const match = line.match(/^\*\*(.*?)\*\*:(.*)/);
@@ -87,7 +95,6 @@ export const useHelpContent = () => {
       const res = await fetch(`/api/help-docs?path=${path}`);
       const data = await res.json();
 
-      // Determine type based on path
       let type: HelpDoc['type'] = 'iso';
       if (path.includes('tutorials')) type = 'tutorial';
       else if (path.includes('how-to')) type = 'how-to';
@@ -117,6 +124,26 @@ export const useHelpContent = () => {
     fetchGlossary();
   }, [fetchStructure, fetchGlossary]);
 
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    const performSearch = async () => {
+      try {
+        const res = await fetch(`/api/help-docs?search=${encodeURIComponent(searchQuery)}`);
+        const data = await res.json();
+        setSearchResults(data.results || []);
+      } catch (err) {
+        console.error('Search error:', err);
+      }
+    };
+
+    const timeoutId = setTimeout(performSearch, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   return {
     structure,
     loading,
@@ -127,6 +154,7 @@ export const useHelpContent = () => {
     setSearchQuery,
     searchResults,
     glossary,
-    isReadingMode: false // Placeholder for now
+    isReadingMode,
+    setIsReadingMode
   };
 };

@@ -3,7 +3,7 @@
 import React from 'react';
 import HelpSectionRenderer from './HelpSectionRenderer';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Tag, ChevronRight, FileText, Layout, Play, Terminal, HelpCircle } from 'lucide-react';
+import { Clock, Tag, ChevronRight, FileText, Layout, Play, Terminal, HelpCircle, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HelpContentProps {
@@ -12,9 +12,19 @@ interface HelpContentProps {
   searchQuery: string;
   searchResults: any[];
   glossary?: Record<string, string>;
+  onSelectResult: (path: string) => void;
+  onClearSearch: () => void;
 }
 
-export default function HelpContent({ doc, loading, searchQuery, searchResults, glossary }: HelpContentProps) {
+export default function HelpContent({
+  doc,
+  loading,
+  searchQuery,
+  searchResults,
+  glossary,
+  onSelectResult,
+  onClearSearch
+}: HelpContentProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
@@ -23,6 +33,64 @@ export default function HelpContent({ doc, loading, searchQuery, searchResults, 
             <h3 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">Cargando documentación...</h3>
             <p className="text-[10px] font-bold text-muted-foreground/50 uppercase mt-2">CostPro Engine v5.8</p>
         </div>
+      </div>
+    );
+  }
+
+  // Search Results view
+  if (searchQuery && searchQuery.length >= 3) {
+    return (
+      <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="flex items-center justify-between pb-8 border-b">
+          <div>
+            <h1 className="text-4xl font-black uppercase tracking-tighter leading-none mb-2">Resultados de búsqueda</h1>
+            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+              Mostrando resultados para: <span className="text-primary">"{searchQuery}"</span>
+            </p>
+          </div>
+          <button
+            onClick={onClearSearch}
+            className="w-12 h-12 rounded-full bg-secondary/50 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-all"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {searchResults.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-secondary/30 flex items-center justify-center mx-auto mb-6">
+              <Search className="w-8 h-8 text-muted-foreground/30" />
+            </div>
+            <h3 className="text-lg font-black uppercase tracking-tighter">No se encontraron coincidencias</h3>
+            <p className="text-muted-foreground text-sm font-medium mt-2">Intenta con otros términos o revisa la ortografía.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {searchResults.map((result, idx) => (
+              <button
+                key={`${result.path}-${idx}`}
+                onClick={() => {
+                  onSelectResult(result.path);
+                  onClearSearch();
+                }}
+                className="group text-left p-6 rounded-3xl bg-secondary/20 border border-border/50 hover:border-primary/30 hover:bg-secondary/40 transition-all active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/10">
+                    {result.type}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{result.path}</span>
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight group-hover:text-primary transition-colors mb-2">
+                  {result.title}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed italic">
+                  "{result.excerpt}"
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
