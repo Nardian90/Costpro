@@ -32,7 +32,7 @@ import {
     FileSearch,
     Receipt,
     ArrowRightLeft,
-    QrCode
+    QrCode, Warehouse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -111,6 +111,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             title: 'Catálogo',
             description: 'Gestión de productos, precios y prioridades de inventario.',
             icon: <PackageSearch />,
+            variant: 'dark'
+        },
+        {
+            id: 'reception',
+            title: 'Recepción',
+            description: 'Logística de entrada de productos y suministros.',
+            icon: <Warehouse />,
             variant: 'dark'
         },
         {

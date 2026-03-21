@@ -29,7 +29,7 @@ import {
   FileSearch,
   Receipt,
   ArrowRightLeft,
-  QrCode
+  QrCode, Warehouse
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
@@ -47,6 +47,7 @@ import { IPVControlPanel } from './IPVControlPanel';
 import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { IncomeReceiptSection } from './IncomeReceiptSection';
+import ProductReceptionView from '../inventory/ProductReceptionView';
 import { TransferQRReportView } from './TransferQRReportView';
 import { IPVReportsDropdown } from './IPVReportsDropdown';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
@@ -391,6 +392,7 @@ export default function IPVView() {
     { id: 'analytics', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics' },
     { id: 'ingestion', label: 'Extracto', icon: Database, onClick: () => setActiveTab('ingestion'), active: activeTab === 'ingestion' },
     { id: 'catalog', label: 'Catálogo', icon: PackageSearch, onClick: () => setActiveTab('catalog'), active: activeTab === 'catalog' },
+    { id: 'reception', label: 'Recepción', icon: Warehouse, onClick: () => setActiveTab('reception'), active: activeTab === 'reception' },
     { id: 'transactions', label: 'Transacciones', icon: Table2, onClick: () => setActiveTab('transactions'), active: activeTab === 'transactions' },
     { id: 'rules', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules'), active: activeTab === 'rules' },
     { id: 'sim', label: 'Simulación', icon: Zap, onClick: () => setActiveTab('sim'), active: activeTab === 'sim' },
@@ -661,6 +663,11 @@ export default function IPVView() {
             </div>
           )}
 
+          {activeTab === 'reception' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <ProductReceptionView onCancel={() => setActiveTab('dashboard')} />
+            </div>
+          )}
           {activeTab === 'reports' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <IPVReportView />
