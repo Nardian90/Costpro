@@ -10,6 +10,7 @@ import { InfrastructurePanel } from '@/components/HealthDashboard/Infrastructure
 import { SecurityGRCPanel } from '@/components/HealthDashboard/SecurityGRCPanel';
 import { ApplicationDataPanel } from '@/components/HealthDashboard/ApplicationDataPanel';
 import { IntelligenceMap } from '@/components/HealthDashboard/IntelligenceMap';
+import { ArchitecturePipelineTabs } from '@/components/HealthDashboard/ArchitecturePipelineTabs';
 import { ViewNavigation } from '@/components/HealthDashboard/ViewNavigation';
 import { AuditResults } from '@/components/HealthDashboard/AuditResults';
 import { ReleaseGateGovernance } from '@/components/HealthDashboard/ReleaseGateGovernance';
@@ -76,6 +77,8 @@ export default function SystemHealthView() {
 
       {/* SECCIÓN 6 — MAPA DE INTELIGENCIA DEL SISTEMA */}
       <IntelligenceMap components={components} />
+
+      <ArchitecturePipelineTabs />
 
       {/* SECCIÓN 7 — NAVEGACIÓN DE VISTAS */}
       <ViewNavigation />
