@@ -75,7 +75,7 @@ export function MatchingAuditView() {
       autoCompleto: autoCompleteRefs.size,
       parcial: realPartial,
       pendiente: realPending,
-      avgConfidence: logs.length > 0 ? logs.reduce((sum, l) => sum + l.matching_confidence, 0) / logs.length : 0,
+      avgConfidence: logs.length > 0 ? logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length : 0,
       successRate: transactions.length > 0 ? (realComplete / transactions.length) * 100 : 0
     };
   }, [logs, transactions]);
