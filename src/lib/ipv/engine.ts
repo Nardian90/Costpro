@@ -776,55 +776,6 @@ export class MatchingEngine {
     return bestCombination || [];
   }
 
-  private findMinimumOverageCombination(target: number): { product: Product, qty: number }[] {
-    const wildcards = this.products
-      .filter(p => p.isWildcardCandidate)
-      .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
-      .sort((a, b) => b.precio_cents - a.precio_cents);
-
-    if (wildcards.length === 0) return [];
-
-    let bestCombination: { product: Product, qty: number }[] | null = null;
-    let minOverage = Infinity;
-    const startTime = Date.now();
-    const TIMEOUT_MS = 1000;
-
-    const solve = (remaining: number, index: number, current: { product: Product, qty: number }[]) => {
-      if (Date.now() - startTime > TIMEOUT_MS || minOverage === 0) return;
-
-      if (remaining <= 0) {
-        const overage = Math.abs(remaining);
-        if (overage < minOverage) {
-          minOverage = overage;
-          bestCombination = [...current];
-        }
-        return;
-      }
-
-      if (index >= wildcards.length || current.length >= 6) return;
-
-      const p = wildcards[index];
-      const needed = Math.ceil(remaining / p.precio_cents);
-
-      for (let qty = needed; qty >= 0; qty--) {
-          if (qty > 0) {
-              const available = this.useStockLimit && !this.allowNegativeStock ? this.getVirtualStock(p.cod) : 999;
-              const actualQty = Math.min(qty, available);
-              if (actualQty > 0) {
-                  current.push({ product: p, qty: actualQty });
-                  solve(remaining - (actualQty * p.precio_cents), index + 1, current);
-                  current.pop();
-              }
-          } else {
-              solve(remaining, index + 1, current);
-          }
-          if (minOverage === 0) return;
-      }
-    };
-
-    solve(target, 0, []);
-    return bestCombination || [];
-  }
 
   async reconcileAll(
     transactions: (BankTransaction & { current_reconciled_cents?: number })[],
