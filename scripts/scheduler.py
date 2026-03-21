@@ -132,7 +132,8 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             9: "scripts/phase_9_workflow_detection.py",
             5: "scripts/phase_5_metrics.py",
             10: "scripts/phase_10_diataxis.py",
-            11: "scripts/phase_11_user_translation.py"
+            11: "scripts/phase_11_user_translation.py",
+            12: "scripts/phase_12_iso_manual.py"
         }
 
         script = script_map.get(phase_num)

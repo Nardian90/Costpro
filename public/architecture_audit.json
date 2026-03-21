@@ -305,13 +305,25 @@
         "user_help"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 12,
+      "phaseName": "ISO/IEC 26514 Manual Generation",
+      "startTime": "2026-03-21T02:20:29.012800+00:00Z",
+      "endTime": "2026-03-21T02:20:29.107201+00:00Z",
+      "durationMs": 94,
+      "status": "success",
+      "artifactsGenerated": [
+        "iso_manual/"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 50042,
+    "averagePhaseDurationMs": 48121,
     "slowestPhase": 7,
     "fastestPhase": 8,
-    "lastCycleDurationMs": 1251064
+    "lastCycleDurationMs": 1251158
   },
   "healthMetrics": {
     "integrityScore": 84.0,
