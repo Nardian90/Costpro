@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, Book, Layout, Search, BookOpen } from 'lucide-react';
+import { HelpCircle, Book, Layout, Search, BookOpen, X } from 'lucide-react';
 import { useUIStore } from '@/store';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import HelpLayout from './HelpLayout';
 import HelpSidebar from './HelpSidebar';
 import HelpContent from './HelpContent';
 import { useHelpContent } from './hooks/useHelpContent';
+import { cn } from '@/lib/utils';
 
 export default function HelpView() {
   const { viewQueries } = useUIStore();
@@ -21,6 +22,7 @@ export default function HelpView() {
     setSearchQuery,
     searchResults,
     isReadingMode,
+    setIsReadingMode,
     glossary
   } = useHelpContent();
 
@@ -33,16 +35,24 @@ export default function HelpView() {
 
   return (
     <HelpLayout
-        sidebar={<HelpSidebar structure={structure} toc={toc} onSelect={loadDocument} activePath={currentDoc?.path} />}
+        sidebar={
+            <HelpSidebar
+                structure={structure}
+                toc={toc}
+                onSelect={loadDocument}
+                activePath={currentDoc?.path}
+            />
+        }
+        isReadingMode={isReadingMode}
         header={
             <div className="flex items-center justify-between w-full px-6 py-4 border-b bg-card/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                         <HelpCircle className="w-6 h-6 text-primary" />
                     </div>
-                    <div>
-                        <h1 className="text-lg font-black uppercase tracking-tighter">Centro de Ayuda ISO/IEC 26514</h1>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Documentación Oficial CostPro</p>
+                    <div className="hidden sm:block">
+                        <h1 className="text-lg font-black uppercase tracking-tighter leading-none mb-1">Centro de Ayuda</h1>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ISO/IEC 26514 • v5.8</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -50,12 +60,31 @@ export default function HelpView() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Buscar en el manual..."
-                            className="pl-10 pr-4 py-2 bg-background border rounded-xl text-sm focus:ring-2 ring-primary/20 outline-none w-64"
+                            placeholder="Buscar en manuales..."
+                            className="pl-10 pr-10 py-2 bg-background border rounded-xl text-xs font-bold uppercase tracking-wider focus:ring-2 ring-primary/20 outline-none w-64 transition-all focus:w-80"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                            >
+                                <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            </button>
+                        )}
                     </div>
+
+                    <button
+                        onClick={() => setIsReadingMode(!isReadingMode)}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            isReadingMode ? "bg-primary text-white" : "bg-secondary hover:bg-secondary/80 text-foreground"
+                        )}
+                    >
+                        {isReadingMode ? 'Salir Lectura' : 'Modo Lectura'}
+                    </button>
+
                     <ThemeToggle />
                 </div>
             </div>
@@ -67,6 +96,8 @@ export default function HelpView() {
             searchQuery={searchQuery}
             searchResults={searchResults}
             glossary={glossary}
+            onSelectResult={loadDocument}
+            onClearSearch={() => setSearchQuery('')}
         />
     </HelpLayout>
   );

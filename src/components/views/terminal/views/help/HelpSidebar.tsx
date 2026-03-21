@@ -63,7 +63,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath }: He
   ];
 
   return (
-    <div className="flex flex-col h-full bg-card/20 border-r border-border/50">
+    <div className="flex flex-col h-full bg-card/20 border-r border-border/50 lg:border-none">
       <div className="p-6">
         <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground mb-4">Estructura del Sistema</h2>
         <Accordion type="single" collapsible className="space-y-2">
@@ -101,7 +101,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath }: He
       </div>
 
       {toc.length > 0 && (
-        <div className="mt-8 px-6 pb-12 border-t pt-8">
+        <div className="mt-8 px-6 pb-20 border-t pt-8">
            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground mb-6">En este documento</h2>
            <div className="space-y-4">
               {toc.map((item) => (
