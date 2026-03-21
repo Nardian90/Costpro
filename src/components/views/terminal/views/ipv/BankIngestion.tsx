@@ -135,7 +135,7 @@ export function BankIngestion() {
         const validProducts: any[] = [];
         const now = new Date().toISOString();
 
-        for (const row of processingRows) {
+        for (const row of data) {
             const cod = row['Código'] || row['cod'] || row['CODIGO'];
             const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || row['grupo'] || '';
             const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || row['hijo'] || '';
