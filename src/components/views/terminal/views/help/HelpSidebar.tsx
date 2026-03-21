@@ -34,31 +34,31 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath }: He
         id: 'iso',
         label: 'Manual de Usuario (ISO)',
         icon: Book,
-        files: structure.iso_manual.map((f: string) => ({ path: `iso_manual/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
+        files: (structure.iso_manual || []).map((f: string) => ({ path: `iso_manual/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
     },
     {
         id: 'tutorials',
         label: 'Tutoriales',
         icon: Zap,
-        files: structure.docs.tutorials.map((f: string) => ({ path: `docs/tutorials/${f}`, name: f.replace('.md', '') }))
+        files: (structure.docs?.tutorials || []).map((f: string) => ({ path: `docs/tutorials/${f}`, name: f.replace('.md', '') }))
     },
     {
         id: 'how-to',
         label: 'Guías Prácticas (How-To)',
         icon: FileText,
-        files: structure.docs.howTo.map((f: string) => ({ path: `docs/how-to/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
+        files: (structure.docs?.howTo || []).map((f: string) => ({ path: `docs/how-to/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
     },
     {
         id: 'reference',
         label: 'Referencia Técnica',
         icon: Terminal,
-        files: structure.docs.reference.map((f: string) => ({ path: `docs/reference/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
+        files: (structure.docs?.reference || []).map((f: string) => ({ path: `docs/reference/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
     },
     {
         id: 'explanation',
         label: 'Explicaciones (Conceptos)',
         icon: HelpCircle,
-        files: structure.docs.explanation.map((f: string) => ({ path: `docs/explanation/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
+        files: (structure.docs?.explanation || []).map((f: string) => ({ path: `docs/explanation/${f}`, name: f.replace('.md', '').replace('_', ' ') }))
     }
   ];
 
@@ -81,19 +81,23 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath }: He
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pl-11 pt-2 pb-4 space-y-1">
-                {cat.files.map((file: any) => (
-                  <button
-                    key={file.path}
-                    onClick={() => onSelect(file.path)}
-                    className={cn(
-                      "w-full text-left px-4 py-2 rounded-xl text-xs font-medium transition-all",
-                      "hover:bg-secondary/50",
-                      activePath === file.path ? "bg-primary/10 text-primary font-black shadow-sm ring-1 ring-primary/20" : "text-muted-foreground"
-                    )}
-                  >
-                    {file.name}
-                  </button>
-                ))}
+                {cat.files.length === 0 ? (
+                  <p className="text-[10px] font-bold text-muted-foreground/30 uppercase italic px-4">Sin documentos</p>
+                ) : (
+                  cat.files.map((file: any) => (
+                    <button
+                      key={file.path}
+                      onClick={() => onSelect(file.path)}
+                      className={cn(
+                        "w-full text-left px-4 py-2 rounded-xl text-xs font-medium transition-all",
+                        "hover:bg-secondary/50",
+                        activePath === file.path ? "bg-primary/10 text-primary font-black shadow-sm ring-1 ring-primary/20" : "text-muted-foreground"
+                      )}
+                    >
+                      {file.name}
+                    </button>
+                  ))
+                )}
               </AccordionContent>
             </AccordionItem>
           ))}

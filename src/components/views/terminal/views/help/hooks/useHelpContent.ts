@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 
 export interface HelpDoc {
   path: string;
@@ -46,16 +47,19 @@ export const useHelpContent = () => {
   const fetchStructure = useCallback(async () => {
     try {
       const res = await fetch('/api/help-docs');
+      if (!res.ok) throw new Error('Failed to fetch help structure');
       const data = await res.json();
       setStructure(data);
     } catch (err) {
       console.error('Error fetching structure:', err);
+      toast.error('Error al cargar la estructura de ayuda');
     }
   }, []);
 
   const fetchGlossary = useCallback(async () => {
     try {
       const res = await fetch('/api/help-docs?path=iso_manual/glossary.md');
+      if (!res.ok) return; // Silent fail if glossary not found
       const data = await res.json();
       const content = data.content || '';
 
@@ -75,6 +79,7 @@ export const useHelpContent = () => {
   }, []);
 
   const generateToc = (content: string) => {
+    if (!content) return;
     const lines = content.split('\n');
     const items: TocItem[] = [];
     lines.forEach(line => {
@@ -93,7 +98,10 @@ export const useHelpContent = () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/help-docs?path=${path}`);
+      if (!res.ok) throw new Error('Document not found');
       const data = await res.json();
+
+      if (!data.content) throw new Error('Document content is empty');
 
       let type: HelpDoc['type'] = 'iso';
       if (path.includes('tutorials')) type = 'tutorial';
@@ -114,6 +122,7 @@ export const useHelpContent = () => {
       generateToc(data.content);
     } catch (err) {
       console.error('Error loading document:', err);
+      toast.error('No se pudo cargar el documento');
     } finally {
       setLoading(false);
     }
@@ -133,6 +142,7 @@ export const useHelpContent = () => {
     const performSearch = async () => {
       try {
         const res = await fetch(`/api/help-docs?search=${encodeURIComponent(searchQuery)}`);
+        if (!res.ok) return;
         const data = await res.json();
         setSearchResults(data.results || []);
       } catch (err) {

@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { Menu } from 'lucide-react';
+import { Columns } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -25,7 +25,7 @@ export default function HelpLayout({ sidebar, children, header, isReadingMode }:
       {header}
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile Sidebar Toggle */}
+        {/* Mobile Sidebar Toggle - Index drawer */}
         <div className={cn(
             "lg:hidden fixed bottom-8 right-8 z-[60] transition-transform duration-500",
             isReadingMode && "translate-y-24"
@@ -33,12 +33,12 @@ export default function HelpLayout({ sidebar, children, header, isReadingMode }:
             <Sheet>
               <SheetTrigger asChild>
                 <Button size="icon" className="w-14 h-14 rounded-full shadow-2xl bg-primary text-primary-foreground hover:scale-110 active:scale-95 transition-all">
-                   <Menu className="w-6 h-6" />
+                   <Columns className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0 border-r bg-card/95 backdrop-blur-md">
                 <SheetHeader className="p-6 border-b">
-                   <SheetTitle className="text-xs font-black uppercase tracking-[0.3em] text-primary">Navegación del Manual</SheetTitle>
+                   <SheetTitle className="text-xs font-black uppercase tracking-[0.3em] text-primary">Índice del Manual</SheetTitle>
                 </SheetHeader>
                 <div className="h-full overflow-y-auto pb-20">
                    {sidebar}
