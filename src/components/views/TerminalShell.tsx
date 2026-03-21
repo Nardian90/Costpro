@@ -221,7 +221,7 @@ export default function TerminalShell() {
 
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
-      {!isIntegroView && (
+      {true && (
         <Sidebar
           sidebarOpen={sidebarOpen}
           sidebarSearch={sidebarSearch}
@@ -240,7 +240,7 @@ export default function TerminalShell() {
       )}
 
       <main className="flex-1 min-h-screen flex flex-col z-10 min-w-0">
-        {!isIntegroView && (
+        {true && (
           <Header
             sidebarOpen={sidebarOpen}
             toggleSidebar={toggleSidebar}
@@ -311,8 +311,8 @@ export default function TerminalShell() {
       )}
 
       <CreateProductModal />
-      {currentView !== 'pos' && !isIntegroView && <ChatBot />}
-      {currentView !== "pos" && <FloatingCalculator />}
+      {currentView !== 'pos' && <ChatBot />}
+      {currentView !== "pos" && !isIntegroView && <FloatingCalculator />}
     </div>
   );
 }
