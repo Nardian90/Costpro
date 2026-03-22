@@ -1,7 +1,19 @@
 import json
 import os
+import sys
+import shutil
+
+# Add scripts to path for commit_artifact
+sys.path.append('scripts')
+try:
+    from commit_artifact import commit_artifact
+except ImportError as e:
+    print(f"Error: No se pudo importar commit_artifact.py: {e}")
+    sys.exit(1)
 
 def generate():
+    print("Executing Phase 13: Knowledge Graph Generation...")
+
     components = []
     if os.path.exists('knowledge/components.json'):
         with open('knowledge/components.json', 'r', encoding='utf-8') as f:
@@ -65,11 +77,16 @@ def generate():
 
     output = {"nodes": nodes, "edges": edges}
 
-    os.makedirs('knowledge', exist_ok=True)
-    with open('knowledge/knowledge_graph.json', 'w', encoding='utf-8') as f:
+    temp_path = "/tmp/knowledge_graph.json"
+    with open(temp_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print("Knowledge Graph generated successfully at knowledge/knowledge_graph.json")
+    # Commit artifact with governance
+    res = commit_artifact("knowledge_graph", temp_path, 95.0, 13)
+    print(f"Phase 13 result: {res}")
+
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
 
 if __name__ == "__main__":
     generate()
