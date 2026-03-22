@@ -322,7 +322,7 @@ export function MatchingAuditView() {
               <div key={log.id} className="p-3 bg-card rounded-lg border border-border/50 text-[11px]">
                 <div className="flex items-center justify-between mb-2">
                     <span className="font-mono text-muted-foreground bg-muted px-1 rounded text-[9px]">INTENTO #{txHistory.length - idx}</span>
-                    <span className="text-muted-foreground">{log.fecha_ejecucion ? new Date(log.fecha_ejecucion).toLocaleString() : "N/A"}</span>
+                    <span className="text-muted-foreground">{log.fecha_ejecucion ? new Date(log.fecha_ejecucion || "").toLocaleString() : "N/A"}</span>
                     <Badge variant="outline" className="font-black text-[9px]">{log.resultado_estado}</Badge>
                 </div>
 
