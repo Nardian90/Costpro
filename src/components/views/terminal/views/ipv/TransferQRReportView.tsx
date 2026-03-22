@@ -13,7 +13,7 @@ import { formatDate, formatCurrency } from "@/lib/utils";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { BaseModal } from "@/components/ui/BaseModal";
-import MappingRulesManager from './MatchingRulesEditor';
+import { MatchingRulesEditor as MappingRulesManager } from './MatchingRulesEditor';
 
 interface Props {
     type: 'TRANSFER' | 'QR';
