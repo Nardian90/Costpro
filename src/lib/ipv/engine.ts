@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
   type BankTransaction,
   type Product,
@@ -119,7 +120,7 @@ export class MatchingEngine {
     }
 
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
-    const cached = await db.matching_cache.get(targetAmount);
+    const cached = await db.matching_cache.get(targetAmount + "-" + catalogHash);
     if (cached && cached.catalog_hash === catalogHash) {
       logs.push(`Caché hit para importe ${targetAmount}`);
       for (const item of cached.results) {
@@ -148,8 +149,9 @@ export class MatchingEngine {
     if (hardRefRule && remaining_cents > 0) {
       const matchedProduct = this.products.find(p => {
         if (this.useStockLimit && !this.allowNegativeStock && this.getVirtualStock(p.cod) <= 0) return false;
-        return transaction.observaciones.includes(p.cod) ||
-               transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase());
+        // Optimization: case-insensitive check and trim for better matching
+        const obs = transaction.observaciones.toLowerCase();
+        return obs.includes(p.cod.toLowerCase()) || obs.includes(p.descripcion.toLowerCase());
       });
 
       if (matchedProduct) {
@@ -228,7 +230,7 @@ export class MatchingEngine {
                 if (lockedPrice === undefined) {
                     this.dailyAdjustedPrices.set(flexProduct.cod, targetPrice);
                     this.pendingMovements.push({
-                        id: crypto.randomUUID(),
+                        id: uuidv4(),
                         fecha: new Date().toISOString(),
                         producto_origen_cod: flexProduct.cod,
                         producto_destino_cod: flexProduct.cod,
@@ -305,10 +307,20 @@ export class MatchingEngine {
           let found = false;
           for (const product of candidateProducts) {
             if (product.precio_cents <= 0) continue;
-            let qty = Math.round(remaining_cents / product.precio_cents);
-            if (qty <= 0) qty = 1;
+            let idealQty = Math.round(remaining_cents / product.precio_cents);
+            if (idealQty <= 0) idealQty = 1;
+
+            let qty = idealQty;
             if (this.useStockLimit) {
                 const available = this.getVirtualStock(product.cod);
+                // Prefer avoiding negative stock if possible within tolerance
+                if (available < idealQty && available > 0) {
+                    const diffWithAvailable = Math.abs(remaining_cents - (product.precio_cents * available));
+                    if (diffWithAvailable <= (toleranceRule.meta?.tolerance_cents ?? toleranceRule.tolerancia_cents ?? 0)) {
+                        qty = available;
+                    }
+                }
+
                 if (!this.allowNegativeStock) qty = Math.min(qty, available);
             }
             if (qty <= 0) continue;
@@ -434,7 +446,7 @@ export class MatchingEngine {
 
           if (remaining_cents > 0) {
               const line: ReconciliationLine = {
-                  id: crypto.randomUUID(),
+                  id: uuidv4(),
                   transaction_ref: transaction.referencia_origen,
                   fecha_operacion: transaction.fecha,
                   ingreso_banco_cents: 0,
@@ -570,7 +582,7 @@ export class MatchingEngine {
         const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
         if (qtyToPick > 0) {
           const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo', undefined);
-          line.id = crypto.randomUUID();
+          line.id = uuidv4();
           line.cuadre_cents = 0;
           line.importe_linea_cents = p.precio_cents * qtyToPick;
           lines.push(line);
@@ -584,6 +596,10 @@ export class MatchingEngine {
   private async attemptDecomposition(productCod: string): Promise<boolean> {
     const targetProduct = this.products.find(p => p.cod === productCod);
     if (!targetProduct || !targetProduct.id_grupo) return false;
+
+    // Invariant: Do not decompose if it's "A Medida" (optional rule, but good for safety)
+    const { isProductAMedida } = await import('./utils');
+    if (isProductAMedida(targetProduct.um)) return false;
     const ancestors = this.products.filter(p => p.cod_hijo === productCod);
 
     for (const ancestor of ancestors) {
@@ -601,7 +617,7 @@ export class MatchingEngine {
         const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
         this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
         this.pendingMovements.push({
-          id: crypto.randomUUID(),
+          id: uuidv4(),
           fecha: new Date().toISOString(),
           producto_origen_cod: ancestor.cod,
           producto_destino_cod: targetProduct.cod,
@@ -640,7 +656,7 @@ export class MatchingEngine {
     }
 
     return {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       transaction_ref: transaction.referencia_origen,
       fecha_operacion: transaction.fecha,
       ingreso_banco_cents: transaction.importe_cents,
