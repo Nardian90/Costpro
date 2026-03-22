@@ -2271,13 +2271,33 @@
       "group": "component"
     },
     {
+      "id": "src/lib/ipv/intelligentEngine.ts",
+      "label": "intelligentEngine.ts",
+      "group": "component"
+    },
+    {
       "id": "reconciliacion_ipv",
       "label": "Conciliación de Inventario (IPV)",
       "group": "workflow"
     },
     {
+      "id": "gestion_costos",
+      "label": "Gestión de Fichas de Costo",
+      "group": "workflow"
+    },
+    {
       "id": "gestion_productos",
       "label": "Gestión de Productos y Precios",
+      "group": "workflow"
+    },
+    {
+      "id": "conteo_inventario",
+      "label": "Conteo y Ajuste de Inventario",
+      "group": "workflow"
+    },
+    {
+      "id": "punto_de_venta",
+      "label": "Punto de Venta (POS)",
       "group": "workflow"
     },
     {
@@ -13403,843 +13423,738 @@
       "type": "depends_on"
     },
     {
-      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "target": "@/components/ui/button",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "target": "@/components/ui/progress",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "target": "@/components/ui/badge",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "target": "@/components/ui/card",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/AISystemObserver",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "HealthDashboard/ApplicationDataPanel",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/AuditResults",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/GlobalMetricsCards",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/InfrastructurePanel",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/IntelligenceConsole",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/IntelligenceMap",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/MetricsGuide",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/ObservabilityHeader",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/ReleaseGateGovernance",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/SecurityGRCPanel",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/ViewNavigation",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/hooks/useComponentHealth",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/hooks/useHealthIndex",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "HealthDashboard/hooks/useLiveScan",
+      "type": "contains"
+    },
+    {
+      "source": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wallet/WalletView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "@/components/ui/ProductImage",
+      "target": "ui/ProductImage",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/catalog/CatalogView.tsx",
-      "target": "@/components/ui/ViewSwitcher",
+      "target": "ui/ViewSwitcher",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "target": "@/components/ui/toggle-group",
+      "target": "ui/calendar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "target": "@/components/ui/popover",
+      "target": "ui/popover",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
-      "target": "@/components/ui/calendar",
+      "target": "ui/toggle-group",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/reports/ReportsView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/academy/AcademyView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ThemeToggle",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/help/HelpView.tsx",
-      "target": "@/components/ThemeToggle",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
-      "target": "@/components/ui/atomic",
+      "target": "ui/atomic",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "target": "@/components/ui/atomic",
+      "target": "ui/BaseModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "target": "@/components/ui/SecurityScrollContainer",
+      "target": "ui/SecurityScrollContainer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
-      "target": "@/components/ui/BaseModal",
+      "target": "ui/atomic",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
-      "target": "@/components/ui/CostProLoader",
+      "target": "ui/CostProLoader",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
-      "target": "@/components/ui/ProductImage",
+      "target": "ui/ProductImage",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/atomic",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/atomic",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory/InventoryView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/tabs",
+      "target": "ui/HorizontalScroll",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/LoadingOverlay",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/LoadingOverlay",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/HorizontalScroll",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/tabs",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVView.tsx",
-      "target": "@/components/ui/tooltip",
+      "target": "ui/tooltip",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "@/components/ui/BaseModal",
+      "target": "ui/BaseModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/LoadingOverlay",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
-      "target": "@/components/ui/LoadingOverlay",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "target": "@/components/ui/label",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/label",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "target": "@/components/ui/scroll-area",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/scroll-area",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
-      "target": "@/components/ui/SecurityScrollContainer",
+      "target": "ui/SecurityScrollContainer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/wiki/WikiView.tsx",
-      "target": "@/components/ui/scroll-area",
+      "target": "ui/scroll-area",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSTableView.tsx",
-      "target": "@/components/ui/ProductImage",
+      "target": "ui/ProductImage",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "modals/BarcodeScanner",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "modals/PriceSelectorModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/atomic",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/ViewSwitcher",
+      "target": "ui/BaseModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/Portal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/QueryInspector",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/Portal",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/BaseModal",
+      "target": "ui/SpeedDial",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/atomic",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/QueryInspector",
+      "target": "ui/ViewSwitcher",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/modals/PriceSelectorModal",
+      "target": "ui/atomic",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/modals/BarcodeScanner",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/views/terminal/views/pos/POSView.tsx",
-      "target": "@/components/ui/SpeedDial",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "@/components/ui/tabs",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/tabs",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "target": "@/components/ui/card",
+      "target": "ui/badge",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "target": "@/components/ui/badge",
+      "target": "ui/card",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
-      "target": "@/components/ui/scroll-area",
+      "target": "ui/scroll-area",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/LazyRender",
+      "target": "modals/UpgradeModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/BaseModal",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/ViewSwitcher",
+      "target": "ui/BaseModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/LazyRender",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/skeleton",
+      "target": "ui/SpeedDial",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/ViewSwitcher",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/modals/UpgradeModal",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
-      "target": "@/components/ui/SpeedDial",
+      "target": "ui/skeleton",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "@/components/ui/LazyRender",
+      "target": "ui/LazyRender",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "@/components/ui/input",
+      "target": "ui/input",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
-      "target": "@/components/ui/popover",
+      "target": "ui/popover",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "@/components/ui/button",
+      "target": "ui/button",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "@/components/ui/switch",
+      "target": "ui/select",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/UsersManagementView.tsx",
-      "target": "@/components/ui/select",
+      "target": "ui/switch",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "target": "@/components/ui/SearchBar",
+      "target": "ui/ActionMenu",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "target": "@/components/ui/ActionMenu",
+      "target": "ui/BaseModal",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/users/RolesManagementView.tsx",
-      "target": "@/components/ui/BaseModal",
+      "target": "ui/SearchBar",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
-      "target": "@/components/ui/StateRenderer",
+      "target": "ui/StateRenderer",
       "type": "contains"
     },
     {
       "source": "src/components/views/terminal/views/rss/NewsView.tsx",
-      "target": "@/components/ui/StateRenderer",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/auth/WelcomeLandingView.tsx",
-      "target": "@/components/CostProLogo",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/auth/WelcomeLandingView.tsx",
-      "target": "@/components/ThemeToggle",
-      "type": "contains"
-    },
-    {
-      "source": "src/components/auth/WelcomeLandingView.tsx",
-      "target": "@/components/ui/PWAInstallModal",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/page.tsx",
-      "target": "@/components/ui/CyberShell",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/page.tsx",
-      "target": "@/components/views/TerminalShell",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/page.tsx",
-      "target": "@/components/ui/DataDecryption",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/theme-provider",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/GlobalSessionManager",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/ServiceWorkerRegister",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/providers/QueryProvider",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/providers/SyncProvider",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/layout.tsx",
-      "target": "@/components/IntelligentThemeHandler",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/cost-sheets/page.tsx",
-      "target": "@/components/ui/skeleton",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/verify-dashboard/page.tsx",
-      "target": "@/components/views/terminal/views/dashboard/ConcentricDashboardRing",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/verify-dashboard/page.tsx",
-      "target": "@/components/views/terminal/views/dashboard/ExecutiveKpiCards",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/cashier/close-session/page.tsx",
-      "target": "@/components/ui/button",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/cashier/close-session/page.tsx",
-      "target": "@/components/ui/input",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/cashier/close-session/page.tsx",
-      "target": "@/components/ui/card",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/cashier/close-session/page.tsx",
-      "target": "@/components/ui/BaseModal",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/executive/page.tsx",
-      "target": "@/components/views/executive-demo/ExecutiveDemoView",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/card",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/button",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/table",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/badge",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/input",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/demo/calculate/page.tsx",
-      "target": "@/components/ui/select",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/login/page.tsx",
-      "target": "@/components/SplashScreen",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/login/page.tsx",
-      "target": "@/components/auth/WelcomeLandingView",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/login/page.tsx",
-      "target": "@/components/auth/LoginForm",
-      "type": "contains"
-    },
-    {
-      "source": "src/app/login/page.tsx",
-      "target": "@/components/CostProLogo",
+      "target": "ui/StateRenderer",
       "type": "contains"
     }
   ]

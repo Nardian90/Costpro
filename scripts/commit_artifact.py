@@ -46,7 +46,7 @@ def get_destination_base(name, source_phase):
     if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
         return "knowledge/"
     if name == "knowledge_graph":
-        return "./"
+        return "knowledge/"
     if name.startswith("docs/") or name == "iso_manual":
         return "knowledge/"
     if name.startswith("ai_context") or name == "vector_index":
