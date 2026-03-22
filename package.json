@@ -120,7 +120,6 @@
     "typescript": "5.9.3",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
-    "vitest": "^4.1.0",
     "workbox-window": "^7.4.0",
     "xlsx": "^0.18.5",
     "z-ai-web-dev-sdk": "^0.0.15",
@@ -128,6 +127,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "vitest": "^4.1.0",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.15.5",
     "@playwright/test": "^1.58.2",
