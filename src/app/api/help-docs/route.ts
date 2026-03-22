@@ -4,8 +4,6 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-const KNOWLEDGE_BASE = path.join(/*turbopackIgnore:true*/process.cwd(), 'knowledge');
-
 interface SearchResult {
   path: string;
   title: string;
@@ -14,6 +12,7 @@ interface SearchResult {
 }
 
 export async function GET(request: Request) {
+  const KNOWLEDGE_BASE = path.join(/*turbopackIgnore: true*/ process.cwd(), 'knowledge');
   const { searchParams } = new URL(request.url);
   const filePath = searchParams.get('path');
   const searchQuery = searchParams.get('search');

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-// @ts-ignore
-import pdf from 'pdf-parse/lib/pdf-parse.js';
+import pdf from 'pdf-parse';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
@@ -28,7 +27,7 @@ function getSupabaseAdmin() {
 }
 
 export async function GET() {
-  const manualsDir = path.join(/*turbopackIgnore:true*/process.cwd(), 'public', 'manuals');
+  const manualsDir = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals');
   try {
     if (!fs.existsSync(manualsDir)) {
       return NextResponse.json({ files: [] });
@@ -53,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
     }
 
-    const filePath = path.join(/*turbopackIgnore:true*/process.cwd(), 'public', 'manuals', filename);
+    const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals', filename);
     if (!fs.existsSync(filePath)) {
       return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     // Search for companion JSON file
     const baseName = filename.replace(/\.pdf$/i, '');
-    const manualsDir = path.join(/*turbopackIgnore:true*/process.cwd(), "public", "manuals");
+    const manualsDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "manuals");
     const jsonPaths = [
         path.join(manualsDir, `${baseName}.json`),
         path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),

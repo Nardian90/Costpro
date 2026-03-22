@@ -42,3 +42,6 @@ test-results/
 # Python
 __pycache__/
 *.pyc
+
+# Logs
+*.log
