@@ -52,9 +52,9 @@ export function TransferQRReportView({ type }: Props) {
             if (dateFrom && dateTo) {
                 collection = db.bank_statements.where('fecha').between(dateFrom, dateTo, true, true);
             } else if (dateFrom) {
-                collection = db.bank_statements.where('fecha').aboveEqual(dateFrom);
+                collection = db.bank_statements.where('fecha').aboveOrEqual(dateFrom);
             } else if (dateTo) {
-                collection = db.bank_statements.where('fecha').belowEqual(dateTo);
+                collection = db.bank_statements.where('fecha').belowOrEqual(dateTo);
             }
 
             let data = await collection.toArray();
@@ -130,7 +130,7 @@ export function TransferQRReportView({ type }: Props) {
             startY: 30,
             theme: 'grid',
             styles: { fontSize: 8, cellPadding: 2 },
-            headStyles: { fillStyle: 'DF', fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+            headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
         });
 
         doc.save(`Reporte_${type}_${new Date().toISOString().split('T')[0]}.pdf`);
