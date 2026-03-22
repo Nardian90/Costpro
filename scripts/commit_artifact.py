@@ -46,7 +46,7 @@ def get_destination_base(name, source_phase):
     if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
         return "knowledge/"
     if name == "knowledge_graph":
-        return "./"
+        return "knowledge/"
     if name.startswith("docs/") or name == "iso_manual":
         return "knowledge/"
     if name.startswith("ai_context") or name == "vector_index":
@@ -204,10 +204,14 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
     if os.path.isdir(artifact_path):
         if os.path.exists(dest_path):
             shutil.rmtree(dest_path)
-        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        dirname = os.path.dirname(dest_path)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
         shutil.copytree(artifact_path, dest_path)
     else:
-        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        dirname = os.path.dirname(dest_path)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
         shutil.copy2(artifact_path, dest_path)
 
     short_hash = hash_value[:6]
