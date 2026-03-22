@@ -287,7 +287,25 @@ export interface YearlyGoals {
   months: MonthlyGoal[];
 }
 
-export class IPVDatabase extends Dexie {  mapping_rules!: Table<MappingRuleType>;
+export interface Customer {
+  ci: string; // Clave única
+  nombre: string;
+  alias?: string;
+  ultima_actualizacion: string;
+}
+
+export interface IdentityAudit {
+  id: string;
+  transaction_ref: string;
+  tipo: "CONFLICT" | "AUTO_CORRECTION" | "NEW_RECORD";
+  detalle: string;
+  timestamp: string;
+}
+
+export class IPVDatabase extends Dexie {
+  customers!: Table<Customer>;
+  identity_audit!: Table<IdentityAudit>;
+  mapping_rules!: Table<MappingRuleType>;
   mapping_executions!: Table<MappingExecution>;
 
   bank_statements!: Table<BankTransaction>;
@@ -309,7 +327,9 @@ export class IPVDatabase extends Dexie {  mapping_rules!: Table<MappingRuleType>
 
   constructor() {
     super('IPVDB');
-    this.version(20).stores({
+    this.version(21).stores({
+      customers: "&ci, nombre, alias",
+      identity_audit: "&id, transaction_ref, tipo",
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad, activo',

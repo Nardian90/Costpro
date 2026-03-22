@@ -1,211 +1,116 @@
 'use client';
-import { supabase } from '@/lib/supabaseClient';
-import { useAuthStore } from '@/store';
-
-
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, BankTransaction } from '@/lib/dexie';
-import { Card } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Download, FileText, Calendar, Filter, Building, User, Phone, IdCard, Hash } from 'lucide-react';
-import { useColumnMapping } from '@/hooks/useColumnMapping';
-import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
-import { MappingStatsPanel } from '@/components/views/shared/MappingStatsPanel';
-import { BaseModal } from '@/components/ui/BaseModal';
-import { Settings2, UploadCloud } from 'lucide-react';
-import { formatCurrency, formatDate, getStoreLogoUrl } from '@/lib/utils';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import React, { useState, useMemo, useEffect } from 'react';
+import { db, type BankTransaction } from "@/lib/dexie";
+import { resolveIdentity } from "@/lib/ipv/identity/registry";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate, formatCurrency } from "@/lib/utils";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { BaseModal } from "@/components/ui/BaseModal";
+import MappingRulesManager from './MatchingRulesEditor';
 
 interface Props {
     type: 'TRANSFER' | 'QR';
 }
 
-
-const extractTransactionMetadata = (obs: string) => {
-    const result = { nombre: '', carnet: '', tarjeta: '' };
-    if (!obs) return result;
-
-    const isBandec = obs.includes("Banca Movil BANDEC");
-
-    if (isBandec) {
-        // Nombre: between "ORDENANTE NOMBRE:" and "|"
-        const nombreMatch = obs.match(/ORDENANTE NOMBRE:\s*([^|]+)/i);
-        if (nombreMatch) result.nombre = nombreMatch[1].trim();
-
-        // CI: between "CI:" and "|"
-        const ciMatch = obs.match(/CI:\s*([^|]+)/i);
-        if (ciMatch) result.carnet = ciMatch[1].trim();
-
-        // Tarjeta: Right 16 characters
-        const last16 = obs.trim().slice(-16);
-        if (/^\d+$/.test(last16)) {
-            result.tarjeta = last16;
-        }
-    } else {
-        // Standard Transfermóvil / Metropolitano
-        // Nombre: between "ORDENADA POR:" and "PAN:" or end
-        const nombreMatch = obs.match(/ORDENADA POR:\s*(.+?)(?=\s*PAN:|$)/i);
-        if (nombreMatch) result.nombre = nombreMatch[1].trim();
-
-        // In some cases CI is also present in standard transfers if they come from certain channels
-        const ciMatch = obs.match(/CI:\s*([^| \n]+)/i);
-        if (ciMatch) result.carnet = ciMatch[1].trim();
-
-        const tarjetaMatch = obs.match(/PAN:\s*(\d+)/i);
-        if (tarjetaMatch) result.tarjeta = tarjetaMatch[1].trim();
-    }
-    return result;
-};
-
 export function TransferQRReportView({ type }: Props) {
-    const [isRulesOpen, setIsRulesOpen] = useState(false);
-    const { applyMapping, lastStats, isProcessing } = useColumnMapping(type);
-    const { user } = useAuthStore();
-    const activeStoreId = user?.activeStoreId;
-
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [transactions, setTransactions] = useState<BankTransaction[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [isRulesOpen, setIsRulesOpen] = useState(false);
+    const [lastStats, setLastStats] = useState<any>(null);
 
-    // Header Editable Fields
+    // Entity Settings
     const [comercio, setComercio] = useState('');
     const [reeup, setReeup] = useState('');
     const [cuenta, setCuenta] = useState('');
 
-    // Fetch Store info
     useEffect(() => {
-        const fetchStore = async () => {
-            if (!activeStoreId) return;
-            const { data } = await supabase.from('stores').select('*').eq('id', activeStoreId).single();
-            if (data) {
-                setComercio(data.name || '');
-                setReeup(data.reeup || '');
-                setCuenta(data.bank_account || '');
+        const loadSettings = async () => {
+            const settings = await db.ipv_settings.get('current');
+            if (settings) {
+                setComercio(settings.entidad_nombre || '');
+                setReeup(settings.entidad_codigo || '');
+                setCuenta(''); // Account not in settings?
             }
         };
-        fetchStore();
-    }, [activeStoreId]);
+        loadSettings();
+    }, []);
 
-    const transactions = useLiveQuery(async () => {
-        const all = await db.bank_statements.orderBy('fecha').reverse().toArray();
-        return all.filter(t => {
-            const isMatch = type === 'TRANSFER' ? (t.comision_cents === 0 || !t.comision_cents) : (t.comision_cents && t.comision_cents > 0);
-            if (!isMatch) return false;
-            if (t.excluido) return false;
-            if (t.tipo !== 'Cr') return false;
+    useEffect(() => {
+        const loadTransactions = async () => {
+            let collection = db.bank_statements.toCollection();
 
-            const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                 t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesDate = (!dateFrom || t.fecha >= dateFrom) && (!dateTo || t.fecha <= dateTo);
+            if (dateFrom && dateTo) {
+                collection = db.bank_statements.where('fecha').between(dateFrom, dateTo, true, true);
+            } else if (dateFrom) {
+                collection = db.bank_statements.where('fecha').aboveEqual(dateFrom);
+            } else if (dateTo) {
+                collection = db.bank_statements.where('fecha').belowEqual(dateTo);
+            }
 
-            return matchesSearch && matchesDate;
-        });
+            let data = await collection.toArray();
+
+            // Filter by type (this is a bit heuristic since BankTransaction doesn't have a 'channel' field)
+            // But usually we can filter by observations or type
+            if (type === 'QR') {
+                data = data.filter(t => t.observaciones?.toUpperCase().includes('QR') || t.observaciones?.toUpperCase().includes('PAGO EN LINEA'));
+            }
+
+            if (searchTerm) {
+                const lowSearch = searchTerm.toLowerCase();
+                data = data.filter(t =>
+                    t.referencia_origen.toLowerCase().includes(lowSearch) ||
+                    t.observaciones?.toLowerCase().includes(lowSearch) ||
+                    t.nombre_cliente?.toLowerCase().includes(lowSearch) ||
+                    t.carnet?.toLowerCase().includes(lowSearch)
+                );
+            }
+
+            setTransactions(data.sort((a, b) => a.fecha.localeCompare(b.fecha)));
+        };
+        loadTransactions();
     }, [searchTerm, dateFrom, dateTo, type]);
 
-    // Deffered side-effect for auto-extraction to avoid ReadOnlyError
-    useEffect(() => {
-        if (!transactions) return;
+    const handleUpdateRow = async (ref: string, field: string, value: string) => {
+        const update: any = { [field]: value };
 
-        const updateMetadata = async () => {
-            let updated = 0;
-            for (const t of transactions) {
-                // If missing name or carnet, try to extract
-                if (!t.nombre_cliente || !t.carnet) {
-                    const extracted = extractTransactionMetadata(t.observaciones);
-                    const updates: Partial<BankTransaction> = {};
+        // If updating CI or Name, trigger registry logic
+        if (field === 'carnet' || field === 'nombre_cliente') {
+            const tx = await db.bank_statements.get(ref);
+            if (tx) {
+                const ci = field === 'carnet' ? value : tx.carnet;
+                const nombre = field === 'nombre_cliente' ? value : tx.nombre_cliente;
 
-                    if (!t.nombre_cliente && extracted.nombre) updates.nombre_cliente = extracted.nombre;
-                    if (!t.carnet && extracted.carnet) updates.carnet = extracted.carnet;
-                    if (!t.tarjeta_cliente && extracted.tarjeta) updates.tarjeta_cliente = extracted.tarjeta;
-
-                    if (Object.keys(updates).length > 0) {
-                        await db.bank_statements.update(t.referencia_origen, updates);
-                        updated++;
-                    }
+                if (ci && nombre) {
+                   const result = await resolveIdentity(ref, ci, nombre);
+                   if (result.nombre) update.nombre_cliente = result.nombre;
+                   if (result.ci) update.carnet = result.ci;
                 }
             }
-            // if (updated > 0) console.log(`Auto-updated metadata for ${updated} transactions`);
-        };
-
-        updateMetadata();
-    }, [transactions]);
-
-    const handleUpdateRow = async (ref: string, field: string, value: string) => {
-        await db.bank_statements.update(ref, { [field]: value } as any);
-    };
-
-    const getYear = () => {
-        if (dateFrom) return new Date(dateFrom).getFullYear();
-        if (dateTo) return new Date(dateTo).getFullYear();
-        return new Date().getFullYear();
-    };
-
-    const stats = useMemo(() => {
-        if (!transactions) return { total: 0, count: 0 };
-        return {
-            total: transactions.reduce((sum, t) => sum + (t.importe_venta_cents || t.importe_cents), 0),
-            count: transactions.length
-        };
-    }, [transactions]);
-
-    const handleExportPDF = async () => {
-        if (!transactions || transactions.length === 0) {
-            toast.error('No hay datos para exportar');
-            return;
         }
 
-        const doc = new jsPDF({ orientation: 'landscape' });
-        const pageWidth = doc.internal.pageSize.width;
+        await db.bank_statements.update(ref, update);
+        // Refresh local state
+        setTransactions(prev => prev.map(t => t.referencia_origen === ref ? { ...t, ...update } : t));
+    };
 
-        // Logo
-        if (user?.activeStoreId) {
-            const { data: store } = await supabase.from('stores').select('logo_url').eq('id', user.activeStoreId).single();
-            if (store?.logo_url) {
-                try {
-                    const img = new Image();
-                    img.src = store.logo_url;
-                    await new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; });
-                    doc.addImage(img, 'PNG', 14, 10, 20, 20);
-                } catch (e) { console.error("Error loading logo for PDF", e); }
-            }
-        }
+    const handleExportPDF = () => {
+        const doc = new jsPDF('l', 'mm', 'a4');
+        const title = type === 'TRANSFER' ? 'REPORTE DE TRANSFERENCIAS' : 'REPORTE DE PAGOS QR';
 
-        const mainTitle = type === 'TRANSFER' ? 'RELACIÓN DE OPERACIONES DE TRANSFERENCIA DE EFECTIVO RECIBIDAS' : 'REPORTE DE PAGOS POR CÓDIGO QR';
-
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        doc.text('CostPro', pageWidth - 30, 15);
-
-        doc.setTextColor(0);
         doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text(mainTitle, pageWidth / 2, 25, { align: 'center' });
-
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-
-        if (type === 'TRANSFER') {
-            doc.text(`Nombre del comercio: ${comercio || 'N/A'}`, 14, 40);
-            doc.text(`Código Reeup: ${reeup || 'N/A'}`, 100, 40);
-            doc.text(`Cuenta: ${cuenta || 'N/A'}`, 170, 40);
-            doc.text(`Año: ${getYear()}`, 250, 40);
-        } else {
-            doc.text(`Período: ${dateFrom || 'Inicio'} - ${dateTo || 'Fin'}`, 14, 40);
-        }
+        doc.text(title, 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Entidad: ${comercio} | REEUP: ${reeup}`, 14, 22);
 
         const tableData = transactions.map((t, i) => [
             i + 1,
@@ -220,102 +125,44 @@ export function TransferQRReportView({ type }: Props) {
         ]);
 
         autoTable(doc, {
-            startY: 50,
-            head: [['No', 'FECHA', 'Carnet de Identidad', 'Nombres y Apellidos', 'Importe', 'Transferencia', 'Teléfono', 'Firma cliente', 'Firma dependiente']],
+            head: [['No', 'Fecha', 'CI / Pasaporte', 'Nombres y Apellidos', 'Importe', 'Transferencia', 'Teléfono', 'Firma Cliente', 'Firma Dep.']],
             body: tableData,
+            startY: 30,
             theme: 'grid',
-            headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 8, halign: 'center' },
-            styles: { fontSize: 7, cellPadding: 2 },
-            columnStyles: {
-                0: { halign: 'center', cellWidth: 10 },
-                4: { halign: 'right' },
-                7: { cellWidth: 30 },
-                8: { cellWidth: 30 }
-            }
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillStyle: 'DF', fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
         });
 
-        const finalY = (doc as any).lastAutoTable.finalY + 20;
-        doc.setFontSize(8);
-        doc.text('__________________________', 40, finalY);
-        doc.text('Firma Responsable', 48, finalY + 5);
-
-        doc.text('__________________________', pageWidth - 80, finalY);
-        doc.text('Control y Revisión', pageWidth - 72, finalY + 5);
-
         doc.save(`Reporte_${type}_${new Date().toISOString().split('T')[0]}.pdf`);
-        toast.success('PDF generado con éxito');
     };
 
     return (
         <div className="space-y-6">
-
-            {type === 'TRANSFER' && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-card rounded-3xl border shadow-sm">
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Nombre del Comercio</Label>
-                        <Input value={comercio} onChange={(e) => setComercio(e.target.value)} className="h-10 font-bold" />
-                    </div>
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Código Reeup</Label>
-                        <Input value={reeup} onChange={(e) => setReeup(e.target.value)} className="h-10 font-bold" />
-                    </div>
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cuenta</Label>
-                        <Input value={cuenta} onChange={(e) => setCuenta(e.target.value)} className="h-10 font-bold" />
-                    </div>
-                    <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Año</Label>
-                        <Input value={getYear()} disabled className="h-10 font-black bg-muted/50" />
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-card rounded-3xl border border-border/50">
+                <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Nombre del Comercio</Label>
+                    <Input value={comercio} onChange={(e) => setComercio(e.target.value)} className="h-10 font-bold" />
                 </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4 bg-primary/5 border-primary/10">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Total Ingresos</p>
-                    <h3 className="text-2xl font-black text-primary">{formatCurrency(stats.total)}</h3>
-                </Card>
-                <Card className="p-4 bg-muted/50">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Operaciones</p>
-                    <h3 className="text-2xl font-black">{stats.count}</h3>
-                </Card>
-                <div className="md:col-span-2 flex items-end gap-2">
-                    <Button onClick={handleExportPDF} className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-2 w-full sm:w-auto">
-                        <Download className="w-4 h-4" />
-                        Exportar PDF
+                <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Código Reeup</Label>
+                    <Input value={reeup} onChange={(e) => setReeup(e.target.value)} className="h-10 font-bold" />
+                </div>
+                <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cuenta</Label>
+                    <Input value={cuenta} onChange={(e) => setCuenta(e.target.value)} className="h-10 font-bold" />
+                </div>
+                <div className="flex items-end">
+                    <Button onClick={handleExportPDF} className="h-10 w-full rounded-xl font-black uppercase tracking-widest text-xs gap-2">
+                        <Download className="w-4 h-4" /> Exportar PDF
                     </Button>
                 </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center justify-between bg-card p-4 rounded-3xl border shadow-sm">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setIsRulesOpen(true)} className="h-10 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-primary/20 hover:bg-primary/5"><Settings2 className="w-4 h-4 text-primary" /> Configurar Mapeo</Button>
-                    <input type="file" id="dataset-upload" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = async (event) => {
-                            const text = event.target?.result as string;
-                            const lines = text.split('\n').filter(line => line.trim());
-                            if (lines.length < 2) return;
-                            const headers = lines[0].split(',').map((h: string) => h.trim());
-                            const data = lines.slice(1).map((line: string) => {
-                                const values = line.split(',');
-                                return headers.reduce((obj, header, i) => { obj[header] = values[i]?.trim(); return obj; }, {} as any);
-                            });
-                            await applyMapping(data);
-                        };
-                        reader.readAsText(file);
-                    }} accept=".csv" />
-                    <Button variant="outline" onClick={() => document.getElementById('dataset-upload')?.click()} disabled={isProcessing} className="h-10 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-purple-500/20 hover:bg-purple-500/5 text-purple-600"><UploadCloud className="w-4 h-4" /> Dataset</Button>
-                </div>
-            </div>
-            {lastStats && <div className="animate-in slide-in-from-top duration-500"><MappingStatsPanel stats={lastStats} /></div>}
             <div className="flex flex-col lg:flex-row gap-4 items-center bg-card/50 p-4 rounded-3xl border border-border/50">
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por referencia u observaciones..."
+                        placeholder="Buscar por referencia, nombre o CI..."
                         className="pl-10 h-11 rounded-xl"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -327,8 +174,8 @@ export function TransferQRReportView({ type }: Props) {
                 </div>
             </div>
 
-            <div className="table-scroll-wrapper rounded-3xl border border-border/50 overflow-hidden shadow-xl">
-                <Table className="data-table">
+            <div className="rounded-3xl border border-border/50 overflow-hidden shadow-xl">
+                <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12">No</TableHead>
@@ -337,60 +184,40 @@ export function TransferQRReportView({ type }: Props) {
                             <TableHead>Nombres y Apellidos</TableHead>
                             <TableHead className="text-right">Importe</TableHead>
                             <TableHead>Transferencia</TableHead>
-                            <TableHead>Teléfono</TableHead>
-                            <TableHead>Firma Cliente</TableHead>
-                            <TableHead>Firma Dep.</TableHead>
+                            <TableHead>Firma</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {!transactions || transactions.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground font-medium italic">
-                                    No se encontraron registros para este criterio.
+                        {transactions.map((t, index) => (
+                            <TableRow key={t.referencia_origen}>
+                                <TableCell className="font-bold text-xs">{index + 1}</TableCell>
+                                <TableCell className="text-xs">{formatDate(t.fecha)}</TableCell>
+                                <TableCell>
+                                    <Input
+                                        value={t.carnet || ''}
+                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'carnet', e.target.value)}
+                                        className="h-8 text-[10px] font-bold w-28"
+                                        placeholder="CI"
+                                    />
                                 </TableCell>
+                                <TableCell>
+                                    <Input
+                                        value={t.nombre_cliente || ''}
+                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'nombre_cliente', e.target.value)}
+                                        className="h-8 text-[10px] font-black uppercase min-w-[200px]"
+                                        placeholder="NOMBRE"
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right font-black text-xs">
+                                    {formatCurrency(t.importe_venta_cents || t.importe_cents)}
+                                </TableCell>
+                                <TableCell className="font-mono text-[10px] text-primary">{t.referencia_origen}</TableCell>
+                                <TableCell className="text-[10px] italic opacity-20">__________</TableCell>
                             </TableRow>
-                        ) : (
-                            transactions.map((t, index) => (
-                                <TableRow key={t.referencia_origen}>
-                                    <TableCell className="font-bold text-xs">{index + 1}</TableCell>
-                                    <TableCell className="font-bold text-xs">{formatDate(t.fecha)}</TableCell>
-                                    <TableCell>
-                                        <Input
-                                            value={t.carnet || ''}
-                                            onChange={(e) => handleUpdateRow(t.referencia_origen, 'carnet', e.target.value)}
-                                            className="h-8 text-[10px] font-bold border-transparent hover:border-border focus:border-primary w-24"
-                                            placeholder="CARNET"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Input
-                                            value={t.nombre_cliente || ''}
-                                            onChange={(e) => handleUpdateRow(t.referencia_origen, 'nombre_cliente', e.target.value)}
-                                            className="h-8 text-[10px] font-black uppercase border-transparent hover:border-border focus:border-primary min-w-[150px]"
-                                            placeholder="NOMBRE CLIENTE"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right font-black text-xs">
-                                        {formatCurrency(t.importe_venta_cents || t.importe_cents)}
-                                    </TableCell>
-                                    <TableCell className="font-mono text-[10px] text-primary">{t.referencia_origen}</TableCell>
-                                    <TableCell>
-                                        <Input
-                                            value={t.telefono_cliente || ''}
-                                            onChange={(e) => handleUpdateRow(t.referencia_origen, 'telefono_cliente', e.target.value)}
-                                            className="h-8 text-[10px] font-bold border-transparent hover:border-border focus:border-primary w-24"
-                                            placeholder="TELÉFONO"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-[10px] italic opacity-20">________________</TableCell>
-                                    <TableCell className="text-[10px] italic opacity-20">________________</TableCell>
-                                </TableRow>
-                            ))
-                        )}
+                        ))}
                     </TableBody>
                 </Table>
             </div>
-            <BaseModal open={isRulesOpen} onOpenChange={setIsRulesOpen} title="Reglas de Mapeo" maxWidth="4xl"><div className="py-4"><MappingRulesManager reportType={type} /></div></BaseModal>
         </div>
     );
 }
