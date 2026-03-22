@@ -6,6 +6,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
+import { enrichTransactions } from '@/lib/ipv/parser';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { importCatalogProducts } from "@/lib/ipv/importUtils";
@@ -245,7 +246,9 @@ export function BankIngestion() {
           ingestion_hash: await generateHash(`${finalRef}-${fecha}-${importe}`)
         };
 
-        await db.bank_statements.add(tx);
+        const enriched = await enrichTransactions([tx]);
+        const finalTx = enriched[0];
+        await db.bank_statements.add(finalTx);
         imported++;
       } catch (error: any) {
           console.error('Error banco:', error);
