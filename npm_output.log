@@ -1,0 +1,15 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 570ms
+
+○ Compiling / ...
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 24.5s (next.js: 23.3s, application-code: 1170ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+○ Compiling /login ...
+ GET /login 200 in 7.1s (next.js: 7.1s, application-code: 60ms)

@@ -50,6 +50,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
   const [showExcluded, setShowExcluded] = useState(true);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
+  const [obsModal, setObsModal] = useState<{ open: boolean; tx: BankTransaction | null }>({ open: false, tx: null });
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -247,7 +248,17 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   </div>
                               </div>
                               <div className="space-y-2">
-                                  <p className="text-xs text-muted-foreground line-clamp-2" title={tx.observaciones}>{tx.observaciones}</p>
+                                  <div className="flex justify-between items-start gap-2 group/obs">
+                                      <p className="text-xs text-muted-foreground line-clamp-3 flex-1" title={tx.observaciones}>{tx.observaciones}</p>
+                                      <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 shrink-0 rounded-xl hover:bg-primary/10 hover:text-primary transition-all opacity-0 group-hover/obs:opacity-100 bg-muted/50"
+                                          onClick={() => setObsModal({ open: true, tx })}
+                                      >
+                                          <Eye className="w-4 h-4" />
+                                      </Button>
+                                  </div>
                                   {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
                                       <div className="text-[10px] text-red-500 font-bold uppercase leading-tight animate-pulse whitespace-normal break-words">
                                           ⚠️ {tx.fail_reason}
@@ -288,6 +299,46 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         <div className="py-4"><p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p></div>
       </BaseModal>
       <AddTransactionModal open={isAddTxOpen} onOpenChange={setIsAddTxOpen} />
+
+      <BaseModal
+        open={obsModal.open}
+        onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
+        title="Detalle de Observaciones"
+        maxWidth="md"
+      >
+        <div className="space-y-6 py-4">
+          <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+            <div className="p-2 bg-background rounded-xl shadow-sm">
+                <Info className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Referencia de Origen</p>
+                <p className="text-sm font-mono font-bold text-primary">{obsModal.tx?.referencia_origen}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-primary rounded-full" />
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Contenido de Observaciones</p>
+            </div>
+            <div className="p-5 bg-muted/30 rounded-3xl border border-border/50 shadow-inner">
+                <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-foreground/90">
+                    {obsModal.tx?.observaciones || 'No hay información adicional registrada para esta transacción.'}
+                </p>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Button
+                className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                onClick={() => setObsModal({ open: false, tx: null })}
+            >
+                Entendido
+            </Button>
+          </div>
+        </div>
+      </BaseModal>
     </>
   );
 }

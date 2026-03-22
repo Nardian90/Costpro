@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Download, FileText, Calendar, Filter, Building, User, Phone, IdCard, Hash } from 'lucide-react';
+import { Search, Download, FileText, Calendar, Filter, Building, User, Phone, IdCard, Hash, Eye, Info } from 'lucide-react';
 import { useColumnMapping } from '@/hooks/useColumnMapping';
 import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
 import { MappingStatsPanel } from '@/components/views/shared/MappingStatsPanel';
@@ -80,6 +80,7 @@ export function TransferQRReportView({ type }: Props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [obsModal, setObsModal] = useState<{ open: boolean; tx: BankTransaction | null }>({ open: false, tx: null });
 
     // Header Editable Fields
     const [comercio, setComercio] = useState('');
@@ -340,12 +341,13 @@ export function TransferQRReportView({ type }: Props) {
                             <TableHead>Teléfono</TableHead>
                             <TableHead>Firma Cliente</TableHead>
                             <TableHead>Firma Dep.</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {!transactions || transactions.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground font-medium italic">
+                                <TableCell colSpan={10} className="h-32 text-center text-muted-foreground font-medium italic">
                                     No se encontraron registros para este criterio.
                                 </TableCell>
                             </TableRow>
@@ -384,12 +386,63 @@ export function TransferQRReportView({ type }: Props) {
                                     </TableCell>
                                     <TableCell className="text-[10px] italic opacity-20">________________</TableCell>
                                     <TableCell className="text-[10px] italic opacity-20">________________</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+                                            onClick={() => setObsModal({ open: true, tx: t })}
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}
                     </TableBody>
                 </Table>
             </div>
+
+            <BaseModal
+                open={obsModal.open}
+                onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
+                title="Detalle de Observaciones"
+                maxWidth="md"
+            >
+                <div className="space-y-6 py-4">
+                    <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                        <div className="p-2 bg-background rounded-xl shadow-sm">
+                            <Info className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Referencia de Origen</p>
+                            <p className="text-sm font-mono font-bold text-primary">{obsModal.tx?.referencia_origen}</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-4 bg-primary rounded-full" />
+                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Contenido de Observaciones</p>
+                        </div>
+                        <div className="p-5 bg-muted/30 rounded-3xl border border-border/50 shadow-inner">
+                            <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-foreground/90">
+                                {obsModal.tx?.observaciones || 'No hay información adicional registrada para esta transacción.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <Button
+                            className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            onClick={() => setObsModal({ open: false, tx: null })}
+                        >
+                            Entendido
+                        </Button>
+                    </div>
+                </div>
+            </BaseModal>
+
             <BaseModal open={isRulesOpen} onOpenChange={setIsRulesOpen} title="Reglas de Mapeo" maxWidth="4xl"><div className="py-4"><MappingRulesManager reportType={type} /></div></BaseModal>
         </div>
     );
