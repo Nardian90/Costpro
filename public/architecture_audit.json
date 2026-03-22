@@ -317,13 +317,25 @@
         "iso_manual/"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 13,
+      "phaseName": "Knowledge Graph Generation",
+      "startTime": "2026-03-21T10:00:00.000000+00:00Z",
+      "endTime": "2026-03-21T10:00:15.000000+00:00Z",
+      "durationMs": 15000,
+      "status": "success",
+      "artifactsGenerated": [
+        "knowledge_graph"
+      ],
+      "cycle": 1
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 48121,
+    "averagePhaseDurationMs": 46907,
     "slowestPhase": 7,
     "fastestPhase": 8,
-    "lastCycleDurationMs": 1251158
+    "lastCycleDurationMs": 1266158
   },
   "healthMetrics": {
     "integrityScore": 84.0,
