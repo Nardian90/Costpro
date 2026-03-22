@@ -248,7 +248,7 @@ export function MatchingAuditView() {
                     <TableRow
                     key={log.id}
                     className={`cursor-pointer transition-colors ${selectedTx === log.transaction_ref ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
-                    onClick={() => log.transaction_ref && setSelectedTx(log.transaction_ref)}
+                    onClick={() => setSelectedTx(log.transaction_ref || null)}
                     >
                     <TableCell className="font-mono text-[10px]">
                         {log.transaction_ref?.slice(-12) || "N/A"}
