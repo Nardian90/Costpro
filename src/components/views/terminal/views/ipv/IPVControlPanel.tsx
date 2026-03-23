@@ -32,7 +32,7 @@ import {
     FileSearch,
     Receipt,
     ArrowRightLeft,
-    QrCode
+    QrCode, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -181,6 +181,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             title: 'Pagos QR',
             description: 'Reporte especializado de pagos por Código QR.',
             icon: <QrCode />,
+            variant: 'dark'
+        },
+        {
+            id: 'customers',
+            title: 'Clientes',
+            description: 'Catálogo maestro de identidad y resolución inteligente.',
+            icon: <Users />,
             variant: 'dark'
         }
     ];

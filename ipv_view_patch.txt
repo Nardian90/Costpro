@@ -1,0 +1,36 @@
+<<<<<<< SEARCH
+import { ManualReconciliationView } from './ManualReconciliationView';
+import { IPVControlPanel } from './IPVControlPanel';
+=======
+import { ManualReconciliationView } from './ManualReconciliationView';
+import { CustomerCatalog } from './CustomerCatalog';
+import { IPVControlPanel } from './IPVControlPanel';
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
+    {
+        id: 'reports-dropdown',
+=======
+    { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
+    { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers' },
+    {
+        id: 'reports-dropdown',
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+          {activeTab === 'mapping-rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MappingRulesManager />
+            </div>
+          )}
+=======
+          {activeTab === 'mapping-rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MappingRulesManager />
+            </div>
+          )}
+          {activeTab === 'customers' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <CustomerCatalog />
+            </div>
+          )}
+>>>>>>> REPLACE
