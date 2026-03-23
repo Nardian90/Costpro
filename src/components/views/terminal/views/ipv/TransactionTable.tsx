@@ -144,8 +144,11 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     const status = tx.estado_conciliacion;
     const badge = (() => {
       if (status === "NO_PROCESAR") return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-xs font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
-      if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) return <Badge className="bg-green-500 text-foreground border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
-      if (matchedTotal > 0 && Math.abs(diffCents) >= 0.001) return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs font-black uppercase tracking-tighter">EN PROCESO</Badge>;
+      if (matchedTotal > 0 && diffCents <= 0.001) {
+          if (diffCents < -0.001) return <Badge className="bg-blue-500 text-foreground border-blue-600 shadow-sm text-xs font-black uppercase tracking-tighter">EXCEDENTE</Badge>;
+          return <Badge className="bg-green-500 text-foreground border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
+      }
+      if (matchedTotal > 0 && diffCents > 0.001) return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs font-black uppercase tracking-tighter">EN PROCESO</Badge>;
       return <Badge className="bg-muted/10 text-muted-foreground border-gray-500/20 text-xs font-black uppercase tracking-tighter">PENDIENTE</Badge>;
     })();
 
