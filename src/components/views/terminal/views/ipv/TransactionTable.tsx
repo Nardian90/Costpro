@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import * as XLSX from "xlsx";
 import { FileSpreadsheet } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction, type Product } from '@/lib/dexie';
 import { MatchingTracePopover } from "./MatchingTracePopover";
 import { ActionBadges } from "./ActionBadges";
+import { ObservationsModal } from "./ObservationsModal";
 import {
   Table,
   TableBody,
@@ -28,7 +30,7 @@ import { generateHash } from '@/lib/ipv/engine';
 import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -50,6 +52,9 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
   const [showExcluded, setShowExcluded] = useState(true);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [obsModal, setObsModal] = useState<{ open: boolean; observations: string; reference: string }>({ open: false, observations: "", reference: "" });
+  const toggleExpand = (id: string) => setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -221,6 +226,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         getStatusBadge={getStatusBadge}
                         diff={(tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0)}
                         onForceMatchInternal={onForceMatch}
+                        onViewObservations={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}
                       />
                   ))
                 )}
@@ -247,7 +253,19 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   </div>
                               </div>
                               <div className="space-y-2">
-                                  <p className="text-xs text-muted-foreground line-clamp-2" title={tx.observaciones}>{tx.observaciones}</p>
+                                  <div className="space-y-1">
+                                  <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
+                                    {tx.observaciones || "Sin observaciones"}
+                                  </p>
+                                  {tx.observaciones && tx.observaciones.length > 60 && (
+                                    <button
+                                      onClick={() => toggleExpand(tx.referencia_origen)}
+                                      className="text-[10px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+                                    >
+                                      {expandedCards[tx.referencia_origen] ? <><ChevronUp className="w-3 h-3"/> Ver menos</> : <><ChevronDown className="w-3 h-3"/> Ver más</>}
+                                    </button>
+                                  )}
+                                </div>
                                   {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
                                       <div className="text-[10px] text-red-500 font-bold uppercase leading-tight animate-pulse whitespace-normal break-words">
                                           ⚠️ {tx.fail_reason}
@@ -272,7 +290,13 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
               )}
           </div>
         )}
-        <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
+        <ObservationsModal
+        open={obsModal.open}
+        onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
+        observations={obsModal.observations}
+        reference={obsModal.reference}
+      />
+      <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
       </div>
       <BaseModal
         open={confirmation.open}
@@ -307,14 +331,21 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
     return (<div className="space-y-1"><p className="text-sm font-black text-primary uppercase tracking-tighter">{title}</p><p className="text-xs text-muted-foreground leading-relaxed font-medium">{desc}</p></div>);
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff, onForceMatchInternal }: any) => {
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff, onForceMatchInternal, onViewObservations }: any) => {
     return (
         <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
           <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
           <TableCell className="text-xs max-w-[150px]">
-    <div className="truncate font-medium" title={tx.observaciones}>{tx.observaciones}</div>
+    <div className="flex items-center gap-2 group">
+    <div className="truncate font-medium cursor-pointer flex-1" onClick={onViewObservations} title={tx.observaciones}>
+      {tx.observaciones || "Sin observaciones"}
+    </div>
+    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={onViewObservations}>
+      <Info className="w-3 h-3 text-primary" />
+    </Button>
+  </div>
     {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
         <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight animate-pulse whitespace-normal break-words">
             ⚠️ {tx.fail_reason}
