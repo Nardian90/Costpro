@@ -438,7 +438,7 @@ export function IPVReportView() {
             "Código": p.cod,
             "Descripción": p.descripcion,
             "UM": p.um,
-            "Precio": p.precio_cents,
+            "Precio": Number(p.precio_cents),
             "Prioridad": p.prioridad_algoritmo,
             "ID Grupo": p.id_grupo || "",
             "Cód Hijo": p.cod_hijo || "",
@@ -452,7 +452,7 @@ export function IPVReportView() {
             "Fecha": t.fecha,
             "Referencia": t.referencia_origen,
             "Observaciones": t.observaciones,
-            "Importe": t.importe_cents,
+            "Importe": Number(t.importe_cents),
             "Tipo": t.tipo,
             "Estado": t.estado_conciliacion
         }));
@@ -465,8 +465,8 @@ export function IPVReportView() {
             "Transacción Ref": l.transaction_ref,
             "Producto": l.product_cod,
             "Cantidad": l.cantidad,
-            "Precio Unit": l.precio_unitario_cents,
-            "Importe": l.importe_linea_cents,
+            "Precio Unit": Number(l.precio_unitario_cents),
+            "Importe": Number(l.importe_linea_cents),
             "Tipo": l.clasificacion
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(breakdownData), "Desglose");
@@ -485,6 +485,21 @@ export function IPVReportView() {
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movementsData), "Trazabilidad");
 
         const timestamp = new Date().toISOString().split("T")[0];
+
+        // Apply numeric formatting to all sheets
+        wb.SheetNames.forEach(name => {
+            const ws = wb.Sheets[name];
+            const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+            for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const addr = XLSX.utils.encode_cell({r: R, c: C});
+                    const cell = ws[addr];
+                    if (cell && typeof cell.v === 'number') {
+                        cell.z = '#,##0.00';
+                    }
+                }
+            }
+        });
         XLSX.writeFile(wb, `IPV_REPORTE_COMPLETO_${timestamp}.xlsx`);
         toast.success("Reporte Excel Completo exportado correctamente");
     } catch (error) {

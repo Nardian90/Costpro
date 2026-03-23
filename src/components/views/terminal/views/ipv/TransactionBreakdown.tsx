@@ -93,9 +93,9 @@ export function TransactionBreakdown() {
             "Producto": prod?.descripcion || l.product_cod,
             "Código": l.product_cod,
             "Cantidad": l.cantidad,
-            "Precio Unit": l.precio_unitario_cents / 100,
-            "Importe Total": l.importe_linea_cents / 100,
-            "Ajuste/Cuadre": l.cuadre_cents / 100,
+            "Precio Unit": Number(l.precio_unitario_cents),
+            "Importe Total": Number(l.importe_linea_cents),
+            "Ajuste/Cuadre": Number(l.cuadre_cents || 0),
             "Tipo": l.clasificacion,
             "Origen": l.origen_dato,
             "Observaciones": tx?.observaciones || ""
@@ -103,6 +103,20 @@ export function TransactionBreakdown() {
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+    // Apply numeric formatting to currency columns (F, G, H)
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      ['F', 'G', 'H'].forEach(col => {
+        const addr = col + (R + 1);
+        if (worksheet[addr]) {
+            worksheet[addr].t = 'n';
+
+            worksheet[addr].z = '#,##0.00';
+        }
+      });
+    }
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Desglose");
     XLSX.writeFile(workbook, `IPV_Desglose_${new Date().toISOString().split('T')[0]}.xlsx`);

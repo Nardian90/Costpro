@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,24 +11,49 @@ import {
     PlayCircle,
     Target,
     BarChart3,
-    Database,
-    Package
+    DollarSign,
+    ArrowRight
 } from 'lucide-react';
 import { useFinancialPlanning } from '@/hooks/logic/useFinancialPlanning';
-import { useSimulationConfig } from '@/hooks/logic/useSimulationConfig';
 import { formatCurrency } from '@/lib/utils';
-import { db, type Product, type MatchingRule } from '@/lib/dexie';
+import { db } from '@/lib/dexie';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { toast } from 'sonner';
+import { debounce } from 'lodash';
+
+const VERSION = "1.0";
 
 export const FinancialPlanningView: React.FC = () => {
     const currentYear = new Date().getFullYear();
     const [year, setYear] = useState(currentYear);
-    const { goals, initYear, updateMonthlyGoal } = useFinancialPlanning(year);
+    const { goals, realData, initYear, updateMonthlyGoal } = useFinancialPlanning(year);
     const products = useLiveQuery(() => db.products.toArray());
     const rules = useLiveQuery(() => db.matching_rules.toArray());
     const [editingGoal, setEditingGoal] = useState<{month: string, amount: string, strategy: "MIN_STOCK" | "MAX_VALUE"} | null>(null);
+
+    // Simulation persistence (Frontend State Management)
+    const [simulations, setSimulations] = useState<Record<string, string>>(() => {
+        try {
+            const saved = localStorage.getItem('IPV_PLANEACION_SIMULATIONS_V' + VERSION);
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
+    });
+
+    const debouncedSaveSimulations = useCallback(
+        debounce((newSims: Record<string, string>) => {
+            localStorage.setItem('IPV_PLANEACION_SIMULATIONS_V' + VERSION, JSON.stringify(newSims));
+        }, 300),
+        []
+    );
+
+    const handleSimulationChange = (month: string, value: string) => {
+        const newSims = { ...simulations, [month]: value };
+        setSimulations(newSims);
+        debouncedSaveSimulations(newSims);
+    };
 
     useEffect(() => {
         initYear();
@@ -124,18 +149,58 @@ export const FinancialPlanningView: React.FC = () => {
                         <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Distribución Mensual</h4>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {goals.map((g) => {
                             const monthName = new Date(g.month + "-01").toLocaleDateString('es-ES', { month: 'long' });
                             const isEditing = editingGoal?.month === g.month;
+                            const monthReal = realData.get(g.month) || { total: 0, efectivo: 0, transferencia: 0 };
+                            const simulatedValue = simulations[g.month] || "";
 
                             return (
-                                <Card key={g.month} className="p-3 hover:shadow-md transition-all group relative overflow-hidden">
+                                <Card key={g.month} className="p-4 hover:shadow-md transition-all group relative overflow-hidden flex flex-col gap-3">
                                     <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
-                                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">{monthName}</p>
+
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground">{monthName}</p>
+                                        <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60">
+                                            {g.strategy === 'MAX_VALUE' ? 'MAX SALDO' : 'MIN EXISTENCIA'}
+                                        </span>
+                                    </div>
+
+                                    {/* Real Data Breakdown */}
+                                    <div className="space-y-1 bg-muted/30 p-2 rounded-md">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Real Total</span>
+                                            <span className="text-[10px] font-black text-foreground">{formatCurrency(monthReal.total)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center opacity-70">
+                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Efectivo</span>
+                                            <span className="text-[9px] font-bold">{formatCurrency(monthReal.efectivo)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center opacity-70">
+                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Transferencia</span>
+                                            <span className="text-[9px] font-bold">{formatCurrency(monthReal.transferencia)}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Simulation Input (Overlay) */}
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-black uppercase text-primary/70">Proyección (Simulación)</p>
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                            <Input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={simulatedValue}
+                                                onChange={(e) => handleSimulationChange(g.month, e.target.value)}
+                                                className="h-8 pl-6 text-[11px] font-black bg-primary/5 border-primary/20 focus:border-primary"
+                                            />
+                                        </div>
+                                    </div>
 
                                     {isEditing ? (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 pt-2 border-t">
+                                            <p className="text-[9px] font-black uppercase text-muted-foreground">Editar Objetivo</p>
                                             <Input
                                                 type="number"
                                                 value={editingGoal.amount}
@@ -152,32 +217,38 @@ export const FinancialPlanningView: React.FC = () => {
                                                 <option value="MAX_VALUE">MAX SALDO</option>
                                             </select>
                                             <div className="flex gap-1">
-                                                <Button size="sm" className="h-6 flex-1 text-[9px] font-black uppercase" onClick={() => handleSaveGoal(g.month)}>
+                                                <Button size="sm" className="h-7 flex-1 text-[9px] font-black uppercase" onClick={() => handleSaveGoal(g.month)}>
                                                     <Save className="w-3 h-3 mr-1" /> Guardar
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="h-6 flex-1 text-[9px] font-black uppercase" onClick={() => setEditingGoal(null)}>
+                                                <Button size="sm" variant="outline" className="h-7 flex-1 text-[9px] font-black uppercase" onClick={() => setEditingGoal(null)}>
                                                     X
                                                 </Button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
-                                            <p className="text-sm font-black cursor-pointer" onClick={() => setEditingGoal({month: g.month, amount: g.goalAmount.toString(), strategy: g.strategy || "MIN_STOCK"})}>
-                                                {formatCurrency(g.goalAmount)}
-                                            </p>
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60">
-                                                    {g.strategy === 'MAX_VALUE' ? 'MAX SALDO' : 'MIN EXISTENCIA'}
-                                                </span>
+                                        <div className="space-y-2 pt-2 border-t">
+                                            <div className="flex justify-between items-center">
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground">Objetivo Fijado</p>
                                                 <Button
                                                     variant="ghost"
-                                                    className="w-full h-7 text-[10px] font-black uppercase gap-1 hover:bg-primary/10 text-primary"
-                                                    onClick={() => handleSimulateMonthGoal(g.month, g.goalAmount, g.strategy)}
-                                                    disabled={g.goalAmount <= 0}
+                                                    size="sm"
+                                                    className="h-5 px-1 text-[8px] font-black uppercase hover:text-primary"
+                                                    onClick={() => setEditingGoal({month: g.month, amount: g.goalAmount.toString(), strategy: g.strategy || "MIN_STOCK"})}
                                                 >
-                                                    <PlayCircle className="w-3 h-3" /> Simular
+                                                    Editar
                                                 </Button>
                                             </div>
+                                            <p className="text-sm font-black text-foreground">
+                                                {formatCurrency(g.goalAmount)}
+                                            </p>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full h-8 text-[10px] font-black uppercase gap-1 hover:bg-primary hover:text-white transition-colors border-primary/30 text-primary"
+                                                onClick={() => handleSimulateMonthGoal(g.month, Number(simulatedValue) || g.goalAmount, g.strategy)}
+                                                disabled={!simulatedValue && g.goalAmount <= 0}
+                                            >
+                                                <PlayCircle className="w-3 h-3" /> Simular
+                                            </Button>
                                         </div>
                                     )}
                                 </Card>
@@ -195,7 +266,8 @@ export const FinancialPlanningView: React.FC = () => {
                     <h3 className="font-black uppercase text-sm">Integridad Predictiva</h3>
                     <p className="text-xs text-muted-foreground font-medium">
                         Define tus objetivos mensuales para alimentar el motor de simulación.
-                        La simulación se aplicará al periodo de transacciones correspondiente.
+                        Los valores ingresados en "Proyección" persisten localmente y te permiten previsualizar
+                        el impacto antes de comprometer el objetivo.
                     </p>
                 </div>
             </Card>
