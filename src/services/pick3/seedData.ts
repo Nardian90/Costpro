@@ -1,6 +1,5 @@
 import { Pick3Result } from '@/types/pick3';
 
-// Mock generating 90 days of Miami Pick 3 results (Midday & Evening)
 export function generateSeedData(): Pick3Result[] {
   const results: Pick3Result[] = [];
   const today = new Date();
@@ -10,7 +9,6 @@ export function generateSeedData(): Pick3Result[] {
     date.setDate(today.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
 
-    // Midday
     results.push({
       date: dateStr,
       draw_time: 'midday',
@@ -21,7 +19,6 @@ export function generateSeedData(): Pick3Result[] {
       ] as [number, number, number]
     });
 
-    // Evening
     results.push({
       date: dateStr,
       draw_time: 'evening',
