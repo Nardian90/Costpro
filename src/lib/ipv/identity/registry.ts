@@ -62,12 +62,12 @@ export async function resolveIdentity(
       // New valid record
       const newCustomer: Customer = {
         ci,
-        nombre: rawNombre.toUpperCase(),
+        nombre: rawNombre?.toUpperCase(),
         normalized_name: normalizedInputName,
         raw_names: [rawNombre],
         phone,
         card_number: card,
-        status: (ci && rawNombre) ? "COMPLETO" : "PARTIAL",
+        status: (ci && rawNombre) ? "COMPLETO" : "PARCIAL",
         source: "AUTOMATICO",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -95,7 +95,7 @@ export async function resolveIdentity(
     } else if (matches.length > 1) {
        await logAudit(transactionRef, 'CONFLICT',
           `Ambigüedad: Múltiples CIs encontrados para el nombre '${rawNombre}'`);
-       return { nombre: rawNombre.toUpperCase(), phone, card_number: card, source: 'CONFLICT' };
+       return { nombre: rawNombre?.toUpperCase(), phone, card_number: card, source: 'CONFLICT' };
     }
   }
 
@@ -188,7 +188,7 @@ export async function propagateIdentity(): Promise<number> {
         // 3. Match by Heuristic Similarity (> 85% - only if no CI and no Name match)
         // This is more intensive, we only do it for pending or partially filled ones
         const pendingTxs = await db.bank_statements
-            .filter(t => !t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre)
+            .filter(t => !!(!t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre))
             .toArray();
 
         for (const tx of pendingTxs) {
