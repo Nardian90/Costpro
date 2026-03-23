@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2 } from 'lucide-react';
+import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2, Eye, Info } from 'lucide-react';
+import { ObservationsModal } from "./ObservationsModal";
 import { toast } from 'sonner';
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { jsPDF } from "jspdf";
@@ -27,6 +28,7 @@ export function TransferQRReportView({ type }: Props) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isRulesOpen, setIsRulesOpen] = useState(false);
     const [lastStats, setLastStats] = useState<any>(null);
+    const [obsModal, setObsModal] = useState<{ open: boolean; observations: string; reference: string }>({ open: false, observations: "", reference: "" });
 
     // Entity Settings
     const [comercio, setComercio] = useState('');
@@ -184,6 +186,7 @@ export function TransferQRReportView({ type }: Props) {
                             <TableHead>Nombres y Apellidos</TableHead>
                             <TableHead className="text-right">Importe</TableHead>
                             <TableHead>Transferencia</TableHead>
+                            <TableHead>Observaciones</TableHead>
                             <TableHead>Firma</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -212,12 +215,28 @@ export function TransferQRReportView({ type }: Props) {
                                     {formatCurrency(t.importe_venta_cents || t.importe_cents)}
                                 </TableCell>
                                 <TableCell className="font-mono text-[10px] text-primary">{t.referencia_origen}</TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-primary hover:bg-primary/10"
+                                        onClick={() => setObsModal({ open: true, observations: t.observaciones || "", reference: t.referencia_origen })}
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
+                                </TableCell>
                                 <TableCell className="text-[10px] italic opacity-20">__________</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </div>
+            <ObservationsModal
+                open={obsModal.open}
+                onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
+                observations={obsModal.observations}
+                reference={obsModal.reference}
+            />
         </div>
     );
 }

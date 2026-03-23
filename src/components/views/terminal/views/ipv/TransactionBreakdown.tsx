@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2, Edit2, CheckCircle2, X, RotateCcw } from 'lucide-react';
+import { Search, Filter, Trash2, Edit2, CheckCircle2, X, RotateCcw, Eye, Info } from 'lucide-react';
+import { ObservationsModal } from "./ObservationsModal";
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -26,6 +27,7 @@ export function TransactionBreakdown() {
   const [editingLine, setEditingLine] = useState<any>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editDate, setEditDate] = useState<string>('');
+  const [obsModal, setObsModal] = useState<{ open: boolean; observations: string; reference: string }>({ open: false, observations: "", reference: "" });
 
   const lines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const products = useLiveQuery(() => db.products.toArray());
@@ -57,51 +59,57 @@ export function TransactionBreakdown() {
       const matchesClassification = classificationFilter === "ALL" || l.clasificacion === classificationFilter;
       return matchesSearch && matchesClassification;
     }).sort((a, b) => b.fecha_operacion.localeCompare(a.fecha_operacion));
-  }, [lines, txMap, productMap, searchTerm]);
-  const exportToExcel = () => {
-    const data = filteredLines.map(l => {
-        const prod = productMap.get(l.product_cod);
-        return {
-            "Fecha": l.fecha_operacion,
-            "Transacción Ref": l.transaction_ref,
-            "Producto": l.product_cod,
-            "Descripción": prod?.descripcion || "",
-            "Cantidad": l.cantidad,
-            "Precio Unit": l.precio_unitario_cents,
-            "Importe": l.importe_linea_cents,
-            "Tipo": l.clasificacion
-        };
-    });
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Desglose");
-    XLSX.writeFile(wb, `desglose_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
-    toast.success("Excel de desglose exportado");
-  };
-
-  const total = useMemo(() => {
-      return filteredLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-  }, [filteredLines]);
+  }, [lines, txMap, productMap, searchTerm, classificationFilter]);
 
   const handleDeleteLine = async (line: any) => {
-    if (!confirm('¿Seguro que desea eliminar esta línea?')) return;
-
+    if (!confirm('¿Deseas eliminar este registro?')) return;
     await db.reconciliation_lines.delete(line.id);
 
-    // Update transaction status
-    const txLines = await db.reconciliation_lines.where('transaction_ref').equals(line.transaction_ref).toArray();
-    const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+    // Update status of the affected transaction
     const tx = await db.bank_statements.get(line.transaction_ref);
     if (tx) {
+        const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(line.transaction_ref).toArray();
+        const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
         const target = tx.importe_venta_cents || tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
-        await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
+        await db.bank_statements.update(line.transaction_ref, { estado_conciliacion: newStatus });
     }
+
     toast.success('Línea eliminada');
   };
 
+  const handleExportXLS = () => {
+    if (!filteredLines || filteredLines.length === 0) {
+        toast.error("No hay datos para exportar");
+        return;
+    }
+
+    const dataToExport = filteredLines.map(l => {
+        const prod = productMap.get(l.product_cod);
+        const tx = txMap.get(l.transaction_ref);
+        return {
+            "Fecha": l.fecha_operacion,
+            "Referencia": l.transaction_ref,
+            "Producto": prod?.descripcion || l.product_cod,
+            "Código": l.product_cod,
+            "Cantidad": l.cantidad,
+            "Precio Unit": l.precio_unitario_cents / 100,
+            "Importe Total": l.importe_linea_cents / 100,
+            "Ajuste/Cuadre": l.cuadre_cents / 100,
+            "Tipo": l.clasificacion,
+            "Origen": l.origen_dato,
+            "Observaciones": tx?.observaciones || ""
+        };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Desglose");
+    XLSX.writeFile(workbook, `IPV_Desglose_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const handleResetCash = async () => {
-    if (!confirm('¿Estás seguro de que deseas eliminar TODOS los registros en efectivo? Esto incluye ajustes globales y ventas manuales en cash.')) {
+    if (!confirm('¿Deseas eliminar TODOS los registros de efectivo generados automáticamente? Los ajustes manuales no se verán afectados.')) {
         return;
     }
 
@@ -141,36 +149,6 @@ export function TransactionBreakdown() {
     }
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingLine) return;
-
-    const prod = productMap.get(editingLine.product_cod);
-    const basePrice = prod?.precio_cents || editingLine.precio_unitario_cents;
-    const baseTotal = basePrice * editingLine.cantidad;
-    const newCuadre = editAmount - baseTotal;
-
-    await db.reconciliation_lines.update(editingLine.id, {
-        importe_linea_cents: editAmount,
-        cuadre_cents: newCuadre,
-        fecha_operacion: editDate,
-        // Si cantidad es 1, ajustamos unitario para que cuadre
-        precio_unitario_cents: editingLine.cantidad === 1 ? editAmount : editingLine.precio_unitario_cents
-    });
-
-    // Update transaction status
-    const txLines = await db.reconciliation_lines.where('transaction_ref').equals(editingLine.transaction_ref).toArray();
-    const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-    const tx = await db.bank_statements.get(editingLine.transaction_ref);
-    if (tx) {
-        const target = tx.importe_cents;
-        const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
-        await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
-    }
-
-    toast.success('Línea actualizada');
-    setEditingLine(null);
-  };
-
   const handleRandomizeDates = async () => {
     if (!confirm('¿Deseas reacomodar aleatoriamente las fechas de todos los registros de efectivo? Se priorizarán los días con menos transferencias para un look natural.')) {
         return;
@@ -200,83 +178,55 @@ export function TransactionBreakdown() {
             ? Object.keys(dailyVolumes)
             : Array.from(new Set(lines?.map(l => l.fecha_operacion) || []));
 
-        if (availableDates.length === 0) {
-            toast.error('No se detectaron fechas disponibles para reacomodar.');
-            return;
+        if (availableDates.length === 0) return;
+
+        // 2. Re-distribuir
+        for (const line of allCashLines) {
+            const randomDate = availableDates[Math.floor(Math.random() * availableDates.length)];
+            await db.reconciliation_lines.update(line.id, { fecha_operacion: randomDate });
         }
 
-        // 2. Ordenar fechas por volumen (menor primero)
-        const sortedDates = [...availableDates].sort((a, b) => (dailyVolumes[a] || 0) - (dailyVolumes[b] || 0));
-
-        // 3. Reasignar fechas a las líneas de efectivo
-        const shuffledLines = [...allCashLines].sort(() => Math.random() - 0.5);
-
-        for (let i = 0; i < shuffledLines.length; i++) {
-            // Round robin sobre sortedDates
-            const dateIndex = i % sortedDates.length;
-            const newDate = sortedDates[dateIndex];
-
-            await db.reconciliation_lines.update(shuffledLines[i].id, {
-                fecha_operacion: newDate
-            });
-        }
-
-        toast.success(`Fechas reacomodadas para ${shuffledLines.length} registros.`);
+        toast.success(`${allCashLines.length} registros de efectivo reubicados exitosamente.`);
     } catch (error) {
-        console.error('Error randomizing dates:', error);
-        toast.error('Error al reacomodar fechas');
+        toast.error('Error al reubicar registros');
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (!editingLine) return;
+
+    const prod = productMap.get(editingLine.product_cod);
+    const basePrice = prod?.precio_cents || editingLine.precio_unitario_cents;
+    const diff = editAmount - (basePrice * editingLine.cantidad);
+
+    await db.reconciliation_lines.update(editingLine.id, {
+        importe_linea_cents: editAmount,
+        fecha_operacion: editDate,
+        cuadre_cents: diff
+    });
+
+    const tx = await db.bank_statements.get(editingLine.transaction_ref);
+    if (tx) {
+        const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(editingLine.transaction_ref).toArray();
+        const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+        const target = tx.importe_venta_cents || tx.importe_cents;
+        const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+        await db.bank_statements.update(editingLine.transaction_ref, { estado_conciliacion: newStatus });
+    }
+
+    toast.success('Cambios guardados');
+    setEditingLine(null);
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                    <Search className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-black uppercase tracking-tight">Análisis de Desglose</h3>
-                    <p className="text-xs text-muted-foreground font-medium">Justificación detallada por producto</p>
-                </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRandomizeDates}
-                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-xs gap-2 hover:bg-primary hover:text-foreground transition-all shadow-sm active:scale-95"
-                >
-                    <RotateCcw className="w-4 h-4" />
-                    Reacomodar Fechas
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetCash}
-                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-xs gap-2 hover:bg-red-500 hover:text-foreground transition-all shadow-sm active:scale-95"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    Reset Efectivo
-                </Button>
-                <Badge variant="outline" className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5">
-                    <div className="flex flex-col items-end">
-                        <span className="text-xs font-black text-muted-foreground uppercase leading-none">Total Filtrado</span>
-                        <span className="text-sm font-black text-primary">{formatCurrency(total)}</span>
-                    </div>
-                <Button variant="outline" size="sm" onClick={exportToExcel} className="h-11 px-4 rounded-xl border-green-500/20 bg-green-500/5 text-green-600 font-black uppercase tracking-widest text-xs gap-2 hover:bg-green-500 hover:text-foreground transition-all shadow-sm active:scale-95"><FileSpreadsheet className="w-4 h-4" /> Exportar Excel</Button>
-                </Badge>
-            </div>
-        </div>
-
-      <div className="p-4 bg-background/50 border-b flex flex-col md:flex-row justify-between items-center gap-4 rounded-2xl">
-        <div className="flex flex-1 w-full gap-2">
-          <div className="relative flex-1">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por transacción, producto o descripción..."
-              className="pl-10 h-10 font-medium"
+              placeholder="Buscar referencia o producto..."
+             className="pl-10 h-10 font-medium"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -292,7 +242,16 @@ export function TransactionBreakdown() {
             <option value="QR">QR</option>
           </select>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleRandomizeDates} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2">
+                <RotateCcw className="w-3 h-3 text-orange-500" /> Mezclar Fechas
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleResetCash} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive border-destructive/20 hover:bg-destructive/5">
+                <Trash2 className="w-3 h-3" /> Limpiar Efectivo
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportXLS} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-green-600" /> Exportar Excel
+            </Button>
             <Badge variant="outline" className="h-10 px-4 font-black text-xs gap-2 bg-background/50 border-primary/20">
                 <Filter className="w-3 h-3 text-primary" />
                 {filteredLines.length} Líneas
@@ -341,14 +300,21 @@ export function TransactionBreakdown() {
                       <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
                         {l.transaction_ref}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={tx?.observaciones}>
-                        {tx?.observaciones || 'Ajuste Manual / Global'}
+                      <div className="flex items-center gap-1 group">
+                        <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })} >
+                          {tx?.observaciones || "Ajuste Manual / Global"}
+                        </div>
+                        {tx && (
+                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                            <Info className="w-3 h-3 text-primary" />
+                          </Button>
+                        )}
+                      </div>
                       {l.observaciones && (
-                        <div className="text-[10px] text-orange-600 font-bold italic mt-0.5 truncate max-w-[150px]" title={l.observaciones}>
+                        <div className="text-[10px] text-orange-600 font-bold italic mt-0.5 truncate max-w-[150px] cursor-pointer" title={l.observaciones} onClick={() => setObsModal({ open: true, observations: l.observaciones || "", reference: l.transaction_ref })} >
                           {l.observaciones}
                         </div>
                       )}
-                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-xs font-bold">{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
@@ -420,6 +386,12 @@ export function TransactionBreakdown() {
         </Table>
       </div>
 
+      <ObservationsModal
+        open={obsModal.open}
+        onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
+        observations={obsModal.observations}
+        reference={obsModal.reference}
+      />
       <Dialog open={!!editingLine} onOpenChange={(open) => !open && setEditingLine(null)}>
         <DialogContent className="max-w-md">
             <DialogHeader>
