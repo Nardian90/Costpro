@@ -127,7 +127,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "vitest": "^4.1.0",
+    "vitest": "4.0.17",
     "@eslint/eslintrc": "^3",
     "@netlify/plugin-nextjs": "^5.15.5",
     "@playwright/test": "^1.58.2",
