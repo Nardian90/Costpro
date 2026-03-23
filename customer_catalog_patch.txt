@@ -1,0 +1,62 @@
+<<<<<<< SEARCH
+import { db, type Customer } from "@/lib/dexie";
+import { normalizeName } from "@/lib/ipv/identity/normalization";
+=======
+import { db, type Customer } from "@/lib/dexie";
+import { normalizeName } from "@/lib/ipv/identity/normalization";
+import { propagateIdentity } from "@/lib/ipv/identity/registry";
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    const handlePropagate = async () => {
+        setIsPropagating(true);
+        try {
+            const allCustomers = await db.customers.toArray();
+            let affectedTxs = 0;
+
+            for (const customer of allCustomers) {
+                // Update by CI
+                const byCi = await db.bank_statements.where('carnet').equals(customer.ci).toArray();
+                for (const tx of byCi) {
+                    await db.bank_statements.update(tx.referencia_origen, {
+                        nombre_cliente: customer.nombre,
+                        telefono_cliente: customer.phone,
+                        tarjeta_cliente: customer.card_number
+                    });
+                    affectedTxs++;
+                }
+
+                // Update by Name (if no CI)
+                const byName = await db.bank_statements
+                    .where('nombre_cliente').equals(customer.nombre)
+                    .and(t => !t.carnet)
+                    .toArray();
+
+                for (const tx of byName) {
+                    await db.bank_statements.update(tx.referencia_origen, {
+                        carnet: customer.ci,
+                        telefono_cliente: customer.phone,
+                        tarjeta_cliente: customer.card_number
+                    });
+                    affectedTxs++;
+                }
+            }
+            toast.success(`Propagación completada. ${affectedTxs} registros actualizados.`);
+        } catch (error) {
+            toast.error("Error durante la propagación");
+        } finally {
+            setIsPropagating(false);
+        }
+    };
+=======
+    const handlePropagate = async () => {
+        setIsPropagating(true);
+        try {
+            const affectedTxs = await propagateIdentity();
+            toast.success(`Propagación completada. ${affectedTxs} registros actualizados.`);
+        } catch (error) {
+            toast.error("Error durante la propagación");
+        } finally {
+            setIsPropagating(false);
+        }
+    };
+>>>>>>> REPLACE

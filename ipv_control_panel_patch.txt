@@ -1,0 +1,26 @@
+<<<<<<< SEARCH
+        {
+            id: 'qr',
+            title: 'Pagos QR',
+            description: 'Reporte especializado de pagos por Código QR.',
+            icon: <QrCode />,
+            variant: 'dark'
+        }
+    ];
+=======
+        {
+            id: 'qr',
+            title: 'Pagos QR',
+            description: 'Reporte especializado de pagos por Código QR.',
+            icon: <QrCode />,
+            variant: 'dark'
+        },
+        {
+            id: 'customers',
+            title: 'Clientes',
+            description: 'Catálogo maestro de identidad y resolución inteligente.',
+            icon: <Users />,
+            variant: 'dark'
+        }
+    ];
+>>>>>>> REPLACE
