@@ -127,7 +127,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             2: "scripts/maintenance/domain_classifier.py",
             6: "scripts/phase_6_health.py",
             13: "scripts/generate_knowledge_graph.py",
-            14: "scripts/build_vector_index.py",
+            14: "scripts/phase_14_rag_context.py",
             8: "scripts/phase_8_view_mapping.py",
             9: "scripts/phase_9_workflow_detection.py",
             5: "scripts/phase_5_metrics.py",

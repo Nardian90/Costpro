@@ -1,39 +1,58 @@
 #!/usr/bin/env python3
 """
 canonicalize_sha256.py
-Genera hash SHA256 determinista de archivos JSON
-Uso: python canonicalize_sha256.py <archivo.json>
+Genera hash SHA256 determinista para archivos y directorios.
+Uso: python canonicalize_sha256.py <path>
 """
 
-import json
 import hashlib
+import os
 import sys
-from datetime import datetime, timezone
+import json
 
 def canonical_json(obj):
-    """Convierte objeto a JSON canónico (ordenado, sin espacios)"""
     return json.dumps(obj, separators=(',', ':'), sort_keys=True, ensure_ascii=False)
 
-def sha256_hex(s: str):
-    """Calcula hash SHA256 de string"""
-    return hashlib.sha256(s.encode('utf-8')).hexdigest()
+def get_hash(path):
+    if os.path.isdir(path):
+        hasher = hashlib.sha256()
+        for root, dirs, files in os.walk(path):
+            for names in sorted(files):
+                filepath = os.path.join(root, names)
+                with open(filepath, 'rb') as f:
+                    while True:
+                        data = f.read(65536)
+                        if not data:
+                            break
+                        hasher.update(data)
+        return hasher.hexdigest()
 
-def calculate_hash(file_path):
-    """Calcula hash de archivo JSON"""
-    with open(file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    canonical = canonical_json(data)
-    return sha256_hex(canonical)
+    if path.endswith('.json'):
+        with open(path, 'r', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+                content = canonical_json(data).encode('utf-8')
+                return hashlib.sha256(content).hexdigest()
+            except json.JSONDecodeError:
+                pass
+
+    hasher = hashlib.sha256()
+    with open(path, 'rb') as f:
+        while True:
+            data = f.read(65536)
+            if not data:
+                break
+            hasher.update(data)
+    return hasher.hexdigest()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Error: Proporcionar ruta de archivo JSON")
+        print("Usage: python canonicalize_sha256.py <path>")
         sys.exit(1)
 
-    file_path = sys.argv[1]
-    try:
-        hash_value = calculate_hash(file_path)
-        print(f"sha256:{hash_value}")
-    except Exception as e:
-        print(f"Error: {e}")
+    path = sys.argv[1]
+    if not os.path.exists(path):
+        print(f"Error: Path not found: {path}")
         sys.exit(1)
+
+    print(get_hash(path))

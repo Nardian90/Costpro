@@ -1,0 +1,10 @@
+{
+  "domain": "architecture",
+  "summary": "File public/system_architecture.json contains keys: components. File public/architecture_manifest.json contains keys: generated_at, version, system, artifacts. File public/architecture_graph.json contains keys: nodes, links, metadata.",
+  "sources": [
+    "public/system_architecture.json",
+    "public/architecture_manifest.json",
+    "public/architecture_graph.json"
+  ],
+  "generated_at": "2026-03-23T08:18:35.852598+00:00Z"
+}

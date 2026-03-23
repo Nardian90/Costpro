@@ -1,8 +1,4922 @@
 {
   "indexVersion": "1.0.0",
-  "totalEntries": 0,
+  "totalEntries": 546,
   "shards": 1,
-  "entries": [],
-  "builtAt": "2026-03-16T14:42:12.909514Z",
-  "lastUpdated": "2026-03-16T14:42:12.909602Z"
+  "entries": [
+    {
+      "id": "61690c52103c",
+      "embedding_path": "ai_context/ai_embeddings/system_architecture_json_61690c52103c.npy",
+      "metadata": {
+        "source": "public/system_architecture.json",
+        "key": "components",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "cbfc33687309",
+      "embedding_path": "ai_context/ai_embeddings/architecture_manifest_json_cbfc33687309.npy",
+      "metadata": {
+        "source": "public/architecture_manifest.json",
+        "key": "generated_at",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "f8b7f507406b",
+      "embedding_path": "ai_context/ai_embeddings/architecture_manifest_json_f8b7f507406b.npy",
+      "metadata": {
+        "source": "public/architecture_manifest.json",
+        "key": "version",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "9fe5d203506e",
+      "embedding_path": "ai_context/ai_embeddings/architecture_manifest_json_9fe5d203506e.npy",
+      "metadata": {
+        "source": "public/architecture_manifest.json",
+        "key": "system",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "8b0da5f208f7",
+      "embedding_path": "ai_context/ai_embeddings/architecture_manifest_json_8b0da5f208f7.npy",
+      "metadata": {
+        "source": "public/architecture_manifest.json",
+        "key": "artifacts",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "84349f8ea86d",
+      "embedding_path": "ai_context/ai_embeddings/architecture_graph_json_84349f8ea86d.npy",
+      "metadata": {
+        "source": "public/architecture_graph.json",
+        "key": "nodes",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "636c3306dd8d",
+      "embedding_path": "ai_context/ai_embeddings/architecture_graph_json_636c3306dd8d.npy",
+      "metadata": {
+        "source": "public/architecture_graph.json",
+        "key": "links",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "ac2fd0db3d22",
+      "embedding_path": "ai_context/ai_embeddings/architecture_graph_json_ac2fd0db3d22.npy",
+      "metadata": {
+        "source": "public/architecture_graph.json",
+        "key": "metadata",
+        "type": "json_dict_key"
+      }
+    },
+    {
+      "id": "1b3e487724b2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1b3e487724b2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 0,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5a58dabf6c87",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5a58dabf6c87.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 1,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "67d72046316b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_67d72046316b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 2,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6b0c322050ff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6b0c322050ff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 3,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "712780b20840",
+      "embedding_path": "ai_context/ai_embeddings/components_json_712780b20840.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 4,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6e0fed5678cd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6e0fed5678cd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 5,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "39fe2ca71f34",
+      "embedding_path": "ai_context/ai_embeddings/components_json_39fe2ca71f34.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 6,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "69a9aba98e5d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_69a9aba98e5d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 7,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d952b57e4b90",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d952b57e4b90.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 8,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2284e34ccd09",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2284e34ccd09.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 9,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "75b8dd5ecabe",
+      "embedding_path": "ai_context/ai_embeddings/components_json_75b8dd5ecabe.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 10,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ab8040d9ba3d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ab8040d9ba3d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 11,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2f63b5ccaed3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2f63b5ccaed3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 12,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "801c15d9614f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_801c15d9614f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 13,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f926791d972d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f926791d972d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 14,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "55415457a425",
+      "embedding_path": "ai_context/ai_embeddings/components_json_55415457a425.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 15,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2a471f62d095",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2a471f62d095.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 16,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d9678f446a1c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d9678f446a1c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 17,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "68b19cf83fa2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_68b19cf83fa2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 18,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5a774caeff8c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5a774caeff8c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 19,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "31fa8ad14264",
+      "embedding_path": "ai_context/ai_embeddings/components_json_31fa8ad14264.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 20,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d4faf41c070b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d4faf41c070b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 21,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fdf0e0ed718e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fdf0e0ed718e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 22,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7241abfbf672",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7241abfbf672.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 23,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "76d38f925773",
+      "embedding_path": "ai_context/ai_embeddings/components_json_76d38f925773.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 24,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "afd664a3e0ff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_afd664a3e0ff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 25,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7d1599c5e916",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7d1599c5e916.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 26,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1b3e1162fb74",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1b3e1162fb74.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 27,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2f7a503f2520",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2f7a503f2520.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 28,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3b0c6d4a8661",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3b0c6d4a8661.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 29,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2cdfa0a64cdf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2cdfa0a64cdf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 30,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "79c2d4cb22e2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_79c2d4cb22e2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 31,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "28555826caec",
+      "embedding_path": "ai_context/ai_embeddings/components_json_28555826caec.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 32,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6bdc7fa9686b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6bdc7fa9686b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 33,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "865f8dc42f1d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_865f8dc42f1d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 34,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fc9dd22cf3ee",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fc9dd22cf3ee.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 35,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e0c6347a7b3e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e0c6347a7b3e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 36,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "98a6fbf8f283",
+      "embedding_path": "ai_context/ai_embeddings/components_json_98a6fbf8f283.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 37,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b2dc3fd76457",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b2dc3fd76457.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 38,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "97561223b857",
+      "embedding_path": "ai_context/ai_embeddings/components_json_97561223b857.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 39,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b4919aa186fb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b4919aa186fb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 40,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bcc28b9bca50",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bcc28b9bca50.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 41,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5dc48788ec1b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5dc48788ec1b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 42,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c9460351ece7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c9460351ece7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 43,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "41ee38e66536",
+      "embedding_path": "ai_context/ai_embeddings/components_json_41ee38e66536.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 44,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9ea13f7fc0b5",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9ea13f7fc0b5.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 45,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e9216d96f65d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e9216d96f65d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 46,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "df3a3826ac7c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_df3a3826ac7c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 47,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "74ae4c453acf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_74ae4c453acf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 48,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "95408a5fe589",
+      "embedding_path": "ai_context/ai_embeddings/components_json_95408a5fe589.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 49,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "225b555299aa",
+      "embedding_path": "ai_context/ai_embeddings/components_json_225b555299aa.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 50,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7d916bc22fab",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7d916bc22fab.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 51,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6f86c2ff18d0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6f86c2ff18d0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 52,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "98288aa0fb7f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_98288aa0fb7f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 53,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7eef40e28028",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7eef40e28028.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 54,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "31d38cb33eff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_31d38cb33eff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 55,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "00f0d255eddc",
+      "embedding_path": "ai_context/ai_embeddings/components_json_00f0d255eddc.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 56,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "10034e67b764",
+      "embedding_path": "ai_context/ai_embeddings/components_json_10034e67b764.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 57,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "98628b257a75",
+      "embedding_path": "ai_context/ai_embeddings/components_json_98628b257a75.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 58,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "16f8756083ce",
+      "embedding_path": "ai_context/ai_embeddings/components_json_16f8756083ce.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 59,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3c712a5f346e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3c712a5f346e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 60,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "479c7e7da0dc",
+      "embedding_path": "ai_context/ai_embeddings/components_json_479c7e7da0dc.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 61,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4d7c21a64810",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4d7c21a64810.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 62,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d3e10a8c4fda",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d3e10a8c4fda.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 63,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "784f34a72375",
+      "embedding_path": "ai_context/ai_embeddings/components_json_784f34a72375.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 64,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5b28dfffade0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5b28dfffade0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 65,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c331b403049e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c331b403049e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 66,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ad71ac10a8a3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ad71ac10a8a3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 67,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2bb0baf399bb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2bb0baf399bb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 68,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "41ac34cad8d7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_41ac34cad8d7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 69,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "93048bee597a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_93048bee597a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 70,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f6ac46a3f392",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f6ac46a3f392.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 71,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f6b7e9c0bb5c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f6b7e9c0bb5c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 72,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8ff7d864dd3f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8ff7d864dd3f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 73,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8c64a47c0537",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8c64a47c0537.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 74,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2e06c3788983",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2e06c3788983.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 75,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "56f4d3be4aa5",
+      "embedding_path": "ai_context/ai_embeddings/components_json_56f4d3be4aa5.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 76,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "41fd8ba39f1d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_41fd8ba39f1d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 77,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9b016bf629b3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9b016bf629b3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 78,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ab91b3c58c51",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ab91b3c58c51.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 79,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c9dc1ee1fb62",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c9dc1ee1fb62.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 80,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "07c25a2cbac0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_07c25a2cbac0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 81,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "78452b23fe37",
+      "embedding_path": "ai_context/ai_embeddings/components_json_78452b23fe37.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 82,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "489fab321a90",
+      "embedding_path": "ai_context/ai_embeddings/components_json_489fab321a90.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 83,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5f78126e66cb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5f78126e66cb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 84,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7a1d495dfcd7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7a1d495dfcd7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 85,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "be6afe5c2662",
+      "embedding_path": "ai_context/ai_embeddings/components_json_be6afe5c2662.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 86,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "399f4482c951",
+      "embedding_path": "ai_context/ai_embeddings/components_json_399f4482c951.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 87,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e2e382af7f90",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e2e382af7f90.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 88,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "dac2ff606968",
+      "embedding_path": "ai_context/ai_embeddings/components_json_dac2ff606968.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 89,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8e8b56f30496",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8e8b56f30496.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 90,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a60f83484bfa",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a60f83484bfa.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 91,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5198430fafcc",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5198430fafcc.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 92,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a5ccf80126c8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a5ccf80126c8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 93,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "652817b283bf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_652817b283bf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 94,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "54769d943c3d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_54769d943c3d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 95,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "74f2172ff85b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_74f2172ff85b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 96,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3577a0ed3b96",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3577a0ed3b96.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 97,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4cdc4c13ca8f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4cdc4c13ca8f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 98,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4189751a560d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4189751a560d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 99,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "65a2892d8474",
+      "embedding_path": "ai_context/ai_embeddings/components_json_65a2892d8474.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 100,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ace52681367b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ace52681367b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 101,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fbe0a9423e26",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fbe0a9423e26.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 102,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1f9519a26d6c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1f9519a26d6c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 103,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ad78a373ecce",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ad78a373ecce.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 104,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4c2c4a39bac5",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4c2c4a39bac5.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 105,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fbcf6d59776e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fbcf6d59776e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 106,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f48762bf859d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f48762bf859d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 107,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b51056482bac",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b51056482bac.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 108,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "79f80e08ac69",
+      "embedding_path": "ai_context/ai_embeddings/components_json_79f80e08ac69.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 109,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "571bc13c5da2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_571bc13c5da2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 110,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "28bd3ee6448b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_28bd3ee6448b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 111,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e10ce579a742",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e10ce579a742.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 112,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ad0a34b8b5b3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ad0a34b8b5b3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 113,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ab0d99469b96",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ab0d99469b96.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 114,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5add0a0e1bc0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5add0a0e1bc0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 115,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3f8419cbb52f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3f8419cbb52f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 116,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d1b887438b1b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d1b887438b1b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 117,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "db7de50f6375",
+      "embedding_path": "ai_context/ai_embeddings/components_json_db7de50f6375.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 118,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9f772837668a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9f772837668a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 119,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5bf7508f41ab",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5bf7508f41ab.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 120,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b016a294d2df",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b016a294d2df.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 121,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5811e37f58a1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5811e37f58a1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 122,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "96ca21ddd7ff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_96ca21ddd7ff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 123,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8057486b3fa9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8057486b3fa9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 124,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "23fc197b2097",
+      "embedding_path": "ai_context/ai_embeddings/components_json_23fc197b2097.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 125,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d2c59764f2ba",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d2c59764f2ba.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 126,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2186fe905f89",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2186fe905f89.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 127,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2e46f876da24",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2e46f876da24.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 128,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b3612807fd26",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b3612807fd26.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 129,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f7da95a78389",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f7da95a78389.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 130,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "970911acc253",
+      "embedding_path": "ai_context/ai_embeddings/components_json_970911acc253.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 131,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0a342e806363",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0a342e806363.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 132,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f6ac3a3fc47c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f6ac3a3fc47c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 133,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5555f0ee32aa",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5555f0ee32aa.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 134,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "80e420f48fac",
+      "embedding_path": "ai_context/ai_embeddings/components_json_80e420f48fac.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 135,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "91d8cbc06f8f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_91d8cbc06f8f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 136,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "35c43bebd403",
+      "embedding_path": "ai_context/ai_embeddings/components_json_35c43bebd403.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 137,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f1a2375d1ca8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f1a2375d1ca8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 138,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "78d6c144d36d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_78d6c144d36d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 139,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0503a1208be9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0503a1208be9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 140,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0ee6c077cdb4",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0ee6c077cdb4.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 141,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "387b5624eddb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_387b5624eddb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 142,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "420334f73d27",
+      "embedding_path": "ai_context/ai_embeddings/components_json_420334f73d27.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 143,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "42092857f13c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_42092857f13c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 144,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ee41a6485527",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ee41a6485527.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 145,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "04d5ca0e261e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_04d5ca0e261e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 146,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "07d6d7b14f13",
+      "embedding_path": "ai_context/ai_embeddings/components_json_07d6d7b14f13.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 147,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "655ace83a3ec",
+      "embedding_path": "ai_context/ai_embeddings/components_json_655ace83a3ec.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 148,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4215244a577e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4215244a577e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 149,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c3230e6f9b49",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c3230e6f9b49.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 150,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "efb78329659c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_efb78329659c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 151,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "513585af0fe9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_513585af0fe9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 152,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "45274538d58d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_45274538d58d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 153,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d76e08f8b605",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d76e08f8b605.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 154,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "093143dcc211",
+      "embedding_path": "ai_context/ai_embeddings/components_json_093143dcc211.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 155,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6631ee832b82",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6631ee832b82.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 156,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "69e61cbaf320",
+      "embedding_path": "ai_context/ai_embeddings/components_json_69e61cbaf320.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 157,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d10753f1cf6e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d10753f1cf6e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 158,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "81f141ee34ff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_81f141ee34ff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 159,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2a9119b840da",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2a9119b840da.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 160,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "53ea74a79ab0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_53ea74a79ab0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 161,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "cf75d28c3913",
+      "embedding_path": "ai_context/ai_embeddings/components_json_cf75d28c3913.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 162,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "888b539ec6d9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_888b539ec6d9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 163,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9f76a12b8c85",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9f76a12b8c85.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 164,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d14defbb15a0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d14defbb15a0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 165,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d147c694c75a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d147c694c75a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 166,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f191098c4803",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f191098c4803.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 167,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a36afd23ee6f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a36afd23ee6f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 168,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bc2b552cd8d7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bc2b552cd8d7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 169,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3376986fd6a6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3376986fd6a6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 170,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "21206e68a3d0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_21206e68a3d0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 171,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a69af6cc4dff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a69af6cc4dff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 172,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e7637ed7cdf0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e7637ed7cdf0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 173,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1a81345403ce",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1a81345403ce.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 174,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d2f0334550a3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d2f0334550a3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 175,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5a3f004b5376",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5a3f004b5376.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 176,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c7274850898f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c7274850898f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 177,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "aa2517060bbc",
+      "embedding_path": "ai_context/ai_embeddings/components_json_aa2517060bbc.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 178,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "074932fd2e77",
+      "embedding_path": "ai_context/ai_embeddings/components_json_074932fd2e77.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 179,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ca396fab574a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ca396fab574a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 180,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "462daabd266d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_462daabd266d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 181,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7a8296e508f6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7a8296e508f6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 182,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "84a04abc63cd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_84a04abc63cd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 183,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7ffce2eb134b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7ffce2eb134b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 184,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f9c070a0a0a5",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f9c070a0a0a5.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 185,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "baff10dc0871",
+      "embedding_path": "ai_context/ai_embeddings/components_json_baff10dc0871.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 186,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a28ea25328c9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a28ea25328c9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 187,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "76e12f029a06",
+      "embedding_path": "ai_context/ai_embeddings/components_json_76e12f029a06.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 188,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4630986e0a6a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4630986e0a6a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 189,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f7901eacafd9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f7901eacafd9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 190,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4cb97cb2f071",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4cb97cb2f071.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 191,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f9d80c529761",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f9d80c529761.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 192,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f5f65197a1d3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f5f65197a1d3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 193,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "73368f7c5d6f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_73368f7c5d6f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 194,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e8d351b3c1c3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e8d351b3c1c3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 195,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bbd297011123",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bbd297011123.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 196,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "512dc129eff7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_512dc129eff7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 197,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "884e3565cd41",
+      "embedding_path": "ai_context/ai_embeddings/components_json_884e3565cd41.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 198,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4356687a4571",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4356687a4571.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 199,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c7d87faaa946",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c7d87faaa946.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 200,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "30152e21e3f9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_30152e21e3f9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 201,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e9a4f552dbf7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e9a4f552dbf7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 202,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "04484c7215af",
+      "embedding_path": "ai_context/ai_embeddings/components_json_04484c7215af.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 203,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b0c31fc12acf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b0c31fc12acf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 204,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8b1656ae0aa2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8b1656ae0aa2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 205,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "43be0f392808",
+      "embedding_path": "ai_context/ai_embeddings/components_json_43be0f392808.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 206,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8fe1c39e5f59",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8fe1c39e5f59.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 207,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "10888ae4fb57",
+      "embedding_path": "ai_context/ai_embeddings/components_json_10888ae4fb57.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 208,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a1fab3fd1e94",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a1fab3fd1e94.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 209,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7972cd0dde3b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7972cd0dde3b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 210,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "67fd209e67e2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_67fd209e67e2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 211,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "312148a778b6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_312148a778b6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 212,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7b0ab5fe6e46",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7b0ab5fe6e46.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 213,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0e443968ccf3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0e443968ccf3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 214,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "cd6a9b689ee1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_cd6a9b689ee1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 215,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7e8f87a42d04",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7e8f87a42d04.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 216,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a8ffe1ca0843",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a8ffe1ca0843.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 217,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "734491efdeee",
+      "embedding_path": "ai_context/ai_embeddings/components_json_734491efdeee.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 218,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0a3ce64047eb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0a3ce64047eb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 219,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9fa8da350504",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9fa8da350504.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 220,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2e7f4dd7a428",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2e7f4dd7a428.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 221,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f750c108c8b2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f750c108c8b2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 222,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0dce3bfca68c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0dce3bfca68c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 223,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4eeeb1430f13",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4eeeb1430f13.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 224,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d170d771108a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d170d771108a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 225,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a28239259456",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a28239259456.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 226,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0d43b60ab865",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0d43b60ab865.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 227,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fddfd7881f4a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fddfd7881f4a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 228,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "31f3408d95e4",
+      "embedding_path": "ai_context/ai_embeddings/components_json_31f3408d95e4.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 229,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c1e25b72724e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c1e25b72724e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 230,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3bafbfb1a51b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3bafbfb1a51b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 231,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c8fe4a08a62a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c8fe4a08a62a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 232,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0150231facd2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0150231facd2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 233,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1af1315b6b4f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1af1315b6b4f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 234,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d4bc45b79f78",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d4bc45b79f78.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 235,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ea0ae24d51f0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ea0ae24d51f0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 236,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "57f897368a95",
+      "embedding_path": "ai_context/ai_embeddings/components_json_57f897368a95.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 237,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "32aedcb3b525",
+      "embedding_path": "ai_context/ai_embeddings/components_json_32aedcb3b525.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 238,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0027165fd897",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0027165fd897.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 239,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "543ae07d45b7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_543ae07d45b7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 240,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "98da0eaf08b9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_98da0eaf08b9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 241,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3c161792284d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3c161792284d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 242,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ac23c8326bf8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ac23c8326bf8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 243,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8b8250872a66",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8b8250872a66.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 244,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fb2cd2c37689",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fb2cd2c37689.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 245,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d56bfe9f0210",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d56bfe9f0210.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 246,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2bb9144cadd3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2bb9144cadd3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 247,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "588e26c91e05",
+      "embedding_path": "ai_context/ai_embeddings/components_json_588e26c91e05.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 248,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "dd8d453ac81d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_dd8d453ac81d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 249,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f8c88fc17742",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f8c88fc17742.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 250,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8a7382daec64",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8a7382daec64.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 251,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c40cd48e3bce",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c40cd48e3bce.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 252,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8a5392a844e6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8a5392a844e6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 253,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "697061ba2514",
+      "embedding_path": "ai_context/ai_embeddings/components_json_697061ba2514.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 254,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eb8123726418",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eb8123726418.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 255,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "27bb99e93e5f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_27bb99e93e5f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 256,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ba0f2cb843e3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ba0f2cb843e3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 257,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6aa3828b3b31",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6aa3828b3b31.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 258,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5602e4dd17d8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5602e4dd17d8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 259,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a460149e2814",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a460149e2814.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 260,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "58168619a924",
+      "embedding_path": "ai_context/ai_embeddings/components_json_58168619a924.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 261,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b7e8ed7b66bd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b7e8ed7b66bd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 262,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "474464af0250",
+      "embedding_path": "ai_context/ai_embeddings/components_json_474464af0250.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 263,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "764b235debdd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_764b235debdd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 264,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "957f2e33fd3e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_957f2e33fd3e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 265,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6e639e3317b2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6e639e3317b2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 266,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "34978ac770b8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_34978ac770b8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 267,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f5897c520d82",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f5897c520d82.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 268,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "00c6fd581fd6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_00c6fd581fd6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 269,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9dbd66fe0709",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9dbd66fe0709.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 270,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eef5a8205878",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eef5a8205878.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 271,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9d1f75d9724b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9d1f75d9724b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 272,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fd7b8c46f9bc",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fd7b8c46f9bc.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 273,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3c64d7c57373",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3c64d7c57373.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 274,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4fea39c06072",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4fea39c06072.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 275,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fe2c4bbf42ff",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fe2c4bbf42ff.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 276,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f3881f318da3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f3881f318da3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 277,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bcfd3310809d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bcfd3310809d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 278,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "21e2627a15b7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_21e2627a15b7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 279,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "314af3a26833",
+      "embedding_path": "ai_context/ai_embeddings/components_json_314af3a26833.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 280,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "43e5abbc9633",
+      "embedding_path": "ai_context/ai_embeddings/components_json_43e5abbc9633.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 281,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "40cf56d1a482",
+      "embedding_path": "ai_context/ai_embeddings/components_json_40cf56d1a482.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 282,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b4c2d66c72c1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b4c2d66c72c1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 283,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2c27267a582f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2c27267a582f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 284,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f8f3d0e6eccb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f8f3d0e6eccb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 285,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3244704de8f0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3244704de8f0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 286,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8594671045dd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8594671045dd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 287,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0a8149c66a82",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0a8149c66a82.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 288,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "daaaed07b6e4",
+      "embedding_path": "ai_context/ai_embeddings/components_json_daaaed07b6e4.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 289,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "215fd149a71c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_215fd149a71c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 290,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d6e1adbeb0d1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d6e1adbeb0d1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 291,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1eda9ef964ae",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1eda9ef964ae.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 292,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5b121bb7da74",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5b121bb7da74.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 293,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3ca8f92a162b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3ca8f92a162b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 294,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "46667ab43124",
+      "embedding_path": "ai_context/ai_embeddings/components_json_46667ab43124.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 295,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "43ad82936ee9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_43ad82936ee9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 296,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7abf326bdf27",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7abf326bdf27.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 297,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8715d1de0aba",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8715d1de0aba.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 298,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bb997adea4f9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bb997adea4f9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 299,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f0853178bc97",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f0853178bc97.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 300,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8a37d3af5dde",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8a37d3af5dde.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 301,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d6f86431267e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d6f86431267e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 302,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7d83344fb391",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7d83344fb391.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 303,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1a4ea3da8ff8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1a4ea3da8ff8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 304,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "13c6074831ed",
+      "embedding_path": "ai_context/ai_embeddings/components_json_13c6074831ed.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 305,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "acac5f29dae7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_acac5f29dae7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 306,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "25cd63088206",
+      "embedding_path": "ai_context/ai_embeddings/components_json_25cd63088206.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 307,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "17b7eb5f48a5",
+      "embedding_path": "ai_context/ai_embeddings/components_json_17b7eb5f48a5.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 308,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4729f4e142f2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4729f4e142f2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 309,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f98efa6f6d70",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f98efa6f6d70.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 310,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "85ada773e377",
+      "embedding_path": "ai_context/ai_embeddings/components_json_85ada773e377.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 311,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "08f82bb9e6b1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_08f82bb9e6b1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 312,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eccc02774b71",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eccc02774b71.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 313,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b4e71c9e7ae3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b4e71c9e7ae3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 314,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "58285d435f43",
+      "embedding_path": "ai_context/ai_embeddings/components_json_58285d435f43.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 315,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bc7fcc581b94",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bc7fcc581b94.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 316,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bf9b8af7f282",
+      "embedding_path": "ai_context/ai_embeddings/components_json_bf9b8af7f282.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 317,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c13563043e41",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c13563043e41.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 318,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5bb7c5cfe056",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5bb7c5cfe056.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 319,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "edeaabde710b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_edeaabde710b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 320,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fc922c6933d6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fc922c6933d6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 321,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8cc62a22273f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8cc62a22273f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 322,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c4e5eb3c09e1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c4e5eb3c09e1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 323,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "faf4ed6f33b2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_faf4ed6f33b2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 324,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2951168c991a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2951168c991a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 325,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5f24f44ea6df",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5f24f44ea6df.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 326,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a1a9206d7ee9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a1a9206d7ee9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 327,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "883395fe1b57",
+      "embedding_path": "ai_context/ai_embeddings/components_json_883395fe1b57.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 328,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d75a2ce22596",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d75a2ce22596.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 329,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a663fe6ab377",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a663fe6ab377.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 330,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6304536c3c12",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6304536c3c12.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 331,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "319629fb4537",
+      "embedding_path": "ai_context/ai_embeddings/components_json_319629fb4537.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 332,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f89c2124b7a3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f89c2124b7a3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 333,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "423060a22209",
+      "embedding_path": "ai_context/ai_embeddings/components_json_423060a22209.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 334,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6a7a3bdb6534",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6a7a3bdb6534.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 335,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "43366c09ef42",
+      "embedding_path": "ai_context/ai_embeddings/components_json_43366c09ef42.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 336,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5d6dfb1871c3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5d6dfb1871c3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 337,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "aaabbdea0f64",
+      "embedding_path": "ai_context/ai_embeddings/components_json_aaabbdea0f64.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 338,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a0f685a563e0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a0f685a563e0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 339,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "37d422986c38",
+      "embedding_path": "ai_context/ai_embeddings/components_json_37d422986c38.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 340,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "046e0da5b8fb",
+      "embedding_path": "ai_context/ai_embeddings/components_json_046e0da5b8fb.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 341,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ff1dbd13654b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ff1dbd13654b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 342,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0e676c9da1ae",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0e676c9da1ae.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 343,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f0221bda0cb7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f0221bda0cb7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 344,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "82586f384090",
+      "embedding_path": "ai_context/ai_embeddings/components_json_82586f384090.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 345,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9b2e860c28be",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9b2e860c28be.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 346,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "17bb96040ff0",
+      "embedding_path": "ai_context/ai_embeddings/components_json_17bb96040ff0.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 347,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a9868e1507d8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a9868e1507d8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 348,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "204d99d5387f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_204d99d5387f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 349,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3fd9536fa93a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3fd9536fa93a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 350,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "957bca0ffa81",
+      "embedding_path": "ai_context/ai_embeddings/components_json_957bca0ffa81.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 351,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "75006d98c285",
+      "embedding_path": "ai_context/ai_embeddings/components_json_75006d98c285.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 352,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6de9710f769e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_6de9710f769e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 353,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "950b6f08069d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_950b6f08069d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 354,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "26b29ee153f8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_26b29ee153f8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 355,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c5b62c54c9d6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c5b62c54c9d6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 356,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4888b1f76161",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4888b1f76161.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 357,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1dfcb2cd9a21",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1dfcb2cd9a21.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 358,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5ce0f4c2121e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5ce0f4c2121e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 359,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1c85a041f3e1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1c85a041f3e1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 360,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e92fc7f2b25c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e92fc7f2b25c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 361,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "38e543161a2e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_38e543161a2e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 362,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "65297919b6f6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_65297919b6f6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 363,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b05b1bc8b14a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b05b1bc8b14a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 364,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c34c7c0b62c3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c34c7c0b62c3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 365,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d4f5045facc8",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d4f5045facc8.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 366,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ab663c91a093",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ab663c91a093.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 367,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7d756e911b47",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7d756e911b47.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 368,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7160823e6bbf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7160823e6bbf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 369,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8dbc32137ad1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8dbc32137ad1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 370,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "18c2e5b6ab7c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_18c2e5b6ab7c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 371,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9b9a7c5db016",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9b9a7c5db016.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 372,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a3c77ffcd4a6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a3c77ffcd4a6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 373,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "00bfadcf9d2a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_00bfadcf9d2a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 374,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b7a8b6513a58",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b7a8b6513a58.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 375,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3ae190279865",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3ae190279865.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 376,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e87d59d80f13",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e87d59d80f13.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 377,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "76e8b9364fc6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_76e8b9364fc6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 378,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7c28d9ed2fc9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7c28d9ed2fc9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 379,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ae64e088ffbe",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ae64e088ffbe.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 380,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "74e664ee7c77",
+      "embedding_path": "ai_context/ai_embeddings/components_json_74e664ee7c77.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 381,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "05592a5ac22d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_05592a5ac22d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 382,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a9847eed746b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_a9847eed746b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 383,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "08b85c97445c",
+      "embedding_path": "ai_context/ai_embeddings/components_json_08b85c97445c.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 384,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2fda685e02a6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2fda685e02a6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 385,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ed746101742f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_ed746101742f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 386,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "22781c0ed504",
+      "embedding_path": "ai_context/ai_embeddings/components_json_22781c0ed504.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 387,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c41d1be53512",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c41d1be53512.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 388,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "cb3746c94f09",
+      "embedding_path": "ai_context/ai_embeddings/components_json_cb3746c94f09.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 389,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7b289a1172d7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7b289a1172d7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 390,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4faa533e7def",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4faa533e7def.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 391,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b136f1a0ad49",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b136f1a0ad49.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 392,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e17dd5f988cf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e17dd5f988cf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 393,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eb94d61a228b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eb94d61a228b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 394,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c4e6a888d83a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c4e6a888d83a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 395,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5832a2be83dd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5832a2be83dd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 396,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "035b3fecb60d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_035b3fecb60d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 397,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "87d283e8a799",
+      "embedding_path": "ai_context/ai_embeddings/components_json_87d283e8a799.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 398,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4fa418b40f24",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4fa418b40f24.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 399,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eb042356cf52",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eb042356cf52.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 400,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "17b5ca4658ce",
+      "embedding_path": "ai_context/ai_embeddings/components_json_17b5ca4658ce.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 401,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5d009f3828c1",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5d009f3828c1.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 402,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c6df6fcc73ac",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c6df6fcc73ac.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 403,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "08954a0995b7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_08954a0995b7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 404,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "351f122395a9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_351f122395a9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 405,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "72f99e0d272b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_72f99e0d272b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 406,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2533dd65e79e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2533dd65e79e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 407,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f6fd03b3bb25",
+      "embedding_path": "ai_context/ai_embeddings/components_json_f6fd03b3bb25.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 408,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "02ea33282c03",
+      "embedding_path": "ai_context/ai_embeddings/components_json_02ea33282c03.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 409,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "133f410c9728",
+      "embedding_path": "ai_context/ai_embeddings/components_json_133f410c9728.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 410,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "47e516a9c3b7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_47e516a9c3b7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 411,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "665ba82c0686",
+      "embedding_path": "ai_context/ai_embeddings/components_json_665ba82c0686.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 412,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "84b47689cc66",
+      "embedding_path": "ai_context/ai_embeddings/components_json_84b47689cc66.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 413,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "62ae3bd359ba",
+      "embedding_path": "ai_context/ai_embeddings/components_json_62ae3bd359ba.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 414,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "99c6b2ff936f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_99c6b2ff936f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 415,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "43e11a300b5d",
+      "embedding_path": "ai_context/ai_embeddings/components_json_43e11a300b5d.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 416,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4a00954bed61",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4a00954bed61.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 417,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1a5844e119c2",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1a5844e119c2.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 418,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d75576ba359e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d75576ba359e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 419,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "332f0cfe045b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_332f0cfe045b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 420,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4c2031be746e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_4c2031be746e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 421,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "32b3dca155bf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_32b3dca155bf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 422,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "02d6d8b93711",
+      "embedding_path": "ai_context/ai_embeddings/components_json_02d6d8b93711.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 423,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5dd8a537e4e3",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5dd8a537e4e3.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 424,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0bb250ff2b38",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0bb250ff2b38.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 425,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1340a102a119",
+      "embedding_path": "ai_context/ai_embeddings/components_json_1340a102a119.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 426,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "cd13b6123427",
+      "embedding_path": "ai_context/ai_embeddings/components_json_cd13b6123427.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 427,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "162fe2223440",
+      "embedding_path": "ai_context/ai_embeddings/components_json_162fe2223440.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 428,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eee867284e2f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_eee867284e2f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 429,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c395ef3c598b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_c395ef3c598b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 430,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "394217e13163",
+      "embedding_path": "ai_context/ai_embeddings/components_json_394217e13163.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 431,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b4c8ff452282",
+      "embedding_path": "ai_context/ai_embeddings/components_json_b4c8ff452282.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 432,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5ec34b52a620",
+      "embedding_path": "ai_context/ai_embeddings/components_json_5ec34b52a620.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 433,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "34b5de9d788f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_34b5de9d788f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 434,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "00c77fe9341f",
+      "embedding_path": "ai_context/ai_embeddings/components_json_00c77fe9341f.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 435,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "9ffa890c92a6",
+      "embedding_path": "ai_context/ai_embeddings/components_json_9ffa890c92a6.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 436,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "85c9de4b6301",
+      "embedding_path": "ai_context/ai_embeddings/components_json_85c9de4b6301.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 437,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d41ed69a56c7",
+      "embedding_path": "ai_context/ai_embeddings/components_json_d41ed69a56c7.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 438,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0cc47e0a330a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_0cc47e0a330a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 439,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7245245dcb05",
+      "embedding_path": "ai_context/ai_embeddings/components_json_7245245dcb05.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 440,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "196cd1152684",
+      "embedding_path": "ai_context/ai_embeddings/components_json_196cd1152684.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 441,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2e9f9006e41b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_2e9f9006e41b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 442,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e0c6efd659d9",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e0c6efd659d9.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 443,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "86325b2b026b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_86325b2b026b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 444,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "674d2073445a",
+      "embedding_path": "ai_context/ai_embeddings/components_json_674d2073445a.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 445,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "84efba81916e",
+      "embedding_path": "ai_context/ai_embeddings/components_json_84efba81916e.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 446,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3a548ed12dcf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3a548ed12dcf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 447,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "fd86b974abad",
+      "embedding_path": "ai_context/ai_embeddings/components_json_fd86b974abad.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 448,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "85c588ed9f80",
+      "embedding_path": "ai_context/ai_embeddings/components_json_85c588ed9f80.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 449,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "49e41a283f54",
+      "embedding_path": "ai_context/ai_embeddings/components_json_49e41a283f54.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 450,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3e811ea7ccdd",
+      "embedding_path": "ai_context/ai_embeddings/components_json_3e811ea7ccdd.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 451,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e5552d376daf",
+      "embedding_path": "ai_context/ai_embeddings/components_json_e5552d376daf.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 452,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "37c469590d6b",
+      "embedding_path": "ai_context/ai_embeddings/components_json_37c469590d6b.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 453,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8edd3c838b81",
+      "embedding_path": "ai_context/ai_embeddings/components_json_8edd3c838b81.npy",
+      "metadata": {
+        "source": "knowledge/components.json",
+        "index": 454,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "19b826e2e4ae",
+      "embedding_path": "ai_context/ai_embeddings/views_json_19b826e2e4ae.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 0,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c1adf4d93fc4",
+      "embedding_path": "ai_context/ai_embeddings/views_json_c1adf4d93fc4.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 1,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7a075bd6c25a",
+      "embedding_path": "ai_context/ai_embeddings/views_json_7a075bd6c25a.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 2,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "26ddc05197e4",
+      "embedding_path": "ai_context/ai_embeddings/views_json_26ddc05197e4.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 3,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "526f03bb1ef6",
+      "embedding_path": "ai_context/ai_embeddings/views_json_526f03bb1ef6.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 4,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "838c552a900e",
+      "embedding_path": "ai_context/ai_embeddings/views_json_838c552a900e.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 5,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "423dc1a7b2a3",
+      "embedding_path": "ai_context/ai_embeddings/views_json_423dc1a7b2a3.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 6,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "cf7403552471",
+      "embedding_path": "ai_context/ai_embeddings/views_json_cf7403552471.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 7,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "203500656933",
+      "embedding_path": "ai_context/ai_embeddings/views_json_203500656933.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 8,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d59c47d10537",
+      "embedding_path": "ai_context/ai_embeddings/views_json_d59c47d10537.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 9,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "58a38c7421c5",
+      "embedding_path": "ai_context/ai_embeddings/views_json_58a38c7421c5.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 10,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "db6296c0f62f",
+      "embedding_path": "ai_context/ai_embeddings/views_json_db6296c0f62f.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 11,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4d9584b53fa3",
+      "embedding_path": "ai_context/ai_embeddings/views_json_4d9584b53fa3.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 12,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4c4009f2b51d",
+      "embedding_path": "ai_context/ai_embeddings/views_json_4c4009f2b51d.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 13,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "eaee077d657f",
+      "embedding_path": "ai_context/ai_embeddings/views_json_eaee077d657f.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 14,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7df2c9d5e1f1",
+      "embedding_path": "ai_context/ai_embeddings/views_json_7df2c9d5e1f1.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 15,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "99bf136fe664",
+      "embedding_path": "ai_context/ai_embeddings/views_json_99bf136fe664.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 16,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d607da363bbb",
+      "embedding_path": "ai_context/ai_embeddings/views_json_d607da363bbb.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 17,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a282aef5ba48",
+      "embedding_path": "ai_context/ai_embeddings/views_json_a282aef5ba48.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 18,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "096526c8e470",
+      "embedding_path": "ai_context/ai_embeddings/views_json_096526c8e470.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 19,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ea455cf8a16b",
+      "embedding_path": "ai_context/ai_embeddings/views_json_ea455cf8a16b.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 20,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5b8d5d9c45e2",
+      "embedding_path": "ai_context/ai_embeddings/views_json_5b8d5d9c45e2.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 21,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d3a308b369ce",
+      "embedding_path": "ai_context/ai_embeddings/views_json_d3a308b369ce.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 22,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8f640d22ccfd",
+      "embedding_path": "ai_context/ai_embeddings/views_json_8f640d22ccfd.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 23,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7e490e57a8a8",
+      "embedding_path": "ai_context/ai_embeddings/views_json_7e490e57a8a8.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 24,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "936844c9f153",
+      "embedding_path": "ai_context/ai_embeddings/views_json_936844c9f153.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 25,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8938c6aced33",
+      "embedding_path": "ai_context/ai_embeddings/views_json_8938c6aced33.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 26,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4869eb5ae069",
+      "embedding_path": "ai_context/ai_embeddings/views_json_4869eb5ae069.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 27,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0c3de9373086",
+      "embedding_path": "ai_context/ai_embeddings/views_json_0c3de9373086.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 28,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "e25765a7be24",
+      "embedding_path": "ai_context/ai_embeddings/views_json_e25765a7be24.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 29,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b2ae4a379c67",
+      "embedding_path": "ai_context/ai_embeddings/views_json_b2ae4a379c67.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 30,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1386da9e56d0",
+      "embedding_path": "ai_context/ai_embeddings/views_json_1386da9e56d0.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 31,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0349eb7bb493",
+      "embedding_path": "ai_context/ai_embeddings/views_json_0349eb7bb493.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 32,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "02c50d5b2775",
+      "embedding_path": "ai_context/ai_embeddings/views_json_02c50d5b2775.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 33,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "25995db0f009",
+      "embedding_path": "ai_context/ai_embeddings/views_json_25995db0f009.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 34,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "65fd7a2d45ea",
+      "embedding_path": "ai_context/ai_embeddings/views_json_65fd7a2d45ea.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 35,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "560cfdcb1a99",
+      "embedding_path": "ai_context/ai_embeddings/views_json_560cfdcb1a99.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 36,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7d992155a752",
+      "embedding_path": "ai_context/ai_embeddings/views_json_7d992155a752.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 37,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5f3bc2df1450",
+      "embedding_path": "ai_context/ai_embeddings/views_json_5f3bc2df1450.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 38,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "977a90cbb442",
+      "embedding_path": "ai_context/ai_embeddings/views_json_977a90cbb442.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 39,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f8ddf11af3db",
+      "embedding_path": "ai_context/ai_embeddings/views_json_f8ddf11af3db.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 40,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "735b11f32d6b",
+      "embedding_path": "ai_context/ai_embeddings/views_json_735b11f32d6b.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 41,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "61de0e12d152",
+      "embedding_path": "ai_context/ai_embeddings/views_json_61de0e12d152.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 42,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bd9e3d11e919",
+      "embedding_path": "ai_context/ai_embeddings/views_json_bd9e3d11e919.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 43,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b5ba9e3c104c",
+      "embedding_path": "ai_context/ai_embeddings/views_json_b5ba9e3c104c.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 44,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0f8292d77c2a",
+      "embedding_path": "ai_context/ai_embeddings/views_json_0f8292d77c2a.npy",
+      "metadata": {
+        "source": "knowledge/views.json",
+        "index": 45,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a6bf3aacc124",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_a6bf3aacc124.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 0,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "dbe022363ea3",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_dbe022363ea3.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 1,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "ae862d2b97b4",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_ae862d2b97b4.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 2,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "2422143868db",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_2422143868db.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 3,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "6c0b9bb4e847",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_6c0b9bb4e847.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 4,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d80544e8d23f",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_d80544e8d23f.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 5,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a1e8148f61f2",
+      "embedding_path": "ai_context/ai_embeddings/workflows_json_a1e8148f61f2.npy",
+      "metadata": {
+        "source": "knowledge/workflows.json",
+        "index": 6,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1ca242b2eaef",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_1ca242b2eaef.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 0,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4c0746c6f8ba",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_4c0746c6f8ba.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 1,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d42fb5d73cf1",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_d42fb5d73cf1.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 2,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f522f70d336e",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_f522f70d336e.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 3,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "565b8a89ec19",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_565b8a89ec19.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 4,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bd293e9ea50a",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_bd293e9ea50a.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 5,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "bea55d0b2f97",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_bea55d0b2f97.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 6,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "5bce23832a08",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_5bce23832a08.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 7,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "b66cabc84979",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_b66cabc84979.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 8,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "1a0e430144ea",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_1a0e430144ea.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 9,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "03325cddcc03",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_03325cddcc03.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 10,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4f0a3de291a1",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_4f0a3de291a1.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 11,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0a23985083be",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_0a23985083be.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 12,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "63db2237b0c0",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_63db2237b0c0.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 13,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "093742b05b4c",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_093742b05b4c.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 14,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "7cf04e2f1c74",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_7cf04e2f1c74.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 15,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "c1f9e1289ec2",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_c1f9e1289ec2.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 16,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3a7a0a02d73c",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_3a7a0a02d73c.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 17,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "f29d57179068",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_f29d57179068.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 18,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "47304503f484",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_47304503f484.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 19,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "8fd5493fc087",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_8fd5493fc087.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 20,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "a74811a1d237",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_a74811a1d237.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 21,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "d70148e37d25",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_d70148e37d25.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 22,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "453efcd9fa9a",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_453efcd9fa9a.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 23,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4c4f77c32055",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_4c4f77c32055.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 24,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4f0965fb253c",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_4f0965fb253c.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 25,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "4a6dcc80e6f5",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_4a6dcc80e6f5.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 26,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "96527425b482",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_96527425b482.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 27,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "3c2cfe791033",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_3c2cfe791033.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 28,
+        "type": "json_list_item"
+      }
+    },
+    {
+      "id": "0a882c5bab95",
+      "embedding_path": "ai_context/ai_embeddings/user_help_json_0a882c5bab95.npy",
+      "metadata": {
+        "source": "knowledge/user_help.json",
+        "index": 29,
+        "type": "json_list_item"
+      }
+    }
+  ],
+  "builtAt": "2026-03-23T08:18:35.839558+00:00Z"
 }

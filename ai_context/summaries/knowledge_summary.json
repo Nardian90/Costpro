@@ -1,0 +1,10 @@
+{
+  "domain": "knowledge",
+  "summary": "File knowledge/components.json contains 455 items. File knowledge/views.json contains 46 items. File knowledge/user_help.json contains 30 items.",
+  "sources": [
+    "knowledge/components.json",
+    "knowledge/views.json",
+    "knowledge/user_help.json"
+  ],
+  "generated_at": "2026-03-23T08:18:35.856772+00:00Z"
+}
