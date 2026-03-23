@@ -24,7 +24,7 @@ import {
   Table2,
   Cpu,
   Zap,
-  BarChart4, Wand2,
+  BarChart4, Wand2, Users,
   PackageSearch,
   FileSearch, Target,
   Receipt,
@@ -46,6 +46,7 @@ import { PivotStatementView } from './PivotStatementView';
 import { FinancialPlanningView } from './FinancialPlanningView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { ManualReconciliationView } from './ManualReconciliationView';
+import { CustomerCatalog } from './CustomerCatalog';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
 import { IPVRightSidebar } from './IPVRightSidebar';
@@ -407,6 +408,7 @@ export default function IPVView() {
     { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
     { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
+    { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers' },
     {
         id: 'reports-dropdown',
         label: '',
@@ -719,6 +721,11 @@ export default function IPVView() {
           {activeTab === 'mapping-rules' && (
             <div className="m-0 p-6 animate-in fade-in duration-500">
                 <MappingRulesManager />
+            </div>
+          )}
+          {activeTab === 'customers' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <CustomerCatalog />
             </div>
           )}
         </div>
