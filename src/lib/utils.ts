@@ -53,6 +53,33 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Utility to strip formatting and return a raw number for exports or calculations.
+ * Handles es-AR format (thousands: . decimal: ,)
+ */
+export function parseCurrency(value: string | number): number {
+  if (typeof value === "number") return value;
+  if (!value) return 0;
+
+  try {
+    const cleaned = value
+      .replace(/\./g, "")   // elimina miles
+      .replace(",", ".")    // convierte decimal
+      .replace(/[^\d.-]/g, ""); // limpia símbolos
+
+    const result = Number(cleaned);
+    return isNaN(result) ? 0 : result;
+  } catch (e) {
+    console.error("Error parsing currency:", e);
+    return 0;
+  }
+}
+
+/**
+ * Standard Excel currency format for consistency across exports.
+ */
+export const EXCEL_CURRENCY_FORMAT = '#,##0.00';
+
+/**
  * Utility to format numbers with accounting format (US style):
  * Thousands: comma (,)
  * Decimal: dot (.)

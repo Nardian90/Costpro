@@ -532,19 +532,19 @@ export function CatalogTable() {
     });
   };
 const handleExportCatalog = () => {
-    const exportData = (products && products.length > 0)
+    const exportData = products && products.length > 0
         ? products.map(p => ({
             'cod': p.cod,
             'id_grupo': p.id_grupo || '',
             'cod_hijo': p.cod_hijo || '',
             'descripcion': p.descripcion,
             'um': p.um,
-            'precio_cents': p.precio_cents,
+            'precio_cents': Number(p.precio_cents),
             'prioridad_alg': p.prioridad_algoritmo,
             'activo': p.activo ? 'VERDADERO' : 'FALSO',
             'es_paquete': p.es_paquete ? 'VERDADERO' : 'FALSO',
             'contenido_paquete': p.contenido_paquete,
-            'stock_inicial_manual': p.stock_inicial_manual
+            'stock_inicial_manual': Number(p.stock_inicial_manual)
           }))
         : [{
             'cod': 'SKU-001',
@@ -561,11 +561,25 @@ const handleExportCatalog = () => {
           }];
 
     const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Apply numeric formatting to currency column (F) and stock (K)
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        if (ws['F' + (R + 1)]) {
+            ws['F' + (R + 1)].t = 'n';
+            ws['F' + (R + 1)].z = '#,##0.00';
+        }
+        if (ws['K' + (R + 1)]) {
+            ws['K' + (R + 1)].t = 'n';
+            ws['K' + (R + 1)].z = '0.00';
+        }
+    }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Catalogo");
 
     XLSX.writeFile(wb, `catalogo_ipv_${new Date().toISOString().split('T')[0]}.xlsx`);
-    toast.success(products && products.length > 0 ? 'Catálogo exportado (Excel)' : 'Plantilla de catálogo exportada (Excel)');
+    toast.success("Catálogo exportado");
   };
 
   const handleImportCatalog = (event: React.ChangeEvent<HTMLInputElement>) => {
