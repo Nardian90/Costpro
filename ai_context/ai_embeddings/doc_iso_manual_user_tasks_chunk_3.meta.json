@@ -1,8 +1,0 @@
-{
-  "id": "doc_iso_manual_user_tasks_chunk_3",
-  "source": "knowledge/iso_manual/user_tasks.md",
-  "domain": "Documentation",
-  "vectorDimension": 128,
-  "model": "fake-embed-v1",
-  "createdAt": "2026-03-23T05:58:49.827581+00:00Z"
-}
