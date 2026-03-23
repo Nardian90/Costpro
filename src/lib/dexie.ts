@@ -289,9 +289,15 @@ export interface YearlyGoals {
 
 export interface Customer {
   ci: string; // Clave única
-  nombre: string;
-  alias?: string;
-  ultima_actualizacion: string;
+  nombre: string; // Nombre Normalizado
+  normalized_name: string; // Para matching
+  raw_names: string[]; // Alias detectados
+  phone?: string;
+  card_number?: string;
+  status: "COMPLETO" | "PARCIAL" | "PENDIENTE";
+  source: "MANUAL" | "AUTOMATICO";
+  created_at: string;
+  updated_at: string;
 }
 
 export interface IdentityAudit {
@@ -327,8 +333,8 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(21).stores({
-      customers: "&ci, nombre, alias",
+    this.version(22).stores({
+      customers: "&ci, nombre, normalized_name, status",
       identity_audit: "&id, transaction_ref, tipo",
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',

@@ -1,0 +1,56 @@
+<<<<<<< SEARCH
+        // 2. Match by Name (Weak match - only if no CI)
+        const byName = await db.bank_statements
+            .where('nombre_cliente').equals(customer.nombre)
+            .and(t => !t.carnet)
+            .toArray();
+
+        for (const tx of byName) {
+            await db.bank_statements.update(tx.referencia_origen, {
+                carnet: customer.ci,
+                telefono_cliente: customer.phone,
+                tarjeta_cliente: customer.card_number
+            });
+            affectedTxs++;
+        }
+    }
+    return affectedTxs;
+}
+=======
+        // 2. Match by Name (Weak match - only if no CI)
+        const byName = await db.bank_statements
+            .where('nombre_cliente').equals(customer.nombre)
+            .and(t => !t.carnet)
+            .toArray();
+
+        for (const tx of byName) {
+            await db.bank_statements.update(tx.referencia_origen, {
+                carnet: customer.ci,
+                telefono_cliente: customer.phone,
+                tarjeta_cliente: customer.card_number
+            });
+            affectedTxs++;
+        }
+
+        // 3. Match by Heuristic Similarity (> 85% - only if no CI and no Name match)
+        // This is more intensive, we only do it for pending or partially filled ones
+        const pendingTxs = await db.bank_statements
+            .filter(t => !t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre)
+            .toArray();
+
+        for (const tx of pendingTxs) {
+            const sim = similarity(normalizeName(tx.nombre_cliente!), customer.normalized_name);
+            if (sim > 0.85) {
+                await db.bank_statements.update(tx.referencia_origen, {
+                    carnet: customer.ci,
+                    nombre_cliente: customer.nombre, // Normalize to catalog name
+                    telefono_cliente: customer.phone,
+                    tarjeta_cliente: customer.card_number
+                });
+                affectedTxs++;
+            }
+        }
+    }
+    return affectedTxs;
+}
+>>>>>>> REPLACE

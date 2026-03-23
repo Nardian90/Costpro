@@ -1,0 +1,29 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 524ms
+
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 1551ms (next.js: 437ms, application-code: 1114ms)
+ GET / 200 in 107ms (next.js: 8ms, application-code: 100ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 2.7s (next.js: 2.6s, application-code: 78ms)
+ GET / 200 in 85ms (next.js: 5ms, application-code: 80ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 86ms (next.js: 6ms, application-code: 79ms)
+ GET / 200 in 86ms (next.js: 7ms, application-code: 79ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 52ms (next.js: 4ms, application-code: 48ms)
+ GET / 200 in 91ms (next.js: 6ms, application-code: 85ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 66ms (next.js: 14ms, application-code: 52ms)
+ GET / 200 in 87ms (next.js: 6ms, application-code: 81ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 67ms (next.js: 5ms, application-code: 62ms)
+ GET / 200 in 73ms (next.js: 4ms, application-code: 69ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 54ms (next.js: 3ms, application-code: 51ms)
