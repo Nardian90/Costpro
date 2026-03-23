@@ -1,8 +1,0 @@
-{
-  "id": "doc_docs_explanation_ERROR_LOGS_chunk_0",
-  "source": "knowledge/docs/explanation/ERROR_LOGS.md",
-  "domain": "Documentation",
-  "vectorDimension": 128,
-  "model": "fake-embed-v1",
-  "createdAt": "2026-03-23T05:58:49.818371+00:00Z"
-}
