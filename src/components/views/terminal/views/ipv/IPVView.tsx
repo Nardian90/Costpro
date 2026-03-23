@@ -145,7 +145,7 @@ export default function IPVView() {
 
         if (matched === 0) {
             pending++;
-        } else if (Math.abs(diff) < 0.001) {
+        } else if (diff <= 0.001) {
             squared++;
         } else {
             inProcess++;
@@ -167,7 +167,6 @@ export default function IPVView() {
                 // Restamos del total de transferencias y sumamos a efectivo para el desglose real
                 if (l.clasificacion === 'Efectivo') {
                     totalEfectivo += l.importe_linea_cents;
-                    totalTransferencias -= l.importe_linea_cents;
                 }
             }
         }
