@@ -375,28 +375,29 @@ export class MatchingEngine {
               const line = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
               lines.push(line);
               currentTarget -= totalItemValue;
-              cashMatched += totalItemValue;
+              // Transfer part, no cashMatched update
             } else {
-              const transfPart = currentTarget;
+              const transfPart = Math.max(0, currentTarget);
               const cashPart = totalItemValue - transfPart;
 
               if (transfPart > 0) {
                 const lineTransf = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
                 lineTransf.importe_linea_cents = transfPart;
-                lineTransf.cuadre_cents = lineTransf.importe_linea_cents - lineTransf.venta_real_calculada_cents;
+                lineTransf.venta_real_calculada_cents = transfPart;
+                lineTransf.cuadre_cents = 0;
                 lines.push(lineTransf);
-                cashMatched += transfPart;
 
                 if (cashPart > 0) {
                     const lineCash = await this.createLine(transaction, item.product, 0, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
                     lineCash.importe_linea_cents = cashPart;
                     lineCash.venta_real_calculada_cents = cashPart;
                     lineCash.cuadre_cents = 0;
-                    lineCash.product_cod = 'CASH';
-                    lineCash.cantidad = 1;
+                    lineCash.product_cod = item.product.cod;
+                    lineCash.cantidad = 0;
                     lineCash.ingreso_banco_cents = 0;
-                    lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-${cashPart}-MIXED`);
+                    lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-PART-${item.product.cod}-${cashPart}-${Date.now()}`);
                     lines.push(lineCash);
+                    cashMatched += cashPart;
                 }
               } else {
                 const lineCash = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
@@ -406,6 +407,7 @@ export class MatchingEngine {
                 lineCash.product_cod = 'CASH';
                 lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-${lineCash.importe_linea_cents}-MIXED-FULL`);
                 lines.push(lineCash);
+                cashMatched += lineCash.importe_linea_cents;
               }
               currentTarget = 0;
             }
@@ -473,7 +475,7 @@ export class MatchingEngine {
       }
     }
 
-    const isComplete = Math.abs(remaining_cents) < 0.001;
+    const isComplete = remaining_cents <= 0.001;
     let failReason = undefined;
     if (!isComplete) {
         if (this.useStockLimit) {
