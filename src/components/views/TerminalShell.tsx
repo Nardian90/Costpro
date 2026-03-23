@@ -54,6 +54,7 @@ const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
 const HealthView = lazy(() => import('./health/HealthView'));
 const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
 const SettingsView = lazy(() => import("./terminal/views/settings/SettingsView"));
+const Pick3IntelligenceView = lazy(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
 
 
 export default function TerminalShell() {
@@ -159,6 +160,7 @@ export default function TerminalShell() {
   const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <DashboardView />;
+        case 'pick3-intelligence': return <Pick3IntelligenceView />;
         case 'wallet': return <WalletView />;
         case 'pos': return <POSView />;
         case 'sales': return <SalesHistoryView />;
