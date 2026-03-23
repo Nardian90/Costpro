@@ -77,12 +77,25 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         "Fecha": t.fecha,
         "Referencia": t.referencia_origen,
         "Observaciones": t.observaciones,
-        "Importe": (t.importe_venta_cents || t.importe_cents) / 100,
+        "Importe": Number(t.importe_venta_cents || t.importe_cents),
         "Tipo": t.tipo,
         "Estado": t.estado_conciliacion,
-        "Conciliado": (txReconciliationTotals[t.referencia_origen] || 0) / 100
+        "Conciliado": Number(txReconciliationTotals[t.referencia_origen] || 0)
     }));
     const ws = XLSX.utils.json_to_sheet(data);
+
+    // Apply numeric formatting to currency columns (D and G)
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      ['D', 'G'].forEach(col => {
+        const addr = col + (R + 1);
+        if (ws[addr]) {
+            ws[addr].t = 'n';
+            ws[addr].z = '#,##0.00';
+        }
+      });
+    }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
     XLSX.writeFile(wb, `transacciones_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
