@@ -4,12 +4,11 @@ export class Pick3Engine {
   private history: Pick3Result[];
 
   constructor(history: Pick3Result[]) {
-    this.history = history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    this.history = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
-  // 1. FREQUENCY ANALYSIS
   public analyzeFrequency(days: number = 30): FrequencyAnalysis {
-    const subset = this.history.slice(0, days * 2); // 2 draws per day
+    const subset = this.history.slice(0, days * 2);
     const posFreq = {
       0: {} as Record<number, number>,
       1: {} as Record<number, number>,
@@ -18,7 +17,6 @@ export class Pick3Engine {
     const globalFreq = {} as Record<number, number>;
     const gaps = {} as Record<number, number>;
 
-    // Initialize
     for (let i = 0; i < 10; i++) {
       posFreq[0][i] = 0;
       posFreq[1][i] = 0;
@@ -27,14 +25,15 @@ export class Pick3Engine {
       gaps[i] = 0;
     }
 
-    subset.forEach((draw, index) => {
+    subset.forEach((draw) => {
       draw.result.forEach((num, pos) => {
-        posFreq[pos as 0|1|2][num]++;
+        if (pos === 0 || pos === 1 || pos === 2) {
+          posFreq[pos][num]++;
+        }
         globalFreq[num]++;
       });
     });
 
-    // Calculate gaps (days since last appearance)
     const found = new Set();
     for (let i = 0; i < this.history.length; i++) {
         const draw = this.history[i];
@@ -60,21 +59,15 @@ export class Pick3Engine {
     };
   }
 
-  // 2. CONFIDENCE SCORING
   public calculateConfidence(combination: [number, number, number], analysis: FrequencyAnalysis): number {
     let score = 0;
-
-    // Weight 1: Positional Frequency (0.4)
     const posScore = (
         analysis.positional[0][combination[0]] +
         analysis.positional[1][combination[1]] +
         analysis.positional[2][combination[2]]
-    ) / (this.history.length / 10);
+    ) / (Math.max(1, this.history.length / 10));
 
-    // Weight 2: Recency/Gap (0.3)
     const gapScore = (analysis.gaps[combination[0]] + analysis.gaps[combination[1]] + analysis.gaps[combination[2]]) / 30;
-
-    // Weight 3: Entropy (0.3) - avoid 111, 222 etc unless recurring
     const unique = new Set(combination).size;
     const entropyScore = unique === 3 ? 1 : unique === 2 ? 0.6 : 0.2;
 
@@ -82,11 +75,8 @@ export class Pick3Engine {
     return Math.min(Math.max(score * 100, 0), 100);
   }
 
-  // 3. PLAY GENERATOR
   public generatePlays(analysis: FrequencyAnalysis, count: number = 5): IntelligencePlay[] {
     const plays: IntelligencePlay[] = [];
-
-    // Simple heuristic: combine top positional numbers
     const topPos = [
         Object.entries(analysis.positional[0]).sort((a,b) => b[1]-a[1]).slice(0,3),
         Object.entries(analysis.positional[1]).sort((a,b) => b[1]-a[1]).slice(0,3),
@@ -111,7 +101,6 @@ export class Pick3Engine {
     return plays.sort((a,b) => b.score - a.score);
   }
 
-  // 4. FINANCIAL SIMULATOR
   public simulate(config: StrategyConfig): SimulationResult {
     let currentCapital = config.budget;
     const equityCurve = [currentCapital];
@@ -125,27 +114,19 @@ export class Pick3Engine {
     for (let day = 0; day < days; day++) {
         const dailyCost = betsPerDay * config.costPerBet;
         currentCapital -= dailyCost;
-
-        // Random outcome for simulation purpose based on a "win probability"
-        // In Pick 3, straight win is 1/1000.
-        // Our "intelligent" system might have a slightly better edge in simulation for UI feedback
         const winProb = config.riskLevel === 'high' ? 0.005 : config.riskLevel === 'medium' ? 0.002 : 0.001;
-
         let dailyWin = 0;
         for(let b=0; b < betsPerDay; b++) {
             if (Math.random() < winProb) {
-                dailyWin += 500 * config.costPerBet; // Straight payout
+                dailyWin += 500 * config.costPerBet;
                 totalWins++;
             }
         }
-
         currentCapital += dailyWin;
         equityCurve.push(currentCapital);
-
         if (currentCapital > peak) peak = currentCapital;
-        const drawdown = (peak - currentCapital) / peak;
+        const drawdown = (peak - currentCapital) / (peak || 1);
         if (drawdown > maxDrawdown) maxDrawdown = drawdown;
-
         if (currentCapital <= 0) {
             currentCapital = 0;
             break;
@@ -153,16 +134,16 @@ export class Pick3Engine {
     }
 
     return {
-        id: crypto.randomUUID(),
+        id: Math.random().toString(36).substring(7),
         timestamp: Date.now(),
         config,
         equityCurve,
         totalBets: days * betsPerDay,
         totalWins,
         finalCapital: currentCapital,
-        roi: ((currentCapital - config.budget) / config.budget) * 100,
+        roi: ((currentCapital - config.budget) / (config.budget || 1)) * 100,
         maxDrawdown: maxDrawdown * 100,
-        probabilityOfRuin: currentCapital <= 0 ? 100 : 5 // Static for mock
+        probabilityOfRuin: currentCapital <= 0 ? 100 : 5
     };
   }
 }

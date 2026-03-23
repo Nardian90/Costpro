@@ -1,8 +1,7 @@
-import { cn } from '@/lib/utils';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  BarChart3, TrendingUp, DollarSign, BrainCircuit, Target,
-  History, Settings2, Sparkles, Activity, PieChart, Info
+  TrendingUp, DollarSign, BrainCircuit, Target,
+  History, Sparkles, Activity, Info
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,16 +14,17 @@ import { MIAMI_PICK3_HISTORICAL } from '@/services/pick3/seedData';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { StrategyConfig, FrequencyAnalysis, IntelligencePlay, SimulationResult } from '@/types/pick3';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell, AreaChart, Area
 } from 'recharts';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export default function Pick3IntelligenceView() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const engine = useMemo(() => new Pick3Engine(MIAMI_PICK3_HISTORICAL), []);
-  const [analysis, setAnalysis] = useState<FrequencyAnalysis>(() => engine.analyzeFrequency(30));
-  const [plays, setPlays] = useState<IntelligencePlay[]>(() => engine.generatePlays(analysis));
+  const [analysis] = useState<FrequencyAnalysis>(() => engine.analyzeFrequency(30));
+  const [plays] = useState<IntelligencePlay[]>(() => engine.generatePlays(analysis));
   const [simulations, setSimulations] = useState<SimulationResult[]>(() => Pick3Storage.getSimulations());
 
   const [config, setConfig] = useState<StrategyConfig>({
@@ -51,7 +51,6 @@ export default function Pick3IntelligenceView() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
@@ -92,7 +91,6 @@ export default function Pick3IntelligenceView() {
           </TabsTrigger>
         </TabsList>
 
-        {/* DASHBOARD TAB */}
         <TabsContent value="dashboard" className="space-y-6 mt-6 outline-none">
            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl overflow-hidden relative group">
@@ -221,7 +219,6 @@ export default function Pick3IntelligenceView() {
            </div>
         </TabsContent>
 
-        {/* STATS TAB */}
         <TabsContent value="stats" className="mt-6 outline-none">
            <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
               <CardHeader>
@@ -238,7 +235,7 @@ export default function Pick3IntelligenceView() {
                          <div className="space-y-3">
                             {Object.entries(analysis.positional[pos as 0|1|2]).map(([num, count]) => {
                               const max = Math.max(...Object.values(analysis.positional[pos as 0|1|2]));
-                              const percentage = (count / max) * 100;
+                              const percentage = (count / (max || 1)) * 100;
                               return (
                                 <div key={num} className="space-y-1">
                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
@@ -262,7 +259,6 @@ export default function Pick3IntelligenceView() {
            </Card>
         </TabsContent>
 
-        {/* STRATEGIES TAB */}
         <TabsContent value="strategies" className="mt-6 outline-none">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
@@ -276,7 +272,7 @@ export default function Pick3IntelligenceView() {
                           <DollarSign className="w-4 h-4 text-primary" />
                           <input
                             type="number"
-                            className="bg-transparent border-none outline-none font-bold w-full"
+                            className="bg-transparent border-none outline-none font-bold w-full text-foreground"
                             value={config.budget}
                             onChange={(e) => setConfig({...config, budget: Number(e.target.value)})}
                           />
@@ -369,7 +365,6 @@ export default function Pick3IntelligenceView() {
            </div>
         </TabsContent>
 
-        {/* SIMULATOR TAB */}
         <TabsContent value="simulator" className="mt-6 outline-none">
            {simulations.length === 0 ? (
              <div className="h-[400px] flex flex-col items-center justify-center text-center space-y-4">
@@ -461,7 +456,6 @@ export default function Pick3IntelligenceView() {
            )}
         </TabsContent>
 
-        {/* HISTORY TAB */}
         <TabsContent value="history" className="mt-6 outline-none">
            <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
               <CardHeader>
