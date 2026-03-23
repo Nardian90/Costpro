@@ -1,0 +1,8 @@
+{
+  "id": "doc_docs_reference_README_POS_chunk_8",
+  "source": "knowledge/docs/reference/README_POS.md",
+  "domain": "Documentation",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:49.634964+00:00Z"
+}

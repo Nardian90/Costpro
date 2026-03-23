@@ -1,0 +1,8 @@
+{
+  "id": "doc_docs_explanation_ADR-001-Uso_de_Variables_Sem\u00e1nticas_para_Temas_chunk_0",
+  "source": "knowledge/docs/explanation/ADR-001-Uso_de_Variables_Sem\u00e1nticas_para_Temas.md",
+  "domain": "Documentation",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:49.820506+00:00Z"
+}

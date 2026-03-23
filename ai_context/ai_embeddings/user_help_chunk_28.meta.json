@@ -1,0 +1,8 @@
+{
+  "id": "user_help_chunk_28",
+  "source": "user_help.json",
+  "domain": "User Documentation",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:48.367800+00:00Z"
+}

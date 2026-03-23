@@ -1,0 +1,8 @@
+{
+  "id": "doc_iso_manual_procedures_chunk_1",
+  "source": "knowledge/iso_manual/procedures.md",
+  "domain": "Documentation",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:49.832791+00:00Z"
+}
