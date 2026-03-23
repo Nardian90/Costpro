@@ -1,8 +1,0 @@
-{
-  "id": "doc_docs_explanation_resolucion_01_chunk_0",
-  "source": "knowledge/docs/explanation/resolucion_01.md",
-  "domain": "Documentation",
-  "vectorDimension": 128,
-  "model": "fake-embed-v1",
-  "createdAt": "2026-03-23T05:58:49.818880+00:00Z"
-}

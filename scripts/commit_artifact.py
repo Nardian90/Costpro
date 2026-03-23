@@ -49,7 +49,7 @@ def get_destination_base(name, source_phase):
         return "knowledge/"
     if name.startswith("docs/") or name == "iso_manual":
         return "knowledge/"
-    if name.startswith("ai_context") or name == "vector_index" or name == "summaries":
+    if name.startswith("ai_context") or name == "vector_index":
         return "ai_context/"
     if source_phase <= 6: return STATE.get("artifactStore", "public/")
     if source_phase <= 13: return "knowledge/"

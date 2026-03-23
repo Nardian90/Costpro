@@ -1,8 +1,0 @@
-{
-  "id": "knowledge_graph_chunk_2232",
-  "source": "knowledge_graph.json",
-  "domain": "Semantic Graph",
-  "vectorDimension": 128,
-  "model": "fake-embed-v1",
-  "createdAt": "2026-03-23T05:58:49.301386+00:00Z"
-}
