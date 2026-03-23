@@ -1,0 +1,8 @@
+{
+  "id": "components_chunk_21",
+  "source": "components.json",
+  "domain": "Domain Logic",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:48.148846+00:00Z"
+}
