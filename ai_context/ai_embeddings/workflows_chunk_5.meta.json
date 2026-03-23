@@ -1,0 +1,8 @@
+{
+  "id": "workflows_chunk_5",
+  "source": "workflows.json",
+  "domain": "Business Processes",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:48.354653+00:00Z"
+}

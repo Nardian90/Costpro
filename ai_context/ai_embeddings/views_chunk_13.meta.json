@@ -1,0 +1,8 @@
+{
+  "id": "views_chunk_13",
+  "source": "views.json",
+  "domain": "UI Flow",
+  "vectorDimension": 128,
+  "model": "fake-embed-v1",
+  "createdAt": "2026-03-23T05:58:48.337961+00:00Z"
+}
