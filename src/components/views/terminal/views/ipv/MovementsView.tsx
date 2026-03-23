@@ -52,12 +52,25 @@ export default function MovementsView() {
         "Fecha": m.fecha,
         "Producto Origen": m.producto_origen_cod,
         "Producto Destino": m.producto_destino_cod,
-        "Cantidad Origen": m.cantidad_origen,
-        "Cantidad Destino": m.cantidad_destino,
+        "Cantidad Origen": Number(m.cantidad_origen),
+        "Cantidad Destino": Number(m.cantidad_destino),
         "Tipo": m.tipo,
         "Referencia": m.referencia_transaccion || ""
     })) || [];
     const ws = XLSX.utils.json_to_sheet(data);
+
+    // Apply numeric formatting to quantity columns (D and E)
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        ['D', 'E'].forEach(col => {
+            const addr = col + (R + 1);
+            if (ws[addr]) {
+                ws[addr].t = 'n';
+                ws[addr].z = '0.00';
+            }
+        });
+    }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
     XLSX.writeFile(wb, `movimientos_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
