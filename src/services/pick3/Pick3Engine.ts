@@ -281,7 +281,7 @@ export class Pick3Engine {
       cumulativeMaxDrawdown += localMaxDrawdown;
     }
 
-    const avgFinalCapital = finalCapitals.reduce((a, b) => a + b, 0) / SCENARIOS;
+    const avgFinalCapital = finalCapitals.reduce((a, b) => (a as number)+(b as number), 0) / SCENARIOS;
     const probOfRuin = (finalCapitals.filter(c => c <= 0).length / SCENARIOS) * 100;
 
     return {
