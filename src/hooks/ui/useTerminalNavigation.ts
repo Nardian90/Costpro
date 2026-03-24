@@ -29,7 +29,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
     if (!user) return [];
     const all: NavigationItem[] = [
       { id: 'dashboard', icon: TrendingUp, label: 'KPI', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
-            { id: 'pick3-intelligence', icon: BarChart3, label: 'Pick 3 Intelligence', roles: ['admin', 'manager', 'encargado'], category: 'OPERACIONES' },
+            { id: 'pick3-intelligence', icon: BarChart3, label: 'Pick 3 Intelligence', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
       { id: 'pos', icon: ShoppingCart, label: 'Vender', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
@@ -46,15 +46,15 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'inventory_adjustments', icon: RefreshCcw, label: 'Ajustes Doc.', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
 
       { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
-      { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
-      { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'health', icon: HeartPulse, label: 'Salud', roles: ['admin', 'manager'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'roles', icon: ShieldCheck, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
-      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'GESTIÓN' },
 
       { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
