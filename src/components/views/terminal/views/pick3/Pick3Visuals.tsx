@@ -31,7 +31,7 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   useEffect(() => {
     if (!mounted || !heatmapRef.current) return;
 
-    // Heatmap D3 implementation (Standardized)
+    // Heatmap D3 implementation
     import('d3').then((d3) => {
       const svg = d3.select(heatmapRef.current);
       svg.selectAll("*").remove();
@@ -68,11 +68,10 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
         .attr("height", y.bandwidth())
         .style("fill", (d: any) => color(d.value))
         .style("stroke-width", 1)
-        .style("stroke", "rgba(255,255,255,0.05)")
+        .style("stroke", "rgba(0,0,0,0.05)")
         .append("title")
         .text((d: any) => `De ${d.x} a ${d.y}: ${d.value} veces`);
 
-      // Axes
       g.append("g")
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(x).tickSize(0))
@@ -102,52 +101,49 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   const insight = useMemo(() => {
     const hot = analysis.hotNumbers[0];
     const bias = analysis.biasScore[hot];
-    if (bias > 20) return `El número ${hot} muestra una desviación positiva crítica de +${bias.toFixed(1)}%. Alta probabilidad de tendencia persistente.`;
-    return "Distribución estable. Considere una estrategia balanceada entre fríos y calientes.";
+    if (bias > 20) return `El número ${hot} muestra una desviación positiva de +${bias.toFixed(1)}%. Alta frecuencia detectada.`;
+    return "Distribución estable de resultados oficiales.";
   }, [analysis]);
 
-  const ChartWrapper = ({ title, desc, children, tooltip }: any) => (
-    <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl relative group overflow-hidden">
+  const ChartWrapper = ({ title, desc, children }: any) => (
+    <Card className="bg-card border-border/50 shadow-xl relative group overflow-hidden rounded-[32px]">
       <div className="absolute top-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <Dialog>
           <DialogTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-black/40 border border-white/10 text-white">
+            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-muted/80 border border-border">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-5xl h-[80vh] bg-black border-white/10">
+          <DialogContent className="max-w-5xl h-[80vh] bg-background border-border">
              <DialogHeader>
-                <DialogTitle className="text-2xl font-black italic uppercase italic tracking-tighter text-primary flex items-center gap-3">
+                <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter text-primary flex items-center gap-3">
                   <Zap className="w-6 h-6" />
-                  Modo Enfoque: {title}
+                  {title}
                 </DialogTitle>
                 <CardDescription className="text-base">{desc}</CardDescription>
              </DialogHeader>
              <div className="flex-1 mt-8 min-h-0 relative">
                {children}
-               <div className="absolute bottom-4 left-4 right-4 p-6 rounded-3xl bg-primary/5 border border-primary/10 flex gap-4 items-start animate-in fade-in slide-in-from-bottom-2 duration-500">
+               <div className="absolute bottom-4 left-4 right-4 p-6 rounded-3xl bg-primary/5 border border-primary/10 flex gap-4 items-start">
                   <div className="p-2 rounded-xl bg-primary/20">
                     <Info className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Análisis Cuántico Automático</h4>
-                    <p className="text-sm font-medium italic text-white/80">{insight}</p>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Análisis de Mercado</h4>
+                    <p className="text-sm font-medium italic text-foreground/80">{insight}</p>
                   </div>
                </div>
              </div>
           </DialogContent>
         </Dialog>
-        <div className="h-8 w-8 rounded-full bg-black/40 border border-white/10 text-white flex items-center justify-center cursor-help">
-          <Info className="h-4 w-4" />
-        </div>
       </div>
       <CardHeader>
-        <CardTitle className="text-sm font-black uppercase tracking-widest italic flex items-center gap-2">
+        <CardTitle className="text-xs font-black uppercase tracking-widest italic flex items-center gap-2">
           {title}
         </CardTitle>
-        <CardDescription>{desc}</CardDescription>
+        <CardDescription className="text-[10px]">{desc}</CardDescription>
       </CardHeader>
-      <CardContent className="h-[250px]">
+      <CardContent className="h-[200px] md:h-[250px]">
         {children}
       </CardContent>
     </Card>
@@ -156,24 +152,23 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   if (!mounted) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
        <ChartWrapper
-          title="Frecuencia Global"
-          desc="Distribución histórica por dígito"
-          tooltip="Muestra cuántas veces ha salido cada dígito. Valores altos indican tendencia caliente."
+          title="Frecuencia de Dígitos"
+          desc="Distribución histórica oficial"
        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={freqData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="number" stroke="#666" fontSize={10} axisLine={false} tickLine={false} />
-              <YAxis stroke="#666" fontSize={10} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+              <XAxis dataKey="number" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
+              <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px' }}
               />
               <Bar dataKey="frequency" radius={[4, 4, 0, 0]}>
                 {freqData.map((entry, index) => (
-                  <Cell key={index} fill={entry.isHot ? '#3b82f6' : 'rgba(255,255,255,0.1)'} />
+                  <Cell key={index} fill={entry.isHot ? '#3b82f6' : 'rgba(0,0,0,0.1)'} />
                 ))}
               </Bar>
             </BarChart>
@@ -181,23 +176,22 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
        </ChartWrapper>
 
        <ChartWrapper
-          title="Evolución Cuántica"
-          desc="Suma de dígitos en el tiempo"
-          tooltip="Muestra la suma de los tres dígitos. Permite detectar oscilaciones entre valores altos y bajos."
+          title="Evolución de Sumas"
+          desc="Tendencia de volatilidad"
        >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={evolutionData}>
               <defs>
                 <linearGradient id="colorSum" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
               <XAxis dataKey="date" hide />
-              <YAxis stroke="#666" fontSize={10} axisLine={false} tickLine={false} />
+              <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px' }}
               />
               <Area type="monotone" dataKey="sum" stroke="#10b981" fillOpacity={1} fill="url(#colorSum)" strokeWidth={3} />
             </AreaChart>
@@ -205,12 +199,11 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
        </ChartWrapper>
 
        <ChartWrapper
-          title="Mapa de Calor de Transición"
-          desc="Correlación Markov entre sorteos"
-          tooltip="Analiza la probabilidad de que un dígito sea seguido por otro específico."
+          title="Mapa de Calor Markov"
+          desc="Transiciones entre sorteos"
        >
           <div className="flex justify-center items-center h-full">
-            <svg ref={heatmapRef} width="280" height="280"></svg>
+            <svg ref={heatmapRef} width="280" height="280" className="max-w-full h-auto"></svg>
           </div>
        </ChartWrapper>
     </div>
