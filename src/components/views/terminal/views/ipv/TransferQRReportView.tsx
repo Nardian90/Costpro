@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2, Eye, Info } from 'lucide-react';
+import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2, Eye, Info, UserCheck, AlertCircle } from 'lucide-react';
 import { ObservationsModal } from "./ObservationsModal";
 import { toast } from 'sonner';
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { MatchingRulesEditor as MappingRulesManager } from './MatchingRulesEditor';
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
     type: 'TRANSFER' | 'QR';
@@ -62,9 +63,12 @@ export function TransferQRReportView({ type }: Props) {
             let data = await collection.toArray();
 
             // Filter by type (this is a bit heuristic since BankTransaction doesn't have a 'channel' field)
-            // But usually we can filter by observations or type
             if (type === 'QR') {
                 data = data.filter(t => t.observaciones?.toUpperCase().includes('QR') || t.observaciones?.toUpperCase().includes('PAGO EN LINEA'));
+            } else {
+                 // For Transfer, we might want to exclude QR explicit ones if they are mixed
+                 // But usually they are all Cr
+                 data = data.filter(t => t.tipo === 'Cr');
             }
 
             if (searchTerm) {
@@ -85,14 +89,20 @@ export function TransferQRReportView({ type }: Props) {
     const handleUpdateRow = async (ref: string, field: string, value: string) => {
         const update: any = { [field]: value };
 
+        // Generic placeholders should not trigger identity resolution
+        const isPlaceholder = (val: string) => {
+            const upper = val.toUpperCase();
+            return upper === 'CI' || upper === 'NOMBRE' || upper === 'TELÉFONO' || upper === 'TARJETA' || upper === 'TELEFONO';
+        };
+
         // If updating CI or Name, trigger registry logic
         if (field === 'carnet' || field === 'nombre_cliente' || field === 'telefono_cliente' || field === 'tarjeta_cliente') {
             const tx = await db.bank_statements.get(ref);
             if (tx) {
-                const ci = field === 'carnet' ? value : tx.carnet;
-                const nombre = field === 'nombre_cliente' ? value : tx.nombre_cliente;
-                const phone = field === 'telefono_cliente' ? value : tx.telefono_cliente;
-                const card = field === 'tarjeta_cliente' ? value : tx.tarjeta_cliente;
+                const ci = field === 'carnet' ? (isPlaceholder(value) ? undefined : value) : tx.carnet;
+                const nombre = field === 'nombre_cliente' ? (isPlaceholder(value) ? undefined : value) : tx.nombre_cliente;
+                const phone = field === 'telefono_cliente' ? (isPlaceholder(value) ? undefined : value) : tx.telefono_cliente;
+                const card = field === 'tarjeta_cliente' ? (isPlaceholder(value) ? undefined : value) : tx.tarjeta_cliente;
 
                 if (ci || nombre) {
                    const result = await resolveIdentity(ref, ci, nombre, phone, card);
@@ -105,7 +115,7 @@ export function TransferQRReportView({ type }: Props) {
         }
 
         await db.bank_statements.update(ref, update);
-        // Refresh local state
+        // Refresh local state to show clean data
         setTransactions(prev => prev.map(t => t.referencia_origen === ref ? { ...t, ...update } : t));
     };
 
@@ -180,78 +190,88 @@ export function TransferQRReportView({ type }: Props) {
                 </div>
             </div>
 
-            <div className="rounded-3xl border border-border/50 overflow-hidden shadow-xl">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-12">No</TableHead>
-                            <TableHead>Fecha</TableHead>
-                            <TableHead>CI / Pasaporte</TableHead>
-                            <TableHead>Nombres y Apellidos</TableHead>
-                            <TableHead>Teléfono</TableHead>
-                            <TableHead>Tarjeta</TableHead>
-                            <TableHead className="text-right">Importe</TableHead>
-                            <TableHead>Transferencia</TableHead>
-                            <TableHead>Observaciones</TableHead>
-                            <TableHead>Firma</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {transactions.map((t, index) => (
-                            <TableRow key={t.referencia_origen}>
-                                <TableCell className="font-bold text-xs">{index + 1}</TableCell>
-                                <TableCell className="text-xs">{formatDate(t.fecha)}</TableCell>
-                                <TableCell>
-                                    <Input
-                                        value={t.carnet || ''}
-                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'carnet', e.target.value)}
-                                        className="h-8 text-[10px] font-bold w-28"
-                                        placeholder="CI"
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Input
-                                        value={t.nombre_cliente || ''}
-                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'nombre_cliente', e.target.value)}
-                                        className="h-8 text-[10px] font-black uppercase min-w-[200px]"
-                                        placeholder="NOMBRE"
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Input
-                                        value={t.telefono_cliente || ''}
-                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'telefono_cliente', e.target.value)}
-                                        className="h-8 text-[10px] font-bold w-24"
-                                        placeholder="TELÉFONO"
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Input
-                                        value={t.tarjeta_cliente || ''}
-                                        onChange={(e) => handleUpdateRow(t.referencia_origen, 'tarjeta_cliente', e.target.value)}
-                                        className="h-8 text-[10px] font-mono w-32"
-                                        placeholder="TARJETA"
-                                    />
-                                </TableCell>
-                                <TableCell className="text-right font-black text-xs">
-                                    {formatCurrency(t.importe_venta_cents || t.importe_cents)}
-                                </TableCell>
-                                <TableCell className="font-mono text-[10px] text-primary">{t.referencia_origen}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-primary hover:bg-primary/10"
-                                        onClick={() => setObsModal({ open: true, observations: t.observaciones || "", reference: t.referencia_origen })}
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </Button>
-                                </TableCell>
-                                <TableCell className="text-[10px] italic opacity-20">__________</TableCell>
+            <div className="rounded-3xl border border-border/50 overflow-hidden shadow-xl bg-card">
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow>
+                                <TableHead className="w-12 text-[10px] font-black uppercase">No</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">Fecha</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">CI / Pasaporte</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">Nombres y Apellidos</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">Teléfono</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">Tarjeta</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase">Importe</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase">Referencia</TableHead>
+                                <TableHead className="text-center text-[10px] font-black uppercase">Info</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {transactions.map((t, index) => {
+                                const hasCompleteInfo = t.carnet && t.nombre_cliente && !t.nombre_cliente.includes('NOMBRE');
+                                return (
+                                    <TableRow key={t.referencia_origen} className="hover:bg-muted/30 transition-colors">
+                                        <TableCell className="font-bold text-xs">{index + 1}</TableCell>
+                                        <TableCell className="text-xs whitespace-nowrap">{formatDate(t.fecha)}</TableCell>
+                                        <TableCell>
+                                            <Input
+                                                value={t.carnet || ''}
+                                                onChange={(e) => handleUpdateRow(t.referencia_origen, 'carnet', e.target.value)}
+                                                className="h-8 text-[10px] font-bold w-28 bg-transparent border-transparent hover:border-border focus:bg-background"
+                                                placeholder="CI"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 min-w-[200px]">
+                                                <Input
+                                                    value={t.nombre_cliente || ''}
+                                                    onChange={(e) => handleUpdateRow(t.referencia_origen, 'nombre_cliente', e.target.value)}
+                                                    className="h-8 text-[10px] font-black uppercase flex-1 bg-transparent border-transparent hover:border-border focus:bg-background"
+                                                    placeholder="NOMBRE"
+                                                />
+                                                {hasCompleteInfo ? (
+                                                    <UserCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                                ) : (
+                                                    <AlertCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                value={t.telefono_cliente || ''}
+                                                onChange={(e) => handleUpdateRow(t.referencia_origen, 'telefono_cliente', e.target.value)}
+                                                className="h-8 text-[10px] font-bold w-24 bg-transparent border-transparent hover:border-border focus:bg-background"
+                                                placeholder="53XXXX"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                value={t.tarjeta_cliente || ''}
+                                                onChange={(e) => handleUpdateRow(t.referencia_origen, 'tarjeta_cliente', e.target.value)}
+                                                className="h-8 text-[10px] font-mono w-32 bg-transparent border-transparent hover:border-border focus:bg-background"
+                                                placeholder="16 DÍGITOS"
+                                            />
+                                        </TableCell>
+                                        <TableCell className="text-right font-black text-xs text-primary whitespace-nowrap">
+                                            {formatCurrency(t.importe_venta_cents || t.importe_cents)}
+                                        </TableCell>
+                                        <TableCell className="font-mono text-[9px] text-muted-foreground">{t.referencia_origen}</TableCell>
+                                        <TableCell className="text-center">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-primary hover:bg-primary/10"
+                                                onClick={() => setObsModal({ open: true, observations: t.observaciones || "", reference: t.referencia_origen })}
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
             <ObservationsModal
                 open={obsModal.open}

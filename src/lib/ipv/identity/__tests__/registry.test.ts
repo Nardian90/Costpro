@@ -8,6 +8,7 @@ vi.mock('../../../dexie', () => {
     get: vi.fn(),
     put: vi.fn(),
     add: vi.fn(),
+    update: vi.fn(),
     where: vi.fn().mockReturnThis(),
     equals: vi.fn().mockReturnThis(),
     toArray: vi.fn(), update: vi.fn()
@@ -15,7 +16,8 @@ vi.mock('../../../dexie', () => {
   return {
     db: {
       customers: mockTable,
-      identity_audit: mockTable
+      identity_audit: mockTable,
+      bank_statements: mockTable
     }
   };
 });
@@ -26,7 +28,12 @@ describe('Customer Identity Registry', () => {
   });
 
   it('should resolve identity from CI and enrich name', async () => {
-    (db.customers.get as any).mockResolvedValue({ ci: '12345678901', nombre: 'JUAN PEREZ' });
+    (db.customers.get as any).mockResolvedValue({
+        ci: '12345678901',
+        nombre: 'JUAN PEREZ',
+        normalized_name: 'JUAN PEREZ',
+        raw_names: ['JUAN PEREZ']
+    });
 
     const result = await resolveIdentity('ref1', '12345678901');
 
@@ -47,7 +54,12 @@ describe('Customer Identity Registry', () => {
   });
 
   it('should detect conflicts if Name differs for same CI', async () => {
-    (db.customers.get as any).mockResolvedValue({ ci: '11111111111', nombre: 'ORIGINAL NAME' });
+    (db.customers.get as any).mockResolvedValue({
+        ci: '11111111111',
+        nombre: 'ORIGINAL NAME',
+        normalized_name: 'ORIGINAL NAME',
+        raw_names: ['ORIGINAL NAME']
+    });
 
     const result = await resolveIdentity('ref3', '11111111111', 'CONFLICTING NAME');
 
@@ -59,7 +71,13 @@ describe('Customer Identity Registry', () => {
   });
 
   it('should enrich CI from Name if deterministic', async () => {
-    (db.customers.toArray as any).mockResolvedValue([{ ci: '22222222222', nombre: 'UNIQUE NAME' }]);
+    (db.customers.where as any)().equals.mockReturnThis();
+    (db.customers.toArray as any).mockResolvedValue([{
+        ci: '22222222222',
+        nombre: 'UNIQUE NAME',
+        normalized_name: 'UNIQUE NAME',
+        raw_names: ['UNIQUE NAME']
+    }]);
 
     const result = await resolveIdentity('ref4', undefined, 'UNIQUE NAME');
 
