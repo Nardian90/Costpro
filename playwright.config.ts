@@ -13,7 +13,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     launchOptions: {
-      executablePath: '/home/jules/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
+      executablePath: '/home/jules/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome'
     }
   },
   projects: [
