@@ -14,14 +14,7 @@ export class Pick3ExternalService {
    */
   static async fetchOfficialResult(date: string, drawTime: DrawTime): Promise<number[] | null> {
     try {
-      // In a real implementation:
-      // const response = await fetch(`https://api.lottery.com/v1/miami/pick3/${date}/${drawTime}`);
-      // const data = await response.json();
-      // return data.winning_numbers;
-
-      // Mocked simulation of official results:
-      // In our mock history, we use deterministic results based on date and time
-      // to avoid inconsistent validations.
+      // Mocked simulation of official results
       const deterministicRes = (date: string, time: string) => {
         const seed = parseInt(date.replace(/-/g, '')) + (time === 'evening' ? 77 : 33);
         const r1 = seed % 10;
@@ -32,7 +25,7 @@ export class Pick3ExternalService {
 
       return deterministicRes(date, drawTime);
     } catch (error) {
-      logger.error('PICK3_EXTERNAL', 'Fetch failed', { date, drawTime, error });
+      logger.error('PICK3', 'Fetch failed', { date, drawTime, error });
       return null;
     }
   }
@@ -43,11 +36,9 @@ export class Pick3ExternalService {
       const currentHistory = await Pick3Storage.getHistory();
       const today = new Date().toISOString().split('T')[0];
 
-      // Determine missing draws
       const times: DrawTime[] = ['midday', 'evening'];
       const missingDraws: { date: string, time: DrawTime }[] = [];
 
-      // Only check today and yesterday
       for (let i = 0; i < 2; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);

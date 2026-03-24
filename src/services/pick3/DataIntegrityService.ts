@@ -50,7 +50,7 @@ export class DataIntegrityService {
           };
           errors.push(error);
 
-          logger.error('PICK3_INTEGRITY', 'Data mismatch found in DB', {
+          logger.error('PICK3', 'Data mismatch found in DB', {
             timestamp: error.timestamp,
             source: error.source,
             raw_value: error.official,
@@ -72,7 +72,7 @@ export class DataIntegrityService {
   static validateUIState(draw: Pick3Result, official: number[]): boolean {
     const isMatch = draw.result.every((val, i) => val === official[i]);
     if (!isMatch) {
-      logger.error('PICK3_INTEGRITY', 'UI State mismatch', {
+      logger.error('PICK3', 'UI State mismatch', {
         timestamp: new Date().toISOString(),
         source: 'UI',
         raw_value: official,

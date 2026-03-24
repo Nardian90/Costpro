@@ -56,3 +56,18 @@ export interface FrequencyAnalysis {
   coldNumbers: number[];
   gaps: Record<number, number>; // days since last appearance
 }
+
+export interface AdvancedAnalysis extends FrequencyAnalysis {
+  entropy: number;
+  biasScore: Record<number, number>; // Deviation from expected 10%
+  markovTransitions: Record<number, Record<number, number>>;
+  patterns: {
+    sums: Record<number, number>;
+    oddEven: Record<string, number>;
+    highLow: Record<string, number>;
+  };
+  movingAverages: {
+    global: Record<number, number[]>; // 7-day, 30-day window frequencies
+  };
+  strategyAccuracy?: Record<string, number>;
+}

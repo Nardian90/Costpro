@@ -192,7 +192,7 @@ export class Pick3Engine {
     const gapWeight = ((analysis.gaps[combination[0]] || 0) + (analysis.gaps[combination[1]] || 0) + (analysis.gaps[combination[2]] || 0)) / 60;
 
     // 3. Pattern Harmony (15%)
-    const sum = combination.reduce((a,b) => a+b,0);
+    const sum = combination.reduce((a,b) => (a as number)+(b as number), 0);
     const sumScore = (analysis.patterns.sums[sum] || 0) / (Math.max(1, this.history.length / 28));
 
     // 4. Markov Probability (30%)

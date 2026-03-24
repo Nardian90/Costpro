@@ -24,6 +24,7 @@ import { Pick3Visuals } from './Pick3Visuals';
 import { Pick3StrategySection } from './Pick3StrategySection';
 import { Pick3FeedbackService } from '@/services/pick3/FeedbackService';
 import { Input } from '@/components/ui/input';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 export default function Pick3IntelligenceView() {
   const { user } = useAuthStore();
@@ -31,10 +32,10 @@ export default function Pick3IntelligenceView() {
   const [simulations, setSimulations] = useState<SimulationResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [lookbackDays, setLookbackDays] = useState(30);
   const [integrityErrors, setIntegrityErrors] = useState<IntegrityError[]>([]);
   const [isMonteCarloRunning, setIsMonteCarloRunning] = useState(false);
   const [feedbackInput, setFeedbackInput] = useState({ inversion: '', ganancia: '' });
+  const [lookbackDays, setLookbackDays] = useState(30);
 
   const [config, setConfig] = useState<StrategyConfig>({
     budget: 300,
@@ -72,7 +73,7 @@ export default function Pick3IntelligenceView() {
   }, [user]);
 
   const engine = useMemo(() => new Pick3Engine(history), [history]);
-  const analysis = useMemo(() => engine.analyzeAdvanced(lookbackDays), [engine]);
+  const analysis = useMemo(() => engine.analyzeAdvanced(lookbackDays), [engine, lookbackDays]);
   const plays = useMemo(() => engine.generatePlays(analysis, 5), [engine, analysis]);
 
   const runSimulation = async () => {
@@ -230,10 +231,8 @@ export default function Pick3IntelligenceView() {
                    <Activity className="w-3 h-3 text-primary" />
                    Entropy: {(analysis.entropy || 0).toFixed(4)} bits
                 </Badge>
-                <Badge variant="outline" className="h-10 px-4 rounded-xl border-border/50 bg-background/50 font-black uppercase tracking-widest text-[9px] italic flex gap-2 shrink-0 whitespace-nowrap">
-                   <History className="w-3 h-3 text-orange-400" />
                 <div className="flex bg-muted/10 p-1 border border-border/50 rounded-xl h-10 shrink-0">
-                  {[7, 30, 90].map(d => (
+                  {[7, 30, 90].map((d: number) => (
                     <button
                       key={d}
                       onClick={() => setLookbackDays(d)}
@@ -246,7 +245,6 @@ export default function Pick3IntelligenceView() {
                     </button>
                   ))}
                 </div>
-                </Badge>
               </div>
             </div>
 
@@ -266,7 +264,7 @@ export default function Pick3IntelligenceView() {
                       <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-black tracking-widest text-[10px]">HEAT MAP</Badge>
                     </CardHeader>
                     <CardContent className="flex gap-4 pt-6">
-                       {analysis.hotNumbers.map(n => (
+                       {analysis.hotNumbers.map((n: number) => (
                          <div key={n} className="flex-1 group">
                             <div className="aspect-square rounded-2xl bg-blue-500/10 border border-blue-500/20 flex flex-col items-center justify-center group-hover:bg-blue-500/20 transition-all active:scale-95 cursor-pointer">
                                 <span className="text-3xl font-black italic text-blue-400 group-hover:scale-110 transition-transform">{n}</span>
@@ -289,7 +287,7 @@ export default function Pick3IntelligenceView() {
                       <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 font-black tracking-widest text-[10px]">REVERSION</Badge>
                     </CardHeader>
                     <CardContent className="flex gap-4 pt-6">
-                       {analysis.coldNumbers.map(n => (
+                       {analysis.coldNumbers.map((n: number) => (
                          <div key={n} className="flex-1 group">
                             <div className="aspect-square rounded-2xl bg-orange-500/10 border border-orange-500/20 flex flex-col items-center justify-center group-hover:bg-orange-500/20 transition-all active:scale-95 cursor-pointer">
                                 <span className="text-3xl font-black italic text-orange-400 group-hover:scale-110 transition-transform">{n}</span>
@@ -374,7 +372,7 @@ export default function Pick3IntelligenceView() {
                       </CardHeader>
                       <CardContent className="h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={simulations[0].equityCurve.map((val, i) => ({ day: i, capital: val }))}>
+                            <AreaChart data={simulations[0].equityCurve.map((val: number, i: number) => ({ day: i, capital: val }))}>
                                 <defs>
                                   <linearGradient id="colorCap" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
