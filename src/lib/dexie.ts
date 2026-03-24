@@ -1,3 +1,4 @@
+import { MVTTemplate, MVTSettings, MVTExportLog } from "./ipv/mvt/types";
 import { MappingRule as MappingRuleType, MappingExecution } from "../core/mapping/mapping.types";
 import Dexie, { type Table } from 'dexie';
 
@@ -67,6 +68,8 @@ export interface Product {
   cod_hijo?: string;           // Código del producto inferior en la jerarquía
   unit_factor?: number;        // Factor de conversión (ej: 1000 para caja de 1000)
   unit_level?: 'BOX' | 'PACK' | 'UNIT'; // Nivel de empaque
+  cuenta_contable?: string;
+  costo_unitario_cents?: number;
 }
 
 export interface CostTrace {
@@ -344,6 +347,9 @@ export class IPVDatabase extends Dexie {
   consolidated_accounts!: Table<ConsolidatedAccount>;
   period_closures!: Table<PeriodClosure>;
   yearly_goals!: Table<YearlyGoals>;
+  mvt_templates!: Table<MVTTemplate>;
+  mvt_settings!: Table<MVTSettings>;
+  mvt_exports_log!: Table<MVTExportLog>;
 
   constructor() {
     super('IPVDB');
@@ -368,6 +374,13 @@ export class IPVDatabase extends Dexie {
       yearly_goals: '&year',
       mapping_rules: "id, reportType, provider, sourceColumn, targetField, active, priority",
       mapping_executions: "id, reportType, timestamp, successRate"
+    });
+
+    this.version(23).stores({
+      products: "&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo, cuenta_contable",
+      mvt_templates: "&id, name",
+      mvt_settings: "id",
+      mvt_exports_log: "&id, exportNumber, templateId"
     });
   }
 }

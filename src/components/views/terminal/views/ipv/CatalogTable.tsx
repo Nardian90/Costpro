@@ -535,6 +535,8 @@ const handleExportCatalog = () => {
     const exportData = products && products.length > 0
         ? products.map(p => ({
             'cod': p.cod,
+            'cuenta_contable': p.cuenta_contable || '',
+            'costo_unitario': p.costo_unitario_cents || 0,
             'id_grupo': p.id_grupo || '',
             'cod_hijo': p.cod_hijo || '',
             'descripcion': p.descripcion,
@@ -617,6 +619,8 @@ const handleExportCatalog = () => {
                 const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
                 const activo_val = row['activo'] || row['Activo'] || 'VERDADERO';
                 const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
+                const cuenta = row['Cuenta Contable'] || row['cuenta_contable'] || '';
+                const costo = row['Costo Unitario'] || row['costo_unitario_cents'] || 0;
 
                 if (!cod || !descripcion) continue;
 
@@ -632,6 +636,8 @@ const handleExportCatalog = () => {
                     stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
                     es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
                     contenido_paquete: parseInt(String(cont_pqt)),
+                    cuenta_contable: String(cuenta),
+                    costo_unitario_cents: typeof costo === 'number' ? costo : parseFloat(String(costo).replace(',', '.')),
                     activo: true,
                     created_at: now,
                     priorityMode: 'manual',
@@ -716,6 +722,8 @@ const handleExportCatalog = () => {
                   <TableHead className="sticky top-0 bg-background z-20"><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20">Sugerencia</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-right">Costo</TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20">Cuenta</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="initial" label="Inicial" className="justify-end w-full" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="entradas" label="Entrada" className="justify-end w-full" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="salidas" label="Salida" className="justify-end w-full" /></TableHead>
@@ -739,6 +747,8 @@ const handleExportCatalog = () => {
                           <TableCell><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 w-24 text-xs uppercase" /></TableCell>
                           <TableCell className="text-center"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /></TableCell>
                           <TableCell className="text-right"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" /></TableCell>
+                          <TableCell className="text-right"><Input type="number" step="0.01" value={editForm.costo_unitario_cents || 0} onChange={e => setEditForm({...editForm, costo_unitario_cents: parseFloat(e.target.value) || 0})} className="h-8 w-20 text-right text-xs" /></TableCell>
+                          <TableCell><Input value={editForm.cuenta_contable || ""} onChange={e => setEditForm({...editForm, cuenta_contable: e.target.value})} placeholder="CUENTA" className="h-8 w-24 text-xs font-mono" /></TableCell>
                           <TableCell className="text-right"><Input type="number" min="0" value={editForm.stock_inicial_manual || 0} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 w-16 text-right text-xs" /></TableCell>
                           <TableCell colSpan={2}></TableCell>
                           <TableCell className="text-center"><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-8 rounded-md border border-input bg-background px-2 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}</select></TableCell>
@@ -862,7 +872,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
         <Card className="p-4 space-y-4 border-2 border-dashed border-primary/50 bg-primary/5 relative">
             <div className="grid grid-cols-3 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Código</Label><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="SKU-123" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">ID Grupo</Label><Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="OPCIONAL" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Cód. Hijo</Label><Input value={editForm.cod_hijo || ""} onChange={e => setEditForm({...editForm, cod_hijo: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="AUTO" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">UM</Label><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 text-xs uppercase" placeholder="UNIDADES" /></div></div>
             <div className="space-y-1"><Label className="text-xs uppercase font-black">Descripción</Label><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs" placeholder="Nombre del producto..." /></div>
-            <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Precio de Venta</Label><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Prioridad</Label><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}</select></div></div>
+            <div className="grid grid-cols-3 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Precio</Label><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Costo</Label><Input type="number" step="0.01" value={editForm.costo_unitario_cents || 0} onChange={e => setEditForm({...editForm, costo_unitario_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Cuenta</Label><Input value={editForm.cuenta_contable || ""} onChange={e => setEditForm({...editForm, cuenta_contable: e.target.value})} className="h-8 text-xs font-mono" placeholder="700..." /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Prioridad</Label><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}</select></div></div>
             <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Stock Inicial</Label><Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 text-xs" /></div><div className="space-y-1 flex flex-col justify-end"><div className="flex items-center gap-2 pb-1"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">¿Es Paquete?</Label></div>{editForm.es_paquete && (<Input type="number" placeholder="Contenido..." value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 text-xs" />)}</div></div>
             <div className="flex gap-2 pt-2"><Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-xs uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button><Button variant="ghost" className="h-12 sm:h-10 text-xs uppercase font-bold" onClick={onCancel}>Cancelar</Button></div>
         </Card>

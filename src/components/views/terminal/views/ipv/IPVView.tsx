@@ -53,6 +53,7 @@ import { IPVRightSidebar } from './IPVRightSidebar';
 import { IncomeReceiptSection } from './IncomeReceiptSection';
 import { TransferQRReportView } from './TransferQRReportView';
 import { IPVReportsDropdown } from './IPVReportsDropdown';
+import { MVTExportView } from "./mvt/MVTExportView";
 import { seedMappingRules } from '@/lib/ipv/seedMappingRules';
 import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
@@ -89,7 +90,6 @@ export default function IPVView() {
     }
   }, [rules]);
 
-  // Mapa de stock actual para el motor de matching y simulación
   const currentStockMap = useMemo(() => {
     const map = new Map<string, number>();
     if (!products || !reconciliationLines) return map;
@@ -103,7 +103,6 @@ export default function IPVView() {
     return map;
   }, [products, reconciliationLines]);
 
-  // Optimización: Cálculos pesados de conciliación movidos a useMemo con dependencias granulares
   const txTotals = useMemo(() => {
     if (!reconciliationLines) return {} as Record<string, number>;
     const totals: Record<string, number> = {};
@@ -125,11 +124,9 @@ export default function IPVView() {
     let totalEfectivo = 0;
     const checkedTxRefs = new Set<string>();
 
-    // 1. Procesar transacciones bancarias (Transferencias)
     for (let i = 0; i < transactions.length; i++) {
         const t = transactions[i];
 
-        // Omitir excluidas de las estadísticas de KPI
         if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
 
         checkedTxRefs.add(t.referencia_origen);
@@ -139,7 +136,6 @@ export default function IPVView() {
         const matched = txTotals[t.referencia_origen] || 0;
         const diff = target - matched;
 
-        // Si es un ingreso (Cr), lo sumamos como transferencia base
         if (t.tipo === 'Cr') {
             totalTransferencias += target;
         }
@@ -153,19 +149,15 @@ export default function IPVView() {
         }
     }
 
-    // 2. Procesar líneas de reconciliación para capturar Efectivo (incluyendo CASH_FILLER)
     if (reconciliationLines) {
         for (let i = 0; i < reconciliationLines.length; i++) {
             const l = reconciliationLines[i];
 
-            // Si la línea NO pertenece a una transacción bancaria activa, es venta en efectivo independiente
             if (!checkedTxRefs.has(l.transaction_ref)) {
                 if (l.importe_linea_cents > 0) {
                     totalEfectivo += l.importe_linea_cents;
                 }
             } else {
-                // Si pertenece a una transacción bancaria, pero está clasificada como Efectivo (ej: Cash Fill de una transferencia)
-                // Restamos del total de transferencias y sumamos a efectivo para el desglose real
                 if (l.clasificacion === 'Efectivo') {
                     totalEfectivo += l.importe_linea_cents;
                 }
@@ -191,7 +183,6 @@ export default function IPVView() {
     try {
       await importFullBackup(db, file);
       toast.success('Base de datos restaurada correctamente', { id: loadingToast });
-      // Reload page to refresh all live queries and state
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -226,7 +217,6 @@ export default function IPVView() {
     setIsMatching(true);
     setMatchMessage('Iniciando proceso de matching...');
 
-    // Preparar transacciones para el worker, incluyendo el total ya conciliado
     const allLines = await db.reconciliation_lines.toArray();
     const txTotalsMap = allLines.reduce((acc, line) => {
         acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
@@ -248,7 +238,6 @@ export default function IPVView() {
         return;
     }
 
-    // Aquí invocaríamos al Worker
     const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
 
     worker.postMessage({
@@ -268,7 +257,6 @@ export default function IPVView() {
       if (e.data.type === 'BATCH_COMPLETE') {
         const { results } = e.data;
 
-        // Persistir resultados
         for (const res of results) {
           if (res.lines.length > 0) {
             await db.reconciliation_lines.bulkAdd(res.lines);
@@ -281,7 +269,6 @@ export default function IPVView() {
               })));
           }
 
-          // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
           await db.bank_statements.update(res.transactionId, {
             estado_conciliacion: res.status,
             fail_reason: res.failReason,
@@ -409,6 +396,7 @@ export default function IPVView() {
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
     { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
     { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers' },
+    { id: 'mvt', label: 'Exportación MVT', icon: FileText, onClick: () => setActiveTab('mvt'), active: activeTab === 'mvt' },
     {
         id: 'reports-dropdown',
         label: '',
@@ -462,7 +450,6 @@ export default function IPVView() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <Tooltip>
             <TooltipTrigger asChild>
@@ -726,6 +713,11 @@ export default function IPVView() {
           {activeTab === 'customers' && (
             <div className="m-0 p-6 animate-in fade-in duration-500">
                 <CustomerCatalog />
+            </div>
+          )}
+          {activeTab === 'mvt' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <MVTExportView />
             </div>
           )}
         </div>
