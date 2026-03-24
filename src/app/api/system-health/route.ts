@@ -10,8 +10,8 @@ export async function GET() {
   try {
     const readJson = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), relPath);
-      if (fs.existsSync(/*turbopackIgnore: true*/ fullPath)) {
-        return JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ fullPath, 'utf8'));
+      if (fs.existsSync(/*turbopackIgnore:true*/ fullPath)) {
+        return JSON.parse(fs.readFileSync(/*turbopackIgnore:true*/ fullPath, 'utf8'));
       }
       return null;
     };

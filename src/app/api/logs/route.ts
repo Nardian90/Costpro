@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     try {
       const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'docs/logs/ERROR_LOGS.md');
-      fs.appendFileSync(filePath, logEntry);
+      fs.appendFileSync(/*turbopackIgnore:true*/ filePath, logEntry);
     } catch (fsError) {
       console.error('[API LOGS] Failed to write to file (expected in some serverless envs):', fsError);
       console.error(logEntry);
