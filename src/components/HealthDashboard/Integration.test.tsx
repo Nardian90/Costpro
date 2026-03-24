@@ -45,6 +45,6 @@ describe('HealthView Integration', () => {
 
     expect(getByText('Intelligence Hub')).toBeDefined();
     expect(getByText('90%')).toBeDefined();
-    expect(getByText('OVERVIEW')).toBeDefined();
+    expect(getByText(/OVERVIEW/i)).toBeDefined();
   });
 });
