@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id: 'estrategico',
         label: 'MÓDULO ESTRATÉGICO',
         isDirect: true,
-        items: ['dashboard', 'wallet', 'cost-sheets', 'ipv']
+        items: ['dashboard', 'pick3-intelligence', 'wallet', 'cost-sheets', 'ipv']
       },
       {
         id: 'punto_venta',
