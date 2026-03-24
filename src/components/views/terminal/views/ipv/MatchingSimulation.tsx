@@ -118,7 +118,13 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
             return;
         }
 
-        const currentKpiTotal = 0;
+        // Calcular total actual real para el mes seleccionado
+        const monthLines = await db.reconciliation_lines
+            .where('fecha_operacion')
+            .startsWith(selectedMonth)
+            .toArray();
+        const currentKpiTotal = monthLines.reduce((sum, l) => sum + (l.importe_linea_cents || 0), 0);
+
         const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { strategy: globalStrategy });
 
         if (extraLines.length > 0) {
