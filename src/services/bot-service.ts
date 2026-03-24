@@ -18,15 +18,15 @@ async function getKnowledgeBaseContext(): Promise<string> {
     return cachedKnowledge;
   }
 
-  const dirPath = path.join(/*turbopackIgnore:true*/process.cwd(), 'docs/knowledge/resolutions');
-  if (!fs.existsSync(dirPath)) return '';
+  const dirPath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'docs/knowledge/resolutions');
+  if (!fs.existsSync(/*turbopackIgnore: true*/ dirPath)) return '';
 
   try {
-    const files = fs.readdirSync(dirPath);
+    const files = fs.readdirSync(/*turbopackIgnore: true*/ dirPath);
     let knowledge = '';
     for (const file of files) {
       if (file.endsWith('.md') || file.endsWith('.json') || file.endsWith('.txt')) {
-        const fileContent = fs.readFileSync(path.join(dirPath, file), 'utf-8');
+        const fileContent = fs.readFileSync(/*turbopackIgnore: true*/ path.join(dirPath, file), 'utf-8');
         knowledge += `\n[DOC: ${file}]\n${fileContent}\n`;
       }
     }

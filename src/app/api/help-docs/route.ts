@@ -24,14 +24,14 @@ export async function GET(request: Request) {
       const query = searchQuery.toLowerCase();
 
       const walk = (dir: string) => {
-        const files = fs.readdirSync(dir);
+        const files = fs.readdirSync(/*turbopackIgnore: true*/ dir);
         files.forEach(file => {
           const fullPath = path.join(dir, file);
           const stats = fs.statSync(fullPath);
           if (stats.isDirectory()) {
             walk(fullPath);
           } else if (file.endsWith('.md')) {
-            const content = fs.readFileSync(fullPath, 'utf8');
+            const content = fs.readFileSync(/*turbopackIgnore: true*/ fullPath, 'utf8');
             if (content.toLowerCase().includes(query)) {
               const relativePath = path.relative(KNOWLEDGE_BASE, fullPath);
               const title = content.split('\n')[0].replace(/^#+\s+/, '') || file;
@@ -66,14 +66,14 @@ export async function GET(request: Request) {
     if (!filePath) {
       // List all relevant files for the help system
       const structure = {
-        iso_manual: fs.existsSync(path.join(KNOWLEDGE_BASE, 'iso_manual')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'iso_manual')).filter(f => f.endsWith('.md')) : [],
+        iso_manual: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'iso_manual')) ? fs.readdirSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'iso_manual')).filter(f => f.endsWith('.md')) : [],
         docs: {
-          tutorials: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/tutorials')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/tutorials')).filter(f => f.endsWith('.md')) : [],
-          howTo: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/how-to')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/how-to')).filter(f => f.endsWith('.md')) : [],
-          reference: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/reference')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/reference')).filter(f => f.endsWith('.md')) : [],
-          explanation: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/explanation')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/explanation')).filter(f => f.endsWith('.md')) : [],
+          tutorials: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/tutorials')) ? fs.readdirSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/tutorials')).filter(f => f.endsWith('.md')) : [],
+          howTo: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/how-to')) ? fs.readdirSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/how-to')).filter(f => f.endsWith('.md')) : [],
+          reference: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/reference')) ? fs.readdirSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/reference')).filter(f => f.endsWith('.md')) : [],
+          explanation: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/explanation')) ? fs.readdirSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'docs/explanation')).filter(f => f.endsWith('.md')) : [],
         },
-        user_help: fs.existsSync(path.join(KNOWLEDGE_BASE, 'user_help.json'))
+        user_help: fs.existsSync(/*turbopackIgnore: true*/ path.join(KNOWLEDGE_BASE, 'user_help.json'))
       };
       return NextResponse.json(structure);
     }
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
        return NextResponse.json({ error: 'Unauthorized path' }, { status: 403 });
     }
 
-    if (!fs.existsSync(fullPath)) {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ fullPath)) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
 
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Path is a directory' }, { status: 400 });
     }
 
-    const content = fs.readFileSync(fullPath, 'utf8');
+    const content = fs.readFileSync(/*turbopackIgnore: true*/ fullPath, 'utf8');
 
     if (fullPath.endsWith('.json')) {
         return NextResponse.json(JSON.parse(content));

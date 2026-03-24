@@ -30,10 +30,10 @@ function getSupabaseAdmin() {
 export async function GET() {
   const manualsDir = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals');
   try {
-    if (!fs.existsSync(manualsDir)) {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ manualsDir)) {
       return NextResponse.json({ files: [] });
     }
-    const files = fs.readdirSync(manualsDir).filter(f => f.endsWith('.pdf'));
+    const files = fs.readdirSync(/*turbopackIgnore: true*/ manualsDir).filter(f => f.endsWith('.pdf'));
     return NextResponse.json({ files });
   } catch (e) {
     return NextResponse.json({ files: [] });
@@ -54,11 +54,11 @@ export async function POST(req: NextRequest) {
     }
 
     const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'manuals', filename);
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ filePath)) {
       return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
 
-    const dataBuffer = fs.readFileSync(filePath);
+    const dataBuffer = fs.readFileSync(/*turbopackIgnore: true*/ filePath);
     const data = await pdf(dataBuffer);
     let fullText = data.text;
 
@@ -73,9 +73,9 @@ export async function POST(req: NextRequest) {
 
     let jsonFound = false;
     for (const jPath of jsonPaths) {
-        if (fs.existsSync(jPath)) {
+        if (fs.existsSync(/*turbopackIgnore: true*/ jPath)) {
             try {
-                const jsonRaw = fs.readFileSync(jPath, 'utf8');
+                const jsonRaw = fs.readFileSync(/*turbopackIgnore: true*/ jPath, 'utf8');
                 // We prioritize JSON if it exists as it is usually better structured
                 fullText = `DATOS ESTRUCTURADOS DEL MANUAL (JSON):\n${jsonRaw}\n\nCONTENIDO ADICIONAL:\n${fullText}`;
                 jsonFound = true;
