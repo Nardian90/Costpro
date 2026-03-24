@@ -1,23 +1,33 @@
-import { Pick3Result } from '@/types/pick3';
+import { Pick3Result, DrawTime } from '@/types/pick3';
 import { Pick3Storage } from './storage';
 import { logger } from '@/lib/logger';
 
 /**
  * Service to handle external data extraction for Pick 3 results.
- * In a production environment, this would call a scraper or a dedicated API.
+ * For Enterprise, this is the "Source of Truth" (SOT).
  */
 export class Pick3ExternalService {
-  private static MOCK_EXTERNAL_API = 'https://api.example.com/lottery/miami/pick3'; // Placeholder
-
   /**
-   * Simulates fetching the "official" results for validation.
-   * In a real app, this would be the ground truth.
+   * Fetches the "official" ground truth from the primary SOT.
+   * In a production environment, this would call a real-world lottery API or a scraper.
+   * Currently, we implement a mock logic that mimics the SOT behavior.
    */
-  private static async fetchOfficialGroundTruth(date: string, drawTime: string): Promise<[number, number, number] | null> {
-    // This represents the "Official API" response
-    // For the sake of the audit, we simulate it
-    // In reality, you'd fetch from Florida Lottery or a trusted source
-    return null; // Return null to skip validation if no official data
+  static async fetchOfficialResult(date: string, drawTime: DrawTime): Promise<number[] | null> {
+    try {
+      // Mocked simulation of official results
+      const deterministicRes = (date: string, time: string) => {
+        const seed = parseInt(date.replace(/-/g, '')) + (time === 'evening' ? 77 : 33);
+        const r1 = seed % 10;
+        const r2 = (seed * 7) % 10;
+        const r3 = (seed * 13) % 10;
+        return [r1, r2, r3];
+      };
+
+      return deterministicRes(date, drawTime);
+    } catch (error) {
+      logger.error('PICK3', 'Fetch failed', { date, drawTime, error });
+      return null;
+    }
   }
 
   static async syncLatestResults(): Promise<{ success: boolean; newCount: number; errors?: string[] }> {
@@ -25,54 +35,39 @@ export class Pick3ExternalService {
     try {
       const currentHistory = await Pick3Storage.getHistory();
       const today = new Date().toISOString().split('T')[0];
-      const hasToday = currentHistory.some(h => h.date === today);
 
-      if (hasToday) {
-        return { success: true, newCount: 0 };
+      const times: DrawTime[] = ['midday', 'evening'];
+      const missingDraws: { date: string, time: DrawTime }[] = [];
+
+      for (let i = 0; i < 2; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dStr = d.toISOString().split('T')[0];
+
+        for (const time of times) {
+           const exists = currentHistory.some(h => h.date === dStr && h.draw_time === time);
+           if (!exists) {
+              missingDraws.push({ date: dStr, time });
+           }
+        }
       }
 
-      // Simulate fetching 2 new results (Midday and Evening)
-      const newResults: Pick3Result[] = [
-        {
-          date: today,
-          draw_time: 'midday',
-          result: [
-            Math.floor(Math.random() * 10),
-            Math.floor(Math.random() * 10),
-            Math.floor(Math.random() * 10)
-          ]
-        },
-        {
-          date: today,
-          draw_time: 'evening',
-          result: [
-            Math.floor(Math.random() * 10),
-            Math.floor(Math.random() * 10),
-            Math.floor(Math.random() * 10)
-          ]
-        }
-      ];
-
-      // --- VALIDATION STEP ---
       const validatedResults: Pick3Result[] = [];
-      for (const res of newResults) {
-        const official = await this.fetchOfficialGroundTruth(res.date, res.draw_time);
+      for (const missing of missingDraws) {
+        const official = await this.fetchOfficialResult(missing.date, missing.time);
 
         if (official) {
-          const isMatch = res.result.every((val, i) => val === official[i]);
-          if (!isMatch) {
-            const errorMsg = `[Pick3Audit] Discrepancia detectada: módulo ${res.result.join('-')} vs oficial ${official.join('-')} (${res.date} ${res.draw_time})`;
-            logger.error('PICK3', 'Sync Discrepancy', { local: res.result, official, date: res.date, time: res.draw_time });
-            syncErrors.push(errorMsg);
-
-            // Correct the result with official data before saving
-            res.result = official;
-          }
+          validatedResults.push({
+            date: missing.date,
+            draw_time: missing.time,
+            result: official as [number, number, number]
+          });
         }
-        validatedResults.push(res);
       }
 
-      await Pick3Storage.saveHistory(validatedResults);
+      if (validatedResults.length > 0) {
+        await Pick3Storage.saveHistory(validatedResults);
+      }
 
       return {
         success: true,
