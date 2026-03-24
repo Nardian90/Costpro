@@ -13,8 +13,8 @@ export const DEFAULT_MVT_SETTINGS: MVTSettings = {
 
 export const STANDARD_MVT_TEMPLATE: MVTTemplate = {
   id: 'standard-v1',
-  name: 'Estándar MVT v1.0',
-  description: 'Plantilla base para exportación contable estructurada',
+  name: 'Estándar MVT v1.0 (Versat)',
+  description: 'Plantilla base para exportación contable estructurada optimizada para Versat ERP',
   version: 1,
   sections: [
     {
@@ -40,7 +40,12 @@ export const STANDARD_MVT_TEMPLATE: MVTTemplate = {
         { key: 'DESCRIPCION', source: 'dynamic', value: 'product.descripcion' },
         { key: 'UM', source: 'dynamic', value: 'product.um' },
         { key: 'CUENTA', source: 'dynamic', value: 'product.cuenta_contable' },
+        { key: 'EMPTY_1', source: 'static', value: '' },
+        { key: 'EMPTY_2', source: 'static', value: '' },
+        { key: 'EMPTY_3', source: 'static', value: '' },
+        { key: 'EMPTY_4', source: 'static', value: '' },
         { key: 'EXISTENCIA', source: 'dynamic', value: 'product.existencia' },
+        { key: 'EMPTY_5', source: 'static', value: '' },
       ]
     },
     {
@@ -50,8 +55,8 @@ export const STANDARD_MVT_TEMPLATE: MVTTemplate = {
       fields: [
         { key: 'CODIGO', source: 'dynamic', value: 'product.cod' },
         { key: 'UM', source: 'dynamic', value: 'product.um' },
-        { key: 'CANTIDAD', source: 'dynamic', value: 'movement.cantidad' },
-        { key: 'COSTO', source: 'dynamic', value: 'product.costo_unitario' },
+        { key: 'CANTIDAD', source: 'dynamic', value: 'cantidad' },
+        { key: 'COSTO', source: 'dynamic', value: 'costo' },
         { key: 'IMPORTE', source: 'expression', value: '{cantidad} * {costo}' },
         { key: '0_1', source: 'static', value: '0' },
         { key: '0_2', source: 'static', value: '0' },
