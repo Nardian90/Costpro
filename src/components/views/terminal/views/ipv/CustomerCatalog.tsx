@@ -314,8 +314,8 @@ export function CustomerCatalog() {
             </div>
 
             <BaseModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
+                open={isAddModalOpen}
+                onOpenChange={(open) => setIsAddModalOpen(open)}
                 title="Agregar Nuevo Cliente"
                 description="Complete la información del cliente para el catálogo maestro."
             >
