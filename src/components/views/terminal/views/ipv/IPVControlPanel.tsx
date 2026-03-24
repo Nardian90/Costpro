@@ -184,6 +184,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             variant: 'dark'
         },
         {
+            id: 'mvt',
+            title: 'Exportación MVT',
+            description: 'Generación de archivos contables .mvt configurables.',
+            icon: <FileText />,
+            variant: 'dark'
+        },
+        {
             id: 'customers',
             title: 'Clientes',
             description: 'Catálogo maestro de identidad y resolución inteligente.',
