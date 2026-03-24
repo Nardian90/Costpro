@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db, type Customer } from "@/lib/dexie";
 import { normalizeName } from "@/lib/ipv/identity/normalization";
-import { propagateIdentity, getAllCustomerStats } from "@/lib/ipv/identity/registry";
+import { getHybridCustomers, propagateIdentity, getAllCustomerStats } from "@/lib/ipv/identity/registry";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,25 +24,45 @@ export function CustomerCatalog() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [newCustomer, setNewCustomer] = useState<Partial<Customer>>({ ci: '', nombre: '', phone: '', card_number: '' });
     const [customerStats, setCustomerStats] = useState<Record<string, { totalTransactions: number; totalAmountCents: number }>>({});
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         loadData();
     }, [searchTerm]);
 
     const loadData = async () => {
-        let collection = db.customers.toCollection();
-        if (searchTerm) {
-            const lowSearch = searchTerm.toLowerCase();
-            collection = db.customers.where('nombre').startsWithIgnoreCase(lowSearch)
-                .or('ci').startsWith(lowSearch)
-                .or('normalized_name').startsWithIgnoreCase(normalizeName(lowSearch));
-        }
-        const data = await collection.toArray();
-        setCustomers(data.sort((a, b) => a.nombre.localeCompare(b.nombre)));
+        setIsLoading(true);
+        try {
+            // SINGLE SOURCE OF TRUTH: Hybrid Catalog (Dexie Master + Transactions)
+            const allHybrid = await getHybridCustomers();
 
-        // Load stats
-        const stats = await getAllCustomerStats();
-        setCustomerStats(stats);
+            let filtered = allHybrid;
+            if (searchTerm) {
+                const lowSearch = searchTerm.toLowerCase();
+                filtered = allHybrid.filter(c =>
+                    c.nombre.toLowerCase().includes(lowSearch) ||
+                    c.ci.toLowerCase().includes(lowSearch) ||
+                    (c.normalized_name && c.normalized_name.toLowerCase().includes(normalizeName(lowSearch)))
+                );
+            }
+
+            setCustomers(filtered);
+
+            // Load stats
+            const stats = await getAllCustomerStats();
+            setCustomerStats(stats);
+
+            // CONSISTENCY CHECK
+            const txCount = Object.keys(stats).length;
+            if (txCount > 0 && filtered.length === 0 && !searchTerm) {
+                console.error("Inconsistencia crítica: Se detectaron transacciones pero el catálogo híbrido está vacío.");
+            }
+        } catch (error) {
+            console.error("Error loading hybrid catalog:", error);
+            toast.error("Error al cargar el catálogo de clientes");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleEdit = (customer: Customer) => {
@@ -71,15 +91,17 @@ export function CustomerCatalog() {
         const normalized_name = normalizeName(editData.nombre);
         const status = (ci && editData.nombre && editData.phone && editData.card_number) ? "COMPLETO" : "PARCIAL";
 
-        await db.customers.update(ci, {
+        // Persist change to Dexie Master
+        await db.customers.put({
             ...editData,
+            ci,
             normalized_name,
             status,
             source: "MANUAL",
             updated_at: new Date().toISOString()
-        });
+        } as Customer);
 
-        toast.success("Cliente actualizado");
+        toast.success("Cliente actualizado en catálogo maestro");
         setEditingCi(null);
         loadData();
     };
@@ -92,7 +114,7 @@ export function CustomerCatalog() {
 
         const existing = await db.customers.get(newCustomer.ci);
         if (existing) {
-            toast.error("Ya existe un cliente con este CI");
+            toast.error("Ya existe un cliente con este CI en el catálogo");
             return;
         }
 
@@ -111,29 +133,26 @@ export function CustomerCatalog() {
         const normalized_name = normalizeName(newCustomer.nombre);
         const status = (newCustomer.ci && newCustomer.nombre && newCustomer.phone && newCustomer.card_number) ? "COMPLETO" : "PARCIAL";
 
-        await db.customers.put({
-            ci: newCustomer.ci,
-            nombre: newCustomer.nombre.toUpperCase() as string,
+        await db.customers.add({
+            ...newCustomer,
             normalized_name,
-            raw_names: [newCustomer.nombre] as string[],
-            phone: newCustomer.phone,
-            card_number: newCustomer.card_number,
             status,
             source: "MANUAL",
+            raw_names: [newCustomer.nombre!],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-        });
+        } as Customer);
 
-        toast.success("Cliente agregado correctamente");
+        toast.success("Cliente registrado con éxito");
         setIsAddModalOpen(false);
         setNewCustomer({ ci: '', nombre: '', phone: '', card_number: '' });
         loadData();
     };
 
     const handleDelete = async (ci: string) => {
-        if (confirm("¿Está seguro de eliminar este cliente?")) {
+        if (confirm('¿Está seguro de eliminar este cliente del catálogo maestro? Esto no eliminará sus transacciones.')) {
             await db.customers.delete(ci);
-            toast.success("Cliente eliminado");
+            toast.success("Cliente eliminado del catálogo maestro");
             loadData();
         }
     };
@@ -141,77 +160,69 @@ export function CustomerCatalog() {
     const handlePropagate = async () => {
         setIsPropagating(true);
         try {
-            const affectedTxs = await propagateIdentity();
-            toast.success(`Propagación completada. ${affectedTxs} registros actualizados.`);
+            const affected = await propagateIdentity();
+            toast.success(`Identidad propagada a ${affected} transacciones`);
             loadData();
         } catch (error) {
-            toast.error("Error durante la propagación");
+            toast.error("Error al propagar identidad");
         } finally {
             setIsPropagating(false);
         }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3 text-primary">
-                        <Users className="w-6 h-6" />
-                        Catálogo Maestro de Clientes
-                    </h2>
-                    <p className="text-xs text-muted-foreground font-medium">Gestione la identidad centralizada para reportes IPV y conciliación.</p>
-                </div>
-
-                <div className="flex gap-3">
-                    <Button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="h-11 rounded-2xl font-black uppercase tracking-widest text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <UserPlus className="w-4 h-4" />
-                        Nuevo Cliente
-                    </Button>
-                    <Button
-                        onClick={handlePropagate}
-                        disabled={isPropagating}
-                        className="h-11 rounded-2xl font-black uppercase tracking-widest text-xs gap-2 shadow-lg shadow-primary/20"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${isPropagating ? 'animate-spin' : ''}`} />
-                        Propagar Cambios
-                    </Button>
-                </div>
-            </div>
-
-            <div className="flex gap-4 items-center bg-card/50 p-4 rounded-3xl border border-border/50">
-                <div className="relative flex-1">
+        <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                <div className="relative w-full md:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por CI, Nombre o Alias..."
-                        className="pl-10 h-11 rounded-xl"
+                        placeholder="Buscar por nombre o CI..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="pl-10 font-bold"
                     />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <Button
+                        variant="outline"
+                        onClick={handlePropagate}
+                        disabled={isPropagating}
+                        className="flex-1 md:flex-none font-black text-xs uppercase"
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isPropagating ? 'animate-spin' : ''}`} />
+                        Sincronizar Reportes
+                    </Button>
+                    <Button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex-1 md:flex-none font-black text-xs uppercase bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Nuevo Cliente
+                    </Button>
                 </div>
             </div>
 
-            <div className="rounded-3xl border border-border/50 overflow-hidden shadow-xl bg-card">
+            <div className="rounded-xl border bg-card overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead className="text-[10px] font-black uppercase">Identidad (CI)</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase">Nombre del Cliente</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase">Contacto / Pago</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase text-center">Transacciones</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase text-right">Importe Total</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase">Estado</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase text-right">Acciones</TableHead>
+                            <TableHead className="w-[120px] font-black uppercase text-[10px]">CI / Pasaporte</TableHead>
+                            <TableHead className="font-black uppercase text-[10px]">Nombre Completo</TableHead>
+                            <TableHead className="font-black uppercase text-[10px]">Contacto / Tarjeta</TableHead>
+                            <TableHead className="text-center font-black uppercase text-[10px]">Operaciones</TableHead>
+                            <TableHead className="text-right font-black uppercase text-[10px]">Total Operado</TableHead>
+                            <TableHead className="font-black uppercase text-[10px]">Estado</TableHead>
+                            <TableHead className="text-right font-black uppercase text-[10px]">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {customers.map((c) => {
                             const stats = customerStats[c.ci] || { totalTransactions: 0, totalAmountCents: 0 };
                             return (
-                                <TableRow key={c.ci} className="hover:bg-muted/30 transition-colors">
-                                    <TableCell className="font-mono text-xs font-bold">{c.ci}</TableCell>
+                                <TableRow key={c.ci || c.nombre} className="hover:bg-muted/30 transition-colors">
+                                    <TableCell className="font-mono font-bold text-xs">
+                                        {c.ci || "—"}
+                                    </TableCell>
                                     <TableCell>
                                         {editingCi === c.ci ? (
                                             <Input
@@ -221,10 +232,12 @@ export function CustomerCatalog() {
                                             />
                                         ) : (
                                             <div className="space-y-0.5">
-                                                <span className="text-xs font-black uppercase block">{c.nombre}</span>
-                                                <span className="text-[9px] text-muted-foreground italic truncate block max-w-[200px]">
-                                                    {c.raw_names.join(', ')}
-                                                </span>
+                                                <span className="text-xs font-black uppercase block">{c.nombre || "—"}</span>
+                                                {c.raw_names && c.raw_names.length > 0 && (
+                                                    <span className="text-[9px] text-muted-foreground italic truncate block max-w-[200px]">
+                                                        {c.raw_names.join(', ')}
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
                                     </TableCell>
@@ -255,11 +268,11 @@ export function CustomerCatalog() {
                                                 <>
                                                     <div className="flex items-center gap-1.5">
                                                         <Phone className="w-3 h-3 text-muted-foreground" />
-                                                        <span className="text-xs font-bold">{c.phone || '-'}</span>
+                                                        <span className="text-xs font-bold">{c.phone || '—'}</span>
                                                     </div>
                                                     <div className="flex items-center gap-1.5">
                                                         <CreditCard className="w-3 h-3 text-muted-foreground" />
-                                                        <span className="text-[10px] font-mono">{c.card_number || '-'}</span>
+                                                        <span className="text-[10px] font-mono">{c.card_number || '—'}</span>
                                                     </div>
                                                 </>
                                             )}
@@ -302,10 +315,17 @@ export function CustomerCatalog() {
                                 </TableRow>
                             );
                         })}
-                        {customers.length === 0 && (
+                        {customers.length === 0 && !isLoading && (
                             <TableRow>
                                 <TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">
                                     No se encontraron clientes en el catálogo.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {isLoading && (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                                    Cargando clientes híbridos...
                                 </TableCell>
                             </TableRow>
                         )}

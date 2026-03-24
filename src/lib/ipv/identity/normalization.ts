@@ -17,6 +17,26 @@ export function normalizeName(name: string): string {
 }
 
 /**
+ * Unified normalization for customer data.
+ * Handles different field names from various sources (localStorage legacy, Dexie, raw imports).
+ */
+export const normalizeCliente = (raw: any) => {
+  const ci = (raw.ci || raw.CI || raw.documento || raw.carnet || "").toString().trim();
+  const nombreRaw = raw.nombre || raw.name || raw.cliente || raw.nombre_cliente || "";
+  const nombre = normalizeName(nombreRaw);
+  const telefono = (raw.telefono || raw.phone || raw.telefono_cliente || "").toString().trim();
+  const tarjeta = (raw.tarjeta || raw.card_number || raw.tarjeta_cliente || "").toString().trim();
+
+  return {
+    ci,
+    nombre,
+    nombre_display: nombreRaw.toUpperCase().trim() || "—",
+    telefono,
+    tarjeta,
+  };
+};
+
+/**
  * Levenshtein Distance for fuzzy matching
  */
 export function levenshteinDistance(s1: string, s2: string): number {
