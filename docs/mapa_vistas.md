@@ -68,7 +68,7 @@
 | CreateProductModal | src/components/modals/CreateProductModal.tsx | component | Óptimo | BaseModal, index | 2026-03-24 |
 | CreateTransferModal | src/components/views/terminal/views/transfers/CreateTransferModal.tsx | component | Óptimo | BaseModal, utils | 2026-03-24 |
 | CuentasModule | src/components/views/terminal/views/wiki/CuentasModule.tsx | component | Óptimo | badge, button, scroll-area, types, utils | 2026-03-24 |
-| CustomerCatalog | src/components/views/terminal/views/ipv/CustomerCatalog.tsx | component | Óptimo | badge, button, card, dexie, input, label, normalization, registry, table, utils | 2026-03-24 |
+| CustomerCatalog | src/components/views/terminal/views/ipv/CustomerCatalog.tsx | component | Óptimo | BaseModal, badge, button, card, dexie, input, label, normalization, registry, table, utils | 2026-03-24 |
 | CyberShell | src/components/ui/CyberShell.tsx | component | Óptimo |  | 2026-03-24 |
 | DarianEditor | src/components/views/terminal/views/cost_sheet/DarianEditor.tsx | component | Advertencia | utils | 2026-03-24 |
 | DataDecryption | src/components/ui/DataDecryption.tsx | component | Óptimo |  | 2026-03-24 |
@@ -354,7 +354,7 @@
 | SettingsView | src/components/views/terminal/views/settings/SettingsView.tsx | view | Óptimo | supabaseClient, utils | 2026-03-24 |
 | StockHistoryView | src/components/views/terminal/views/stock_history/StockHistoryView.tsx | view | Óptimo | ActionMenu, QueryInspector, SearchBar, utils | 2026-03-24 |
 | StoresManagementView | src/components/views/terminal/views/stores/StoresManagementView.tsx | view | Óptimo | ActionMenu, SearchBar, StoreModals, useStoresView, utils | 2026-03-24 |
-| TransferQRReportView | src/components/views/terminal/views/ipv/TransferQRReportView.tsx | view | Advertencia | BaseModal, MatchingRulesEditor, ObservationsModal, button, card, dexie, input, label, registry, table, utils | 2026-03-24 |
+| TransferQRReportView | src/components/views/terminal/views/ipv/TransferQRReportView.tsx | view | Advertencia | BaseModal, MatchingRulesEditor, ObservationsModal, badge, button, card, dexie, input, label, registry, table, utils | 2026-03-24 |
 | TransferenciasView | src/components/views/terminal/views/transfers/TransferenciasView.tsx | view | Óptimo | ActionMenu, CreateTransferModal, StateRenderer, TransferDetailsModal, utils | 2026-03-24 |
 | UsersManagementView | src/components/views/terminal/views/users/UsersManagementView.tsx | view | Óptimo | ActionMenu, SearchBar, UserFormModal, button, select, switch, useUsersView, utils | 2026-03-24 |
 | WalletView | src/components/views/terminal/views/wallet/WalletView.tsx | view | Óptimo | badge, button, card, input, parser, types, utils | 2026-03-24 |

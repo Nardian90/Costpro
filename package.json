@@ -9,7 +9,7 @@
     "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
     "postinstall": "sh scripts/postinstall.sh",
-    "build": "next build && sh scripts/bundle_standalone.sh",
+    "build": "npx prisma generate && next build && sh scripts/bundle_standalone.sh",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "test": "vitest",
