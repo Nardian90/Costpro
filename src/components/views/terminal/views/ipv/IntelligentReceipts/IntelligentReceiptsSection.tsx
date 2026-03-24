@@ -5,21 +5,35 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Play, RotateCcw, Save, Loader2, Wand2, History, Settings2, Calculator, AlertCircle, Info } from 'lucide-react';
-import { reconstruirRecepciones, aplicarRecepciones, SimulationResult } from '@/lib/ipv/intelligentEngine';
+import { Play, RotateCcw, Save, Loader2, Wand2, History, Settings2, Calculator, AlertCircle, Info, Printer, Download, Warehouse, Truck, FileCheck, Building2 } from 'lucide-react';
+import { reconstruirRecepciones, aplicarRecepciones, SimulationResult, generarRecepcionDesdeSaldoInicial } from '@/lib/ipv/intelligentEngine';
 import { calculateCosts, validateMargins, CostEngineConfig, CostEngineMode } from '@/lib/ipv/costEngine';
 import { SimulationPreview } from './SimulationPreview';
 import { AppliedReceiptsHistory } from './AppliedReceiptsHistory';
 import { toast } from 'sonner';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
-import { db, Product } from '@/lib/dexie';
+import { db, Product, SC204Metadata, IPVSettings } from '@/lib/dexie';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SC204Preview } from '../SC204Preview';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { generateLegalPdf } from '../../legal/LegalPdfExporter';
 
 export function IntelligentReceiptsSection() {
     const [mode, setMode] = useState<'A' | 'B' | 'C'>('B');
     const [isSimulating, setIsSimulating] = useState(false);
     const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
     const [isApplying, setIsApplying] = useState(false);
+    const [showSC204, setShowSC204] = useState(false);
+    const [settings, setSettings] = useState<IPVSettings | null>(null);
+    const [sc204Metadata, setSc204Metadata] = useState<SC204Metadata>({
+        proveedor_nombre: '',
+        proveedor_codigo: '',
+        documento_tipo: 'Factura',
+        documento_numero: '',
+        transportador_nombre: '',
+        transportador_ci: '',
+        chapa: ''
+    });
 
     // Cost Engine State
     const [costMode, setCostMode] = useState<CostEngineMode>('PERCENTAGE');
@@ -30,6 +44,7 @@ export function IntelligentReceiptsSection() {
 
     useEffect(() => {
         db.products.toArray().then(setProducts);
+        db.ipv_settings.get('current').then(s => setSettings(s || null));
     }, []);
 
     const handleSimulate = async () => {
@@ -50,6 +65,20 @@ export function IntelligentReceiptsSection() {
         }
     };
 
+    const handleSimulateInitial = async () => {
+        setIsSimulating(true);
+        try {
+            const result = await generarRecepcionDesdeSaldoInicial();
+            setSimulationResult(result);
+            setMarginValidations([]);
+            toast.success("Simulación desde saldo inicial cargada");
+        } catch (error) {
+            toast.error("Error al cargar saldo inicial");
+        } finally {
+            setIsSimulating(false);
+        }
+    };
+
     const handleCalculateCosts = () => {
         if (!simulationResult) return;
         setIsCalculatingCosts(true);
@@ -57,7 +86,7 @@ export function IntelligentReceiptsSection() {
             const config: CostEngineConfig = {
                 type: costMode,
                 value: parseFloat(costValue),
-                usuario_id: "system" // Fallback as decided
+                usuario_id: "system"
             };
 
             const receiptsWithCosts = calculateCosts(simulationResult.receipts, products, config);
@@ -81,6 +110,37 @@ export function IntelligentReceiptsSection() {
         }
     };
 
+    const handleExportSC204 = async () => {
+        if (!simulationResult || !settings) return;
+        try {
+            const model = { code: 'SC-2-04', name: 'INFORME DE RECEPCIÓN' };
+            const data = {
+                entidad_nombre: settings.entidad_nombre,
+                entidad_codigo: settings.entidad_codigo,
+                almacen_nombre: settings.almacen_nombre || 'ALMACÉN PRINCIPAL',
+                almacen_codigo: settings.almacen_codigo || 'ALM-01',
+                fecha_emision: new Date().toLocaleDateString(),
+                numero_consecutivo: String(settings.consecutivo_inicio || 1).padStart(6, '0'),
+                metadata: sc204Metadata,
+                productos: simulationResult.receipts.map(r => ({
+                    product: products.find(p => p.cod === r.product_id)!,
+                    quantity: r.quantity,
+                    total_units: r.total_units,
+                    unit_price_cents: r.costo_unitario_cents || 0,
+                    total_price_cents: r.costo_total_cents || 0,
+                    stock_after: (simulationResult.stockImpact.get(r.product_id)?.simulated || 0)
+                })),
+                total_importe_cents: simulationResult.receipts.reduce((sum, r) => sum + (r.costo_total_cents || 0), 0),
+                logo_url: settings.logo_url,
+                paper_size: settings.paper_size || 'LETTER'
+            };
+            await generateLegalPdf(model, data);
+            toast.success("Reporte SC-2-04 generado");
+        } catch (error) {
+            toast.error("Error al generar PDF");
+        }
+    };
+
     const handleApply = async () => {
         if (!simulationResult || simulationResult.receipts.length === 0) return;
 
@@ -101,46 +161,158 @@ export function IntelligentReceiptsSection() {
         try {
             await aplicarRecepciones(simulationResult.receipts);
             await recalculateIPVReportsChain(db);
-            toast.success(`${simulationResult.receipts.length} recepciones aplicadas correctamente con sus costos`);
             setSimulationResult(null);
-            setMarginValidations([]);
+            toast.success("Cambios aplicados correctamente");
         } catch (error) {
-            console.error(error);
-            toast.error("Error al aplicar las recepciones");
+            toast.error("Error al aplicar cambios");
         } finally {
             setIsApplying(false);
         }
     };
 
-    const isBlockedByMargin = marginValidations.some(v => v.type === 'ERROR');
-
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/30 p-6 rounded-[2.5rem] border-2 border-primary/5 shadow-inner">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-black tracking-tight">Recepciones Inteligentes</h2>
-                    <p className="text-muted-foreground">Motor de ingeniería inversa para reconstrucción de inventario y costeo.</p>
+                    <h2 className="text-2xl font-black tracking-tighter uppercase flex items-center gap-3">
+                        <Wand2 className="w-8 h-8 text-primary" />
+                        Recepciones Inteligentes
+                    </h2>
+                    <p className="text-muted-foreground text-sm font-medium">Reconstrucción automatizada de inventario basado en demanda.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => { setSimulationResult(null); setMarginValidations([]); }} disabled={isSimulating || isApplying}>
-                        <RotateCcw className="w-4 h-4 mr-2" />
-                        Reset
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={handleSimulateInitial}
+                        disabled={isSimulating}
+                        className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 border-2 hover:bg-primary/5"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                        Saldo Inicial
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            setSimulationResult(null);
+                            setMarginValidations([]);
+                        }}
+                        disabled={!simulationResult}
+                        className="h-12 px-4 rounded-2xl font-black uppercase tracking-widest text-xs gap-3"
+                    >
+                        <RotateCcw className="w-4 h-4" />
                     </Button>
                     <Button
                         onClick={handleSimulate}
-                        disabled={isSimulating || isApplying}
-                        className="bg-primary text-primary-foreground font-bold"
+                        disabled={isSimulating}
+                        className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all"
                     >
-                        {isSimulating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-                        1. Simular Stock
+                        {isSimulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                        1. Simular Demanda
                     </Button>
+
+                    <Dialog open={showSC204} onOpenChange={setShowSC204}>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                disabled={!simulationResult || simulationResult.receipts.length === 0}
+                                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 border-2 border-blue-500/50 text-blue-600 hover:bg-blue-50"
+                            >
+                                <Printer className="w-4 h-4" />
+                                Exportar SC-2-04
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 font-black uppercase tracking-widest text-sm">
+                                    <FileCheck className="w-5 h-5 text-primary" />
+                                    Formalización de Recepción (SC-2-04)
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                                <div className="space-y-4 border-r pr-6">
+                                    <div className="flex items-center gap-2 text-primary mb-2">
+                                        <Building2 className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Proveedor</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase font-bold opacity-60">Nombre</Label>
+                                            <Input value={sc204Metadata.proveedor_nombre} onChange={e => setSc204Metadata({...sc204Metadata, proveedor_nombre: e.target.value})} className="h-9 text-xs font-bold" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase font-bold opacity-60">Código</Label>
+                                            <Input value={sc204Metadata.proveedor_codigo} onChange={e => setSc204Metadata({...sc204Metadata, proveedor_codigo: e.target.value})} className="h-9 text-xs font-bold" />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-primary mt-6 mb-2">
+                                        <Truck className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Transportador</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase font-bold opacity-60">Nombre Completo</Label>
+                                            <Input value={sc204Metadata.transportador_nombre} onChange={e => setSc204Metadata({...sc204Metadata, transportador_nombre: e.target.value})} className="h-9 text-xs font-bold" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold opacity-60">C.I.</Label>
+                                                <Input value={sc204Metadata.transportador_ci} onChange={e => setSc204Metadata({...sc204Metadata, transportador_ci: e.target.value})} className="h-9 text-xs font-bold" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase font-bold opacity-60">Chapa</Label>
+                                                <Input value={sc204Metadata.chapa} onChange={e => setSc204Metadata({...sc204Metadata, chapa: e.target.value})} className="h-9 text-xs font-bold" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-6">
+                                        <Button onClick={handleExportSC204} className="w-full h-11 uppercase font-black tracking-widest text-[10px] gap-2 shadow-lg">
+                                            <Download className="w-4 h-4" />
+                                            Generar PDF Oficial
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="bg-muted/30 rounded-2xl p-4 overflow-hidden border border-primary/5">
+                                    <div className="flex items-center gap-2 text-primary mb-4">
+                                        <Warehouse className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Previsualización</span>
+                                    </div>
+                                    <div className="scale-[0.55] origin-top-left -mr-[100%]">
+                                        {simulationResult && settings && (
+                                            <SC204Preview
+                                                data={{
+                                                    entidad_nombre: settings.entidad_nombre,
+                                                    entidad_codigo: settings.entidad_codigo,
+                                                    almacen_nombre: settings.almacen_nombre || 'ALMACÉN PRINCIPAL',
+                                                    almacen_codigo: settings.almacen_codigo || 'ALM-01',
+                                                    fecha_emision: new Date().toLocaleDateString(),
+                                                    numero_consecutivo: String(settings.consecutivo_inicio || 1).padStart(6, '0'),
+                                                    metadata: sc204Metadata,
+                                                    productos: simulationResult.receipts.map(r => ({
+                                                        product: products.find(p => p.cod === r.product_id)!,
+                                                        quantity: r.quantity,
+                                                        total_units: r.total_units,
+                                                        unit_price_cents: r.costo_unitario_cents || 0,
+                                                        total_price_cents: r.costo_total_cents || 0,
+                                                        stock_after: (simulationResult.stockImpact.get(r.product_id)?.simulated || 0)
+                                                    })),
+                                                    total_importe_cents: simulationResult.receipts.reduce((sum, r) => sum + (r.costo_total_cents || 0), 0),
+                                                    logo_url: settings.logo_url
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
                     <Button
-                        variant="default"
                         onClick={handleApply}
-                        disabled={!simulationResult || isApplying || simulationResult.receipts.length === 0 || isBlockedByMargin}
-                        className="font-bold bg-green-600 hover:bg-green-700 text-white"
+                        disabled={!simulationResult || simulationResult.receipts.length === 0 || isApplying}
+                        className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-green-600 text-white hover:bg-green-700 disabled:bg-muted disabled:text-muted-foreground"
                     >
-                        {isApplying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                        {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         3. Aplicar Cambios
                     </Button>
                 </div>

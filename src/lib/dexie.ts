@@ -249,6 +249,8 @@ export interface IPVSettings {
   id: string; // "current"
   entidad_nombre: string;
   entidad_codigo: string;
+  almacen_nombre?: string;
+  almacen_codigo?: string;
   persona_entrega: string;
   consecutivo_inicio: number;
   agrupacion_modo: 'GLOBAL' | 'DETALLADO';
@@ -257,6 +259,18 @@ export interface IPVSettings {
   paper_size?: 'LETTER' | 'A4';
   copiloto_activo: boolean;
   updated_at: string;
+}
+
+export interface SC204Metadata {
+  proveedor_nombre: string;
+  proveedor_codigo: string;
+  documento_tipo: string;
+  documento_numero: string;
+  transportador_nombre: string;
+  transportador_ci: string;
+  chapa: string;
+  casilla?: string;
+  guia_aerea?: string;
 }
 
 // --- Dexie Database ---
