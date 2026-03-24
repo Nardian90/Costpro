@@ -1,12 +1,10 @@
 "use client";
 import React from 'react';
-import { Target, BrainCircuit, Activity, Shield, TrendingUp, Zap } from 'lucide-react';
+import { BrainCircuit, Activity, Shield, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AdvancedAnalysis } from '@/services/pick3/Pick3Engine';
-import { IntelligencePlay } from '@/types/pick3';
-import { cn } from '@/lib/utils';
+import { AdvancedAnalysis, IntelligencePlay } from '@/types/pick3';
 
 interface Pick3StrategySectionProps {
   analysis: AdvancedAnalysis;
@@ -18,7 +16,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-      {/* JUGADAS RECOMENDADAS */}
+      {/* Recommended Plays */}
       <Card className="lg:col-span-2 bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
@@ -56,12 +54,12 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
         </CardContent>
       </Card>
 
-      {/* RENDIMIENTO DE ESTRATEGIAS */}
+      {/* Strategy Performance */}
       <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
         <CardHeader>
           <CardTitle className="text-sm font-black uppercase tracking-widest italic flex items-center gap-2">
             <Activity className="w-4 h-4 text-orange-400" />
-            Precisión de Estrategias
+            RENDIMIENTO DE ESTRATEGIAS
           </CardTitle>
           <CardDescription>Backtest histórico (últimas 50 muestras)</CardDescription>
         </CardHeader>

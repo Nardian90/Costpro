@@ -95,7 +95,7 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   const evolutionData = useMemo(() => {
     return history.slice(0, 30).reverse().map(h => ({
       date: h.date,
-      sum: h.result?.reduce((a,b) => a+b, 0) || 0
+      sum: h.result?.reduce((a,b) => (a as number)+(b as number), 0) || 0
     }));
   }, [history]);
 
@@ -138,10 +138,6 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
           </DialogContent>
         </Dialog>
         <div className="h-8 w-8 rounded-full bg-black/40 border border-white/10 text-white flex items-center justify-center cursor-help">
-          <Tooltip
-             contentStyle={{ display: 'none' }}
-             content={<div className="p-2 text-[10px] font-bold">{tooltip}</div>}
-          />
           <Info className="h-4 w-4" />
         </div>
       </div>

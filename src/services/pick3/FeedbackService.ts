@@ -17,10 +17,10 @@ export class Pick3FeedbackService {
         .insert(feedback);
 
       if (error) throw error;
-      logger.info('PICK3_FEEDBACK', 'Feedback saved successfully', { feedback });
+      logger.info('PICK3', 'Feedback saved successfully', { feedback });
       return { success: true };
     } catch (err) {
-      logger.error('PICK3_FEEDBACK', 'Error saving feedback', { err, feedback });
+      logger.error('PICK3', 'Error saving feedback', { err, feedback });
       return { success: false, error: err };
     }
   }
@@ -36,7 +36,7 @@ export class Pick3FeedbackService {
       if (error) throw error;
       return data;
     } catch (err) {
-      logger.error('PICK3_FEEDBACK', 'Error fetching feedback', { err, userId });
+      logger.error('PICK3', 'Error fetching feedback', { err, userId });
       return [];
     }
   }
