@@ -1,0 +1,11 @@
+$ next dev -p 3000 -p "3000"
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 550ms
+
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 1026ms (next.js: 277ms, application-code: 750ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+ GET /login 200 in 98ms (next.js: 31ms, application-code: 67ms)
+[?25h
