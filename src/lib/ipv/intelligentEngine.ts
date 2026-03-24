@@ -261,3 +261,42 @@ export async function aplicarRecepciones(receipts: IntelligentReceipt[]) {
 export async function simularImpacto(receipts: IntelligentReceipt[]): Promise<SimulationResult> {
     throw new Error("Not implemented");
 }
+
+/**
+ * Genera recepciones simuladas basadas en el stock inicial manual del catálogo.
+ */
+export async function generarRecepcionDesdeSaldoInicial(): Promise<SimulationResult> {
+    const products = await db.products.where('stock_inicial_manual').above(0).toArray();
+    const simulationId = uuidv4();
+    const today = new Date().toISOString().split('T')[0];
+
+    const receipts: IntelligentReceipt[] = products.map(p => ({
+        id: uuidv4(),
+        date: today,
+        product_id: p.cod,
+        type: 'INTELLIGENT',
+        level: p.unit_level || 'UNIT',
+        quantity: p.stock_inicial_manual / (p.unit_factor || 1),
+        total_units: p.stock_inicial_manual,
+        source: 'ADJUSTMENT',
+        mode: 'A',
+        simulation_id: simulationId,
+        applied: 0,
+        created_at: new Date().toISOString()
+    }));
+
+    const stockImpact = new Map<string, { current: number; simulated: number }>();
+    for (const p of products) {
+        const current = await calculateActualStock(p.cod);
+        stockImpact.set(p.cod, {
+            current,
+            simulated: current + p.stock_inicial_manual
+        });
+    }
+
+    return {
+        receipts,
+        stockImpact,
+        correctedProducts: products.map(p => p.cod)
+    };
+}
