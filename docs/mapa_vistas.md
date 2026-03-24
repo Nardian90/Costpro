@@ -129,6 +129,8 @@
 | OverviewTab | src/components/views/health/tabs/OverviewTab.tsx | component | Óptimo | MetricCard, useHealthData | 2026-03-24 |
 | POSCart | src/components/views/terminal/views/pos/POSCart.tsx | component | Advertencia | BaseModal, CostProLoader, ProductImage, index, utils | 2026-03-24 |
 | PWAInstallModal | src/components/ui/PWAInstallModal.tsx | component | Óptimo | dialog, utils | 2026-03-24 |
+| Pick3StrategySection | src/components/views/terminal/views/pick3/Pick3StrategySection.tsx | component | Óptimo | badge, card, progress, utils | 2026-03-24 |
+| Pick3Visuals | src/components/views/terminal/views/pick3/Pick3Visuals.tsx | component | Óptimo | card | 2026-03-24 |
 | PipelineTab | src/components/views/health/tabs/PipelineTab.tsx | component | Óptimo | useHealthData, utils | 2026-03-24 |
 | Portal | src/components/ui/Portal.tsx | component | Óptimo |  | 2026-03-24 |
 | PriceSelectorModal | src/components/modals/PriceSelectorModal.tsx | component | Óptimo | BaseModal, index, utils | 2026-03-24 |
@@ -340,7 +342,7 @@
 | NewsView | src/components/views/terminal/views/rss/NewsView.tsx | view | Óptimo | StateRenderer, utils | 2026-03-24 |
 | POSTableView | src/components/views/terminal/views/pos/POSTableView.tsx | view | Óptimo | ProductImage, utils | 2026-03-24 |
 | POSView | src/components/views/terminal/views/pos/POSView.tsx | view | Advertencia | ActionMenu, BarcodeScanner, BaseModal, POSCart, POSTableView, Portal, PriceSelectorModal, QueryInspector, SearchBar, SpeedDial, StateRenderer, StickyCartSummary, ViewSwitcher, drawer, index, skeleton, usePOSView, utils | 2026-03-24 |
-| Pick3IntelligenceView | src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx | view | Óptimo | badge, button, card, scroll-area, separator, tabs, utils | 2026-03-24 |
+| Pick3IntelligenceView | src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx | view | Óptimo | Pick3StrategySection, Pick3Visuals, badge, button, card, scroll-area, separator, tabs, utils | 2026-03-24 |
 | PivotStatementView | src/components/views/terminal/views/ipv/PivotStatementView.tsx | view | Advertencia | button, card, dexie, input, table, utils | 2026-03-24 |
 | ProductReceptionView | src/components/views/terminal/views/inventory/ProductReceptionView.tsx | view | Advertencia | ActionMenu, BaseModal, SecurityScrollContainer, index, supabaseClient, utils | 2026-03-24 |
 | RSSManagementView | src/components/views/terminal/views/rss/RSSManagementView.tsx | view | Óptimo | StateRenderer, utils | 2026-03-24 |

@@ -11,7 +11,7 @@ vi.mock('../../../dexie', () => {
     update: vi.fn(),
     where: vi.fn().mockReturnThis(),
     equals: vi.fn().mockReturnThis(),
-    toArray: vi.fn()
+    toArray: vi.fn(), update: vi.fn()
   };
   return {
     db: {
