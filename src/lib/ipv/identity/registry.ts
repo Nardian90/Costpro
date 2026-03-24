@@ -1,6 +1,6 @@
-import { db, type Customer, type BankTransaction } from '../../dexie';
+import { db, type Customer } from "@/lib/dexie";
+import { normalizeName, similarity, normalizeCliente } from "./normalization";
 import { v4 as uuidv4 } from 'uuid';
-import { normalizeName, similarity } from './normalization';
 
 export type ResolutionSource = 'CATALOG' | 'NEW' | 'PARTIAL' | 'CONFLICT' | 'FUZZY';
 
@@ -18,18 +18,57 @@ export interface CustomerStats {
 }
 
 /**
- * Resolves identity based on input CI and/or Name.
- * Implements bidirectional enrichment and self-healing.
+ * Hybrid Catalog logic: Merges persisted customers with data detected in transactions.
+ * Ensures that any client visible in reports is also visible in the catalog.
+ */
+export async function getHybridCustomers(): Promise<Customer[]> {
+  const [customers, transactions] = await Promise.all([
+    db.customers.toArray(),
+    db.bank_statements.toArray()
+  ]);
+
+  const map = new Map<string, Customer>();
+
+  // 1. Base persistida (Catálogo Maestro)
+  customers.forEach(c => {
+    map.set(c.ci || c.nombre, c);
+  });
+
+  // 2. Enriquecimiento desde transacciones (Clientes Virtuales)
+  transactions.forEach(tx => {
+    const norm = normalizeCliente(tx);
+    const key = norm.ci || norm.nombre;
+
+    if (key && !map.has(key)) {
+      // Crear un registro virtual compatible con la interfaz Customer
+      map.set(key, {
+        ci: norm.ci,
+        nombre: norm.nombre_display,
+        normalized_name: norm.nombre,
+        raw_names: [norm.nombre_display],
+        phone: norm.telefono,
+        card_number: norm.tarjeta,
+        status: (norm.ci && norm.nombre) ? "COMPLETO" : "PARCIAL",
+        source: "AUTOMATICO",
+        created_at: tx.created_at || new Date().toISOString(),
+        updated_at: tx.updated_at || new Date().toISOString()
+      } as Customer);
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+/**
+ * Resolves a customer identity from raw input data.
  */
 export async function resolveIdentity(
   transactionRef: string,
-  inputCi?: string,
-  inputNombre?: string,
+  ci?: string,
+  rawNombre?: string,
   inputPhone?: string,
   inputCard?: string
 ): Promise<IdentityResult> {
-  const ci = inputCi?.trim();
-  const rawNombre = inputNombre?.trim();
   const normalizedInputName = normalizeName(rawNombre || "");
   const phone = inputPhone?.trim();
   const card = inputCard?.trim();

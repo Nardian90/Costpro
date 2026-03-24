@@ -1,10 +1,11 @@
-# ARCHITECTURE AI PIPELINE v8.0 — CostPro
+# ARCHITECTURE AI PIPELINE v8.1 — CostPro
 ## Autonomous Architecture · Knowledge · Documentation · AI Engineering Brain
 
-**Versión:** 8.0.0 (Enterprise Final)
+**Versión:** 8.1.0 (Enterprise Stabilized)
 **Estándares:** ISO/IEC 26514, Diátaxis Framework
-**Arquitectura:** Híbrida (AST Determinista + IA Probabilística + RAG)
+**Arquitectura:** Híbrida (AST Determinista + IA Probabilística + RAG Incremental)
 **Estado:** Listo para producción (Copy-Paste)
+**Nota:** Incluye correcciones de estabilidad para Fase 14 (RAG Engine).
 
 ---
 
@@ -16,11 +17,11 @@
 
 **Reglas Críticas de Ejecución:**
 1.  **Leer Estado:** Siempre iniciar leyendo `/docs/automation/pipeline_state.yaml`.
-2.  **Una Fase por Día:** Ejecutar únicamente la fase indicada por `currentPhase`.
+2.  **Una Fase por Día:** Ejecutar únicamente la fase indicada por `currentPhase` (excepto modo repair).
 3.  **Gobernanza:** Ningún artefacto se commita sin `confidenceScore` y `hashSHA256`.
 4.  **Cuarentena:** Si `confidenceScore < 90`, el artefacto va a `/docs/automation/quarantine/` y se notifica.
 5.  **Determinismo:** Fases 1-6 deben usar análisis estático (AST), no IA generativa pura.
-6.  **RAG:** Fase 14 debe generar embeddings y vector index, no un JSON monolítico.
+6.  **RAG Estable (Fase 14):** Debe ser **incremental**, **no bloqueante** y ejecutada por script especializado (`rag_indexer.py`), no por generación LLM directa.
 7.  **Performance Tracking:** Cada fase debe registrar `startTime`, `endTime`, `durationMs` en `architecture_audit.json`.
 
 ---
@@ -33,7 +34,7 @@
 ```yaml
 currentPhase: 1
 lastExecution: null
-pipelineVersion: 8.0.0
+pipelineVersion: 8.1.0
 cycle: 1
 schedulerMode: normal           # normal | repair | light
 documentationModel: ISO_26514 + Diataxis
@@ -47,6 +48,17 @@ reviewQueue: docs/automation/review_queue.json
 ai_embeddings_path: ai_context/ai_embeddings/
 ai_vector_index_path: ai_context/ai_vector_index/
 humanFeedbackStore: docs/automation/human_feedback.json
+
+# Configuración Específica RAG (Fase 14)
+rag_engine:
+  mode: incremental           # full | incremental
+  last_indexed_hash: ""       # Hash del estado anterior del conocimiento
+  batch_size: 50              # Archivos por lote para evitar timeouts
+  embedding_model: "text-embedding-3-small" # Modelo dedicado
+  retry_policy:
+    max_attempts: 3
+    backoff_seconds: 60
+  non_blocking: true          # Si falla, no detiene el pipeline
 ```
 
 ---
@@ -75,12 +87,13 @@ El pipeline mantiene y valida la siguiente estructura de directorios y archivos.
 - `knowledge/docs/explanation/` (Conceptos y decisiones)
 - `knowledge/iso_manual/` (Manual conforme a ISO/IEC 26514)
 
-### 3.4 Capa de Contexto IA (Engine 3 - RAG)
+### 3.4 Capa de Contexto IA (Engine 3 - RAG Optimizado)
 - `knowledge_graph.json` (Grafo semántico)
 - `ai_context/` (Contextos modulares)
-- `ai_context/ai_embeddings/` (Vectores por chunk)
+- `ai_context/ai_embeddings/` (Vectores por chunk - Incremental)
 - `ai_context/ai_vector_index/` (Índice de recuperación)
-- `ai_context/vector_index.json` (Metadatos del índice)
+- `ai_context/vector_index_stats.json` (Estadísticas de indexación)
+- `ai_context/previous_hashes.json` (Control de cambios para delta)
 
 ### 3.5 Gobernanza y Metadata
 - `public/_meta/*.meta.json` (Sidecars de versionado y confianza)
@@ -150,6 +163,15 @@ Cada ejecución de fase debe registrar timing en `architecture_audit.json`:
 }
 ```
 
+### 4.6 Tolerancia a Fallos en RAG (Fase 14)
+- La Fase 14 es **No Bloqueante** para las Fases 1-13 y 15-18.
+- Si la Fase 14 falla:
+  1.  El pipeline continúa a la Fase 15.
+  2.  Se marca `rag_status: degraded` en `architecture_audit.json`.
+  3.  El sistema usa el índice vectorial de la versión anterior (que sigue siendo válido).
+  4.  Se genera una tarea en `review_queue.json` para reparación asíncrona.
+- **Justificación:** La búsqueda semántica es una mejora, pero la integridad arquitectónica (Fases 1-6) es crítica.
+
 ---
 
 ## 5. FASES DEL PIPELINE (18 FASES)
@@ -182,6 +204,7 @@ El pipeline se divide en 3 Motores de Ejecución.
 - **Acción:** Analizar historial Git (nuevos, borrados, refactor).
 - **Salida:** `architecture_changes.json`.
 - **Regla:** Si hay cambio estructural mayor → Forzar re-ejecución de Fases 1 y 3.
+- **Importante:** Genera `delta_hash` usado por la Fase 14.
 - **Timing:** Registrar en audit.
 
 **FASE 5 — Architecture Metrics**
@@ -264,19 +287,27 @@ El pipeline se divide en 3 Motores de Ejecución.
 - **Salida:** `docs/automation/PIPELINE_IMPROVEMENTS.md`.
 - **Timing:** Registrar en audit.
 
-### ENGINE 3: AI RAG CONTEXT (Optimización)
-*Evita saturar ventana de contexto de LLM.*
+### ENGINE 3: AI RAG CONTEXT (Optimizado & Incremental)
+*Evita saturar ventana de contexto de LLM. Ejecución vía script especializado.*
 
-**FASE 14 — AI Retrieval Context System**
-- **Objetivo:** Generar contexto modular para IA (RAG).
+**FASE 14 — AI Retrieval Context System (Stable)**
+- **Objetivo:** Actualizar índice vectorial RAG de forma incremental y eficiente.
+- **Motor:** Script Python especializado (`rag_indexer.py`), NO generación LLM directa.
 - **Acción:**
-  1.  **Chunking:** Dividir artefactos en bloques semánticos.
-  2.  **Embeddings:** Generar vectores por chunk → `ai_context/ai_embeddings/`.
-  3.  **Index:** Construir índice vectorial → `ai_context/ai_vector_index/`.
-  4.  **Summaries:** Generar resúmenes por dominio.
-- **Salida:** `ai_context/vector_index.json`, `ai_context/*`.
-- **Regla:** NO generar un `ai_context_index.json` monolítico.
-- **Timing:** Registrar en audit.
+  1.  **Delta Detection:** Comparar hash de archivos en `knowledge/` y `public/` contra `last_indexed_hash` (de Fase 4).
+  2.  **Selective Chunking:** Solo procesar archivos nuevos o modificados.
+  3.  **Batched Embedding:** Enviar solicitudes a la API de embeddings en lotes de `batch_size` (ej. 50 chunks).
+  4.  **Upsert Index:** Actualizar `ai_context/ai_vector_index/` sin borrar lo existente.
+  5.  **Cache Validation:** Si un archivo no cambió, reutilizar su vector existente.
+- **Salida:**
+  - `ai_context/ai_embeddings/*.json` (Solo nuevos/actualizados)
+  - `ai_context/ai_vector_index/manifest.json` (Mapa de IDs a archivos)
+  - `ai_context/vector_index_stats.json` (Conteo total, últimos actualizados)
+- **Regla de Estabilidad:**
+  - Si el proceso excede el 80% del tiempo asignado, guardar checkpoint y continuar en siguiente ciclo (Estado `partial`).
+  - Si falla la API de embeddings > 3 veces → Marcar `rag_status: degraded`, registrar en audit, **NO bloquear** pipeline.
+  - Si **NO hay cambios** detectados en Fase 4 → Marcar Fase 14 como `SKIPPED` (duración 0ms).
+- **Timing:** Registrar en audit (incluye `embedding_calls_count` y `tokens_used`).
 
 ### VALIDACIONES FINALES
 
@@ -296,22 +327,26 @@ El pipeline se divide en 3 Motores de Ejecución.
 ## 6. FLUJO DIARIO DE EJECUCIÓN (STEP-BY-STEP)
 
 1.  **Lock:** Bloquear `/docs/automation/pipeline_state.yaml` para evitar concurrencia.
-2.  **Read:** Leer `currentPhase`, `schedulerMode`, `confidenceThreshold`.
+2.  **Read:** Leer `currentPhase`, `schedulerMode`, `confidenceThreshold`, `rag_engine`.
 3.  **Start Timer:** Registrar `phaseStartTime = now()`.
 4.  **Determine:**
     -   Si `currentPhase > 18` → `currentPhase = 1`, `cycle += 1`.
-    -   Si `schedulerMode = repair` → Ejecutar solo fases [1, 3, 6, 13, 16].
-    -   Si `schedulerMode = light` → Ejecutar solo fases [4, 6, 15, 16].
-    -   Si `normal` → Ejecutar `currentPhase`.
+    -   Si `schedulerMode = repair` → Ejecutar solo fases [1, 3, 6, 13, 16] (Skip 14).
+    -   Si `schedulerMode = light` → Ejecutar solo fases [4, 6, 15, 16] (Skip 14).
+    -   Si `normal` y `currentPhase == 14`:
+        -   Verificar `architecture_changes.json` (Fase 4).
+        -   Si **NO hay cambios**: Marcar Fase 14 `SKIPPED`, avanzar a 15.
+        -   Si **HAY cambios**: Ejecutar script `rag_indexer.py`.
+    -   Si `normal` y `currentPhase != 14` → Ejecutar `currentPhase`.
 5.  **Execute:**
     -   Validar inputs.
-    -   Ejecutar lógica (AST o IA según fase).
+    -   Ejecutar lógica (AST, IA o Script RAG según fase).
     -   Generar artefacto temporal.
     -   Calcular `confidenceScore` y `hashSHA256`.
     -   Generar metadata sidecar.
 6.  **Stop Timer:** Registrar `phaseEndTime = now()`, calcular `durationMs`.
 7.  **Validate:**
-    -   Si `confidenceScore < threshold` → Mover a `quarantine/`, actualizar `review_queue.json`, **NO COMMIT**.
+    -   Si `confidenceScore < threshold` (y fase no es 14) → Mover a `quarantine/`, actualizar `review_queue.json`, **NO COMMIT**.
     -   Si `integrityScore` baja > 5 puntos → **ROLLBACK** a versión anterior.
     -   Si todo OK → Mover a `public/`, copiar a `_archive/`, actualizar `_meta/`.
 8.  **Update Audit:** Registrar timing en `public/architecture_audit.json`:
@@ -322,13 +357,16 @@ El pipeline se divide en 3 Motores de Ejecución.
       "startTime": "<ISO8601>",
       "endTime": "<ISO8601>",
       "durationMs": <integer>,
-      "status": "success|failed|quarantined",
+      "status": "success|failed|quarantined|skipped",
       "artifactsGenerated": [...]
     }
     ```
 9.  **Update State:** Incrementar `currentPhase`, actualizar `lastExecution` en `pipeline_state.yaml`.
 10. **Unlock:** Liberar lock del estado y emitir log estructurado.
-11. **RAG Trigger:** Si es Fase 14, ejecutar `build_vector_index.py`.
+11. **RAG Trigger (Solo Fase 14):**
+    -   Invocar `rag_indexer.py` como subprocess.
+    -   Capturar `stderr` para detectar fallos de API.
+    -   Si `non_blocking: true` y falla → Continuar a Fase 15 con warning.
 
 ---
 
@@ -337,36 +375,38 @@ El pipeline se divide en 3 Motores de Ejecución.
 | Modo | Condición | Fases Activas | Propósito |
 | :--- | :--- | :--- | :--- |
 | **Normal** | Default | 1 → 18 (Secuencial) | Evolución completa diaria. |
-| **Repair** | `integrityScore < 80` | 1, 3, 6, 13, 16 | Reconstruir arquitectura y grafo crítico. |
-| **Light** | Sin cambios Git mayores | 4, 6, 15, 16 | Validación rápida sin regeneración pesada. |
+| **Repair** | `integrityScore < 80` | 1, 3, 6, 13, 16 | Reconstruir arquitectura y grafo crítico. (Skip 14) |
+| **Light** | Sin cambios Git mayores | 4, 6, 15, 16 | Validación rápida sin regeneración pesada. (Skip 14) |
 
 ---
 
 ## 8. CHECKLIST DE IMPLEMENTACIÓN TÉCNICA
 
-- [ ] Crear `/docs/automation/pipeline_state.yaml` con el contenido de la Sección 2.
+- [ ] Crear `/docs/automation/pipeline_state.yaml` con el contenido de la Sección 2 (incluye `rag_engine`).
 - [ ] Crear directorios: `ai_context/ai_embeddings/`, `ai_context/ai_vector_index/`, `public/_meta/`, `public/_archive/`.
 - [ ] Implementar script `canonicalize_sha256.py` para hashing determinista.
 - [ ] Implementar script `commit_artifact.py` con lógica de cuarentena y versionado.
-- [ ] Implementar script `generate_embeddings.py` (con modelo real de embeddings).
-- [ ] **NUEVO:** Implementar timing capture en cada fase (start/end/duration).
-- [ ] **NUEVO:** Actualizar `architecture_audit.json` con estructura de performance metrics.
+- [ ] **CRÍTICO:** Implementar script `rag_indexer.py` (con lógica incremental, batching y manejo de errores).
+- [ ] **CRÍTICO:** Implementar lógica de `delta_detection` (comparar hashes actuales vs `previous_hashes.json`).
+- [ ] Implementar timing capture en cada fase (start/end/duration).
+- [ ] Actualizar `architecture_audit.json` con estructura de performance metrics.
 - [ ] Configurar Job Diario (Cron/Cloud Scheduler) para ejecutar el scheduler.
 - [ ] Configurar Webhook para notificar `review_queue.json` (Slack/Jira/Email).
 - [ ] Definir equipo de revisión humana para artefactos en cuarentena.
-- [ ] Ejecutar prueba de Dry-Run para validar rollback.
+- [ ] Ejecutar prueba de Dry-Run para validar rollback y fallo no bloqueante de Fase 14.
 
 ---
 
 ## 9. RESULTADO ESPERADO
 
-Al implementar este pipeline v8.0, CostPro tendrá:
+Al implementar este pipeline v8.1, CostPro tendrá:
 1.  **Arquitectura Viva:** Documentación técnica 100% sincronizada con el código (AST).
 2.  **Documentación Profesional:** Cumplimiento ISO/IEC 26514 y experiencia de usuario Diátaxis.
-3.  **IA Confiable:** Contexto RAG modular que evita alucinaciones y saturación de ventana.
+3.  **IA Confiable y Eficiente:** Contexto RAG **incremental** que evita alucinaciones, saturación de ventana y timeouts.
 4.  **Gobernanza:** Control de calidad con scores de confianza, versionado y rollback automático.
 5.  **Auto-Evolución:** El sistema recomienda mejoras arquitectónicas y optimiza su propio pipeline.
 6.  **Performance Visibility:** Métricas de timing por fase para identificar cuellos de botella.
+7.  **Estabilidad Operativa:** La Fase 14 ya no bloquea el pipeline si falla el servicio de embeddings.
 
 ---
-*Fin del Documento ARCHITECTURE AI PIPELINE v8.0*
+*Fin del Documento ARCHITECTURE AI PIPELINE v8.1*
