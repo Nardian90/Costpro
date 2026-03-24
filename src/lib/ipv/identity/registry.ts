@@ -43,8 +43,9 @@ export async function resolveIdentity(
       const updates: Partial<Customer> = {};
       if (!fromCatalog.phone && phone) updates.phone = phone;
       if (!fromCatalog.card_number && card) updates.card_number = card;
-      if (rawNombre && !fromCatalog.raw_names.includes(rawNombre)) {
-          updates.raw_names = [...fromCatalog.raw_names, rawNombre];
+      const currentRawNames = fromCatalog.raw_names || [];
+      if (rawNombre && !currentRawNames.includes(rawNombre)) {
+          updates.raw_names = [...currentRawNames, rawNombre];
       }
 
       if (Object.keys(updates).length > 0) {
