@@ -1,5 +1,6 @@
 import { SimulationResult, StrategyConfig, Pick3Result } from '@/types/pick3';
 import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 const STORAGE_KEYS = {
   HISTORY: 'pick3_draw_history',
@@ -14,63 +15,103 @@ export class Pick3Storage {
   static async saveHistory(results: Pick3Result[]) {
     if (!results.length) return;
 
-    // Map to DB schema
-    const rows = results.map(r => ({
-      draw_date: r.date,
-      draw_time: r.draw_time,
-      result: r.result
-    }));
+    try {
+      // Map to DB schema
+      const rows = results.map(r => ({
+        draw_date: r.date,
+        draw_time: r.draw_time,
+        result: r.result
+      }));
 
-    const { error } = await supabase
-      .from('pick3_history')
-      .upsert(rows, { onConflict: 'draw_date,draw_time' });
+      const { error } = await supabase
+        .from('pick3_history')
+        .upsert(rows, { onConflict: 'draw_date,draw_time' });
 
-    if (error) console.error('[Pick3Storage] Error saving history:', error);
+      if (error) {
+        logger.error('PICK3', 'Error saving history to Supabase', { error, rows });
+        throw error;
+      }
 
-    // Fallback/Cache
-    if (isBrowser) {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+      logger.info('PICK3', 'History saved successfully', { count: results.length });
+
+      // Fallback/Cache
+      if (isBrowser) {
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+      }
+    } catch (err) {
+       console.error('[Pick3Storage] Critical error saving history:', err);
+       // We still cache locally if possible even if Supabase fails
+       if (isBrowser) {
+         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+       }
+       throw err;
     }
   }
 
   static async getHistory(): Promise<Pick3Result[]> {
-    const { data, error } = await supabase
-      .from('pick3_history')
-      .select('*')
-      .order('draw_date', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('pick3_history')
+        .select('*')
+        .order('draw_date', { ascending: false });
 
-    if (error || !data) {
-      console.warn('[Pick3Storage] Error fetching from Supabase, falling back to local:', error);
-      if (isBrowser) {
-        const local = localStorage.getItem(STORAGE_KEYS.HISTORY);
-        return local ? JSON.parse(local) : [];
+      if (error) {
+        logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
+        return this.getHistoryLocal();
       }
-      return [];
-    }
 
-    return data.map(r => ({
-      date: r.draw_date,
-      draw_time: r.draw_time as any,
-      result: r.result as [number, number, number]
-    }));
+      if (!data) return this.getHistoryLocal();
+
+      const results = data.map(r => ({
+        date: r.draw_date,
+        draw_time: r.draw_time as any,
+        result: r.result as [number, number, number]
+      }));
+
+      // Update cache
+      if (isBrowser) {
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+      }
+
+      return results;
+    } catch (err) {
+      logger.error('PICK3', 'Critical error fetching history', { error: err });
+      return this.getHistoryLocal();
+    }
+  }
+
+  private static getHistoryLocal(): Pick3Result[] {
+    if (isBrowser) {
+      const local = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      return local ? JSON.parse(local) : [];
+    }
+    return [];
   }
 
   static async saveSimulation(userId: string, simulation: SimulationResult) {
-    const { error } = await supabase
-      .from('pick3_simulations')
-      .insert({
-        user_id: userId,
-        config: simulation.config,
-        result: simulation,
-        created_at: new Date().toISOString()
-      });
+    try {
+      const { error } = await supabase
+        .from('pick3_simulations')
+        .insert({
+          user_id: userId,
+          config: simulation.config,
+          result: simulation,
+          created_at: new Date().toISOString()
+        });
 
-    if (error) console.error('[Pick3Storage] Error saving simulation:', error);
+      if (error) {
+        logger.error('PICK3', 'Error saving simulation to Supabase', { error, userId });
+        throw error;
+      }
 
-    if (isBrowser) {
-      const existing = this.getSimulationsLocal();
-      const updated = [simulation, ...existing].slice(0, 10);
-      localStorage.setItem(STORAGE_KEYS.SIMULATIONS, JSON.stringify(updated));
+      if (isBrowser) {
+        const existing = this.getSimulationsLocal();
+        const updated = [simulation, ...existing].slice(0, 10);
+        localStorage.setItem(STORAGE_KEYS.SIMULATIONS, JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error('[Pick3Storage] Error saving simulation:', err);
+      throw err;
     }
   }
 
@@ -81,15 +122,19 @@ export class Pick3Storage {
   }
 
   static async getSimulations(userId: string): Promise<SimulationResult[]> {
-    const { data, error } = await supabase
-      .from('pick3_simulations')
-      .select('result')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    try {
+      const { data, error } = await supabase
+        .from('pick3_simulations')
+        .select('result')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-    if (error || !data) return this.getSimulationsLocal();
-    return data.map(d => d.result as unknown as SimulationResult);
+      if (error || !data) return this.getSimulationsLocal();
+      return data.map(d => d.result as unknown as SimulationResult);
+    } catch (err) {
+      return this.getSimulationsLocal();
+    }
   }
 
   static saveConfig(config: StrategyConfig) {
