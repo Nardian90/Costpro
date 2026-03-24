@@ -123,7 +123,7 @@ export default function Pick3IntelligenceView() {
     if (isNaN(inv) || isNaN(gan)) return;
 
     try {
-      await Pick3FeedbackService.saveFeedback(user.id, inv, gan);
+      await Pick3FeedbackService.saveFeedback({ user_id: user.id, fecha: new Date().toISOString().split("T")[0], inversion: inv, ganancia: gan, estrategia_id: "MANUAL" });
       toast.success("Rendimiento guardado correctamente");
       setFeedbackInput({ inversion: '', ganancia: '' });
     } catch (e) {
