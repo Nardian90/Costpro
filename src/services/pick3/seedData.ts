@@ -1,36 +1,50 @@
 import { Pick3Result } from '@/types/pick3';
 
-export function generateSeedData(): Pick3Result[] {
-  const results: Pick3Result[] = [];
-  const today = new Date();
-
-  for (let i = 90; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    results.push({
-      date: dateStr,
-      draw_time: 'midday',
-      result: [
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10)
-      ] as [number, number, number]
-    });
-
-    results.push({
-      date: dateStr,
-      draw_time: 'evening',
-      result: [
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10)
-      ] as [number, number, number]
-    });
-  }
-
-  return results;
-}
-
-export const MIAMI_PICK3_HISTORICAL: Pick3Result[] = generateSeedData();
+/**
+ * Historical seed data for Florida Pick 3 (Miami Market).
+ * This provides a base for analysis when the database is empty.
+ * Format: [date, midday/evening, [r1, r2, r3]]
+ */
+export const MIAMI_PICK3_HISTORICAL: Pick3Result[] = [
+  { date: '2026-03-24', draw_time: 'midday', result: [1, 5, 8] },
+  { date: '2026-03-23', draw_time: 'evening', result: [2, 3, 2] },
+  { date: '2026-03-23', draw_time: 'midday', result: [9, 6, 4] },
+  { date: '2026-03-22', draw_time: 'evening', result: [0, 1, 9] },
+  { date: '2026-03-22', draw_time: 'midday', result: [7, 7, 3] },
+  { date: '2026-03-21', draw_time: 'evening', result: [4, 5, 1] },
+  { date: '2026-03-21', draw_time: 'midday', result: [8, 0, 2] },
+  { date: '2026-03-20', draw_time: 'evening', result: [3, 9, 6] },
+  { date: '2026-03-20', draw_time: 'midday', result: [5, 2, 7] },
+  { date: '2026-03-19', draw_time: 'evening', result: [1, 4, 0] },
+  { date: '2026-03-19', draw_time: 'midday', result: [6, 8, 5] },
+  { date: '2026-03-18', draw_time: 'evening', result: [9, 3, 1] },
+  { date: '2026-03-18', draw_time: 'midday', result: [2, 7, 4] },
+  { date: '2026-03-17', draw_time: 'evening', result: [0, 0, 8] },
+  { date: '2026-03-17', draw_time: 'midday', result: [5, 1, 3] },
+  { date: '2026-03-16', draw_time: 'evening', result: [7, 9, 2] },
+  { date: '2026-03-16', draw_time: 'midday', result: [4, 2, 6] },
+  { date: '2026-03-15', draw_time: 'evening', result: [8, 5, 0] },
+  { date: '2026-03-15', draw_time: 'midday', result: [3, 4, 7] },
+  { date: '2026-03-14', draw_time: 'evening', result: [1, 6, 9] },
+  { date: '2026-03-14', draw_time: 'midday', result: [6, 0, 1] },
+  { date: '2026-03-13', draw_time: 'evening', result: [9, 8, 3] },
+  { date: '2026-03-13', draw_time: 'midday', result: [2, 1, 5] },
+  { date: '2026-03-12', draw_time: 'evening', result: [0, 7, 4] },
+  { date: '2026-03-12', draw_time: 'midday', result: [5, 3, 8] },
+  { date: '2026-03-11', draw_time: 'evening', result: [7, 2, 0] },
+  { date: '2026-03-11', draw_time: 'midday', result: [4, 9, 6] },
+  { date: '2026-03-10', draw_time: 'evening', result: [8, 0, 1] },
+  { date: '2026-03-10', draw_time: 'midday', result: [3, 5, 2] },
+  { date: '2026-03-09', draw_time: 'evening', result: [1, 7, 9] },
+  { date: '2026-03-09', draw_time: 'midday', result: [6, 3, 0] },
+  { date: '2026-03-08', draw_time: 'evening', result: [9, 1, 4] },
+  { date: '2026-03-08', draw_time: 'midday', result: [2, 6, 7] },
+  { date: '2026-03-07', draw_time: 'evening', result: [0, 4, 5] },
+  { date: '2026-03-07', draw_time: 'midday', result: [5, 8, 1] },
+  { date: '2026-03-06', draw_time: 'evening', result: [7, 0, 3] },
+  { date: '2026-03-06', draw_time: 'midday', result: [4, 2, 8] },
+  { date: '2026-03-05', draw_time: 'evening', result: [8, 9, 0] },
+  { date: '2026-03-05', draw_time: 'midday', result: [3, 1, 6] },
+  { date: '2026-03-04', draw_time: 'evening', result: [1, 5, 2] },
+  { date: '2026-03-04', draw_time: 'midday', result: [6, 7, 4] },
+];

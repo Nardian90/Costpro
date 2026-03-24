@@ -12,6 +12,7 @@ export interface AdvancedAnalysis extends FrequencyAnalysis {
   movingAverages: {
     global: Record<number, number[]>; // 7-day, 30-day window frequencies
   };
+  strategyAccuracy?: Record<string, number>;
 }
 
 export class Pick3Engine {
@@ -29,7 +30,7 @@ export class Pick3Engine {
     const expected = (subset.length * 3) / 10;
     const biasScore: Record<number, number> = {};
     Object.entries(baseFreq.global).forEach(([num, freq]) => {
-      biasScore[parseInt(num)] = (freq - expected) / expected;
+      biasScore[parseInt(num)] = (freq - expected) / (expected || 1);
     });
 
     // 2. Markov Chain Transitions (Next Digit Probability)
@@ -75,14 +76,42 @@ export class Pick3Engine {
       }
     });
 
+    // 5. Strategy Accuracy (Simplified Backtest)
+    const accuracy: Record<string, number> = {
+      'Hot Frequency': this.backtest('hot', 50),
+      'Cold Reversion': this.backtest('cold', 50)
+    };
+
     return {
       ...baseFreq,
       entropy,
       biasScore,
       markovTransitions: markov,
       patterns: { sums, oddEven, highLow },
-      movingAverages: { global: {} } // Placeholder
+      movingAverages: { global: {} },
+      strategyAccuracy: accuracy
     };
+  }
+
+  private backtest(strategy: 'hot' | 'cold', samples: number = 20): number {
+    if (this.history.length < samples + 10) return 0;
+    let hits = 0;
+
+    for (let i = 1; i <= samples; i++) {
+       const pastHistory = this.history.slice(i);
+       const engine = new Pick3Engine(pastHistory);
+       const analysis = engine.analyzeFrequency(30);
+       const realResult = this.history[i-1].result;
+
+       let predicted: number[] = [];
+       if (strategy === 'hot') predicted = analysis.hotNumbers;
+       else predicted = analysis.coldNumbers;
+
+       // Simple hit check: if any of the predicted numbers appeared in any position
+       if (realResult.some(n => predicted.includes(n))) hits++;
+    }
+
+    return (hits / samples) * 100;
   }
 
   public analyzeFrequency(days: number = 30): FrequencyAnalysis {
@@ -104,7 +133,7 @@ export class Pick3Engine {
     }
 
     subset.forEach((draw) => {
-      draw.result.forEach((num, pos) => {
+      draw.result?.forEach((num, pos) => {
         if (pos >= 0 && pos <= 2) {
           posFreq[pos as 0|1|2][num]++;
         }
@@ -115,7 +144,7 @@ export class Pick3Engine {
     const found = new Set();
     for (let i = 0; i < this.history.length; i++) {
         const draw = this.history[i];
-        draw.result.forEach(num => {
+        draw.result?.forEach(num => {
             if (!found.has(num)) {
                 gaps[num] = Math.floor(i / 2);
                 found.add(num);
@@ -142,30 +171,29 @@ export class Pick3Engine {
 
     // 1. Positional Alignment (30%)
     const posScore = (
-        analysis.positional[0][combination[0]] +
-        analysis.positional[1][combination[1]] +
-        analysis.positional[2][combination[2]]
+        (analysis.positional[0][combination[0]] || 0) +
+        (analysis.positional[1][combination[1]] || 0) +
+        (analysis.positional[2][combination[2]] || 0)
     ) / (Math.max(1, (this.history.length / 10) * 3));
 
     // 2. Mean Reversion / Gaps (20%)
-    const gapWeight = (analysis.gaps[combination[0]] + analysis.gaps[combination[1]] + analysis.gaps[combination[2]]) / 60;
+    const gapWeight = ((analysis.gaps[combination[0]] || 0) + (analysis.gaps[combination[1]] || 0) + (analysis.gaps[combination[2]] || 0)) / 60;
 
     // 3. Pattern Harmony (20%)
     const sum = combination.reduce((a,b) => a+b,0);
-    const sumScore = (analysis.patterns.sums[sum] || 0) / (this.history.length / 28); // Average spread
+    const sumScore = (analysis.patterns.sums[sum] || 0) / (Math.max(1, this.history.length / 28));
 
     // 4. Markov Probability (30%)
     const lastDraw = this.history[0]?.result || [0,0,0];
     const markovProb = (
-      (analysis.markovTransitions[lastDraw[0]][combination[0]] || 0) +
-      (analysis.markovTransitions[lastDraw[1]][combination[1]] || 0) +
-      (analysis.markovTransitions[lastDraw[2]][combination[2]] || 0)
-    ) / (this.history.length / 5);
+      (analysis.markovTransitions[lastDraw[0]]?.[combination[0]] || 0) +
+      (analysis.markovTransitions[lastDraw[1]]?.[combination[1]] || 0) +
+      (analysis.markovTransitions[lastDraw[2]]?.[combination[2]] || 0)
+    ) / (Math.max(1, this.history.length / 5));
 
     score = (posScore * 0.3) + (gapWeight * 0.2) + (sumScore * 0.2) + (markovProb * 0.3);
 
-    // Normalization boost for entropy (high entropy = more unpredictable)
-    const entropyFactor = analysis.entropy / 3.32; // max entropy for 10 digits is ~3.32 bits
+    const entropyFactor = analysis.entropy / 3.32;
 
     return Math.min(Math.max(score * 100 * (1.5 - (entropyFactor || 0)), 0), 100);
   }
@@ -229,7 +257,6 @@ export class Pick3Engine {
         const dailyCost = betsPerDay * config.costPerBet;
         currentCapital -= dailyCost;
 
-        // Dynamic probability based on risk level and algorithm efficiency
         const winProb = config.riskLevel === 'high' ? 0.008 : config.riskLevel === 'medium' ? 0.004 : 0.002;
         let dailyWin = 0;
 
