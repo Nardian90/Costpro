@@ -18,13 +18,13 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-      {/* Recommended Plays */}
+      {/* JUGADAS RECOMENDADAS */}
       <Card className="lg:col-span-2 bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-xl font-black italic tracking-tight uppercase flex items-center gap-2">
               <BrainCircuit className="w-5 h-5 text-primary" />
-              Jugadas Recomendadas
+              JUGADAS RECOMENDADAS
             </CardTitle>
             <CardDescription>Basado en algoritmos de frecuencia y cadenas de Markov</CardDescription>
           </div>
@@ -56,7 +56,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
         </CardContent>
       </Card>
 
-      {/* Strategy Performance */}
+      {/* RENDIMIENTO DE ESTRATEGIAS */}
       <Card className="bg-background/40 backdrop-blur-md border-border/50 shadow-2xl">
         <CardHeader>
           <CardTitle className="text-sm font-black uppercase tracking-widest italic flex items-center gap-2">
@@ -70,7 +70,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
             <div key={name} className="space-y-2">
               <div className="flex justify-between items-end">
                 <span className="text-xs font-bold uppercase text-muted-foreground">{name}</span>
-                <span className="text-sm font-black text-primary italic">{acc.toFixed(1)}% Hits</span>
+                <span className="text-sm font-black text-primary italic">{acc.toFixed(1)}% Aciertos</span>
               </div>
               <Progress value={acc} className="h-1.5" />
             </div>
