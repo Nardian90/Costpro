@@ -1,10 +1,12 @@
 "use client";
 import React from 'react';
-import { BrainCircuit, Activity, Shield, TrendingUp } from 'lucide-react';
+import { Target, BrainCircuit, Activity, Shield, TrendingUp, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AdvancedAnalysis, IntelligencePlay } from '@/types/pick3';
+import { AdvancedAnalysis } from '@/types/pick3';
+import { IntelligencePlay } from '@/types/pick3';
+import { cn } from '@/lib/utils';
 
 interface Pick3StrategySectionProps {
   analysis: AdvancedAnalysis;
@@ -22,7 +24,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
           <div>
             <CardTitle className="text-xl font-black italic tracking-tight uppercase flex items-center gap-2">
               <BrainCircuit className="w-5 h-5 text-primary" />
-              JUGADAS RECOMENDADAS
+              Jugadas Recomendadas
             </CardTitle>
             <CardDescription>Basado en algoritmos de frecuencia y cadenas de Markov</CardDescription>
           </div>
@@ -59,7 +61,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
         <CardHeader>
           <CardTitle className="text-sm font-black uppercase tracking-widest italic flex items-center gap-2">
             <Activity className="w-4 h-4 text-orange-400" />
-            RENDIMIENTO DE ESTRATEGIAS
+            Precisión de Estrategias
           </CardTitle>
           <CardDescription>Backtest histórico (últimas 50 muestras)</CardDescription>
         </CardHeader>
@@ -68,7 +70,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
             <div key={name} className="space-y-2">
               <div className="flex justify-between items-end">
                 <span className="text-xs font-bold uppercase text-muted-foreground">{name}</span>
-                <span className="text-sm font-black text-primary italic">{acc.toFixed(1)}% Aciertos</span>
+                <span className="text-sm font-black text-primary italic">{acc.toFixed(1)}% Hits</span>
               </div>
               <Progress value={acc} className="h-1.5" />
             </div>
