@@ -1,69 +1,83 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState, useMemo } from "react";
+import {
+  FileText, Download, Settings2, Calendar, AlertCircle,
+  CheckCircle2, Play, Loader2, History, X, Search,
+  ArrowRight
+} from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { format, isWithinInterval, parseISO, isBefore, addDays } from "date-fns";
+import { toast } from "sonner";
+
+import { db, Product, ReconciliationLine, ProductMovement } from "@/lib/dexie";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, Play, Settings2, History, AlertCircle, CheckCircle2, Loader2, Calendar } from "lucide-react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/dexie";
-import { MVTTemplate, MVTSettings, MVTExportLog } from "@/lib/ipv/mvt/types";
-import { STANDARD_MVT_TEMPLATE, DEFAULT_MVT_SETTINGS } from "@/lib/ipv/mvt/defaults";
-import { generateMVTContent, downloadMVT } from "@/lib/ipv/mvt/engine";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+} from "@/components/ui/dialog";
+
+import { generateMVTContent, downloadMVT, MVTExportContext } from "@/lib/ipv/mvt/engine";
+import { STANDARD_MVT_TEMPLATE } from "@/lib/ipv/mvt/defaults";
+import { MVTTemplate, MVTExportLog } from "@/lib/ipv/mvt/types";
 import { MVTPreview } from "./MVTPreview";
 import { TemplateEditor } from "./TemplateEditor";
-import { toast } from "sonner";
-import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
-export const MVTExportView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("export");
+export const MVTExportView = () => {
   const [dateRange, setDateRange] = useState({
-    start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    start: format(new Date(), 'yyyy-MM-01'),
     end: format(new Date(), 'yyyy-MM-dd')
   });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentTemplate, setCurrentTemplate] = useState<MVTTemplate>(STANDARD_MVT_TEMPLATE);
 
   // DB Data
   const templates = useLiveQuery(() => db.mvt_templates.toArray()) || [];
   const settings = useLiveQuery(() => db.mvt_settings.get('current'));
-  const exportLogs = useLiveQuery(() => db.mvt_exports_log.orderBy('timestamp').reverse().limit(10).toArray()) || [];
+  const exportLogs = useLiveQuery(() => db.mvt_exports_log.orderBy('timestamp').reverse().limit(20).toArray()) || [];
   const products = useLiveQuery(() => db.products.toArray()) || [];
-  const reconciliationLines = useLiveQuery(() =>
-    db.reconciliation_lines
-      .where('fecha_operacion')
-      .between(dateRange.start, dateRange.end, true, true)
-      .toArray()
-  ) || [];
 
-  const [currentTemplate, setCurrentTemplate] = useState<MVTTemplate>(STANDARD_MVT_TEMPLATE);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [previewContent, setPreviewContent] = useState<string>("");
+  // We need ALL movements and lines to calculate dynamic stock
+  const allReconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray()) || [];
+  const allProductMovements = useLiveQuery(() => db.product_movements.toArray()) || [];
 
-  useEffect(() => {
-    if (templates.length === 0) {
-      db.mvt_templates.put(STANDARD_MVT_TEMPLATE);
-    } else {
-      const active = templates.find(t => t.id === settings?.defaultTemplateId) || templates[0];
-      setCurrentTemplate(active);
-    }
+  // Filtered data for the CURRENT export (movements section)
+  const reconciliationLinesInRange = useMemo(() => {
+    return allReconciliationLines.filter(line => {
+      const date = line.fecha_operacion;
+      return date >= dateRange.start && date <= dateRange.end;
+    });
+  }, [allReconciliationLines, dateRange]);
 
-    if (!settings) {
-      db.mvt_settings.put(DEFAULT_MVT_SETTINGS);
-    }
-  }, [templates, settings]);
+  const prepareExportContext = (): MVTExportContext => {
+    // 1. Calculate Dynamic Existence for each product at the END date
+    const productData = products.map(p => {
+      let stock = p.stock_inicial_manual || 0;
 
-  // Generate Preview
-  useEffect(() => {
-    if (products.length > 0) {
-      const context = prepareExportContext();
-      const content = generateMVTContent(currentTemplate, context);
-      setPreviewContent(content);
-    }
-  }, [currentTemplate, products, reconciliationLines, dateRange]);
+      // Add entries (Movements) up to end date
+      allProductMovements.forEach(m => {
+        if (isBefore(parseISO(m.fecha), addDays(parseISO(dateRange.end), 1))) {
+           if (m.producto_destino_cod === p.cod) stock += m.cantidad_destino;
+           if (m.producto_origen_cod === p.cod) stock -= m.cantidad_origen;
+        }
+      });
 
-  const prepareExportContext = () => {
-    // Aggregate movements by product
-    const movementMap = new Map();
-    reconciliationLines.forEach(line => {
+      // Subtract sales (Reconciliation Lines) up to end date
+      allReconciliationLines.forEach(l => {
+        if (l.product_cod === p.cod && isBefore(parseISO(l.fecha_operacion), addDays(parseISO(dateRange.end), 1))) {
+           stock -= l.cantidad;
+        }
+      });
+
+      return { ...p, existencia: stock };
+    });
+
+    // 2. Group movements in range for the [Movimientos] section
+    const movementMap = new Map<string, { cantidad: number, total_cents: number }>();
+    reconciliationLinesInRange.forEach(line => {
       const existing = movementMap.get(line.product_cod) || { cantidad: 0, total_cents: 0 };
       movementMap.set(line.product_cod, {
         cantidad: existing.cantidad + line.cantidad,
@@ -71,28 +85,38 @@ export const MVTExportView: React.FC = () => {
       });
     });
 
-    const contextMovements = Array.from(movementMap.entries()).map(([cod, data]) => ({
-      product: products.find(p => p.cod === cod) || { cod, descripcion: 'Desconocido', um: 'U' },
-      cantidad: data.cantidad,
-      importe_cents: data.total_cents
-    }));
+    const contextMovements = Array.from(movementMap.entries()).map(([cod, data]) => {
+      const prod = productData.find(p => p.cod === cod);
+      return {
+        product: prod || { cod, descripcion: 'Desconocido', um: 'U', existencia: 0 },
+        cantidad: data.cantidad,
+        importe_cents: data.total_cents,
+        costo_unitario: prod?.costo_unitario_cents ? prod.costo_unitario_cents / 100 : 0
+      };
+    });
 
     return {
       global: {
         numero: (settings?.lastExportNumber || 0) + 1,
-        fecha: format(new Date(), 'dd/MM/yyyy'),
+        fecha: format(parseISO(dateRange.end), 'dd/MM/yyyy'),
         almacen: settings?.almacen || '0109',
         centro: settings?.centro || '0110200012611',
         concepto: settings?.concepto || '210',
         cuenta_mn: settings?.globalCuenta || '7000050'
       },
-      products: products.map(p => ({
-        ...p,
-        existencia: 0 // In real app, calculate from movements + initial
-      })),
+      products: productData,
       movements: contextMovements
     };
   };
+
+  const previewContent = useMemo(() => {
+    if (products.length === 0) return "Cargando datos...";
+    try {
+      return generateMVTContent(currentTemplate, prepareExportContext());
+    } catch (e) {
+      return "Error generando vista previa: " + (e as Error).message;
+    }
+  }, [currentTemplate, products, reconciliationLinesInRange, settings, dateRange]);
 
   const handleExport = async () => {
     setIsGenerating(true);
@@ -119,7 +143,7 @@ export const MVTExportView: React.FC = () => {
         lastExportNumber: context.global.numero
       });
 
-      toast.success("Archivo MVT generado y descargado con éxito");
+      toast.success("Archivo MVT generado con éxito");
     } catch (error) {
       console.error(error);
       toast.error("Error al generar el archivo MVT");
@@ -137,11 +161,16 @@ export const MVTExportView: React.FC = () => {
             Exportación Contable MVT
           </h1>
           <p className="text-muted-foreground text-sm max-w-2xl">
-            Generación de archivos de movimientos contables estructurados para integración con sistemas ERP (SAP/Microsoft Dynamics).
+            Generación de archivos de movimientos contables estructurados para Versat y otros sistemas ERP.
           </p>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="outline" size="sm" className="bg-white border-slate-200 shadow-sm h-9">
+           <Button
+            variant="outline"
+            size="sm"
+            className="bg-white border-slate-200 shadow-sm h-9"
+            onClick={() => setShowHistory(true)}
+           >
               <History className="w-4 h-4 mr-2 text-slate-500" />
               Historial
            </Button>
@@ -157,7 +186,6 @@ export const MVTExportView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Sidebar / Configuration */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <Card className="border-slate-200/60 shadow-sm overflow-hidden bg-white">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100">
@@ -208,6 +236,7 @@ export const MVTExportView: React.FC = () => {
                     {templates.map(t => (
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
+                    <option value={STANDARD_MVT_TEMPLATE.id}>{STANDARD_MVT_TEMPLATE.name}</option>
                   </select>
                 </div>
 
@@ -216,8 +245,8 @@ export const MVTExportView: React.FC = () => {
                   <div className="space-y-1">
                     <p className="text-[11px] font-semibold text-amber-900 uppercase">Resumen de Datos</p>
                     <p className="text-xs text-amber-800/80 leading-relaxed">
-                      Se detectaron <strong>{reconciliationLines.length}</strong> transacciones en el rango seleccionado
-                      cubriendo <strong>{new Set(reconciliationLines.map(l => l.product_cod)).size}</strong> productos.
+                      Se detectaron <strong>{reconciliationLinesInRange.length}</strong> transacciones de venta en el rango.
+                      La existencia se calculará dinámicamente al <strong>{dateRange.end}</strong>.
                     </p>
                   </div>
                 </div>
@@ -251,7 +280,6 @@ export const MVTExportView: React.FC = () => {
           </Card>
         </div>
 
-        {/* Main Content / Tabs */}
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <Tabs defaultValue="preview" className="w-full">
             <div className="flex items-center justify-between mb-2">
@@ -287,6 +315,53 @@ export const MVTExportView: React.FC = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Historial de Exportaciones</DialogTitle>
+            <DialogDescription>
+              Últimas 20 exportaciones generadas por el sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto border rounded-md">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 sticky top-0 border-b">
+                <tr>
+                  <th className="p-3 text-left font-medium text-slate-500">No.</th>
+                  <th className="p-3 text-left font-medium text-slate-500">Fecha Gen</th>
+                  <th className="p-3 text-left font-medium text-slate-500">Archivo</th>
+                  <th className="p-3 text-left font-medium text-slate-500">Rango</th>
+                  <th className="p-3 text-left font-medium text-slate-500">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {exportLogs.length === 0 ? (
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No hay registros aún</td></tr>
+                ) : exportLogs.map(log => (
+                  <tr key={log.id} className="hover:bg-slate-50/50">
+                    <td className="p-3 font-semibold text-indigo-600">#{log.exportNumber}</td>
+                    <td className="p-3 text-slate-600">{format(parseISO(log.timestamp), 'dd/MM/yy HH:mm')}</td>
+                    <td className="p-3 text-slate-900 font-medium truncate max-w-[150px]">{log.fileName}</td>
+                    <td className="p-3 text-slate-500 flex items-center gap-1">
+                      {log.dateRange.start} <ArrowRight className="w-3 h-3" /> {log.dateRange.end}
+                    </td>
+                    <td className="p-3">
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100">
+                        {log.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowHistory(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

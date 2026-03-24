@@ -380,7 +380,7 @@ export class IPVDatabase extends Dexie {
       products: "&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo, cuenta_contable",
       mvt_templates: "&id, name",
       mvt_settings: "id",
-      mvt_exports_log: "&id, exportNumber, templateId"
+      mvt_exports_log: "&id, exportNumber, templateId, timestamp"
     });
   }
 }
