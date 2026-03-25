@@ -44,6 +44,7 @@ export const STANDARD_MVT_TEMPLATE: MVTTemplate = {
         { key: 'EMPTY_2', source: 'static', value: '' },
         { key: 'EMPTY_3', source: 'static', value: '' },
         { key: 'EMPTY_4', source: 'static', value: '' },
+        { key: 'EMPTY_4_BIS', source: 'static', value: '' },
         { key: 'EXISTENCIA', source: 'dynamic', value: 'product.existencia' },
         { key: 'EMPTY_5', source: 'static', value: '' },
       ]
