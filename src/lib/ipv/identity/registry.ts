@@ -18,49 +18,42 @@ export interface CustomerStats {
 }
 
 /**
- * Hybrid Catalog logic: Merges persisted customers with data detected in transactions.
- * Ensures that any client visible in reports is also visible in the catalog.
+ * Gets a unified list of customers from both manual catalog and bank transactions.
  */
 export async function getHybridCustomers(): Promise<Customer[]> {
-  const [customers, transactions] = await Promise.all([
-    db.customers.toArray(),
-    db.bank_statements.toArray()
-  ]);
+  const catalog = await db.customers.toArray();
+  const txCustomers = await db.bank_statements
+    .filter(tx => !!(tx.carnet || tx.nombre_cliente))
+    .toArray();
 
   const map = new Map<string, Customer>();
 
-  // 1. Base persistida (Catálogo Maestro)
-  customers.forEach(c => {
-    map.set(c.ci || c.nombre, c);
-  });
+  // 1. Add catalog records
+  catalog.forEach(c => map.set(c.ci, c));
 
-  // 2. Enriquecimiento desde transacciones (Clientes Virtuales)
-  transactions.forEach(tx => {
-    const norm = normalizeCliente(tx);
-    const key = norm.ci || norm.nombre;
-
-    if (key && !map.has(key)) {
-      // Crear un registro virtual compatible con la interfaz Customer
-      map.set(key, {
-        ci: norm.ci,
-        nombre: norm.nombre_display,
-        normalized_name: norm.nombre,
-        raw_names: [norm.nombre_display],
-        phone: norm.telefono,
-        card_number: norm.tarjeta,
-        status: (norm.ci && norm.nombre) ? "COMPLETO" : "PARCIAL",
+  // 2. Add from transactions (if not already in catalog)
+  txCustomers.forEach(tx => {
+    if (tx.carnet && !map.has(tx.carnet)) {
+      map.set(tx.carnet, {
+        ci: tx.carnet,
+        nombre: (tx.nombre_cliente || "DESCONOCIDO").toUpperCase(),
+        normalized_name: normalizeName(tx.nombre_cliente || ""),
+        raw_names: tx.nombre_cliente ? [tx.nombre_cliente] : [],
+        phone: tx.telefono_cliente,
+        card_number: tx.tarjeta_cliente,
+        status: "PARCIAL",
         source: "AUTOMATICO",
-        created_at: tx.created_at || new Date().toISOString(),
-        updated_at: tx.updated_at || new Date().toISOString()
-      } as Customer);
+        created_at: tx.fecha,
+        updated_at: tx.fecha
+      });
     }
   });
 
-  return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  return Array.from(map.values());
 }
 
 /**
- * Resolves a customer identity from raw input data.
+ * Resolves a customer identity from transaction data.
  */
 export async function resolveIdentity(
   transactionRef: string,
@@ -73,7 +66,6 @@ export async function resolveIdentity(
   const phone = inputPhone?.trim();
   const card = inputCard?.trim();
 
-  // Helper to check if data is generic placeholder
   const isPlaceholder = (val?: string) => {
     if (!val) return true;
     const upper = val.toUpperCase();
@@ -83,7 +75,6 @@ export async function resolveIdentity(
   const cleanCi = isPlaceholder(ci) ? undefined : ci;
   const cleanNombre = isPlaceholder(rawNombre) ? undefined : rawNombre;
 
-  // 1. Priority 1: CI exact match
   if (cleanCi) {
     const fromCatalog = await db.customers.get(cleanCi);
     if (fromCatalog) {
@@ -93,7 +84,6 @@ export async function resolveIdentity(
             `Conflicto de nombre para CI ${cleanCi}: Importado '${rawNombre}' vs Catálogo '${fromCatalog.nombre}'`);
       }
 
-      // Update missing fields in catalog if found in transaction
       const updates: Partial<Customer> = {};
       if (!fromCatalog.phone && phone && !isPlaceholder(phone)) updates.phone = phone;
       if (!fromCatalog.card_number && card && !isPlaceholder(card)) updates.card_number = card;
@@ -113,7 +103,6 @@ export async function resolveIdentity(
         source: isNameConflict ? 'CONFLICT' : 'CATALOG'
       };
     } else if (cleanNombre) {
-      // New valid record
       const newCustomer: Customer = {
         ci: cleanCi,
         nombre: cleanNombre.toUpperCase(),
@@ -132,7 +121,6 @@ export async function resolveIdentity(
     }
   }
 
-  // 2. Priority 2: Exact Normalized Name Match
   if (normalizedInputName && !isPlaceholder(rawNombre)) {
     const matches = await db.customers.where('normalized_name').equals(normalizedInputName).toArray();
     if (matches.length === 1) {
@@ -153,7 +141,6 @@ export async function resolveIdentity(
     }
   }
 
-  // 3. Priority 3: Fuzzy Matching (> 0.85 similarity)
   if (normalizedInputName && !isPlaceholder(rawNombre)) {
       const allCustomers = await db.customers.toArray();
       let bestMatch: Customer | null = null;
@@ -197,10 +184,6 @@ async function logAudit(
   });
 }
 
-/**
- * Propagates current customer catalog data to all bank statements.
- * Useful after manual corrections or bulk updates.
- */
 export async function propagateIdentity(): Promise<number> {
     const allCustomers = await db.customers.toArray();
     let affectedTxs = 0;
@@ -211,16 +194,12 @@ export async function propagateIdentity(): Promise<number> {
     return affectedTxs;
 }
 
-/**
- * Propagates a specific customer identity to bank statements.
- */
 export async function propagateCustomerIdentity(ci: string): Promise<number> {
     const customer = await db.customers.get(ci);
     if (!customer) return 0;
 
     let affected = 0;
 
-    // 1. Match by CI (Strong match)
     const byCi = await db.bank_statements.where('carnet').equals(customer.ci).toArray();
     for (const tx of byCi) {
         const needsUpdate =
@@ -238,7 +217,6 @@ export async function propagateCustomerIdentity(ci: string): Promise<number> {
         }
     }
 
-    // 2. Match by Name (Weak match - only if no CI)
     const byName = await db.bank_statements
         .where('nombre_cliente').equals(customer.nombre)
         .and(t => !t.carnet)
@@ -253,7 +231,6 @@ export async function propagateCustomerIdentity(ci: string): Promise<number> {
         affected++;
     }
 
-    // 3. Match by Heuristic Similarity (> 85% - only if no CI and no Name match)
     const pendingTxs = await db.bank_statements
         .filter(t => !!(!t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre))
         .toArray();
@@ -274,9 +251,6 @@ export async function propagateCustomerIdentity(ci: string): Promise<number> {
     return affected;
 }
 
-/**
- * Calculates statistics for a specific customer based on bank statements.
- */
 export async function getCustomerStats(ci: string): Promise<CustomerStats> {
     const txs = await db.bank_statements.where('carnet').equals(ci).toArray();
     const totalAmountCents = txs.reduce((sum, tx) => sum + (tx.importe_venta_cents || tx.importe_cents || 0), 0);
@@ -287,9 +261,6 @@ export async function getCustomerStats(ci: string): Promise<CustomerStats> {
     };
 }
 
-/**
- * Gets stats for all customers.
- */
 export async function getAllCustomerStats(): Promise<Record<string, CustomerStats>> {
     const allTxs = await db.bank_statements.toArray();
     const stats: Record<string, CustomerStats> = {};
@@ -307,9 +278,6 @@ export async function getAllCustomerStats(): Promise<Record<string, CustomerStat
     return stats;
 }
 
-/**
- * Adds or updates a customer manually.
- */
 export async function saveCustomerManually(customerData: Partial<Customer> & { ci: string }): Promise<void> {
     const ci = customerData.ci.trim();
     if (!ci) throw new Error("CI es requerido");
@@ -334,6 +302,18 @@ export async function saveCustomerManually(customerData: Partial<Customer> & { c
     };
 
     await db.customers.put(customer);
-    // Auto-propagate to reports
     await propagateCustomerIdentity(ci);
+}
+
+export async function deleteCustomer(ci: string): Promise<void> {
+    await db.customers.delete(ci);
+}
+
+export async function resolveConflict(
+    auditId: string,
+    resolution: 'KEEP_CATALOG' | 'UPDATE_CATALOG' | 'MERGE'
+): Promise<void> {
+    const audit = await db.identity_audit.get(auditId);
+    if (!audit) throw new Error("Conflicto no encontrado");
+    await db.identity_audit.delete(auditId);
 }
