@@ -317,3 +317,46 @@ export async function resolveConflict(
     if (!audit) throw new Error("Conflicto no encontrado");
     await db.identity_audit.delete(auditId);
 }
+
+/**
+ * Scans all bank transactions and adds unique identities (CI + Name)
+ * to the customers catalog if they don't exist yet.
+ */
+export async function syncCatalogFromTransactions(): Promise<number> {
+  const txCustomers = await db.bank_statements
+    .filter(tx => !!(tx.carnet && tx.nombre_cliente))
+    .toArray();
+
+  let importedCount = 0;
+  for (const tx of txCustomers) {
+    const existing = await db.customers.get(tx.carnet!);
+    if (!existing) {
+      await db.customers.put({
+        ci: tx.carnet!,
+        nombre: tx.nombre_cliente!.toUpperCase(),
+        normalized_name: normalizeName(tx.nombre_cliente!),
+        raw_names: [tx.nombre_cliente!],
+        phone: tx.telefono_cliente,
+        card_number: tx.tarjeta_cliente,
+        status: "PARCIAL",
+        source: "AUTOMATICO",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      importedCount++;
+    } else {
+      // Enriquecimiento opcional si el existente no tiene datos que la tx sí
+      const updates: Partial<Customer> = {};
+      if (!existing.phone && tx.telefono_cliente) updates.phone = tx.telefono_cliente;
+      if (!existing.card_number && tx.tarjeta_cliente) updates.card_number = tx.tarjeta_cliente;
+
+      if (Object.keys(updates).length > 0) {
+        await db.customers.update(existing.ci, {
+          ...updates,
+          updated_at: new Date().toISOString()
+        });
+      }
+    }
+  }
+  return importedCount;
+}
