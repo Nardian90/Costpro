@@ -6,6 +6,7 @@ import { BankTransaction, Product, MatchingRule } from '../../dexie';
 // Mock Dexie
 vi.mock('../../dexie', () => ({
   db: {
+    transaction: vi.fn((mode, tables, callback) => callback()),
     matching_logs: {
       add: vi.fn().mockResolvedValue("mock-id"),
       where: vi.fn().mockReturnThis(),

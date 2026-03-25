@@ -74,7 +74,34 @@ export class MatchingEngine {
     }
   }
 
+  private async persistLog(
+    transaction: BankTransaction,
+    result: MatchingResult,
+    durationMs: number
+  ) {
+    try {
+      await db.matching_logs.add({
+        id: uuidv4(),
+        transaction_ref: transaction.referencia_origen,
+        fecha_ejecucion: new Date().toISOString(),
+        resultado_estado: result.status,
+        trace: result.trace,
+        applied_rules: result.appliedRules,
+        matching_confidence: result.matchingConfidence,
+        fail_reason: result.failReason,
+        reconciliation_lines_count: result.lines.length,
+        duration_ms: durationMs,
+        engine_version: "2.1.0",
+        reglas_activas: this.rules.map(r => r.tipo),
+        created_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Error persistiendo audit log:", e);
+    }
+  }
+
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
+    const startTimeMs = performance.now();
     const startTime = Date.now();
     const logs: string[] = [];
     const trace: MatchingTrace[] = [];
@@ -106,7 +133,7 @@ export class MatchingEngine {
       const reason = transaction.tipo === 'Db' ? 'Débito auto-finalizado' : 'Excluida del matching';
       logs.push(`PASS 0: ${reason}`);
       addTrace(0, 'AUTO_COMPLETE', 'SUCCESS', reason);
-      return {
+      const result: MatchingResult = {
           lines: [],
           status: 'COMPLETO',
           logs,
@@ -115,13 +142,27 @@ export class MatchingEngine {
           appliedRules,
           matchingConfidence
       };
+      await this.persistLog(transaction, result, performance.now() - startTimeMs);
+      return result;
     } else {
         addTrace(0, 'AUTO_COMPLETE', 'SKIPPED', 'No aplica a créditos activos');
     }
 
-    const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
-    const cached = await db.matching_cache.get(targetAmount + "-" + catalogHash);
-    if (cached && cached.catalog_hash === catalogHash) {
+    const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({
+      cod: p.cod,
+      price: p.precio_cents,
+      stock: p.stock_inicial_manual
+    }))));
+    const rulesHash = await generateHash(JSON.stringify(this.rules.map(r => ({
+      id: r.id,
+      tipo: r.tipo,
+      prioridad: r.prioridad,
+      meta: r.meta
+    }))));
+    const cacheKey = `${targetAmount}-${catalogHash}-${rulesHash}`;
+
+    const cached = await db.matching_cache.get(cacheKey);
+    if (cached && cached.catalog_hash === catalogHash && cached.rules_hash === rulesHash) {
       logs.push(`Caché hit para importe ${targetAmount}`);
       for (const item of cached.results) {
         const product = this.products.find(p => p.cod === item.product_cod);
@@ -133,7 +174,7 @@ export class MatchingEngine {
       }
       if (Math.abs(remaining_cents) < 0.001) {
         addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Recuperado de caché');
-        return {
+        const result: MatchingResult = {
             lines,
             status: 'COMPLETO',
             logs,
@@ -142,6 +183,8 @@ export class MatchingEngine {
             appliedRules,
             matchingConfidence
         };
+        await this.persistLog(transaction, result, performance.now() - startTimeMs);
+        return result;
       }
     }
 
@@ -182,8 +225,10 @@ export class MatchingEngine {
       const combination = this.findExactCombination(remaining_cents);
       if (combination.length > 0) {
         await db.matching_cache.put({
+          id: cacheKey,
           importe_cents: remaining_cents,
           catalog_hash: catalogHash,
+          rules_hash: rulesHash,
           results: combination.map(c => ({ product_cod: c.product.cod, cantidad: c.qty })),
           updated_at: new Date().toISOString()
         });
@@ -491,30 +536,10 @@ export class MatchingEngine {
     this.pendingMovements = [];
 
     const durationMs = Date.now() - startTime;
-
-    // Persist log
-    (async () => {
-      try {
-        const { MatchingLogService } = await import('../../services/matching-log-service');
-        await MatchingLogService.logMatchingResult(
-          transaction.referencia_origen,
-          isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
-          trace,
-          appliedRules,
-          matchingConfidence,
-          failReason,
-          lines.length,
-          durationMs,
-          this.rules.filter(r => r.activo).map(r => r.tipo)
-        );
-      } catch (error) {
-        console.error('Error logging matching result:', error);
-      }
-    })();
-
-    return {
+    const finalStatus = isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
+    const result: MatchingResult = {
       lines,
-      status: isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
+      status: finalStatus,
       logs,
       failReason,
       movements: resultMovements,
@@ -522,6 +547,8 @@ export class MatchingEngine {
       appliedRules,
       matchingConfidence: isComplete ? matchingConfidence : 0
     };
+    await this.persistLog(transaction, result, performance.now() - startTimeMs);
+    return result;
   }
 
   async matchSimulation(targetAmount: number): Promise<MatchingResult> {
@@ -721,22 +748,36 @@ export class MatchingEngine {
     const solve = (remaining: number, index: number, depth: number): { product: Product, qty: number }[] | null => {
       if (Math.abs(remaining) < 0.001) return [];
       if (depth >= MAX_DEPTH || index >= sortedProducts.length || (Date.now() - startTime) > TIMEOUT_MS) return null;
+
       const p = sortedProducts[index];
+
+      // Optimization: If remaining is less than the current product price, and it's the smallest price, skip
+      if (remaining < p.precio_cents && index === sortedProducts.length - 1) return null;
       if (p.precio_cents <= 0) return solve(remaining, index + 1, depth);
+
+      // Pruning: if remaining is much larger than possible with remaining products
+      // (This is basic, could be improved by calculating max possible sum)
+
       const maxQty = Math.floor((remaining + 0.001) / p.precio_cents);
       let actualMaxQty = maxQty;
       if (this.useStockLimit) actualMaxQty = Math.min(maxQty, this.getVirtualStock(p.cod));
 
       for (let qty = actualMaxQty; qty >= 1; qty--) {
+        // Optimization: early exit if this qty makes it impossible
+        const nextRemaining = remaining - qty * p.precio_cents;
+
         if (this.useStockLimit) {
             const current = this.stockMap.get(p.cod) || 0;
             this.stockMap.set(p.cod, current - qty);
         }
-        const sub = solve(remaining - qty * p.precio_cents, index + 1, depth + 1);
+
+        const sub = solve(nextRemaining, index + 1, depth + 1);
+
         if (this.useStockLimit) {
             const current = this.stockMap.get(p.cod) || 0;
             this.stockMap.set(p.cod, current + qty);
         }
+
         if (sub) return [{ product: p, qty }, ...sub];
       }
       return solve(remaining, index + 1, depth);
@@ -800,9 +841,10 @@ export class MatchingEngine {
     onProgress?: (percentage: number) => void,
     customStockMap?: Map<string, number>
   ): Promise<any[]> {
-    const results: any[] = [];
-    if (customStockMap) this.stockMap = new Map(customStockMap);
-    for (let i = 0; i < transactions.length; i++) {
+    return await db.transaction('rw', [db.reconciliation_lines, db.matching_logs, db.matching_cache, db.product_movements, db.products, db.bank_statements], async () => {
+      const results: any[] = [];
+      if (customStockMap) this.stockMap = new Map(customStockMap);
+      for (let i = 0; i < transactions.length; i++) {
         const tx = transactions[i];
         try {
             const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
@@ -831,8 +873,9 @@ export class MatchingEngine {
             const percentage = Math.round(((i + 1) / transactions.length) * 100);
             if (i % 20 === 0 || percentage % 5 === 0 || i === transactions.length - 1) onProgress(percentage);
         }
-    }
-    return results;
+      }
+      return results;
+    });
   }
 
   async generateDailyAggregate(fecha: string): Promise<void> {
