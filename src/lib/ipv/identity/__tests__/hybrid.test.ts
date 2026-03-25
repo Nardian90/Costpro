@@ -8,6 +8,7 @@ vi.mock('@/lib/dexie', () => ({
       toArray: vi.fn(),
     },
     bank_statements: {
+      filter: vi.fn().mockReturnThis(),
       toArray: vi.fn(),
     },
   },
