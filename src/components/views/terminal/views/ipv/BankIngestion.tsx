@@ -139,8 +139,12 @@ export function BankIngestion() {
 
         for (const row of data) {
             try {
-                const product = ImportValidator.normalizeProduct(row);
-                normalized.push(product);
+                const { product, errors: rowErrors } = ImportValidator.normalizeProduct(row, 0);
+                if (product) {
+                    normalized.push(product);
+                } else if (rowErrors.length > 0) {
+                    throw new Error(rowErrors[0].message);
+                }
             } catch (error: any) {
                 validationErrors.push(`Fila: ${error.message}`);
             }
@@ -153,7 +157,7 @@ export function BankIngestion() {
         }
 
         const existing = await db.products.toArray();
-        const validation = await ImportValidator.validateImport(normalized, existing);
+        const { result: validation } = await ImportValidator.validateImport(normalized);
 
         if (!validation.valid) {
             const errorMsgs = validation.errors.map(e => e.message).join('\n');
