@@ -319,6 +319,21 @@ export interface Customer {
   updated_at: string;
 }
 
+export interface CatalogAudit {
+  id: string;
+  timestamp: string;
+  userId: string;
+  action: "IMPORT" | "EXPORT" | "SYNC" | "UPDATE";
+  fileHash?: string;
+  fileName?: string;
+  summary: {
+    added: number;
+    updated: number;
+    deleted: number;
+    errors: number;
+  };
+}
+
 export interface IdentityAudit {
   id: string;
   transaction_ref: string;
@@ -332,6 +347,7 @@ export class IPVDatabase extends Dexie {
   identity_audit!: Table<IdentityAudit>;
   mapping_rules!: Table<MappingRuleType>;
   mapping_executions!: Table<MappingExecution>;
+  catalog_audit!: Table<CatalogAudit>;
 
   bank_statements!: Table<BankTransaction>;
   products!: Table<Product>;
@@ -387,6 +403,10 @@ export class IPVDatabase extends Dexie {
 
     this.version(24).stores({
       matching_cache: '&id'
+    });
+
+    this.version(25).stores({
+      catalog_audit: "&id, timestamp, action, userId"
     });
   }
 }

@@ -32,11 +32,22 @@ export async function importCatalogProducts(products: Product[], userId: string 
         created_at: now
     }));
     await db.product_movements.bulkAdd(movements as any);
+
     await CatalogAuditService.log({
         userId,
         action: 'IMPORT',
         fileName,
-        summary: validationResult?.summary || { added: valid.length, updated: 0, deleted: 0, errors: errors.length }
+        summary: validationResult ? {
+            added: validationResult.summary.added,
+            updated: validationResult.summary.updated,
+            deleted: 0,
+            errors: validationResult.errors.length
+        } : {
+            added: valid.length,
+            updated: 0,
+            deleted: 0,
+            errors: errors.length
+        }
     });
     return { success: true, count: valid.length };
 }

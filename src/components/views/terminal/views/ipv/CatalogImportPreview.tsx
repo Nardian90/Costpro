@@ -11,7 +11,7 @@ interface Props { isOpen: boolean; onClose: () => void; onConfirm: () => void; r
 export function CatalogImportPreview({ isOpen, onClose, onConfirm, result, products, fileName }: Props) {
   const previewProducts = products.slice(0, 10);
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Vista Previa de Importación" size="xl">
+    <BaseModal open={isOpen} onOpenChange={(val) => !val && onClose()} title="Vista Previa de Importación" maxWidth="sm:max-w-4xl">
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20"><div className="flex items-center gap-2 mb-1"><Plus className="w-4 h-4 text-blue-500" /><span className="text-xs font-black uppercase text-blue-500">Nuevos</span></div><div className="text-2xl font-black">{result.summary.added}</div></div>
