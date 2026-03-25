@@ -104,7 +104,7 @@ export const MVTExportView = () => {
         concepto: settings?.concepto || '210',
         cuenta_mn: settings?.globalCuenta || '7000050'
       },
-      products: productData,
+      products: contextMovements.map(m => m.product),
       movements: contextMovements
     };
   };
