@@ -158,6 +158,12 @@ export function CatalogTable() {
 
     if (sortConfig) {
         result.sort((a, b) => {
+            if (sortConfig.key === 'cod') {
+                const aNum = parseFloat(a.cod) || 0;
+                const bNum = parseFloat(b.cod) || 0;
+                if (aNum !== bNum) return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum;
+                return sortConfig.direction === 'asc' ? a.cod.localeCompare(b.cod) : b.cod.localeCompare(a.cod);
+            }
             let aValue: any;
             let bValue: any;
             if (sortConfig.key === 'final_stock') {
@@ -589,70 +595,26 @@ const handleExportCatalog = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
             const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as any[];
 
             if (!jsonData || jsonData.length === 0) {
                 toast.error('El archivo está vacío');
                 return;
             }
 
-            const validProducts: Product[] = [];
-            const now = new Date().toISOString();
-
-            for (const row of jsonData) {
-                // Map from Spanish headers or generic headers
-                const cod = row['Código'] || row['cod'] || row['CODIGO'];
-                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || row['grupo'] || '';
-                const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || row['hijo'] || '';
-                const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
-                const um = row['UM'] || row['um'] || 'UNIDADES';
-                const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
-                const var_perm = row['variacion_permisible_percent'] || row['VARIACION_PERMISIBLE'] || row['Variación %'] || 0;
-                const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
-                const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
-                const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
-                const activo_val = row['activo'] || row['Activo'] || 'VERDADERO';
-                const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
-                const cuenta = row['Cuenta Contable'] || row['cuenta_contable'] || '';
-                const costo = row['Costo Unitario'] || row['costo_unitario_cents'] || 0;
-
-                if (!cod || !descripcion) continue;
-
-                validProducts.push({
-                    cod: String(cod).toUpperCase(),
-                    id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
-                    cod_hijo: cod_hijo ? String(cod_hijo).toUpperCase() : '',
-                    descripcion: String(descripcion),
-                    um: String(um).toUpperCase(),
-                    precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
-                    variacion_permisible_percent: typeof var_perm === 'number' ? var_perm : parseFloat(String(var_perm).replace(',', '.')),
-                    prioridad_algoritmo: parseInt(String(prioridad)),
-                    stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
-                    es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
-                    contenido_paquete: parseInt(String(cont_pqt)),
-                    cuenta_contable: String(cuenta),
-                    costo_unitario_cents: typeof costo === 'number' ? costo : parseFloat(String(costo).replace(',', '.')),
-                    activo: true,
-                    created_at: now,
-                    priorityMode: 'manual',
-                    isWildcardCandidate: false
-                });
-            }
+            const { products: validProducts, result: validation } = await ImportValidator.validateImport(jsonData);
 
             if (validProducts.length > 0) {
-                importCatalogProducts(validProducts).then(() => {
-                    toast.success(`Se importaron ${validProducts.length} productos correctamente`);
-                    event.target.value = '';
-                }).catch(err => {
-                    toast.error('Error al guardar los productos');
-                    console.error(err);
-                });
+                await importCatalogProducts(validProducts as Product[]);
+                toast.success(`Se importaron ${validProducts.length} productos correctamente`);
+                if (validation.warnings.length > 0) {
+                  toast.warning(`${validation.warnings.length} advertencias detectadas`);
+                }
+                event.target.value = '';
             } else {
                 toast.error('No se encontraron productos válidos. Verifique las columnas Código y Descripción.');
             }
