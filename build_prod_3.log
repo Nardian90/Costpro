@@ -4,7 +4,7 @@
 
 Prisma schema loaded from prisma/schema.prisma
 
-✔ Generated Prisma Client (4.16.2 | library) to ./node_modules/@prisma/client in 183ms
+✔ Generated Prisma Client (4.16.2 | library) to ./node_modules/@prisma/client in 159ms
 You can now start using Prisma Client in your code. Reference: https://pris.ly/d/client
 ```
 import { PrismaClient } from '@prisma/client'
@@ -31,7 +31,7 @@ Import trace:
     ./src/app/api/academy/generate/route.ts
 
 
-✓ Compiled successfully in 23.0s
+✓ Compiled successfully in 23.2s
   Running TypeScript ...
   Finished TypeScript in 32.3s ...
   Collecting page data using 3 workers ...
@@ -44,7 +44,7 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
   Generating static pages using 3 workers (14/29)
   Generating static pages using 3 workers (21/29)
-✓ Generating static pages using 3 workers (29/29) in 827ms
+✓ Generating static pages using 3 workers (29/29) in 858ms
   Finalizing page optimization ...
 
 Route (app)
