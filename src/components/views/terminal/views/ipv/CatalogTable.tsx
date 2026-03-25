@@ -263,7 +263,7 @@ export function CatalogTable() {
 
   const handleAddNew = () => {
       const newProd: Product = {
-          cod: '', id_grupo: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false
+          cod: '', id_grupo: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, costo_unitario_cents: 0, cuenta_contable: '', prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false
       };
       setEditingId('NEW');
       setEditForm(newProd);
@@ -682,6 +682,7 @@ const handleExportCatalog = () => {
                   <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
                   <TableHead className="sticky top-0 left-0 bg-background z-30"><SortButton column="cod" label="Código" /></TableHead>
                   <TableHead className="sticky top-0 left-[100px] bg-background z-30"><SortButton column="descripcion" label="Descripción" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20">UM</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20"><SortButton column="priceEffectivenessScore" label="Efectividad" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20">Sugerencia</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="precio_cents" label="Precio" className="justify-end w-full" /></TableHead>
@@ -700,21 +701,43 @@ const handleExportCatalog = () => {
               </TableHeader>
               <TableBody>
                   {paginatedResult.length === 0 && editingId !== 'NEW' ? (
-                  <TableRow><TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">No hay productos.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={18} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">No hay productos.</TableCell></TableRow>
                   ) : (
                   <>
                   {editingId === 'NEW' && (
                       <TableRow className="bg-primary/10">
-                          <TableCell className="sticky-column-1"><div className="flex flex-col gap-1"><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} placeholder="CÓDIGO" className="h-8 w-24 text-xs font-bold" /><Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} placeholder="GRUPO" className="h-6 w-24 text-[10px] font-bold" /><Input value={editForm.cod_hijo || ""} onChange={e => setEditForm({...editForm, cod_hijo: e.target.value})} placeholder="COD HIJO" className="h-6 w-24 text-[10px] font-bold" /></div></TableCell>
-                          <TableCell><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} placeholder="Descripción..." className="h-8 text-xs min-w-[200px]" /></TableCell>
-                          <TableCell><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 w-24 text-xs uppercase" /></TableCell>
-                          <TableCell className="text-center"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell className="sticky left-0 bg-background z-10">
+                              <div className="flex flex-col gap-1">
+                                  <Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} placeholder="CÓDIGO" className="h-8 w-24 text-xs font-bold" />
+                                  <Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} placeholder="GRUPO" className="h-6 w-24 text-[10px] font-bold" />
+                                  <Input value={editForm.cod_hijo || ""} onChange={e => setEditForm({...editForm, cod_hijo: e.target.value})} placeholder="COD HIJO" className="h-6 w-24 text-[10px] font-bold" />
+                              </div>
+                          </TableCell>
+                          <TableCell className="sticky left-[100px] bg-background z-10">
+                              <div className="space-y-1">
+                                  <Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} placeholder="Descripción..." className="h-8 text-xs min-w-[200px]" />
+                                  <div className="flex items-center gap-1">
+                                      <span className="text-[10px] font-bold uppercase opacity-50">Pack</span>
+                                      <Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} className="scale-75" />
+                                  </div>
+                              </div>
+                          </TableCell>
+                          <TableCell>
+                              <Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} placeholder="UM" className="h-8 w-24 text-xs uppercase" />
+                          </TableCell>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
                           <TableCell className="text-right"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" /></TableCell>
                           <TableCell className="text-right"><Input type="number" step="0.01" value={editForm.costo_unitario_cents || 0} onChange={e => setEditForm({...editForm, costo_unitario_cents: parseFloat(e.target.value) || 0})} className="h-8 w-20 text-right text-xs" /></TableCell>
                           <TableCell><Input value={editForm.cuenta_contable || ""} onChange={e => setEditForm({...editForm, cuenta_contable: e.target.value})} placeholder="CUENTA" className="h-8 w-24 text-xs font-mono" /></TableCell>
                           <TableCell className="text-right"><Input type="number" min="0" value={editForm.stock_inicial_manual || 0} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 w-16 text-right text-xs" /></TableCell>
-                          <TableCell colSpan={2}></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
                           <TableCell className="text-center"><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-8 rounded-md border border-input bg-background px-2 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}</select></TableCell>
+                          <TableCell></TableCell>
                           <TableCell className="text-center"><Switch checked={editForm.activo} onCheckedChange={checked => setEditForm({...editForm, activo: checked})} /></TableCell>
                           <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}><Check className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}><X className="w-4 h-4" /></Button></div></TableCell>
                       </TableRow>
@@ -745,9 +768,18 @@ const handleExportCatalog = () => {
                               </div>
                           </TableCell>
                           <TableCell className="sticky left-[100px] bg-background z-10">{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
+                          <TableCell>
+                              {isEditing ? (
+                                  <Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 w-24 text-xs uppercase" />
+                              ) : (
+                                  <Badge variant="outline" className="text-[10px] uppercase font-black">{p.um}</Badge>
+                              )}
+                          </TableCell>
                           <TableCell>{!isEditing && p.priceEffectivenessScore !== undefined && (<div className="flex items-center gap-2"><div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden"><div className={`h-full ${p.priceEffectivenessScore > 70 ? 'bg-green-500' : p.priceEffectivenessScore > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${p.priceEffectivenessScore}%` }} /></div><span className="text-xs font-black">{p.priceEffectivenessScore}</span></div>)}</TableCell>
                           <TableCell>{!isEditing && p.suggestedPrice && (<Tooltip><TooltipTrigger asChild><Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help"><Sparkles className="w-3 h-3" />{p.suggestedPrice}</Badge></TooltipTrigger><TooltipContent className="bg-popover text-popover-foreground border shadow-xl"><p className="text-xs max-w-xs">{p.suggestionReason}</p></TooltipContent></Tooltip>)}</TableCell>
                           <TableCell className="text-right">{isEditing ? (<Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 w-24 text-right text-xs font-black" />) : (<div className="flex flex-col items-end"><span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>{p.precio_base_cents && (<span className="text-xs text-muted-foreground line-through">Base: {p.precio_base_cents}</span>)}</div>)}</TableCell>
+                          <TableCell className="text-right">{isEditing ? (<Input type="number" step="0.01" value={editForm.costo_unitario_cents || 0} onChange={e => setEditForm({...editForm, costo_unitario_cents: parseFloat(e.target.value) || 0})} className="h-8 w-20 text-right text-xs" />) : (<span className="text-xs font-bold text-muted-foreground">{p.costo_unitario_cents || 0}</span>)}</TableCell>
+                          <TableCell>{isEditing ? (<Input value={editForm.cuenta_contable || ""} onChange={e => setEditForm({...editForm, cuenta_contable: e.target.value})} className="h-8 w-24 text-xs font-mono" />) : (<span className="text-xs font-mono opacity-70">{p.cuenta_contable || "-"}</span>)}</TableCell>
                           <TableCell className="text-right text-xs font-bold text-muted-foreground">{isEditing ? (<Input type="number" min="0" value={editForm.stock_inicial_manual || 0} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 w-16 text-right text-xs ml-auto" />) : stats.initial}</TableCell>
                           <TableCell className="text-right text-xs font-bold text-green-600">{stats.entradas}</TableCell>
                           <TableCell className="text-right text-xs font-bold text-blue-600">{stats.salidas}</TableCell>
@@ -823,7 +855,11 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
             </div>
             <div className="flex justify-between items-center"><div className="flex flex-col gap-2">{isEditing ? (<div className="flex items-center gap-2"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">Paquete</Label>{editForm.es_paquete && (<Input type="number" value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 w-12 text-xs text-center" />)}</div>) : (product.es_paquete && (<div className="flex items-center gap-1"><Badge className="bg-primary/10 text-primary text-xs font-black uppercase">Pack X{product.contenido_paquete}</Badge></div>))}</div></div>
             <div className="flex justify-between items-center">
-                <div><p className="text-xs font-bold text-muted-foreground uppercase">Precio</p>{isEditing ? (<div className="flex items-center gap-1"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-7 text-xs w-24 font-black" /></div>) : (<div className="flex flex-col items-end"><p className={`font-black text-base ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>{product.precio_base_cents && (<p className="text-xs text-muted-foreground line-through">Base: {product.precio_base_cents}</p>)}</div>)}</div>
+                <div className="flex gap-4">
+                    <div><p className="text-xs font-bold text-muted-foreground uppercase">Precio</p>{isEditing ? (<div className="flex items-center gap-1"><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-7 text-xs w-20 font-black" /></div>) : (<div className="flex flex-col items-end"><p className={`font-black text-sm ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>{product.precio_base_cents && (<p className="text-[10px] text-muted-foreground line-through">Base: {product.precio_base_cents}</p>)}</div>)}</div>
+                    <div><p className="text-xs font-bold text-muted-foreground uppercase">Costo</p>{isEditing ? (<div className="flex items-center gap-1"><Input type="number" step="0.01" value={editForm.costo_unitario_cents || 0} onChange={e => setEditForm({...editForm, costo_unitario_cents: parseFloat(e.target.value) || 0})} className="h-7 text-xs w-20" /></div>) : (<p className="font-bold text-sm text-muted-foreground">{product.costo_unitario_cents || 0}</p>)}</div>
+                    <div><p className="text-xs font-bold text-muted-foreground uppercase">Cuenta</p>{isEditing ? (<div className="flex items-center gap-1"><Input value={editForm.cuenta_contable || ""} onChange={e => setEditForm({...editForm, cuenta_contable: e.target.value})} className="h-7 text-xs w-24 font-mono" /></div>) : (<p className="text-xs font-mono opacity-70">{product.cuenta_contable || "-"}</p>)}</div>
+                </div>
                 <div className="flex gap-2">{isEditing ? (<Button size="sm" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn-primary" onClick={onSave}><Check className="w-4 h-4" /></Button>) : (<Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn" onClick={onEdit}><Edit2 className="w-4 h-4" /></Button>)}<Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div>
             </div>
         </Card>
