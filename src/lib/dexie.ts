@@ -236,8 +236,10 @@ export interface DailyAggregate {
 }
 
 export interface MatchingCache {
+  id: string; // cache_key
   importe_cents: number; // En Pesos
   catalog_hash: string;
+  rules_hash: string;
   results: {
     product_cod: string;
     cantidad: number;
@@ -364,7 +366,7 @@ export class IPVDatabase extends Dexie {
       ipv_reports: '&id, fecha_reporte, estado',
       cash_adjustments: '&id, fecha',
       daily_aggregates: '&fecha',
-      matching_cache: '&importe_cents',
+      matching_cache: '&id',
       ingestion_errors: 'id, fecha, referencia_origen',
       ipv_settings: 'id',
       matching_logs: '&id, transaction_ref, fecha_ejecucion, resultado_estado, type, event_type',
@@ -381,6 +383,10 @@ export class IPVDatabase extends Dexie {
       mvt_templates: "&id, name",
       mvt_settings: "id",
       mvt_exports_log: "&id, exportNumber, templateId, timestamp"
+    });
+
+    this.version(24).stores({
+      matching_cache: '&id'
     });
   }
 }

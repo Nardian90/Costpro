@@ -10,6 +10,7 @@ import { enrichTransactions } from '@/lib/ipv/parser';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { importCatalogProducts } from "@/lib/ipv/importUtils";
+import { ImportValidator } from '@/lib/ipv/import-validator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus, Database } from 'lucide-react';
@@ -133,47 +134,41 @@ export function BankIngestion() {
 
   const processCatalogData = async (data: any[]) => {
     try {
-        const validProducts: any[] = [];
-        const now = new Date().toISOString();
+        const normalized: any[] = [];
+        const validationErrors: string[] = [];
 
         for (const row of data) {
-            const cod = row['Código'] || row['cod'] || row['CODIGO'];
-            const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || row['grupo'] || '';
-            const cod_hijo = row['cod_hijo'] || row['COD_HIJO'] || row['Hijo'] || row['hijo'] || '';
-            const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
-            const um = row['UM'] || row['um'] || 'UNIDADES';
-            const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
-            const var_perm = row['variacion_permisible_percent'] || row['VARIACION_PERMISIBLE'] || row['Variación %'] || 0;
-            const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
-            const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
-            const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
-            const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
-
-            if (!cod || !descripcion) continue;
-
-            validProducts.push({
-                cod: String(cod).toUpperCase(),
-                id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
-                cod_hijo: cod_hijo ? String(cod_hijo).toUpperCase() : '',
-                descripcion: String(descripcion),
-                um: String(um).toUpperCase(),
-                precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
-                variacion_permisible_percent: typeof var_perm === 'number' ? var_perm : parseFloat(String(var_perm).replace(',', '.')),
-                prioridad_algoritmo: parseInt(String(prioridad)),
-                stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
-                es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
-                contenido_paquete: parseInt(String(cont_pqt)),
-                activo: true,
-                created_at: now,
-                updated_at: now,
-                priorityMode: "manual",
-                isWildcardCandidate: false
-            });
+            try {
+                const product = ImportValidator.normalizeProduct(row);
+                normalized.push(product);
+            } catch (error: any) {
+                validationErrors.push(`Fila: ${error.message}`);
+            }
         }
 
-        if (validProducts.length > 0) {
-            await importCatalogProducts(validProducts);
-            toast.success(`Se importaron ${validProducts.length} productos correctamente`);
+        if (validationErrors.length > 0) {
+            toast.error(`${validationErrors.length} filas con error. Ver consola para detalles.`);
+            console.error("Errores de normalización:", validationErrors);
+            if (normalized.length === 0) return;
+        }
+
+        const existing = await db.products.toArray();
+        const validation = await ImportValidator.validateImport(normalized, existing);
+
+        if (!validation.valid) {
+            const errorMsgs = validation.errors.map(e => e.message).join('\n');
+            toast.error(`Errores de validación:\n${errorMsgs}`);
+            return;
+        }
+
+        if (validation.warnings.length > 0) {
+            toast.warning(`Atención: ${validation.warnings.length} advertencias detectadas.`);
+            console.warn("Advertencias de importación:", validation.warnings);
+        }
+
+        if (normalized.length > 0) {
+            await importCatalogProducts(normalized);
+            toast.success(`Se importaron ${normalized.length} productos correctamente`);
         } else {
             toast.error('No se encontraron productos válidos');
         }
