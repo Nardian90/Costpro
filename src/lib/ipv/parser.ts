@@ -62,20 +62,38 @@ export function parseObservations(obs: string): ParsedObservation {
  * Enriches a batch of transactions with identity data from the registry.
  */
 export async function enrichTransactions(transactions: any[]): Promise<any[]> {
-  const enriched = [];
-  for (const tx of transactions) {
-    const parsed = parseObservations(tx.observaciones || '');
-    const identity = await resolveIdentity(tx.referencia_origen || tx.id, parsed.ci, parsed.payer);
+  const batchSize = 50;
+  const enriched: any[] = [];
 
-    enriched.push({
-      ...tx,
-      nombre_cliente: identity.nombre || parsed.payer,
-      carnet: identity.ci || parsed.ci,
-      pagador: identity.nombre || parsed.payer,
-      esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
-      comision: parsed.commission
-    });
+  for (let i = 0; i < transactions.length; i += batchSize) {
+    const batch = transactions.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map(async (tx) => {
+        const parsed = parseObservations(tx.observaciones || '');
+
+        // If the transaction already has carnet/nombre from mapping, use them
+        const inputCi = tx.carnet || parsed.ci;
+        const inputNombre = tx.nombre_cliente || parsed.payer;
+
+        const identity = await resolveIdentity(
+            tx.referencia_origen || tx.id,
+            inputCi,
+            inputNombre
+        );
+
+        return {
+          ...tx,
+          nombre_cliente: identity.nombre || inputNombre,
+          carnet: identity.ci || inputCi,
+          pagador: identity.nombre || inputNombre,
+          esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
+          comision: parsed.commission
+        };
+      })
+    );
+    enriched.push(...results);
   }
+
   return enriched;
 }
 

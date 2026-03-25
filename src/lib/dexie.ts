@@ -1,57 +1,37 @@
-import { MVTTemplate, MVTSettings, MVTExportLog } from "./ipv/mvt/types";
-import { MappingRule as MappingRuleType, MappingExecution } from "../core/mapping/mapping.types";
 import Dexie, { type Table } from 'dexie';
-
-// --- Interfaces ---
-
-export type MatchingTrace = {
-  pass: number
-  rule: string
-  status: "SUCCESS" | "FAIL" | "SKIPPED"
-  reason?: string
-  details?: any
-  timestamp: number
-}
+import { v4 as uuidv4 } from 'uuid';
 
 export interface BankTransaction {
-  id: string;                  // UUID o hash fila
-  fecha: string;               // YYYY-MM-DD
-  referencia_corta: string;
-  referencia_origen: string;   // UNIQUE
+  id: string;
+  fecha: string;               // ISO Date
+  referencia_corta: string;    // De la observación (ej: VB1234)
+  referencia_origen: string;   // Unique ID from bank (e.g. "202301010001")
   observaciones: string;
-  importe_cents: number;       // En Pesos (decimal)
-  comision_cents?: number;     // Extraído de observaciones
-  importe_venta_cents?: number; // importe_cents + comision_cents
+  importe_cents: number;       // En Pesos * 100
+  comision_cents?: number;
+  importe_venta_cents?: number;
   tipo: 'Cr' | 'Db';
-  estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'NO_PROCESAR';
-  fail_reason?: string;
-  ipv_id?: string;             // FK ipv_reports.id
-  excluido?: boolean;          // Excluir del matching
-  created_at: string;
-  updated_at?: string;
-  ingestion_hash: string;      // HASH para idempotencia
-  // Persistence for Transfer Report
-  carnet?: string;
-  nombre_cliente?: string;
+  estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO';
+  excluido?: boolean;
+  motivo_exclusion?: string;
+  nombre_cliente?: string;     // Meta-data persistida tras el parseo
   telefono_cliente?: string;
   tarjeta_cliente?: string;
-  // Matching Engine traceability
-  matching_trace?: MatchingTrace[];
-  applied_rules?: string[];
-  matching_confidence?: number;
+  carnet?: string;             // Documento identidad extraido
+  ingestion_hash: string;      // hash(ref + fecha + monto) para evitar duplicados
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Product {
-  cod: string;
+  cod: string;                 // PK
   descripcion: string;
   um: string;
-  es_paquete: boolean;
-  contenido_paquete: number;
-  precio_cents: number;        // En Pesos (decimal) - PRECIO ACTUAL/AJUSTADO
-  precio_base_cents?: number;  // Precio original de catálogo
-  variacion_permisible_percent?: number; // ±% permitido para ajuste automático
-  prioridad_algoritmo: number; // 1..5
+  precio_cents: number;        // En Pesos * 100
+  prioridad_algoritmo: number;
   activo: boolean;
+  es_paquete: boolean;
+  contenido_paquete: number;   // Cuántas unidades trae el paquete
   stock_inicial_manual: number;
   created_at: string;
   updated_at?: string;
@@ -327,6 +307,45 @@ export interface IdentityAudit {
   timestamp: string;
 }
 
+export interface MappingRuleType {
+    id: string;
+    reportType: string;
+    provider: string;
+    sourceColumn: string;
+    targetField: string;
+    active: boolean;
+    priority: number;
+}
+
+export interface MappingExecution {
+    id: string;
+    reportType: string;
+    timestamp: string;
+    successRate: number;
+}
+
+export interface MatchingTrace {
+    step: string;
+    timestamp: number;
+    description: string;
+}
+
+export interface MVTTemplate {
+    id: string;
+    name: string;
+}
+
+export interface MVTSettings {
+    id: string;
+}
+
+export interface MVTExportLog {
+    id: string;
+    exportNumber: number;
+    templateId: string;
+    timestamp: string;
+}
+
 export class IPVDatabase extends Dexie {
   customers!: Table<Customer>;
   identity_audit!: Table<IdentityAudit>;
@@ -386,7 +405,8 @@ export class IPVDatabase extends Dexie {
     });
 
     this.version(24).stores({
-      matching_cache: '&id'
+      matching_cache: '&id',
+      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash, carnet, nombre_cliente'
     });
   }
 }

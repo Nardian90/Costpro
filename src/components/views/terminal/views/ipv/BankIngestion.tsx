@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { enrichTransactions } from '@/lib/ipv/parser';
+import { syncCatalogFromTransactions } from '@/lib/ipv/identity/registry';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { importCatalogProducts } from "@/lib/ipv/importUtils";
@@ -265,6 +266,12 @@ export function BankIngestion() {
       }
     }
 
+    if (imported > 0) {
+        const syncedCount = await syncCatalogFromTransactions();
+        if (syncedCount > 0) {
+            toast.info(`${syncedCount} clientes nuevos agregados al catálogo`);
+        }
+    }
     if (imported > 0) toast.success(`${imported} transacciones procesadas`);
     if (errorsCount > 0) toast.error(`${errorsCount} transacciones con errores`);
   };

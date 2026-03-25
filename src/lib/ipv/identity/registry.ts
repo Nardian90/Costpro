@@ -1,4 +1,4 @@
-import { db, type Customer } from "@/lib/dexie";
+import { db, type Customer, type BankTransaction } from "@/lib/dexie";
 import { normalizeName, similarity, normalizeCliente } from "./normalization";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,13 +18,26 @@ export interface CustomerStats {
 }
 
 /**
+ * Robustly checks if a value is a placeholder or generic string that shouldn't
+ * be registered as a valid identity field.
+ */
+export const isPlaceholder = (val?: string): boolean => {
+  if (!val) return true;
+  const cleaned = val.trim().toUpperCase();
+  const placeholders = [
+    'CI', 'NOMBRE', 'TELÉFONO', 'TARJETA', 'TELEFONO', 'N/A',
+    'CLIENTE', '---', 'UNKNOWN', 'DESCONOCIDO', 'SIN DATO', '---'
+  ];
+  return placeholders.includes(cleaned) || cleaned.length < 2;
+};
+
+/**
  * Gets a unified list of customers from both manual catalog and bank transactions.
  */
 export async function getHybridCustomers(): Promise<Customer[]> {
   const catalog = await db.customers.toArray();
-  const txCustomers = await db.bank_statements
-    .filter(tx => !!(tx.carnet || tx.nombre_cliente))
-    .toArray();
+  const allTxs = await db.bank_statements.toArray();
+  const txCustomers = allTxs.filter(tx => !!(tx.carnet || tx.nombre_cliente));
 
   const map = new Map<string, Customer>();
 
@@ -65,12 +78,6 @@ export async function resolveIdentity(
   const normalizedInputName = normalizeName(rawNombre || "");
   const phone = inputPhone?.trim();
   const card = inputCard?.trim();
-
-  const isPlaceholder = (val?: string) => {
-    if (!val) return true;
-    const upper = val.toUpperCase();
-    return upper === 'CI' || upper === 'NOMBRE' || upper === 'TELÉFONO' || upper === 'TARJETA' || upper === 'TELEFONO' || upper === 'N/A';
-  };
 
   const cleanCi = isPlaceholder(ci) ? undefined : ci;
   const cleanNombre = isPlaceholder(rawNombre) ? undefined : rawNombre;
@@ -231,9 +238,8 @@ export async function propagateCustomerIdentity(ci: string): Promise<number> {
         affected++;
     }
 
-    const pendingTxs = await db.bank_statements
-        .filter(t => !!(!t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre))
-        .toArray();
+    const allTxs = await db.bank_statements.toArray();
+    const pendingTxs = allTxs.filter(t => !!(!t.carnet && t.nombre_cliente && t.nombre_cliente !== customer.nombre));
 
     for (const tx of pendingTxs) {
         const sim = similarity(normalizeName(tx.nombre_cliente!), customer.normalized_name);
@@ -286,7 +292,7 @@ export async function saveCustomerManually(customerData: Partial<Customer> & { c
     const nombre = customerData.nombre || existing?.nombre || "";
     const normalized_name = normalizeName(nombre);
 
-    const status = (ci && nombre && customerData.phone && customerData.card_number) ? "COMPLETO" : "PARCIAL";
+    const status = (ci && nombre && (customerData.phone || existing?.phone) && (customerData.card_number || existing?.card_number)) ? "COMPLETO" : "PARCIAL";
 
     const customer: Customer = {
         ci,
@@ -323,9 +329,8 @@ export async function resolveConflict(
  * to the customers catalog if they don't exist yet.
  */
 export async function syncCatalogFromTransactions(): Promise<number> {
-  const txCustomers = await db.bank_statements
-    .filter(tx => !!(tx.carnet && tx.nombre_cliente))
-    .toArray();
+  const allTxs = await db.bank_statements.toArray();
+  const txCustomers = allTxs.filter(tx => !!(tx.carnet && tx.nombre_cliente));
 
   let importedCount = 0;
   for (const tx of txCustomers) {
@@ -347,14 +352,15 @@ export async function syncCatalogFromTransactions(): Promise<number> {
     } else {
       // Enriquecimiento opcional si el existente no tiene datos que la tx sí
       const updates: Partial<Customer> = {};
-      if (!existing.phone && tx.telefono_cliente) updates.phone = tx.telefono_cliente;
-      if (!existing.card_number && tx.tarjeta_cliente) updates.card_number = tx.tarjeta_cliente;
+      if (!existing.phone && tx.telefono_cliente && !isPlaceholder(tx.telefono_cliente)) updates.phone = tx.telefono_cliente;
+      if (!existing.card_number && tx.tarjeta_cliente && !isPlaceholder(tx.tarjeta_cliente)) updates.card_number = tx.tarjeta_cliente;
 
       if (Object.keys(updates).length > 0) {
         await db.customers.update(existing.ci, {
           ...updates,
           updated_at: new Date().toISOString()
         });
+        await propagateCustomerIdentity(existing.ci);
       }
     }
   }

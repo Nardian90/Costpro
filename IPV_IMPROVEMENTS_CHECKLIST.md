@@ -33,3 +33,16 @@ Based on the surgical audit provided, the following improvements have been succe
 - [x] **Unit Testing**:
     - Ran and passed existing tests in `src/lib/ipv/__tests__/engine.test.ts` and `src/lib/ipv/__tests__/advanced_engine.test.ts`.
     - Verified that `db.transaction` and audit logging work as expected in the engine.
+
+## 🟢 Customer Module & Identity Synchronization
+- [x] **Optimized Transaction Enrichment**:
+    - Refactored `enrichTransactions` in `src/lib/ipv/parser.ts` to use `Promise.all` with batching (50) for significantly faster imports.
+    - Updated logic to prioritize pre-mapped customer data from the ingestion process.
+- [x] **Automated Catalog Synchronization**:
+    - Integrated `syncCatalogFromTransactions` into `BankIngestion.tsx` to automatically populate the customer catalog after importing transactions.
+    - Added user feedback (toast) showing the number of new customers added.
+- [x] **Identity Propagation & Enrichment**:
+    - Fixed `syncCatalogFromTransactions` in `src/lib/ipv/identity/registry.ts` to trigger `propagateCustomerIdentity` when an existing customer is enriched with new metadata (phone, card).
+    - Improved `isPlaceholder` utility to be more robust against generic strings and whitespace.
+- [x] **Database & Schema Stability**:
+    - Updated Dexie schema to version 24, adding indexes for `carnet` and `nombre_cliente` in the `bank_statements` table to ensure performant identity lookups and synchronization.
