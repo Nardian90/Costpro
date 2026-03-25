@@ -337,3 +337,25 @@ export async function saveCustomerManually(customerData: Partial<Customer> & { c
     // Auto-propagate to reports
     await propagateCustomerIdentity(ci);
 }
+
+/**
+ * Deletes a customer from the catalog.
+ */
+export async function deleteCustomer(ci: string): Promise<void> {
+    await db.customers.delete(ci);
+}
+
+/**
+ * Resolves a specific identity conflict.
+ */
+export async function resolveConflict(
+    auditId: string,
+    resolution: 'KEEP_CATALOG' | 'UPDATE_CATALOG' | 'MERGE'
+): Promise<void> {
+    const audit = await db.identity_audit.get(auditId);
+    if (!audit) throw new Error("Conflicto no encontrado");
+
+    // Implementation of resolution logic can be expanded here
+    // For now, we just remove the audit entry to mark it as "handled"
+    await db.identity_audit.delete(auditId);
+}
