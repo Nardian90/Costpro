@@ -324,31 +324,35 @@ export async function resolveConflict(
  */
 export async function syncCatalogFromTransactions(): Promise<number> {
   const txCustomers = await db.bank_statements
-    .filter(tx => !!(tx.carnet && tx.nombre_cliente))
+    .filter(tx => !!(tx.carnet || tx.nombre_cliente))
     .toArray();
 
   let importedCount = 0;
   for (const tx of txCustomers) {
-    const existing = await db.customers.get(tx.carnet!);
+    const effectiveCi = tx.carnet || `_GEN_${normalizeName(tx.nombre_cliente || "").slice(0, 3)}_${tx.referencia_origen.slice(-4)}`;
+    const existing = await db.customers.get(effectiveCi);
+
     if (!existing) {
       await db.customers.put({
-        ci: tx.carnet!,
-        nombre: tx.nombre_cliente!.toUpperCase(),
-        normalized_name: normalizeName(tx.nombre_cliente!),
-        raw_names: [tx.nombre_cliente!],
+        ci: effectiveCi,
+        nombre: (tx.nombre_cliente || "DESCONOCIDO").toUpperCase(),
+        normalized_name: normalizeName(tx.nombre_cliente || ""),
+        raw_names: tx.nombre_cliente ? [tx.nombre_cliente] : [],
         phone: tx.telefono_cliente,
         card_number: tx.tarjeta_cliente,
-        status: "PARCIAL",
+        status: (tx.carnet && tx.nombre_cliente) ? "COMPLETO" : "PARCIAL",
         source: "AUTOMATICO",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
       importedCount++;
     } else {
-      // Enriquecimiento opcional si el existente no tiene datos que la tx sí
       const updates: Partial<Customer> = {};
       if (!existing.phone && tx.telefono_cliente) updates.phone = tx.telefono_cliente;
       if (!existing.card_number && tx.tarjeta_cliente) updates.card_number = tx.tarjeta_cliente;
+      if (tx.nombre_cliente && !existing.raw_names.includes(tx.nombre_cliente)) {
+        updates.raw_names = [...existing.raw_names, tx.nombre_cliente];
+      }
 
       if (Object.keys(updates).length > 0) {
         await db.customers.update(existing.ci, {
