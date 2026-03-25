@@ -43,11 +43,12 @@ import {
   Download,
   AlertTriangle,
   History,
-  TrendingUp
+  TrendingUp,
+  Database
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { propagateIdentity, getAllCustomerStats, deleteCustomer, type CustomerStats } from '@/lib/ipv/identity/registry';
+import { propagateIdentity, getAllCustomerStats, deleteCustomer, type CustomerStats, syncCatalogFromTransactions } from '@/lib/ipv/identity/registry';
 import { toast } from 'sonner';
 import { CustomerFormDialog } from './CustomerFormDialog';
 import { CustomerDetailsModal } from './CustomerDetailsModal';
@@ -56,6 +57,7 @@ import { IdentityConflictPanel } from './IdentityConflictPanel';
 export function CustomerCatalog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isPropagating, setIsPropagating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('catalog');
 
   const [formOpen, setFormOpen] = useState(false);
@@ -98,6 +100,19 @@ export function CustomerCatalog() {
       toast.error('Error al propagar la identidad');
     } finally {
       setIsPropagating(false);
+    }
+  };
+
+  const handleSyncFromTransactions = async () => {
+    try {
+      setIsSyncing(true);
+      const imported = await syncCatalogFromTransactions();
+      toast.success(`Sincronización completada: ${imported} nuevos clientes detectados`);
+    } catch (error) {
+      console.error('Error syncing from transactions:', error);
+      toast.error('Error al sincronizar con transacciones');
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -168,7 +183,7 @@ export function CustomerCatalog() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-adaptive">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
@@ -179,64 +194,78 @@ export function CustomerCatalog() {
             Gestión de identidades detectadas y registradas
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Button
+            onClick={handleSyncFromTransactions}
+            disabled={isSyncing}
+            variant="outline"
+            className="neu-btn gap-2 flex-1 sm:flex-none"
+            title="Sincronizar desde Transacciones"
+          >
+            <Database className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
+            <span className="hidden xs:inline">Actualizar Catálogo</span>
+            <span className="inline xs:hidden">Act. Catálogo</span>
+          </Button>
           <Button
             onClick={handlePropagate}
             disabled={isPropagating}
             variant="outline"
-            className="neu-btn gap-2"
+            className="neu-btn gap-2 flex-1 sm:flex-none"
+            title="Propagar Identidad a Historico"
           >
             <RefreshCw className={`w-4 h-4 ${isPropagating ? 'animate-spin' : ''}`} />
-            Re-Sincronizar
+            <span className="hidden xs:inline">Re-Sincronizar</span>
+            <span className="inline xs:hidden">Re-Sync</span>
           </Button>
           <Button
-            className="neu-btn-primary gap-2"
+            className="neu-btn-primary gap-2 flex-1 sm:flex-none"
             onClick={() => {
               setSelectedCustomer(null);
               setFormOpen(true);
             }}
           >
             <UserPlus className="w-4 h-4" />
-            Nuevo Cliente
+            <span className="hidden sm:inline">Nuevo Cliente</span>
+            <span className="inline sm:hidden">+ Cliente</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="neu-card border-none bg-card/50 shadow-md">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <User className="w-3 h-3" /> Total Clientes
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-adaptive">
+        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
+          <CardHeader className="pb-2 p-0">
+            <CardDescription className="badge-responsive flex items-center gap-1">
+                <User className="w-3 h-3 shrink-0" /> <span className="label-no-wrap">Total Clientes</span>
             </CardDescription>
-            <CardTitle className="text-3xl font-black">{customers.length}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl font-black">{customers.length}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-green-500" /> Completos
+        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
+          <CardHeader className="pb-2 p-0">
+            <CardDescription className="badge-responsive flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-green-500 shrink-0" /> <span className="label-no-wrap">Completos</span>
             </CardDescription>
-            <CardTitle className="text-3xl font-black text-green-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-green-500">
               {customers.filter(c => c.status === 'COMPLETO').length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <Clock className="w-3 h-3 text-blue-500" /> Detectados Auto
+        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
+          <CardHeader className="pb-2 p-0">
+            <CardDescription className="badge-responsive flex items-center gap-1">
+                <Clock className="w-3 h-3 text-blue-500 shrink-0" /> <span className="label-no-wrap">Detectados Auto</span>
             </CardDescription>
-            <CardTitle className="text-3xl font-black text-blue-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-blue-500">
               {customers.filter(c => c.source === 'AUTOMATICO').length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-orange-500" /> Conflictos
+        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
+          <CardHeader className="pb-2 p-0">
+            <CardDescription className="badge-responsive flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-orange-500 shrink-0" /> <span className="label-no-wrap">Conflictos</span>
             </CardDescription>
-            <CardTitle className="text-3xl font-black text-orange-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-orange-500">
               {conflictCount}
             </CardTitle>
           </CardHeader>
@@ -245,11 +274,11 @@ export function CustomerCatalog() {
 
       <Tabs defaultValue="catalog" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/30 p-1 rounded-2xl mb-4">
-          <TabsTrigger value="catalog" className="rounded-xl px-6 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+          <TabsTrigger value="catalog" className="rounded-xl px-4 md:px-6 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
             <User className="w-4 h-4 mr-2" />
             Catálogo
           </TabsTrigger>
-          <TabsTrigger value="conflicts" className="rounded-xl px-6 data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all relative">
+          <TabsTrigger value="conflicts" className="rounded-xl px-4 md:px-6 data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all relative">
             <AlertTriangle className="w-4 h-4 mr-2" />
             Conflictos
             {conflictCount > 0 && (
@@ -279,12 +308,13 @@ export function CustomerCatalog() {
                 disabled={filteredCustomers.length === 0}
               >
                 <Download className="w-4 h-4" />
-                Exportar CSV
+                <span className="hidden sm:inline">Exportar CSV</span>
+                <span className="inline sm:hidden">Exportar</span>
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="table-container">
+              <Table className="table-responsive">
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent border-border/50">
                     <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Cliente / CI</TableHead>
@@ -302,8 +332,8 @@ export function CustomerCatalog() {
                       return (
                         <TableRow key={customer.ci} className="hover:bg-primary/5 transition-colors border-border/40 group">
                           <TableCell className="py-4">
-                            <div className="flex flex-col">
-                              <span className="font-bold text-sm">{customer.nombre}</span>
+                            <div className="flex flex-col min-w-[120px]">
+                              <span className="font-bold text-sm whitespace-nowrap overflow-hidden text-ellipsis">{customer.nombre}</span>
                               <span className="text-[10px] font-mono text-muted-foreground">{customer.ci}</span>
                             </div>
                           </TableCell>
@@ -311,25 +341,25 @@ export function CustomerCatalog() {
                             {getStatusBadge(customer.status)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 min-w-[120px]">
                               <div className="flex items-center gap-1.5 text-[10px] font-medium opacity-80">
-                                <Phone className="w-3 h-3 text-muted-foreground" />
-                                <span>{customer.phone || '—'}</span>
+                                <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span className="label-no-wrap">{customer.phone || '—'}</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-[10px] font-mono opacity-60">
-                                <CreditCard className="w-3 h-3 text-muted-foreground" />
-                                <span>{customer.card_number || '—'}</span>
+                                <CreditCard className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span className="label-no-wrap">{customer.card_number || '—'}</span>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 min-w-[80px]">
                               <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                                <History className="w-3 h-3 text-muted-foreground" />
+                                <History className="w-3 h-3 text-muted-foreground shrink-0" />
                                 <span>{cStats.totalTransactions} tx</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-[10px] font-black text-primary">
-                                <TrendingUp className="w-3 h-3" />
+                                <TrendingUp className="w-3 h-3 shrink-0" />
                                 <span>${(cStats.totalAmountCents / 100).toLocaleString('es-CU', { minimumFractionDigits: 2 })}</span>
                               </div>
                             </div>
@@ -341,34 +371,37 @@ export function CustomerCatalog() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right px-6">
-                            <div className="flex justify-end gap-1">
+                            <div className="action-buttons-mobile justify-end">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-primary/10 group-hover:opacity-100 opacity-70 transition-opacity"
+                                className="h-8 w-8 hover:bg-primary/10 group-hover:opacity-100 opacity-70 transition-opacity shrink-0"
                                 onClick={() => {
                                   setSelectedCustomer(customer);
                                   setDetailsOpen(true);
                                 }}
+                                title="Ver Detalles"
                               >
                                 <ExternalLink className="w-4 h-4 text-primary" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-blue-500/10 group-hover:opacity-100 opacity-70 transition-opacity"
+                                className="h-8 w-8 hover:bg-blue-500/10 group-hover:opacity-100 opacity-70 transition-opacity shrink-0"
                                 onClick={() => {
                                   setSelectedCustomer(customer);
                                   setFormOpen(true);
                                 }}
+                                title="Editar Cliente"
                               >
                                 <Edit className="w-4 h-4 text-blue-500" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-destructive/10 group-hover:opacity-100 opacity-70 transition-opacity"
+                                className="h-8 w-8 hover:bg-destructive/10 group-hover:opacity-100 opacity-70 transition-opacity shrink-0"
                                 onClick={() => handleDelete(customer.ci)}
+                                title="Eliminar Cliente"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
