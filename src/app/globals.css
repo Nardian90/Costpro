@@ -953,7 +953,7 @@
       font-size: clamp(20px, 5vw, 24px) !important;
     }
 
-    /* Surgical grid adjustment for non-responsive forms in narrow viewports */
+    /* Surgical grid adjustment for non-responsive heartbeat in narrow viewports */
     form .grid-cols-2,
     form .grid-cols-3 {
       grid-template-columns: 1fr !important;
