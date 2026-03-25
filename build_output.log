@@ -1,0 +1,53 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 build
+> npx prisma generate && next build && sh scripts/bundle_standalone.sh
+
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (4.16.2 | library) to ./node_modules/@prisma/client in 120ms
+You can now start using Prisma Client in your code. Reference: https://pris.ly/d/client
+```
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+```
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.2.0 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 28.1s
+  Running TypeScript ...
+Failed to type check.
+
+./src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx:70:49
+Type error: Property 'syncOfficialResults' does not exist on type 'typeof Pick3ExternalService'.
+
+  [90m68 |[0m     setIsSyncing([36mtrue[0m);
+  [90m69 |[0m     [36mtry[0m {
+[31m[1m>[0m [90m70 |[0m       [36mconst[0m latest = [36mawait[0m [33mPick3ExternalService[0m.syncOfficialResults();
+  [90m   |[0m                                                 [31m[1m^[0m
+  [90m71 |[0m       [36mif[0m (latest && latest.length > [35m0[0m) {
+  [90m72 |[0m         setHistory(latest);
+  [90m73 |[0m         toast.success([32m"Sincronización exitosa"[0m);
+Next.js build worker exited with code: 1 and signal: null
