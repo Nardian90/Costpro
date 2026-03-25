@@ -1,6 +1,7 @@
 'use client';
 import { Card } from '@/components/ui/card';
 
+import { syncCatalogFromTransactions } from "@/lib/ipv/identity/registry";
 import React, { useState, useCallback } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useDropzone } from 'react-dropzone';
@@ -269,6 +270,12 @@ export function BankIngestion() {
       }
     }
 
+    if (imported > 0) {
+        const importedCustomers = await syncCatalogFromTransactions();
+        if (importedCustomers > 0) {
+            toast.info(`${importedCustomers} clientes agregados al catálogo`);
+        }
+    }
     if (imported > 0) toast.success(`${imported} transacciones procesadas`);
     if (errorsCount > 0) toast.error(`${errorsCount} transacciones con errores`);
   };
