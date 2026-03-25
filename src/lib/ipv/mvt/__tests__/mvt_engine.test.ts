@@ -33,9 +33,9 @@ describe('MVT Generation Engine', () => {
     expect(content).toContain('Numero=1');
     expect(content).toContain('NumCtrl=010(1)');
 
-    // Check Ubicacion (with empty pipes as per Refined defaults)
+    // Check Ubicacion (with 5 empty pipes as per Refined defaults)
     expect(content).toContain('[Ubicacion]');
-    expect(content).toContain('P1|Prod 1|U|100|||||10|');
+    expect(content).toContain('P1|Prod 1|U|100||||||10|');
 
     // Check Movimientos
     expect(content).toContain('[Movimientos]');
