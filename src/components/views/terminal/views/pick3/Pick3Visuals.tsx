@@ -31,7 +31,6 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   useEffect(() => {
     if (!mounted || !heatmapRef.current) return;
 
-    // Heatmap D3 implementation
     import('d3').then((d3) => {
       const svg = d3.select(heatmapRef.current);
       svg.selectAll("*").remove();
@@ -44,9 +43,10 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
       const data: any[] = [];
+      const transitions = analysis.markovTransitions.digits;
       for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
-          data.push({ x: String(i), y: String(j), value: analysis.markovTransitions[i][j] || 0 });
+          data.push({ x: String(i), y: String(j), value: transitions[i]?.[j] || 0 });
         }
       }
 
@@ -91,52 +91,20 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
     }));
   }, [analysis]);
 
-  const evolutionData = useMemo(() => {
-    return history.slice(0, 30).reverse().map(h => ({
-      date: h.date,
-      sum: h.result?.reduce((a,b) => (a as number)+(b as number), 0) || 0
-    }));
+  const distribution2DData = useMemo(() => {
+    const dist: Record<number, number> = {};
+    history.slice(0, 100).forEach(h => {
+      const val = (h.result[1] * 10) + h.result[2];
+      dist[val] = (dist[val] || 0) + 1;
+    });
+    return Object.entries(dist)
+      .map(([val, count]) => ({ val: val.padStart(2, '0'), count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
   }, [history]);
-
-  const insight = useMemo(() => {
-    const hot = analysis.hotNumbers[0];
-    const bias = analysis.biasScore[hot];
-    if (bias > 20) return `El número ${hot} muestra una desviación positiva de +${bias.toFixed(1)}%. Alta frecuencia detectada.`;
-    return "Distribución estable de resultados oficiales.";
-  }, [analysis]);
 
   const ChartWrapper = ({ title, desc, children }: any) => (
     <Card className="bg-card border-border/50 shadow-xl relative group overflow-hidden rounded-[32px]">
-      <div className="absolute top-4 right-4 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-muted/80 border border-border">
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-5xl h-[80vh] bg-background border-border">
-             <DialogHeader>
-                <DialogTitle className="text-2xl font-black italic uppercase tracking-tighter text-primary flex items-center gap-3">
-                  <Zap className="w-6 h-6" />
-                  {title}
-                </DialogTitle>
-                <CardDescription className="text-base">{desc}</CardDescription>
-             </DialogHeader>
-             <div className="flex-1 mt-8 min-h-0 relative">
-               {children}
-               <div className="absolute bottom-4 left-4 right-4 p-6 rounded-3xl bg-primary/5 border border-primary/10 flex gap-4 items-start">
-                  <div className="p-2 rounded-xl bg-primary/20">
-                    <Info className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Análisis de Mercado</h4>
-                    <p className="text-sm font-medium italic text-foreground/80">{insight}</p>
-                  </div>
-               </div>
-             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
       <CardHeader>
         <CardTitle className="text-xs font-black uppercase tracking-widest italic flex items-center gap-2">
           {title}
@@ -155,7 +123,7 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
        <ChartWrapper
           title="Frecuencia de Dígitos"
-          desc="Distribución histórica oficial"
+          desc="Distribución histórica (Global)"
        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={freqData}>
@@ -176,31 +144,23 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
        </ChartWrapper>
 
        <ChartWrapper
-          title="Evolución de Sumas"
-          desc="Tendencia de volatilidad"
+          title="Top 2D (Últimos 100)"
+          desc="Pares más frecuentes (YZ)"
        >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={evolutionData}>
-              <defs>
-                <linearGradient id="colorSum" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-              <XAxis dataKey="date" hide />
-              <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px' }}
-              />
-              <Area type="monotone" dataKey="sum" stroke="#10b981" fillOpacity={1} fill="url(#colorSum)" strokeWidth={3} />
-            </AreaChart>
+            <BarChart data={distribution2DData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.05)" />
+              <XAxis type="number" hide />
+              <YAxis dataKey="val" type="category" stroke="#999" fontSize={10} axisLine={false} tickLine={false} width={30} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+            </BarChart>
           </ResponsiveContainer>
        </ChartWrapper>
 
        <ChartWrapper
           title="Mapa de Calor Markov"
-          desc="Transiciones entre sorteos"
+          desc="Transiciones (X -> X')"
        >
           <div className="flex justify-center items-center h-full">
             <svg ref={heatmapRef} width="280" height="280" className="max-w-full h-auto"></svg>
