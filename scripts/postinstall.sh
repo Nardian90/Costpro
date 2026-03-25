@@ -7,8 +7,11 @@ set -e
 echo "Starting postinstall tasks..."
 
 # 1. Prisma Client Generation
-# Use bun if available, otherwise npx
-if command -v bun > /dev/null 2>&1; then
+# Use local prisma if available, otherwise bun/npx
+if [ -f "./node_modules/.bin/prisma" ]; then
+    echo "Using local Prisma to generate client..."
+    ./node_modules/.bin/prisma generate
+elif command -v bun > /dev/null 2>&1; then
     echo "Using Bun to generate Prisma client..."
     bun x prisma generate
 elif command -v npx > /dev/null 2>&1; then
@@ -25,9 +28,7 @@ if command -v pip > /dev/null 2>&1; then
     if [ -f "requirements.txt" ]; then
         echo "Installing Python dependencies from requirements.txt..."
         # Try different install methods for maximum compatibility
-        pip install --break-system-packages -r requirements.txt > /dev/null 2>&1 || \
-        pip install -r requirements.txt > /dev/null 2>&1 || \
-        echo "Warning: Python dependencies failed to install, but continuing..."
+        pip install --break-system-packages -r requirements.txt > /dev/null 2>&1 ||         pip install -r requirements.txt > /dev/null 2>&1 ||         echo "Warning: Python dependencies failed to install, but continuing..."
     fi
 else
     echo "pip not found, skipping Python dependencies."
