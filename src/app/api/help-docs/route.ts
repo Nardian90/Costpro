@@ -4,7 +4,7 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-const KNOWLEDGE_BASE = path.join(/*turbopackIgnore:true*/ process.cwd(), 'knowledge');
+const KNOWLEDGE_BASE = path.join(/*turbopackIgnore: true*/ process.cwd(), 'knowledge');
 
 interface SearchResult {
   path: string;

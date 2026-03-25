@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const readJson = (relPath: string) => {
-      const fullPath = path.join(/*turbopackIgnore:true*/ process.cwd(), relPath);
+      const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), relPath);
       if (fs.existsSync(fullPath)) {
         return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
       }
