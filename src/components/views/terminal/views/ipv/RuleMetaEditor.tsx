@@ -14,6 +14,7 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { MatchingRuleValidator } from '@/lib/ipv/rule-validator';
 
 interface RuleMetaEditorProps {
   rule: MatchingRule;
@@ -120,6 +121,18 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
   };
 
   const handleSave = async () => {
+    // Validar regla antes de guardar
+    const validation = MatchingRuleValidator.validateRule({ ...rule, meta });
+
+    if (!validation.valid) {
+      toast.error(`Errores de validación:\n${validation.errors.join('\n')}`);
+      return;
+    }
+
+    if (validation.warnings.length > 0) {
+      toast.warning(`Atención:\n${validation.warnings.join('\n')}`);
+    }
+
     setIsSaving(true);
     try {
       await onSave(rule.id, meta);
