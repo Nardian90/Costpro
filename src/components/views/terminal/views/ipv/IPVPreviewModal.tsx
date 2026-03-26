@@ -6,7 +6,6 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +40,6 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                             </div>
                             <div>
                                 <DialogTitle className="text-2xl font-black uppercase text-primary tracking-tighter">Vista Previa IPV</DialogTitle>
-          <DialogDescription className="sr-only">Detalles del diálogo</DialogDescription>
                                 <p className="text-xs font-medium text-muted-foreground mt-0.5">Reporte Diario correspondiente al {formatDate(report.fecha_reporte)}</p>
                             </div>
                         </div>

@@ -424,10 +424,6 @@ export class IPVDatabase extends Dexie {
     this.version(26).stores({
       audit_logs: "++id, timestamp, action, entity, actor"
     });
-
-    this.version(27).stores({
-      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash, carnet, nombre_cliente'
-    });
   }
 }
 

@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -85,9 +84,6 @@ export function CustomerFormDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{customer ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
-          <DialogDescription>
-            Complete la información del cliente. Los campos con * son obligatorios.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
