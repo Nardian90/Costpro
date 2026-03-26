@@ -208,7 +208,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
         {layoutMode === 'table' ? (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="transaction-table">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b-2">
                   <TableHead className="w-[40px] text-center"><Info className="w-3 h-3 mx-auto opacity-20" /></TableHead>
