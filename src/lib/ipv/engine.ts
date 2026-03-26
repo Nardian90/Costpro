@@ -7,6 +7,7 @@ import {
   type MatchingTrace,
   db
 } from '../dexie';
+import { isProductAMedida } from './utils';
 
 /**
  * Genera un hash simple para idempotencia
@@ -547,7 +548,14 @@ export class MatchingEngine {
       appliedRules,
       matchingConfidence: isComplete ? matchingConfidence : 0
     };
-    await this.persistLog(transaction, result, performance.now() - startTimeMs);
+
+    try {
+      await this.persistLog(transaction, result, performance.now() - startTimeMs);
+    } catch (logError) {
+      console.error('Error in persistLog for transaction:', transaction.referencia_origen, logError);
+      // We don't throw here to avoid stopping the matching process if only logging fails
+    }
+
     return result;
   }
 
@@ -627,7 +635,6 @@ export class MatchingEngine {
     if (!targetProduct || !targetProduct.id_grupo) return false;
 
     // Invariant: Do not decompose if it's "A Medida" (optional rule, but good for safety)
-    const { isProductAMedida } = await import('./utils');
     if (isProductAMedida(targetProduct.um)) return false;
     const ancestors = this.products.filter(p => p.cod_hijo === productCod);
 
@@ -841,41 +848,44 @@ export class MatchingEngine {
     onProgress?: (percentage: number) => void,
     customStockMap?: Map<string, number>
   ): Promise<any[]> {
-    return await db.transaction('rw', [db.reconciliation_lines, db.matching_logs, db.matching_cache, db.product_movements, db.products, db.bank_statements], async () => {
-      const results: any[] = [];
-      if (customStockMap) this.stockMap = new Map(customStockMap);
-      for (let i = 0; i < transactions.length; i++) {
-        const tx = transactions[i];
-        try {
-            const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
-            results.push({
-                transactionId: tx.referencia_origen,
-                status: res.status,
-                lines: res.lines,
-                failReason: res.failReason,
-                movements: res.movements,
-                trace: res.trace,
-                appliedRules: res.appliedRules,
-                matchingConfidence: res.matchingConfidence
-            });
-        } catch (error) {
-            results.push({
-                transactionId: tx.referencia_origen,
-                status: 'PENDIENTE',
-                lines: [],
-                movements: [],
-                trace: [],
-                appliedRules: [],
-                matchingConfidence: 0
-            });
-        }
-        if (onProgress) {
-            const percentage = Math.round(((i + 1) / transactions.length) * 100);
-            if (i % 20 === 0 || percentage % 5 === 0 || i === transactions.length - 1) onProgress(percentage);
-        }
+    const results: any[] = [];
+    if (customStockMap) this.stockMap = new Map(customStockMap);
+
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      try {
+          const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
+          results.push({
+              transactionId: tx.referencia_origen,
+              status: res.status,
+              lines: res.lines,
+              failReason: res.failReason,
+              movements: res.movements,
+              trace: res.trace,
+              appliedRules: res.appliedRules,
+              matchingConfidence: res.matchingConfidence
+          });
+      } catch (error) {
+          console.error(`Error matching transaction ${tx.referencia_origen}:`, error);
+          results.push({
+              transactionId: tx.referencia_origen,
+              status: 'PENDIENTE',
+              lines: [],
+              movements: [],
+              trace: [],
+              appliedRules: [],
+              matchingConfidence: 0
+          });
       }
-      return results;
-    });
+
+      if (onProgress) {
+          const percentage = Math.round(((i + 1) / transactions.length) * 100);
+          if (i % 5 === 0 || percentage === 100) {
+              onProgress(Math.min(100, Math.max(0, percentage)));
+          }
+      }
+    }
+    return results;
   }
 
   async generateDailyAggregate(fecha: string): Promise<void> {

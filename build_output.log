@@ -1,3 +1,0 @@
-$ next build && sh scripts/bundle_standalone.sh
-/usr/bin/bash: line 1: next: command not found
-error: script "build" exited with code 127

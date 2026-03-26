@@ -214,6 +214,11 @@ export default function IPVView() {
         return;
     }
 
+    if (!settings?.copiloto_activo && (!rules || rules.length === 0)) {
+        toast.error('No hay reglas de matching configuradas.');
+        return;
+    }
+
     setIsMatching(true);
     setMatchMessage('Iniciando proceso de matching...');
 
@@ -249,36 +254,54 @@ export default function IPVView() {
     });
 
     worker.onmessage = async (e) => {
-      if (e.data.type === 'PROGRESS') {
+      try {
+        if (e.data.type === 'PROGRESS') {
           setMatchProgress(e.data.percentage);
           setMatchMessage(`Procesando: ${e.data.percentage}%`);
-      }
-
-      if (e.data.type === 'BATCH_COMPLETE') {
-        const { results } = e.data;
-
-        for (const res of results) {
-          if (res.lines.length > 0) {
-            await db.reconciliation_lines.bulkAdd(res.lines);
-          }
-
-          if (res.movements && res.movements.length > 0) {
-              await db.product_movements.bulkAdd(res.movements.map((m: any) => ({
-                  ...m,
-                  referencia_transaccion: res.transactionId
-              })));
-          }
-
-          await db.bank_statements.update(res.transactionId, {
-            estado_conciliacion: res.status,
-            fail_reason: res.failReason,
-            matching_trace: res.trace,
-            applied_rules: res.appliedRules,
-            matching_confidence: res.matchingConfidence
-          });
         }
 
-        toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
+        if (e.data.type === 'BATCH_COMPLETE') {
+          const { results } = e.data;
+
+          if (!results || results.length === 0) {
+            toast.info('No se generaron resultados de matching.');
+            worker.terminate();
+            setIsMatching(false);
+            setMatchProgress(0);
+            return;
+          }
+
+          await db.transaction('rw', [db.reconciliation_lines, db.product_movements, db.bank_statements], async () => {
+            for (const res of results) {
+              if (res.lines && res.lines.length > 0) {
+                await db.reconciliation_lines.bulkAdd(res.lines);
+              }
+
+              if (res.movements && res.movements.length > 0) {
+                await db.product_movements.bulkAdd(res.movements.map((m: any) => ({
+                  ...m,
+                  referencia_transaccion: res.transactionId
+                })));
+              }
+
+              await db.bank_statements.update(res.transactionId, {
+                estado_conciliacion: res.status,
+                fail_reason: res.failReason,
+                matching_trace: res.trace,
+                applied_rules: res.appliedRules,
+                matching_confidence: res.matchingConfidence
+              });
+            }
+          });
+
+          toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
+          worker.terminate();
+          setIsMatching(false);
+          setMatchProgress(0);
+        }
+      } catch (err) {
+        console.error('Error processing worker message:', err);
+        toast.error(`Error al guardar resultados: ${err instanceof Error ? err.message : 'Error desconocido'}`);
         worker.terminate();
         setIsMatching(false);
         setMatchProgress(0);
