@@ -1,0 +1,8 @@
+{
+  "id": "SPECIFICATION_LANDING_b__showcase_de_módulos__grid_informativo_",
+  "content": "### B. Showcase de Módulos (Grid Informativo)\nBreve descripción de los pilares del sistema:\n1. **Gestión de Costos:** Motor de cálculo con 14 secciones de gasto.\n2. **Punto de Venta (TPV):** Operativa móvil optimizada para zonas de alcance del pulgar.\n3. **Logística e Inventario:** Control multi-sucursal con aislamiento RLS.\n4. **Inteligencia de Negocio:** Reportes profesionales y asistente Jules AI.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/SPECIFICATION_LANDING.md",
+    "header": "B. Showcase de Módulos (Grid Informativo)"
+  }
+}

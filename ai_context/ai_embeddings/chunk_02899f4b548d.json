@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_1__limpiar_cache",
+  "content": "### 1. Limpiar cache\n\n```typescript\n// En la consola del browser (DevTools F12)\n// Limpiar React Query cache\nlocalStorage.clear();\nsessionStorage.clear();\nlocation.reload();\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "1. Limpiar cache"
+  }
+}

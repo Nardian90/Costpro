@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_AUDIT_REPORT_1__inconsistent_stock_data",
+  "content": "### 1. Inconsistent Stock Data\n- **Description:** The `products.stock_current` field is denormalized and not consistently updated with the `inventory` table, creating a high risk of data inconsistency. There are no triggers or constraints to ensure that `stock_current` reflects the actual inventory levels.\n- **Impact:** Inaccurate stock data can lead to incorrect business decisions, poor customer satisfaction, and financial losses.\n- **Recommendation:** Implement a database trigger to automatically update `products.stock_current` whenever the `inventory` table is modified.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
+    "header": "1. Inconsistent Stock Data"
+  }
+}

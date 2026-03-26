@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_1____modal_de_recepción__interfaz_incompleta____",
+  "content": "### 1. **Modal de Recepción: Interfaz Incompleta** 🟠\n**Severidad:** MEDIA\n**Ubicación:** Falta de panel de captura de detalles\n\n**Problema:**\n- Old project muestra **sección expandible** para capturar:\n  - Proveedor (required)\n  - Fecha (required)\n  - Número de Factura (required)\n- **Nuevo proyecto:** No existe esta sección\n\n**Comparativo:**\n```javascript\n// OLD PROJECT - tiene esto ✅\n<div id=\"receipt-meta-section\" style=\"display:none;\">\n    <label>Proveedor <span style=\"color:red\">*</span></label>\n    <input id=\"receipt-meta-supplier\" placeholder=\"Nombre del Proveedor\" />\n\n    <label>Fecha Recepción <span style=\"color:red\">*</span></label>\n    <input type=\"date\" id=\"receipt-meta-date\" />\n\n    <label>Ref. / Factura <span style=\"color:red\">*</span></label>\n    <input id=\"receipt-meta-ref\" placeholder=\"FAC-001\" />\n</div>\n\n// NUEVO PROYECTO - NO TIENE ESTO ❌\n// panel de recepción vacío de estos campos\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "1. **Modal de Recepción: Interfaz Incompleta** 🟠"
+  }
+}

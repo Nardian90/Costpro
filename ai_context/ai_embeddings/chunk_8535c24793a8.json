@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_auditlogsview",
+  "content": "## AuditLogsView\n**Propósito:** Interfaz para gestionar AuditLogsView.\n\n**Acciones clave:**\n- handleExportPdf\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "AuditLogsView"
+  }
+}

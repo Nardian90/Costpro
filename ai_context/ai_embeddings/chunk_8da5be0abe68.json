@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useUsers_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useUsers.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/lib/logger\", \"./base\", \"@/lib/rpc-validator\", \"@/validation/schemas\", \"@/types\", \"zod\", \"sonner\"], \"domain\": \"Domain\", \"exports\": [\"useUsers\", \"useUserStoreAccess\", \"useCreateUser\", \"useManageUserMemberships\", \"useUpdateUser\"], \"id\": \"src/hooks/api/useUsers.ts\", \"name\": \"useUsers.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useUsers.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useUsers.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 342,
+    "domain": "components"
+  }
+}

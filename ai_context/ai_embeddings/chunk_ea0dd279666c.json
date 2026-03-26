@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_CHECKLIST_test_1__imágenes",
+  "content": "### Test 1: Imágenes\n```\n1. Navegar a Vista Almacén\n2. Verificar que productos con image_url muestren imagen\n3. Verificar fallback a icono si no hay imagen\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
+    "header": "Test 1: Imágenes"
+  }
+}

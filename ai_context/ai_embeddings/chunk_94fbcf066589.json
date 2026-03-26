@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_panel_de_controlview",
+  "content": "## Panel de ControlView\n**Propósito:** Interfaz para gestionar Panel de ControlView.\n\n**Acciones clave:**\n- Calendar\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "Panel de ControlView"
+  }
+}

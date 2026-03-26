@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_receptions_ReceptionsHistoryView_tsx",
+  "content": "{\"actions\": [\"handleDelete\", \"handleEdit\"], \"components\": [\"ui/QueryInspector\", \"ui/SearchBar\", \"ui/StateRenderer\", \"ui/skeleton\"], \"id\": \"src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx\", \"inputs\": [\"Calendar\"], \"name\": \"ReceptionsHistoryView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 21,
+    "domain": "views"
+  }
+}

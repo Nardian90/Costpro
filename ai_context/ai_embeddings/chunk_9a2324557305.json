@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_AUDIT_debilidades",
+  "content": "### Debilidades\n- **Desorden en el Raíz**: Demasiados scripts (`.py`), parches (`.patch`, `.diff`) y reportes (`.md`) en la raíz ensucian el proyecto y dificultan la navegación.\n- **Falta de Lógica de Negocio**: Existe un \"gap\" entre el \"qué hace el código\" (técnico) y el \"para qué sirve en el negocio\" (funcional).\n- **Obsolescencia**: Muchos reportes de auditorías pasadas (Marzo 2024) deberían estar archivados.\n- **Fragmentación**: La información de \"cómo funciona x\" está repartida entre `docs/features`, `docs/guides` y archivos sueltos.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
+    "header": "Debilidades"
+  }
+}

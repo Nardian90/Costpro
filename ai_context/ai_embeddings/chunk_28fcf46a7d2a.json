@@ -1,0 +1,8 @@
+{
+  "id": "PERFORMANCE_GUIDELINES_stale_time",
+  "content": "### Stale Time\n- **Static Data:** (Stores, User Profiles) `staleTime: 5 * 60 * 1000` (5 minutes).\n- **Operational Data:** (Products, Transactions) `staleTime: 30 * 1000` (30 seconds).\n- **Audit/Logs:** `staleTime: 60 * 1000` (1 minute).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
+    "header": "Stale Time"
+  }
+}

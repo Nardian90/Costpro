@@ -1,0 +1,8 @@
+{
+  "id": "FLOW_IPV_MISMATCH_1__fase_de_ingesta__ingestion_",
+  "content": "## 1. Fase de Ingesta (Ingestion)\nLas transacciones bancarias se extraen de reportes (SMS o Banca en Línea) y se importan al sistema (`BankIngestion.tsx`).\n- **Validación de Duplicados:** Se utiliza un hash basado en referencia, fecha e importe. Los conflictos se envían a `IngestionErrorsTable.tsx`.\n- **Estado Inicial:** Las transacciones válidas entran con estado `PENDIENTE`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
+    "header": "1. Fase de Ingesta (Ingestion)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_IPVInstitutionalDashboard_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para IPVInstitutionalDashboard.\", \"dependencies\": [\"react\", \"@/components/ui/card\", \"@/lib/dexie\", \"@/lib/utils\", \"@/components/ui/button\", \"@/components/ui/badge\"], \"domain\": \"UI\", \"exports\": [\"IPVInstitutionalDashboard\"], \"id\": \"src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx\", \"name\": \"IPVInstitutionalDashboard.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico IPVInstitutionalDashboard.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 111,
+    "domain": "components"
+  }
+}

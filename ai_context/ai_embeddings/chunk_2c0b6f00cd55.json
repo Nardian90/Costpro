@@ -1,0 +1,8 @@
+{
+  "id": "data-model_2__persistencia_remota__postgresql_via_prisma_supabase_",
+  "content": "## 2. Persistencia Remota (PostgreSQL via Prisma/Supabase)\nLa persistencia global y sincronizada se maneja a través de Supabase con Prisma ORM.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/data-model.md",
+    "header": "2. Persistencia Remota (PostgreSQL via Prisma/Supabase)"
+  }
+}

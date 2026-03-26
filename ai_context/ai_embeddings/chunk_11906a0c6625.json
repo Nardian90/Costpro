@@ -1,0 +1,8 @@
+{
+  "id": "audit_v5_plan_de_mejora",
+  "content": "## Plan de Mejora\n1. **Exportación Integral:** Modificar la lógica para preservar fórmulas originales y valores calculados por separado.\n2. **Corrección de Referencias:** Arreglar el motor de expresiones del encabezado.\n3. **Funciones Matemáticas:** Implementar `REDONDEO` y optimizar acceso a Anexos.\n4. **Auditoría Proactiva:** Añadir reglas de validación para prevenir errores de cálculo antes de la exportación.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/audit_v5.8_optimization.md",
+    "header": "Plan de Mejora"
+  }
+}

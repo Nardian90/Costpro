@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_reports_ReportConfigPanel_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ReportConfigPanel.\", \"dependencies\": [\"react\", \"@/components/ui/card\", \"@/components/ui/input\", \"@/components/ui/label\", \"@/components/ui/select\", \"@/components/ui/checkbox\", \"@/types\", \"@/hooks/api/useProducts\", \"@/store\", \"@/hooks/api/useStores\", \"lucide-react\", \"@/contracts/reports\", \"@/lib/utils\", \"@/components/ui/button\"], \"domain\": \"UI\", \"exports\": [\"ReportConfigPanel\"], \"id\": \"src/components/views/terminal/views/reports/ReportConfigPanel.tsx\", \"name\": \"ReportConfigPanel.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ReportConfigPanel.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ReportConfigPanel.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 40,
+    "domain": "components"
+  }
+}

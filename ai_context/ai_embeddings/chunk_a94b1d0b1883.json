@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_3_1_sincronización_en_la_nube",
+  "content": "### 3.1 Sincronización en la Nube\n*   **Situación actual**: Los datos residen exclusivamente en el navegador del usuario (IndexedDB).\n*   **Mejora**: Implementar un proceso de \"Sync & Backup\" hacia Supabase para permitir que múltiples usuarios accedan a la misma conciliación y evitar pérdida de datos por limpieza de caché del navegador.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "3.1 Sincronización en la Nube"
+  }
+}

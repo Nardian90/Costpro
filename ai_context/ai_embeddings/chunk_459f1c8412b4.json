@@ -1,0 +1,9 @@
+{
+  "id": "components_src_services_report_service_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para report-service.\", \"dependencies\": [\"@/lib/supabaseClient\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"reportService\"], \"id\": \"src/services/report-service.ts\", \"name\": \"report-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico report-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar report-service.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 319,
+    "domain": "components"
+  }
+}

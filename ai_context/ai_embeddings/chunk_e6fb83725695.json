@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_2__archivo_compañero_obligatorio__crear_primero_",
+  "content": "## 2. ARCHIVO COMPAÑERO OBLIGATORIO (CREAR PRIMERO)\n\n**Ruta:** `/docs/automation/pipeline_state.yaml`\n**Contenido:** Copiar y pegar el siguiente bloque YAML exactamente.\n\n```yaml\ncurrentPhase: 1\nlastExecution: null\npipelineVersion: 8.0.0\ncycle: 1\nschedulerMode: normal           # normal | repair | light\ndocumentationModel: ISO_26514 + Diataxis\nrepairThreshold: 80             # integrityScore < 80 → modo repair\nconfidenceThreshold: 90         # % (0-100) — mínimo aceptable para artefacts IA\nquarantinePath: docs/automation/quarantine/\nartifactStore: public/\nmetadataStore: public/_meta/\narchiveStore: public/_archive/\nreviewQueue: docs/automation/review_queue.json\nai_embeddings_path: ai_context/ai_embeddings/\nai_vector_index_path: ai_context/ai_vector_index/\nhumanFeedbackStore: docs/automation/human_feedback.json\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "2. ARCHIVO COMPAÑERO OBLIGATORIO (CREAR PRIMERO)"
+  }
+}

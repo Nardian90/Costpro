@@ -1,0 +1,8 @@
+{
+  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_case_3__admin_intenta_borrar_tienda",
+  "content": "### Case 3: Admin intenta borrar tienda\n\n**Antes:**\n```sql\n-- \"Stores management\" (ALL)\nUSING: is_admin()  -- FALSE\n-- BLOCKED\n```\n\n**Después:**\n```sql\n-- \"stores_delete_admin\" (DELETE)\nUSING: is_admin()  -- TRUE\n-- ALLOWED\n```\n\n✅ Funciona\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
+    "header": "Case 3: Admin intenta borrar tienda"
+  }
+}

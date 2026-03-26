@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_AJUSTES_DOCUMENTOS_probabilidad_de_error__5_",
+  "content": "### Probabilidad de Error: 5%\n- **Fuga de memoria/Estado:** Si se invierte un documento con cientos de items, la iteración en el cliente podría ser lenta. Se recomienda mover esta lógica a un RPC de base de datos en el futuro para mayor atomicidad.\n- **Desincronización de Items:** El hook depende de que los items estén cargados en el estado local en el momento de la inversión. Si el fetch de detalles falla justo antes de invertir, el ajuste podría ser parcial.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_AJUSTES_DOCUMENTOS.md",
+    "header": "Probabilidad de Error: 5%"
+  }
+}

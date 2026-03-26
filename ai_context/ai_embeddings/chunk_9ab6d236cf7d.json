@@ -1,0 +1,8 @@
+{
+  "id": "MAINTENANCE_LOG_roadmap_de_secciones",
+  "content": "# ROADMAP DE SECCIONES\n\nEl agente debe trabajar **una sección por ejecución diaria**.\n\n[ ] SECCION_01_HEADER\nNav principal\nLogo\nMenú hamburguesa\n\n[ ] SECCION_02_HERO\nBanner principal\nTítulos H1\nCTAs superiores\n\n[ ] SECCION_03_PRODUCTO\nGrids de productos\nCards\nPrecios\n\n[ ] SECCION_04_CONTENIDO\nArtículos\nTexto largo\nTablas\n\n[ ] SECCION_05_MEDIA\nGalerías\nVideos\nSliders\n\n[ ] SECCION_06_FORMS\nFormularios\nInputs\nCheckouts\n\n[ ] SECCION_07_FOOTER\nEnlaces legales\nCopyright\nRedes sociales\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
+    "header": "ROADMAP DE SECCIONES"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "user_help_26",
+  "content": "{\"acciones\": [\"handleCreate\", \"handleDelete\", \"handleEdit\", \"handleSubmit\"], \"descripcion_usuario\": \"Interfaz para gestionar RolesManagementView.\", \"feature\": \"RolesManagementView\", \"resultados\": [\"Table\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 26,
+    "domain": "user_help"
+  }
+}

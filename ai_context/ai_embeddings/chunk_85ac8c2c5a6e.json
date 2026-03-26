@@ -1,0 +1,8 @@
+{
+  "id": "ERROR_AUDIT_riesgo_residual",
+  "content": "### Riesgo Residual\n- **Lógica de Negocio en TerminalView:** Aunque los datos ahora están validados, la complejidad del componente `TerminalView` sigue siendo alta. Se recomienda seguir con la modularización.\n- **Sincronización de Tipos:** Es vital mantener sincronizados los esquemas de Zod con las interfaces de TypeScript para evitar discrepancias.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
+    "header": "Riesgo Residual"
+  }
+}

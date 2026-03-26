@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_settingsview",
+  "content": "## SettingsView\n**Propósito:** Interfaz para gestionar SettingsView.\n\n**Acciones clave:**\n- handleAddKey\n- handleDeleteKey\n- handleToggleKeyStatus\n- handleUpdateKey\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "SettingsView"
+  }
+}

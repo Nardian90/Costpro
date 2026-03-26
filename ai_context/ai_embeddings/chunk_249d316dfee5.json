@@ -1,0 +1,9 @@
+{
+  "id": "components_src_store___tests___session_store_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para session-store.test.\", \"dependencies\": [\"vitest\", \"../session-store\", \"@testing-library/react\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/store/__tests__/session-store.test.ts\", \"name\": \"session-store.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico session-store.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar session-store.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 364,
+    "domain": "components"
+  }
+}

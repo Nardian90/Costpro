@@ -1,0 +1,8 @@
+{
+  "id": "SPECIFICATION_LANDING_3__narrativa_del_caso_de_uso_mipyme___la_transformación_de_los_lunes_",
+  "content": "## 3. Narrativa del Caso de Uso MiPyME: \"La Transformación de los Lunes\"\n\n**Escenario Crítico:**\nUna MiPyME de distribución recibe semanalmente un promedio de **100 productos nuevos**. Cada lote llega con facturas de costos variables (cambios en materia prima, aranceles, logística).\n\n**El Dolor (Proceso Manual):**\n- Crear 100 fichas de costo una a una consume ~15-20 horas hombre.\n- Riesgo crítico de errores de transcripción en fórmulas complejas.\n- Inviabilidad para ajustar precios de venta rápidamente.\n\n**La Solución CostPro:**\n- **Entrada:** Un archivo Excel simple con la relación Producto ↔ Costo Unitario.\n- **Acción:** El usuario carga el archivo en el Generador Masivo.\n- **Resultado:** En menos de **5 minutos**, el sistema genera las 100 fichas de costo completas, aplicando automáticamente porcentajes de seguridad social, impuestos de fuerza de trabajo y márgenes de utilidad configurados.\n\n**Impacto en el Negocio:**\n- Ahorro del 95% en tiempo administrativo.\n- Datos 100% precisos para la toma de decisiones.\n- Agilidad para reaccionar a cambios de mercado en tiempo real.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/SPECIFICATION_LANDING.md",
+    "header": "3. Narrativa del Caso de Uso MiPyME: \"La Transformación de los Lunes\""
+  }
+}

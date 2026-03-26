@@ -1,0 +1,8 @@
+{
+  "id": "AI_BOT_FLOW_4__lógica_de_conversación_y_modelo",
+  "content": "## 4. Lógica de Conversación y Modelo\n\n- **Modelo Predeterminado:** `gemini-2.5-flash`.\n- **Manejo de Errores:** El `GeminiAdapter` intercepta errores técnicos de la API de Google y los traduce a mensajes amigables en español:\n  - **401/403:** Error de API Key o permisos.\n  - **429:** Error de cuota (límite alcanzado).\n  - **Safety:** Bloqueo por políticas de contenido.\n- **Contexto de Darian:** Para las fichas de costo, se inyecta un `systemPrompt` masivo que incluye regulaciones cubanas (Res. 148/2023) y reglas estrictas de formato JSON para actualizaciones automáticas.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
+    "header": "4. Lógica de Conversación y Modelo"
+  }
+}

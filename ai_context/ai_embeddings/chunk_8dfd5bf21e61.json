@@ -1,0 +1,8 @@
+{
+  "id": "DOWNLOAD_INSTRUCTIONS_copia_los_archivos_importantes",
+  "content": "# Copia los archivos importantes\ncp /home/z/my-project/src ./ -r\ncp /home/z/my-project/package.json ./\ncp /home/z/my-project/tsconfig.json ./\ncp /home/z/my-project/tailwind.config.ts ./\ncp /home/z/my-project/next.config.ts ./\ncp /home/z/my-project/postcss.config.mjs ./\ncp /home/z/my-project/eslint.config.mjs ./\ncp /home/z/my-project/prisma ./ -r\ncp /home/z/my-project/README_POS.md ./\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
+    "header": "Copia los archivos importantes"
+  }
+}

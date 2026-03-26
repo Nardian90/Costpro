@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_ipv_TransferQRReportView_tsx",
+  "content": "{\"actions\": [\"handleExportPDF\", \"handleUpdateRow\"], \"components\": [\"ui/badge\", \"ui/button\", \"ui/card\", \"ui/input\", \"ui/label\"], \"id\": \"src/components/views/terminal/views/ipv/TransferQRReportView.tsx\", \"inputs\": [\"Input\"], \"name\": \"TransferQRReportView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/TransferQRReportView.tsx\", \"servicesUsed\": [\"dexie\", \"supabaseClient\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 27,
+    "domain": "views"
+  }
+}

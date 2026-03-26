@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_2__llenar_formulario",
+  "content": "### Paso 2: Llenar formulario\n\n```\nNombre: \"Test Store \" + timestamp (ej: \"Test Store 2026-02-09 14:30\")\nDirección: \"123 Main Street\"\nLogo URL: (opcional)\nEstado: Activo ✓\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 2: Llenar formulario"
+  }
+}

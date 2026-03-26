@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_COSTOS_3__integración_en_la_vista___costsheetview__",
+  "content": "## 3. Integración en la Vista (`CostSheetView`)\n**Calificación: 10/10** (Incrementada sustancialmente)\n\n*   **Unificación de Lógica:** **CUMPLIDO**. Se ha eliminado la implementación simplificada en el frontend. El hook `useCostSheetCalculator.ts` ahora actúa como un puente directo al motor de `lib/cost-engine`, garantizando que lo que el usuario ve en pantalla sea idéntico (al céntimo) a lo que se procesa en el servidor.\n*   **Audit Trail:** **INTEGRADO**. La bitácora de auditoría ahora es visible directamente en la terminal, permitiendo a los contadores inspeccionar cada cálculo en tiempo real.\n*   **Alertas Inteligentes:** La tabla interactiva ahora consume los errores y advertencias del motor (ciclos, divisiones por cero, referencias perdidas) y los muestra visualmente por fila.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_COSTOS.md",
+    "header": "3. Integración en la Vista (`CostSheetView`)"
+  }
+}

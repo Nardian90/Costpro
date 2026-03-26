@@ -1,0 +1,8 @@
+{
+  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_b__consolidación_documental",
+  "content": "### B. Consolidación Documental\n1. **Unificación de Knowledge Base:** Mover el contenido de `public/docs/` y `knowledge/` a una estructura jerárquica dentro de `docs/` para evitar duplicidad.\n2. **Archivo de Auditorías:** Mover reportes de 2024 y 2025 a `docs/audits/archive/` para priorizar la salud actual del sistema.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
+    "header": "B. Consolidación Documental"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "BUSINESS_LOGIC_REFERENCE_gestión_de_ingresos__ipv_",
+  "content": "## Gestión de Ingresos (IPV)\n- **BankIngestion**: Punto de entrada para la digitalización de la economía. Transforma estados de cuenta bancarios en registros contables, eliminando errores manuales en la conciliación de pagos QR y transferencias.\n- **IncomeReceiptSection**: Garantiza la transparencia fiscal. Genera el Modelo SC-3-01, documento legal indispensable para la declaración de ingresos ante las autoridades pertinentes.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/BUSINESS_LOGIC_REFERENCE.md",
+    "header": "Gestión de Ingresos (IPV)"
+  }
+}

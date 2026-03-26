@@ -1,0 +1,8 @@
+{
+  "id": "README_POS___estado_global_con_zustand",
+  "content": "### ✅ Estado Global con Zustand\n- AuthStore: Gestión de autenticación\n- CartStore: Carrito de compras en tiempo real\n- UIStore: Estado de la interfaz (sidebar, dark mode)\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "✅ Estado Global con Zustand"
+  }
+}

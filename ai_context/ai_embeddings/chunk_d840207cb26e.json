@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_AUDIT_REPORT_3__limited_traceability",
+  "content": "### 3. Limited Traceability\n- **Description:** The `audit_logs` table provides a good starting point for traceability, but it lacks a clear and consistent structure. The `reference_id` in `stock_movements` is not strongly typed, making it difficult to trace movements back to their source.\n- **Impact:** Poor traceability can hinder auditing efforts and make it difficult to investigate discrepancies or suspicious activities.\n- **Recommendation:** Standardize the `audit_logs` table and use foreign key constraints for `reference_id` in `stock_movements` to improve traceability.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
+    "header": "3. Limited Traceability"
+  }
+}

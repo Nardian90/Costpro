@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_4____flujo_de_negocio_incompleto____",
+  "content": "### 4. **Flujo de Negocio Incompleto** 🟠\n**Severidad:** MEDIA\n\n**Problema:**\n- No existe captura de **proveedores como entidad**\n- Proveedores se guardan como string en campo `supplier` (desnormalizado)\n- **Mejor arquitectura:**\n```sql\nCREATE TABLE suppliers (\n  id UUID PRIMARY KEY,\n  name TEXT UNIQUE,\n  contact_info TEXT,\n  created_at TIMESTAMP\n);\n\nALTER TABLE products ADD supplier_id UUID REFERENCES suppliers(id);\nALTER TABLE receptions ADD supplier_id UUID REFERENCES suppliers(id);\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "4. **Flujo de Negocio Incompleto** 🟠"
+  }
+}

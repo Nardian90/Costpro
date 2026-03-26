@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MISMATCH_hallazgos_específicos_para_mejora_end",
+  "content": "### Hallazgos Específicos para Mejora\n1. **Sincronización de UI:** Se detectó una inconsistencia menor donde la importación masiva en la vista de \"Extracto\" no capturaba todas las columnas de jerarquía necesarias para la descomposición automática (Corregido en esta intervención).\n2. **Visualización de KPIs:** Los números de ventas totales en dispositivos móviles o con cifras altas tendían a romper el diseño de las tarjetas (Corregido con formato MP).\n3. **Persistencia de Trazas:** Se recomienda seguir fortaleciendo la persistencia de los objetos `trace` para auditorías históricas de largo plazo.\n\n---\n*Evaluación realizada por Jules (Software Engineer) - 2026-03-15*\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MISMATCH.md",
+    "header": "Hallazgos Específicos para Mejora"
+  }
+}

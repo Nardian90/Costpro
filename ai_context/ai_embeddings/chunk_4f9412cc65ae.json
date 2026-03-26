@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_3_1_motor_de_reglas_dinámicas__propuesta_",
+  "content": "### 3.1 Motor de Reglas Dinámicas (Propuesta)\nSe propone un sistema de **Cascada de Puntuación (Scoring)**:\n1. **R1: Identidad Estricta (100 pts):** Referencia bancaria coincide con SKU.\n2. **R2: Combinación Perfecta (95 pts):** Suma exacta de productos con stock.\n3. **R3: Descomposición Necesaria (90 pts):** Match exacto tras romper un bulto.\n4. **R4: Ajuste Coherente (80 pts):** Match con variación de precio permitida (±X%).\n5. **R5: Heurística de Residuos (60 pts):** Uso de comodines para centavos sobrantes.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "3.1 Motor de Reglas Dinámicas (Propuesta)"
+  }
+}

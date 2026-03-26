@@ -1,0 +1,8 @@
+{
+  "id": "AI_ASSISTANT_AUDIT_MARCH_2024_corrección_de_tipado__post_build___end",
+  "content": "### Corrección de Tipado (Post-Build):\n- Se resolvió un error de compilación donde `ReactMarkdown` rechazaba la prop `className`.\n- Se volvió al patrón de diseño original envolviendo el componente en un `div` con clases Tailwind Typography (`prose`).\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AI_ASSISTANT_AUDIT_MARCH_2024.md",
+    "header": "Corrección de Tipado (Post-Build):"
+  }
+}

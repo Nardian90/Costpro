@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_inventory_ProductReceptionView_tsx",
+  "content": "{\"actions\": [\"handleExport\", \"handleFileChange\", \"handleImportClick\"], \"components\": [\"ui/ActionMenu\", \"ui/BaseModal\", \"ui/SecurityScrollContainer\", \"ui/atomic\"], \"id\": \"src/components/views/terminal/views/inventory/ProductReceptionView.tsx\", \"inputs\": [], \"name\": \"ProductReceptionView.tsx\", \"outputs\": [\"Summary Panel\", \"Table\"], \"route\": \"src/components/views/terminal/views/inventory/ProductReceptionView.tsx\", \"servicesUsed\": [\"api/useInventory\", \"import-service\", \"supabaseClient\", \"ui/useDebounce\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 16,
+    "domain": "views"
+  }
+}

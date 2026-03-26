@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_e__resiliencia_offline__9_5_10_",
+  "content": "### E. Resiliencia Offline (9.5/10)\n*   **Mecanismo:** SyncProvider con IndexDB e Idempotencia.\n*   **Justificación:** El uso de llaves de idempotencia (UUID v4) asegura que si una venta se envía dos veces por una intermitencia de red, la base de datos solo la procese una vez. El sistema de colas offline permite seguir operando sin internet, sincronizando automáticamente al recuperar la señal.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "E. Resiliencia Offline (9.5/10)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_wallet_WalletView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para WalletView.\", \"dependencies\": [\"react\", \"next/dynamic\", \"@/components/ui/card\", \"@/components/ui/button\", \"@/components/ui/input\", \"@/components/ui/badge\", \"@/lib/utils\", \"@/lib/wallet/parser\", \"@/lib/wallet/types\", \"sonner\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/wallet/WalletView.tsx\", \"name\": \"WalletView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico WalletView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con WalletView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 30,
+    "domain": "components"
+  }
+}

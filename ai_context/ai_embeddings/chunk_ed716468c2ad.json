@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_health_AuditSummary_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para AuditSummary.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\", \"@/hooks/api/useAuditLogs\", \"date-fns\", \"date-fns/locale\"], \"domain\": \"UI\", \"exports\": [\"AuditSummary\"], \"id\": \"src/components/views/terminal/views/health/AuditSummary.tsx\", \"name\": \"AuditSummary.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico AuditSummary.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con AuditSummary.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 19,
+    "domain": "components"
+  }
+}

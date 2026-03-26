@@ -1,0 +1,8 @@
+{
+  "id": "data-model_tabla___bank_statements_",
+  "content": "### Tabla: `bank_statements`\n**Índices:** `&referencia_origen, fecha, importe_cents, ingestion_hash`\n\n```typescript\n// Interface: BankTransaction\ninterface BankTransaction {\n  id: string;                  // UUID o hash fila\n  fecha: string;               // YYYY-MM-DD\n  referencia_corta: string;\n  referencia_origen: string;   // UNIQUE\n  observaciones: string;\n  importe_cents: number;       // En Pesos (decimal)\n  comision_cents?: number;     // Extraído de observaciones\n  importe_venta_cents?: number; // importe_cents + comision_cents\n  tipo: 'Cr' | 'Db';\n  estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'NO_PROCESAR';\n  fail_reason?: string;\n  ipv_id?: string;             // FK ipv_reports.id\n  excluido?: boolean;          // Excluir del matching\n  created_at: string;\n  updated_at?: string;\n  ingestion_hash: string;      // HASH para idempotencia\n  // Persistence for Transfer Report\n  carnet?: string;\n  nombre_cliente?: string;\n  telefono_cliente?: string;\n  // Matching Engine traceability\n  matching_trace?: MatchingTrace[];\n  applied_rules?: string[];\n  matching_confidence?: number;\n}\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/data-model.md",
+    "header": "Tabla: `bank_statements`"
+  }
+}

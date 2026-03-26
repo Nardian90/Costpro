@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_ui_useTerminalNavigation_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useTerminalNavigation.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/types\", \"@/contracts/user\", \"@/lib/roles\"], \"domain\": \"UI\", \"exports\": [\"NavigationItem\", \"useTerminalNavigation\"], \"id\": \"src/hooks/ui/useTerminalNavigation.ts\", \"name\": \"useTerminalNavigation.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useTerminalNavigation.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useTerminalNavigation.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 351,
+    "domain": "components"
+  }
+}

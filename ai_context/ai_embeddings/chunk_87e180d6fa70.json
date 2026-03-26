@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_AUDIT_REPORT_2__scalability_and_performance_bottlenecks",
+  "content": "### 2. Scalability and Performance Bottlenecks\n- **Description:** The `stock_movements` table is likely to grow very large, which could lead to performance degradation over time. The lack of a data archiving strategy exacerbates this risk.\n- **Impact:** Slow query performance can negatively impact the user experience and the overall efficiency of the inventory management system.\n- **Recommendation:** Implement a data archiving strategy for the `stock_movements` table and ensure that all foreign key columns are properly indexed.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
+    "header": "2. Scalability and Performance Bottlenecks"
+  }
+}

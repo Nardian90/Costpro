@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_CONTEXT_1__estado_de_reglas__engine_ts_",
+  "content": "### 1. Estado de Reglas (engine.ts)\nEl motor utiliza un enfoque de **pipeline secuencial de 7 pasos**. Aunque el constructor recibe una lista de reglas ordenadas por prioridad, el método `matchTransaction` las ejecuta mediante bloques `if` explícitos. Esto limita la flexibilidad del usuario: cambiar el orden en la UI no altera el orden real de ejecución en el código actual.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_CONTEXT.md",
+    "header": "1. Estado de Reglas (engine.ts)"
+  }
+}

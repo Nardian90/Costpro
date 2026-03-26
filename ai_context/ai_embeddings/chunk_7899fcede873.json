@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_8__checklist_de_implementación_técnica",
+  "content": "## 8. CHECKLIST DE IMPLEMENTACIÓN TÉCNICA\n\n- [ ] Crear `/docs/automation/pipeline_state.yaml` con el contenido de la Sección 2.\n- [ ] Crear directorios: `ai_context/ai_embeddings/`, `ai_context/ai_vector_index/`, `public/_meta/`, `public/_archive/`.\n- [ ] Implementar script `canonicalize_sha256.py` para hashing determinista.\n- [ ] Implementar script `commit_artifact.py` con lógica de cuarentena y versionado.\n- [ ] Implementar script `generate_embeddings.py` (con modelo real de embeddings).\n- [ ] **NUEVO:** Implementar timing capture en cada fase (start/end/duration).\n- [ ] **NUEVO:** Actualizar `architecture_audit.json` con estructura de performance metrics.\n- [ ] Configurar Job Diario (Cron/Cloud Scheduler) para ejecutar el scheduler.\n- [ ] Configurar Webhook para notificar `review_queue.json` (Slack/Jira/Email).\n- [ ] Definir equipo de revisión humana para artefactos en cuarentena.\n- [ ] Ejecutar prueba de Dry-Run para validar rollback.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
+    "header": "8. CHECKLIST DE IMPLEMENTACIÓN TÉCNICA"
+  }
+}

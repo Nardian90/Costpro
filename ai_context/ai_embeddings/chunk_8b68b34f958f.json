@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_tooltip_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para tooltip.\", \"dependencies\": [\"react\", \"@radix-ui/react-tooltip\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/tooltip.tsx\", \"name\": \"tooltip.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico tooltip.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con tooltip.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 258,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_AUDIT_REPORT_prioritized_recommendations",
+  "content": "## Prioritized Recommendations\n\n1.  **Implement a database trigger** to ensure consistency between `inventory` and `products.stock_current`.\n2.  **Introduce an optimistic locking mechanism** to prevent race conditions.\n3.  **Refine RLS policies** to enforce the principle of least privilege.\n4.  **Develop a data archiving strategy** for the `stock_movements` table.\n5.  **Improve the traceability of stock movements** by standardizing the audit trail.\n6.  **Optimize the mobile user experience** with a responsive and intuitive design.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
+    "header": "Prioritized Recommendations"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT___tabla_de_contenidos",
+  "content": "## 📋 TABLA DE CONTENIDOS\n1. [Hallazgos Críticos](#hallazgos-críticos)\n2. [Hallazgos de Seguridad](#hallazgos-de-seguridad)\n3. [Hallazgos de UX](#hallazgos-de-ux)\n4. [Hallazgos de Código](#hallazgos-de-código)\n5. [Inconsistencias de Negocio](#inconsistencias-de-negocio)\n6. [Recomendaciones](#recomendaciones)\n7. [Evaluación Final](#evaluación-final)\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "📋 TABLA DE CONTENIDOS"
+  }
+}

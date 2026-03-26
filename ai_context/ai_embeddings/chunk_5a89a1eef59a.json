@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_health_SystemHealthView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para SystemHealthView.\", \"dependencies\": [\"react\", \"@/lib/utils\", \"sonner\", \"./HealthStatusHeader\", \"./InfrastructureMetrics\", \"./ApplicationMetrics\", \"./SecurityMetrics\", \"./ReleaseGateStatus\", \"@/components/ui/CostProLoader\", \"@/lib/release_gate/ReleaseGatePdfExporter\", \"./AuditSummary\", \"./ViewNavigator\", \"./ArchitectureAuditTable\", \"./HealthAgentLogs\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/health/SystemHealthView.tsx\", \"name\": \"SystemHealthView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico SystemHealthView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con SystemHealthView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 22,
+    "domain": "components"
+  }
+}

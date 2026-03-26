@@ -1,0 +1,9 @@
+{
+  "id": "components_src_store___tests___cart_advanced_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para cart_advanced.test.\", \"dependencies\": [\"vitest\", \"../cart\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/store/__tests__/cart_advanced.test.ts\", \"name\": \"cart_advanced.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico cart_advanced.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar cart_advanced.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 367,
+    "domain": "components"
+  }
+}

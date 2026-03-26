@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_catalog_CatalogView_tsx",
+  "content": "{\"actions\": [\"handleAddVariant\", \"handleDeleteProduct\", \"handleDeleteVariant\", \"handleImportFileChange\", \"handlePrintLabel\", \"handleToggleActive\", \"handleUpdateImage\", \"handleUpdateProduct\"], \"components\": [\"ui/ActionMenu\", \"ui/CostProLoader\", \"ui/ProductImage\", \"ui/QueryInspector\", \"ui/ViewSwitcher\"], \"id\": \"src/components/views/terminal/views/catalog/CatalogView.tsx\", \"inputs\": [], \"name\": \"CatalogView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/catalog/CatalogView.tsx\", \"servicesUsed\": [\"api/useProducts\", \"catalog-service\", \"ui/useCatalogModals\", \"ui/useMobile\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 2,
+    "domain": "views"
+  }
+}

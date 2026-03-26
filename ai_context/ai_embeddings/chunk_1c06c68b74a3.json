@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_prioridad_baja__mejora_continua__end",
+  "content": "### Prioridad BAJA (Mejora Continua)\n7.  **Setup de Testing:** Configurar un framework de pruebas y escribir los primeros tests E2E para el proceso de checkout.\n8.  **Auditoría a11y:** Completar las etiquetas ARIA en componentes de iconos y mejorar la navegación por teclado.\n9.  **Optimización de Suspense:** Crear boundaries granulares para una experiencia de carga más fluida.\n\n---\n**Auditoría realizada por Jules (Senior Software Engineer)**\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FRONTEND_AUDIT.md",
+    "header": "Prioridad BAJA (Mejora Continua)"
+  }
+}

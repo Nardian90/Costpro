@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_settings_SettingsView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para SettingsView.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\", \"next-themes\", \"@/hooks/api/useTaxes\", \"@/store\", \"@/lib/supabaseClient\", \"sonner\", \"@tanstack/react-query\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/settings/SettingsView.tsx\", \"name\": \"SettingsView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico SettingsView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con SettingsView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 34,
+    "domain": "components"
+  }
+}

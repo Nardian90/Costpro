@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_4_2_metadata_sidecar",
+  "content": "### 4.2 Metadata Sidecar\nCada artefacto `nombre.json` debe tener un `public/_meta/nombre.meta.json` con:\n```json\n{\n  \"artifactName\": \"nombre\",\n  \"version\": \"1.0.0\",\n  \"hash\": \"sha256:...\",\n  \"confidenceScore\": 95.5,\n  \"reviewRequired\": false,\n  \"createdAt\": \"ISO8601\",\n  \"sourcePhase\": 1\n}\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
+    "header": "4.2 Metadata Sidecar"
+  }
+}

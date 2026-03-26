@@ -1,0 +1,8 @@
+{
+  "id": "AI_ASSISTANT_AUDIT_MARCH_2024_hallazgos_críticos_y_soluciones",
+  "content": "## Hallazgos Críticos y Soluciones\n\n1. **Truncamiento por Timeout (Vercel Free)**:\n   - **Problema**: Las respuestas de la IA excedían los 10s, dejando JSON inválido visible en el chat.\n   - **Solución**: Se implementó `repairJson` en el cliente para cerrar automáticamente estructuras truncadas y permitir que el usuario aplique datos parciales.\n   - **Optimización**: Se instruyó a la IA a limitar la generación a 5 ítems por anexo para asegurar que el proceso termine antes del timeout.\n\n2. **Fuga de JSON Crudo**:\n   - **Problema**: El JSON era visible si no estaba envuelto en bloques markdown correctos.\n   - **Solución**: Limpieza agresiva en el frontend. Cualquier texto a partir de la primera llave `{` se oculta del chat pero se procesa para la previsualización de anexos.\n\n3. **Navegación y Auditoría**:\n   - **Solución**: Se integró un botón directo a la vista \"Todo\" tras el guardado. Esto permite verificar inmediatamente cómo los anexos alimentan el cálculo final (Precio de Venta, Utilidad).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AI_ASSISTANT_AUDIT_MARCH_2024.md",
+    "header": "Hallazgos Críticos y Soluciones"
+  }
+}

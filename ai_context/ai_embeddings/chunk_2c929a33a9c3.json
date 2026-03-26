@@ -1,0 +1,8 @@
+{
+  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_3_4_transferencias_atómicas__rollback_test_",
+  "content": "### 3.4 Transferencias Atómicas (Rollback Test)\n**Escenario:** Transferencia de Tienda A a Tienda B de un SKU inexistente en B.\n**Resultado:**\n1.  El sistema intentó descontar en A.\n2.  Falló la validación en B.\n3.  **Rollback Automático:** El stock en A regresó a su valor original inmediatamente.\n4.  Consistencia mantenida.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
+    "header": "3.4 Transferencias Atómicas (Rollback Test)"
+  }
+}

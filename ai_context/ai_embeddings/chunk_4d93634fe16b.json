@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_ui___tests___usePWA_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para usePWA.test.\", \"dependencies\": [\"@testing-library/react\", \"../usePWA\", \"vitest\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/hooks/ui/__tests__/usePWA.test.ts\", \"name\": \"usePWA.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico usePWA.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar usePWA.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 356,
+    "domain": "components"
+  }
+}

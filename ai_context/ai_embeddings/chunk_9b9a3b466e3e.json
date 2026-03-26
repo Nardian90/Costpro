@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetExportModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetExportModal.\", \"dependencies\": [\"react\", \"@/components/ui/button\", \"@/components/ui/checkbox\", \"@/components/ui/switch\", \"@/components/ui/label\", \"lucide-react\", \"@/components/ui/scroll-area\"], \"domain\": \"UI\", \"exports\": [\"ExportOptions\", \"CostSheetExportModal\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx\", \"name\": \"CostSheetExportModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetExportModal.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 167,
+    "domain": "components"
+  }
+}

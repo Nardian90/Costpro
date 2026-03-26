@@ -1,0 +1,8 @@
+{
+  "id": "SKU_ENFORCEMENT_AUDIT_hallazgos_",
+  "content": "### Hallazgos:\n1. **Base de Datos:** La columna `sku` en la tabla `public.products` es `UNIQUE` pero no tiene restricción `NOT NULL`.\n2. **Creación de Producto (UI):** El modal `CreateProductModal.tsx` no valida la presencia del SKU antes de enviar el formulario.\n3. **Recepción de Productos (UI):** La vista `ProductReceptionView.tsx` asume que el SKU existe pero no lo valida estrictamente durante el proceso de guardado manual o mapeo.\n4. **Importación Masiva (RPC):** La función `process_bulk_import` utiliza `NULLIF(v_item->>'sku', '')`, lo que permite que el SKU sea nulo si no se proporciona en el JSON.\n5. **Esquemas de Validación:** Aunque existen `catalogImportRowSchema` y `receptionImportRowSchema` en `src/validation/schemas.ts` que marcan el SKU como obligatorio, estos no se aplican en todos los puntos de entrada (especialmente en la creación manual).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SKU_ENFORCEMENT_AUDIT.md",
+    "header": "Hallazgos:"
+  }
+}

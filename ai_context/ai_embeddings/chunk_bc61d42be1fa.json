@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_usuario",
+  "content": "### Usuario\n```typescript\ninterface User {\n  id: string;\n  email: string;\n  full_name: string;\n  role: UserRole;\n  store_id: string | null;\n  is_active: boolean;\n  created_at: string;\n  updated_at: string;\n}\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Usuario"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_1__click_en_tienda_recién_creada__o_existente_",
+  "content": "### Paso 1: Click en tienda recién creada (o existente)\n\n**UI:** En la tabla de tiendas, busca ícono \"edit\" 🖊️ o haz click en la fila\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 1: Click en tienda recién creada (o existente)"
+  }
+}

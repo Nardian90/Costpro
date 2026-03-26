@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_adapters_openai_compatible_adapter_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para openai-compatible-adapter.\", \"dependencies\": [\"../types\"], \"domain\": \"Integration\", \"exports\": [\"OpenAICompatibleAdapter\"], \"id\": \"src/lib/ai/adapters/openai-compatible-adapter.ts\", \"name\": \"openai-compatible-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico openai-compatible-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar openai-compatible-adapter.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 443,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_audit_AuditTableView_tsx",
+  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/audit/AuditTableView.tsx\", \"inputs\": [], \"name\": \"AuditTableView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/audit/AuditTableView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 36,
+    "domain": "views"
+  }
+}

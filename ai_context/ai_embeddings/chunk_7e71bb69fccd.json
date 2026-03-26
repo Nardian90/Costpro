@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_wiki_CuentasModule_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CuentasModule.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\", \"@/components/ui/badge\", \"@/components/ui/button\", \"@/components/ui/scroll-area\"], \"domain\": \"UI\", \"exports\": [\"CuentasModule\"], \"id\": \"src/components/views/terminal/views/wiki/CuentasModule.tsx\", \"name\": \"CuentasModule.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CuentasModule.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con CuentasModule.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 119,
+    "domain": "components"
+  }
+}

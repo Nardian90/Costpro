@@ -1,0 +1,9 @@
+{
+  "id": "user_help_4",
+  "content": "{\"acciones\": [\"Escanear productos\", \"Gestionar carrito de compras\", \"Procesar pagos y generar facturas\"], \"descripcion_usuario\": \"Agilizar las ventas directas y el registro de ingresos.\", \"feature\": \"Punto de Venta (POS)\", \"resultados\": [\"Cumplimiento de: Agilizar las ventas directas y el registro de ingresos.\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 4,
+    "domain": "user_help"
+  }
+}

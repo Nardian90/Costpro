@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_5__mejora_del_sistema_de_ingesta_de_datos",
+  "content": "## 5. Mejora del Sistema de Ingesta de Datos\n**Problema Crítico:** Los IDs jerárquicos se pierden si el Excel no usa los nombres técnicos exactos.\n**Solución:** Mapeo inteligente de cabeceras y validación de \"Huérfanos\". Si un producto tiene `cod_hijo`, el sistema debe verificar que ese hijo existe en el mismo lote de importación.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "5. Mejora del Sistema de Ingesta de Datos"
+  }
+}

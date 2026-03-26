@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_AUDIT_fortalezas",
+  "content": "### Fortalezas\n- **Automatización**: El uso de `scripts/audit-agent.py` asegura que el mapa de vistas (`mapa_vistas.md`) y el grafo de dependencias estén siempre actualizados.\n- **Contexto Técnico**: Archivos como `SUPABASE_CONTEXT.md` proporcionan una buena inmersión para desarrolladores nuevos.\n- **Protocolos de Agente**: `AGENTS.md` establece reglas claras para el mantenimiento móvil.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
+    "header": "Fortalezas"
+  }
+}

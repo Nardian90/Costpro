@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES___checklist_final_de_validación",
+  "content": "## 📊 CHECKLIST FINAL DE VALIDACIÓN\n\n- [ ] **Test 1:** Admin VE tiendas (SELECT) ✅\n- [ ] **Test 2:** Admin CREA tienda (INSERT) ✅\n- [ ] **Test 3:** Admin EDITA tienda (UPDATE) ✅\n- [ ] **Test 4:** Admin VE usuarios (SELECT) ✅\n- [ ] **Test 5:** Admin EDITA usuario (UPDATE) ✅\n- [ ] **Test 6:** Admin DESACTIVA usuario (UPDATE is_active) ✅\n- [ ] **Test 7:** User NO-admin NO ve usuarios (RLS bloquea) ✅\n- [ ] **Test 8:** Multi-tenant aislamiento funciona ✅\n\n**Si todos pasan:** ✅ Sistema operacional, RLS fixes exitosas\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "📊 CHECKLIST FINAL DE VALIDACIÓN"
+  }
+}

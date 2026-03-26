@@ -1,0 +1,8 @@
+{
+  "id": "QUICK_REFERENCE_RLS_FIX_migration_aplicada",
+  "content": "### Migration Aplicada\n\nArchivo: `supabase/migrations/20260209_fix_critical_rls_issues.sql`\n\n```sql\n-- 3 cambios principales:\n\n1. CREATE OR REPLACE FUNCTION public.is_admin()\n   -- Antes: role::text IN ('admin', 'superadmin')  ❌\n   -- Ahora: role = ANY(ARRAY['admin', 'superadmin']::user_role[])  ✅\n\n2. Consolidar policies en stores\n   -- Antes: 3 policies conflictivas\n   -- Ahora: 4 policies claras sin duplicados\n\n3. NEW POLICY \"profiles_admin_full_access\"\n   -- Permite admin hacer ALL en profiles\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
+    "header": "Migration Aplicada"
+  }
+}

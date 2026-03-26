@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_a__integridad_de_datos__10_10_",
+  "content": "### A. Integridad de Datos (10/10)\n*   **Mecanismo:** El sistema utiliza procedimientos almacenados (RPC) en Supabase para ejecutar ventas de forma atómica.\n*   **Justificación:** La implementación de `create_sale` asegura que el registro de la transacción, la creación de los ítems de venta y el movimiento de stock ocurran dentro de una misma transacción SQL. Si falla cualquier parte (por ejemplo, stock insuficiente en el último milisegundo), toda la operación se revierte (Rollback), eliminando la posibilidad de \"ventas fantasma\" o descuadres de inventario.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "A. Integridad de Datos (10/10)"
+  }
+}

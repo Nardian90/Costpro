@@ -1,0 +1,8 @@
+{
+  "id": "bugs_documentation_1__uso_de_confirm___nativo_en_catalogtable_tsx",
+  "content": "## 1. Uso de confirm() nativo en CatalogTable.tsx\n- **Descripción**: El componente utiliza `confirm()` nativo para acciones críticas, lo cual bloquea el hilo principal y rompe la estética de la aplicación.\n- **Impacto**: UX inconsistente y bloqueante.\n- **Solución**: Reemplazar por un sistema de confirmación basado en modales (BaseModal) o Toast con acción.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/bugs_documentation.md",
+    "header": "1. Uso de confirm() nativo en CatalogTable.tsx"
+  }
+}

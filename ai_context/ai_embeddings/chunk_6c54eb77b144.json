@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_ActionBadges_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ActionBadges.\", \"dependencies\": [\"react\", \"@/components/ui/badge\", \"@/components/ui/tooltip\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"ActionBadges\"], \"id\": \"src/components/views/terminal/views/ipv/ActionBadges.tsx\", \"name\": \"ActionBadges.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ActionBadges.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ActionBadges.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 92,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_CostProLogo_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostProLogo.\", \"dependencies\": [\"react\", \"framer-motion\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/CostProLogo.tsx\", \"name\": \"CostProLogo.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostProLogo.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 5,
+    "domain": "components"
+  }
+}

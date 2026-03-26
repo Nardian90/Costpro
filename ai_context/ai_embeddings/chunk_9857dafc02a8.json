@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_modals_PriceSelectorModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para PriceSelectorModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"@/components/ui/atomic\", \"@/lib/utils\", \"@/types\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"PriceSelectorModal\"], \"id\": \"src/components/modals/PriceSelectorModal.tsx\", \"name\": \"PriceSelectorModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico PriceSelectorModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con PriceSelectorModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 11,
+    "domain": "components"
+  }
+}

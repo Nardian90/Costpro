@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_ubicación_en_código_",
+  "content": "### Ubicación en código:\n- Líneas 55-62: Función `getProductImageUrl`\n- Líneas 319-333: Renderizado de imagen en tabla\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
+    "header": "Ubicación en código:"
+  }
+}

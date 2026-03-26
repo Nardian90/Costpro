@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_el_error",
+  "content": "#### El Error\n\nEl campo `role` en `profiles` es del tipo **ENUM `user_role`**, no `text`:\n\n```sql\nALTER TYPE user_role ENUM ADD VALUE 'admin';\nALTER TYPE user_role ENUM ADD VALUE 'superadmin';\n-- ✅ Estos se almacenan como ENUM, no como TEXT\n```\n\n**En la BD:**\n```\nid                                  role (ENUM, no text)\na1111111-1111-1111-1111-111111111111  admin::user_role\n```\n\n**Cuando hace `role::text IN ('admin', 'superadmin')`:**\n- PostgreSQL convierte `admin::user_role` → `'admin'` (string)\n- Luego compara `'admin' IN ('admin', 'superadmin')` → ✅ debería ser `true`\n\n**PERO:** El problema real es que **`get_my_role()` está retornando `NULL`** cuando `auth.uid()` es `NULL`:\n\n```sql\nCREATE OR REPLACE FUNCTION public.get_my_role()\nRETURNS text\nLANGUAGE plpgsql\nSECURITY DEFINER\nSET search_path = public\nAS $$\nDECLARE\n  v_role text;\nBEGIN\n  SELECT role::text INTO v_role FROM public.profiles WHERE id = auth.uid();\n  RETURN v_role;  -- Retorna NULL si auth.uid() no existe\nEND;\n$$;\n```\n\nSi un usuario está logeado pero **su perfil NO existe en `profiles`**, entonces:\n- `auth.uid()` retorna un UUID válido\n- `SELECT ... WHERE id = auth.uid()` retorna 0 filas\n- `v_role` se queda como `NULL`\n- `is_admin()` retorna `false`\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "El Error"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "reference_ipvreportview_tsx",
+  "content": "## IPVReportView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/IPVReportView.tsx`\n\n**Acciones disponibles:** handleAnularReport, handleCloseReport, handleDeleteReport, handleRefreshReport\n\n**Salidas esperadas:** Summary Panel, Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "IPVReportView.tsx"
+  }
+}

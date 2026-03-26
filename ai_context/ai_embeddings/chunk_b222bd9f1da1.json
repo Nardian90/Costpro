@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS____notas_importantes_end",
+  "content": "## ⚠️ NOTAS IMPORTANTES\n\n1. **Frontend debe hacer refresh/redeploy** para que los cambios de RLS apliquen correctamente\n2. **Cache de PostgREST** puede tardar segundos en actualizar - espera 30 segundos\n3. **Si aún hay errores 403**, verificar en `useStores` hook que no esté filtrando admin incorrectamente\n4. **Auditoría:** Todos los cambios están en `audit_logs` con timestamp\n\n---\n\n**Validación Final:** ✅ SISTEMA OPERACIONAL - Listo para pruebas en UI\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "⚠️ NOTAS IMPORTANTES"
+  }
+}

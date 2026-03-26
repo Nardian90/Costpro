@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_POST_REFACTOR_2__data_access___backend__supabase_",
+  "content": "## 2. Data Access & Backend (Supabase)\n\n- **Política:** Cumplimiento estricto de \"Over-Fetching Zero\".\n- **Queries:** Uso extensivo de listas de columnas explícitas y RPCs de PostgreSQL.\n- **Observabilidad:** Implementación de `withLogging` y `withTableLogging` para trazabilidad de DB.\n- **Hallazgos:**\n    - ✔️ `get_audit_logs` RPC centralizado y seguro.\n    - ✔️ Consultas optimizadas en POS e Inventario.\n    - ✔️ Validación de esquemas con Zod en la capa de datos.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
+    "header": "2. Data Access & Backend (Supabase)"
+  }
+}

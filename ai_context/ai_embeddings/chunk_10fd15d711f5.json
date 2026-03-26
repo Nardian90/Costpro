@@ -1,0 +1,8 @@
+{
+  "id": "bugs_documentation_3__uso_de_confirm___nativo_en_transactiontable_tsx",
+  "content": "## 3. Uso de confirm() nativo en TransactionTable.tsx\n- **Descripción**: Acciones como eliminar transacciones o reiniciar conciliación usan `confirm()` nativo.\n- **Impacto**: UX inconsistente.\n- **Solución**: Implementar confirmación no bloqueante.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/bugs_documentation.md",
+    "header": "3. Uso de confirm() nativo en TransactionTable.tsx"
+  }
+}

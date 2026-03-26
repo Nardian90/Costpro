@@ -1,0 +1,8 @@
+{
+  "id": "reference_reportsview_tsx",
+  "content": "## ReportsView.tsx\n**Ruta:** `src/components/views/terminal/views/reports/ReportsView.tsx`\n\n**Acciones disponibles:** handleExportExcel, handleGenerate, handleSave\n\n**Salidas esperadas:** Card List\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "ReportsView.tsx"
+  }
+}

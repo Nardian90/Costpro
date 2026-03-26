@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_cashclosureview",
+  "content": "## CashClosureView\n**Propósito:** Interfaz para gestionar CashClosureView.\n\n**Acciones clave:**\n- handleProcessClosure\n- handleRefresh\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "CashClosureView"
+  }
+}

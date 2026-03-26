@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_2__ciclo_de_vida_del_inventario",
+  "content": "### 2. Ciclo de Vida del Inventario\n-   **Entradas:** Recepciones de productos (`register_reception`) que recalculan el Costo Promedio Ponderado (CPP).\n-   **Ajustes:** Módulo de mermas y conteos que utiliza la lógica de `calcularAjusteInventario` para asegurar que nunca existan valores monetarios con stock cero.\n-   **Salidas:** Descuento automático en ventas con validación de integridad referencial.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "2. Ciclo de Vida del Inventario"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "EXECUTIVE_SUMMARY_RLS_FIX___problema_original",
+  "content": "## 🔴 PROBLEMA ORIGINAL\n\nSistema completamente bloqueado:\n- ❌ Tiendas NO se veían en UI\n- ❌ Admin NO podía crear/editar tiendas\n- ❌ Admin NO podía desactivar usuarios\n- ❌ 403 Forbidden en todas las operaciones admin\n\n**Root Cause:** 3 bugs interdependientes en RLS + Frontend\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
+    "header": "🔴 PROBLEMA ORIGINAL"
+  }
+}

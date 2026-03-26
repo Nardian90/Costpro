@@ -1,0 +1,8 @@
+{
+  "id": "ai-controller-architecture_overview",
+  "content": "## Overview\nDarian acts as the intelligent interface between the user and the CostPro application. It transforms natural language into actionable system commands.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ai-controller-architecture.md",
+    "header": "Overview"
+  }
+}

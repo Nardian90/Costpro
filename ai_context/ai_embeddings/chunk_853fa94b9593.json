@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_API_CONTRACT_venta",
+  "content": "### Venta\n\n1. **GET `/api/inventory`**: El frontend obtiene el stock y la `version` del producto.\n2. **POST `/api/inventory/adjust`**: El frontend envía `quantity: -1` y la `version`.\n3. El backend valida, actualiza el stock, incrementa la `version` y responde 200 OK.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_API_CONTRACT.md",
+    "header": "Venta"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_data_costpro_reinicio_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para costpro-reinicio.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/costpro-reinicio.ts\", \"name\": \"costpro-reinicio.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico costpro-reinicio.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar costpro-reinicio.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 414,
+    "domain": "components"
+  }
+}

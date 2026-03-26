@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_MatchingTracePopover_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para MatchingTracePopover.\", \"dependencies\": [\"react\", \"@/components/ui/badge\", \"@/components/ui/scroll-area\", \"@/lib/dexie\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"MatchingTracePopover\"], \"id\": \"src/components/views/terminal/views/ipv/MatchingTracePopover.tsx\", \"name\": \"MatchingTracePopover.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico MatchingTracePopover.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 99,
+    "domain": "components"
+  }
+}

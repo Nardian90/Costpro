@@ -1,0 +1,9 @@
+{
+  "id": "components_src_store_cost_sheet_store_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para cost-sheet-store.\", \"dependencies\": [\"zustand\", \"zustand/middleware\", \"@/lib/data/costpro-reinicio\", \"@/lib/data/costpro-ejemplo\", \"immer\", \"@/validation/schemas\", \"sonner\"], \"domain\": \"Infrastructure\", \"exports\": [\"useCostSheetStore\"], \"id\": \"src/store/cost-sheet-store.ts\", \"name\": \"cost-sheet-store.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico cost-sheet-store.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar cost-sheet-store.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 361,
+    "domain": "components"
+  }
+}

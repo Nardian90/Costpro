@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MATCHING_ENGINE_2_4__cobertura_con_efectivo",
+  "content": "### 2.4. Cobertura con efectivo\n- **Cumplimiento:** **SÍ**.\n- **Detalle:** Implementado como `CASH_FILL (PASS 6)`, actuando como el último eslabón de la cadena.\n- **Puntuación:** 10/10\n\n**Evaluación general del cumplimiento del motor: 9/10**\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
+    "header": "2.4. Cobertura con efectivo"
+  }
+}

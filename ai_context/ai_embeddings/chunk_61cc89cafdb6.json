@@ -1,0 +1,8 @@
+{
+  "id": "EXECUTIVE_SUMMARY_RLS_FIX___soporte_end",
+  "content": "## 📞 SOPORTE\n\nSi hay problemas post-deploy:\n\n1. **Revisa logs en Supabase:**\n   - Proyecto → Logs → Consulta errores recientes\n\n2. **Ejecuta verificación SQL:**\n   ```sql\n   -- Desde supabase/VERIFICATION_TESTS.sql\n   SELECT * FROM verification tests;\n   ```\n\n3. **Limpia caché PostgREST:**\n   ```sql\n   NOTIFY pgrst, 'reload schema';\n   ```\n\n4. **Hard reload en navegador:** Ctrl+Shift+R\n\n---\n\n**Validación Final:** ✅ SISTEMA OPERACIONAL\n**Riesgo Residual:** 🟢 BAJO (only admin operations, well-tested policies)\n**Ready for Production:** ✅ SÍ\n\n---\n\n*Generado por: Arquitecto Senior Full-Stack especializado en Supabase/PostgreSQL RLS*\n*Timestamp: 2026-02-09 14:00 UTC*\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
+    "header": "📞 SOPORTE"
+  }
+}
