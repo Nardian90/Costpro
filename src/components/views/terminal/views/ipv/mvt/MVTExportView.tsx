@@ -26,9 +26,10 @@ import {
   MVT_RECEPCION_TEMPLATE,
   MVT_RECEPCION_ALT_TEMPLATE,
   CYP_COMEDOR_TEMPLATE,
-  CYP_DEPOSITO_TEMPLATE
+  CYP_DEPOSITO_TEMPLATE,
+  DEFAULT_MVT_SETTINGS
 } from "@/lib/ipv/mvt/defaults";
-import { MVTTemplate, MVTExportLog } from "@/lib/ipv/mvt/types";
+import { MVTTemplate, MVTExportLog, MVTSettings } from "@/lib/ipv/mvt/types";
 import { MVTPreview } from "./MVTPreview";
 import { TemplateManager } from "./TemplateManager";
 import { TemplateEditor } from "./TemplateEditor";
@@ -161,11 +162,14 @@ export const MVTExportView = () => {
       };
 
       await db.mvt_exports_log.add(log);
-      await db.mvt_settings.put({
-        ...settings,
+
+      const newSettings: MVTSettings = {
+        ...(settings || DEFAULT_MVT_SETTINGS),
         id: 'current',
         lastExportNumber: context.global.numero
-      });
+      };
+
+      await db.mvt_settings.put(newSettings);
 
       toast.success(`Archivo .${ext} generado con éxito`);
     } catch (error) {
