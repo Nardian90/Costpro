@@ -57,7 +57,7 @@ import { MVTExportView } from "./mvt/MVTExportView";
 import { seedMappingRules } from '@/lib/ipv/seedMappingRules';
 import { MappingRulesManager } from '@/components/views/shared/MappingRulesManager';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
-import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
+import { exportFullBackup, importFullBackup, runAutoBackup } from "@/lib/ipv/backup";
 import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
 import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -83,10 +83,19 @@ export default function IPVView() {
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      runAutoBackup(db);
+    }, 3600000);
+    return () => clearInterval(interval);
+  }, []);
+
   React.useEffect(() => {
     if (rules && rules.length === 0) {
       db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
       seedMappingRules();
+      runAutoBackup(db);
     }
   }, [rules]);
 
@@ -114,397 +123,121 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0, totalTransferencias: 0, totalEfectivo: 0 };
-
-    let squared = 0;
+    if (!transactions) return { total: 0, squares: 0, inProcess: 0, pending: 0, totalAmount: 0 };
+    let squares = 0;
     let inProcess = 0;
     let pending = 0;
-    let activeTotal = 0;
-    let totalTransferencias = 0;
-    let totalEfectivo = 0;
-    const checkedTxRefs = new Set<string>();
-
-    for (let i = 0; i < transactions.length; i++) {
-        const t = transactions[i];
-
-        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
-
-        checkedTxRefs.add(t.referencia_origen);
-        activeTotal++;
-
-        const target = t.importe_venta_cents || t.importe_cents;
-        const matched = txTotals[t.referencia_origen] || 0;
-        const diff = target - matched;
-
-        if (t.tipo === 'Cr') {
-            totalTransferencias += target;
-        }
-
-        if (matched === 0) {
-            pending++;
-        } else if (diff <= 0.001) {
-            squared++;
-        } else {
-            inProcess++;
-        }
-    }
-
-    if (reconciliationLines) {
-        for (let i = 0; i < reconciliationLines.length; i++) {
-            const l = reconciliationLines[i];
-
-            if (!checkedTxRefs.has(l.transaction_ref)) {
-                if (l.importe_linea_cents > 0) {
-                    totalEfectivo += l.importe_linea_cents;
-                }
-            } else {
-                if (l.clasificacion === 'Efectivo') {
-                    totalEfectivo += l.importe_linea_cents;
-                }
-            }
-        }
-    }
-
-    return {
-      total: activeTotal,
-      squared,
-      inProcess,
-      pending,
-      percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0,
-      totalSales: totalTransferencias + totalEfectivo,
-      totalTransferencias,
-      totalEfectivo
-    };
-  }, [transactions, txTotals, reconciliationLines]);
-
-
-  async function handleImportBackup(file: File) {
-    const loadingToast = toast.loading('Restaurando base de datos...');
-    try {
-      await importFullBackup(db, file);
-      toast.success('Base de datos restaurada correctamente', { id: loadingToast });
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    } catch (error) {
-      console.error('Error importing backup:', error);
-      toast.error('Error al restaurar la base de datos', { id: loadingToast });
-    }
-  }
-
-  const handleGlobalRecalculate = React.useCallback(async () => {
-    const loadingToast = toast.loading('Sincronizando datos del sistema...');
-    try {
-        await recalculateIPVReportsChain(db);
-        toast.success('Sincronización completa: IPV, Desglose y Catálogo alineados.', { id: loadingToast });
-    } catch (error) {
-        console.error('Error in global recalculate:', error);
-        toast.error('Error al sincronizar datos', { id: loadingToast });
-    }
-  }, []);
-
-  const handleRunMatching = React.useCallback(async () => {
-    if (!transactions || transactions.length === 0) {
-      toast.error('No hay transacciones para procesar');
-      return;
-    }
-
-    if (!products || products.length === 0) {
-        toast.error('El catálogo de productos está vacío');
-        return;
-    }
-
-    if (!settings?.copiloto_activo && (!rules || rules.length === 0)) {
-        toast.error('No hay reglas de matching configuradas.');
-        return;
-    }
-
-    setIsMatching(true);
-    setMatchMessage('Iniciando proceso de matching...');
-
-    const allLines = await db.reconciliation_lines.toArray();
-    const txTotalsMap = allLines.reduce((acc, line) => {
-        acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
-        return acc;
-    }, {} as Record<string, number>);
-
-    setMatchMessage('Ejecutando algoritmos de matching...');
-
-    const transactionsToProcess = transactions
-        .filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido)
-        .map(t => ({
-            ...t,
-            current_reconciled_cents: txTotalsMap[t.referencia_origen] || 0
-        }));
-
-    if (transactionsToProcess.length === 0) {
-        toast.info('Todas las transacciones ya están completadas o excluidas.');
-        setIsMatching(false);
-        return;
-    }
-
-    const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
-
-    worker.postMessage({
-      type: 'RECONCILE_BATCH',
-      transactions: transactionsToProcess,
-      products: products,
-      rules: settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules,
-      stockMap: currentStockMap
+    let totalAmount = 0;
+    transactions.forEach(tx => {
+        totalAmount += tx.importe_cents;
+        const matchedTotal = txTotals[tx.referencia_origen] || 0;
+        const target = tx.importe_venta_cents || tx.importe_cents;
+        if (Math.abs(matchedTotal - target) < 0.001) squares++;
+        else if (matchedTotal > 0) inProcess++;
+        else pending++;
     });
+    return { total: transactions.length, squares, inProcess, pending, totalAmount };
+  }, [transactions, txTotals]);
 
-    worker.onmessage = async (e) => {
-      try {
-        if (e.data.type === 'PROGRESS') {
-          setMatchProgress(e.data.percentage);
-          setMatchMessage(`Procesando: ${e.data.percentage}%`);
-        }
-
-        if (e.data.type === 'BATCH_COMPLETE') {
-          const { results } = e.data;
-
-          if (!results || results.length === 0) {
-            toast.info('No se generaron resultados de matching.');
-            worker.terminate();
-            setIsMatching(false);
-            setMatchProgress(0);
-            return;
-          }
-
-          await db.transaction('rw', [db.reconciliation_lines, db.product_movements, db.bank_statements], async () => {
-            for (const res of results) {
-              if (res.lines && res.lines.length > 0) {
-                await db.reconciliation_lines.bulkAdd(res.lines);
-              }
-
-              if (res.movements && res.movements.length > 0) {
-                await db.product_movements.bulkAdd(res.movements.map((m: any) => ({
-                  ...m,
-                  referencia_transaccion: res.transactionId
-                })));
-              }
-
-              await db.bank_statements.update(res.transactionId, {
-                estado_conciliacion: res.status,
-                fail_reason: res.failReason,
-                matching_trace: res.trace,
-                applied_rules: res.appliedRules,
-                matching_confidence: res.matchingConfidence
-              });
-            }
-          });
-
-          toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
-          worker.terminate();
-          setIsMatching(false);
-          setMatchProgress(0);
-        }
-      } catch (err) {
-        console.error('Error processing worker message:', err);
-        toast.error(`Error al guardar resultados: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-        worker.terminate();
-        setIsMatching(false);
-        setMatchProgress(0);
-      }
-    };
-
-    worker.onerror = (err) => {
-      console.error('Worker error:', err);
-      toast.error('Error en el motor de matching');
-      worker.terminate();
-      setIsMatching(false);
-    };
-  }, [transactions, products, currentStockMap, rules, settings]);
-
-  const handleForceMatch = React.useCallback(async (tx: BankTransaction) => {
-    if (!products || !rules) return;
-
-    const loadingToast = toast.loading(`Forzando matching para ${tx.referencia_origen}...`);
-
+  const handleRunMatching = async () => {
+    if (!transactions || !products || !rules) return;
+    setIsMatching(true);
+    setMatchProgress(0);
     try {
         const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
-        const currentReconciled = txTotals[tx.referencia_origen] || 0;
+        const engineResults = await engine.reconcileAll(transactions, (p) => {
+            setMatchProgress(p);
+            setMatchMessage(`Analizando transacciones: ${p}%`);
+        }, currentStockMap);
 
-        const result = await engine.matchTransaction(tx, currentReconciled);
+        await db.transaction('rw', [db.reconciliation_lines, db.bank_statements, db.matching_logs], async () => {
+            for (const res of engineResults) {
+                if (res.lines.length > 0) {
+                    await db.reconciliation_lines.bulkAdd(res.lines);
+                    await db.bank_statements.update(res.transactionId, {
+                        estado_conciliacion: res.status,
+                        applied_rules: res.appliedRules,
+                        fail_reason: res.failReason
+                    });
+                } else if (res.failReason) {
+                    await db.bank_statements.update(res.transactionId, {
+                        fail_reason: res.failReason
+                    });
+                }
 
-        if (result.lines.length > 0) {
-            await db.reconciliation_lines.bulkAdd(result.lines);
-        }
-
-        if (result.movements && result.movements.length > 0) {
-            await db.product_movements.bulkAdd(result.movements.map(m => ({
-                ...m,
-                referencia_transaccion: tx.referencia_origen
-            })));
-        }
-
-        await db.bank_statements.update(tx.referencia_origen, {
-            estado_conciliacion: result.status,
-            fail_reason: result.failReason,
-            matching_trace: result.trace,
-            applied_rules: result.appliedRules,
-            matching_confidence: result.matchingConfidence
+                if (res.trace && res.trace.length > 0) {
+                    await db.matching_logs.add({
+                        transaction_ref: res.transactionId,
+                        fecha_ejecucion: new Date().toISOString(),
+                        trace: res.trace,
+                        status: res.status,
+                        confidence: res.matchingConfidence || 0
+                    });
+                }
+            }
         });
-
-        if (result.status === 'COMPLETO') {
-            toast.success('¡Transacción cuadradada exitosamente!', { id: loadingToast });
-        } else if (result.status === 'PARCIAL') {
-            toast.info('Matching parcial aplicado. Aún queda una diferencia.', { id: loadingToast });
-        } else {
-            toast.error('No se encontraron coincidencias automáticas para esta transacción.', { id: loadingToast });
-        }
+        toast.success('Matching automatizado completado');
+        recalculateIPVReportsChain();
     } catch (error) {
-        console.error('Error in force match:', error);
-        toast.error('Error al ejecutar el matching', { id: loadingToast });
+        console.error('Matching Error:', error);
+        toast.error('Error durante la ejecución del matching');
+    } finally {
+        setIsMatching(false);
     }
-  }, [products, rules, settings, txTotals]);
+  };
 
-  const topActions: Action[] = useMemo(() => [
-    {
-        id: 'sync',
-        label: 'Sincronizar IPV',
-        icon: History,
-        onClick: handleGlobalRecalculate,
-        variant: 'outline' as const,
-        tooltip: (
-            <div className="space-y-1">
-                <p className="font-bold text-primary">Sincronizar IPV</p>
-                <p className="text-xs leading-relaxed">Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.</p>
-            </div>
-        )
-    },
-    {
-        id: 'rules',
-        label: 'Reglas',
-        icon: Settings,
-        onClick: () => setActiveTab('rules'),
-        variant: 'outline' as const
-    },
-    {
-        id: 'matching',
-        label: 'Ejecutar Matching',
-        icon: Play,
-        onClick: handleRunMatching,
-        variant: 'primary' as const,
-        className: 'font-black',
-        tooltip: (
-            <>
-                <p className="font-bold text-primary">Motor de Matching Pro:</p>
-                <p className="text-xs leading-relaxed">
-                    Procesa transacciones en 4 pasos automáticos:
-                    <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
-                    <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
-                    <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
-                    <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
-                </p>
-            </>
-        )
+  const handleImportBackup = async (file: File) => {
+    try {
+        await importFullBackup(db, file);
+        toast.success('Copia de seguridad restaurada');
+        window.location.reload();
+    } catch (e: any) {
+        toast.error(`Error al restaurar: ${e.message}`);
     }
-  ], [handleGlobalRecalculate, handleRunMatching]);
+  };
 
-  const menuActions: Action[] = useMemo(() => [
-    { id: 'dashboard', label: 'Flujo', icon: Workflow, onClick: () => setActiveTab('dashboard'), active: activeTab === 'dashboard' },
-    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics' },
-    { id: 'ingestion', label: 'Extracto', icon: Database, onClick: () => setActiveTab('ingestion'), active: activeTab === 'ingestion' },
-    { id: 'catalog', label: 'Catálogo', icon: PackageSearch, onClick: () => setActiveTab('catalog'), active: activeTab === 'catalog' },
-    { id: 'transactions', label: 'Transacciones', icon: Table2, onClick: () => setActiveTab('transactions'), active: activeTab === 'transactions' },
-    { id: 'rules', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules'), active: activeTab === 'rules' },
-    { id: 'sim', label: 'Simulación', icon: Zap, onClick: () => setActiveTab('sim'), active: activeTab === 'sim' },
-    { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
-    { id: 'intelligent-receipts', label: 'Recepciones', icon: Wand2, onClick: () => setActiveTab('intelligent-receipts'), active: activeTab === 'intelligent-receipts' },
-    { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
-    { id: 'planning', label: 'Planeación', icon: Target, onClick: () => setActiveTab('planning'), active: activeTab === 'planning' },
-    { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
-    { id: 'audit', label: 'Auditoría Matching', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit' },
-    { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
-    { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
-    { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers' },
-    { id: 'mvt', label: 'Exportación MVT', icon: FileText, onClick: () => setActiveTab('mvt'), active: activeTab === 'mvt' },
-    {
-        id: 'reports-dropdown',
-        label: '',
-        onClick: () => {},
-        component: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />
-    }
-  ], [activeTab]);
+  const handleForceMatch = async (tx: BankTransaction) => {
+    setSelectedReconTx(tx);
+    setActiveTab('manual-recon');
+  };
 
-  if (!isStarted) {
-    return (
-        <div className="space-y-6 animate-in fade-in duration-700">
-            <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
-            <IPVInstitutionalDashboard
-                transactions={transactions || []}
-                reconciliationLines={reconciliationLines || []}
-                onStart={() => setIsStarted(true)}
-            />
-        </div>
-    );
-  }
+  const menuActions: Action[] = [
+    { id: 'dashboard', label: 'Inicio', icon: Workflow, active: activeTab === 'dashboard' },
+    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, active: activeTab === 'analytics' },
+    { id: 'ingestion', label: 'Extracto', icon: Database, active: activeTab === 'ingestion' },
+    { id: 'catalog', label: 'Catálogo', icon: PackageSearch, active: activeTab === 'catalog' },
+    { id: 'transactions', label: 'Transacciones', icon: Table2, active: activeTab === 'transactions' },
+    { id: 'intelligent-receipts', label: 'Recibos I.', icon: Zap, active: activeTab === 'intelligent-receipts' },
+    { id: 'reports-drop', label: 'Documentos', icon: FileText, customElement: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} /> },
+    { id: 'audit', label: 'Auditoría', icon: History, active: activeTab === 'audit' },
+    { id: 'settings-drop', label: 'Config', icon: Settings, customElement: (
+        <HorizontalScroll className="flex gap-2">
+            <Button variant={activeTab === 'rules' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('rules')} className="h-8 text-[10px] font-black uppercase">Reglas Matching</Button>
+            <Button variant={activeTab === 'mapping-rules' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('mapping-rules')} className="h-8 text-[10px] font-black uppercase">Mapeo Identidad</Button>
+            <Button variant={activeTab === 'customers' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('customers')} className="h-8 text-[10px] font-black uppercase">Clientes</Button>
+            <Button variant={activeTab === 'mvt' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('mvt')} className="h-8 text-[10px] font-black uppercase">Contabilidad MVT</Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsHelpOpen(true)} className="h-8 text-[10px] font-black uppercase">Ayuda</Button>
+        </HorizontalScroll>
+    )}
+  ];
 
   return (
-    <TooltipProvider delayDuration={200}>
-    <div className="space-y-6">
-      <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
+    <TooltipProvider>
+    <div className="min-h-screen bg-background/30 p-2 sm:p-4 lg:p-6 space-y-6 ipv-content">
+      {isMatching && <LoadingOverlay message={matchMessage} progress={matchProgress} />}
 
+      <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
 
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons">
-        <div className="flex items-center gap-4">
-            {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setActiveTab('dashboard')}
-                    className="h-11 w-11 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm active:scale-95"
-                >
-                    <Settings className="w-5 h-5 rotate-180" />
-                </Button>
-            )}
-            <div>
-                <div className="flex items-center gap-2">
-                    <h1 className="text-[clamp(2rem,8vw,3rem)] font-black tracking-tight text-primary uppercase">IPV Builder</h1>
-                    <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
-            </div>
-        </div>
-
-        <div className="w-full lg:w-auto">
-            <ActionMenu actions={topActions} sticky={false} className="shadow-none bg-transparent" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 overflow-hidden">
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
                     <StatCard
-                        title="Venta Total"
-                        value={stats.totalSales}
-                        icon={<FileText className="text-primary" />}
-                        subtitle={`T: ${formatCurrency(stats.totalTransferencias)} | E: ${formatCurrency(stats.totalEfectivo)}`}
-                        active={false}
+                        title="Ventas Totales"
+                        value={stats.totalAmount}
+                        icon={<Database className="text-primary" />}
+                        subtitle={`${stats.total} Operaciones`}
                         isCurrency={true}
-                    />
-                </div>
-            </TooltipTrigger>
-            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-xs font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
-                <div className="space-y-1">
-                    <p className="text-xs"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
-                    <p className="text-xs"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
-                </div>
-                <p className="text-xs mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
-            </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className="flex-1">
-                    <StatCard
-                        title="Total"
-                        value={stats.total}
-                        icon={<History className="text-blue-500" />}
-                        subtitle="Transacciones"
                         active={kpiFilter === 'ALL'}
                         onClick={() => {
                             setKpiFilter('ALL');
@@ -514,18 +247,18 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-xs font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
+                <p className="text-xs font-bold">Importe total neto de todas las operaciones bancarias cargadas en el sistema.</p>
             </TooltipContent>
         </Tooltip>
+
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
                     <StatCard
                         title="Cuadradas"
-                        value={stats.squared}
+                        value={stats.squares}
                         icon={<CheckCircle2 className="text-green-500" />}
-                        trend={`${stats.percentage}%`}
-                        subtitle="Completadas"
+                        subtitle="Conciliación 100%"
                         active={kpiFilter === 'CUADRADAS'}
                         onClick={() => {
                             setKpiFilter('CUADRADAS');

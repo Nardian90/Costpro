@@ -210,6 +210,8 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
     const removeExistingLine = async (id: string) => {
         if (!transaction) return;
         if (confirm('¿Eliminar esta línea de conciliación?')) {
+            const before = existingLines?.find(l => l.id === id);
+            await logAction({ type: "DELETE", entity: "RECONCILIATION_LINE", before, context: { transaction_ref: transaction?.referencia_origen, source: "MANUAL_RECON" } });
             await db.reconciliation_lines.delete(id);
 
             const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
@@ -256,6 +258,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                     created_at: new Date().toISOString()
                 };
                 await db.reconciliation_lines.add(fullLine);
+                await logAction({ type: "CREATE", entity: "RECONCILIATION_LINE", after: fullLine, context: { transaction_ref: transaction?.referencia_origen, source: "MANUAL_RECON" } });
             }
 
             const target = transaction.importe_venta_cents || transaction.importe_cents;

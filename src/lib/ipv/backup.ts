@@ -1,4 +1,5 @@
 import { type Dexie } from 'dexie';
+import { strToU8, zipSync } from 'fflate';
 
 export interface BackupMetadata {
     version: string;
@@ -37,7 +38,7 @@ export async function exportFullBackup(db: Dexie) {
 
         const fullBackup: FullBackup = {
             metadata: {
-                version: '1.1',
+                version: '1.2',
                 timestamp: new Date().toISOString(),
                 source: 'CostPro IPV Engine',
                 tables: tableNames,
@@ -115,4 +116,53 @@ export async function importFullBackup(db: Dexie, file: File) {
         reader.onerror = (error) => reject(error);
         reader.readAsText(file);
     });
+}
+
+/**
+ * Local Storage Backup Manager
+ * Manages automated incremental backups in LocalStorage
+ */
+const BACKUP_PREFIX = 'costpro_ipv_auto_backup_';
+const MAX_BACKUPS = 5;
+
+export async function runAutoBackup(db: Dexie) {
+    try {
+        const backupData: Record<string, any[]> = {};
+        for (const table of db.tables) {
+            backupData[table.name] = await table.toArray();
+        }
+
+        const dataString = JSON.stringify(backupData);
+        const compressed = zipSync({
+            'backup.json': strToU8(dataString)
+        });
+
+        // Convert to base64 for LocalStorage
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(compressed)));
+
+        const timestamp = Date.now();
+        const key = `${BACKUP_PREFIX}${timestamp}`;
+
+        localStorage.setItem(key, base64);
+
+        // Cleanup old backups
+        const keys = Object.keys(localStorage)
+            .filter(k => k.startsWith(BACKUP_PREFIX))
+            .sort();
+
+        if (keys.length > MAX_BACKUPS) {
+            const toDelete = keys.slice(0, keys.length - MAX_BACKUPS);
+            toDelete.forEach(k => localStorage.removeItem(k));
+        }
+
+        localStorage.setItem('costpro_ipv_last_backup_ts', timestamp.toString());
+        console.log(`Auto-backup completed: ${new Date(timestamp).toLocaleString()}`);
+    } catch (error) {
+        console.error('Auto-backup failed:', error);
+    }
+}
+
+export function getLastBackupTimestamp(): number | null {
+    const ts = localStorage.getItem('costpro_ipv_last_backup_ts');
+    return ts ? parseInt(ts, 10) : null;
 }

@@ -194,3 +194,42 @@ export function classifyGroupHierarchy(products: Product[]): Product[] {
 
     return updatedProducts;
 }
+
+/**
+ * Calculates the Levenshtein distance between two strings.
+ */
+export function levenshteinDistance(a: string, b: string): number {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = Array.from({ length: b.length + 1 }, () =>
+        Array.from({ length: a.length + 1 }, (_, i) => i)
+    );
+
+    for (let j = 1; j <= b.length; j++) {
+        matrix[j][0] = j;
+    }
+
+    for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+            const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+                matrix[j - 1][i] + 1, // deletion
+                matrix[j][i - 1] + 1, // insertion
+                matrix[j - 1][i - 1] + substitutionCost // substitution
+            );
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Fuzzy similarity score between 0 and 1.
+ */
+export function fuzzySimilarity(a: string, b: string): number {
+    const distance = levenshteinDistance(a.toLowerCase(), b.toLowerCase());
+    const maxLength = Math.max(a.length, b.length);
+    if (maxLength === 0) return 1.0;
+    return 1.0 - distance / maxLength;
+}

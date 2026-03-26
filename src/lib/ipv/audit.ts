@@ -33,3 +33,21 @@ export async function logAction(action: AuditAction) {
     console.error('Error logging audit action:', error);
   }
 }
+
+export async function exportAuditLogsJSON() {
+  try {
+    const logs = await db.audit_logs.toArray();
+    const json = JSON.stringify(logs, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting audit logs:', error);
+  }
+}

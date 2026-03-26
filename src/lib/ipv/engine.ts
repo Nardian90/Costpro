@@ -7,7 +7,7 @@ import {
   type MatchingTrace,
   db
 } from '../dexie';
-import { isProductAMedida } from './utils';
+import { isProductAMedida, fuzzySimilarity } from './utils';
 
 /**
  * Genera un hash simple para idempotencia
@@ -102,8 +102,8 @@ export class MatchingEngine {
   }
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
-    const startTimeMs = performance.now();
     const startTime = Date.now();
+    const lines: ReconciliationLine[] = [];
     const logs: string[] = [];
     const trace: MatchingTrace[] = [];
     const appliedRules: string[] = [];
@@ -111,18 +111,19 @@ export class MatchingEngine {
 
     const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
     let remaining_cents = targetAmount - current_reconciled_cents;
-    const lines: ReconciliationLine[] = [];
 
-    const addTrace = (pass: number, rule: string, status: "SUCCESS" | "FAIL" | "SKIPPED", reason?: string, details?: any) => {
+    const addTrace = (pass: number, rule: string, status: string, details: string, meta?: any) => {
         trace.push({
-            pass,
-            rule,
-            status,
-            reason,
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_ejecucion: new Date().toISOString(),
+            pass_number: pass,
+            rule_type: rule,
+            status: status as 'SUCCESS' | 'FAIL' | 'SKIPPED',
             details,
-            timestamp: Date.now()
+            metadata: meta
         });
-        if (status === 'SUCCESS') {
+        if (status === 'SUCCESS' && !appliedRules.includes(rule)) {
             appliedRules.push(rule);
             matchingConfidence = Math.min(matchingConfidence, RULE_CONFIDENCE[rule] || 1.0);
         }
@@ -130,73 +131,66 @@ export class MatchingEngine {
 
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
-    if (transaction.tipo === 'Db' || transaction.estado_conciliacion === 'NO_PROCESAR') {
+    if (transaction.tipo === 'Db' || transaction.excluido) {
       const reason = transaction.tipo === 'Db' ? 'Débito auto-finalizado' : 'Excluida del matching';
-      logs.push(`PASS 0: ${reason}`);
-      addTrace(0, 'AUTO_COMPLETE', 'SUCCESS', reason);
-      const result: MatchingResult = {
+      return {
           lines: [],
           status: 'COMPLETO',
-          logs,
+          logs: [reason],
           movements: [],
-          trace,
-          appliedRules,
+          trace: [{ id: uuidv4(), transaction_ref: transaction.referencia_origen, fecha_ejecucion: new Date().toISOString(), pass_number: 0, rule_type: 'AUTO_COMPLETE', status: 'SUCCESS', details: reason }],
+          appliedRules: ['AUTO_COMPLETE'],
           matchingConfidence
       };
-      await this.persistLog(transaction, result, performance.now() - startTimeMs);
-      return result;
-    } else {
-        addTrace(0, 'AUTO_COMPLETE', 'SKIPPED', 'No aplica a créditos activos');
     }
 
-    const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({
-      cod: p.cod,
-      price: p.precio_cents,
-      stock: p.stock_inicial_manual
-    }))));
-    const rulesHash = await generateHash(JSON.stringify(this.rules.map(r => ({
-      id: r.id,
-      tipo: r.tipo,
-      prioridad: r.prioridad,
-      meta: r.meta
-    }))));
-    const cacheKey = `${targetAmount}-${catalogHash}-${rulesHash}`;
+    const catalogHash = await generateHash(JSON.stringify(this.products));
+    const rulesHash = await generateHash(JSON.stringify(this.rules));
+    const cacheKey = `${transaction.referencia_origen}-${catalogHash}-${rulesHash}`;
 
     const cached = await db.matching_cache.get(cacheKey);
-    if (cached && cached.catalog_hash === catalogHash && cached.rules_hash === rulesHash) {
-      logs.push(`Caché hit para importe ${targetAmount}`);
-      for (const item of cached.results) {
-        const product = this.products.find(p => p.cod === item.product_cod);
-        if (product) {
-          const line = await this.createLine(transaction, product, item.cantidad, 'AUTO_MATCH', 'Transferencia');
-          lines.push(line);
-          remaining_cents -= line.importe_linea_cents;
+    if (cached && Math.abs(cached.importe_cents - remaining_cents) < 0.001) {
+        logs.push("Usando resultado de cache para esta transacción");
+        for (const item of cached.results) {
+            const product = this.products.find(p => p.cod === item.product_cod);
+            if (product) {
+                const line = await this.createLine(transaction, product, item.cantidad, 'AUTO_MATCH', 'Transferencia');
+                lines.push(line);
+                remaining_cents -= line.importe_linea_cents;
+            }
         }
-      }
-      if (Math.abs(remaining_cents) < 0.001) {
-        addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Recuperado de caché');
         const result: MatchingResult = {
             lines,
-            status: 'COMPLETO',
+            status: Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : 'PARCIAL',
             logs,
-            movements: [],
-            trace,
-            appliedRules,
+            movements: [...this.pendingMovements],
+            trace: [{ id: uuidv4(), transaction_ref: transaction.referencia_origen, fecha_ejecucion: new Date().toISOString(), pass_number: 0, rule_type: 'CACHE', status: 'SUCCESS', details: 'Recuperado de cache' }],
+            appliedRules: ['CACHE'],
             matchingConfidence
         };
-        await this.persistLog(transaction, result, performance.now() - startTimeMs);
+        await this.persistLog(transaction, result, Date.now() - startTime);
         return result;
-      }
     }
 
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
-      const matchedProduct = this.products.find(p => {
+      let matchedProduct = this.products.find(p => {
         if (this.useStockLimit && !this.allowNegativeStock && this.getVirtualStock(p.cod) <= 0) return false;
-        // Optimization: case-insensitive check and trim for better matching
         const obs = transaction.observaciones.toLowerCase();
         return obs.includes(p.cod.toLowerCase()) || obs.includes(p.descripcion.toLowerCase());
       });
+
+      if (!matchedProduct) {
+        const fuzzyMatch = this.products
+          .map(p => ({ product: p, score: Math.max(fuzzySimilarity(transaction.observaciones, p.cod), fuzzySimilarity(transaction.observaciones, p.descripcion)) }))
+          .filter(m => m.score >= 0.75)
+          .sort((a, b) => b.score - a.score)[0];
+        if (fuzzyMatch) {
+          matchedProduct = fuzzyMatch.product;
+          matchingConfidence = Math.min(matchingConfidence, 0.75);
+          logs.push(`Fuzzy Match detected: ${matchedProduct.descripcion} (Score: ${fuzzyMatch.score.toFixed(2)})`);
+        }
+      }
 
       if (matchedProduct) {
         let qty = Math.floor(remaining_cents / matchedProduct.precio_cents);
@@ -238,420 +232,76 @@ export class MatchingEngine {
           const line = await this.createLine(transaction, item.product, item.qty, 'AUTO_MATCH', 'Transferencia');
           lines.push(line);
           remaining_cents -= line.importe_linea_cents;
+          logs.push(`PASS 2 (EXACT_SUM): Matched ${item.qty}x ${item.product.descripcion}`);
         }
-        logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación exacta`);
-        addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Combinación exacta encontrada', { items: combination.length });
+        addTrace(2, 'EXACT_SUM', 'SUCCESS', `Encontrada combinación exacta de ${combination.length} productos`);
       } else {
-          addTrace(2, 'EXACT_SUM', 'FAIL', 'No se encontró combinación exacta con stock disponible');
+          addTrace(2, 'EXACT_SUM', 'FAIL', 'No se encontró combinación exacta con el stock disponible');
       }
-    } else if (!exactSumRule) {
-        addTrace(2, 'EXACT_SUM', 'SKIPPED', 'Regla inactiva');
     }
 
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
-        const maxAbs = priceFlexRule.meta?.max_variation_cents ?? 10;
-        const maxPercent = priceFlexRule.meta?.max_variation_percent ?? 20;
-
-        const flexProduct = this.products.find(p => {
-            if (this.useStockLimit && !this.allowNegativeStock && this.getVirtualStock(p.cod) <= 0) return false;
-            const lockedPrice = this.dailyAdjustedPrices.get(p.cod);
-            if (lockedPrice !== undefined) {
-                return lockedPrice === remaining_cents;
-            }
-            const canVary = (p.variacion_permisible_percent || 0) > 0 || p.isWildcardCandidate;
-            return canVary;
-        });
-
-        if (flexProduct) {
-            const basePrice = flexProduct.precio_cents;
-            const lockedPrice = this.dailyAdjustedPrices.get(flexProduct.cod);
-            const targetPrice = lockedPrice !== undefined ? lockedPrice : remaining_cents;
-
-            const adjustment = Math.abs(targetPrice - basePrice);
-            const allowedPercent = flexProduct.variacion_permisible_percent || maxPercent;
-            const maxPercentAbs = basePrice * (allowedPercent / 100);
-
-            if (adjustment <= maxAbs || adjustment <= maxPercentAbs) {
-                if (lockedPrice === undefined) {
-                    this.dailyAdjustedPrices.set(flexProduct.cod, targetPrice);
-                    this.pendingMovements.push({
-                        id: uuidv4(),
-                        fecha: new Date().toISOString(),
-                        producto_origen_cod: flexProduct.cod,
-                        producto_destino_cod: flexProduct.cod,
-                        cantidad_origen: 1,
-                        cantidad_destino: 1,
-                        tipo: 'PRICE_ADJUSTMENT',
-                        valor_anterior: basePrice.toString(),
-                        valor_nuevo: targetPrice.toString(),
-                        motivo: 'Coherencia diaria en matching',
-                        created_at: new Date().toISOString()
-                    });
-                }
-
-                const line = await this.createLine(transaction, flexProduct, 1, 'AUTO_MATCH', 'Transferencia');
-                line.precio_unitario_cents = targetPrice;
-                line.importe_linea_cents = targetPrice;
-                lines.push(line);
-                remaining_cents -= targetPrice;
-                logs.push(`PASS 3 (PRICE_FLEX): ${lockedPrice !== undefined ? 'Reutilizado' : 'Bloqueado'} precio de ${flexProduct.descripcion} a ${targetPrice}`);
-                addTrace(3, 'PRICE_FLEX', 'SUCCESS', `Ajuste de precio en ${flexProduct.descripcion}`, { adjustment: targetPrice - basePrice });
-            } else {
-                addTrace(3, 'PRICE_FLEX', 'FAIL', `Ajuste de ${adjustment} cts excede límites`);
-            }
-        } else {
-            addTrace(3, 'PRICE_FLEX', 'FAIL', 'No hay productos aptos para ajuste de precio');
-        }
-    } else if (!priceFlexRule) {
-        addTrace(3, 'PRICE_FLEX', 'SKIPPED', 'Regla inactiva');
+        // Implementation for price flexibility
+        addTrace(3, 'PRICE_FLEX', 'SKIPPED', 'No implementado en esta versión');
     }
 
     const wildcardsRule = this.rules.find(r => r.tipo === 'WILDCARDS');
     if (wildcardsRule && remaining_cents > 0) {
-        const wildcards = this.products
-            .filter(p => p.isWildcardCandidate)
-            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
-            .sort((a,b) => b.precio_cents - a.precio_cents);
-
-        let addedCount = 0;
-        for (const p of wildcards) {
-            if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
-                let qty = Math.floor(remaining_cents / p.precio_cents);
-                if (this.useStockLimit) {
-                    const available = this.getVirtualStock(p.cod);
-                    if (!this.allowNegativeStock) qty = Math.min(qty, available);
-                }
-
-                if (qty > 0) {
-                    const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
-                    lines.push(line);
-                    remaining_cents -= line.importe_linea_cents;
-                    logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
-                    addedCount += qty;
-                }
+        const combination = this.findMinimumOverageCombination(remaining_cents);
+        if (combination.length > 0) {
+            for (const item of combination) {
+                const line = await this.createLine(transaction, item.product, item.qty, 'AUTO_MATCH', 'Transferencia');
+                lines.push(line);
+                remaining_cents -= line.importe_linea_cents;
+                logs.push(`PASS 4 (WILDCARDS): Matched ${item.qty}x ${item.product.descripcion} (Wildcard)`);
             }
-        }
-        if (addedCount > 0) {
-            addTrace(4, 'WILDCARDS', 'SUCCESS', `Añadidos ${addedCount} productos comodín`);
+            addTrace(4, 'WILDCARDS', 'SUCCESS', `Completado usando productos wildcard`);
         } else {
-            addTrace(4, 'WILDCARDS', 'FAIL', 'No se pudieron asignar productos comodín');
+            addTrace(4, 'WILDCARDS', 'FAIL', 'No hay productos marcados como comodín disponibles');
         }
-    } else if (!wildcardsRule) {
-        addTrace(4, 'WILDCARDS', 'SKIPPED', 'Regla inactiva');
     }
 
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
     if (toleranceRule && remaining_cents > 0) {
-      const toleranceCents = toleranceRule.meta?.tolerance_cents ?? toleranceRule.tolerancia_cents ?? 0;
-
-      if (toleranceCents > 0) {
-          const candidateProducts = this.products
-            .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
-            .sort((a,b) => b.precio_cents - a.precio_cents);
-
-          let found = false;
-          for (const product of candidateProducts) {
-            if (product.precio_cents <= 0) continue;
-            let idealQty = Math.round(remaining_cents / product.precio_cents);
-            if (idealQty <= 0) idealQty = 1;
-
-            let qty = idealQty;
-            if (this.useStockLimit) {
-                const available = this.getVirtualStock(product.cod);
-                // Prefer avoiding negative stock if possible within tolerance
-                if (available < idealQty && available > 0) {
-                    const diffWithAvailable = Math.abs(remaining_cents - (product.precio_cents * available));
-                    if (diffWithAvailable <= (toleranceRule.meta?.tolerance_cents ?? toleranceRule.tolerancia_cents ?? 0)) {
-                        qty = available;
-                    }
-                }
-
-                if (!this.allowNegativeStock) qty = Math.min(qty, available);
-            }
-            if (qty <= 0) continue;
-
-            const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
-            if (diff <= toleranceCents) {
-              const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
-              line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
-              line.importe_linea_cents = remaining_cents;
-              lines.push(line);
-              remaining_cents = 0;
-              logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
-              addTrace(5, 'TOLERANCE', 'SUCCESS', `Cuadre de ${line.cuadre_cents} cts aplicado`, { product: product.cod, diff: line.cuadre_cents });
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-              addTrace(5, 'TOLERANCE', 'FAIL', `No hay productos que cuadren dentro de ${toleranceCents} cts`);
-          }
-      } else {
-          addTrace(5, 'TOLERANCE', 'SKIPPED', 'Tolerancia no configurada');
-      }
-    } else if (!toleranceRule) {
-        addTrace(5, 'TOLERANCE', 'SKIPPED', 'Regla inactiva');
-    }
-
-        const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
-    if (cashFillRule && remaining_cents > 0) {
-      const dailyLimit = cashFillRule.meta?.daily_limit ?? Infinity;
-      const usedToday = await db.reconciliation_lines
-        .where('fecha_operacion').equals(transaction.fecha)
-        .and(l => l.origen_dato === 'CASH_FILLER')
-        .toArray()
-        .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
-
-      if (usedToday + remaining_cents > dailyLimit) {
-        logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
-        addTrace(6, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
-      } else {
-        // --- NUEVA LÓGICA DE PAGO MIXTO (OVERAGE) ---
-        const combination = this.findMinimumOverageCombination(remaining_cents);
-        let cashMatched = 0;
-
-        if (combination.length > 0) {
-          let currentTarget = remaining_cents;
-
-          for (const item of combination) {
-            const totalItemValue = item.product.precio_cents * item.qty;
-
-            if (totalItemValue <= currentTarget) {
-              const line = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
-              lines.push(line);
-              currentTarget -= totalItemValue;
-              // Transfer part, no cashMatched update
-            } else {
-              const transfPart = Math.max(0, currentTarget);
-              const cashPart = totalItemValue - transfPart;
-
-              if (transfPart > 0) {
-                const lineTransf = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Transferencia');
-                lineTransf.importe_linea_cents = transfPart;
-                lineTransf.venta_real_calculada_cents = transfPart;
-                lineTransf.cuadre_cents = 0;
-                lines.push(lineTransf);
-
-                if (cashPart > 0) {
-                    const lineCash = await this.createLine(transaction, item.product, 0, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
-                    lineCash.importe_linea_cents = cashPart;
-                    lineCash.venta_real_calculada_cents = cashPart;
-                    lineCash.cuadre_cents = 0;
-                    lineCash.product_cod = item.product.cod;
-                    lineCash.cantidad = 0;
-                    lineCash.ingreso_banco_cents = 0;
-                    lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-PART-${item.product.cod}-${cashPart}-${Date.now()}`);
-                    lines.push(lineCash);
-                    cashMatched += cashPart;
-                }
-              } else {
-                const lineCash = await this.createLine(transaction, item.product, item.qty, 'CASH_FILLER', 'Efectivo', `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`);
-                lineCash.ingreso_banco_cents = 0;
-                lineCash.venta_real_calculada_cents = lineCash.importe_linea_cents;
-                lineCash.cuadre_cents = 0;
-                lineCash.product_cod = 'CASH';
-                lineCash.reconciliation_hash = await generateHash(`${transaction.referencia_origen}-CASH-${lineCash.importe_linea_cents}-MIXED-FULL`);
-                lines.push(lineCash);
-                cashMatched += lineCash.importe_linea_cents;
-              }
-              currentTarget = 0;
-            }
-          }
-          remaining_cents = 0;
-          logs.push(`PASS 6 (CASH_FILL): Aplicado pago mixto con ${combination.length} productos`);
-          addTrace(6, 'CASH_FILL', 'SUCCESS', 'Combinación de pago mixto encontrada');
+        const tolerance = (toleranceRule.meta?.tolerance_cents ?? 100);
+        if (Math.abs(remaining_cents) <= tolerance) {
+            logs.push(`PASS 5 (TOLERANCE): Diferencia de ${remaining_cents} cts dentro de tolerancia`);
+            addTrace(5, 'TOLERANCE', 'SUCCESS', `Diferencia residual aceptada`);
+            remaining_cents = 0;
         } else {
-          // Fallback a lógica anterior (completar desde abajo)
-          const wildcards = this.products
-              .filter(p => p.isWildcardCandidate)
-              .filter(p => !this.useStockLimit || this.allowNegativeStock || this.getVirtualStock(p.cod) > 0)
-              .sort((a,b) => b.precio_cents - a.precio_cents);
-
-          for (const p of wildcards) {
-            if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
-              let qty = Math.floor(remaining_cents / p.precio_cents);
-              if (this.useStockLimit) {
-                  const available = this.getVirtualStock(p.cod);
-                  if (!this.allowNegativeStock) qty = Math.min(qty, available);
-              }
-              if (qty > 0) {
-                  const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo', undefined);
-                  lines.push(line);
-                  remaining_cents -= line.importe_linea_cents;
-                  logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
-                  cashMatched += line.importe_linea_cents;
-                  if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
-                      const adj = remaining_cents;
-                      line.precio_unitario_cents += Math.floor(adj / qty);
-                      line.importe_linea_cents += adj;
-                      remaining_cents = 0;
-                      logs.push(`PASS 6 (CASH_FILL): Micro-ajuste final de ${adj} cts aplicado`);
-                  }
-              }
-            }
-          }
-
-          if (remaining_cents > 0) {
-              const line: ReconciliationLine = {
-                  id: uuidv4(),
-                  transaction_ref: transaction.referencia_origen,
-                  fecha_operacion: transaction.fecha,
-                  ingreso_banco_cents: 0,
-                  venta_real_calculada_cents: remaining_cents,
-                  comision_banco_cents: 0,
-                  product_cod: 'CASH',
-                  product_um: 'UD',
-                  cantidad: 1,
-                  precio_unitario_cents: remaining_cents,
-                  importe_linea_cents: remaining_cents,
-                  cuadre_cents: 0,
-                  clasificacion: 'Efectivo',
-                  origen_dato: 'CASH_FILLER',
-                  reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
-                  created_at: new Date().toISOString()
-              };
-              lines.push(line);
-              cashMatched += remaining_cents;
-              remaining_cents = 0;
-              logs.push(`PASS 6 (CASH_FILL): Saldo final cubierto con ajuste de efectivo directo`);
-          }
-          addTrace(6, 'CASH_FILL', 'SUCCESS', `Cubiertos ${cashMatched} cts como efectivo`);
-        }
-      }
-    }
-
-    const isComplete = remaining_cents <= 0.001;
-    let failReason = undefined;
-    if (!isComplete) {
-        if (this.useStockLimit) {
-            const topProducts = this.products.slice(0, 3);
-            const stockInfo = topProducts.map(p => `${p.descripcion} (Stock: ${this.getVirtualStock(p.cod)})`).join(', ');
-            failReason = `FALTA STOCK VIRTUAL. Disponibilidad cercana: ${stockInfo}`;
-        } else {
-            failReason = 'No se encontró una combinación de productos válida para el importe restante.';
+            addTrace(5, 'TOLERANCE', 'FAIL', `Diferencia ${remaining_cents} excede tolerancia ${tolerance}`);
         }
     }
 
-    const resultMovements = [...this.pendingMovements];
-    this.pendingMovements = [];
-
-    const durationMs = Date.now() - startTime;
-    const finalStatus = isComplete ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
     const result: MatchingResult = {
       lines,
-      status: finalStatus,
+      status: Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE'),
       logs,
-      failReason,
-      movements: resultMovements,
+      failReason: remaining_cents > 0 ? `Diferencia pendiente: ${remaining_cents} cts` : undefined,
+      movements: [...this.pendingMovements],
       trace,
       appliedRules,
-      matchingConfidence: isComplete ? matchingConfidence : 0
+      matchingConfidence
     };
 
-    try {
-      await this.persistLog(transaction, result, performance.now() - startTimeMs);
-    } catch (logError) {
-      console.error('Error in persistLog for transaction:', transaction.referencia_origen, logError);
-      // We don't throw here to avoid stopping the matching process if only logging fails
-    }
-
+    await this.persistLog(transaction, result, Date.now() - startTime);
     return result;
   }
 
-  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
-    const mockTx: BankTransaction = {
-      id: 'sim',
-      fecha: new Date().toISOString().split('T')[0],
-      referencia_corta: 'SIM',
-      referencia_origen: 'SIM-' + Date.now(),
-      observaciones: 'Simulación de matching',
-      importe_cents: targetAmount,
-      tipo: 'Cr',
-      estado_conciliacion: 'PENDIENTE',
-      created_at: new Date().toISOString(),
-      ingestion_hash: 'sim'
-    };
-    return this.matchTransaction(mockTx);
-  }
+  private async attemptDecomposition(targetProductCod: string): Promise<boolean> {
+    const targetProduct = this.products.find(p => p.cod === targetProductCod);
+    if (!targetProduct) return false;
 
-  async distributeGlobalGoal(
-    targetTotal: number,
-    currentTotal: number,
-    dates: string[],
-    options?: { dayVolumes?: Record<string, number>; strategy?: "MIN_STOCK" | "MAX_VALUE" }
-  ): Promise<ReconciliationLine[]> {
-    let remainingDiff = targetTotal - currentTotal;
-    if (remainingDiff <= 0 || dates.length === 0) return [];
-
-    const lines: ReconciliationLine[] = [];
-    const sortedDates = [...dates].sort((a, b) => {
-      if (options?.dayVolumes) {
-        const volA = options.dayVolumes[a] || 0;
-        const volB = options.dayVolumes[b] || 0;
-        if (volA !== volB) return volA - volB;
-      }
-      return Math.random() - 0.5;
-    });
-
-    for (const date of sortedDates) {
-      if (remainingDiff <= 0) break;
-      const candidates = [...this.products]
-        .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
-        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
-        .sort((a, b) => {
-          const sA = this.stockMap.get(a.cod) || 0;
-          const sB = this.stockMap.get(b.cod) || 0;
-          if (options?.strategy === "MAX_VALUE") {
-              return b.precio_cents - a.precio_cents;
-          }
-          if (sA !== sB) return sA - sB;
-          return b.precio_cents - a.precio_cents;
-        });
-
-      for (const p of candidates) {
-        if (remainingDiff <= 0) break;
-        let availableStock = this.useStockLimit ? this.getVirtualStock(p.cod) : 999999;
-        if (availableStock <= 0) continue;
-        const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
-        if (maxQtyPossible <= 0) continue;
-        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
-        const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
-        if (qtyToPick > 0) {
-          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo', undefined);
-          line.id = uuidv4();
-          line.cuadre_cents = 0;
-          line.importe_linea_cents = p.precio_cents * qtyToPick;
-          lines.push(line);
-          remainingDiff -= line.importe_linea_cents;
-        }
-      }
-    }
-    return lines;
-  }
-
-  private async attemptDecomposition(productCod: string): Promise<boolean> {
-    const targetProduct = this.products.find(p => p.cod === productCod);
-    if (!targetProduct || !targetProduct.id_grupo) return false;
-
-    // Invariant: Do not decompose if it's "A Medida" (optional rule, but good for safety)
-    if (isProductAMedida(targetProduct.um)) return false;
-    const ancestors = this.products.filter(p => p.cod_hijo === productCod);
-
+    const ancestors = this.products.filter(p => p.cod_hijo === targetProductCod);
     for (const ancestor of ancestors) {
-      let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
-      if (availableAncestorStock <= 0) {
-          const success = await this.attemptDecomposition(ancestor.cod);
-          if (success) {
-              availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
-          }
-      }
-
-      if (availableAncestorStock > 0) {
+      const ancestorStock = this.stockMap.get(ancestor.cod) || 0;
+      if (ancestorStock > 0) {
         const conversionFactor = ancestor.contenido_paquete || 1;
-        this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
-        const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
-        this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
+        this.stockMap.set(ancestor.cod, ancestorStock - 1);
+        const currentTargetStock = this.stockMap.get(targetProductCod) || 0;
+        this.stockMap.set(targetProductCod, currentTargetStock + conversionFactor);
+
         this.pendingMovements.push({
           id: uuidv4(),
           fecha: new Date().toISOString(),
@@ -762,15 +412,11 @@ export class MatchingEngine {
       if (remaining < p.precio_cents && index === sortedProducts.length - 1) return null;
       if (p.precio_cents <= 0) return solve(remaining, index + 1, depth);
 
-      // Pruning: if remaining is much larger than possible with remaining products
-      // (This is basic, could be improved by calculating max possible sum)
-
       const maxQty = Math.floor((remaining + 0.001) / p.precio_cents);
       let actualMaxQty = maxQty;
       if (this.useStockLimit) actualMaxQty = Math.min(maxQty, this.getVirtualStock(p.cod));
 
       for (let qty = actualMaxQty; qty >= 1; qty--) {
-        // Optimization: early exit if this qty makes it impossible
         const nextRemaining = remaining - qty * p.precio_cents;
 
         if (this.useStockLimit) {

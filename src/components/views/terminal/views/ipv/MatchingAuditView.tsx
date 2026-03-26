@@ -225,7 +225,7 @@ export function MatchingAuditView() {
         <Card className="p-0 overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b">
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Historial de Ejecución</h3>
-            <Button variant="outline" size="sm" className="h-7 text-[10px] font-black uppercase">
+            <Button variant="outline" size="sm" className="h-7 text-[10px] font-black uppercase" onClick={exportAuditLogsJSON}>
                 <Download className="w-3 h-3 mr-2" />
                 Exportar
             </Button>

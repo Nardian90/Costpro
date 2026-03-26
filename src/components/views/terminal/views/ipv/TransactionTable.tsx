@@ -207,7 +207,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         </div>
 
         {layoutMode === 'table' ? (
-          <div className="overflow-x-auto">
+          <div className="transaction-table-wrapper overflow-x-auto">
             <Table className="transaction-table">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b-2">
@@ -396,6 +396,8 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
         const newTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
         const target = transaction.importe_venta_cents || transaction.importe_cents;
         await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
+        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(remaining) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "FORCE_MATCH" } });
+        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "QUICK_ADJUST" } });
         toast.success('Ajuste aplicado');
         onSuccess();
     };
@@ -427,6 +429,8 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
         };
         await db.reconciliation_lines.add(newLine);
         await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
+        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(remaining) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "FORCE_MATCH" } });
+        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "QUICK_ADJUST" } });
         toast.success('Producto asignado exitosamente');
     };
     return (
