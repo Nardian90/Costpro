@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_producto",
+  "content": "### Producto\n```typescript\ninterface Product {\n  id: string;\n  name: string;\n  sku: string | null;\n  price: number;\n  cost_price: number;\n  stock_current: number;\n  category: string | null;\n  supplier: string | null;\n  image_url: string | null;\n  // ...\n}\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Producto"
+  }
+}

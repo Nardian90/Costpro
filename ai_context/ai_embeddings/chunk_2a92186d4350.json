@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT___próximos_pasos_end",
+  "content": "## 🎯 PRÓXIMOS PASOS\n\n1. **Implementar RPC `register_reception`** (1-2 horas)\n2. **Actualizar componente WarehouseView** (2-3 horas)\n3. **Agregar tests** (2-3 horas)\n4. **Migración de datos** (1 hora)\n5. **Validación en staging** (1-2 horas)\n\n**Tiempo Total Estimado:** 7-11 horas\n\n---\n\n**Documento Generado:** 12 Enero 2025\n**Estado:** PENDIENTE IMPLEMENTACIÓN CRÍTICA\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "🎯 PRÓXIMOS PASOS"
+  }
+}

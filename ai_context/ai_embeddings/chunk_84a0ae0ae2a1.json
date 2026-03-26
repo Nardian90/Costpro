@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_adapters_gemini_adapter_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para gemini-adapter.test.\", \"dependencies\": [\"vitest\", \"./gemini-adapter\", \"../types\"], \"domain\": \"Integration\", \"exports\": [], \"id\": \"src/lib/ai/adapters/gemini-adapter.test.ts\", \"name\": \"gemini-adapter.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico gemini-adapter.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar gemini-adapter.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 446,
+    "domain": "components"
+  }
+}

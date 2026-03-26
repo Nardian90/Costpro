@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetSidePanel_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetSidePanel.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\", \"@/lib/utils\", \"next-themes\", \"./DarianEditor\", \"./CostSheetCalculator\", \"@/hooks/ui/useMobile\"], \"domain\": \"UI\", \"exports\": [\"CostSheetSidePanel\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx\", \"name\": \"CostSheetSidePanel.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetSidePanel.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 174,
+    "domain": "components"
+  }
+}

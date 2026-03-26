@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MISMATCH_1__robustez_del_algoritmo__9_10_",
+  "content": "### 1. Robustez del Algoritmo (9/10)\n- **Estrategia Multi-Pase:** El uso de 7 pases (0-6) permite una resolución progresiva, priorizando la exactitud (Hard Ref, Exact Sum) antes de recurrir a aproximaciones (Tolerance, Cash Fill).\n- **Backtracking Optimizado:** El algoritmo `findExactCombination` incluye límites de profundidad (`max_depth`) y tiempo de espera (`timeout_ms`), evitando bloqueos del hilo principal en combinatorias complejas.\n- **Flexibilidad de Precios:** La regla `PRICE_FLEX` implementa coherencia táctica bloqueando precios ajustados por día, lo cual es fundamental para la integridad contable.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MISMATCH.md",
+    "header": "1. Robustez del Algoritmo (9/10)"
+  }
+}

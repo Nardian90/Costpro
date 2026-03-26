@@ -1,0 +1,8 @@
+{
+  "id": "MAINTENANCE_LOG_paso_4___actualizar_registro",
+  "content": "## Paso 4 — Actualizar registro\n\n1. Marcar sección como completada\n\n[x] SECCION_ACTUAL\n\n2. Actualizar fecha\n\nÚltima ejecución: YYYY-MM-DD\n\n3. Avanzar objetivo\n\nSiguiente objetivo: SECCION_SIGUIENTE\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
+    "header": "Paso 4 — Actualizar registro"
+  }
+}

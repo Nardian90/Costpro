@@ -1,0 +1,8 @@
+{
+  "id": "reference_movementsview_tsx",
+  "content": "## MovementsView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/MovementsView.tsx`\n\n**Salidas esperadas:** Card List, Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "MovementsView.tsx"
+  }
+}

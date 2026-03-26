@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_2_3_generación_de_reportes_e_inmutabilidad",
+  "content": "### 2.3 Generación de Reportes e Inmutabilidad\n*   **Ciclo de Vida**: Los reportes transicionan de `BORRADOR` -> `CERRADO` (Snapshot inmutable).\n*   **Exportación**: PDF generado íntegramente en el navegador para descarga inmediata o revisión en nueva pestaña, cumpliendo con la agilidad requerida en el punto de venta.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "2.3 Generación de Reportes e Inmutabilidad"
+  }
+}

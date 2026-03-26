@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_db_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para db.\", \"dependencies\": [\"@prisma/client\"], \"domain\": \"Infrastructure\", \"exports\": [\"prisma\"], \"id\": \"src/lib/db.ts\", \"name\": \"db.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico db.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar db.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 369,
+    "domain": "components"
+  }
+}

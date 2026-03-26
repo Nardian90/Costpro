@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_fase_3__monitoreo_en_prod__continuado_",
+  "content": "### Fase 3: Monitoreo en Prod (continuado)\n\n- Revisar logs de error en `audit_logs` por patrones 403/401\n- Verificar que admins pueden gestionar usuarios sin bloqueos\n- Confirmar que usuarios no admin no ven datos ajenos\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "Fase 3: Monitoreo en Prod (continuado)"
+  }
+}

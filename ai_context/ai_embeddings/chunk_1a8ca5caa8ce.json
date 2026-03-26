@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_API_CONTRACT_2_2__ajustar_inventario",
+  "content": "### 2.2. Ajustar inventario\n\nEndpoint principal para todas las modificaciones de stock (ventas, recepciones, ajustes, etc.).\n\n- **Endpoint:** `POST /api/inventory/adjust`\n- **Request Body:**\n  ```json\n  {\n    \"productId\": \"...\",\n    \"quantity\": -1,\n    \"movementType\": \"SALE\", // SALE, RECEIVING, ADJUSTMENT, SHRINKAGE\n    \"version\": 5,\n    \"storeId\": \"...\", // Requerido\n    \"reason\": \"...\" // Opcional, para ajustes\n  }\n  ```\n- **Respuesta Exitosa (200 OK):**\n  ```json\n  {\n    \"productId\": \"...\",\n    \"newQuantity\": 99,\n    \"newVersion\": 6\n  }\n  ```\n- **Respuesta de Error (409 Conflict):**\n  ```json\n  {\n    \"error\": \"Conflict\",\n    \"message\": \"Inventory version mismatch.\",\n    \"serverVersion\": 6,\n    \"currentQuantity\": 105\n  }\n  ```\n- **Respuesta de Error (400 Bad Request):**\n  ```json\n  {\n    \"error\": \"Bad Request\",\n    \"message\": \"Negative stock is not allowed.\"\n  }\n  ```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_API_CONTRACT.md",
+    "header": "2.2. Ajustar inventario"
+  }
+}

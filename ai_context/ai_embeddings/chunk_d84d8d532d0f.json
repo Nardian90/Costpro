@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_observability_system_health_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para system-health.\", \"dependencies\": [\"@supabase/supabase-js\"], \"domain\": \"Infrastructure\", \"exports\": [\"SystemHealthLog\"], \"id\": \"src/lib/observability/system-health.ts\", \"name\": \"system-health.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico system-health.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar system-health.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 402,
+    "domain": "components"
+  }
+}

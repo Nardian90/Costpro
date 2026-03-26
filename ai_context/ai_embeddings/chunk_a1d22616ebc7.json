@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_popover_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para popover.\", \"dependencies\": [\"react\", \"@radix-ui/react-popover\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/popover.tsx\", \"name\": \"popover.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico popover.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con popover.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 219,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_3__crear_asignar_usuario_a_store_a",
+  "content": "### Paso 3: Crear/asignar usuario a Store A\n\n```\nNombre: \"User A Only\"\nTiendas: Solo \"Store A\"\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 3: Crear/asignar usuario a Store A"
+  }
+}

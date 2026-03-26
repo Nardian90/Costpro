@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_1__seleccionar_usuario_no_admin",
+  "content": "### Paso 1: Seleccionar usuario no-admin\n\n**UI:** En tabla de usuarios, haz click en botón \"Editar\" 🖊️\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 1: Seleccionar usuario no-admin"
+  }
+}

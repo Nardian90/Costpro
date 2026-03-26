@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetMasterRing_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetMasterRing.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/lib/utils\", \"lucide-react\", \"next-themes\", \"@/components/ui/slider\"], \"domain\": \"UI\", \"exports\": [\"CostSheetMasterRing\", \"CostSheetTelemetry\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx\", \"name\": \"CostSheetMasterRing.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetMasterRing.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 154,
+    "domain": "components"
+  }
+}

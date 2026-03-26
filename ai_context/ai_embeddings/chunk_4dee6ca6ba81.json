@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_2__problema___is_admin____retorna_siempre__false___",
+  "content": "### 2. PROBLEMA: `is_admin()` Retorna SIEMPRE `false` ❌\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "2. PROBLEMA: `is_admin()` Retorna SIEMPRE `false` ❌"
+  }
+}

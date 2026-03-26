@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_3____panel_lateral_de_recepción____líneas_399_464_",
+  "content": "#### 3. **Panel Lateral de Recepción** (líneas 399-464)\n   - **Header**: Muestra cantidad de productos seleccionados\n   - **Lista editable**: Cada producto tiene:\n     - Nombre del producto\n     - Input: \"Cantidad a Agregar\" (editable)\n     - Input: \"Costo Unitario\" (editable)\n     - Botón X para eliminar del resumen\n     - Preview: \"Nuevo Stock estimado\"\n   - **Footer**: Botón \"Confirmar Ingreso\"\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
+    "header": "3. **Panel Lateral de Recepción** (líneas 399-464)"
+  }
+}

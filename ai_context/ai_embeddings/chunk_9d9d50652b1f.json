@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_en__useusersview_ts_",
+  "content": "#### En `useUsersView.ts`\n\n```typescript\nconst handleUserFormSubmit = async (mode, data, selectedUserContractId) => {\n  // ...\n  if (mode === 'edit') {\n    await updateUserMutation.mutateAsync({\n      id: selectedUserContractId,\n      full_name: data.fullName,\n      role: data.role,\n      // ❌ AQ UI FALTA: is_active!\n    });\n\n    // Pero memberships se intenta actualizar por otro lado\n    await manageMembershipsMutation.mutateAsync({...});\n  }\n};\n```\n\nEl campo `is_active` **no se está pasando al `useUpdateUser()`**. Entonces:\n- Admin marca el checkbox: `isActive = false`\n- Pero el payload no incluye `is_active`\n- El UPDATE no actualiza nada\n- Usuario sigue activo\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "En `useUsersView.ts`"
+  }
+}

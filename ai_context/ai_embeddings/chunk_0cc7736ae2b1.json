@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_ProductInventoryPicker_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ProductInventoryPicker.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"@/hooks/api/useProducts\", \"@/components/ui/SearchBar\", \"@/components/ui/table\", \"@/components/ui/skeleton\", \"@/lib/utils\", \"lucide-react\", \"@/components/ui/atomic\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx\", \"name\": \"ProductInventoryPicker.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ProductInventoryPicker.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ProductInventoryPicker.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 151,
+    "domain": "components"
+  }
+}

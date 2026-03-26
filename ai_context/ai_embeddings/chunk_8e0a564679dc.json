@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ipv_calculations_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para calculations.\", \"dependencies\": [\"@/lib/dexie\", \"./parser\"], \"domain\": \"Domain\", \"exports\": [\"IPVMetrics\", \"DailySales\", \"PayerMetric\", \"ProductMetric\", \"calculateIPVMetrics\", \"getDailySalesHistory\", \"getTopProducts\", \"getTopPayers\"], \"id\": \"src/lib/ipv/calculations.ts\", \"name\": \"calculations.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico calculations.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar calculations.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 425,
+    "domain": "components"
+  }
+}

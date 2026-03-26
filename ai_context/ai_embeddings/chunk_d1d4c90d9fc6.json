@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_users_UserForm_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para UserForm.\", \"dependencies\": [\"react\", \"zod\", \"react-hook-form\", \"@hookform/resolvers/zod\", \"@/lib/utils\", \"@/contracts/user\", \"@/types\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"UserFormData\"], \"id\": \"src/components/views/terminal/views/users/UserForm.tsx\", \"name\": \"UserForm.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico UserForm.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con UserForm.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 193,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_iso_iec_26514__documentación_de_software_",
+  "content": "### ISO/IEC 26514 (Documentación de Software)\n- **Cumplimiento:** Parcial.\n- **Brecha:** Falta de un manual de usuario maestro unificado y guías de mantenimiento que no dependan de scripts de remediación específicos.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
+    "header": "ISO/IEC 26514 (Documentación de Software)"
+  }
+}

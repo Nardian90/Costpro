@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_users_useUsersView_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useUsersView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useUsers\", \"@/hooks/api/useStores\", \"./UserForm\", \"sonner\", \"@/contracts/user\", \"@/types\", \"@/lib/roles\", \"@/lib/supabaseClient\"], \"domain\": \"UI\", \"exports\": [\"useUsersView\"], \"id\": \"src/components/views/terminal/views/users/useUsersView.ts\", \"name\": \"useUsersView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useUsersView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useUsersView.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 189,
+    "domain": "components"
+  }
+}

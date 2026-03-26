@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_data_template_industrial_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-industrial.\", \"dependencies\": [\"@/contracts/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-industrial.ts\", \"name\": \"template-industrial.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-industrial.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-industrial.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 413,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION___para_qa___testing",
+  "content": "### 🧪 PARA QA / TESTING\n\n**5. [`TESTING_MANUAL_RLS_FIXES.md`](TESTING_MANUAL_RLS_FIXES.md)** ⭐ **PASO-A-PASO**\n\n- 📌 Setup pre-pruebas (limpiar cache)\n- ✅ **Test 1:** Admin VE tiendas (SELECT)\n- ✅ **Test 2:** Admin CREA tienda (INSERT)\n- ✅ **Test 3:** Admin EDITA tienda (UPDATE)\n- ✅ **Test 4:** Admin VE usuarios (SELECT)\n- ✅ **Test 5:** Admin EDITA usuario (UPDATE)\n- ✅ **Test 6:** Admin DESACTIVA usuario (UPDATE is_active)\n- ✅ **Test 7:** User NO-admin NO ve usuarios (RLS)\n- ✅ **Test 8:** Multi-tenant aislamiento\n- 🔴 Resolución de problemas comunes\n- 📋 Checklist final\n- ⏱ Duración: 15 min ejecución + 20 min documentación\n\n---\n\n**6. [`SOLUCION_APLICADA_STATUS.md`](SOLUCION_APLICADA_STATUS.md)** ⭐ **POST-APLICACIÓN**\n\n- ✅ Cambios aplicados (numerados)\n- 🧪 Validaciones ejecutadas\n- 📊 Impacto en funcionalidad\n- 🔐 Seguridad validada\n- 🚀 Próximos pasos por fase\n- ⏱ Duración: 5 min lectura\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
+    "header": "🧪 PARA QA / TESTING"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "ERROR_LOGS_registro_de_errores_de_fetching_y_mutaciones___costpro_end",
+  "content": "# Registro de Errores de Fetching y Mutaciones - CostPro\n\n| Timestamp | Contexto | Error |\n| :--- | :--- | :--- |\n[2026-02-07T01:53:41.618Z] [Mutation Error] \"[object Object]\"\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/ERROR_LOGS.md",
+    "header": "Registro de Errores de Fetching y Mutaciones - CostPro"
+  }
+}

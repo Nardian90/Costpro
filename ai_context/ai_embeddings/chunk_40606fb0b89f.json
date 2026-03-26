@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_health_ReleaseGateStatus_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ReleaseGateStatus.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"ReleaseGateStatus\"], \"id\": \"src/components/views/terminal/views/health/ReleaseGateStatus.tsx\", \"name\": \"ReleaseGateStatus.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ReleaseGateStatus.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ReleaseGateStatus.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 24,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_ipv_IPVView_tsx",
+  "content": "{\"actions\": [\"handleForceMatch\", \"handleGlobalRecalculate\", \"handleImportBackup\", \"handleRunMatching\"], \"components\": [\"ui/ActionMenu\", \"ui/HorizontalScroll\", \"ui/LoadingOverlay\", \"ui/badge\", \"ui/button\", \"ui/card\", \"ui/tabs\", \"ui/tooltip\"], \"id\": \"src/components/views/terminal/views/ipv/IPVView.tsx\", \"inputs\": [], \"name\": \"IPVView.tsx\", \"outputs\": [\"Card List\", \"Chart\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/IPVView.tsx\", \"servicesUsed\": [\"dexie\", \"ipv/backup\", \"ipv/engine\", \"ipv/utils\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 23,
+    "domain": "views"
+  }
+}

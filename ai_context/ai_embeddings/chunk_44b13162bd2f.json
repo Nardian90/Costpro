@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_SYSTEM_HARDENING_3__plan_de_acción__acciones_futuras__end",
+  "content": "## 3. Plan de Acción (Acciones Futuras)\n\nPara alcanzar el 10/10 y asegurar la escalabilidad a largo plazo, se proponen las siguientes acciones:\n\n1.  **Eliminación Total de `as any`**: Realizar un refactor profundo de los joins de Supabase para definir interfaces que coincidan exactamente con la estructura de retorno anidada, eliminando los últimos castings.\n2.  **Virtualización de Catálogos**: Implementar `react-window` en el POS para manejar catálogos de >5000 SKUs sin degradación de UI.\n3.  **Unificación de API Handlers**: Migrar todos los Route Handlers en `src/app/api` al mismo patrón de validación Zod usado en los hooks de cliente.\n4.  **Cobertura de Tests E2E**: Expandir Playwright para cubrir flujos de error de red simulados (offline mode).\n\n---\n\n*Certificado por Jules - Senior Software Engineer & System Hardener*\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_SYSTEM_HARDENING.md",
+    "header": "3. Plan de Acción (Acciones Futuras)"
+  }
+}

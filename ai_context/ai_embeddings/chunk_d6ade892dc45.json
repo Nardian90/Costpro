@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_4____arquitectura_no_atómica__transacciones_sin_garantía____",
+  "content": "### 4. **Arquitectura No Atómica: Transacciones Sin Garantía** 🔴\n**Severidad:** CRÍTICA\n**Ubicación:** `src/components/WarehouseView.tsx` líneas 189-228\n\n**Problema:**\n```tsx\nconst updates = Array.from(receptionItems.values()).map(async ({ product, ... }) => {\n    const { error: invError } = await supabase.from('inventory').upsert({...})\n    if (invError) throw invError;\n\n    // Si falla aquí, inventory ya fue actualizado pero products no\n    await supabase.from('products').update({ cost_price: newCost }).eq('id', product.id);\n\n    // Si falla aquí, ambas tablas cambiaron pero no hay registro en stock_movements\n    await logStockMovement(...)\n});\nawait Promise.all(updates);\n```\n\n**Riesgos:**\n- ❌ Si `products` falla, `inventory` ya cambió (inconsistencia)\n- ❌ Si `logStockMovement` falla, no hay auditoría\n- ❌ Sin garantía ACID: race conditions posibles\n\n**Solución:** RPC atómica con transacción SQL\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "4. **Arquitectura No Atómica: Transacciones Sin Garantía** 🔴"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "EXECUTIVE_SUMMARY_RLS_FIX___lecciones_aprendidas",
+  "content": "## 🎓 LECCIONES APRENDIDAS\n\n1. **Enum vs Text:** Los tipos ENUM en PostgreSQL pueden tener comportamientos inesperados con type casting\n2. **Policy Overload:** Múltiples policies solapadas crean conflictos - mejor consolidar\n3. **Frontend + Backend:** Los bugs a menudo están en AMBOS lados, no solo en uno\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
+    "header": "🎓 LECCIONES APRENDIDAS"
+  }
+}

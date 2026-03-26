@@ -1,0 +1,9 @@
+{
+  "id": "components_src_app_api_logs_route_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para route.\", \"dependencies\": [\"next/server\", \"fs\", \"path\"], \"domain\": \"Integration\", \"exports\": [], \"id\": \"src/app/api/logs/route.ts\", \"name\": \"route.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico route.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar route.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 304,
+    "domain": "components"
+  }
+}

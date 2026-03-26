@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ipv___tests___bandecParser_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para bandecParser.test.\", \"dependencies\": [\"vitest\", \"../bandecParser\", \"../utils\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/bandecParser.test.ts\", \"name\": \"bandecParser.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico bandecParser.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar bandecParser.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 435,
+    "domain": "components"
+  }
+}

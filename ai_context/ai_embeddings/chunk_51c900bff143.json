@@ -1,0 +1,8 @@
+{
+  "id": "tool-registry-guide_how_to_add_new_ai_tools_end",
+  "content": "# How to Add New AI Tools\n\n1. **Define the Tool**: Add the tool definition to `src/lib/ai/tools/definitions.ts`. Include name, description, parameters, and `allowedRoles`.\n2. **Add Validation**: Add a Zod schema to the `schemas` object in `src/lib/ai/tools/registry.ts`.\n3. **Implement Handler**: Add a handler function to the `toolHandlers` object in `src/lib/ai/tools/registry.ts`.\n4. **Update Frontend (Optional)**: If the tool returns a UI action, handle it in `src/components/ui/ChatBot.tsx` within the `handleAction` function.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/tool-registry-guide.md",
+    "header": "How to Add New AI Tools"
+  }
+}

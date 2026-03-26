@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetMassiveGenerator_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetMassiveGenerator.\", \"dependencies\": [\"react\", \"@/components/ui/button\", \"@/components/ui/progress\", \"@/components/ui/tabs\", \"@/lib/utils\", \"@/store/cost-sheet-store\", \"@/hooks/api/useInventory\", \"@/store\", \"@/lib/cost-engine\", \"@/lib/cost-engine/types\", \"sonner\", \"lucide-react\", \"@/components/ui/CostProLoader\", \"@/components/ui/checkbox\", \"@/components/ui/switch\", \"@/components/ui/label\", \"./CostSheetExportModal\", \"jszip\", \"@/services/export-service\", \"@/services/excel-service\"], \"domain\": \"UI\", \"exports\": [\"CostSheetMassiveGenerator\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx\", \"name\": \"CostSheetMassiveGenerator.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetMassiveGenerator.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 173,
+    "domain": "components"
+  }
+}

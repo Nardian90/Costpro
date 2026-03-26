@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_atomic_index_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para index.\", \"dependencies\": [\"react\", \"@/lib/utils\", \"@radix-ui/react-slot\", \"lucide-react\", \"../ProductImage\", \"../HorizontalScroll\", \"@/types\"], \"domain\": \"UI\", \"exports\": [\"PrimaryButton\", \"SecondaryButton\", \"IconButton\", \"SearchInput\", \"CategoryChips\", \"ProductCard\"], \"id\": \"src/components/ui/atomic/index.tsx\", \"name\": \"index.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico index.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con index.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 271,
+    "domain": "components"
+  }
+}

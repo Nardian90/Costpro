@@ -1,0 +1,8 @@
+{
+  "id": "SUPABASE_CONTEXT_3__row_level_security__rls_",
+  "content": "## 3. Row-Level Security (RLS)\n\nRLS is used extensively to enforce strict data access control and ensure that users can only see the data they are authorized to.\n\n-   **`audit_logs` Table Policies**:\n    -   **SELECT**: Access is highly restricted. Only users with the role of `admin`, `manager`, or `encargado` are permitted to view the audit logs. This is enforced by the `Allow admins, managers and encargados to read audit logs` policy.\n    -   **INSERT/UPDATE/DELETE**: Direct modification of the audit logs is denied for all users. Logs can only be created by the system itself (i.e., through the trigger functions running with elevated privileges), which ensures the integrity and immutability of the audit trail.\n\n-   **Store-Level Isolation**: Most other tables (`transactions`, `products`, `inventory`, etc.) have RLS policies that restrict access based on the user's `active_store_id` or their memberships in the `user_store_memberships` table. This ensures that a manager or clerk from one store cannot view or modify the data of another store.\n\n-   **Role-Based Access**: Functions like `is_admin()` and `has_role()` are used within RLS policies to create a clear hierarchy of permissions, from clerks up to system administrators.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SUPABASE_CONTEXT.md",
+    "header": "3. Row-Level Security (RLS)"
+  }
+}

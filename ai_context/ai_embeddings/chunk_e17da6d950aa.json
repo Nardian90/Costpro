@@ -1,0 +1,9 @@
+{
+  "id": "user_help_1",
+  "content": "{\"acciones\": [\"Crear nueva ficha de costo\", \"Agregar insumos y mano de obra\", \"Calcular m\\u00e1rgenes y precios sugeridos\", \"Generar reportes y anexos\"], \"descripcion_usuario\": \"Calcular con precisi\\u00f3n el costo de producci\\u00f3n y establecer precios competitivos.\", \"feature\": \"Gesti\\u00f3n de Fichas de Costo\", \"resultados\": [\"Cumplimiento de: Calcular con precisi\\u00f3n el costo de producci\\u00f3n y establecer precios competitivos.\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 1,
+    "domain": "user_help"
+  }
+}

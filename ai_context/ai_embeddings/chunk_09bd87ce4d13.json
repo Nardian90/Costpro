@@ -1,0 +1,8 @@
+{
+  "id": "PRODUCT_VARIANT_LOGIC_reglas_de_negocio_para_la_descomposición",
+  "content": "## Reglas de Negocio para la Descomposición\n1.  **Jerarquía de Precios**: Dentro de un mismo `id_grupo`, los productos se ordenan por `precio_cents` de mayor a menor.\n2.  **Flujo de Descomposición**: Si el motor de matching necesita un producto \"A\" y no hay stock, buscará el producto \"B\" inmediatamente superior en precio dentro del mismo grupo que sí tenga stock.\n3.  **Factor de Conversión**: 1 unidad del producto superior se convierte en `N` unidades del producto inferior, donde `N` es el valor de `contenido_paquete` del producto superior.\n4.  **Registro de Movimiento**: Cada vez que ocurre una descomposición, se crea un registro en la tabla `product_movements` con el tipo `DECOMPOSITION`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
+    "header": "Reglas de Negocio para la Descomposición"
+  }
+}

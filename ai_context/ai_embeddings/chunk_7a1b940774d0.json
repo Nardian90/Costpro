@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_COSTOS_1__motor_de_cálculo____lib_cost_engine__",
+  "content": "## 1. Motor de Cálculo (`/lib/cost-engine`)\n**Calificación: 10/10** (Incrementada)\n\n*   **JSON-first:** Cumplido. Arquitectura 100% basada en `FichaJSON`.\n*   **Precisión:** Cumplido. Uso de `decimal.js`. Se han añadido campos `baseTotal` y `baseHist` al resultado calculado para mayor transparencia.\n*   **Seguridad:** Cumplido. Sandbox `expr-eval`.\n*   **Determinismo:** Cumplido. Solver iterativo con damping para ciclos.\n*   **Trazabilidad:** Cumplido. Bitácora detallada de cada paso.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_COSTOS.md",
+    "header": "1. Motor de Cálculo (`/lib/cost-engine`)"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "2026-03-13___creación_express_y_generación_masiva_end",
+  "content": "### 🚀 Creación Express y Generación Masiva\n**Antes:** Registrar productos nuevos tomaba horas de duplicidad.\n**Ahora:** Usas una tabla express que transfiere automáticamente todo al motor de Generación Masiva.\nDiagrama: [SVG](../svg/quick_mode_flow.svg) | Placeholder: [Capture](../screenshots/quick_mode_flow_placeholder.png)\n\n\n---\n*Sincronizado por Jules (CostPro)*",
+  "metadata": {
+    "source": "knowledge/docs/explanation/2026-03-13.md",
+    "header": "🚀 Creación Express y Generación Masiva"
+  }
+}

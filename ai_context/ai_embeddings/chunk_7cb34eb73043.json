@@ -1,0 +1,8 @@
+{
+  "id": "POS_AUDIT_FINAL_ux__professional_interaction_",
+  "content": "### UX (Professional Interaction)\n- **Native Confirm Removal:** Se eliminaron todos los `confirm()` nativos.\n- **Modales Integrados:** Se implementó `BaseModal` para:\n    - Advertencia de productos sin precio.\n    - Confirmación de vaciado de carrito (en vista móvil y panel de caja).\n- **Mobile First:** Ajuste de targets táctiles a 44px (`w-11 h-11`) en todos los botones de acción del POS.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/POS_AUDIT_FINAL.md",
+    "header": "UX (Professional Interaction)"
+  }
+}

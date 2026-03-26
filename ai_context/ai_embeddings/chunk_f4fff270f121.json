@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_MobileSafeContainer_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para MobileSafeContainer.\", \"dependencies\": [\"react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"MobileSafeContainer\"], \"id\": \"src/components/ui/MobileSafeContainer.tsx\", \"name\": \"MobileSafeContainer.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico MobileSafeContainer.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con MobileSafeContainer.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 213,
+    "domain": "components"
+  }
+}

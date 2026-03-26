@@ -1,0 +1,8 @@
+{
+  "id": "PERFORMANCE_GUIDELINES_3__performance_budget",
+  "content": "## 3. Performance Budget\n\n| Metric | Target | Maximum |\n|--------|--------|---------|\n| Initial Page Load (LCP) | < 1.5s | 2.5s |\n| View Transition Time | < 200ms | 500ms |\n| Data Payload (List) | < 50KB | 200KB |\n| Queries per View | < 3 | 5 |\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
+    "header": "3. Performance Budget"
+  }
+}

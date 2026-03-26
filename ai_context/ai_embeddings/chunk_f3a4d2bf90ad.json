@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_2__comparativa_con_versión_anterior__v5_7_22_",
+  "content": "### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.22)\n\n| Dominio | v5.7.22 | v5.7.23 | Variación | Causa Concreta del Cambio |\n| :--- | :---: | :---: | :---: | :--- |\n| Type Safety | 9.5 | 9.8 | **(+0.3)** | Hardening de contratos RPC en Dashboard y Ventas. |\n| Observabilidad | 9.0 | 9.5 | **(+0.5)** | Estandarización de logging en Audit Logs, Taxes y Stores. |\n| DX | 8.0 | 8.5 | **(+0.5)** | Eliminación de tipos `any` y parámetros manuales. |\n| **Global Score** | **9.16**| **9.35**| **(+0.19)**| **Fortalecimiento de la integridad de datos y observabilidad.**|\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.22)"
+  }
+}

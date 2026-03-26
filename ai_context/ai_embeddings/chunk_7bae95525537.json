@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_2____a_mediano_plazo__mejoras___",
+  "content": "### 2. **A MEDIANO PLAZO (Mejoras)**\n\n1. **Crear tabla `suppliers` normalizada**\n   - Referencia en `receptions`\n   - Validación de proveedores únicos\n\n2. **Mejorar Validaciones Frontend**\n   - Validar cantidad > 0\n   - Validar campos no vacíos\n   - Mostrar confirmación antes de guardar\n\n3. **Mejorar UX de Imágenes**\n   - Permitir subir imagen directamente en recepción\n   - Mostrar preview de imagen antes de guardar\n\n4. **Logging Centralizado**\n   - Usar logger de Supabase o Winston\n   - Registrar errores con contexto completo\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "2. **A MEDIANO PLAZO (Mejoras)**"
+  }
+}

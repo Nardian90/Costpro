@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_test_4___está_aislado_multi_tenant_",
+  "content": "### Test 4: ¿Está aislado multi-tenant?\n\n```sql\n-- Un usuario de Store A no debe ver usuarios de Store B\nSELECT * FROM public.profiles\nWHERE id IN (\n  SELECT user_id FROM public.user_store_memberships\n  WHERE store_id = 'store-b-id'\n);\n-- Esperado: 0 resultados si el usuario está en Store A\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "Test 4: ¿Está aislado multi-tenant?"
+  }
+}

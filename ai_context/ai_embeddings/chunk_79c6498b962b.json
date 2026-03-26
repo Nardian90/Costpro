@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_adapters_deepseek_adapter_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para deepseek-adapter.\", \"dependencies\": [\"./openai-compatible-adapter\"], \"domain\": \"Integration\", \"exports\": [\"DeepSeekAdapter\"], \"id\": \"src/lib/ai/adapters/deepseek-adapter.ts\", \"name\": \"deepseek-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico deepseek-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar deepseek-adapter.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 445,
+    "domain": "components"
+  }
+}

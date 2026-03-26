@@ -1,0 +1,9 @@
+{
+  "id": "user_help_3",
+  "content": "{\"acciones\": [\"Realizar conteo f\\u00edsico de productos\", \"Registrar diferencias en el sistema\", \"Ajustar niveles de stock\"], \"descripcion_usuario\": \"Mantener la integridad de los datos de stock f\\u00edsico contra el sistema.\", \"feature\": \"Conteo y Ajuste de Inventario\", \"resultados\": [\"Cumplimiento de: Mantener la integridad de los datos de stock f\\u00edsico contra el sistema.\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 3,
+    "domain": "user_help"
+  }
+}

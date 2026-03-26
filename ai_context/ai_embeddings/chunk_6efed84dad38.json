@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetAuditLog_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetAuditLog.\", \"dependencies\": [\"react\", \"@/components/ui/card\", \"@/components/ui/badge\", \"@/components/ui/scroll-area\", \"@/lib/cost-engine/types\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"CostSheetAuditLog\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx\", \"name\": \"CostSheetAuditLog.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetAuditLog.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 153,
+    "domain": "components"
+  }
+}

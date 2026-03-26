@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS___resumen_de_éxito",
+  "content": "## 🎯 RESUMEN DE ÉXITO\n\n✅ **Problema 1:** `is_admin()` retorna FALSE\n   - **Causa:** `role::text` vs ENUM mismatch\n   - **Solución:** Usar `role = ANY(ARRAY[...])` directamente\n   - **Status:** FIXED\n\n✅ **Problema 2:** Policies conflictivas en `stores`\n   - **Causa:** Policy con `USING: true` conflictúa con otras\n   - **Solución:** Consolidar en 4 policies claras sin comodines\n   - **Status:** FIXED\n\n✅ **Problema 3:** Admin no puede editar usuarios\n   - **Causa:** Falta policy que permita admin editar perfiles ajenos\n   - **Solución:** Agregar `profiles_admin_full_access` policy\n   - **Status:** FIXED\n\n✅ **Problema 4:** Usuarios no pueden ser desactivados\n   - **Causa:** `is_active` faltaba en payload + falta policy\n   - **Solución:** `is_active` ya está en `useUsersView.ts` + ahora con policy si_admin()=true\n   - **Status:** FIXED\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "🎯 RESUMEN DE ÉXITO"
+  }
+}

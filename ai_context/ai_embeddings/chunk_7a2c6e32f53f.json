@@ -1,0 +1,9 @@
+{
+  "id": "components_src_store_cart_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para cart.\", \"dependencies\": [\"zustand\", \"zustand/middleware\", \"immer\", \"@/types\", \"sonner\"], \"domain\": \"Infrastructure\", \"exports\": [\"CartItem\", \"useCartStore\"], \"id\": \"src/store/cart.ts\", \"name\": \"cart.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico cart.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar cart.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 359,
+    "domain": "components"
+  }
+}

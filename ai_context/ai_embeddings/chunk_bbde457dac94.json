@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_dashboard_useDashboardView_ts",
+  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/dashboard/useDashboardView.ts\", \"inputs\": [], \"name\": \"useDashboardView.ts\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/dashboard/useDashboardView.ts\", \"servicesUsed\": [\"api/useDashboard\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 5,
+    "domain": "views"
+  }
+}

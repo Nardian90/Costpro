@@ -127,7 +127,7 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             2: "scripts/maintenance/domain_classifier.py",
             6: "scripts/phase_6_health.py",
             13: "scripts/generate_knowledge_graph.py",
-            14: "scripts/build_vector_index.py",
+            14: "scripts/rag_indexer.py",
             8: "scripts/phase_8_view_mapping.py",
             9: "scripts/phase_9_workflow_detection.py",
             5: "scripts/phase_5_metrics.py",
@@ -135,6 +135,27 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
             11: "scripts/phase_11_user_translation.py",
             12: "scripts/phase_12_iso_manual.py"
         }
+
+        # v8.1 Special Handling for Phase 14
+        if phase_num == 14:
+            changes_path = "public/architecture_changes.json"
+            has_changes = True
+            if os.path.exists(changes_path):
+                try:
+                    with open(changes_path, 'r') as f:
+                        changes = json.load(f)
+                        if changes.get("summary", {}).get("total", 0) == 0:
+                            has_changes = False
+                except: pass
+
+            if not has_changes:
+                print("Modo v8.1: Saltando Fase 14 por falta de cambios.")
+                status = "skipped"
+                end_time = datetime.now(timezone.utc).isoformat() + 'Z'
+                end_ms = datetime.now(timezone.utc).timestamp() * 1000
+                duration_ms = int(end_ms - start_ms)
+                update_audit(phase_num, phase_def["name"], start_time, end_time, duration_ms, status, phase_def["outputs"], cycle)
+                return status
 
         script = script_map.get(phase_num)
         if script and os.path.exists(script):
@@ -146,8 +167,19 @@ def execute_phase(phase_num, phase_def, cycle, dry_run=False):
                 status = "re_execute"
             elif "QUARANTINED" in res.stdout:
                 status = "quarantined"
+            elif "NO_CHANGES" in res.stdout:
+                status = "skipped"
+            elif "EXIT_STATUS: partial" in res.stdout:
+                status = "degraded"
             elif res.returncode != 0:
-                status = "failed"
+                # v8.1 Non-blocking Phase 14
+                state = load_state()
+                rag_conf = state.get("rag_engine", {})
+                if phase_num == 14 and rag_conf.get("non_blocking", True):
+                    print("Aviso: Fase 14 falló pero es NO bloqueante. Marcando como degraded.")
+                    status = "degraded"
+                else:
+                    status = "failed"
         else:
             print(f"Aviso: Script para Fase {phase_num} no encontrado, usando simulación.")
             for art in phase_def["outputs"]:
@@ -216,7 +248,7 @@ def main():
                 new_state["currentPhase"] = 1
                 new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
                 save_state(new_state)
-            elif status in ["success", "quarantined", "committed"]:
+            elif status in ["success", "quarantined", "committed", "skipped", "degraded"]:
                 new_state["currentPhase"] = current_phase + 1
                 new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
                 save_state(new_state)

@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_validaciones_finales",
+  "content": "### VALIDACIONES FINALES\n\n**FASE 15 — Documentation Consistency Validation**\n- **Objetivo:** Validar coherencia cruzada.\n- **Check:** Vistas sin workflow, componentes sin docs, referencias rotas.\n- **Timing:** Registrar en audit.\n\n**FASE 16 — Global Integrity Validation**\n- **Objetivo:** Validación final de integridad del sistema.\n- **Salida:** `docs/architecture/INTEGRITY_REPORT.md`.\n- **Acción:** Cierre del ciclo diario.\n- **Timing:** Registrar en audit.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "VALIDACIONES FINALES"
+  }
+}

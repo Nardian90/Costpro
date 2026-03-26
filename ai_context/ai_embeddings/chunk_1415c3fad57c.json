@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_IPVReportView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para IPVReportView.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/components/ui/button\", \"@/components/ui/badge\", \"@/components/ui/input\", \"@/lib/utils\", \"./IPVPreviewModal\", \"sonner\", \"jspdf\", \"jspdf-autotable\", \"uuid\", \"@/components/ui/LoadingOverlay\"], \"domain\": \"UI\", \"exports\": [\"IPVReportView\"], \"id\": \"src/components/views/terminal/views/ipv/IPVReportView.tsx\", \"name\": \"IPVReportView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico IPVReportView.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 100,
+    "domain": "components"
+  }
+}

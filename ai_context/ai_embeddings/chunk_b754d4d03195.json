@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_adapters_gpt_adapter_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para gpt-adapter.\", \"dependencies\": [\"./openai-compatible-adapter\"], \"domain\": \"Integration\", \"exports\": [\"GPTAdapter\"], \"id\": \"src/lib/ai/adapters/gpt-adapter.ts\", \"name\": \"gpt-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico gpt-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar gpt-adapter.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 449,
+    "domain": "components"
+  }
+}

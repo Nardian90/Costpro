@@ -1,0 +1,9 @@
+{
+  "id": "components_src_store_useAcademyStore_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useAcademyStore.\", \"dependencies\": [\"zustand\", \"@/lib/supabaseClient\"], \"domain\": \"Infrastructure\", \"exports\": [\"AcademyCard\", \"UserProgress\", \"useAcademyStore\"], \"id\": \"src/store/useAcademyStore.ts\", \"name\": \"useAcademyStore.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useAcademyStore.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useAcademyStore.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 363,
+    "domain": "components"
+  }
+}

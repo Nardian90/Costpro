@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_backend__por_implementar_",
+  "content": "### Backend (Por Implementar)\n- API Routes con Supabase\n- Autenticación real con NextAuth\n- CRUD completo de datos\n- Reportes y exportaciones\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Backend (Por Implementar)"
+  }
+}

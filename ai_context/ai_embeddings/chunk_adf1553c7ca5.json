@@ -1,0 +1,8 @@
+{
+  "id": "audit_v5_mejoras_implementadas",
+  "content": "### Mejoras Implementadas\n1. **Exportación No Destructiva:**\n   - Se modificó `handleExportJSON` para evitar el sobrescritura de fórmulas por valores.\n   - Se añadió un campo `metadata.calculationSnapshot` que guarda los resultados calculados sin tocar la estructura original de `header` o `sections`.\n   - Importación ahora restaura el estado 1:1.\n\n2. **Motor de Fórmulas Unificado:**\n   - Se migró la evaluación de encabezados y anexos de `new Function` a `expr-eval` (Parser).\n   - Se corrigió el error en el callback de `replace` que usaba el offset como ID de referencia.\n   - Soporte nativo para `REDONDEO(valor, decimales)` y alias `round`.\n\n3. **Auditoría Matemática Avanzada:**\n   - **Detección de Negativos:** Alerta crítica si algún costo resulta menor a cero.\n   - **Validación de Cantidad:** Advertencia si hay costos pero la cantidad es cero.\n   - **Integridad de Referencias:** Validación profunda de nombres/IDs de Anexos en las fórmulas para evitar errores de ejecución.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/audit_v5.8_optimization.md",
+    "header": "Mejoras Implementadas"
+  }
+}

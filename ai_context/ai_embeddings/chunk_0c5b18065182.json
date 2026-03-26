@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_1__navegar_a_stores",
+  "content": "### Paso 1: Navegar a Stores\n\n**UI:** Menú izquierdo → \"Gestión\" → \"Tiendas\" (o similar según navegación)\n\n**Resultado esperado:**\n- ✅ Se cargan 2+ tiendas en la lista\n- ✅ NO hay error HTTP 403/401\n- ✅ Se ve nombre, dirección, estado (activo/inactivo)\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 1: Navegar a Stores"
+  }
+}

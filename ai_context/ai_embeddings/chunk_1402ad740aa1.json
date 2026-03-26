@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_AUDIT_REPORT_4__rls_security",
+  "content": "### 4. RLS Security\nThe RLS policies are a good security feature, but they could be more granular. The current model grants broad permissions to certain roles, which could be a security risk. A more fine-grained approach would be to grant permissions based on specific job functions rather than broad roles.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
+    "header": "4. RLS Security"
+  }
+}

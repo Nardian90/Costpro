@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_THEME_AUDIT_estrategia_de_success_vs_primary_",
+  "content": "### Estrategia de Success vs Primary:\nPara evitar confusión entre el color de la marca (Verde) y el estado de éxito (Verde), utilizaremos:\n- **Primary:** Green 600/500 (Tono más corporativo/profesional).\n- **Success:** Emerald 500 (Tono más vibrante, asociado a validación).\n- **Secondary:** Slate/Zinc (Neutrales para equilibrio).\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FRONTEND_THEME_AUDIT.md",
+    "header": "Estrategia de Success vs Primary:"
+  }
+}

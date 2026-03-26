@@ -1,0 +1,8 @@
+{
+  "id": "procedures_procedimiento__punto_de_venta__pos_",
+  "content": "## Procedimiento: Punto de Venta (POS)\n1. Escanear productos\n2. Gestionar carrito de compras\n3. Procesar pagos y generar facturas\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/procedures.md",
+    "header": "Procedimiento: Punto de Venta (POS)"
+  }
+}

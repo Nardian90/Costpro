@@ -1,0 +1,8 @@
+{
+  "id": "2026-03-15___auditoría_de_conciliación__matching__end",
+  "content": "### 🚀 Auditoría de Conciliación (Matching)\n**Antes:** Cuando una transacción no se conciliaba automáticamente, no sabías por qué el sistema la había rechazado o qué reglas fallaron.\n**Ahora:** Tienes un panel de auditoría detallado que muestra cada paso que dio el motor de matching, qué reglas se aplicaron y por qué se tomó cada decisión.\nDiagrama: [SVG](../svg/ipv_audit_flow.svg) | Placeholder: [Capture](../screenshots/ipv_audit_flow_placeholder.png)\n\n---\n*Sincronizado por Jules (CostPro)*",
+  "metadata": {
+    "source": "knowledge/docs/reference/2026-03-15.md",
+    "header": "🚀 Auditoría de Conciliación (Matching)"
+  }
+}

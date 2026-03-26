@@ -1,0 +1,8 @@
+{
+  "id": "INVERSION_FIX_REPORT_plan_de_acción__solución_técnica_",
+  "content": "## Plan de Acción (Solución Técnica)\n1. **Corregir Trigger:** Actualizado para usar `old_data`/`new_data` y manejar dinámicamente `seller_id` (ventas) o `user_id` (recepciones).\n2. **Habilitar RLS UPDATE:** Crear políticas que permitan a administradores y propietarios actualizar el estado de los documentos.\n3. **Habilitar RLS SELECT:** Permitir la visualización de movimientos de stock según el acceso a la tienda.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVERSION_FIX_REPORT.md",
+    "header": "Plan de Acción (Solución Técnica)"
+  }
+}

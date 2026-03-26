@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_auth_LoginForm_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para LoginForm.\", \"dependencies\": [\"react\", \"@/store\", \"next/navigation\", \"lucide-react\", \"@/lib/supabaseClient\", \"./RegisterForm\", \"sonner\", \"@/components/ui/input\", \"@/lib/logger\", \"@/contracts\", \"@/lib/navigation\", \"@/services/user-service\", \"@/contracts/user\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/auth/LoginForm.tsx\", \"name\": \"LoginForm.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico LoginForm.\", \"user_description\": \"Sistema de seguridad y acceso de usuarios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 273,
+    "domain": "components"
+  }
+}

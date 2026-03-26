@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_reports_ReportsView_tsx",
+  "content": "{\"actions\": [\"handleExportExcel\", \"handleGenerate\", \"handleSave\"], \"components\": [\"ui/ActionMenu\", \"ui/CostProLoader\", \"ui/button\", \"ui/card\"], \"id\": \"src/components/views/terminal/views/reports/ReportsView.tsx\", \"inputs\": [], \"name\": \"ReportsView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/reports/ReportsView.tsx\", \"servicesUsed\": []}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 9,
+    "domain": "views"
+  }
+}

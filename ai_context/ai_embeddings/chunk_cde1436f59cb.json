@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_toggle_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para toggle.\", \"dependencies\": [\"react\", \"@radix-ui/react-toggle\", \"class-variance-authority\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/toggle.tsx\", \"name\": \"toggle.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico toggle.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con toggle.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 227,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_historial",
+  "content": "### Historial\n- Trazabilidad completa de inventario\n- Movimientos por producto\n- Línea de tiempo de eventos\n- Referencias a documentos\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Historial"
+  }
+}

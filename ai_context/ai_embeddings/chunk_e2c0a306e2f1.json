@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_audit_AuditTableView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para AuditTableView.\", \"dependencies\": [\"react\", \"date-fns\", \"date-fns/locale\", \"@/validation/schemas\", \"./AuditEventIcon\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/audit/AuditTableView.tsx\", \"name\": \"AuditTableView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico AuditTableView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con AuditTableView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 136,
+    "domain": "components"
+  }
+}

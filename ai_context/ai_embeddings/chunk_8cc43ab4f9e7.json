@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_2__comparativa_con_versión_anterior__v1_1_",
+  "content": "### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v1.1)\n\n| Dominio | v1.1 | v5.7.22 | Variación | Causa Concreta del Cambio |\n| :--- | :---: | :---: | :---: | :--- |\n| Core Architecture | 3.0 | 9.0 | **(+6.0)** | Refactor total del God Component a Arquitectura Modular. |\n| Type Safety | 9.0 | 9.5 | **(+0.5)** | Endurecimiento de contratos RPC y esquemas resilientes. |\n| POS / Terminal | 7.5 | 9.5 | **(+2.0)** | Rediseño Mobile-first, zero-latency y robustez funcional. |\n| Multi-Store & Roles | 8.0 | 9.5 | **(+1.5)** | Implementación de membresías dinámicas y SKU isolation. |\n| UX / Mobile | 6.0 | 9.0 | **(+3.0)** | Estandarización de touch targets y layouts ergonómicos. |\n| Performance | 6.5 | 8.5 | **(+2.0)** | Prefetching, lazy-loading y optimización de filtrado. |\n| Seguridad | 7.0 | 9.5 | **(+2.5)** | Auditoría inmutable y hardening de políticas RLS. |\n| Observabilidad | 8.5 | 9.0 | **(+0.5)** | Logging enriquecido con metadatos de contexto. |\n| DX | 2.0 | 8.0 | **(+6.0)** | Mejora drástica en servicios y documentación técnica viva. |\n| **Global Score** | **6.38**| **9.16**| **(+2.78)**| **Transformación total del sistema a Enterprise SaaS.**|\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "2. COMPARATIVA CON VERSIÓN ANTERIOR (v1.1)"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_REPORT_resumen_ejecutivo",
+  "content": "## Resumen Ejecutivo\n\nEl frontend de CostPro es un proyecto con una base tecnológica moderna y potente. En la iteración actual, el componente central se ha consolidado como un **Shell de navegación (`TerminalShell`)** que organiza la UI, el routing interno y la carga diferida de vistas. Esto mejora la modularidad frente a versiones previas y reduce la carga inicial, pero aún concentra la orquestación de vistas y prefetching en un único punto. La ausencia casi total de tests unitarios y de integración sigue siendo una debilidad crítica que eleva el riesgo de regresiones y dificulta la evolución del código.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/FRONTEND_AUDIT_REPORT.md",
+    "header": "Resumen Ejecutivo"
+  }
+}

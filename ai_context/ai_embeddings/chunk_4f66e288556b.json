@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_AJUSTES_DOCUMENTOS_probabilidad_de_éxito__95_",
+  "content": "### Probabilidad de Éxito: 95%\n- El proceso se basa en el motor de ajustes de inventario ya probado (`perform_inventory_adjustment`).\n- Se han validado los estados en las vistas de historial mediante build exitoso.\n- La duplicación de ventas utiliza el `useCartStore` persistente, garantizando que los datos lleguen al POS.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_AJUSTES_DOCUMENTOS.md",
+    "header": "Probabilidad de Éxito: 95%"
+  }
+}

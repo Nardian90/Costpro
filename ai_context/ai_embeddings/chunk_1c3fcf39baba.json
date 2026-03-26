@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_causa_raíz",
+  "content": "#### Causa Raíz\n\nEn la tabla `stores`, hay **2 policies de SELECT** que crean un **corto circuito lógico**:\n\n```sql\n-- POLICY 1: \"Stores management\" (ALL operations)\nUSING: (get_my_role() = 'admin'::text) OR ((get_my_role() = 'encargado'::text) AND (created_by = auth.uid()))\n\n-- POLICY 2: \"Stores visibility\" (SELECT)\nUSING: (is_admin() OR (EXISTS (SELECT 1 FROM user_store_memberships m WHERE ((m.store_id = stores.id) AND (m.user_id = auth.uid()) AND (m.status = 'active'::membership_status)))))\n\n-- POLICY 3: \"Users can view all stores\" (SELECT) ⚠️ PROBLEMA\nUSING: true\n```\n\n**El problema:**\n- La policy \"Users can view all stores\" con `USING: true` **permite a TODOS acceder**\n- Sin embargo, en PostgreSQL RLS, cuando hay **múltiples policies, TODAS deben pasar** (AND logic) para operaciones de lectura con `WHERE`\n- Las policies no son inclusive (OR entre ellas), sino que se aplican como **restricciones acumulativas**\n- El `true` en la tercera policy debería permitir todo, pero **NO está siendo evaluado en contexto de rol**\n\n**Explicación técnica:**\nLa lógica es:\n```\nPolicy A (admin check) → restringida a admins\nPolicy B (membership check) → restringida a miembros\nPolicy C (true) → todos\n```\n\nCuando hay 3 policies, PostgreSQL busca **al menos una que permita la acción**. Si Policy A retorna `false` y Policy B retorna `false`, entonces Policy C debería permitirlo. Pero si `get_my_role()` retorna `NULL` o un valor inesperado, todo falla.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "Causa Raíz"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_LazyRender_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para LazyRender.\", \"dependencies\": [\"react\"], \"domain\": \"UI\", \"exports\": [\"LazyRender\"], \"id\": \"src/components/ui/LazyRender.tsx\", \"name\": \"LazyRender.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico LazyRender.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con LazyRender.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 206,
+    "domain": "components"
+  }
+}

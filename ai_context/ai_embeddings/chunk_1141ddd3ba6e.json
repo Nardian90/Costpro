@@ -1,0 +1,8 @@
+{
+  "id": "ajustes_documentos_ajustes_de_documentos__inversión_y_duplicación_",
+  "content": "# Ajustes de Documentos (Inversión y Duplicación)\n\nEste módulo permite gestionar la anulación de operaciones de ventas y recepciones mediante un proceso de inversión automática que ajusta el inventario de forma segura y coherente.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ajustes_documentos.md",
+    "header": "Ajustes de Documentos (Inversión y Duplicación)"
+  }
+}

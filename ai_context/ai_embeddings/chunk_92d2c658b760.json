@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_CHECKLIST_test_2__recepción_básica",
+  "content": "### Test 2: Recepción Básica\n```\n1. Click \"Nueva Recepción\"\n2. Verificar cambio de título y badge amarillo\n3. Agregar 1 producto\n4. Verificar aparición en panel lateral\n5. Editar cantidad a 10\n6. Click \"Confirmar Ingreso\"\n7. Verificar toast de éxito\n8. Verificar incremento de stock en tabla\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
+    "header": "Test 2: Recepción Básica"
+  }
+}

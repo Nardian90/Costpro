@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_conteo_y_ajuste_de_inventario",
+  "content": "## Conteo y Ajuste de Inventario\n**Propósito:** Mantener la integridad de los datos de stock físico contra el sistema.\n\n**Acciones clave:**\n- Realizar conteo físico de productos\n- Registrar diferencias en el sistema\n- Ajustar niveles de stock\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "Conteo y Ajuste de Inventario"
+  }
+}

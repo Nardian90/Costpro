@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_3_3_auditoría_visual_de_decisiones",
+  "content": "### 3.3 Auditoría Visual de Decisiones\n*   **Situación actual**: Los logs son textuales y planos.\n*   **Mejora**: Añadir una vista de \"Árbol de Decisión\" que permita al contador ver visualmente por qué el algoritmo eligió una combinación de productos específica sobre otra.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "3.3 Auditoría Visual de Decisiones"
+  }
+}

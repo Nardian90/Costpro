@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_V2_END_TO_END___alto__idempotencia_db_incompleta",
+  "content": "### 🟠 ALTO: Idempotencia DB Incompleta\n- **Descripción:** Solo las ventas (`create_sale`) implementan una llave de idempotencia a nivel de base de datos. Las recepciones y ajustes carecen de este control.\n- **Impacto:** Reintentos de red en el proceso de recepción duplicarán la entrada de mercancía y el impacto contable.\n- **Evidencia:** Esquema de la tabla `receipts` y lógica de `register_reception`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
+    "header": "🟠 ALTO: Idempotencia DB Incompleta"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "user_help_10",
+  "content": "{\"acciones\": [], \"descripcion_usuario\": \"Interfaz para gestionar usePanel de ControlView.ts.\", \"feature\": \"usePanel de ControlView.ts\", \"resultados\": []}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 10,
+    "domain": "user_help"
+  }
+}

@@ -1,17 +1,11 @@
 {
-  "timestamp": "2026-03-20T11:27:33.323969+00:00Z",
-  "since": "2026-03-20T11:27:32.724434+00:00Z",
+  "timestamp": "2026-03-21T11:27:33Z",
   "summary": {
-    "total": 0,
-    "added": 0,
-    "modified": 0,
-    "deleted": 0
+    "total": 1,
+    "modified": 1
   },
   "majorChange": false,
-  "reason": "Minor changes detected.",
   "files": {
-    "added": [],
-    "modified": [],
-    "deleted": []
+    "modified": ["knowledge/user_help.json"]
   }
 }

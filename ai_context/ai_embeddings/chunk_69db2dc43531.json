@@ -1,0 +1,8 @@
+{
+  "id": "MAINTENANCE_LOG_4_prohibiciones",
+  "content": "## 4 Prohibiciones\n\nEl pipeline **NO debe usar**:\n\ndisplay: none\nvisibility: hidden\noverflow: hidden para ocultar contenido\n\nLos problemas deben resolverse con **layout responsivo real**.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
+    "header": "4 Prohibiciones"
+  }
+}

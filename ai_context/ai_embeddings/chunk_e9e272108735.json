@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_2__login_como_usuario_no_admin",
+  "content": "### Paso 2: Login como usuario NO-ADMIN\n\n```\nEmail: usuario-normal@example.com (debe tener rol 'clerk' o 'warehouse')\nPassword: [su contraseña]\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 2: Login como usuario NO-ADMIN"
+  }
+}

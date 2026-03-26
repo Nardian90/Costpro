@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_cost_engine_index_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para index.test.\", \"dependencies\": [\"vitest\", \"./index\", \"./types\", \"./fixtures/FC-DEMO-243.json\"], \"domain\": \"Engine\", \"exports\": [], \"id\": \"src/lib/cost-engine/index.test.ts\", \"name\": \"index.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico index.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar index.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 396,
+    "domain": "components"
+  }
+}

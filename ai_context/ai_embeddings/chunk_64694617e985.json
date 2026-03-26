@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_catalog_CatalogView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CatalogView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useProducts\", \"sonner\", \"@/components/ui/CostProLoader\", \"@/components/ui/ActionMenu\", \"@/hooks/ui/useMobile\", \"@/services/catalog-service\", \"@/hooks/ui/useCatalogModals\", \"./CatalogModals\", \"@/lib/utils\", \"@/components/ui/ProductImage\", \"@/components/ui/QueryInspector\", \"@/components/ui/ViewSwitcher\", \"jsbarcode\", \"@/types\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/catalog/CatalogView.tsx\", \"name\": \"CatalogView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CatalogView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con CatalogView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 33,
+    "domain": "components"
+  }
+}

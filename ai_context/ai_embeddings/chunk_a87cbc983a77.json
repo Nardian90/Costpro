@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS___diagnóstico_crítico__bloqueo_funcional_rls___multi_tenant",
+  "content": "# 🔴 DIAGNÓSTICO CRÍTICO: BLOQUEO FUNCIONAL RLS / MULTI-TENANT\n\n**Fecha:** 9 de febrero de 2026\n**Estado:** BLOQUEADO - Tiendas/Usuarios no se ven, Admin no puede gestionar\n**Severidad:** CRÍTICA - Sistema no funcional en producción\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "🔴 DIAGNÓSTICO CRÍTICO: BLOQUEO FUNCIONAL RLS / MULTI-TENANT"
+  }
+}

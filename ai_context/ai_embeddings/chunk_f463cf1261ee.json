@@ -1,0 +1,8 @@
+{
+  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_5__recomendaciones_estratégicas_end",
+  "content": "## 5. Recomendaciones Estratégicas\n\n1. **Implementar Documentación \"As-Code\":** Obligar a que cada nuevo PR incluya o actualice un archivo de documentación en la carpeta `docs/`.\n2. **Automatizar la Sanitización:** Crear un script (`npm run sanitize`) que mueva automáticamente archivos de log o temporales a sus carpetas correspondientes.\n3. **Diccionario de Negocio:** Crear un glosario único para términos técnicos/contables (Costo, Precio, Margen, Utilidad) para asegurar coherencia entre el código y la interfaz.\n4. **Refactor de scripts en Raíz:** Convertir los scripts sueltos en comandos de `package.json` o integrarlos en el CLI del proyecto.\n\n---\n**Auditoría realizada por:** Jules (AI Senior Software Engineer)\n**Fecha:** 2026-03-15\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
+    "header": "5. Recomendaciones Estratégicas"
+  }
+}

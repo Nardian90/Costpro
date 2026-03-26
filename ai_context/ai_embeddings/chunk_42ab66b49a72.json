@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_theme_provider_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para theme-provider.\", \"dependencies\": [\"react\", \"next-themes\"], \"domain\": \"Domain\", \"exports\": [\"ThemeProvider\"], \"id\": \"src/components/theme-provider.tsx\", \"name\": \"theme-provider.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico theme-provider.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con theme-provider.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 2,
+    "domain": "components"
+  }
+}

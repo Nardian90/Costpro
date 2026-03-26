@@ -1,0 +1,8 @@
+{
+  "id": "CHANGELOG_security",
+  "content": "### Security\n- Reinforced Row-Level Security (RLS) policies for audit log access.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/CHANGELOG.md",
+    "header": "Security"
+  }
+}

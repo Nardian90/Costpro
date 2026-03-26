@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_wallet_WalletView_tsx",
+  "content": "{\"actions\": [\"handleImport\"], \"components\": [\"ui/badge\", \"ui/button\", \"ui/card\", \"ui/input\"], \"id\": \"src/components/views/terminal/views/wallet/WalletView.tsx\", \"inputs\": [\"Input\"], \"name\": \"WalletView.tsx\", \"outputs\": [\"Card List\", \"Chart\", \"Table\"], \"route\": \"src/components/views/terminal/views/wallet/WalletView.tsx\", \"servicesUsed\": [\"utils\", \"wallet/parser\", \"wallet/types\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 1,
+    "domain": "views"
+  }
+}

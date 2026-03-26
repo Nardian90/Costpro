@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_7__actualización_post_auditoría_integral__v5_7_25__end",
+  "content": "### 7. ACTUALIZACIÓN POST-AUDITORÍA INTEGRAL (v5.7.25)\n\n- **Versión del sistema:** 5.7.25\n- **Fecha:** 2026-03-08\n- **Score global:** 9.65 (+0.20)\n- **Hito principal:** Implementación de Auditoría Estructural y Validación de Coeficientes de Gastos Indirectos (1.5/1.0).\n- **Mejoras en Exportación:** Motor PDF server-side con jsPDF-AutoTable para fidelidad institucional.\n- **Seguridad:** Hardening de RLS en perfiles y onboarding automático con rol 'costo'.\n\nEl sistema alcanza una madurez óptima para despliegues en entornos de alta exigencia regulatoria.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "7. ACTUALIZACIÓN POST-AUDITORÍA INTEGRAL (v5.7.25)"
+  }
+}

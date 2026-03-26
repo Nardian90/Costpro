@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_hallazgos_",
+  "content": "### Hallazgos:\n*   **Validación de Esquemas:** No se utiliza **Zod** para validar las respuestas de la API o las entradas de los formularios en el frontend, lo que aumenta el riesgo de errores por datos malformados.\n*   **Pruebas Automáticas:** **Cobertura del 0%**. No existen archivos de test (`.test.tsx`), ni configuración para Jest, Vitest o Playwright.\n*   **Seguridad:** El manejo de la sesión con Supabase es robusto, pero la exposición de lógica de negocio sensible en el cliente (como cálculos de costos) podría ser un riesgo si no se valida doblemente en el backend.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FRONTEND_AUDIT.md",
+    "header": "Hallazgos:"
+  }
+}

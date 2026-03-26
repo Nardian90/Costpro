@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_engine_3__ai_rag_context__optimización_",
+  "content": "### ENGINE 3: AI RAG CONTEXT (Optimización)\n*Evita saturar ventana de contexto de LLM.*\n\n**FASE 14 — AI Retrieval Context System**\n- **Objetivo:** Generar contexto modular para IA (RAG).\n- **Acción:**\n  1.  **Chunking:** Dividir artefactos en bloques semánticos.\n  2.  **Embeddings:** Generar vectores por chunk → `ai_context/ai_embeddings/`.\n  3.  **Index:** Construir índice vectorial → `ai_context/ai_vector_index/`.\n  4.  **Summaries:** Generar resúmenes por dominio.\n- **Salida:** `ai_context/vector_index.json`, `ai_context/*`.\n- **Regla:** NO generar un `ai_context_index.json` monolítico.\n- **Timing:** Registrar en audit.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "ENGINE 3: AI RAG CONTEXT (Optimización)"
+  }
+}

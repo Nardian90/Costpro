@@ -1,0 +1,8 @@
+{
+  "id": "reference_postableview_tsx",
+  "content": "## POSTableView.tsx\n**Ruta:** `src/components/views/terminal/views/pos/POSTableView.tsx`\n\n**Salidas esperadas:** Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "POSTableView.tsx"
+  }
+}

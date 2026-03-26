@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_prioridad_media__siguiente_sprint_",
+  "content": "### Prioridad MEDIA (Siguiente Sprint)\n4.  **Implementar React Query:** Centralizar el fetching de datos y habilitar caché para evitar re-cargas constantes en la UI.\n5.  **Refactorizar Prop Drilling:** Hacer que sub-componentes (POS, Inventory) consuman directamente los stores de Zustand.\n6.  **Validación con Zod:** Implementar esquemas de validación para formularios críticos (Creación de Productos, Usuarios).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FRONTEND_AUDIT.md",
+    "header": "Prioridad MEDIA (Siguiente Sprint)"
+  }
+}

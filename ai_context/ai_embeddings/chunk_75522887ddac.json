@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_scroll_area_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para scroll-area.\", \"dependencies\": [\"react\", \"@radix-ui/react-scroll-area\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/scroll-area.tsx\", \"name\": \"scroll-area.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico scroll-area.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con scroll-area.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 231,
+    "domain": "components"
+  }
+}

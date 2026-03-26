@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useStores_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useStores.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/lib/logger\", \"@/validation/schemas\", \"@/lib/rpc-validator\", \"./base\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"useStores\"], \"id\": \"src/hooks/api/useStores.ts\", \"name\": \"useStores.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useStores.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useStores.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 340,
+    "domain": "components"
+  }
+}

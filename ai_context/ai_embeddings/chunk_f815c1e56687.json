@@ -1,0 +1,8 @@
+{
+  "id": "PRODUCT_VARIANT_LOGIC_concepto_de_variantes",
+  "content": "## Concepto de Variantes\nPara maximizar el cuadre (Matching) de transacciones, el sistema permite agrupar productos que son variantes del mismo artículo (ej: Caja, Paquete, Unidad) mediante el campo `id_grupo`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
+    "header": "Concepto de Variantes"
+  }
+}

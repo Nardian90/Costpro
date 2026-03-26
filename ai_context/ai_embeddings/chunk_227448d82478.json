@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_estructura_de_archivos",
+  "content": "### Estructura de Archivos\n```\nsrc/\n├── app/\n│   ├── login/\n│   │   └── page.tsx          # Página de login\n│   ├── page.tsx              # Aplicación principal\n│   ├── layout.tsx            # Layout raíz\n│   └── globals.css           # Estilos globales (neumórfico)\n├── components/\n│   └── ui/                   # Componentes shadcn/ui\n├── store/\n│   └── index.ts              # Zustand stores\n├── types/\n│   └── index.ts              # Tipos TypeScript\n└── lib/\n    ├── db.ts                 # Prisma client\n    └── utils.ts              # Utilidades\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Estructura de Archivos"
+  }
+}

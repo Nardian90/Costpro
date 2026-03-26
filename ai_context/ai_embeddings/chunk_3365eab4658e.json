@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_4__sistema_de_trazabilidad_completa",
+  "content": "## 4. Sistema de Trazabilidad Completa\nSe implementará una tabla de `audit_logs` con el siguiente esquema:\n- `timestamp`: ISO Date\n- `actor`: Sistema / Usuario ID\n- `action`: PRICE_ADJUST / IMPORT / MATCH / DECOMPOSE\n- `entity`: Producto SKU / Transacción ID\n- `prev_value` / `new_value`\n- `metadata`: Regla aplicada, motivo, IP, etc.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "4. Sistema de Trazabilidad Completa"
+  }
+}

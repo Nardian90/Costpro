@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_1__instrucciones_para_el_scheduler__jules___ai_agent_",
+  "content": "## 1. INSTRUCCIONES PARA EL SCHEDULER (JULES / AI AGENT)\n\n**Rol:** Autonomous Architecture & AI Knowledge Maintenance Scheduler\n**Frecuencia:** 1 vez por día (ejecución incremental)\n**Fuente de Verdad:** Este archivo (`/docs/automation/ARCHITECTURE_AI_PIPELINE_v8.md`) + `/docs/automation/pipeline_state.yaml`\n\n**Reglas Críticas de Ejecución:**\n1.  **Leer Estado:** Siempre iniciar leyendo `/docs/automation/pipeline_state.yaml`.\n2.  **Una Fase por Día:** Ejecutar únicamente la fase indicada por `currentPhase`.\n3.  **Gobernanza:** Ningún artefacto se commita sin `confidenceScore` y `hashSHA256`.\n4.  **Cuarentena:** Si `confidenceScore < 90`, el artefacto va a `/docs/automation/quarantine/` y se notifica.\n5.  **Determinismo:** Fases 1-6 deben usar análisis estático (AST), no IA generativa pura.\n6.  **RAG:** Fase 14 debe generar embeddings y vector index, no un JSON monolítico.\n7.  **Performance Tracking:** Cada fase debe registrar `startTime`, `endTime`, `durationMs` en `architecture_audit.json`.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "1. INSTRUCCIONES PARA EL SCHEDULER (JULES / AI AGENT)"
+  }
+}
