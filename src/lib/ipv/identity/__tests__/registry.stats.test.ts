@@ -8,6 +8,7 @@ vi.mock('../../../dexie', () => {
   };
   return {
     db: {
+    matching_logs: { add: vi.fn().mockResolvedValue({}), where: vi.fn().mockReturnThis(), equals: vi.fn().mockReturnThis(), reverse: vi.fn().mockReturnThis(), sortBy: vi.fn().mockResolvedValue([]), toArray: vi.fn().mockResolvedValue([]) },
       bank_statements: mockTable
     }
   };
