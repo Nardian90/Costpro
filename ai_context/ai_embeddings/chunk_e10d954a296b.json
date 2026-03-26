@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_c__agregar_validación_de_permisos",
+  "content": "#### C. Agregar Validación de Permisos\n```tsx\nconst canReceiveProducts = ROLE_PERMISSIONS[user?.role]?.canReceiveProducts;\nif (!canReceiveProducts) {\n    return <div className=\"p-8 text-red-500\">Acceso denegado: Permisos insuficientes</div>;\n}\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "C. Agregar Validación de Permisos"
+  }
+}

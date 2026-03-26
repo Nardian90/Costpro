@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_auth_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para auth.\", \"dependencies\": [\"next/server\", \"@/lib/supabaseClient\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/lib/auth.ts\", \"name\": \"auth.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico auth.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar auth.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 374,
+    "domain": "components"
+  }
+}

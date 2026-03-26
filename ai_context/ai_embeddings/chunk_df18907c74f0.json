@@ -1,0 +1,8 @@
+{
+  "id": "VALIDATION_REPORT_FINAL_recomendaciones_finales_end",
+  "content": "## Recomendaciones Finales\n1.  **Aplicar Migración:** Es imperativo correr el script `20260128_final_hardening_schema.sql` en el entorno de producción.\n2.  **Monitoreo:** Habilitar logs en Supabase para supervisar posibles errores `PGRST202` que indiquen falta de RPCs.\n3.  **Tests Continuos:** Mantener la suite de tests E2E generada para prevenir regresiones en futuras refactorizaciones.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/VALIDATION_REPORT_FINAL.md",
+    "header": "Recomendaciones Finales"
+  }
+}

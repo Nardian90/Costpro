@@ -1,0 +1,8 @@
+{
+  "id": "reference_audittableview_tsx",
+  "content": "## AuditTableView.tsx\n**Ruta:** `src/components/views/terminal/views/audit/AuditTableView.tsx`\n\n**Salidas esperadas:** Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "AuditTableView.tsx"
+  }
+}

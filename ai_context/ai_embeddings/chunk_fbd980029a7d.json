@@ -1,0 +1,9 @@
+{
+  "id": "components_src_app_login_page_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para page.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/components/SplashScreen\", \"@/components/auth/WelcomeLandingView\", \"@/components/auth/LoginForm\", \"lucide-react\", \"@/components/CostProLogo\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/app/login/page.tsx\", \"name\": \"page.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico page.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con page.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 310,
+    "domain": "components"
+  }
+}

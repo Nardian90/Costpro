@@ -1,0 +1,9 @@
+{
+  "id": "components_src_services_excel_service_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para excel-service.\", \"dependencies\": [\"xlsx\", \"sonner\", \"@/types/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [\"exportAnnexToExcel\", \"importAnnexFromExcel\", \"exportMassiveTemplate\", \"importMassiveProducts\", \"exportHeaderToExcel\", \"importHeaderFromExcel\", \"exportSectionToExcel\", \"importSectionFromExcel\"], \"id\": \"src/services/excel-service.ts\", \"name\": \"excel-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico excel-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar excel-service.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 317,
+    "domain": "components"
+  }
+}

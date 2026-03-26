@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ipv_bandecParser_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para bandecParser.\", \"dependencies\": [\"uuid\", \"../dexie\", \"./engine\", \"./utils\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/bandecParser.ts\", \"name\": \"bandecParser.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico bandecParser.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar bandecParser.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 429,
+    "domain": "components"
+  }
+}

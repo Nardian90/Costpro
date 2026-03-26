@@ -1,0 +1,9 @@
+{
+  "id": "components_src_app_verify_dashboard_page_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para page.\", \"dependencies\": [\"@/components/views/terminal/views/dashboard/ConcentricDashboardRing\", \"@/components/views/terminal/views/dashboard/ExecutiveKpiCards\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/app/verify-dashboard/page.tsx\", \"name\": \"page.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico page.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con page.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 305,
+    "domain": "components"
+  }
+}

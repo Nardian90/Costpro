@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_gestión_de_fichas_de_costo",
+  "content": "## Gestión de Fichas de Costo\n**Propósito:** Calcular con precisión el costo de producción y establecer precios competitivos.\n\n**Acciones clave:**\n- Crear nueva ficha de costo\n- Agregar insumos y mano de obra\n- Calcular márgenes y precios sugeridos\n- Generar reportes y anexos\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "Gestión de Fichas de Costo"
+  }
+}

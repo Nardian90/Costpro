@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_7__modos_del_scheduler",
+  "content": "## 7. MODOS DEL SCHEDULER\n\n| Modo | Condición | Fases Activas | Propósito |\n| :--- | :--- | :--- | :--- |\n| **Normal** | Default | 1 → 18 (Secuencial) | Evolución completa diaria. |\n| **Repair** | `integrityScore < 80` | 1, 3, 6, 13, 16 | Reconstruir arquitectura y grafo crítico. |\n| **Light** | Sin cambios Git mayores | 4, 6, 15, 16 | Validación rápida sin regeneración pesada. |\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "7. MODOS DEL SCHEDULER"
+  }
+}

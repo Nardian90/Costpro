@@ -1,0 +1,8 @@
+{
+  "id": "DOC_MULTI_STORE_flujo_de_login",
+  "content": "## Flujo de Login\nAl iniciar sesión satisfactoriamente:\n1. El sistema consulta las tiendas asignadas al usuario en la tabla `user_store_access`.\n2. **Caso 1: Una sola tienda asignada**\n   - El sistema establece automáticamente esa tienda como `active_store_id` en el perfil del usuario.\n   - El usuario es redirigido directamente al panel principal de esa tienda.\n3. **Caso 2: Múltiples tiendas asignadas**\n   - El sistema redirige al usuario a una vista de \"Selección de Tienda\".\n   - El usuario debe elegir en cuál tienda desea operar.\n   - Al elegir, se actualiza su `active_store_id` en la base de datos.\n4. **Caso 3: Ninguna tienda asignada**\n   - El usuario ve un mensaje informativo indicando que no tiene tiendas asignadas y debe contactar a un administrador.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
+    "header": "Flujo de Login"
+  }
+}

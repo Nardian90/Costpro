@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_cost_engine_accuracy_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para accuracy.test.\", \"dependencies\": [\"vitest\", \"./index\", \"./types\"], \"domain\": \"Engine\", \"exports\": [], \"id\": \"src/lib/cost-engine/accuracy.test.ts\", \"name\": \"accuracy.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico accuracy.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar accuracy.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 391,
+    "domain": "components"
+  }
+}

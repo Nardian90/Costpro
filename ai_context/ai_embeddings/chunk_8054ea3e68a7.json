@@ -1,0 +1,8 @@
+{
+  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_después____admin_puede_gestionar_",
+  "content": "### DESPUÉS (✅ Admin puede gestionar)\n\n| Policy | Operación | USING | WITH_CHECK | Propósito |\n|--------|-----------|-------|-----------|----------|\n| (todas las anteriores) | ... | ... | ... | Se mantienen igual |\n| **\"profiles_admin_full_access\"** (NUEVA) | ALL | `is_admin()` | `is_admin()` | ✅ Admin pueda hacer todo |\n\n**Mejoras:**\n- ✅ Nueva policy \"profiles_admin_full_access\" con `is_admin()` ahora correcto\n- ✅ Admin puede INSERT/UPDATE/DELETE cualquier profile\n- ✅ Permite desactivar usuarios, cambiar roles, etc.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
+    "header": "DESPUÉS (✅ Admin puede gestionar)"
+  }
+}

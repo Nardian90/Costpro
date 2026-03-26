@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_b__actualizar_frontend_para_llamar_rpc",
+  "content": "#### B. Actualizar Frontend para llamar RPC\n```tsx\nconst processReception = async () => {\n    if (!metaDetails.supplier || !metaDetails.invoiceNumber || !metaDetails.date) {\n        toast.error('Complete los detalles de recepción');\n        return;\n    }\n    if (receptionItems.size === 0) {\n        toast.error('Agregue al menos un producto');\n        return;\n    }\n\n    const items = Array.from(receptionItems.values()).map(({ product, quantityToAdd, newCost }) => ({\n        product_id: product.id,\n        quantity: quantityToAdd,\n        unit_cost: newCost\n    }));\n\n    try {\n        const { data, error } = await supabase.rpc('register_reception', {\n            p_store_id: user.store_id,\n            p_supplier: metaDetails.supplier,\n            p_reception_date: metaDetails.date,\n            p_invoice_number: metaDetails.invoiceNumber,\n            p_items: items,\n            p_user_id: user.id\n        });\n\n        if (error) throw error;\n        toast.success(`Recepción registrada: #${data}`);\n        fetchProducts();\n        setIsReceptionMode(false);\n    } catch (error) {\n        toast.error(error.message || 'Error en recepción');\n    }\n};\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "B. Actualizar Frontend para llamar RPC"
+  }
+}

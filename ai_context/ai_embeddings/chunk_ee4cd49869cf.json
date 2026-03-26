@@ -1,0 +1,8 @@
+{
+  "id": "EXECUTIVE_SUMMARY_RLS_FIX_verificar_estado_actual_",
+  "content": "### Verificar estado actual:\n\n```sql\n-- ¿Funciona is_admin()?\nSELECT is_admin() as admin_check;\n\n-- ¿Existen las new policies?\nSELECT COUNT(*) FROM pg_policies\nWHERE tablename='stores' AND schemaname='public';\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
+    "header": "Verificar estado actual:"
+  }
+}

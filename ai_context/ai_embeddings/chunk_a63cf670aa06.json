@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_ui_usePWA_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para usePWA.\", \"dependencies\": [\"react\"], \"domain\": \"UI\", \"exports\": [\"usePWA\"], \"id\": \"src/hooks/ui/usePWA.ts\", \"name\": \"usePWA.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico usePWA.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar usePWA.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 350,
+    "domain": "components"
+  }
+}

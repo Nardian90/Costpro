@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_3__realizar_una_venta__pos_",
+  "content": "### 3. Realizar una Venta (POS)\n1. Navega a \"Punto de Venta\"\n2. Busca productos por nombre o SKU\n3. Haz clic en productos para agregar al carrito\n4. Ajusta cantidades en el carrito\n5. Aplica descuentos si es necesario\n6. Selecciona método de pago\n7. Procesa la venta\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "3. Realizar una Venta (POS)"
+  }
+}

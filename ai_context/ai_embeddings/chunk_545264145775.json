@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_AUDIT_a__reorganización_estructural__limpieza_de_raíz_",
+  "content": "### A. Reorganización Estructural (Limpieza de Raíz)\n- Mover todos los scripts de utilidad a `scripts/remediation/` o `scripts/tools/`.\n- Mover todos los reportes históricos a `docs/audits/archive/`.\n- Centralizar configuraciones en sus carpetas respectivas.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
+    "header": "A. Reorganización Estructural (Limpieza de Raíz)"
+  }
+}

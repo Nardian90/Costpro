@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_CHECKLIST_test_5__ajuste_individual",
+  "content": "### Test 5: Ajuste Individual\n```\n1. En modo normal, click icono lápiz\n2. Ingresar -5 en cantidad\n3. Seleccionar motivo \"Merma\"\n4. Guardar ajuste\n5. Verificar decremento de stock\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
+    "header": "Test 5: Ajuste Individual"
+  }
+}

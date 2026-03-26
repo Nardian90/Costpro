@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_SYSTEM_HARDENING_b__estabilidad_de_tipos__stability_",
+  "content": "### B. Estabilidad de Tipos (Stability)\n*   **Hallazgo:** Uso extensivo de `any` en hooks de prefetched y gestión de sesiones.\n*   **Mitigación:** Se tiparon todos los prefetchers de React Query con `QueryClient` y se redujo el uso de `any` en `useUsers.ts` y `useSessionManager.ts`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_SYSTEM_HARDENING.md",
+    "header": "B. Estabilidad de Tipos (Stability)"
+  }
+}

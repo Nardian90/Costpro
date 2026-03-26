@@ -1,0 +1,8 @@
+{
+  "id": "ADR-002-Seguridad_de_API_Keys_de_AI_decisión",
+  "content": "## Decisión\nLas llaves de API nunca deben estar en el código. Se deben obtener de variables de entorno o de la base de datos (Supabase ai_api_keys).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/ADR-002-Seguridad_de_API_Keys_de_AI.md",
+    "header": "Decisión"
+  }
+}

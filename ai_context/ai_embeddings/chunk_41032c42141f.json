@@ -1,0 +1,8 @@
+{
+  "id": "AI_BOT_FLOW_2__jerarquía_de_selección_de_api_keys",
+  "content": "## 2. Jerarquía de Selección de API Keys\n\nPara garantizar que el bot siempre responda, el orquestador busca llaves en el siguiente orden:\n\n1.  **Llave Forzada:** Proporcionada directamente en el cuerpo de la solicitud (UI).\n2.  **Llave de Usuario (Base de Datos):** Recuperada de la tabla `ai_api_keys` asociada al ID del usuario actual.\n3.  **Fallbacks de Usuario:** Otras llaves activas del mismo usuario para diferentes proveedores.\n4.  **Llaves de Sistema:** Llaves globales configuradas en `ai_api_keys` sin `user_id`.\n5.  **Variables de Entorno:** Claves configuradas en el servidor (`GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, etc.).\n6.  **Llave de Emergencia:** `EMERGENCY_GOOGLE_API_KEY`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
+    "header": "2. Jerarquía de Selección de API Keys"
+  }
+}

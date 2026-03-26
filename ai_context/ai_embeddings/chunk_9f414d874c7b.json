@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_academy_sm2_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para sm2.\", \"dependencies\": [], \"domain\": \"Engine\", \"exports\": [\"SM2Result\", \"calculateSM2\"], \"id\": \"src/lib/academy/sm2.ts\", \"name\": \"sm2.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico sm2.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar sm2.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 405,
+    "domain": "components"
+  }
+}

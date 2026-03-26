@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_modelo_de_datos",
+  "content": "### Modelo de Datos\n- Adición de `variacion_permisible_percent` a la tabla `products`.\n- Nueva tabla `audit_logs`.\n- Adición de `locked_price_cents` a `bank_statements` para persistir el precio pactado en el match.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "Modelo de Datos"
+  }
+}

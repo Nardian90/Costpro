@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_V5_7_25_c__fidelidad_de_exportación",
+  "content": "### C. Fidelidad de Exportación\nEl motor de exportación PDF ha migrado a un modelo basado en servidor (`/api/cost-sheets/export-pdf`) que garantiza:\n*   **Consistencia Visual:** Layout idéntico independientemente del dispositivo del cliente.\n*   **Nota de Utilidad:** Inclusión opcional de la justificación del margen basada en el ratio Utilidad/Costo.\n*   **Cumplimiento Normativo:** Estética alineada con los estándares del Ministerio de Finanzas y Precios.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_V5_7_25.md",
+    "header": "C. Fidelidad de Exportación"
+  }
+}

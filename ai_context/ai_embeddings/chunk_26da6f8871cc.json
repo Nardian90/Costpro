@@ -1,0 +1,8 @@
+{
+  "id": "ADR-001-Uso_de_Variables_Semánticas_para_Temas_decisión",
+  "content": "## Decisión\nSe prohíbe el uso de colores hardcodeados (hex, Tailwind colors como bg-white). Se deben usar variables semánticas como bg-background, text-foreground.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/ADR-001-Uso_de_Variables_Semánticas_para_Temas.md",
+    "header": "Decisión"
+  }
+}

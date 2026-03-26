@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_paso_1__en_tabla_de_usuarios__buscar_columna__estado_",
+  "content": "### Paso 1: En tabla de usuarios, buscar columna \"Estado\"\n\n**UI:** Cada usuario debe tener un toggle/checkbox \"Activo/Baneado\"\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Paso 1: En tabla de usuarios, buscar columna \"Estado\""
+  }
+}

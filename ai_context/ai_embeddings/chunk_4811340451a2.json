@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_pagination_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para pagination.\", \"dependencies\": [\"react\", \"@/lib/utils\", \"@/components/ui/button\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/pagination.tsx\", \"name\": \"pagination.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico pagination.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con pagination.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 214,
+    "domain": "components"
+  }
+}

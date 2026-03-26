@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_label_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para label.\", \"dependencies\": [\"react\", \"@radix-ui/react-label\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/label.tsx\", \"name\": \"label.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico label.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con label.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 232,
+    "domain": "components"
+  }
+}

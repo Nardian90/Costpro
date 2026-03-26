@@ -1,0 +1,8 @@
+{
+  "id": "RECOMMENDATIONS_MATCHING_ENGINE_5__implementación_de__explainable_ai__en_el_matching_end",
+  "content": "## 5. Implementación de \"Explainable AI\" en el Matching\n\n**Solución Propuesta:**\n- Al fallar un matching, mostrar un botón \"Analizar Fallo\" que ejecute una simulación rápida y explique: \"Se intentó combinar con A y B, pero faltaron 5 unidades de B\".\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/RECOMMENDATIONS_MATCHING_ENGINE.md",
+    "header": "5. Implementación de \"Explainable AI\" en el Matching"
+  }
+}

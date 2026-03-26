@@ -1,0 +1,8 @@
+{
+  "id": "DOC_MULTI_STORE_introducción",
+  "content": "## Introducción\nEste documento describe el comportamiento esperado del sistema tras la implementación del modelo multi-tienda. El sistema ahora permite que un usuario esté asignado a múltiples tiendas y gestione una \"tienda activa\" para sus operaciones.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
+    "header": "Introducción"
+  }
+}

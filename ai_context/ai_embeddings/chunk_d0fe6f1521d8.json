@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MISMATCH_4__resolución_manual_y_user_experience__9_10_",
+  "content": "### 4. Resolución Manual y User Experience (9/10)\n- **Escape Hatches:** Las funciones de \"Forzar Matching\" y la vista de \"Conciliación Manual\" permiten al operador humano resolver casos excepcionales sin quedar bloqueado por la rigidez del algoritmo.\n- **Detección de Duplicados:** La implementación de hashes de ingesta previene la duplicidad de datos en la entrada, asegurando que el proceso de matching trabaje sobre datos limpios.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MISMATCH.md",
+    "header": "4. Resolución Manual y User Experience (9/10)"
+  }
+}

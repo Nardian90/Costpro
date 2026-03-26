@@ -1,0 +1,8 @@
+{
+  "id": "bugs_documentation_2__uso_de_confirm___nativo_en_ipvreportview_tsx",
+  "content": "## 2. Uso de confirm() nativo en IPVReportView.tsx\n- **Descripción**: Se detectaron múltiples llamadas a `confirm()` para generar, anular o eliminar reportes.\n- **Impacto**: UX inconsistente.\n- **Solución**: Implementar confirmación no bloqueante.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/bugs_documentation.md",
+    "header": "2. Uso de confirm() nativo en IPVReportView.tsx"
+  }
+}

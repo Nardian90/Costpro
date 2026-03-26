@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_data_template_lavar_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-lavar.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-lavar.ts\", \"name\": \"template-lavar.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-lavar.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-lavar.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 417,
+    "domain": "components"
+  }
+}

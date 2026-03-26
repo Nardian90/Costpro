@@ -1,0 +1,8 @@
+{
+  "id": "ALMACEN_AUDIT_BEFORE_resumen_ejecutivo",
+  "content": "## Resumen Ejecutivo\nEl Módulo Almacén presenta una base sólida con una implementación coherente en la mayoría de sus componentes. Sin embargo, se han identificado áreas críticas que requieren atención para cumplir con los estándares corporativos de diseño móvil-first y accesibilidad visual.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ALMACEN_AUDIT_BEFORE.md",
+    "header": "Resumen Ejecutivo"
+  }
+}

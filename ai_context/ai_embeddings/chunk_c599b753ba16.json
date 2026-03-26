@@ -1,0 +1,8 @@
+{
+  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_4__remediaciones_de_seguridad_aplicadas__v2_0_1_",
+  "content": "## 4. Remediaciones de Seguridad Aplicadas (V2.0.1)\n\n1.  **Hardening `managed_create_user`:** Se cerró brecha que permitía a cajeros crear usuarios administradores debido a falta de validación interna en el overload de 9 parámetros.\n2.  **Hardening `reset_store_data`:** Se añadió validación de rol `admin` y pertenencia a la tienda para evitar destrucción maliciosa de datos.\n3.  **Casting Idempotencia:** Se corrigió error `22P02` en el motor de ventas.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
+    "header": "4. Remediaciones de Seguridad Aplicadas (V2.0.1)"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_AUDIT_b__diccionario_de_lógica_de_negocio__health_view_integration_",
+  "content": "### B. Diccionario de Lógica de Negocio (Health View Integration)\n- Enriquecer `system_architecture.json` con descripciones funcionales de alto nivel.\n- Implementar un sistema de \"Contexto de Negocio\" que sea consumible por la UI de Salud.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
+    "header": "B. Diccionario de Lógica de Negocio (Health View Integration)"
+  }
+}

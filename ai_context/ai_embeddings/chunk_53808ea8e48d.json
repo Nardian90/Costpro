@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_3____inconsistencia_entre_inventario_y_movimientos____",
+  "content": "### 3. **Inconsistencia entre Inventario y Movimientos** 🔴\n**Severidad:** CRÍTICA\n\n**Problema:**\n```\nOLD PROJECT:\n  inventory (READ-ONLY) ← stock_movements (INSERT via RPC) ← receptions + reception_items\n\nNUEVO PROYECTO:\n  inventory (DIRECT UPSERT) ← NO se registra en receptions/reception_items\n  stock_movements (INTENTO de INSERT pero sin RPC atómico)\n```\n\n**Resultado:** Bases de datos inconsistentes si hay fallo a mitad del proceso\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "3. **Inconsistencia entre Inventario y Movimientos** 🔴"
+  }
+}

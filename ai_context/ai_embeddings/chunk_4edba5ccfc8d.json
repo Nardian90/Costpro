@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_inventory_count_InventoryCountCardView_tsx",
+  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx\", \"inputs\": [], \"name\": \"InventoryCountCardView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 31,
+    "domain": "views"
+  }
+}

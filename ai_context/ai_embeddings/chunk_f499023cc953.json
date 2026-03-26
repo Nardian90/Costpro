@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks___tests___templates_verification_test_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para templates_verification.test.\", \"dependencies\": [\"vitest\", \"@testing-library/react\", \"../logic/useCostSheetCalculator\", \"../../lib/data/costpro-reinicio\", \"../../lib/data/template-juice\", \"../../lib/data/template-industrial\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/hooks/__tests__/templates_verification.test.ts\", \"name\": \"templates_verification.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico templates_verification.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar templates_verification.test.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 358,
+    "domain": "components"
+  }
+}

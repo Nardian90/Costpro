@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_wiki_ClasificadorModule_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ClasificadorModule.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"ClasificadorModule\"], \"id\": \"src/components/views/terminal/views/wiki/ClasificadorModule.tsx\", \"name\": \"ClasificadorModule.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ClasificadorModule.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ClasificadorModule.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 126,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "VALIDATION_REPORT_FINAL_3__hardening_y_seguridad__resumen_técnico_",
+  "content": "## 3. Hardening y Seguridad (Resumen Técnico)\n\n1.  **Immutabilidad de Auditoría:** Las políticas RLS bloquean cualquier inserción o borrado manual en `audit_logs` por parte de clientes, delegando al sistema (triggers/RPC) la integridad.\n2.  **Aislamiento de Sucursal:** El uso de `SECURITY DEFINER` en funciones críticas asegura que ningún usuario pueda manipular datos fuera de su `active_store_id`.\n3.  **Contratos de Datos:** El uso de `UserContract` y Zod garantiza que el frontend sea predecible y robusto frente a cambios menores en el backend.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/VALIDATION_REPORT_FINAL.md",
+    "header": "3. Hardening y Seguridad (Resumen Técnico)"
+  }
+}

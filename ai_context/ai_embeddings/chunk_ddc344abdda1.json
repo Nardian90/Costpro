@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useTransfers_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useTransfers.\", \"dependencies\": [\"@tanstack/react-query\", \"@/services/transfer-service\", \"@/components/providers/SyncProvider\", \"./base\"], \"domain\": \"Domain\", \"exports\": [\"useIncomingTransfers\", \"useOutgoingTransfers\", \"useTransferDetails\", \"useTransferableStores\", \"useCreateTransfer\", \"useConfirmTransfer\"], \"id\": \"src/hooks/api/useTransfers.ts\", \"name\": \"useTransfers.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useTransfers.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useTransfers.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 332,
+    "domain": "components"
+  }
+}

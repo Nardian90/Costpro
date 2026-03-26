@@ -1,0 +1,8 @@
+{
+  "id": "data-model_tabla___matching_logs_",
+  "content": "### Tabla: `matching_logs`\n**Índices:** `&id, transaction_ref, fecha_ejecucion, resultado_estado`\n\n```typescript\n// Interface: MatchingLog\ninterface MatchingLog {\n  id: string; // UUID\n  transaction_ref: string; // FK -> BankTransaction.referencia_origen\n  fecha_ejecucion: string; // ISO date\n  resultado_estado: \"COMPLETO\" | \"PARCIAL\" | \"PENDIENTE\";\n\n  // Traceabilidad\n  trace: MatchingTrace[];\n  applied_rules: string[];\n  matching_confidence: number;\n\n  // Detalles del fallo (si aplica)\n  fail_reason?: string;\n\n  // Líneas generadas\n  reconciliation_lines_count: number;\n\n  // Metadatos\n  duration_ms: number;\n  engine_version: string;\n  reglas_activas: string[];\n\n  created_at: string;\n}\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/data-model.md",
+    "header": "Tabla: `matching_logs`"
+  }
+}

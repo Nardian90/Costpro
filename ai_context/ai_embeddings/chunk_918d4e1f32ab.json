@@ -1,0 +1,8 @@
+{
+  "id": "THEME_AUDIT_MARCH_2024_3__batería_de_salud__healthbattery_",
+  "content": "### 3. Batería de Salud (HealthBattery)\n- **Estado Actual:** Mismo problema que el Ring. Usa `currentColor` en temas oscuros.\n- **Impacto:** La batería se ve blanca en lugar de verde cuando está al 100%.\n- **Corrección:** Eliminar el uso de `currentColor` y forzar `text-primary`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/THEME_AUDIT_MARCH_2024.md",
+    "header": "3. Batería de Salud (HealthBattery)"
+  }
+}

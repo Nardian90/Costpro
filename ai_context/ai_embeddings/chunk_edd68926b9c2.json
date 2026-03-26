@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_test_4__tiendas_persisten__",
+  "content": "### Test 4: Tiendas persisten ✅\n\n```sql\nSELECT COUNT(*) FROM public.stores WHERE is_active=true;\n-- Resultado: 2 (sin cambios de datos)\n```\n\n**Status:** ✅ PASS - Datos intactos\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "Test 4: Tiendas persisten ✅"
+  }
+}

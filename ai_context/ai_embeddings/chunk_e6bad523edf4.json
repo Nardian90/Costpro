@@ -1,0 +1,9 @@
+{
+  "id": "workflows_gestion_productos",
+  "content": "{\"businessRules\": [], \"business_goal\": \"Mantener un cat\\u00e1logo actualizado para la automatizaci\\u00f3n del matching.\", \"components\": [\"src/components/views/terminal/views/catalog/CatalogModals.tsx\", \"src/components/views/terminal/views/catalog/CatalogView.tsx\"], \"id\": \"gestion_productos\", \"name\": \"Gesti\\u00f3n de Productos y Precios\", \"services\": [\"@/hooks/api/useProducts\", \"@/hooks/ui/useCatalogModals\", \"@/hooks/ui/useMobile\", \"@/lib/utils\", \"@/services/catalog-service\", \"@/store\", \"@/types\", \"api/useProducts\", \"catalog-service\", \"jsbarcode\", \"lucide-react\", \"react\", \"sonner\", \"ui/useCatalogModals\", \"ui/useMobile\", \"utils\"], \"steps\": [\"Crear o importar productos\", \"Definir variaciones permitidas\", \"Organizar por grupos y subgrupos\"], \"views\": [\"src/components/views/terminal/views/catalog/CatalogView.tsx\"]}",
+  "metadata": {
+    "source": "knowledge/workflows.json",
+    "index": 2,
+    "domain": "workflows"
+  }
+}

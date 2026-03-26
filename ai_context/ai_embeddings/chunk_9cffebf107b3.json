@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para InventoryCountView.\", \"dependencies\": [\"react\", \"@/store\", \"@/types\", \"sonner\", \"@/components/ui/ActionMenu\", \"@/components/ui/SearchBar\", \"@/components/ui/QueryInspector\", \"@/lib/utils\", \"@/components/ui/SecurityScrollContainer\", \"@/hooks/ui/useMobile\", \"framer-motion\", \"./InventoryCountCardView\", \"./InventoryCountTableView\"], \"domain\": \"UI\", \"exports\": [\"ExtendedProduct\"], \"id\": \"src/components/views/terminal/views/inventory_count/InventoryCountView.tsx\", \"name\": \"InventoryCountView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico InventoryCountView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con InventoryCountView.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 117,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_API_CONTRACT_2_3__obtener_historial_de_movimientos",
+  "content": "### 2.3. Obtener historial de movimientos\n\n- **Endpoint:** `GET /api/inventory/{productId}/history`\n- **Query Params:**\n  - `page` (opcional, default: 1): Número de página.\n  - `pageSize` (opcional, default: 20): Tamaño de la página.\n- **Respuesta Exitosa (200 OK):**\n  ```json\n  {\n    \"data\": [\n      {\n        \"movementId\": \"...\",\n        \"timestamp\": \"...\",\n        \"quantityChange\": -1,\n        \"movementType\": \"SALE\"\n      }\n    ],\n    \"pagination\": {\n      \"totalItems\": 1,\n      \"currentPage\": 1,\n      \"pageSize\": 20,\n      \"totalPages\": 1\n    }\n  }\n  ```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_API_CONTRACT.md",
+    "header": "2.3. Obtener historial de movimientos"
+  }
+}

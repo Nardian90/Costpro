@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_menubar_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para menubar.\", \"dependencies\": [\"react\", \"@radix-ui/react-menubar\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/menubar.tsx\", \"name\": \"menubar.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico menubar.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con menubar.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 257,
+    "domain": "components"
+  }
+}

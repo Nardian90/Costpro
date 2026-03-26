@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_academy_AcademyView_tsx",
+  "content": "{\"actions\": [\"handleGenerate\", \"handleScore\"], \"components\": [\"ui/CostProLoader\", \"ui/button\"], \"id\": \"src/components/views/terminal/views/academy/AcademyView.tsx\", \"inputs\": [], \"name\": \"AcademyView.tsx\", \"outputs\": [\"Card List\", \"Chart\"], \"route\": \"src/components/views/terminal/views/academy/AcademyView.tsx\", \"servicesUsed\": []}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 11,
+    "domain": "views"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_toaster_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para toaster.\", \"dependencies\": [\"@/hooks/ui/useToast\"], \"domain\": \"UI\", \"exports\": [\"Toaster\"], \"id\": \"src/components/ui/toaster.tsx\", \"name\": \"toaster.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico toaster.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con toaster.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 243,
+    "domain": "components"
+  }
+}

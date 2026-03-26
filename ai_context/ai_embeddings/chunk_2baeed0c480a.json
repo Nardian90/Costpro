@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_sidebar_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para sidebar.\", \"dependencies\": [\"react\", \"@radix-ui/react-slot\", \"class-variance-authority\", \"lucide-react\", \"@/hooks/ui/useMobile\", \"@/lib/utils\", \"@/components/ui/button\", \"@/components/ui/input\", \"@/components/ui/separator\", \"@/components/ui/skeleton\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/sidebar.tsx\", \"name\": \"sidebar.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico sidebar.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con sidebar.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 234,
+    "domain": "components"
+  }
+}

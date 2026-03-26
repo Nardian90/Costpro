@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES___test_7__usuario_no_admin_no_puede_ver_otro_usuario",
+  "content": "## ✅ TEST 7: Usuario NO-ADMIN NO PUEDE VER OTRO USUARIO\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "✅ TEST 7: Usuario NO-ADMIN NO PUEDE VER OTRO USUARIO"
+  }
+}

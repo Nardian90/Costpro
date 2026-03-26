@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_modals_SyncConflictModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para SyncConflictModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"lucide-react\", \"@/components/ui/atomic\", \"@/lib/sync/offline-storage\", \"@/components/providers/SyncProvider\"], \"domain\": \"UI\", \"exports\": [\"SyncConflictModal\"], \"id\": \"src/components/modals/SyncConflictModal.tsx\", \"name\": \"SyncConflictModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico SyncConflictModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con SyncConflictModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 7,
+    "domain": "components"
+  }
+}

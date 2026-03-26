@@ -1,0 +1,9 @@
+{
+  "id": "user_help_24",
+  "content": "{\"acciones\": [\"handleExportPdf\"], \"descripcion_usuario\": \"Interfaz para gestionar AuditLogsView.\", \"feature\": \"AuditLogsView\", \"resultados\": [\"Table\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 24,
+    "domain": "user_help"
+  }
+}

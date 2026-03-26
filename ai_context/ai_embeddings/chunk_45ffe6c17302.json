@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_d__rendimiento_y_ux__9_5_10_",
+  "content": "### D. Rendimiento y UX (9.5/10)\n*   **Mecanismo:** Patrón \"Zero Latency\" y filtrado local.\n*   **Justificación:** El POS descarga el catálogo una sola vez y utiliza `useDeferredValue` para la búsqueda. Esto permite una respuesta instantánea al cajero. El 0.5 de reducción se debe a que, en catálogos de +50,000 SKUs, la carga inicial podría ser pesada, aunque el sistema está optimizado para flujos estándar de retail.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "D. Rendimiento y UX (9.5/10)"
+  }
+}

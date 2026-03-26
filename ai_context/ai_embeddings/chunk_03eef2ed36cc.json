@@ -1,0 +1,8 @@
+{
+  "id": "ESTRATEGIA_BOT_ENCARGADO_i__gestión_proactiva_de_inventario",
+  "content": "### I. Gestión Proactiva de Inventario\n*   **Alertas de Quiebre de Stock:** Notificación automática inmediata cuando `stock_current < min_stock`.\n*   **Monitoreo de Caducidad:** (Propuesta de mejora al esquema) Alerta 30 días antes de la fecha de vencimiento de lotes en `inventory_batches`.\n*   **Detección de \"Stock Muerto\":** Identificación de productos sin movimientos en los últimos 45 días para sugerir promociones.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
+    "header": "I. Gestión Proactiva de Inventario"
+  }
+}

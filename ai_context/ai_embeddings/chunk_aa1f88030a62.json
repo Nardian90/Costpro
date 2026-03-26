@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_2____función__get_my_role______mejorada",
+  "content": "### 2. ✅ Función `get_my_role()` - Mejorada\n\n**Antes:**\n```sql\nRETURN v_role;  -- Retorna NULL si profile no existe\n```\n\n**Después:**\n```sql\nRETURN COALESCE(v_role, 'usuario');  -- Default seguro\n```\n\n**Resultado:** Nunca retorna NULL, siempre hay valor por defecto ✅\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "2. ✅ Función `get_my_role()` - Mejorada"
+  }
+}

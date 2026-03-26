@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_recomendaciones_end",
+  "content": "### Recomendaciones\n\nPara alinear la aplicación con el archivo de FC adjunto, se recomienda lo siguiente:\n\n*   **Corregir el Cálculo de Prorrateo:** Implementar la lógica de prorrateo correcta en el hook `useCostSheetCalculator` para garantizar que los totales se calculen con precisión.\n*   **Corregir el Cálculo de Impuestos:** Actualizar las fórmulas de impuestos para incluir todos los tipos de salarios relevantes.\n*   **Corregir el Cálculo de Depreciación:** Asegurarse de que el `baseDeCalculoRef` se utilice correctamente para calcular el total de depreciación a partir del Anexo III.\n*   **Corregir la Fórmula del Anexo III:** Implementar la fórmula de depreciación correcta en el Anexo III para garantizar que los costos de depreciación se calculen con precisión.\n*   **Verificación y Pruebas:** Después de implementar estas correcciones, realizar una verificación completa y pruebas para garantizar que todos los cálculos en toda la aplicación sean precisos y coincidan con el archivo de FC adjunto.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT.md",
+    "header": "Recomendaciones"
+  }
+}

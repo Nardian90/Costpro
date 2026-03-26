@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_types_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para types.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"MessageRole\", \"Message\", \"ToolCall\", \"ToolDefinition\", \"LLMResponse\", \"LLMProvider\", \"AIAction\", \"BotContext\"], \"id\": \"src/lib/ai/types.ts\", \"name\": \"types.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico types.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar types.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 441,
+    "domain": "components"
+  }
+}

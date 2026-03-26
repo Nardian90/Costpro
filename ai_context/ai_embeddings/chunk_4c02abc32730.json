@@ -1,0 +1,8 @@
+{
+  "id": "POS_AUDIT_FINAL_identidad_visual___temas",
+  "content": "### Identidad Visual & Temas\n- **Tokenización Total:** Se reemplazaron colores absolutos (`white`, `slate-800`, `green-600`, `amber-200`) por tokens semánticos:\n    - `primary`, `primary-foreground`\n    - `destructive`, `destructive-foreground`\n    - `muted`, `muted-foreground`\n    - `card`, `border`, `background`\n- **Compatibilidad:** Verificada legibilidad en temas Dark y Light.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/POS_AUDIT_FINAL.md",
+    "header": "Identidad Visual & Temas"
+  }
+}

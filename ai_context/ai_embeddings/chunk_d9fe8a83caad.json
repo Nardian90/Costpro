@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_dashboard",
+  "content": "### Dashboard\n- KPIs en tiempo real (Ventas, Costo, Utilidad)\n- Gráficos de distribución por forma de pago\n- Alertas de stock bajo\n- Resumen de transacciones\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Dashboard"
+  }
+}

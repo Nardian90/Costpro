@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ipv_utils_ts",
+  "content": "{\"businessRules\": [\"Commission extraction from bank observations using regex 'Comi(?:s(?:i[\\u00f3o]n)?)?:?\\\\s*([0-9]+(?:\\\\.[0-9]{1,2})?)'.\", \"Real-time stock calculation: initial_stock + entries - exits - sales.\", \"Non-negative stock requirement for 'A Medida' products (m, m2, m3, kg, lb).\"], \"business_logic\": \"L\\u00f3gica de negocio para utils.\", \"dependencies\": [\"../dexie\"], \"domain\": \"Domain\", \"exports\": [\"extractCommission\", \"standardizeDate\", \"isProductAMedida\", \"classifyGroupHierarchy\"], \"id\": \"src/lib/ipv/utils.ts\", \"name\": \"utils.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico utils.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar utils.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 432,
+    "domain": "components"
+  }
+}

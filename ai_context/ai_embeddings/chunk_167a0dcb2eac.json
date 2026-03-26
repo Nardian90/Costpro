@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_AJUSTES_DOCUMENTOS_evaluación_de_calidad",
+  "content": "## Evaluación de Calidad\n\n| Criterio | Puntuación (1-10) | Notas |\n| :--- | :---: | :--- |\n| **Integridad de Datos** | 9 | Se utiliza el estado `voided` para invalidar, preservando el registro original. |\n| **Lógica de Inventario** | 9 | La reversión es exacta (+ para ventas, - para recepciones) y utiliza `unit_cost` original en recepciones. |\n| **Experiencia de Usuario (UX)** | 8 | Acceso directo desde el historial y vista dedicada para auditoría de ajustes. |\n| **Rendimiento** | 8 | Operaciones atómicas por item utilizando hooks reactivos existentes. |\n| **Consistencia Visual** | 10 | Uso de tokens semánticos (`text-primary`, `bg-card`) y etiquetas normalizadas (\"Anulado\"). |\n\n**Puntuación General: 8.8 / 10**\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_AJUSTES_DOCUMENTOS.md",
+    "header": "Evaluación de Calidad"
+  }
+}

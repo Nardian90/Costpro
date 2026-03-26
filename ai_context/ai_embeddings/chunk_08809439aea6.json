@@ -1,0 +1,8 @@
+{
+  "id": "README_patches_and_diffs_archive_end",
+  "content": "# Patches and Diffs Archive\n\nThis directory contains legacy patches and diffs used during previous remediation and update cycles.\nMost of these are one-off fixes and should be consulted only for historical context on specific bug resolutions.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README.md",
+    "header": "Patches and Diffs Archive"
+  }
+}

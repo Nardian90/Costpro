@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_Header_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para Header.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\", \"@/components/ThemeToggle\", \"@/store\", \"@/contracts/user\", \"@/hooks/ui/useTerminalNavigation\", \"@/components/ui/SyncStatusBadge\", \"@/components/modals/SyncConflictModal\", \"@/components/ui/popover\"], \"domain\": \"UI\", \"exports\": [\"Header\"], \"id\": \"src/components/views/terminal/Header.tsx\", \"name\": \"Header.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico Header.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con Header.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 17,
+    "domain": "components"
+  }
+}

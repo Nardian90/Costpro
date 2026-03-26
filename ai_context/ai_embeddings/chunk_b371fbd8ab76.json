@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS___archivos_generados",
+  "content": "## 📋 ARCHIVOS GENERADOS\n\n| Archivo | Propósito |\n|---------|-----------|\n| `supabase/migrations/20260209_fix_critical_rls_issues.sql` | Migration aplicada ✅ |\n| `supabase/VERIFICATION_TESTS.sql` | Suite de validación manual |\n| `DIAGNOSTICO_CRITICO_RLS.md` | Análisis detallado de la raíz del problema |\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "📋 ARCHIVOS GENERADOS"
+  }
+}

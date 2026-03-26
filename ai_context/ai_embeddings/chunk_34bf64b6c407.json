@@ -1,0 +1,8 @@
+{
+  "id": "ALMACEN_AUDIT_AFTER_mejoras_implementadas",
+  "content": "## Mejoras Implementadas\n\n| Componente | Antes | Después | Cambio Clave |\n| --- | --- | --- | --- |\n| **StoreModals** | 5.0 | 10.0 | Implementación total de `text-primary`, `clamp()` y touch targets de 44px. |\n| **CatalogModals** | 5.0 | 8.0 | Estandarización de títulos y aumento de targets en botones. |\n| **InventoryCardView** | 6.5 | 8.5 | Incorporación de branding primario en estados vacíos y finales. |\n| **TransferenciasView** | 6.5 | 8.0 | Header responsivo y semántica de color corregida. |\n| **Vistas de Gestión** | 8.5 | 10.0 | Unificación de tipografía responsiva (`clamp`) en encabezados principales. |\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ALMACEN_AUDIT_AFTER.md",
+    "header": "Mejoras Implementadas"
+  }
+}

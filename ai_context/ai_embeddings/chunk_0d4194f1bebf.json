@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_receptions_ReceptionDetailsModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ReceptionDetailsModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"lucide-react\", \"@/types\", \"@/components/ui/skeleton\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"ReceptionDetailsModal\"], \"id\": \"src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx\", \"name\": \"ReceptionDetailsModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ReceptionDetailsModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ReceptionDetailsModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 85,
+    "domain": "components"
+  }
+}

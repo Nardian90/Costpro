@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_4__gestionar_inventario",
+  "content": "### 4. Gestionar Inventario\n1. Navega a \"Inventario\"\n2. Usa filtros para buscar productos\n3. Haz clic en el icono de editar para ajustar stock\n4. Ingresa cantidad y motivo del ajuste\n5. Aplica el ajuste\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "4. Gestionar Inventario"
+  }
+}

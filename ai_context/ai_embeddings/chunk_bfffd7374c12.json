@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_TerminalShell_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para TerminalShell.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/store\", \"./terminal/Sidebar\", \"./terminal/Header\", \"@/hooks/ui/useTerminalNavigation\", \"@/hooks/ui/useMobile\", \"lucide-react\", \"@/services/user-service\", \"next/navigation\", \"@/lib/utils\", \"@tanstack/react-query\", \"@/hooks/api/useStores\", \"@/hooks/api/useProducts\", \"@/hooks/api/useTransactions\", \"@/hooks/api/useDashboard\", \"@/hooks/api/useAuditLogs\", \"@/hooks/api/useReceptions\", \"@/components/ui/CostProLoader\", \"@/components/ui/FloatingCalculator\", \"@/components/ui/ChatBot\", \"@/components/modals/CreateProductModal\", \"@/components/ui/MobileSafeContainer\", \"sonner\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/TerminalShell.tsx\", \"name\": \"TerminalShell.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico TerminalShell.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con TerminalShell.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 14,
+    "domain": "components"
+  }
+}

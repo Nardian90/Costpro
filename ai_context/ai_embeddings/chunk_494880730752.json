@@ -1,0 +1,8 @@
+{
+  "id": "reference_inventoryview_tsx",
+  "content": "## InventoryView.tsx\n**Ruta:** `src/components/views/terminal/views/inventory/InventoryView.tsx`\n\n**Acciones disponibles:** handleAdjustProduct, handleCategoryChange, handleConfirmAdjustment\n\n**Salidas esperadas:** Card List, Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "InventoryView.tsx"
+  }
+}

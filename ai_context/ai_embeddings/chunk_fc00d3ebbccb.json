@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_logic_useCostSheetCalculator_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useCostSheetCalculator.\", \"dependencies\": [\"react\", \"immer\", \"decimal.js\", \"expr-eval\", \"@/lib/cost-engine\", \"@/lib/cost-engine/types\", \"@/lib/cost-engine/validations\"], \"domain\": \"Domain\", \"exports\": [\"useCostSheetCalculator\"], \"id\": \"src/hooks/logic/useCostSheetCalculator.ts\", \"name\": \"useCostSheetCalculator.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useCostSheetCalculator.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 328,
+    "domain": "components"
+  }
+}

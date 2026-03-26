@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_health_SystemHealthView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"HealthDashboard/AISystemObserver\", \"HealthDashboard/ApplicationDataPanel\", \"HealthDashboard/AuditResults\", \"HealthDashboard/GlobalMetricsCards\", \"HealthDashboard/InfrastructurePanel\", \"HealthDashboard/IntelligenceConsole\", \"HealthDashboard/IntelligenceMap\", \"HealthDashboard/MetricsGuide\", \"HealthDashboard/ObservabilityHeader\", \"HealthDashboard/ReleaseGateGovernance\", \"HealthDashboard/SecurityGRCPanel\", \"HealthDashboard/ViewNavigation\", \"HealthDashboard/hooks/useComponentHealth\", \"HealthDashboard/hooks/useHealthIndex\", \"HealthDashboard/hooks/useLiveScan\", \"ui/CostProLoader\"], \"id\": \"src/components/views/terminal/views/health/SystemHealthView.tsx\", \"inputs\": [], \"name\": \"SystemHealthView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/health/SystemHealthView.tsx\", \"servicesUsed\": [\"release_gate/ReleaseGatePdfExporter\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 0,
+    "domain": "views"
+  }
+}

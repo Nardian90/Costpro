@@ -1,0 +1,8 @@
+{
+  "id": "ajustes_documentos_1__inversión_de_documentos",
+  "content": "### 1. Inversión de Documentos\n- **Ventas:** Al invertir una venta, el estado del documento cambia a **ANULADO**. El sistema realiza un ajuste de inventario sumando automáticamente las unidades que fueron vendidas de vuelta al stock.\n- **Recepciones:** Al invertir una recepción, el estado cambia a **ANULADO**. El sistema realiza un ajuste de inventario restando las unidades recibidas, revirtiendo el incremento de stock inicial.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ajustes_documentos.md",
+    "header": "1. Inversión de Documentos"
+  }
+}

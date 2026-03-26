@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_AUDIT_REPORT_1____duplicación_de_lógica___logstockmovement__no_integrada____",
+  "content": "### 1. **Duplicación de Lógica: `logStockMovement` No Integrada** 🟠\n**Severidad:** MEDIA\n**Ubicación:** `src/components/WarehouseView.tsx` líneas 126-145\n\n**Problema:**\n```tsx\nconst logStockMovement = async (productId, quantityChange, type, notes) => {\n    // Función desacoplada que intenta insertar en stock_movements\n    // PERO no está integrada en flujo de recepción atómico\n}\n```\n\n**Issue:**\n- Esta función puede fallar silenciosamente\n- No forma parte de transacción RPC\n- Código legacy (old project) integra esto en RPC\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
+    "header": "1. **Duplicación de Lógica: `logStockMovement` No Integrada** 🟠"
+  }
+}

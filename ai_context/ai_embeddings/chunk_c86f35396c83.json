@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_transfers_TransferenciasView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"ui/ActionMenu\", \"ui/StateRenderer\"], \"id\": \"src/components/views/terminal/views/transfers/TransferenciasView.tsx\", \"inputs\": [], \"name\": \"TransferenciasView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/transfers/TransferenciasView.tsx\", \"servicesUsed\": [\"api/useTransfers\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 12,
+    "domain": "views"
+  }
+}

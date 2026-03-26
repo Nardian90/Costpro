@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_GlobalSessionManager_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para GlobalSessionManager.\", \"dependencies\": [\"react\", \"@/hooks/logic/useSessionManager\", \"@/store/session-store\", \"sonner\"], \"domain\": \"Domain\", \"exports\": [\"GlobalSessionManager\"], \"id\": \"src/components/GlobalSessionManager.tsx\", \"name\": \"GlobalSessionManager.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico GlobalSessionManager.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con GlobalSessionManager.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 1,
+    "domain": "components"
+  }
+}

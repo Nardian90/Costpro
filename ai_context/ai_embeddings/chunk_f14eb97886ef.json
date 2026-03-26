@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_modals_UpgradeModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para UpgradeModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"@/components/ui/button\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"UpgradeModal\"], \"id\": \"src/components/modals/UpgradeModal.tsx\", \"name\": \"UpgradeModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico UpgradeModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con UpgradeModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 10,
+    "domain": "components"
+  }
+}

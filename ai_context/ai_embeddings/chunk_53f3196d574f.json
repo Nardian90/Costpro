@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ai_orchestrator_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para orchestrator.\", \"dependencies\": [\"./types\", \"./adapters/gemini-adapter\", \"./adapters/gpt-adapter\", \"./adapters/qwen-adapter\", \"./adapters/deepseek-adapter\", \"./adapters/kimi-adapter\", \"./adapters/fallback-adapter\", \"@supabase/supabase-js\"], \"domain\": \"Domain\", \"exports\": [\"ProviderType\", \"getLLMProvider\"], \"id\": \"src/lib/ai/orchestrator.ts\", \"name\": \"orchestrator.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico orchestrator.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar orchestrator.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 440,
+    "domain": "components"
+  }
+}

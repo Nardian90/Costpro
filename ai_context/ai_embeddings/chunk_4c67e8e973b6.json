@@ -1,0 +1,8 @@
+{
+  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_3_3_verificación_de_idempotencia",
+  "content": "### 3.3 Verificación de Idempotencia\nSe detectó un fallo crítico donde el casting de UUID a JSONB impedía el retorno de la respuesta cacheada.\n*   **Remediación:** Aplicada migración `fix_idempotency_type_mismatch`.\n*   **Prueba:** Se enviaron 2 peticiones idénticas con el mismo `p_transaction_id`.\n    *   *Petición 1:* Éxito, stock descontado.\n    *   *Petición 2:* Retorno instantáneo de UUID original, **0 cambios adicionales en DB**.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
+    "header": "3.3 Verificación de Idempotencia"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_4__certificación_de_funcionalidad__v10_2_",
+  "content": "## 4. Certificación de Funcionalidad (v10.2)\n\n| Módulo / Característica | Estado | Puntuación |\n| :--- | :--- | :--- |\n| **Ingesta e Idempotencia** | ✅ COMPLETO | 100/100 |\n| **Motor de Matching (Multi-Pass)** | ✅ COMPLETO | 100/100 |\n| **Gestión de Catálogo (Edición Total)** | ✅ COMPLETO | 100/100 |\n| **Optimización Mobile-First** | ✅ COMPLETO | 100/100 |\n| **Generador de Datos Demo** | ✅ COMPLETO | 100/100 |\n| **Generación de Reportes PDF** | ✅ COMPLETO | 100/100 |\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "4. Certificación de Funcionalidad (v10.2)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_help_help_CostFlowDiagram_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostFlowDiagram.\", \"dependencies\": [\"framer-motion\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/help/help/CostFlowDiagram.tsx\", \"name\": \"CostFlowDiagram.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostFlowDiagram.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 64,
+    "domain": "components"
+  }
+}

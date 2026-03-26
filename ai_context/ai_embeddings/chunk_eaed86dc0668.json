@@ -1,0 +1,9 @@
+{
+  "id": "components_src_services_rss_service_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para rss-service.\", \"dependencies\": [\"@/lib/supabaseClient\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"rssService\"], \"id\": \"src/services/rss-service.ts\", \"name\": \"rss-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico rss-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar rss-service.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 322,
+    "domain": "components"
+  }
+}

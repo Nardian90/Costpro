@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_navigation_menu_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para navigation-menu.\", \"dependencies\": [\"react\", \"@radix-ui/react-navigation-menu\", \"class-variance-authority\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/navigation-menu.tsx\", \"name\": \"navigation-menu.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico navigation-menu.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con navigation-menu.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 244,
+    "domain": "components"
+  }
+}

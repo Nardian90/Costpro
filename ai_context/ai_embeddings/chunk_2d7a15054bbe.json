@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_pos_POSTableView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"ui/ProductImage\"], \"id\": \"src/components/views/terminal/views/pos/POSTableView.tsx\", \"inputs\": [], \"name\": \"POSTableView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/pos/POSTableView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 34,
+    "domain": "views"
+  }
+}
