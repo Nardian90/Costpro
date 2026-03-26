@@ -189,7 +189,7 @@ export function MatchingRulesEditor() {
     } else {
       await db.ipv_settings.update("current", { copiloto_activo: active });
     }
-    toast.success(active ? "Copiloto activado: El sistema usará la lógica optimizada (>90% mismatch)." : "Copiloto desactivado: Se aplicará su configuración manual.");
+    toast.success(active ? "Copiloto activado: El sistema usará la lógica optimizada (>90% match)." : "Copiloto desactivado: Se aplicará su configuración manual.");
   };
 
   const sensors = useSensors(

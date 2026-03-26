@@ -12,6 +12,7 @@ vi.mock('../../dexie', () => ({
     },
     products: {
       toArray: vi.fn().mockResolvedValue([]),
+    matching_logs: { add: vi.fn().mockResolvedValue({}) },
       where: vi.fn().mockReturnThis(),
       above: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
@@ -23,6 +24,7 @@ vi.mock('../../dexie', () => ({
         between: vi.fn().mockReturnThis(),
         equals: vi.fn().mockReturnThis(),
         toArray: vi.fn().mockResolvedValue([]),
+    matching_logs: { add: vi.fn().mockResolvedValue({}) },
         add: vi.fn().mockResolvedValue("mock-id")
     },
     intelligent_receipts: {

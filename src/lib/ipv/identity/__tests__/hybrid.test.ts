@@ -4,6 +4,7 @@ import { db } from '@/lib/dexie';
 
 vi.mock('@/lib/dexie', () => ({
   db: {
+    matching_logs: { add: vi.fn().mockResolvedValue({}), where: vi.fn().mockReturnThis(), equals: vi.fn().mockReturnThis(), reverse: vi.fn().mockReturnThis(), sortBy: vi.fn().mockResolvedValue([]), toArray: vi.fn().mockResolvedValue([]) },
     customers: {
       toArray: vi.fn(),
     },

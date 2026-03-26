@@ -23,6 +23,7 @@ vi.mock('../../dexie', () => ({
       equals: vi.fn().mockReturnThis(),
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
+    matching_logs: { add: vi.fn().mockResolvedValue({}) },
     }
   }
 }));
