@@ -1,6 +1,7 @@
 import { Pick3Result, BacktestResult, BettingConfig, IntelligencePlay } from '@/types/pick3';
 import { AnalysisEngine } from './analysis.engine';
 import { PredictionEngine } from './prediction.engine';
+import { BankrollManager } from './bankroll.manager';
 
 export class BacktestEngine {
   private history: Pick3Result[];
@@ -21,13 +22,14 @@ export class BacktestEngine {
     let maxDrawdown = 0;
     let peak = initialBankroll;
     const dailyReturns: number[] = [];
+    let totalGrossProfit = 0;
+    let totalGrossLoss = 0;
 
-    // Skip initial data for analysis context (e.g. use first 60 days for analysis, test on the rest)
+    // Skip initial data for analysis context
     const analysisWindow = 60;
-    const testData = this.history.slice(analysisWindow, analysisWindow + (days * 2)); // 2 draws per day
+    const testData = this.history.slice(analysisWindow, analysisWindow + (days * 2));
 
     testData.forEach((draw, index) => {
-      // 1. Get Analysis for the state *before* this draw
       const pastHistory = this.history.slice(0, analysisWindow + index);
       const analysisEngine = new AnalysisEngine(pastHistory);
       const analysis = analysisEngine.analyze(30);
@@ -35,8 +37,22 @@ export class BacktestEngine {
 
       const predictions = predictionEngine.generatePredictions(config, config.maxCombinations || 5);
 
-      const betPerNumber = initialBankroll * (config.riskFactor / 100); // Fixed for backtest base
-      const totalExposure = betPerNumber * predictions.length;
+      let totalExposure = 0;
+      const bets: { p: IntelligencePlay, size: number }[] = [];
+
+      predictions.forEach(p => {
+        // Use the new BankrollManager for adaptive bet sizing
+        const betSize = BankrollManager.calculateBetSize(currentBankroll, config, p.confidence, totalWins / (totalBets || 1));
+        bets.push({ p, size: betSize });
+        totalExposure += betSize;
+      });
+
+      if (totalExposure > currentBankroll) {
+          // Proportionally scale down if exposure > bankroll
+          const scale = currentBankroll / totalExposure;
+          bets.forEach(b => b.size = Math.floor(b.size * scale));
+          totalExposure = currentBankroll;
+      }
 
       currentBankroll -= totalExposure;
       let wonThisDraw = false;
@@ -46,14 +62,14 @@ export class BacktestEngine {
         ? (draw.result[1] * 10) + draw.result[2]
         : (draw.result[0] * 100) + (draw.result[1] * 10) + draw.result[2];
 
-      predictions.forEach(p => {
+      bets.forEach(b => {
         const pValue = config.mode === 'LAST2'
-          ? (p.combination[0] * 10) + p.combination[1]
-          : (p.combination[0] * 100) + (p.combination[1] * 10) + p.combination[2];
+          ? (b.p.combination[0] * 10) + b.p.combination[1]
+          : (b.p.combination[0] * 100) + (b.p.combination[1] * 10) + b.p.combination[2];
 
         if (pValue === resultValue) {
           wonThisDraw = true;
-          winAmount += betPerNumber * config.payout;
+          winAmount += b.size * config.payout;
         }
       });
 
@@ -61,7 +77,11 @@ export class BacktestEngine {
       bankrollHistory.push(currentBankroll);
       totalBets += predictions.length;
 
-      const dailyReturn = (winAmount - totalExposure) / (totalExposure || 1);
+      const netResult = winAmount - totalExposure;
+      if (netResult > 0) totalGrossProfit += netResult;
+      else totalGrossLoss += Math.abs(netResult);
+
+      const dailyReturn = netResult / (totalExposure || 1);
       dailyReturns.push(dailyReturn);
 
       if (wonThisDraw) {
@@ -83,11 +103,21 @@ export class BacktestEngine {
     const netProfit = currentBankroll - initialBankroll;
     const roi = (netProfit / (initialBankroll || 1)) * 100;
 
-    // Simplified Sharpe Ratio
     const avgReturn = dailyReturns.reduce((a, b) => a + b, 0) / (dailyReturns.length || 1);
     const variance = dailyReturns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / (dailyReturns.length || 1);
     const stdDev = Math.sqrt(variance) || 1;
-    const sharpe = (avgReturn / stdDev) * Math.sqrt(365); // Annualized approx
+    const sharpe = (avgReturn / stdDev) * Math.sqrt(365);
+
+    const downsideReturns = dailyReturns.filter(r => r < 0);
+    const downsideVariance = downsideReturns.reduce((a, b) => a + Math.pow(b, 2), 0) / (dailyReturns.length || 1);
+    const downsideStdDev = Math.sqrt(downsideVariance) || 0.0001;
+    const sortino = (avgReturn / downsideStdDev) * Math.sqrt(365);
+
+    const profitFactor = totalGrossLoss === 0 ? totalGrossProfit : totalGrossProfit / totalGrossLoss;
+    const annualizedReturn = (roi / 100) * (365 / days);
+    const calmar = annualizedReturn / (maxDrawdown || 0.01);
+    const absoluteMaxDrawdown = peak * maxDrawdown;
+    const recoveryFactor = absoluteMaxDrawdown === 0 ? profitFactor : netProfit / absoluteMaxDrawdown;
 
     return {
       id: `BT-${Math.random().toString(36).substring(7)}`,
@@ -100,6 +130,10 @@ export class BacktestEngine {
       netProfit,
       maxDrawdown: maxDrawdown * 100,
       sharpeRatio: sharpe,
+      sortinoRatio: sortino,
+      calmarRatio: calmar,
+      profitFactor: profitFactor,
+      recoveryFactor: recoveryFactor,
       equityCurve: bankrollHistory,
       winStreak: maxWinStreak,
       lossStreak: maxLossStreak

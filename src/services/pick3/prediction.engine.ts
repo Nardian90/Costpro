@@ -13,12 +13,12 @@ export class PredictionEngine {
     const universe = config.mode === 'LAST2' ? 100 : 1000;
     const scoredCombinations: IntelligencePlay[] = [];
 
-    // Weights configuration
+    // Weights configuration - Optimized for Pick3 / Last2
     const w = {
-      freq: 0.35,
+      freq: 0.30,
       markov: 0.35,
       trend: 0.20,
-      recency: 0.10
+      recency: 0.15
     };
 
     for (let i = 0; i < universe; i++) {
@@ -31,7 +31,7 @@ export class PredictionEngine {
       scoredCombinations.push({
         combination,
         score,
-        confidence: score, // Simplified for now, could be normalized
+        confidence: score, // Normalized score
         justification: this.generateJustification(combination, score, config)
       });
     }
@@ -45,10 +45,9 @@ export class PredictionEngine {
     let score = 0;
     const is2D = config.mode === 'LAST2';
 
-    // 1. Frequency Score (Historical)
+    // 1. Frequency Score (Historical Positional)
     let freqScore = 0;
     if (is2D) {
-      // Average frequency of the two digits
       freqScore = (
         (this.analysis.positional[1][combination[0]] || 0) +
         (this.analysis.positional[2][combination[1]] || 0)
@@ -61,7 +60,7 @@ export class PredictionEngine {
       ) / (this.history.length / 3.33);
     }
 
-    // 2. Markov Score
+    // 2. Markov Score (Transition Probability)
     let markovScore = 0;
     const lastDraw = this.history[0]?.result || [0, 0, 0];
     if (is2D) {
@@ -71,7 +70,6 @@ export class PredictionEngine {
       if (this.analysis.markovTransitions.full2D && this.analysis.markovTransitions.full2D[last2D]) {
         markovScore = (this.analysis.markovTransitions.full2D[last2D][current2D] || 0) / 5;
       } else {
-        // Fallback to digit-level Markov
         markovScore = (
           (this.analysis.markovTransitions.digits[lastDraw[1]]?.[combination[0]] || 0) +
           (this.analysis.markovTransitions.digits[lastDraw[2]]?.[combination[1]] || 0)
@@ -90,21 +88,24 @@ export class PredictionEngine {
     combination.forEach(num => {
       gapScore += (this.analysis.gaps[num] || 0);
     });
-    gapScore = gapScore / (combination.length * 30); // Normalized by 30 days
+    gapScore = gapScore / (combination.length * 45); // Adjusted normalization
 
-    // 4. Recency Penalty
+    // 4. Recency Penalty (Filter out recent repeats)
     let recencyPenalty = 0;
-    const last3 = this.history.slice(0, 3);
-    last3.forEach(draw => {
+    const last10 = this.history.slice(0, 10);
+    last10.forEach((draw, idx) => {
       const draw2D = (draw.result[1] * 10) + draw.result[2];
       const comb2D = (combination[0] * 10) + (combination[1] || 0);
-      if (is2D && draw2D === comb2D) recencyPenalty += 0.5;
-      // For 3D we could check exact match
       const draw3D = (draw.result[0] * 100) + (draw.result[1] * 10) + draw.result[2];
-      const comb3D = (combination[0] * 100) + (combination[1] * 10) + combination[2];
-      if (!is2D && draw3D === comb3D) recencyPenalty += 1.0;
+      const comb3D = (combination[0] * 100) + (combination[1] * 10) + (combination[2] || 0);
+
+      const penaltyWeight = 1 / (idx + 1); // Older draws have less penalty
+
+      if (is2D && draw2D === comb2D) recencyPenalty += penaltyWeight * 1.5;
+      if (!is2D && draw3D === comb3D) recencyPenalty += penaltyWeight * 2.0;
     });
 
+    // Final Weighted Score
     score = (freqScore * w.freq) + (markovScore * w.markov) + (gapScore * w.trend) - (recencyPenalty * w.recency);
 
     return Math.min(Math.max(score * 100, 0), 100);
@@ -112,24 +113,32 @@ export class PredictionEngine {
 
   private generateJustification(combination: number[], score: number, config: BettingConfig): string {
     const reasons: string[] = [];
-    if (score > 70) reasons.push("Fuerte Señal Predictiva");
-    if (score > 85) reasons.push("Convergencia Cuántica");
-
-    // Check specific drivers
     const is2D = config.mode === 'LAST2';
+
+    // Core technical signals
+    if (score > 80) reasons.push("Convergencia Cuántica (Score > 80)");
+    else if (score > 60) reasons.push("Señal Técnica Fuerte");
+
+    // Markov Signal
     const lastDraw = this.history[0]?.result || [0, 0, 0];
     const last2D = (lastDraw[1] * 10) + lastDraw[2];
     const current2D = (combination[0] * 10) + (combination[1] || 0);
-
     if (this.analysis.markovTransitions.full2D?.[last2D]?.[current2D]) {
-      reasons.push("Alta Probabilidad Markov (2D)");
+      reasons.push("Markov 2D High Prob");
     }
 
+    // Gap Signal
+    const avgGap = combination.reduce((acc, n) => acc + (this.analysis.gaps[n] || 0), 0) / combination.length;
+    if (avgGap > 25) {
+      reasons.push("Reversión por Rezago (${avgGap.toFixed(0)} draws)");
+    }
+
+    // Frequency Alignment
     if (combination.every(n => this.analysis.hotNumbers.includes(n))) {
-      reasons.push("Alineación con Números Calientes");
+      reasons.push("Trend Following (Hot)");
     }
 
-    if (reasons.length === 0) return "Tendencia Probabilística Estándar";
-    return reasons.join(" + ");
+    if (reasons.length === 0) return "Probabilidad Base Basada en Micro-Ciclos";
+    return reasons.join(" | ");
   }
 }
