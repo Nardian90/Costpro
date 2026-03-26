@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 
@@ -411,7 +410,6 @@ export function TransactionBreakdown() {
         <DialogContent className="max-w-md">
             <DialogHeader>
                 <DialogTitle className="text-xl font-black uppercase text-primary">Editar Importe Real</DialogTitle>
-          <DialogDescription className="sr-only">Detalles del diálogo</DialogDescription>
             </DialogHeader>
             <div className="py-6 space-y-4">
                 <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-muted-foreground/30">

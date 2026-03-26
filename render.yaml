@@ -1,17 +1,17 @@
 services:
-  - type: web
-    name: Costpro
-    runtime: node
-    buildCommand: npm install --legacy-peer-deps && npm run build
-    startCommand: npm run start
-    envVars:
-      - key: NODE_VERSION
-        value: 22
-      - key: DATABASE_URL
-        value: "" # Set this in Render Dashboard
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
+- type: web
+  name: Costpro
+  runtime: node
+  buildCommand: bun install; bun run build
+  startCommand: bun run start
+  envVars:
+  - key: NODE_VERSION
+    value: 22
+  - key: DATABASE_URL
+    value: ''
+  - key: NEXT_PUBLIC_SUPABASE_URL
+    sync: false
+  - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+    sync: false
+  - key: SUPABASE_SERVICE_ROLE_KEY
+    sync: false

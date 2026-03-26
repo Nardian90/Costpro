@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -92,9 +91,6 @@ export function CustomerDetailsModal({
             </div>
             <div>
               <DialogTitle className="text-xl font-black">{customer.nombre}</DialogTitle>
-              <DialogDescription className="sr-only">
-                Detalles y transacciones del cliente {customer.nombre}
-              </DialogDescription>
               <p className="text-sm font-mono text-muted-foreground">{customer.ci}</p>
             </div>
           </div>
