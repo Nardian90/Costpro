@@ -83,6 +83,7 @@ export default function IPVView() {
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+  const productMovements = useLiveQuery(() => db.product_movements.toArray());
   React.useEffect(() => {
     if (rules && rules.length === 0) {
       db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
@@ -92,16 +93,25 @@ export default function IPVView() {
 
   const currentStockMap = useMemo(() => {
     const map = new Map<string, number>();
-    if (!products || !reconciliationLines) return map;
+    if (!products || !reconciliationLines || !productMovements) return map;
 
     products.forEach(p => {
         const sold = reconciliationLines
             .filter(l => l.product_cod === p.cod)
             .reduce((sum, l) => sum + l.cantidad, 0);
-        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+
+        const entries = productMovements
+            .filter(m => m.producto_destino_cod === p.cod)
+            .reduce((sum, m) => sum + m.cantidad_destino, 0);
+
+        const exits = productMovements
+            .filter(m => m.producto_origen_cod === p.cod)
+            .reduce((sum, m) => sum + m.cantidad_origen, 0);
+
+        map.set(p.cod, (p.stock_inicial_manual || 0) + entries - exits - sold);
     });
     return map;
-  }, [products, reconciliationLines]);
+  }, [products, reconciliationLines, productMovements]);
 
   const txTotals = useMemo(() => {
     if (!reconciliationLines) return {} as Record<string, number>;
@@ -323,6 +333,8 @@ export default function IPVView() {
 
     try {
         const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
+        // Inject current stock map for accurate matching
+        (engine as any).stockMap = new Map(currentStockMap);
         const currentReconciled = txTotals[tx.referencia_origen] || 0;
 
         const result = await engine.matchTransaction(tx, currentReconciled);
