@@ -373,6 +373,7 @@ export function PivotStatementView() {
                                                                         <span className="font-medium text-[10px]">{formatDate(t.fecha)}</span>
                                                                         <div className="col-span-2 flex flex-col">
                                                                             <span className="font-mono font-bold text-[10px] truncate">{t.referencia_origen}</span>
+                                                                            {t.nombre_cliente && <span className="text-[9px] font-black text-primary uppercase truncate">{t.nombre_cliente}</span>}
                                                                             <span className="text-[10px] text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
                                                                         </div>
                                                                         <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
