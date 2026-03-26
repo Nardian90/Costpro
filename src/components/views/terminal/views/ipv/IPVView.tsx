@@ -30,7 +30,7 @@ import {
   Receipt,
   ArrowRightLeft,
   QrCode,
-  ListFilter
+  ListFilter, ChevronDown, ChevronUp, PackageX
 } from 'lucide-react';
 import { MatchingAuditView } from './MatchingAuditView';
 import { BankIngestion } from './BankIngestion';
@@ -76,6 +76,7 @@ export default function IPVView() {
   const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isStarted, setIsStarted] = useState(true);
+  const [isCardsExpanded, setIsCardsExpanded] = useState(false);
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -124,7 +125,7 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0, totalTransferencias: 0, totalEfectivo: 0 };
+    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0, totalTransferencias: 0, totalEfectivo: 0, negativeStock: 0 };
 
     let squared = 0;
     let inProcess = 0;
@@ -183,9 +184,10 @@ export default function IPVView() {
       percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0,
       totalSales: totalTransferencias + totalEfectivo,
       totalTransferencias,
-      totalEfectivo
+      totalEfectivo,
+      negativeStock: Array.from(currentStockMap.values()).filter(v => v < 0).length
     };
-  }, [transactions, txTotals, reconciliationLines]);
+  }, [transactions, txTotals, reconciliationLines, currentStockMap]);
 
 
   async function handleImportBackup(file: File) {
@@ -485,7 +487,25 @@ export default function IPVView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+
+      <div className="flex items-center justify-between mb-2">
+          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-50 flex items-center gap-2">
+            <BarChart4 className="w-3 h-3" /> Resumen de Operaciones
+          </h3>
+          <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCardsExpanded(!isCardsExpanded)}
+              className="h-7 px-2 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-tighter"
+          >
+              {isCardsExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+              {isCardsExpanded ? 'Ocultar' : 'Ver Detalles'}
+          </Button>
+      </div>
+
+      {isCardsExpanded && (
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+        {stats.totalSales > 0 && (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -508,7 +528,9 @@ export default function IPVView() {
                 <p className="text-xs mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
             </TooltipContent>
         </Tooltip>
+        )}
 
+        {stats.total > 0 && (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -529,6 +551,9 @@ export default function IPVView() {
                 <p className="text-xs font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
             </TooltipContent>
         </Tooltip>
+        )}
+
+        {stats.squared > 0 && (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -550,7 +575,9 @@ export default function IPVView() {
                 <p className="text-xs font-bold">Transacciones cuyo desglose de productos coincide exactamente con el importe neto.</p>
             </TooltipContent>
         </Tooltip>
+        )}
 
+        {stats.inProcess > 0 && (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -571,7 +598,9 @@ export default function IPVView() {
                 <p className="text-xs font-bold">Transacciones con productos asociados pero que aún tienen una diferencia pendiente por cuadrar.</p>
             </TooltipContent>
         </Tooltip>
+        )}
 
+        {stats.pending > 0 && (
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -592,7 +621,35 @@ export default function IPVView() {
                 <p className="text-xs font-bold">Transacciones que no han sido procesadas o no encontraron coincidencias automáticas.</p>
             </TooltipContent>
         </Tooltip>
+        )}
+
+        {stats.negativeStock > 0 && (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Stock Negativo"
+                        value={stats.negativeStock}
+                        icon={<PackageX className="text-red-500" />}
+                        subtitle="Revisar Catálogo"
+                        active={false}
+                        onClick={() => {
+                            localStorage.setItem('catalog_stockFilter', 'negative_stock');
+                            setActiveTab('catalog');
+                        }}
+                        className="border-red-500/20 bg-red-500/5 hover:border-red-500/40"
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-xs font-bold text-red-500">Existen productos con existencias menores a cero.</p>
+                <p className="text-xs opacity-70">Haga clic para ir al catálogo y filtrar estos productos.</p>
+            </TooltipContent>
+        </Tooltip>
+        )}
       </div>
+      )}
+
 
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
@@ -763,7 +820,7 @@ export default function IPVView() {
 }
 
 
-function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean }) {
+function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false, className = "" }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean, className?: string }) {
   const formattedValue = React.useMemo(() => {
     if (!isCurrency) return value.toString();
     if (value > 9999) {
@@ -775,7 +832,7 @@ function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurr
   return (
     <Card
         onClick={onClick}
-        className={`p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2 ${active ? 'border-primary bg-primary/5 shadow-lg scale-[1.02]' : 'border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20'}`}
+        className={cn("p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2", active ? "border-primary bg-primary/5 shadow-lg scale-[1.02]" : "border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20", className)}
     >
       <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1 overflow-hidden w-full">
         <p className="text-xs sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate w-full text-center sm:text-left">{title}</p>
