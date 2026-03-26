@@ -5,6 +5,7 @@ mkdir -p .next/standalone/.next/static
 mkdir -p .next/standalone/public
 mkdir -p .next/standalone/knowledge
 mkdir -p .next/standalone/docs
+mkdir -p .next/standalone/ai_context
 
 if [ -d .next/static ]; then
   echo "Copying .next/static..."
@@ -24,5 +25,10 @@ fi
 if [ -d docs ]; then
   echo "Copying docs..."
   cp -r docs/* .next/standalone/docs/
+fi
+
+if [ -d ai_context ]; then
+  echo "Copying ai_context..."
+  cp -r ai_context/* .next/standalone/ai_context/
 fi
 echo "Bundling complete."
