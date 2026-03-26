@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import {
   FileText, Download, Settings2, Calendar, AlertCircle,
   CheckCircle2, Play, Loader2, History, X, Search,
-  ArrowRight
+  ArrowRight, Layout
 } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { format, isWithinInterval, parseISO, isBefore, addDays } from "date-fns";
@@ -23,6 +23,7 @@ import { generateMVTContent, downloadMVT, MVTExportContext } from "@/lib/ipv/mvt
 import { STANDARD_MVT_TEMPLATE } from "@/lib/ipv/mvt/defaults";
 import { MVTTemplate, MVTExportLog } from "@/lib/ipv/mvt/types";
 import { MVTPreview } from "./MVTPreview";
+import { TemplateManager } from "./TemplateManager";
 import { TemplateEditor } from "./TemplateEditor";
 
 export const MVTExportView = () => {
@@ -32,6 +33,7 @@ export const MVTExportView = () => {
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showManager, setShowManager] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<MVTTemplate>(STANDARD_MVT_TEMPLATE);
 
   // DB Data
@@ -224,19 +226,38 @@ export const MVTExportView = () => {
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <Label className="text-xs font-medium text-slate-700">Plantilla Activa</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="text-xs font-medium text-slate-700">Plantilla Activa</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-indigo-600 hover:text-indigo-700"
+                      onClick={() => setShowManager(true)}
+                    >
+                      <Layout className="w-3 h-3 mr-1" />
+                      Gestionar
+                    </Button>
+                  </div>
                   <select
                     className="w-full h-10 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     value={currentTemplate.id}
                     onChange={(e) => {
+                      if (e.target.value === STANDARD_MVT_TEMPLATE.id) {
+                        setCurrentTemplate(STANDARD_MVT_TEMPLATE);
+                        return;
+                      }
                       const selected = templates.find(t => t.id === e.target.value);
                       if (selected) setCurrentTemplate(selected);
                     }}
                   >
-                    {templates.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                    <option value={STANDARD_MVT_TEMPLATE.id}>{STANDARD_MVT_TEMPLATE.name}</option>
+                    <option value={STANDARD_MVT_TEMPLATE.id}>{STANDARD_MVT_TEMPLATE.name} (Sistema)</option>
+                    {templates.length > 0 && (
+                      <optgroup label="Personalizadas">
+                        {templates.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
 
@@ -360,6 +381,26 @@ export const MVTExportView = () => {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowHistory(false)}>Cerrar</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Manager Dialog */}
+      <Dialog open={showManager} onOpenChange={setShowManager}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Gestión de Plantillas</DialogTitle>
+            <DialogDescription>
+              Configura, duplica o importa/exporta tus estructuras MVT personalizadas.
+            </DialogDescription>
+          </DialogHeader>
+          <TemplateManager
+            templates={templates}
+            currentTemplateId={currentTemplate.id}
+            onSelect={(t) => {
+              setCurrentTemplate(t);
+              setShowManager(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
