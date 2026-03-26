@@ -44,7 +44,10 @@ import {
   AlertTriangle,
   History,
   TrendingUp,
-  Database
+  Database,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -53,6 +56,9 @@ import { toast } from 'sonner';
 import { CustomerFormDialog } from './CustomerFormDialog';
 import { CustomerDetailsModal } from './CustomerDetailsModal';
 import { IdentityConflictPanel } from './IdentityConflictPanel';
+
+type SortKey = 'nombre' | 'transactions' | 'amount';
+type SortDirection = 'asc' | 'desc';
 
 export function CustomerCatalog() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,6 +71,8 @@ export function CustomerCatalog() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const [stats, setStats] = useState<Record<string, CustomerStats>>({});
+  const [sortKey, setSortKey] = useState<SortKey>('transactions');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const customers = useLiveQuery(() => db.customers.toArray()) || [];
   const conflictCount = useLiveQuery(() => db.identity_audit.where('tipo').equals('CONFLICT').count()) || 0;
@@ -78,8 +86,17 @@ export function CustomerCatalog() {
     setStats(s);
   };
 
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
+  };
+
   const filteredCustomers = useMemo(() => {
-    return customers.filter((c) => {
+    let result = customers.filter((c) => {
       const search = searchTerm.toLowerCase();
       return (
         c.nombre.toLowerCase().includes(search) ||
@@ -88,7 +105,23 @@ export function CustomerCatalog() {
         (c.card_number && c.card_number.includes(search))
       );
     });
-  }, [customers, searchTerm]);
+
+    return result.sort((a, b) => {
+      const statsA = stats[a.ci] || { totalTransactions: 0, totalAmountCents: 0 };
+      const statsB = stats[b.ci] || { totalTransactions: 0, totalAmountCents: 0 };
+
+      let comparison = 0;
+      if (sortKey === 'nombre') {
+        comparison = a.nombre.localeCompare(b.nombre);
+      } else if (sortKey === 'transactions') {
+        comparison = statsA.totalTransactions - statsB.totalTransactions;
+      } else if (sortKey === 'amount') {
+        comparison = statsA.totalAmountCents - statsB.totalAmountCents;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [customers, searchTerm, stats, sortKey, sortDirection]);
 
   const handlePropagate = async () => {
     try {
@@ -103,122 +136,105 @@ export function CustomerCatalog() {
     }
   };
 
-  const handleSyncFromTransactions = async () => {
+  const handleSync = async () => {
     try {
       setIsSyncing(true);
       const imported = await syncCatalogFromTransactions();
-      toast.success(`Sincronización completada: ${imported} nuevos clientes detectados`);
+      toast.success(`Sincronizados ${imported} nuevos clientes del historial`);
     } catch (error) {
-      console.error('Error syncing from transactions:', error);
-      toast.error('Error al sincronizar con transacciones');
+      console.error('Error syncing catalog:', error);
+      toast.error('Error al sincronizar catálogo');
     } finally {
       setIsSyncing(false);
     }
   };
 
   const handleDelete = async (ci: string) => {
-    if (confirm('¿Está seguro de que desea eliminar este cliente?')) {
-      try {
-        await deleteCustomer(ci);
-        toast.success('Cliente eliminado');
-      } catch (error) {
-        console.error('Error deleting customer:', error);
-        toast.error('Error al eliminar el cliente');
-      }
+    if (window.confirm('¿Está seguro de eliminar este cliente?')) {
+      await deleteCustomer(ci);
+      toast.success('Cliente eliminado');
     }
   };
 
   const handleExport = () => {
-    try {
-      const headers = ['CI', 'Nombre', 'Estado', 'Teléfono', 'Tarjeta', 'Origen', 'Transacciones', 'Monto Total'];
-      const rows = filteredCustomers.map(c => {
-        const s = stats[c.ci] || { totalTransactions: 0, totalAmountCents: 0 };
-        return [
-          c.ci,
-          c.nombre,
-          c.status,
-          c.phone || '',
-          c.card_number || '',
-          c.source,
-          s.totalTransactions,
-          (s.totalAmountCents / 100).toFixed(2)
-        ];
-      });
+    const headers = ['Nombre', 'CI', 'Teléfono', 'Tarjeta', 'Estado', 'Transacciones', 'Total Gastado'];
+    const rows = filteredCustomers.map(c => {
+      const s = stats[c.ci] || { totalTransactions: 0, totalAmountCents: 0 };
+      return [
+        c.nombre,
+        c.ci,
+        c.phone || '',
+        c.card_number || '',
+        c.status,
+        s.totalTransactions,
+        (s.totalAmountCents / 100).toFixed(2)
+      ].join(',');
+    });
 
-      const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Catalogo_Clientes_${format(new Date(), 'yyyyMMdd')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Catálogo exportado exitosamente');
-    } catch (error) {
-      console.error('Error exporting catalog:', error);
-      toast.error('Error al exportar el catálogo');
-    }
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "catalogo_clientes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETO':
-        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Completo</Badge>;
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><ShieldCheck className="w-3 h-3" /> OK</Badge>;
       case 'PARCIAL':
-        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Parcial</Badge>;
-      case 'PENDIENTE':
-        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Pendiente</Badge>;
+        return <Badge variant="outline" className="text-orange-500 border-orange-500/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><Clock className="w-3 h-3" /> PARCIAL</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="text-muted-foreground gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><AlertCircle className="w-3 h-3" /> PEND</Badge>;
     }
   };
 
   const getSourceIcon = (source: string) => {
-    return source === 'MANUAL' ? (
-      <ShieldCheck className="w-3 h-3 text-blue-500" />
-    ) : (
-      <Clock className="w-3 h-3 text-muted-foreground" />
-    );
+    return source === 'MANUAL' ? <Edit className="w-3 h-3" /> : <RefreshCw className="w-3 h-3" />;
+  };
+
+  const SortIndicator = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30" />;
+    return sortDirection === 'asc' ? <ChevronUp className="w-3 h-3 ml-1 text-primary" /> : <ChevronDown className="w-3 h-3 ml-1 text-primary" />;
   };
 
   return (
-    <div className="space-y-adaptive">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-            <User className="w-6 h-6 text-primary" />
-            Catálogo de Clientes
+          <h2 className="text-3xl md:text-4xl font-black tracking-tighter flex items-center gap-3">
+            <User className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+            CLIENTES
           </h2>
-          <p className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
-            Gestión de identidades detectadas y registradas
-          </p>
+          <p className="text-muted-foreground font-medium text-sm md:text-base">Gestión de identidades y trazabilidad de pagos</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <Button
-            onClick={handleSyncFromTransactions}
-            disabled={isSyncing}
+
+        <div className="flex flex-wrap items-center gap-2">
+           <Button
             variant="outline"
-            className="neu-btn gap-2 flex-1 sm:flex-none"
-            title="Sincronizar desde Transacciones"
+            className="neu-btn gap-2 rounded-2xl h-11"
+            onClick={handleSync}
+            disabled={isSyncing}
           >
-            <Database className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
-            <span className="hidden xs:inline">Actualizar Catálogo</span>
-            <span className="inline xs:hidden">Act. Catálogo</span>
+            <Database className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Sincronizar Banco</span>
+            <span className="inline sm:hidden">Sinc Banc</span>
           </Button>
           <Button
+            variant="outline"
+            className="neu-btn gap-2 rounded-2xl h-11"
             onClick={handlePropagate}
             disabled={isPropagating}
-            variant="outline"
-            className="neu-btn gap-2 flex-1 sm:flex-none"
-            title="Propagar Identidad a Historico"
           >
             <RefreshCw className={`w-4 h-4 ${isPropagating ? 'animate-spin' : ''}`} />
-            <span className="hidden xs:inline">Re-Sincronizar</span>
-            <span className="inline xs:hidden">Re-Sync</span>
+            <span className="hidden sm:inline">Propagar Identidad</span>
+            <span className="inline sm:hidden">Propagar</span>
           </Button>
           <Button
-            className="neu-btn-primary gap-2 flex-1 sm:flex-none"
+            className="neu-btn-primary gap-2 rounded-2xl h-11 shadow-lg shadow-primary/20"
             onClick={() => {
               setSelectedCustomer(null);
               setFormOpen(true);
@@ -226,44 +242,49 @@ export function CustomerCatalog() {
           >
             <UserPlus className="w-4 h-4" />
             <span className="hidden sm:inline">Nuevo Cliente</span>
-            <span className="inline sm:hidden">+ Cliente</span>
+            <span className="inline sm:hidden">Nuevo</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-adaptive">
-        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
-          <CardHeader className="pb-2 p-0">
-            <CardDescription className="badge-responsive flex items-center gap-1">
-                <User className="w-3 h-3 shrink-0" /> <span className="label-no-wrap">Total Clientes</span>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="neu-card border-none bg-primary/5">
+          <CardHeader className="p-4 md:p-6">
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+              <User className="w-3 h-3" /> Total
             </CardDescription>
-            <CardTitle className="text-2xl md:text-3xl font-black">{customers.length}</CardTitle>
+            <CardTitle className="text-2xl md:text-3xl font-black text-primary">
+              {customers.length}
+            </CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
-          <CardHeader className="pb-2 p-0">
-            <CardDescription className="badge-responsive flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-green-500 shrink-0" /> <span className="label-no-wrap">Completos</span>
+
+        <Card className="neu-card border-none bg-green-500/5">
+          <CardHeader className="p-4 md:p-6">
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+              <ShieldCheck className="w-3 h-3" /> Completos
             </CardDescription>
             <CardTitle className="text-2xl md:text-3xl font-black text-green-500">
               {customers.filter(c => c.status === 'COMPLETO').length}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
-          <CardHeader className="pb-2 p-0">
-            <CardDescription className="badge-responsive flex items-center gap-1">
-                <Clock className="w-3 h-3 text-blue-500 shrink-0" /> <span className="label-no-wrap">Detectados Auto</span>
+
+        <Card className="neu-card border-none bg-blue-500/5">
+          <CardHeader className="p-4 md:p-6">
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+              <History className="w-3 h-3" /> Total Transacciones
             </CardDescription>
             <CardTitle className="text-2xl md:text-3xl font-black text-blue-500">
-              {customers.filter(c => c.source === 'AUTOMATICO').length}
+              {Object.values(stats).reduce((acc, curr) => acc + curr.totalTransactions, 0)}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card className="neu-card border-none bg-card/50 shadow-md p-4">
-          <CardHeader className="pb-2 p-0">
-            <CardDescription className="badge-responsive flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-orange-500 shrink-0" /> <span className="label-no-wrap">Conflictos</span>
+
+        <Card className="neu-card border-none bg-orange-500/5">
+          <CardHeader className="p-4 md:p-6">
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="w-3 h-3" /> <span className="label-no-wrap">Conflictos</span>
             </CardDescription>
             <CardTitle className="text-2xl md:text-3xl font-black text-orange-500">
               {conflictCount}
@@ -317,10 +338,20 @@ export function CustomerCatalog() {
               <Table className="table-responsive">
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent border-border/50">
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Cliente / CI</TableHead>
+                    <TableHead
+                        className="text-[10px] font-black uppercase tracking-widest py-4 cursor-pointer hover:bg-muted/40 transition-colors"
+                        onClick={() => toggleSort('nombre')}
+                    >
+                        <div className="flex items-center">Cliente / CI <SortIndicator column="nombre" /></div>
+                    </TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-center">Estado</TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Contacto / Pago</TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Estadísticas</TableHead>
+                    <TableHead
+                        className="text-[10px] font-black uppercase tracking-widest py-4 cursor-pointer hover:bg-muted/40 transition-colors"
+                        onClick={() => toggleSort('transactions')}
+                    >
+                        <div className="flex items-center">Estadísticas <SortIndicator column="transactions" /></div>
+                    </TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest py-4">Origen</TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest py-4 text-right px-6">Acciones</TableHead>
                   </TableRow>
@@ -358,9 +389,18 @@ export function CustomerCatalog() {
                                 <History className="w-3 h-3 text-muted-foreground shrink-0" />
                                 <span>{cStats.totalTransactions} tx</span>
                               </div>
-                              <div className="flex items-center gap-1.5 text-[10px] font-black text-primary">
+                              <div
+                                className="flex items-center gap-1.5 text-[10px] font-black text-primary cursor-pointer hover:opacity-70"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSort('amount');
+                                }}
+                              >
                                 <TrendingUp className="w-3 h-3 shrink-0" />
                                 <span>${(cStats.totalAmountCents / 100).toLocaleString('es-CU', { minimumFractionDigits: 2 })}</span>
+                                {sortKey === 'amount' && (
+                                    sortDirection === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />
+                                )}
                               </div>
                             </div>
                           </TableCell>
