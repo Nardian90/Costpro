@@ -66,6 +66,7 @@ import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { IPVHelpDialog } from './IPVHelpDialog';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -167,17 +168,19 @@ export default function IPVView() {
 
                 if (res.trace && res.trace.length > 0) {
                     await db.matching_logs.add({
+                        id: uuidv4(),
                         transaction_ref: res.transactionId,
                         fecha_ejecucion: new Date().toISOString(),
                         trace: res.trace,
-                        status: res.status,
-                        confidence: res.matchingConfidence || 0
+                        resultado_estado: res.status,
+                        matching_confidence: res.matchingConfidence || 0,
+                        created_at: new Date().toISOString()
                     });
                 }
             }
         });
         toast.success('Matching automatizado completado');
-        recalculateIPVReportsChain();
+        recalculateIPVReportsChain(db);
     } catch (error) {
         console.error('Matching Error:', error);
         toast.error('Error durante la ejecución del matching');
@@ -202,15 +205,15 @@ export default function IPVView() {
   };
 
   const menuActions: Action[] = [
-    { id: 'dashboard', label: 'Inicio', icon: Workflow, active: activeTab === 'dashboard' },
-    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, active: activeTab === 'analytics' },
-    { id: 'ingestion', label: 'Extracto', icon: Database, active: activeTab === 'ingestion' },
-    { id: 'catalog', label: 'Catálogo', icon: PackageSearch, active: activeTab === 'catalog' },
-    { id: 'transactions', label: 'Transacciones', icon: Table2, active: activeTab === 'transactions' },
-    { id: 'intelligent-receipts', label: 'Recibos I.', icon: Zap, active: activeTab === 'intelligent-receipts' },
-    { id: 'reports-drop', label: 'Documentos', icon: FileText, customElement: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} /> },
-    { id: 'audit', label: 'Auditoría', icon: History, active: activeTab === 'audit' },
-    { id: 'settings-drop', label: 'Config', icon: Settings, customElement: (
+    { id: 'dashboard', label: 'Inicio', icon: Workflow, active: activeTab === 'dashboard', onClick: () => setActiveTab('dashboard') },
+    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, active: activeTab === 'analytics', onClick: () => setActiveTab('analytics') },
+    { id: 'ingestion', label: 'Extracto', icon: Database, active: activeTab === 'ingestion', onClick: () => setActiveTab('ingestion') },
+    { id: 'catalog', label: 'Catálogo', icon: PackageSearch, active: activeTab === 'catalog', onClick: () => setActiveTab('catalog') },
+    { id: 'transactions', label: 'Transacciones', icon: Table2, active: activeTab === 'transactions', onClick: () => setActiveTab('transactions') },
+    { id: 'intelligent-receipts', label: 'Recibos I.', icon: Zap, active: activeTab === 'intelligent-receipts', onClick: () => setActiveTab('intelligent-receipts') },
+    { id: 'reports-drop', label: 'Documentos', icon: FileText, component: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />, onClick: () => {} },
+    { id: 'audit', label: 'Auditoría', icon: History, active: activeTab === 'audit', onClick: () => setActiveTab('audit') },
+    { id: 'settings-drop', label: 'Config', icon: Settings, onClick: () => {}, component: (
         <HorizontalScroll className="flex gap-2">
             <Button variant={activeTab === 'rules' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('rules')} className="h-8 text-[10px] font-black uppercase">Reglas Matching</Button>
             <Button variant={activeTab === 'mapping-rules' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveTab('mapping-rules')} className="h-8 text-[10px] font-black uppercase">Mapeo Identidad</Button>
@@ -224,7 +227,7 @@ export default function IPVView() {
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-background/30 p-2 sm:p-4 lg:p-6 space-y-6 ipv-content">
-      {isMatching && <LoadingOverlay message={matchMessage} progress={matchProgress} />}
+      {isMatching && <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />}
 
       <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
 

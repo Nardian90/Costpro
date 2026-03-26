@@ -3,11 +3,10 @@
 import React, { useState } from 'react';
 import * as XLSX from "xlsx";
 import { FileSpreadsheet } from "lucide-react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type BankTransaction, type Product } from '@/lib/dexie';
+import { db, type BankTransaction, type Product, type ReconciliationLine } from '@/lib/dexie';
 import { MatchingTracePopover } from "./MatchingTracePopover";
 import { ActionBadges } from "./ActionBadges";
 import { ObservationsModal } from "./ObservationsModal";
@@ -23,10 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle, Wand2, Zap, Target, Plus, Info } from 'lucide-react';
+import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, Info, Wand2, Zap, Target, Plus, HelpCircle, Info as InfoIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateHash } from '@/lib/ipv/engine';
+import { logAction } from '@/lib/ipv/audit';
 import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -48,125 +48,110 @@ interface TransactionTableProps {
 export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile, onForceMatch, onAnalyzeAll }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [showExcluded, setShowExcluded] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
-  const [showExcluded, setShowExcluded] = useState(true);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
-  const [obsModal, setObsModal] = useState<{ open: boolean; observations: string; reference: string }>({ open: false, observations: "", reference: "" });
-  const toggleExpand = (id: string) => setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  const [obsModal, setObsModal] = useState({ open: false, observations: "", reference: "" });
 
-  const [confirmation, setConfirmation] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    variant?: 'default' | 'destructive';
-  }>({
-    open: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-  });
+  const filtered = (transactions || []).filter(tx => {
+    const matchesSearch = !searchTerm ||
+        tx.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.observaciones || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
-    setConfirmation({ open: true, title, message, onConfirm, variant });
-  };
-  const exportToExcel = () => {
-    const data = filtered.map(t => ({
-        "Fecha": t.fecha,
-        "Referencia": t.referencia_origen,
-        "Observaciones": t.observaciones,
-        "Importe": Number(t.importe_venta_cents || t.importe_cents),
-        "Tipo": t.tipo,
-        "Estado": t.estado_conciliacion,
-        "Conciliado": Number(txReconciliationTotals[t.referencia_origen] || 0)
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
+    const matchesExclusion = showExcluded || !tx.excluido;
+    const matchesType = typeFilter === 'ALL' || tx.tipo === typeFilter;
 
-    // Apply numeric formatting to currency columns (D and G)
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      ['D', 'G'].forEach(col => {
-        const addr = col + (R + 1);
-        if (ws[addr]) {
-            ws[addr].t = 'n';
-            ws[addr].z = '#,##0.00';
-        }
-      });
+    let matchesKpi = true;
+    if (kpiFilter !== 'ALL') {
+        const total = txReconciliationTotals[tx.referencia_origen] || 0;
+        const target = tx.importe_venta_cents || tx.importe_cents;
+        const isSquare = Math.abs(total - target) < 0.001;
+
+        if (kpiFilter === 'CUADRADAS') matchesKpi = isSquare;
+        else if (kpiFilter === 'EN_PROCESO') matchesKpi = total > 0 && !isSquare;
+        else if (kpiFilter === 'PENDIENTES') matchesKpi = total === 0;
     }
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
-    XLSX.writeFile(wb, `transacciones_ipv_${new Date().toISOString().split("T")[0]}.xlsx`);
-    toast.success("Excel de transacciones exportado");
-  };
+    return matchesSearch && matchesExclusion && matchesType && matchesKpi;
+  });
 
-  const filtered = React.useMemo(() => {
-    return transactions.filter(t => {
-        if (!showExcluded && t.excluido) return false;
-        const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) || t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
-        const matched = txReconciliationTotals[t.referencia_origen] || 0;
-        const target = t.importe_venta_cents || t.importe_cents;
-        const diff = target - matched;
-        let matchesKpi = true;
-        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') {
-            matchesKpi = kpiFilter === 'ALL';
-        } else {
-            if (kpiFilter === 'CUADRADAS') matchesKpi = matched > 0 && Math.abs(diff) < 0.001;
-            else if (kpiFilter === 'EN_PROCESO') matchesKpi = matched > 0 && Math.abs(diff) >= 0.001;
-            else if (kpiFilter === 'PENDIENTES') matchesKpi = matched === 0;
-        }
-        return matchesSearch && matchesType && matchesKpi;
-    });
-  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
-
-  const handleDelete = async (referencia: string) => {
-    askConfirmation('Confirmar Acción', '¿Eliminar esta transacción?', async () => {
-      await db.bank_statements.delete(referencia);
-      toast.success('Transacción eliminada');
-    }, 'destructive');
+  const handleDelete = async (ref: string) => {
+    if (confirm('¿Seguro que desea eliminar esta transacción y sus líneas de conciliación?')) {
+        const tx = transactions.find(t => t.referencia_origen === ref);
+        await logAction({ type: "DELETE", entity: "TRANSACTION", before: tx });
+        await db.bank_statements.delete(ref);
+        await db.reconciliation_lines.where('transaction_ref').equals(ref).delete();
+        toast.success('Transacción eliminada');
+    }
   };
 
   const handleResetReconciliation = async (tx: BankTransaction) => {
-    askConfirmation('Confirmar Acción', `¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`, async () => {
+    if (confirm('¿Resetear la conciliación de esta transacción?')) {
+        const before = { ...tx };
         await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
-        await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: 'PENDIENTE' });
-        toast.success('Conciliación reiniciada');
-    }, 'destructive');
+        await db.bank_statements.update(tx.referencia_origen, {
+            estado_conciliacion: 'PENDIENTE',
+            applied_rules: [],
+            fail_reason: undefined
+        });
+        await logAction({ type: "UPDATE", entity: "TRANSACTION", before, after: { ...tx, estado_conciliacion: 'PENDIENTE' }, context: { action: "RESET" } });
+        toast.success('Conciliación reseteada');
+    }
   };
 
   const bulkResetMatching = async () => {
-    const ids = filtered.filter(t => !t.excluido && t.estado_conciliacion !== 'PENDIENTE').map(t => t.referencia_origen);
-    if (ids.length === 0) return;
-    askConfirmation('Reset Masivo', `¿Reiniciar ${ids.length} transacciones filtradas?`, async () => {
-        await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
-            await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
-            await db.bank_statements.where('referencia_origen').anyOf(ids).modify({ estado_conciliacion: 'PENDIENTE' });
+    if (confirm('¿Resetear TODAS las conciliaciones automáticas?')) {
+        await db.reconciliation_lines.where('origen_dato').equals('AUTO_MATCH').delete();
+        await db.bank_statements.toCollection().modify({
+            estado_conciliacion: 'PENDIENTE',
+            applied_rules: [],
+            fail_reason: undefined
         });
-        toast.success('Reinicio masivo completado');
-    }, 'destructive');
+        await logAction({ type: "RESET", entity: "ALL_MATCHING" });
+        toast.success('Todas las conciliaciones reseteadas');
+    }
   };
 
-  const toggleExclusion = async (tx: BankTransaction, excluded: boolean) => {
-      await db.bank_statements.update(tx.referencia_origen, { excluido: !excluded });
+  const toggleExclusion = async (tx: BankTransaction, val: boolean) => {
+    await db.bank_statements.update(tx.referencia_origen, { excluido: !val });
+    await logAction({ type: "UPDATE", entity: "TRANSACTION", before: tx, after: { ...tx, excluido: !val }, context: { action: "TOGGLE_EXCLUSION" } });
   };
 
-  const getStatusBadge = (tx: BankTransaction, diffCents: number, matchedTotal: number) => {
-    const status = tx.estado_conciliacion;
-    const badge = (() => {
-      if (status === "NO_PROCESAR") return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-xs font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
-      if (matchedTotal > 0 && diffCents <= 0.001) {
-          if (diffCents < -0.001) return <Badge className="bg-blue-500 text-foreground border-blue-600 shadow-sm text-xs font-black uppercase tracking-tighter">EXCEDENTE</Badge>;
-          return <Badge className="bg-green-500 text-foreground border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
-      }
-      if (matchedTotal > 0 && diffCents > 0.001) return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs font-black uppercase tracking-tighter">EN PROCESO</Badge>;
-      return <Badge className="bg-muted/10 text-muted-foreground border-gray-500/20 text-xs font-black uppercase tracking-tighter">PENDIENTE</Badge>;
-    })();
+  const exportToExcel = () => {
+    const data = filtered.map(tx => ({
+        Fecha: formatDate(tx.fecha),
+        Referencia: tx.referencia_origen,
+        Observaciones: tx.observaciones,
+        Neto: tx.importe_cents,
+        Comision: tx.comision_cents || 0,
+        Venta: tx.importe_venta_cents || tx.importe_cents,
+        Diferencia: (tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0),
+        Tipo: tx.tipo,
+        Estado: tx.estado_conciliacion
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
+    XLSX.writeFile(wb, `transacciones_ipv_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const getStatusBadge = (tx: BankTransaction, diff: number, matchedTotal: number) => {
+    const badge = (
+        <Badge
+          className={cn(
+            "text-[9px] font-black uppercase px-1.5 h-4",
+            tx.estado_conciliacion === 'COMPLETO' ? "bg-green-500 hover:bg-green-600" :
+            matchedTotal > 0 ? "bg-yellow-500 hover:bg-yellow-600" : "bg-orange-500 hover:bg-orange-600"
+          )}
+        >
+          {tx.estado_conciliacion === 'COMPLETO' ? 'Cuadrado' :
+           matchedTotal > 0 ? 'Parcial' : 'Pendiente'}
+        </Badge>
+    );
 
     return (
-      <MatchingTracePopover trace={tx.matching_trace} confidence={tx.matching_confidence}>
+      <MatchingTracePopover transactionId={tx.referencia_origen}>
         {badge}
       </MatchingTracePopover>
     );
@@ -211,7 +196,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             <Table className="transaction-table">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b-2">
-                  <TableHead className="w-[40px] text-center"><Info className="w-3 h-3 mx-auto opacity-20" /></TableHead>
+                  <TableHead className="w-[40px] text-center"><InfoIcon className="w-3 h-3 mx-auto opacity-20" /></TableHead>
                   <TableHead className="sticky-column-1">Fecha</TableHead>
                   <TableHead>Referencia</TableHead>
                   <TableHead className="max-w-md">Observaciones</TableHead>
@@ -250,97 +235,39 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             </Table>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-              {filtered.length === 0 ? (
-                  <div className="h-24 flex items-center justify-center text-muted-foreground">No se encontraron transacciones.</div>
-              ) : (
-                  filtered.map((tx) => {
-                      const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                      const targetAmount = tx.importe_venta_cents || tx.importe_cents;
-                      const diff = targetAmount - matchedTotal;
-                      return (
-                          <Card key={tx.id} className="p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden">
-                              <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
-                              <div className="flex justify-between items-start">
-                                  <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    {getStatusBadge(tx, diff, matchedTotal)}
-                                    <ActionBadges appliedRules={tx.applied_rules} />
-                                  </div>
-                              </div>
-                              <div className="space-y-2">
-                                  <div className="space-y-1">
-                                  <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
-                                    {tx.observaciones || "Sin observaciones"}
-                                  </p>
-                                  {tx.observaciones && tx.observaciones.length > 60 && (
-                                    <button
-                                      onClick={() => toggleExpand(tx.referencia_origen)}
-                                      className="text-[10px] font-black uppercase text-primary hover:underline flex items-center gap-1"
-                                    >
-                                      {expandedCards[tx.referencia_origen] ? <><ChevronUp className="w-3 h-3"/> Ver menos</> : <><ChevronDown className="w-3 h-3"/> Ver más</>}
-                                    </button>
-                                  )}
-                                </div>
-                                  {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
-                                      <div className="text-[10px] text-red-500 font-bold uppercase leading-tight animate-pulse whitespace-normal break-words">
-                                          ⚠️ {tx.fail_reason}
-                                      </div>
-                                  )}
-                                  {tx.estado_conciliacion !== "COMPLETO" && onForceMatch && (
-                                      <Button variant="link" className="h-4 p-0 text-[10px] text-primary font-black uppercase tracking-tighter" onClick={() => onForceMatch(tx)}>
-                                          Analizar fallo
-                                      </Button>
-                                  )}
-                              </div>
-                              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
-                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Neto</p><p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p></div>
-                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p><p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p></div>
-                                  <div className="text-right"><p className="text-xs font-bold text-primary uppercase">Objetivo</p><p className="text-sm font-black">{formatCurrency(targetAmount)}</p></div>
-                              </div>
-                              <div className="text-right"><p className="text-xs font-bold text-muted-foreground uppercase">Diferencia</p><p className={`text-lg font-black ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</p></div>
-                              <div className="flex justify-end gap-2 pt-2"><Button variant="outline" size="sm" className="h-11 px-4 text-xs font-bold uppercase gap-2 neu-btn" onClick={() => onReconcile(tx)}><Eye className="w-3 h-3" />Ver / Cuadrar</Button><Button variant="outline" size="icon" className="h-11 w-11 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleDelete(tx.referencia_origen)}><Trash2 className="w-3 h-3" /></Button></div>
-                          </Card>
-                      );
-                  })
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+              {filtered.map(tx => (
+                  <TransactionCard
+                    key={tx.referencia_origen}
+                    tx={tx}
+                    matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0}
+                    onView={() => onReconcile(tx)}
+                    onReset={() => handleResetReconciliation(tx)}
+                    onDelete={() => handleDelete(tx.referencia_origen)}
+                    diff={(tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0)}
+                    getStatusBadge={getStatusBadge}
+                  />
+              ))}
           </div>
         )}
-        <ObservationsModal
-        open={obsModal.open}
-        onOpenChange={(open) => setObsModal(prev => ({ ...prev, open }))}
-        observations={obsModal.observations}
-        reference={obsModal.reference}
-      />
-      <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
-      </div>
-      <BaseModal
-        open={confirmation.open}
-        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
-        title={confirmation.title}
-        footer={
-          <div className="flex gap-2 w-full pt-4">
-            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">Cancelar</Button>
-            <Button variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'} onClick={() => { confirmation.onConfirm(); setConfirmation(prev => ({ ...prev, open: false })); }} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">Confirmar</Button>
-          </div>
-        }
-      >
-        <div className="py-4"><p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p></div>
-      </BaseModal>
-      <AddTransactionModal open={isAddTxOpen} onOpenChange={setIsAddTxOpen} />
-    </>
-  );
-}
 
-function ColumnHelpModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <div className="flex justify-between items-center p-4 border-t bg-muted/10">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Mostrando {filtered.length} de {transactions.length} transacciones</p>
+            <Button variant="ghost" size="sm" onClick={() => setHelpOpen(true)} className="h-8 text-xs font-black uppercase"><HelpCircle className="w-4 h-4 mr-2" /> Guía de Uso</Button>
+        </div>
+      </div>
+
+      <AddTransactionModal open={isAddTxOpen} onOpenChange={setIsAddTxOpen} />
+      <ObservationsModal open={obsModal.open} onOpenChange={(val) => setObsModal({ ...obsModal, open: val })} observations={obsModal.observations} reference={obsModal.reference} />
+
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
             <DialogContent className="max-w-2xl">
-                <DialogHeader><div className="flex items-center gap-2 text-primary border-b pb-4"><HelpCircle className="w-6 h-6" /><DialogTitle className="text-xl font-black uppercase tracking-tight">Guía de Columnas</DialogTitle></div></DialogHeader>
+                <DialogHeader><DialogTitle className="text-2xl font-black uppercase italic tracking-tighter">Guía de Conciliación Bancaria</DialogTitle></DialogHeader>
                 <div className="space-y-6 pt-4"><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><HelpItem title="Fecha" desc="Fecha de la operación." /><HelpItem title="Ref_Origen" desc="Identificador único del banco." /><HelpItem title="Ref_Corriente" desc="Referencia corta." /><HelpItem title="Importe" desc="Monto con decimales." /><HelpItem title="Tipo" desc="'Cr' para Ingresos y 'Db' para Gastos." /><HelpItem title="Observaciones" desc="Detalle del banco." /></div></div>
             </DialogContent>
         </Dialog>
-    );
+    </>
+  );
 }
 
 function HelpItem({ title, desc }: { title: string, desc: string }) {
@@ -349,7 +276,7 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
 
 const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff, onForceMatchInternal, onViewObservations }: any) => {
     return (
-        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted\/20' : ''} transition-colors`}>
           <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
@@ -359,7 +286,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
       {tx.observaciones || "Sin observaciones"}
     </div>
     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={onViewObservations}>
-      <Info className="w-3 h-3 text-primary" />
+      <InfoIcon className="w-3 h-3 text-primary" />
     </Button>
   </div>
     {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
@@ -380,24 +307,69 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell><span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>{tx.tipo}</span></TableCell>
           <TableCell>{getStatusBadge(tx, diff, matchedTotal)}</TableCell>
           <TableCell><ActionBadges appliedRules={tx.applied_rules} /></TableCell>
-          <TableCell className="text-right"><div className="flex justify-end gap-1 items-center"><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={onView}><Eye className="w-4 h-4" /></Button>{matchedTotal > 0 && (<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500" onClick={onReset}><RotateCcw className="w-4 h-4" /></Button>)}<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div></TableCell>
+          <TableCell className="text-right"><div className="flex justify-end gap-1 items-center"><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary\/10 hover:text-primary" onClick={onView}><Eye className="w-4 h-4" /></Button>{matchedTotal > 0 && (<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-orange-500\/10 hover:text-orange-500" onClick={onReset}><RotateCcw className="w-4 h-4" /></Button>)}<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive\/10 hover:text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div></TableCell>
         </TableRow>
     );
 });
 TransactionRow.displayName = 'TransactionRow';
+
+function TransactionCard({ tx, matchedTotal, onView, onReset, onDelete, diff, getStatusBadge }: any) {
+    return (
+        <Card className="p-4 space-y-4 shadow-lg hover:border-primary/30 transition-all border-2 border-transparent bg-card/50 backdrop-blur-md rounded-3xl">
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{formatDate(tx.fecha)}</p>
+                    <p className="font-mono text-xs font-bold text-primary">{tx.referencia_origen.slice(-12)}</p>
+                </div>
+                {getStatusBadge(tx, diff, matchedTotal)}
+            </div>
+
+            <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground line-clamp-2 min-h-[2.5rem]">{tx.observaciones || "Sin observaciones"}</p>
+                <div className="grid grid-cols-2 gap-4 py-3 border-y border-border/50">
+                    <div>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase">Importe Venta</p>
+                        <p className="font-black text-sm text-primary">{formatCurrency(tx.importe_venta_cents || tx.importe_cents)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[9px] font-black text-muted-foreground uppercase">Diferencia</p>
+                        <p className={`font-black text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : 'text-red-500'}`}>{formatCurrency(diff)}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center gap-2">
+                <div className="flex gap-1">
+                    <ActionBadges appliedRules={tx.applied_rules} />
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-primary/10 rounded-xl" onClick={onView}><Eye className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-destructive/10 rounded-xl text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button>
+                </div>
+            </div>
+        </Card>
+    );
+}
 
 function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction: BankTransaction, remaining: number, onSuccess: () => void }) {
     const lines = useLiveQuery(() => db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray(), [transaction.referencia_origen]);
     const handleAdjust = async (line: any) => {
         const newTotalLine = line.importe_linea_cents + remaining;
         if (newTotalLine < 0) { toast.error('Precio negativo'); return; }
-        await db.reconciliation_lines.update(line.id, { importe_linea_cents: newTotalLine, precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents, cuadre_cents: (line.cuadre_cents || 0) + remaining });
+        const before = { ...line };
+        await db.reconciliation_lines.update(line.id, {
+            importe_linea_cents: newTotalLine,
+            precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents,
+            cuadre_cents: (line.cuadre_cents || 0) + remaining
+        });
+
+        await logAction({ type: "UPDATE", entity: "RECONCILIATION_LINE", before, after: { ...line, importe_linea_cents: newTotalLine }, context: { action: "QUICK_ADJUST", transaction_ref: transaction.referencia_origen } });
+
         const txLines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
         const newTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
         const target = transaction.importe_venta_cents || transaction.importe_cents;
         await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
-        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(remaining) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "FORCE_MATCH" } });
-        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "QUICK_ADJUST" } });
+
         toast.success('Ajuste aplicado');
         onSuccess();
     };
@@ -425,12 +397,28 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
         const importe = product.precio_cents * qty;
         const remaining = target - importe;
         const newLine: any = {
-            id: uuidv4(), transaction_ref: transaction.referencia_origen, fecha_operacion: transaction.fecha, ingreso_banco_cents: transaction.importe_cents, venta_real_calculada_cents: importe, comision_banco_cents: transaction.comision_cents || 0, product_cod: product.cod, product_um: product.um, cantidad: qty, precio_unitario_cents: product.precio_cents, importe_linea_cents: importe, cuadre_cents: 0, clasificacion: transaction.tipo === 'Cr' ? 'Transferencia' : 'Efectivo', origen_dato: 'MANUAL_USER', reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${product.cod}-${qty}-${Date.now()}`), created_at: new Date().toISOString()
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_operacion: transaction.fecha,
+            ingreso_banco_cents: transaction.importe_cents,
+            venta_real_calculada_cents: importe,
+            comision_banco_cents: transaction.comision_cents || 0,
+            product_cod: product.cod,
+            product_um: product.um,
+            cantidad: qty,
+            precio_unitario_cents: product.precio_cents,
+            importe_linea_cents: importe,
+            cuadre_cents: 0,
+            clasificacion: transaction.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
+            origen_dato: 'MANUAL_USER',
+            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${product.cod}-${qty}-${Date.now()}`),
+            created_at: new Date().toISOString()
         };
         await db.reconciliation_lines.add(newLine);
+        await logAction({ type: "CREATE", entity: "RECONCILIATION_LINE", after: newLine, context: { action: "FORCE_MATCH", transaction_ref: transaction.referencia_origen } });
+
         await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
-        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(remaining) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "FORCE_MATCH" } });
-        await logAction({ type: "UPDATE", entity: "TRANSACTION", before: transaction, after: { ...transaction, estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? "COMPLETO" : "PARCIAL" }, context: { source: "QUICK_ADJUST" } });
+
         toast.success('Producto asignado exitosamente');
     };
     return (

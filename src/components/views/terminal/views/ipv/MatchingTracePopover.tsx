@@ -21,16 +21,26 @@ import {
   Zap,
   Package
 } from 'lucide-react';
-import { type MatchingTrace } from '@/lib/dexie';
+import { type MatchingTrace, db, type MatchingLog } from '@/lib/dexie';
 import { cn } from '@/lib/utils';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface MatchingTracePopoverProps {
+  transactionId?: string;
   trace?: MatchingTrace[];
   confidence?: number;
   children: React.ReactNode;
 }
 
-export function MatchingTracePopover({ trace, confidence, children }: MatchingTracePopoverProps) {
+export function MatchingTracePopover({ transactionId, trace: providedTrace, confidence: providedConfidence, children }: MatchingTracePopoverProps) {
+  const latestLog = useLiveQuery<MatchingLog | undefined>(
+    () => transactionId ? db.matching_logs.where('transaction_ref').equals(transactionId).reverse().first() : Promise.resolve(undefined),
+    [transactionId]
+  );
+
+  const trace = providedTrace || latestLog?.trace;
+  const confidence = providedConfidence || latestLog?.matching_confidence;
+
   if (!trace || trace.length === 0) return <>{children}</>;
 
   const getStatusIcon = (status: string) => {

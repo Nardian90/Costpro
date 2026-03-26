@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { MatchingLogService } from '@/services/matching-log-service';
 import { db } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
+import { exportAuditLogsJSON } from "@/lib/ipv/audit";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -29,152 +30,114 @@ import {
   Cell
 } from 'recharts';
 import {
-  CheckCircle2,
-  UserCheck,
-  Clock,
-  AlertCircle,
-  TrendingUp,
   Download,
-  History
+  Search,
+  Filter,
+  Trash2,
+  FileJson,
+  BarChart3,
+  History,
+  Activity
 } from 'lucide-react';
 
 export function MatchingAuditView() {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
 
   const logs = useLiveQuery(
-    () => MatchingLogService.getLogsByDateAndStatus(selectedDate),
-    [selectedDate]
-  );
-
-  const transactions = useLiveQuery(() => db.bank_statements.where('fecha').equals(selectedDate).toArray(), [selectedDate]);
+    () => db.matching_logs.orderBy('fecha_ejecucion').reverse().toArray()
+  ) || [];
 
   const txHistory = useLiveQuery(
-    () => selectedTx ? MatchingLogService.getTransactionHistory(selectedTx) : Promise.resolve([]),
+    () => selectedTx ? db.matching_logs.where('transaction_ref').equals(selectedTx).sortBy('fecha_ejecucion') : [],
     [selectedTx]
   );
 
+  const filtered = useMemo(() => {
+    if (!searchTerm) return logs;
+    const lower = searchTerm.toLowerCase();
+    return logs.filter(l =>
+        l.transaction_ref?.toLowerCase().includes(lower) ||
+        l.resultado_estado?.toLowerCase().includes(lower)
+    );
+  }, [logs, searchTerm]);
+
   const stats = useMemo(() => {
-    if (!logs || !transactions) return null;
+    const total = logs.length;
+    const success = logs.filter(l => l.resultado_estado === 'COMPLETO').length;
+    const partial = logs.filter(l => l.resultado_estado === 'PARCIAL').length;
+    const failed = logs.filter(l => l.resultado_estado === 'PENDIENTE').length;
+    const avgConfidence = logs.length > 0
+        ? (logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length) * 100
+        : 0;
 
-    // Transacciones cuadradas reales en la DB
-    const realComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
-    const realPartial = transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length;
-    const realPending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length;
+    return { total, success, partial, failed, avgConfidence };
+  }, [logs]);
 
-    // Diferenciar entre automático (en logs) y manual
-    const autoCompleteRefs = new Set(logs.filter(l => l.resultado_estado === 'COMPLETO').map(l => l.transaction_ref));
-    const manualComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO' && !autoCompleteRefs.has(t.referencia_origen)).length;
+  const chartData = [
+    { name: 'Completas', value: stats.success, color: '#22c55e' },
+    { name: 'Parciales', value: stats.partial, color: '#eab308' },
+    { name: 'Pendientes', value: stats.failed, color: '#ef4444' }
+  ];
 
-    return {
-      total: transactions.length,
-      completo: realComplete,
-      manualCompleto: manualComplete,
-      autoCompleto: autoCompleteRefs.size,
-      parcial: realPartial,
-      pendiente: realPending,
-      avgConfidence: logs.length > 0 ? logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length : 0,
-      successRate: transactions.length > 0 ? (realComplete / transactions.length) * 100 : 0
-    };
-  }, [logs, transactions]);
-
-  const chartData = useMemo(() => {
-    if (!stats) return [];
-    return [
-      { name: 'AUTO', value: stats.autoCompleto, color: '#22c55e' },
-      { name: 'MANUAL', value: stats.manualCompleto, color: '#3b82f6' },
-      { name: 'PARCIAL', value: stats.parcial, color: '#f97316' },
-      { name: 'PENDIENTE', value: stats.pendiente, color: '#ef4444' }
-    ];
-  }, [stats]);
-
-  if (!logs) return <div className="p-8 text-center font-bold animate-pulse">Cargando auditoría...</div>;
+  const clearLogs = async () => {
+    if (confirm('¿Seguro que desea limpiar todo el historial de auditoría?')) {
+        await db.matching_logs.clear();
+    }
+  };
 
   return (
-    <div className="space-y-6 p-4">
-      {/* Date Filter */}
-      <div className="flex items-center gap-4">
-        <History className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-black uppercase tracking-tight">Auditoría del Motor</h2>
-        <Input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setSelectedTx(null);
-          }}
-          className="w-40 font-mono text-xs"
-        />
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+            <h2 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-2">
+                <History className="w-6 h-6 text-primary" />
+                Auditoría de Matching
+            </h2>
+            <p className="text-xs text-muted-foreground font-medium">Trazabilidad forense del motor de conciliación automatizado.</p>
+        </div>
+
+        <div className="flex gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                    placeholder="Filtrar por transacción..."
+                    className="pl-10 h-10 text-sm rounded-xl"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl" onClick={clearLogs}>
+                <Trash2 className="w-4 h-4 text-destructive" />
+            </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Card className="p-4 bg-green-500/5 border-green-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUADRADAS (TOTAL)</p>
-                <p className="text-2xl font-black text-green-600">{stats.completo}</p>
-                <div className="flex gap-2 mt-1">
-                    <span className="text-[9px] font-bold text-green-700 bg-green-500/10 px-1 rounded">AUTO: {stats.autoCompleto}</span>
-                    <span className="text-[9px] font-bold text-blue-700 bg-blue-500/10 px-1 rounded">MANUAL: {stats.manualCompleto}</span>
-                </div>
-              </div>
-              <CheckCircle2 className="w-6 h-6 text-green-600 opacity-20" />
-            </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="p-4 bg-primary/5 border-primary/10">
+              <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Total Ejecuciones</p>
+              <h3 className="text-2xl font-black">{stats.total}</h3>
           </Card>
-
-          <Card className="p-4 bg-orange-500/5 border-orange-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PARCIALES</p>
-                <p className="text-2xl font-black text-orange-600">{stats.parcial}</p>
-              </div>
-              <Clock className="w-6 h-6 text-orange-600 opacity-20" />
-            </div>
+          <Card className="p-4 bg-green-500/5 border-green-500/10">
+              <p className="text-[10px] font-black uppercase text-green-600/70 mb-1">Efectividad</p>
+              <h3 className="text-2xl font-black text-green-600">
+                {stats.total > 0 ? ((stats.success / stats.total) * 100).toFixed(1) : 0}%
+              </h3>
           </Card>
-
-          <Card className="p-4 bg-red-500/5 border-red-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PENDIENTES</p>
-                <p className="text-2xl font-black text-red-600">{stats.pendiente}</p>
-              </div>
-              <AlertCircle className="w-6 h-6 text-red-600 opacity-20" />
-            </div>
+          <Card className="p-4 bg-yellow-500/5 border-yellow-500/10">
+              <p className="text-[10px] font-black uppercase text-yellow-600/70 mb-1">Confianza Media</p>
+              <h3 className="text-2xl font-black text-yellow-600">{stats.avgConfidence.toFixed(0)}%</h3>
           </Card>
-
-          <Card className="p-4 bg-primary/5 border-primary/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CONFIANZA AVG</p>
-                <p className="text-2xl font-black">{(stats.avgConfidence * 100).toFixed(0)}%</p>
-              </div>
-              <TrendingUp className="w-6 h-6 text-primary opacity-20" />
-            </div>
+          <Card className="p-4 bg-muted/50 border-border">
+              <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Pendientes</p>
+              <h3 className="text-2xl font-black text-destructive">{stats.failed}</h3>
           </Card>
-
-          <Card className="p-4 bg-card border-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">TASA ÉXITO</p>
-                <p className="text-2xl font-black">{stats.successRate.toFixed(1)}%</p>
-              </div>
-              <CheckCircle2 className="w-6 h-6 text-primary opacity-20" />
-            </div>
-          </Card>
-        </div>
-      ) : (
-        <Card className="p-8 text-center text-muted-foreground italic border-dashed">
-            No hay actividad registrada para esta fecha.
-        </Card>
-      )}
+      </div>
 
       {/* Charts */}
-      {stats && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {logs.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-4">
             <h3 className="text-xs font-black uppercase mb-4 tracking-widest text-muted-foreground">Distribución de Resultados</h3>
             <div className="h-[250px] w-full">
@@ -254,7 +217,7 @@ export function MatchingAuditView() {
                         {log.transaction_ref?.slice(-12) || "N/A"}
                     </TableCell>
                     <TableCell className="text-xs font-medium">
-                        {new Date(log.fecha_ejecucion || "").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {log.fecha_ejecucion ? new Date(log.fecha_ejecucion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
                     </TableCell>
                     <TableCell>
                         <Badge

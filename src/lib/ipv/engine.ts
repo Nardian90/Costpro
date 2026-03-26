@@ -112,16 +112,13 @@ export class MatchingEngine {
     const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
     let remaining_cents = targetAmount - current_reconciled_cents;
 
-    const addTrace = (pass: number, rule: string, status: string, details: string, meta?: any) => {
+    const addTrace = (pass: number, rule: string, status: string, details: string) => {
         trace.push({
-            id: uuidv4(),
-            transaction_ref: transaction.referencia_origen,
-            fecha_ejecucion: new Date().toISOString(),
-            pass_number: pass,
-            rule_type: rule,
+            pass: pass,
+            rule: rule,
             status: status as 'SUCCESS' | 'FAIL' | 'SKIPPED',
-            details,
-            metadata: meta
+            reason: details,
+            timestamp: Date.now()
         });
         if (status === 'SUCCESS' && !appliedRules.includes(rule)) {
             appliedRules.push(rule);
@@ -138,7 +135,7 @@ export class MatchingEngine {
           status: 'COMPLETO',
           logs: [reason],
           movements: [],
-          trace: [{ id: uuidv4(), transaction_ref: transaction.referencia_origen, fecha_ejecucion: new Date().toISOString(), pass_number: 0, rule_type: 'AUTO_COMPLETE', status: 'SUCCESS', details: reason }],
+          trace: [{ pass: 0, rule: 'AUTO_COMPLETE', status: 'SUCCESS', reason, timestamp: Date.now() }],
           appliedRules: ['AUTO_COMPLETE'],
           matchingConfidence
       };
@@ -164,7 +161,7 @@ export class MatchingEngine {
             status: Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : 'PARCIAL',
             logs,
             movements: [...this.pendingMovements],
-            trace: [{ id: uuidv4(), transaction_ref: transaction.referencia_origen, fecha_ejecucion: new Date().toISOString(), pass_number: 0, rule_type: 'CACHE', status: 'SUCCESS', details: 'Recuperado de cache' }],
+            trace: [{ pass: 0, rule: 'CACHE', status: 'SUCCESS', reason: 'Recuperado de cache', timestamp: Date.now() }],
             appliedRules: ['CACHE'],
             matchingConfidence
         };
@@ -204,7 +201,7 @@ export class MatchingEngine {
           lines.push(line);
           remaining_cents -= line.importe_linea_cents;
           logs.push(`PASS 1 (HARD_REF): Matched ${qty}x ${matchedProduct.descripcion}`);
-          addTrace(1, 'HARD_REF', 'SUCCESS', `Detectado ${matchedProduct.descripcion}`, { product: matchedProduct.cod, qty });
+          addTrace(1, 'HARD_REF', 'SUCCESS', `Detectado ${matchedProduct.descripcion}`);
         } else {
             addTrace(1, 'HARD_REF', 'FAIL', `Sin stock para ${matchedProduct.descripcion}`);
         }
@@ -242,7 +239,6 @@ export class MatchingEngine {
 
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
-        // Implementation for price flexibility
         addTrace(3, 'PRICE_FLEX', 'SKIPPED', 'No implementado en esta versión');
     }
 
@@ -556,5 +552,68 @@ export class MatchingEngine {
       }
     }
     await db.daily_aggregates.put({ fecha, total_cents, by_product: Array.from(by_product_map.values()) });
+  }
+
+  async distributeGlobalGoal(
+    targetTotal: number,
+    currentTotal: number,
+    dates: string[],
+    options: { strategy: 'balanced' | 'random' | 'end_of_month' | 'MIN_STOCK' | 'MAX_VALUE' }
+  ): Promise<ReconciliationLine[]> {
+    const lines: ReconciliationLine[] = [];
+    let remaining = targetTotal - currentTotal;
+    if (remaining <= 0) return [];
+
+    const cashFillerProducts = this.products
+      .filter(p => p.isWildcardCandidate)
+      .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    if (cashFillerProducts.length === 0) return [];
+
+    const targetPerDay = remaining / dates.length;
+
+    for (const fecha of dates) {
+        let dailyTarget = 0;
+        if (options.strategy === 'balanced' || (options.strategy as string) === 'MIN_STOCK') {
+            dailyTarget = targetPerDay;
+        } else if (options.strategy === 'end_of_month' || (options.strategy as string) === 'MAX_VALUE') {
+            const isLastDays = dates.indexOf(fecha) > dates.length - 5;
+            dailyTarget = isLastDays ? (remaining / 5) : 0;
+        } else {
+            dailyTarget = Math.random() * targetPerDay * 2;
+        }
+
+        dailyTarget = Math.min(dailyTarget, remaining);
+        if (dailyTarget <= 0) continue;
+
+        let dailyRemaining = dailyTarget;
+        for (const p of cashFillerProducts) {
+            const qty = Math.floor(dailyRemaining / p.precio_cents);
+            if (qty > 0) {
+                const line = await this.createLine(
+                    { referencia_origen: `GOAL-${fecha}`, fecha, importe_cents: dailyTarget, observaciones: 'Distribución automática de meta', tipo: 'Cr' } as BankTransaction,
+                    p,
+                    qty,
+                    'CASH_FILLER',
+                    'Efectivo'
+                );
+                lines.push(line);
+                dailyRemaining -= line.importe_linea_cents;
+                remaining -= line.importe_linea_cents;
+            }
+        }
+    }
+
+    return lines;
+  }
+
+  async matchSimulation(target: number): Promise<MatchingResult> {
+    return this.matchTransaction({
+        referencia_origen: 'SIMULATION',
+        fecha: new Date().toISOString(),
+        importe_cents: target,
+        observaciones: 'SIMULATION_MODE',
+        tipo: 'Cr'
+    } as BankTransaction);
   }
 }
