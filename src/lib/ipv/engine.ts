@@ -66,7 +66,8 @@ export class MatchingEngine {
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
     const stockLimitRule = this.rules.find(r => r.tipo === 'STOCK_LIMIT');
-    this.allowNegativeStock = stockLimitRule?.meta?.allow_negative !== false;
+    // ✅ FIX: Si STOCK_LIMIT está activo, NO permitir negativos (a menos que se especifique)
+    this.allowNegativeStock = this.useStockLimit ? (stockLimitRule?.meta?.allow_negative === true) : true;
     this.pendingMovements = [];
     this.dailyAdjustedPrices = new Map();
 
@@ -101,7 +102,11 @@ export class MatchingEngine {
     }
   }
 
-  async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
+  async matchTransaction(
+    transaction: BankTransaction,
+    current_reconciled_cents: number = 0,
+    cashFillUsedTodayInMemory: number = 0 // ✅ NUEVO PARÁMETRO
+  ): Promise<MatchingResult> {
     const startTimeMs = performance.now();
     const startTime = Date.now();
     const logs: string[] = [];
@@ -397,11 +402,18 @@ export class MatchingEngine {
         const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.daily_limit ?? Infinity;
-      const usedToday = await db.reconciliation_lines
-        .where('fecha_operacion').equals(transaction.fecha)
-        .and(l => l.origen_dato === 'CASH_FILLER')
-        .toArray()
-        .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
+
+      // ✅ FIX: Usar el rastreador en memoria DURANTE el lote
+      let usedToday = cashFillUsedTodayInMemory;
+
+      // ✅ FIX: Si es una llamada individual (no en lote), consultar DB
+      if (cashFillUsedTodayInMemory === 0) {
+        usedToday = await db.reconciliation_lines
+          .where('fecha_operacion').equals(transaction.fecha)
+          .and(l => l.origen_dato === 'CASH_FILLER')
+          .toArray()
+          .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
+      }
 
       if (usedToday + remaining_cents > dailyLimit) {
         logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
@@ -649,6 +661,19 @@ export class MatchingEngine {
 
       if (availableAncestorStock > 0) {
         const conversionFactor = ancestor.contenido_paquete || 1;
+
+        // ✅ FIX: NO descomponer si resultaría en stock negativo
+        if (this.useStockLimit && !this.allowNegativeStock) {
+          const stockAfterDecomposition = availableAncestorStock - 1;
+          if (stockAfterDecomposition < 0) {
+            console.warn(
+              `[STOCK_LIMIT] Cannot decompose ${ancestor.cod}: stock would go negative ` +
+              `(current: ${availableAncestorStock}, required: 1)`
+            );
+            continue; // Pasar al siguiente ancestro
+          }
+        }
+
         this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
         const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
         this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
@@ -846,25 +871,47 @@ export class MatchingEngine {
   async reconcileAll(
     transactions: (BankTransaction & { current_reconciled_cents?: number })[],
     onProgress?: (percentage: number) => void,
-    customStockMap?: Map<string, number>
+    customStockMap?: Map<string, number>,
+    cashFillUsedByDate?: Map<string, number> // ✅ NUEVO PARÁMETRO
   ): Promise<any[]> {
     const results: any[] = [];
     if (customStockMap) this.stockMap = new Map(customStockMap);
 
+    // ✅ FIX: Rastrear CASH_FILL por fecha en memoria
+    const inMemoryCashFillByDate = cashFillUsedByDate || new Map<string, number>();
+
     for (let i = 0; i < transactions.length; i++) {
       const tx = transactions[i];
       try {
-          const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
-          results.push({
-              transactionId: tx.referencia_origen,
-              status: res.status,
-              lines: res.lines,
-              failReason: res.failReason,
-              movements: res.movements,
-              trace: res.trace,
-              appliedRules: res.appliedRules,
-              matchingConfidence: res.matchingConfidence
-          });
+        // ✅ NUEVO: Pasar el estado actual de CASH_FILL
+        const currentCashUsedToday = inMemoryCashFillByDate.get(tx.fecha) || 0;
+
+        const res = await this.matchTransaction(
+          tx,
+          tx.current_reconciled_cents || 0,
+          currentCashUsedToday // ✅ NUEVO ARGUMENTO
+        );
+
+        results.push({
+          transactionId: tx.referencia_origen,
+          status: res.status,
+          lines: res.lines,
+          failReason: res.failReason,
+          movements: res.movements,
+          trace: res.trace,
+          appliedRules: res.appliedRules,
+          matchingConfidence: res.matchingConfidence
+        });
+
+        // ✅ NUEVO: Actualizar el rastreador de CASH_FILL
+        const cashUsedThisTx = res.lines
+          .filter(l => l.origen_dato === 'CASH_FILLER')
+          .reduce((sum, l) => sum + l.importe_linea_cents, 0);
+
+        inMemoryCashFillByDate.set(
+          tx.fecha,
+          currentCashUsedToday + cashUsedThisTx
+        );
       } catch (error) {
           console.error(`Error matching transaction ${tx.referencia_origen}:`, error);
           results.push({
