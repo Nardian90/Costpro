@@ -29,7 +29,7 @@ export class ImportValidator {
   private static HEADER_MAP: Record<string, string[]> = {
     cod: ['Código', 'cod', 'CODIGO', 'SKU', 'Ref', 'REF', 'Id', 'ID'],
     id_grupo: ['id_grupo', 'ID_GRUPO', 'Grupo', 'grupo', 'Group', 'GROUP'],
-    cod_hijo: ['cod_hijo', 'COD_HIJO', 'Hijo', 'hijo', 'Child', 'CHILD'],
+    cod_hijo: ['cod_hijo', 'COD_HIJO', 'Hijo', 'hijo', 'Child', 'CHILD', 'cod_padre', 'COD_PADRE', 'Padre', 'padre', 'Parent', 'PARENT'],
     descripcion: ['Descripción', 'descripcion', 'DESCRIPCION', 'Name', 'NAME', 'Nombre', 'nombre'],
     um: ['UM', 'um', 'UM', 'Unidad', 'unidad', 'Unit', 'UNIT'],
     precio_cents: ['Precio ($)', 'precio_cents', 'PRECIO', 'Price', 'PRICE'],
@@ -121,6 +121,34 @@ export class ImportValidator {
       warnings.push(...rowErrors.filter(e => e.severity === 'WARNING'));
     });
 
-    return { products: normalizedProducts, result: { valid: errors.length === 0, errors, warnings, normalizedCount: normalizedProducts.length, summary } };
+    const validationResult = { valid: errors.length === 0, errors, warnings, normalizedCount: normalizedProducts.length, summary };
+
+    // Validar huérfanos
+    const orphanErrors = this.validateOrphanProducts(normalizedProducts, existingCatalog);
+    validationResult.errors.push(...orphanErrors);
+    if (orphanErrors.length > 0) validationResult.valid = false;
+
+    return { products: normalizedProducts, result: validationResult };
+  }
+
+  private static validateOrphanProducts(newProducts: NormalizedProduct[], existingCatalog: Product[]): ValidationError[] {
+    const errors: ValidationError[] = [];
+    const allCods = new Set([
+      ...newProducts.map(p => p.cod),
+      ...existingCatalog.map(p => p.cod)
+    ]);
+
+    newProducts.forEach((p, index) => {
+      if (p.cod_hijo && !allCods.has(p.cod_hijo)) {
+        errors.push({
+          row: index + 1,
+          code: 'ORPHAN_CHILD',
+          message: `El producto ${p.cod} referencia a un hijo inexistente: ${p.cod_hijo}`,
+          severity: 'ERROR'
+        });
+      }
+    });
+
+    return errors;
   }
 }

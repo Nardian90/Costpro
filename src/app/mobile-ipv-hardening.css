@@ -1,0 +1,64 @@
+/* IPV específico para 320px-420px */
+@media (max-width: 420px) {
+  .ipv-control-panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .ipv-reports-dropdown {
+    width: 100% !important;
+  }
+
+  .transaction-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 1rem !important;
+  }
+
+  .table-row {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    gap: 0.5rem !important;
+    padding: 1rem !important;
+    background: var(--card) !important;
+    border-radius: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Botones de acción */
+  .ipv-action-buttons {
+    gap: 0.5rem !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .button-group {
+    width: 100% !important;
+  }
+
+  .button-group button {
+    min-height: 44px !important;
+    font-size: clamp(11px, 2vw, 12px) !important;
+    width: 100% !important;
+  }
+
+  /* Prevenir CLS > 0.01 */
+  .ipv-content {
+    contain: layout style paint !important;
+  }
+
+  /* Responsividad adicional de TransactionTable */
+  .transaction-table {
+    min-width: 320px !important;
+    display: grid !important;
+    gap: 0.5rem !important;
+  }
+
+  .ipv-reports-container {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+}
