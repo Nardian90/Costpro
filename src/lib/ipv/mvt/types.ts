@@ -4,13 +4,16 @@ export interface FieldConfig {
   key: string;
   source: FieldSource;
   value: string;
+  _id?: string; // Internal use for stable sorting
 }
 
 export interface MVTSection {
   title: string;
   fields: FieldConfig[];
   type: 'single' | 'repeatable';
+  renderMode?: 'key_value' | 'pipe_separated';
   dataSource?: 'products' | 'movements';
+  _id?: string; // Internal use for stable sorting
 }
 
 export interface MVTTemplate {
