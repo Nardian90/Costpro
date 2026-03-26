@@ -18,7 +18,7 @@ async function getKnowledgeBaseContext(): Promise<string> {
     return cachedKnowledge;
   }
 
-  const dirPath = path.join(/*turbopackIgnore: true*/process.cwd(), 'docs/knowledge/resolutions');
+  const dirPath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'docs/knowledge/resolutions');
   if (!fs.existsSync(dirPath)) return '';
 
   try {

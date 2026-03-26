@@ -911,7 +911,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
     let bodyDimensions;
     let slideData;
 
-    const filePath = path.isAbsolute(htmlFile) ? htmlFile : path.join(process.cwd(), htmlFile);
+    const filePath = path.isAbsolute(htmlFile) ? htmlFile : path.join(/*turbopackIgnore: true*/ process.cwd(), htmlFile);
     const validationErrors = [];
 
     try {
