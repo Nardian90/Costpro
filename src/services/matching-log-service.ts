@@ -1,4 +1,5 @@
 import { db, MatchingLog, MatchingTrace } from '@/lib/dexie';
+import { v4 as uuidv4 } from 'uuid';
 
 export class MatchingLogService {
   /**
@@ -16,7 +17,7 @@ export class MatchingLogService {
     activeRules?: string[]
   ): Promise<string> {
     const log: MatchingLog = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       transaction_ref: transactionRef,
       fecha_ejecucion: new Date().toISOString(),
       resultado_estado: status,
