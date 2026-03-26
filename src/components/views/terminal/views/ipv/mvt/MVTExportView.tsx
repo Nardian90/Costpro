@@ -20,11 +20,28 @@ import {
 } from "@/components/ui/dialog";
 
 import { generateMVTContent, downloadMVT, MVTExportContext } from "@/lib/ipv/mvt/engine";
-import { STANDARD_MVT_TEMPLATE } from "@/lib/ipv/mvt/defaults";
-import { MVTTemplate, MVTExportLog } from "@/lib/ipv/mvt/types";
+import {
+  STANDARD_MVT_TEMPLATE,
+  MVT_INVENTARIO_TEMPLATE,
+  MVT_RECEPCION_TEMPLATE,
+  MVT_RECEPCION_ALT_TEMPLATE,
+  CYP_COMEDOR_TEMPLATE,
+  CYP_DEPOSITO_TEMPLATE,
+  DEFAULT_MVT_SETTINGS
+} from "@/lib/ipv/mvt/defaults";
+import { MVTTemplate, MVTExportLog, MVTSettings } from "@/lib/ipv/mvt/types";
 import { MVTPreview } from "./MVTPreview";
 import { TemplateManager } from "./TemplateManager";
 import { TemplateEditor } from "./TemplateEditor";
+
+const SYSTEM_TEMPLATES = [
+    STANDARD_MVT_TEMPLATE,
+    MVT_INVENTARIO_TEMPLATE,
+    MVT_RECEPCION_TEMPLATE,
+    MVT_RECEPCION_ALT_TEMPLATE,
+    CYP_COMEDOR_TEMPLATE,
+    CYP_DEPOSITO_TEMPLATE
+];
 
 export const MVTExportView = () => {
   const [dateRange, setDateRange] = useState({
@@ -97,6 +114,8 @@ export const MVTExportView = () => {
       };
     });
 
+    const totalImporte = reconciliationLinesInRange.reduce((acc, l) => acc + (l.importe_linea_cents / 100), 0);
+
     return {
       global: {
         numero: (settings?.lastExportNumber || 0) + 1,
@@ -104,86 +123,92 @@ export const MVTExportView = () => {
         almacen: settings?.almacen || '0109',
         centro: settings?.centro || '0110200012611',
         concepto: settings?.concepto || '210',
-        cuenta_mn: settings?.globalCuenta || '7000050'
+        cuenta_mn: settings?.globalCuenta || '7000050',
+        importe: totalImporte,
+        entregado_a: 'ADMINISTRADOR', // Default or from user context if available
+        deposito: '10140' // Default or from settings
       },
-      products: contextMovements.map(m => m.product),
+      products: productData,
       movements: contextMovements
     };
   };
 
   const previewContent = useMemo(() => {
-    if (products.length === 0) return "Cargando datos...";
     try {
       return generateMVTContent(currentTemplate, prepareExportContext());
     } catch (e) {
       return "Error generando vista previa: " + (e as Error).message;
     }
-  }, [currentTemplate, products, reconciliationLinesInRange, settings, dateRange]);
+  }, [currentTemplate, reconciliationLinesInRange, products, settings, dateRange]);
 
   const handleExport = async () => {
     setIsGenerating(true);
     try {
       const context = prepareExportContext();
       const content = generateMVTContent(currentTemplate, context);
-      const fileName = `MVT_EXP_${context.global.numero}_${format(new Date(), 'yyyyMMdd')}.mvt`;
+      const ext = currentTemplate.fileExtension || 'mvt';
+      const fileName = `EXP_${context.global.numero}_${format(new Date(), 'yyyyMMdd')}.${ext}`;
 
       downloadMVT(content, fileName);
 
-      // Log export
       const log: MVTExportLog = {
         id: crypto.randomUUID(),
         templateId: currentTemplate.id,
         exportNumber: context.global.numero,
         fileName,
-        dateRange,
+        dateRange: { ...dateRange },
         timestamp: new Date().toISOString(),
         status: 'SUCCESS'
       };
 
       await db.mvt_exports_log.add(log);
-      await db.mvt_settings.update('current', {
-        lastExportNumber: context.global.numero
-      });
 
-      toast.success("Archivo MVT generado con éxito");
+      const newSettings: MVTSettings = {
+        ...(settings || DEFAULT_MVT_SETTINGS),
+        id: 'current',
+        lastExportNumber: context.global.numero
+      };
+
+      await db.mvt_settings.put(newSettings);
+
+      toast.success(`Archivo .${ext} generado con éxito`);
     } catch (error) {
       console.error(error);
-      toast.error("Error al generar el archivo MVT");
+      toast.error("Error en la exportación contable");
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50/50 min-h-screen">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-slate-200">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center">
-            <FileText className="mr-3 w-7 h-7 text-indigo-600" />
-            Exportación Contable MVT
-          </h1>
-          <p className="text-muted-foreground text-sm max-w-2xl">
-            Generación de archivos de movimientos contables estructurados para Versat y otros sistemas ERP.
-          </p>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <FileText className="w-8 h-8 text-indigo-600" />
+            EXPORTACIÓN MVT / CYP
+          </h2>
+          <p className="text-slate-500 text-sm font-medium">Generación de archivos contables para Versat ERP</p>
         </div>
+
         <div className="flex items-center gap-2">
-           <Button
+          <Button
             variant="outline"
             size="sm"
-            className="bg-white border-slate-200 shadow-sm h-9"
             onClick={() => setShowHistory(true)}
-           >
-              <History className="w-4 h-4 mr-2 text-slate-500" />
-              Historial
-           </Button>
-           <Button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-100 h-9"
+            className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-widest gap-2 bg-white hover:bg-slate-50 border-slate-200"
+          >
+            <History className="w-4 h-4 text-indigo-500" />
+            Historial
+          </Button>
+          <Button
             onClick={handleExport}
-            disabled={isGenerating || products.length === 0}
-           >
-              {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              Generar y Descargar .MVT
-           </Button>
+            disabled={isGenerating || reconciliationLinesInRange.length === 0}
+            className="h-10 px-6 rounded-xl font-black text-xs uppercase tracking-widest gap-2 neu-btn-primary"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Ejecutar Exportación
+          </Button>
         </div>
       </div>
 
@@ -193,12 +218,12 @@ export const MVTExportView = () => {
             <CardHeader className="bg-slate-50/50 border-b border-slate-100">
               <CardTitle className="text-sm font-semibold flex items-center">
                 <Settings2 className="w-4 h-4 mr-2 text-indigo-500" />
-                Parámetros de Exportación
+                Configuración
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-5 space-y-5">
+            <CardContent className="p-5 space-y-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-slate-700">Fecha Inicio</Label>
                     <div className="relative">
@@ -242,15 +267,20 @@ export const MVTExportView = () => {
                     className="w-full h-10 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     value={currentTemplate.id}
                     onChange={(e) => {
-                      if (e.target.value === STANDARD_MVT_TEMPLATE.id) {
-                        setCurrentTemplate(STANDARD_MVT_TEMPLATE);
+                      const sysTemplate = SYSTEM_TEMPLATES.find(t => t.id === e.target.value);
+                      if (sysTemplate) {
+                        setCurrentTemplate(sysTemplate);
                         return;
                       }
                       const selected = templates.find(t => t.id === e.target.value);
                       if (selected) setCurrentTemplate(selected);
                     }}
                   >
-                    <option value={STANDARD_MVT_TEMPLATE.id}>{STANDARD_MVT_TEMPLATE.name} (Sistema)</option>
+                    <optgroup label="Plantillas del Sistema">
+                        {SYSTEM_TEMPLATES.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </optgroup>
                     {templates.length > 0 && (
                       <optgroup label="Personalizadas">
                         {templates.map(t => (

@@ -13,6 +13,9 @@ export interface MVTSection {
   type: 'single' | 'repeatable';
   renderMode?: 'key_value' | 'pipe_separated';
   dataSource?: 'products' | 'movements';
+  hideTitle?: boolean;
+  footer?: string; // For things like { ... } or closing tags
+  showHeader?: boolean; // For [Ubicacion] specific headers
   _id?: string; // Internal stable ID for UI reordering
 }
 
@@ -23,6 +26,7 @@ export interface MVTTemplate {
   sections: MVTSection[];
   isDefault?: boolean;
   version: number;
+  fileExtension?: 'mvt' | 'cyp';
 }
 
 export interface MVTSettings {
