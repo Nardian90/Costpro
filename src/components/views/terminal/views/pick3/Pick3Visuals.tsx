@@ -134,7 +134,7 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                 contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px' }}
               />
-              <Bar dataKey="frequency" radius={[4, 4, 0, 0]}>
+              <Bar isAnimationActive={false} dataKey="frequency" radius={[4, 4, 0, 0]}>
                 {freqData.map((entry, index) => (
                   <Cell key={index} fill={entry.isHot ? '#3b82f6' : 'rgba(0,0,0,0.1)'} />
                 ))}
@@ -153,7 +153,7 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
               <XAxis type="number" hide />
               <YAxis dataKey="val" type="category" stroke="#999" fontSize={10} axisLine={false} tickLine={false} width={30} />
               <Tooltip />
-              <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+              <Bar isAnimationActive={false} dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
        </ChartWrapper>

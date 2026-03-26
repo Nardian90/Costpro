@@ -45,6 +45,10 @@ export interface BacktestResult {
   netProfit: number;
   maxDrawdown: number;
   sharpeRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
+  profitFactor: number;
+  recoveryFactor: number;
   equityCurve: number[];
   winStreak: number;
   lossStreak: number;
