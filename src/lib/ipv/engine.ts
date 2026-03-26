@@ -66,7 +66,8 @@ export class MatchingEngine {
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
     const stockLimitRule = this.rules.find(r => r.tipo === 'STOCK_LIMIT');
-    this.allowNegativeStock = stockLimitRule?.meta?.allow_negative !== false;
+    // Fix: If STOCK_LIMIT is active, default allowNegativeStock to false if not explicitly set to true
+    this.allowNegativeStock = stockLimitRule ? (stockLimitRule.meta?.allow_negative === true) : true;
     this.pendingMovements = [];
     this.dailyAdjustedPrices = new Map();
 
@@ -101,7 +102,7 @@ export class MatchingEngine {
     }
   }
 
-  async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
+  async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0, initialCashUsedToday?: number): Promise<MatchingResult> {
     const startTimeMs = performance.now();
     const startTime = Date.now();
     const logs: string[] = [];
@@ -397,11 +398,13 @@ export class MatchingEngine {
         const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.daily_limit ?? Infinity;
-      const usedToday = await db.reconciliation_lines
-        .where('fecha_operacion').equals(transaction.fecha)
-        .and(l => l.origen_dato === 'CASH_FILLER')
+      const usedTodayInDB = await db.reconciliation_lines
+        .where("fecha_operacion").equals(transaction.fecha)
+        .and(l => l.origen_dato === "CASH_FILLER")
         .toArray()
         .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
+
+      const usedToday = (initialCashUsedToday !== undefined) ? (initialCashUsedToday + usedTodayInDB) : usedTodayInDB;
 
       if (usedToday + remaining_cents > dailyLimit) {
         logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
@@ -648,6 +651,10 @@ export class MatchingEngine {
       }
 
       if (availableAncestorStock > 0) {
+        // Guardrail: If STOCK_LIMIT is active and allowNegativeStock is false, verify we can subtract
+        if (this.useStockLimit && !this.allowNegativeStock && availableAncestorStock <= 0) {
+            continue;
+        }
         const conversionFactor = ancestor.contenido_paquete || 1;
         this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
         const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
@@ -851,10 +858,19 @@ export class MatchingEngine {
     const results: any[] = [];
     if (customStockMap) this.stockMap = new Map(customStockMap);
 
+    const cashFillByDate = new Map<string, number>();
+
     for (let i = 0; i < transactions.length; i++) {
       const tx = transactions[i];
       try {
-          const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
+          const currentCashUsed = cashFillByDate.get(tx.fecha) || 0;
+          const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0, currentCashUsed);
+
+          const cashUsedThisTx = res.lines
+              .filter(l => l.origen_dato === "CASH_FILLER")
+              .reduce((sum, l) => sum + l.importe_linea_cents, 0);
+
+          cashFillByDate.set(tx.fecha, currentCashUsed + cashUsedThisTx);
           results.push({
               transactionId: tx.referencia_origen,
               status: res.status,
