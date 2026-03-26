@@ -15,7 +15,8 @@ import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { db, Product, SC204Metadata, IPVSettings } from '@/lib/dexie';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SC204Preview } from '../SC204Preview';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { generateLegalPdf } from '../../legal/LegalPdfExporter';
 
 export function IntelligentReceiptsSection() {
