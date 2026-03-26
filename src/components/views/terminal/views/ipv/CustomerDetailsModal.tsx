@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -83,7 +84,7 @@ export function CustomerDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] h-[80vh] flex flex-col p-0 overflow-hidden border-none rounded-3xl shadow-2xl">
+      <DialogContent className="sm:max-w-[700px] h-[80vh] flex flex-col p-0 overflow-hidden border-none rounded-3xl shadow-2xl" aria-describedby="dialog-description">
         <DialogHeader className="p-6 bg-primary/10 border-b border-primary/20 shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
@@ -91,6 +92,9 @@ export function CustomerDetailsModal({
             </div>
             <div>
               <DialogTitle className="text-xl font-black">{customer.nombre}</DialogTitle>
+              <DialogDescription className="sr-only" id="dialog-description">
+                Detalles y transacciones del cliente {customer.nombre}
+              </DialogDescription>
               <p className="text-sm font-mono text-muted-foreground">{customer.ci}</p>
             </div>
           </div>
@@ -176,7 +180,7 @@ export function CustomerDetailsModal({
               </div>
             </div>
 
-            {customer.raw_names.length > 1 && (
+            {customer.raw_names && customer.raw_names.length > 1 && (
               <div className="space-y-2">
                 <h3 className="text-sm font-black uppercase tracking-widest">Nombres Detectados</h3>
                 <div className="flex flex-wrap gap-2">

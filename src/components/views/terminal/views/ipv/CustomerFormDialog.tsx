@@ -35,6 +35,11 @@ export function CustomerFormDialog({
     card_number: '',
   });
   const [loading, setLoading] = useState(false);
+  const [srDescription, setSrDescription] = useState("");
+
+  useEffect(() => {
+    setSrDescription(customer ? `Editando cliente ${customer.nombre}` : "Creando nuevo cliente");
+  }, [customer]);
 
   useEffect(() => {
     if (customer) {
@@ -81,7 +86,8 @@ export function CustomerFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" aria-describedby="dialog-description">
+        <div className="sr-only" id="dialog-description">{srDescription}</div>
         <DialogHeader>
           <DialogTitle>{customer ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
         </DialogHeader>
