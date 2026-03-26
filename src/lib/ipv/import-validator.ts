@@ -40,7 +40,7 @@ export class ImportValidator {
     activo: ['activo', 'Activo', 'ACTIVO', 'Active', 'ACTIVE'],
     cont_pqt: ['Contenido Paquete', 'contenido_paquete', 'CONTENIDO_PAQUETE', 'Package Content', 'PACKAGE_CONTENT'],
     cuenta: ['Cuenta Contable', 'cuenta_contable', 'CUENTA_CONTABLE', 'Account', 'ACCOUNT'],
-    costo: ['Costo Unitario', 'costo_unitario_cents', 'COSTO_UNITARIO', 'Unit Cost', 'UNIT_COST']
+    costo: ['Costo Unitario', 'costo_unitario', 'costo_unitario_cents', 'COSTO_UNITARIO', 'Unit Cost', 'UNIT_COST', 'COSTO', 'costo']
   };
 
   private static getHeader(row: any, field: string): any {
