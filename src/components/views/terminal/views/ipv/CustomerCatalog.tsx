@@ -79,7 +79,7 @@ export function CustomerCatalog() {
   };
 
   const filteredCustomers = useMemo(() => {
-    return customers.filter((c) => {
+    const filtered = customers.filter((c) => {
       const search = searchTerm.toLowerCase();
       return (
         c.nombre.toLowerCase().includes(search) ||
@@ -88,7 +88,21 @@ export function CustomerCatalog() {
         (c.card_number && c.card_number.includes(search))
       );
     });
-  }, [customers, searchTerm]);
+
+    // Default sorting: Total Transactions (DESC), Total Amount (DESC), Name (ASC)
+    return [...filtered].sort((a, b) => {
+      const statsA = stats[a.ci] || { totalTransactions: 0, totalAmountCents: 0 };
+      const statsB = stats[b.ci] || { totalTransactions: 0, totalAmountCents: 0 };
+
+      if (statsB.totalTransactions !== statsA.totalTransactions) {
+        return statsB.totalTransactions - statsA.totalTransactions;
+      }
+      if (statsB.totalAmountCents !== statsA.totalAmountCents) {
+        return statsB.totalAmountCents - statsA.totalAmountCents;
+      }
+      return a.nombre.localeCompare(b.nombre);
+    });
+  }, [customers, searchTerm, stats]);
 
   const handlePropagate = async () => {
     try {

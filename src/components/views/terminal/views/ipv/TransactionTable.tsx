@@ -34,7 +34,7 @@ import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface TransactionTableProps {
     transactions: BankTransaction[];
@@ -336,7 +336,7 @@ function ColumnHelpModal({ open, onOpenChange }: { open: boolean, onOpenChange: 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl">
-                <DialogHeader><div className="flex items-center gap-2 text-primary border-b pb-4"><HelpCircle className="w-6 h-6" /><DialogTitle className="text-xl font-black uppercase tracking-tight">Guía de Columnas</DialogTitle></div></DialogHeader>
+                <DialogHeader><div className="flex items-center gap-2 text-primary border-b pb-4"><HelpCircle className="w-6 h-6" /><DialogTitle, DialogDescription className="text-xl font-black uppercase tracking-tight">Guía de Columnas</DialogTitle, DialogDescription></div></DialogHeader>
                 <div className="space-y-6 pt-4"><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><HelpItem title="Fecha" desc="Fecha de la operación." /><HelpItem title="Ref_Origen" desc="Identificador único del banco." /><HelpItem title="Ref_Corriente" desc="Referencia corta." /><HelpItem title="Importe" desc="Monto con decimales." /><HelpItem title="Tipo" desc="'Cr' para Ingresos y 'Db' para Gastos." /><HelpItem title="Observaciones" desc="Detalle del banco." /></div></div>
             </DialogContent>
         </Dialog>
