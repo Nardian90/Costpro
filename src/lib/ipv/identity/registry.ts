@@ -286,7 +286,7 @@ export async function saveCustomerManually(customerData: Partial<Customer> & { c
     const nombre = customerData.nombre || existing?.nombre || "";
     const normalized_name = normalizeName(nombre);
 
-    const status = (ci && nombre && customerData.phone && customerData.card_number) ? "COMPLETO" : "PARCIAL";
+    const status = (ci && nombre && (customerData.phone || existing?.phone) && (customerData.card_number || existing?.card_number)) ? "COMPLETO" : "PARCIAL";
 
     const customer: Customer = {
         ci,
@@ -307,6 +307,15 @@ export async function saveCustomerManually(customerData: Partial<Customer> & { c
 
 export async function deleteCustomer(ci: string): Promise<void> {
     await db.customers.delete(ci);
+    const txs = await db.bank_statements.where("carnet").equals(ci).toArray();
+    for (const tx of txs) {
+        await db.bank_statements.update(tx.referencia_origen, {
+            carnet: undefined,
+            nombre_cliente: undefined,
+            telefono_cliente: undefined,
+            tarjeta_cliente: undefined
+        });
+    }
 }
 
 export async function resolveConflict(
