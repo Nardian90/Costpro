@@ -12,7 +12,7 @@ export interface AuditAction {
 function getCurrentUser(): string {
   try {
     const user = useAuthStore.getState().user;
-    return user?.name || user?.email || 'SISTEMA';
+    return user?.fullName || user?.email || 'SISTEMA';
   } catch (e) {
     return 'SISTEMA';
   }
