@@ -52,7 +52,7 @@ export function CatalogTable() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_selectedProductIds') || '[]') : []));
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(() => (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('catalog_sortConfig') || 'null') : null));
-  const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_stockFilter') as any) || 'all' : 'all'));
+  const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock' | 'negative_stock'>(() => (typeof window !== 'undefined' ? (localStorage.getItem('catalog_stockFilter') as any) || 'all' : 'all'));
   const [pageSize, setPageSize] = useState(() => (typeof window !== "undefined" ? Number(localStorage.getItem("catalog_pageSize")) || 15 : 15));
   const [currentPage, setCurrentPage] = useState(1);
 
