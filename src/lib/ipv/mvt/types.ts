@@ -4,7 +4,7 @@ export interface FieldConfig {
   key: string;
   source: FieldSource;
   value: string;
-  _id?: string; // Internal use for stable sorting
+  _id?: string; // Internal stable ID for UI reordering
 }
 
 export interface MVTSection {
@@ -13,7 +13,7 @@ export interface MVTSection {
   type: 'single' | 'repeatable';
   renderMode?: 'key_value' | 'pipe_separated';
   dataSource?: 'products' | 'movements';
-  _id?: string; // Internal use for stable sorting
+  _id?: string; // Internal stable ID for UI reordering
 }
 
 export interface MVTTemplate {
