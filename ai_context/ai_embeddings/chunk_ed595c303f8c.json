@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_V2_END_TO_END_3__reporte_de_cumplimiento__kpis_",
+  "content": "## 3. REPORTE DE CUMPLIMIENTO (KPIs)\n- **Aislamiento de Inquilinos (Tenant Isolation):** ✅ APROBADO (Vía RLS en Profiles/Stores).\n- **Seguridad RBAC:** ❌ REPROBADO (RPCs vulnerables).\n- **Integridad Transaccional:** ✅ APROBADO (Uso de PL/pgSQL Atómico).\n- **Control de Concurrencia:** ❌ REPROBADO (Faltan locks en Transferencias).\n- **Idempotencia:** ⚠️ PARCIAL (Solo en Ventas y Capa API).\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
+    "header": "3. REPORTE DE CUMPLIMIENTO (KPIs)"
+  }
+}

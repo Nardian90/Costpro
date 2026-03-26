@@ -1,0 +1,8 @@
+{
+  "id": "ERROR_AUDIT_avances_realizados",
+  "content": "### Avances Realizados\n- **Configuración de Testing (Vitest & Playwright):**\n    - Implementación de suite de pruebas unitarias con **Vitest** cubriendo stores críticos (Cart, Session) y el motor de cálculo de fichas de costo.\n    - Configuración de **Playwright** para pruebas E2E, incluyendo esqueletos para flujos de venta y costos.\n    - Integración de testing en el pipeline de CI/CD (**Netlify**), bloqueando builds si fallan los tests de cobertura.\n- **Resolución de Errores Críticos de Runtime:**\n    - **Fix 400 Bad Request:** Se corrigió el error en el endpoint de `stores` al prevenir llamadas con `userId` vacío mediante guards en React Query.\n    - **Validación Zod Resiliente:** Se ajustaron los esquemas de Zod para ser más tolerantes a datos incompletos de la DB (usando `.catch()`, `.optional()` y transformaciones de strings vacíos a null), eliminando los ruidos de validación en consola sin comprometer la integridad.\n- **Cobertura de Validación Extendida:**\n    - Se agregaron esquemas y validación para `audit_logs`, `stock_movements` y `transactions`, asegurando que toda la data que fluye desde Supabase sea verificada.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
+    "header": "Avances Realizados"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_AI_PIPELINE_v8_3_2_capa_de_conocimiento__engine_2___ia_",
+  "content": "### 3.2 Capa de Conocimiento (Engine 2 - IA)\n- `knowledge/components.json` (Lógica de negocio y dominios)\n- `knowledge/views.json` (Flujos de interfaz)\n- `knowledge/workflows.json` (Procesos de negocio)\n- `knowledge/master_user_manual.json` (Manual maestro)\n- `knowledge/user_help.json` (Ayuda contextual)\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
+    "header": "3.2 Capa de Conocimiento (Engine 2 - IA)"
+  }
+}

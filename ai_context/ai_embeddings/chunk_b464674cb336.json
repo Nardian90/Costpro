@@ -1,0 +1,8 @@
+{
+  "id": "MAINTENANCE_LOG_paso_5___reinicio_del_ciclo",
+  "content": "## Paso 5 — Reinicio del ciclo\n\nSi se completa `SECCION_07_FOOTER`:\n\n1. limpiar checkboxes\n2. reiniciar roadmap\n3. incrementar ciclo\n\nNuevo estado:\n\nSiguiente objetivo: SECCION_01_HEADER\nCiclo actual: +1\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
+    "header": "Paso 5 — Reinicio del ciclo"
+  }
+}

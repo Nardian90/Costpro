@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_sync_offline_storage_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para offline-storage.\", \"dependencies\": [\"localforage\", \"uuid\", \"@/validation/schemas\", \"zod\"], \"domain\": \"Infrastructure\", \"exports\": [\"offlineStorage\"], \"id\": \"src/lib/sync/offline-storage.ts\", \"name\": \"offline-storage.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico offline-storage.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar offline-storage.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 453,
+    "domain": "components"
+  }
+}

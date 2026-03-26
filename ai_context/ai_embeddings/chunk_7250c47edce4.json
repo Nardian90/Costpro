@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_CHECKLIST_b__recepción___flujo_completo__",
+  "content": "### B. RECEPCIÓN – FLUJO COMPLETO ✅\n- [x] Botón \"Nueva Recepción\" visible y funcional\n- [x] Modo recepción con UI dedicada\n- [x] Lista temporal de productos (Map state)\n- [x] Panel lateral de resumen\n- [x] Edición de cantidades por producto\n- [x] Edición de costo unitario por producto\n- [x] Preview de stock estimado\n- [x] Procesamiento batch (Promise.all)\n- [x] Actualización tabla `inventory` (upsert)\n- [x] Actualización tabla `products` (cost_price)\n- [x] Limpieza de estado al confirmar/cancelar\n- [x] Recarga automática de productos\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
+    "header": "B. RECEPCIÓN – FLUJO COMPLETO ✅"
+  }
+}

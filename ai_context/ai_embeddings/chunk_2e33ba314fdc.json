@@ -1,0 +1,8 @@
+{
+  "id": "ADR-003-Estandarización_de_Generación_de_IDs_consecuencias_end",
+  "content": "## Consecuencias\nEliminación de errores de compilación relacionados con ESM/CJS en la generación de IDs.\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/ADR-003-Estandarización_de_Generación_de_IDs.md",
+    "header": "Consecuencias"
+  }
+}

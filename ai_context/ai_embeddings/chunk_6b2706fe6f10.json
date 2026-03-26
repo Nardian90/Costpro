@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_border_radius",
+  "content": "### Border Radius\n- sm: 4px\n- md: 6px\n- lg: 8px\n- xl: 12px\n- 2xl: 16px\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Border Radius"
+  }
+}

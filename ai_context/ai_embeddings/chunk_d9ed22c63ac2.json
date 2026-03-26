@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_QUALITY_AUDIT_1__evaluación_inicial",
+  "content": "## 1. Evaluación Inicial\n**Fecha:** 2026-03-15\n**Promedio Global de Calidad:** **5.53/10**\n\n| Módulo | Calidad | Justificación |\n| :--- | :---: | :--- |\n| **Terminal Views** | 5.49/10 | La mayoría de las vistas operativas tienen descripciones genéricas ([No definido en el manual]). |\n| **Servicios AI** | 3.51/10 | Los adaptadores de IA (DeepSeek, Kimi, etc.) carecen de contexto funcional y dependencias. |\n| **Componentes UI** | 6.77/10 | Buena cobertura técnica pero falta orientación a procesos en componentes críticos. |\n| **Utilidades Lib** | 3.51/10 | Herramientas críticas como `engine.ts` necesitan mayor detalle arquitectónico. |\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_QUALITY_AUDIT.md",
+    "header": "1. Evaluación Inicial"
+  }
+}

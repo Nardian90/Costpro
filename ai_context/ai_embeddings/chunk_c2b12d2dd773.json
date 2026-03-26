@@ -1,0 +1,8 @@
+{
+  "id": "FLOW_IPV_MISMATCH_2__motor_de_matching__matching_engine_",
+  "content": "## 2. Motor de Matching (Matching Engine)\nCuando se pulsa \"Ejecutar Matching\", el motor (`engine.ts`) procesa cada transacción `PENDIENTE` siguiendo una jerarquía de reglas (PASSES):\n\n- **PASS 0 (Auto-complete):** Identifica débitos, comisiones o transacciones excluidas.\n- **PASS 1 (Hard Ref):** Busca códigos de productos o descripciones literales en las observaciones de la transacción.\n- **PASS 2 (Exact Sum):** Utiliza un algoritmo de backtracking para encontrar una combinación de productos que sume el importe neto exacto.\n- **PASS 3 (Price Flex):** Si se permite, ajusta levemente el precio de un producto (según `variacion_permisible_percent`) para cuadrar el monto.\n- **PASS 4 (Wildcards):** Utiliza productos marcados como \"Comodines\" para rellenar el monto.\n- **PASS 5 (Tolerance):** Aplica un margen de descuadre (propina o descuento) si la diferencia es inferior a la `tolerancia_cents` configurada.\n- **PASS 6 (Cash Fill):** Cubre el residuo faltante como \"Efectivo\", intentando justificarlo con productos comodín si es posible.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
+    "header": "2. Motor de Matching (Matching Engine)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_plan_utils_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para plan-utils.\", \"dependencies\": [\"@/services/usage-service\", \"@/contracts/user\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/plan-utils.ts\", \"name\": \"plan-utils.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico plan-utils.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar plan-utils.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 376,
+    "domain": "components"
+  }
+}

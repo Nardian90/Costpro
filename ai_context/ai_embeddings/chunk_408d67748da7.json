@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_desglose_de_calificación_",
+  "content": "### Desglose de Calificación:\n- **Arquitectura del Matching (7/10):** Sólida base con soporte para Web Workers y ejecución asíncrona. Separación clara de responsabilidades.\n- **Robustez de reglas (6/10):** El sistema depende de una ejecución secuencial rígida. Falla ante escenarios de \"residuos\" complejos.\n- **Capacidad de descomposición jerárquica (8/10):** Implementación recursiva avanzada (Caja -> Paquete -> Unidad) ya presente, superando la media de sistemas similares.\n- **Flexibilidad de precios (4/10):** Muy limitada. La regla `PRICE_FLEX` es atómica y no mantiene coherencia diaria.\n- **Trazabilidad (5/10):** Solo registra descomposiciones. Falta un log de auditoría para cambios en el catálogo y ajustes de precio.\n- **Calidad de la ingesta de datos (5/10):** Vulnerable a variaciones en cabeceras de Excel. La jerarquía se pierde si no se mapean exactamente los IDs.\n- **Integridad del catálogo (6/10):** Estructura correcta pero falta validación de integridad referencial entre padres e hijos.\n\n**Justificación Técnica:**\nEl sistema es funcional y moderno, pero se comporta más como un \"script de búsqueda\" que como un motor de reconciliación profesional. La falta de un estado persistente de precios ajustados durante una sesión de matching provoca inconsistencias (un mismo producto vendido a dos precios distintos el mismo día para forzar el cuadre).\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "Desglose de Calificación:"
+  }
+}

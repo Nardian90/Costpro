@@ -1,0 +1,8 @@
+{
+  "id": "security-controls_idempotency_end",
+  "content": "## Idempotency\n- **Form Submission**: Prevents duplicate submissions of identical data within a 30-second window using audit log checks.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/security-controls.md",
+    "header": "Idempotency"
+  }
+}

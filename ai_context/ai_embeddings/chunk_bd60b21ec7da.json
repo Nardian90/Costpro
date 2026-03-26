@@ -1,0 +1,9 @@
+{
+  "id": "user_help_19",
+  "content": "{\"acciones\": [], \"descripcion_usuario\": \"Interfaz para gestionar SalesHistoryView.\", \"feature\": \"SalesHistoryView\", \"resultados\": [\"Card List\", \"Table\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 19,
+    "domain": "user_help"
+  }
+}

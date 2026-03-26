@@ -1,0 +1,8 @@
+{
+  "id": "DOC_MULTI_STORE_vista__red_de_tiendas_",
+  "content": "## Vista \"Red de Tiendas\"\nDesde el panel principal, el usuario puede acceder a la \"Red de Tiendas\":\n- **Visualización**: Solo se muestran las tiendas asignadas al usuario en `user_store_access`.\n- **Cambio de Tienda**: El usuario puede seleccionar otra tienda de su lista para convertirla en la \"tienda activa\".\n- **Efecto**: Al cambiar la tienda activa, el contexto de datos de toda la aplicación cambia para reflejar la nueva tienda seleccionada.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
+    "header": "Vista \"Red de Tiendas\""
+  }
+}

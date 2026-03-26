@@ -1,0 +1,8 @@
+{
+  "id": "system-context_c4_system_context_diagram_end",
+  "content": "# C4 System Context Diagram\n\n```mermaid\ngraph TD\n    User((Usuario Final))\n    System[CostPro: Sistema de Gestión]\n    Supabase[Supabase: Auth & Data]\n    BankAPIs[APIs Bancarias]\n\n    User -- \"Gestiona costos, ventas e inventario\" --> System\n    System -- \"Almacena datos y autentica\" --> Supabase\n    System -- \"Consulta estados de cuenta\" --> BankAPIs\n```\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/system-context.md",
+    "header": "C4 System Context Diagram"
+  }
+}

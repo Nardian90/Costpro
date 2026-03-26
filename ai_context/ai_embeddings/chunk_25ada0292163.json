@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_3__detección_de_riesgos",
+  "content": "### 3. DETECCIÓN DE RIESGOS\n\n1.  **Riesgo: Mantenimiento de Assets Visuales**\n    -   **Tipo:** DX.\n    -   **Impacto:** Bajo. Los diagramas SVG animados requieren conocimiento de Framer Motion para modificaciones futuras.\n2.  **Riesgo: Sincronización Cloud para IPV Builder**\n    -   **Estado:** igual.\n3.  **Riesgo: Obsolescencia de Prisma**\n    -   **Estado:** igual.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "3. DETECCIÓN DE RIESGOS"
+  }
+}

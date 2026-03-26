@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_users_UsersManagementView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"ui/ActionMenu\", \"ui/SearchBar\", \"ui/button\", \"ui/select\", \"ui/switch\"], \"id\": \"src/components/views/terminal/views/users/UsersManagementView.tsx\", \"inputs\": [\"Select\", \"Switch\"], \"name\": \"UsersManagementView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/users/UsersManagementView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 41,
+    "domain": "views"
+  }
+}

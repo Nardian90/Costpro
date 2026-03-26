@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS___cadena_de_dependencias___por_qué_todoxd__",
+  "content": "## 🚨 CADENA DE DEPENDENCIAS (¿Por qué TODOXD?)\n\n```\n┌─────────────────────────────────────────────────────────────┐\n│ ERROR 1: is_admin() retorna FALSE                            │\n│ (Profile no existe para auth.uid() O role::text falla)      │\n└──────────────────────┬──────────────────────────────────────┘\n                       │\n       ┌───────────────┼───────────────┐\n       │               │               │\n       ▼               ▼               ▼\n   Stores NOT   Policies BLOCK   Admin UPDATE\n   visible     Admin actions     fails (403)\n   (SELECT)    (is_admin()=false)\n\n       │               │               │\n       └───────────────┼───────────────┘\n                       │\n                       ▼\n          ⚠️ Admin puede VER tiendas (3ª policy: true)\n          ⚠️ Pero NO puede EDITAR (1ª policy depends on is_admin())\n          ⚠️ Usuarios no se ven O se ven pero no pueden ser editados\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "🚨 CADENA DE DEPENDENCIAS (¿Por qué TODOXD?)"
+  }
+}

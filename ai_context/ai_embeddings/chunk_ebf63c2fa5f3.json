@@ -1,0 +1,9 @@
+{
+  "id": "workflows_punto_de_venta",
+  "content": "{\"businessRules\": [], \"business_goal\": \"Agilizar las ventas directas y el registro de ingresos.\", \"components\": [\"src/components/views/terminal/views/pos/POSTableView.tsx\", \"src/components/views/terminal/views/pos/usePOSView.ts\", \"src/components/views/terminal/views/pos/POSView.tsx\", \"src/components/views/terminal/views/pos/POSCart.tsx\", \"src/components/views/terminal/views/pos/StickyCartSummary.tsx\"], \"id\": \"punto_de_venta\", \"name\": \"Punto de Venta (POS)\", \"services\": [\"@/hooks/api/useProducts\", \"@/hooks/api/useTaxes\", \"@/hooks/api/useTransactions\", \"@/hooks/logic/usePOSProducts\", \"@/hooks/ui/useMobile\", \"@/lib/logger\", \"@/lib/utils\", \"@/services/audit-service\", \"@/store\", \"@/store/cart\", \"@/types\", \"@/validation/schemas\", \"framer-motion\", \"html2canvas\", \"jspdf\", \"jspdf-autotable\", \"logic/usePOSProducts\", \"lucide-react\", \"react\", \"sonner\", \"ui/useMobile\", \"utils\"], \"steps\": [\"Escanear productos\", \"Gestionar carrito de compras\", \"Procesar pagos y generar facturas\"], \"views\": [\"src/components/views/terminal/views/pos/POSTableView.tsx\", \"src/components/views/terminal/views/pos/POSView.tsx\"]}",
+  "metadata": {
+    "source": "knowledge/workflows.json",
+    "index": 4,
+    "domain": "workflows"
+  }
+}

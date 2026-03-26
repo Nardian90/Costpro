@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_stores_StoresManagementView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"ui/ActionMenu\", \"ui/SearchBar\"], \"id\": \"src/components/views/terminal/views/stores/StoresManagementView.tsx\", \"inputs\": [], \"name\": \"StoresManagementView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/stores/StoresManagementView.tsx\", \"servicesUsed\": [\"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 10,
+    "domain": "views"
+  }
+}

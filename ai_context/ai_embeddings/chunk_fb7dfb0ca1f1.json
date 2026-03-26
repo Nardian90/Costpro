@@ -1,0 +1,8 @@
+{
+  "id": "reference_receptionshistoryview_tsx",
+  "content": "## ReceptionsHistoryView.tsx\n**Ruta:** `src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx`\n\n**Acciones disponibles:** handleDelete, handleEdit\n\n**Salidas esperadas:** Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "ReceptionsHistoryView.tsx"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION_manager_stakeholder",
+  "content": "### Manager/Stakeholder\n\n**Leer:**\n- `EXECUTIVE_SUMMARY_RLS_FIX.md` (visión 30,000 pies)\n\n**Saber:**\n- ✅ Qué se rompió (4 bloques críticos)\n- ✅ Cómo se arregló (cambios mínimos)\n- ✅ Cuándo (12 minutos)\n- ✅ Riesgo (bajo)\n- ✅ Próximos pasos (testing 15 min, deployment cuando pase)\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
+    "header": "Manager/Stakeholder"
+  }
+}

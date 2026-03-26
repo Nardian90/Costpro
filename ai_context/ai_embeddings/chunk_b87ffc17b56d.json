@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS_fase_2__frontend__react____5_minutos",
+  "content": "### Fase 2: Frontend (React) - 5 minutos\n\n1. **Agregar `is_active` a payload de `useUpdateUser`** en [useUsersView.ts](c:\\xampp\\htdocs\\Costpro\\src\\components\\views\\terminal\\views\\users\\useUsersView.ts#L70)\n\n**Estimado:** ~2 minutos\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "Fase 2: Frontend (React) - 5 minutos"
+  }
+}

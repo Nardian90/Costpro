@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_colores_semánticos__light_mode_",
+  "content": "### Colores Semánticos (Light Mode)\n- `--background`: #e8ebf0\n- `--primary`: #6366f1 (Indigo)\n- `--success`: #10b981 (Emerald)\n- `--warning`: #f59e0b (Amber)\n- `--danger`: #ef4444 (Red)\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Colores Semánticos (Light Mode)"
+  }
+}

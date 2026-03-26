@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_REPORT_5__rendimiento__6_10_",
+  "content": "### 5. Rendimiento (6/10)\n- **Fortalezas:** Uso de `useTransition` y `React.lazy` para carga diferida de vistas, reduciendo el impacto en el render inicial.\n- **Debilidades:**\n    - **Prefetching centralizado:** Aunque es selectivo, aún se dispara desde el shell principal y podría afinarse por vista para evitar trabajo innecesario.\n    - **Cálculos intensivos en el cliente:** La lógica de las fichas de costo puede bloquear el hilo principal del navegador si los datos son extensos.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/FRONTEND_AUDIT_REPORT.md",
+    "header": "5. Rendimiento (6/10)"
+  }
+}

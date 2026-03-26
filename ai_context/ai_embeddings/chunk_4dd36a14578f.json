@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_V5_7_25_a__capa_de_auditoría_y_validación__novedad_crítica_",
+  "content": "### A. Capa de Auditoría y Validación (Novedad Crítica)\nSe ha implementado una capa de auditoría en tiempo real en la vista de Fichas de Costo que detecta:\n*   **Desfases Estructurales:** Validación de que la suma de hijos coincide exactamente con el valor del padre.\n*   **Límites de Gastos Indirectos:** Control dinámico del coeficiente (1.5 para producción, 1.0 para servicios) basado en el destino del encabezado.\n*   **Umbrales de Rentabilidad:** Alertas visuales ante márgenes abusivos (>30%) o riesgo de pérdida (<12%).\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_V5_7_25.md",
+    "header": "A. Capa de Auditoría y Validación (Novedad Crítica)"
+  }
+}

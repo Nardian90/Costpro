@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useTaxes_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useTaxes.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/validation/schemas\", \"@/lib/rpc-validator\", \"./base\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"useTaxes\"], \"id\": \"src/hooks/api/useTaxes.ts\", \"name\": \"useTaxes.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useTaxes.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useTaxes.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 335,
+    "domain": "components"
+  }
+}

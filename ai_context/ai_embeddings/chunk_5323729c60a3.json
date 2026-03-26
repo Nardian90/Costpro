@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_BaseModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para BaseModal.\", \"dependencies\": [\"react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"BaseModal\"], \"id\": \"src/components/ui/BaseModal.tsx\", \"name\": \"BaseModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico BaseModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con BaseModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 236,
+    "domain": "components"
+  }
+}

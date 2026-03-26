@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_data_template_icecream_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-icecream.\", \"dependencies\": [\"@/contracts/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-icecream.ts\", \"name\": \"template-icecream.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-icecream.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-icecream.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 419,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "PERFORMANCE_GUIDELINES_performance_guidelines___data_access_budget__over_fetching_zero_",
+  "content": "# Performance Guidelines & Data Access Budget (Over-Fetching Zero)\n\nThis document outlines the executive rules for maintaining high performance and optimal data access in the CostPro system.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
+    "header": "Performance Guidelines & Data Access Budget (Over-Fetching Zero)"
+  }
+}

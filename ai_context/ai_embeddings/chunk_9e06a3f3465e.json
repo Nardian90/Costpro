@@ -1,0 +1,8 @@
+{
+  "id": "procedures_procedimiento__gestión_de_billetera_y_notificaciones__wallet__end",
+  "content": "## Procedimiento: Gestión de Billetera y Notificaciones (Wallet)\n1. Importar mensajes de texto o archivos de banco\n2. Visualizar registros crudos en la pestaña BD\n3. Analizar métricas financieras en Analytics Dashboard\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/procedures.md",
+    "header": "Procedimiento: Gestión de Billetera y Notificaciones (Wallet)"
+  }
+}

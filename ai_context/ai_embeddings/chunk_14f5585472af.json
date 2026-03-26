@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_AUDIT_REPORT_2__arquitectura_y_mantenibilidad__5_10_",
+  "content": "### 2. Arquitectura y Mantenibilidad (5/10)\n- **Fortalezas:**\n    - **Shell de navegación (`TerminalShell.tsx`):** El componente actúa como un contenedor de navegación que usa lazy loading para las vistas principales y centraliza solo lo necesario (layout, navegación, prefetching). Esto reduce el acoplamiento directo entre vistas y mejora el rendimiento percibido.\n    - **Estructura de carpetas clara:** `/hooks`, `/store`, `/components` mantiene una organización coherente con convenciones modernas.\n- **Debilidades:**\n    - **Orquestación centralizada:** Aun con mejoras, el `TerminalShell` sigue siendo el punto único de coordinación de vistas y prefetching. Esto puede convertirse en cuello de botella si las vistas siguen creciendo en complejidad.\n    - **Dependencia de cambios globales:** Ajustes en navegación o carga de datos tienden a requerir cambios en este archivo central.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/FRONTEND_AUDIT_REPORT.md",
+    "header": "2. Arquitectura y Mantenibilidad (5/10)"
+  }
+}

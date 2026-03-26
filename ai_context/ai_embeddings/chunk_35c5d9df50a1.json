@@ -1,0 +1,8 @@
+{
+  "id": "bugs_documentation_8__manejo_de_errores_incompleto_en_closesessionpage",
+  "content": "## 8. Manejo de Errores Incompleto en CloseSessionPage\n- **Descripción**: Existe un `// TODO: Show error message to user` en las capturas de errores de las llamadas a API.\n- **Impacto**: El usuario no recibe retroalimentación si falla el cierre de caja.\n- **Solución**: Implementar notificaciones `toast.error`.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/bugs_documentation.md",
+    "header": "8. Manejo de Errores Incompleto en CloseSessionPage"
+  }
+}

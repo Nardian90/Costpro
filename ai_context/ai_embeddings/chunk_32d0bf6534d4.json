@@ -1,0 +1,8 @@
+{
+  "id": "bugs_documentation_10__mapeo_de_vistas_incompleto_en_terminalshell_tsx_end",
+  "content": "## 10. Mapeo de Vistas Incompleto en TerminalShell.tsx\n- **Descripción**: El shell principal tiene un `// TODO: Map remaining views` que indica que algunas rutas podrían estar desatendidas.\n- **Impacto**: Posibles errores de navegación o vistas inaccesibles.\n- **Solución**: Verificar y completar el mapeo de rutas en el `STRUCTURE` del Terminal.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/bugs_documentation.md",
+    "header": "10. Mapeo de Vistas Incompleto en TerminalShell.tsx"
+  }
+}

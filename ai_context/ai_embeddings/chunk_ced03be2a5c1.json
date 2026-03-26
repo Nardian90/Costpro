@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_3__probabilidad_de_errores____1__",
+  "content": "## 3. Probabilidad de Errores (< 1%)\n\nEl riesgo es extremadamente bajo debido a:\n1.  **Validación Dual:** El stock se valida en el cliente (UX) y se re-valida en el servidor (Seguridad).\n2.  **Immutabilidad:** Los movimientos de stock no se editan, se compensan con nuevos movimientos, manteniendo un historial de auditoría perfecto.\n3.  **Tipado Estricto:** Uso de Zod en el frontend y tipos personalizados en PostgreSQL.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "3. Probabilidad de Errores (< 1%)"
+  }
+}

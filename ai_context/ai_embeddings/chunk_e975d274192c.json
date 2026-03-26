@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useTransactions_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useTransactions.\", \"dependencies\": [\"uuid\", \"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/lib/rpc-validator\", \"./base\", \"zod\", \"@/components/providers/SyncProvider\"], \"domain\": \"Domain\", \"exports\": [\"useTransactions\", \"useTransactionDetails\", \"useCreateSale\"], \"id\": \"src/hooks/api/useTransactions.ts\", \"name\": \"useTransactions.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useTransactions.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useTransactions.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 337,
+    "domain": "components"
+  }
+}

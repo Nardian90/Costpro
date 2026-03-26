@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_test_2__policies_viejas_removidas__",
+  "content": "### Test 2: Policies viejas removidas ✅\n\n```sql\nSELECT COUNT(*) FROM pg_policies\nWHERE tablename='stores'\n  AND policyname IN ('Stores management', 'Stores visibility', 'Users can view all stores');\n-- Resultado: 0\n```\n\n**Status:** ✅ PASS - Ninguna policy vieja existe\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "Test 2: Policies viejas removidas ✅"
+  }
+}

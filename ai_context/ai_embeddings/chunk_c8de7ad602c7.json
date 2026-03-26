@@ -1,0 +1,8 @@
+{
+  "id": "DIAGNOSTICO_CRITICO_RLS___checklist_final",
+  "content": "## 📋 CHECKLIST FINAL\n\n- [ ] **Backend:** `is_admin()` retorna `true` para admins\n- [ ] **Backend:** Policies consolidadas en `stores` (sin duplicados)\n- [ ] **Backend:** Policy \"Admin can manage any profile\" existe\n- [ ] **Frontend:** `useUsersView.ts` incluye `is_active` en UPDATE\n- [ ] **Test:** Admin puede VER tiendas (SELECT)\n- [ ] **Test:** Admin puede CREAR tiendas (INSERT)\n- [ ] **Test:** Admin puede EDITAR usuarios (UPDATE full_name, role, is_active)\n- [ ] **Test:** Admin puede DESACTIVAR usuarios (UPDATE is_active = false)\n- [ ] **Test:** User no puede editar otros usuarios (403 Forbidden)\n- [ ] **Test:** Multi-tenant aislamiento intacto\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
+    "header": "📋 CHECKLIST FINAL"
+  }
+}

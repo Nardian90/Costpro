@@ -1,0 +1,8 @@
+{
+  "id": "ALMACEN_AUDIT_BEFORE_recomendaciones_inmediatas_end",
+  "content": "## Recomendaciones Inmediatas\n- Migrar todas las etiquetas de importancia y encabezados de modales a `text-primary`.\n- Implementar `text-[clamp(...)]` en los encabezados de todos los modales.\n- Aumentar el tamaño de los botones de acción en modales a un mínimo de 44px de altura.\n- Asegurar que todos los formularios utilicen el patrón `grid-cols-1 sm:grid-cols-4`.\n\n---\n*Generado automáticamente por Jules.*\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ALMACEN_AUDIT_BEFORE.md",
+    "header": "Recomendaciones Inmediatas"
+  }
+}

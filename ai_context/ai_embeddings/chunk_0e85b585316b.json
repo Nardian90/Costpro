@@ -1,0 +1,8 @@
+{
+  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION___checklist_pre_deployment",
+  "content": "## ✅ CHECKLIST PRE-DEPLOYMENT\n\n- [ ] Todos los 8 tests en `TESTING_MANUAL_RLS_FIXES.md` PASS ✅\n- [ ] Arquitecto aprobó cambios de seguridad\n- [ ] No hay errores 403 en audit_logs\n- [ ] Multi-tenant aislamiento validado\n- [ ] Cache PostgREST actualizado (30+ segundos)\n- [ ] Frontend redeploy (si aplica)\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
+    "header": "✅ CHECKLIST PRE-DEPLOYMENT"
+  }
+}

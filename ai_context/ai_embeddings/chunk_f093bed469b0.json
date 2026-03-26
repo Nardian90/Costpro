@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_MatchingRulesEditor_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para MatchingRulesEditor.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/lib/ipv/engine\", \"@/components/ui/card\", \"@/components/ui/button\", \"@/components/ui/label\", \"@/components/ui/switch\", \"@/components/ui/badge\", \"lucide-react\", \"sonner\", \"@dnd-kit/utilities\", \"./RuleMetaEditor\"], \"domain\": \"UI\", \"exports\": [\"MatchingRulesEditor\"], \"id\": \"src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx\", \"name\": \"MatchingRulesEditor.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico MatchingRulesEditor.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 105,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_radio_group_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para radio-group.\", \"dependencies\": [\"react\", \"@radix-ui/react-radio-group\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/radio-group.tsx\", \"name\": \"radio-group.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico radio-group.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con radio-group.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 270,
+    "domain": "components"
+  }
+}

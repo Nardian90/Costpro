@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_dexie_ts",
+  "content": "{\"business_logic\": \"Define el esquema de datos local para productos, transacciones, reglas de matching y logs de auditor\\u00eda, permitiendo funcionamiento offline.\", \"dependencies\": [\"dexie\"], \"domain\": \"Data\", \"exports\": [\"MatchingTrace\", \"BankTransaction\", \"Product\", \"ProductMovement\", \"MatchingRule\", \"MatchingLog\", \"ReconciliationLine\", \"DailyIPVReport\", \"CashAdjustment\", \"IngestionError\", \"DailyAggregate\", \"MatchingCache\", \"IPVSettings\", \"IPVDatabase\", \"db\"], \"id\": \"src/lib/dexie.ts\", \"name\": \"dexie.ts\", \"technical_description\": \"Configuraci\\u00f3n de persistencia local con Dexie.js (IndexedDB).\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar dexie.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 370,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_REPORT_V5_7_25____áreas_de_mejora",
+  "content": "### ⚠️ Áreas de Mejora\n1.  **Dependencia de Prisma:** El proyecto mantiene una versión de Prisma (4.16) que podría beneficiarse de una actualización a v5+ para mejorar el rendimiento de las queries complejas.\n2.  **Cobertura de Tests E2E:** Aunque existen tests para PDF y roles, la nueva lógica de auditoría estructural requiere una suite de Playwright específica para cubrir casos de borde en cálculos complejos.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_REPORT_V5_7_25.md",
+    "header": "⚠️ Áreas de Mejora"
+  }
+}

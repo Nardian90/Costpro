@@ -1,0 +1,8 @@
+{
+  "id": "STORE_RESET_AUDIT_margen_de_error_posible_end",
+  "content": "## Margen de Error Posible\n**Estimado:** 1.5%\n\n**Factores de Riesgo:**\n1. **Tablas Legado:** Si existen tablas personalizadas o muy antiguas no listadas en el esquema público principal, podrían quedar registros residuales.\n2. **Dependencias Externas:** El borrado no afecta a archivos físicos en Storage (ej. imágenes de productos), los cuales permanecen en el bucket aunque el registro de la DB desaparezca.\n3. **Cache:** Se implementó un `window.location.reload()` tras la operación para limpiar el estado de TanStack Query y asegurar que la interfaz refleje el borrado inmediato.\n\n---\n**Auditado por:** Jules (AI Senior Engineer)\n**Estado:** Finalizado y Desplegado en rama `feat/store-reset-button`\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/STORE_RESET_AUDIT.md",
+    "header": "Margen de Error Posible"
+  }
+}

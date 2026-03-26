@@ -1,0 +1,8 @@
+{
+  "id": "RECOMMENDATIONS_MATCHING_ENGINE_1__sistema_de_registro_de_reglas_activas__rule_registry_",
+  "content": "## 1. Sistema de Registro de Reglas Activas (Rule Registry)\n\n**Problema:** El motor realiza ajustes (Price Flex, Tolerance, Cash Fill) que el usuario no percibe en la interfaz de transacciones.\n\n**Solución Propuesta:**\n- **Esquema de Datos:** Añadir un campo `matching_logs` (Array de strings) y `applied_rules` (Array de IDs de reglas) a la interfaz `BankTransaction` en `src/lib/dexie.ts`.\n- **Sincronización:** Modificar el `MatchingEngine` para que su `matchTransaction` devuelva siempre el array de logs. El worker y la lógica de persistencia en `IPVView.tsx` deben guardar estos logs en la transacción.\n- **UI:** Crear un componente `MatchingTracePopover.tsx` que se abra al hacer click en el estado de la transacción, mostrando el paso a paso de por qué se cuadró o por qué falló.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/RECOMMENDATIONS_MATCHING_ENGINE.md",
+    "header": "1. Sistema de Registro de Reglas Activas (Rule Registry)"
+  }
+}

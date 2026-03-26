@@ -1,0 +1,8 @@
+{
+  "id": "DOCUMENTATION_QUALITY_AUDIT_4__innovación__sistema_de_mejora_viva_end",
+  "content": "## 4. Innovación: Sistema de Mejora Viva\nSe ha implementado la columna **\"OpenQuestions\"** en la Vista Salud. Esto permite:\n1. Identificar brechas de conocimiento en tiempo real.\n2. Priorizar la investigación técnica sobre componentes complejos.\n3. Facilitar el onboarding de nuevos desarrolladores mediante la resolución de dudas registradas.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/DOCUMENTATION_QUALITY_AUDIT.md",
+    "header": "4. Innovación: Sistema de Mejora Viva"
+  }
+}

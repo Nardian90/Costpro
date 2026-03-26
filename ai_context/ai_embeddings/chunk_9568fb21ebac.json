@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_fase_1__testing_manual__15_min_",
+  "content": "### Fase 1: Testing Manual (15 min)\n\nDesde **Frontend** (como usuario Admin):\n\n```typescript\n// Test 1: Ver tiendas\nconst { data: stores } = useStores(adminId, true, false);\nconsole.log(stores.length); // Esperado: 2+\n\n// Test 2: Crear tienda\nconst { error: createErr } = await supabase\n  .from('stores')\n  .insert({ name: 'Test Store', created_by: adminId });\nconsole.log(createErr); // Esperado: null\n\n// Test 3: Editar usuario\nconst { error: updateErr } = await supabase\n  .from('profiles')\n  .update({ is_active: false })\n  .eq('id', 'target-user');\nconsole.log(updateErr); // Esperado: null\n\n// Test 4: Desactivar vía UI\n// Ir a Users > click toggle status > debe funcionar sin error\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "Fase 1: Testing Manual (15 min)"
+  }
+}

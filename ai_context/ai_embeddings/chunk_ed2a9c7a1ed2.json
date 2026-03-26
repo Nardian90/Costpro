@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_modals_CreateProductModal_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CreateProductModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"@/components/ui/atomic\", \"@/store\", \"@/hooks/api/useProducts\", \"sonner\"], \"domain\": \"UI\", \"exports\": [\"CreateProductModal\"], \"id\": \"src/components/modals/CreateProductModal.tsx\", \"name\": \"CreateProductModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CreateProductModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con CreateProductModal.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 8,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "ERROR_AUDIT_kpis_técnicos___día_5",
+  "content": "### KPIs Técnicos - Día 5\n- **Cobertura de Tests:** ~15% (Enfoque en lógica de negocio crítica: Cálculos y Estado).\n- **Errores de Consola (Runtime):** Reducidos en un 95%.\n- **Resiliencia de Datos:** Alta (Fallback automático en schemas).\n- **Seguridad de Tipos:** Estricta en RPCs y Queries.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
+    "header": "KPIs Técnicos - Día 5"
+  }
+}

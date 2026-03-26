@@ -1,0 +1,8 @@
+{
+  "id": "DOWNLOAD_INSTRUCTIONS_ejecuta_el_servidor",
+  "content": "# Ejecuta el servidor\nbun run dev\n```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
+    "header": "Ejecuta el servidor"
+  }
+}

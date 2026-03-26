@@ -1,0 +1,8 @@
+{
+  "id": "DOWNLOAD_INSTRUCTIONS_2__descomprime_",
+  "content": "# 2. Descomprime:\ntar -xzf ~/Desktop/pos-enterprise-neumorphic.tar.gz\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
+    "header": "2. Descomprime:"
+  }
+}

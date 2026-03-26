@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_CHECKLIST_bucket_de_supabase_storage",
+  "content": "### Bucket de Supabase Storage\n- El código asume bucket llamado `products`\n- Si el bucket tiene otro nombre, actualizar línea 60:\n  ```typescript\n  const { data } = supabase.storage.from('TU_BUCKET_NAME').getPublicUrl(product.image_url);\n  ```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
+    "header": "Bucket de Supabase Storage"
+  }
+}

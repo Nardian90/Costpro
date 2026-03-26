@@ -1,0 +1,8 @@
+{
+  "id": "AUDITORIA_IPV_MATCHING_PRO_2_2_evaluación_del_algoritmo",
+  "content": "### 2.2 Evaluación del Algoritmo\n- **Matching Exacto:** Eficiente (O(N) con backtracking controlado).\n- **Tolerancias:** Solo aplicables al monto final, no al precio unitario de forma inteligente.\n- **Combinaciones:** Soporta combinaciones múltiples pero sin heurísticas de \"probabilidad de venta\".\n- **Impacto:** Un 15-20% de las transacciones requieren intervención manual debido a diferencias de centavos que el sistema no sabe auto-corregir sin romper la coherencia de precios.\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
+    "header": "2.2 Evaluación del Algoritmo"
+  }
+}

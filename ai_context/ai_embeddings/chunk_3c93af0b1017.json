@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_ipv_BankIngestion_tsx",
+  "content": "{\"business_logic\": \"Gestiona la carga y limpieza de datos provenientes de bancos para su posterior conciliaci\\u00f3n.\", \"dependencies\": [\"@/components/ui/card\", \"react\", \"@/components/ui/BaseModal\", \"react-dropzone\", \"@/lib/dexie\", \"@/lib/ipv/engine\", \"@/lib/ipv/bandecParser\", \"@/lib/ipv/utils\", \"@/components/ui/button\", \"@/components/ui/badge\", \"lucide-react\", \"sonner\", \"papaparse\", \"xlsx\", \"uuid\", \"@/lib/ipv/backup\"], \"domain\": \"UI\", \"exports\": [\"BankIngestion\"], \"id\": \"src/components/views/terminal/views/ipv/BankIngestion.tsx\", \"name\": \"BankIngestion.tsx\", \"technical_description\": \"M\\u00f3dulo de procesamiento de extractos bancarios.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con BankIngestion.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 110,
+    "domain": "components"
+  }
+}

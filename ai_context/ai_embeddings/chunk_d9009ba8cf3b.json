@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MATCHING_ENGINE_2_2__coincidencia_exacta_prioritaria",
+  "content": "### 2.2. Coincidencia exacta prioritaria\n- **Cumplimiento:** **SÍ**.\n- **Detalle:** El motor ejecuta el `PASS 2 (EXACT_SUM)` antes de cualquier regla de flexibilidad o tolerancia.\n- **Puntuación:** 10/10\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
+    "header": "2.2. Coincidencia exacta prioritaria"
+  }
+}

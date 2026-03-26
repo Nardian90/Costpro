@@ -1,0 +1,8 @@
+{
+  "id": "AI_BOT_FLOW_1__arquitectura_del_sistema",
+  "content": "## 1. Arquitectura del Sistema\n\nEl sistema utiliza una arquitectura de **Adaptadores y Orquestación** para permitir flexibilidad entre diferentes proveedores de LLM (Gemini, GPT, DeepSeek, etc.), priorizando siempre la disponibilidad y la configuración del usuario.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
+    "header": "1. Arquitectura del Sistema"
+  }
+}

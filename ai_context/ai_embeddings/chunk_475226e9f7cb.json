@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_ipv_MovementsView_tsx",
+  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/ipv/MovementsView.tsx\", \"inputs\": [\"Input\"], \"name\": \"MovementsView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/MovementsView.tsx\", \"servicesUsed\": []}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 24,
+    "domain": "views"
+  }
+}

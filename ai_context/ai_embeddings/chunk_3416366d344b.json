@@ -1,0 +1,8 @@
+{
+  "id": "security-controls_injection_prevention",
+  "content": "## Injection Prevention\n- **SQL Sanitization**: Search queries automatically escape wildcard characters (`%`, `_`).\n- **Parameter Validation**: All tool arguments are validated against Zod schemas before execution.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/security-controls.md",
+    "header": "Injection Prevention"
+  }
+}

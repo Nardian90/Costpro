@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_CONTEXT_4__recomendación_estratégica_end",
+  "content": "### 4. Recomendación Estratégica\nMover el sistema hacia un **Rule Engine Modular**.\n- Cada regla debe ser una clase o función que cumpla una interfaz estándar.\n- `matchTransaction` debe simplemente reducir la transacción a través de la lista ordenada de reglas activas.\n- Esto permitirá añadir nuevas reglas (ej: `AI_SUGGESTION`) sin tocar el núcleo del motor.\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_CONTEXT.md",
+    "header": "4. Recomendación Estratégica"
+  }
+}

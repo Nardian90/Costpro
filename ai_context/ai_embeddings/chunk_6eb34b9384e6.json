@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_3_2_nlp_en_observaciones",
+  "content": "### 3.2 NLP en Observaciones\n*   **Situación actual**: El `HARD_REF` busca coincidencias literales.\n*   **Mejora**: Integrar un motor ligero de procesamiento de lenguaje natural (NLP) para identificar productos incluso con errores ortográficos o abreviaturas no estandarizadas en las observaciones bancarias.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "3.2 NLP en Observaciones"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useCostSheets_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useCostSheets.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\"], \"domain\": \"Domain\", \"exports\": [\"useCostSheets\"], \"id\": \"src/hooks/api/useCostSheets.ts\", \"name\": \"useCostSheets.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useCostSheets.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 334,
+    "domain": "components"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_2__comparativa_con_versión_anterior",
+  "content": "### 2. COMPARATIVA CON VERSIÓN ANTERIOR\n\n| Dominio | v1.0 | v1.1 | Variación | Causa Concreta del Cambio |\n| :--- | :---: | :---: | :---: | :--- |\n| Core Architecture | 3.0 | 3.0 | = | Sin refactorización del \"God Component\". |\n| Type Safety | 9.0 | 9.0 | = | Sin cambios en los contratos de datos o validación. |\n| POS / Terminal | 7.5 | 7.5 | = | Sin cambios en la lógica del TPV. |\n| Multi-Store & Roles | 8.0 | 8.0 | = | Sin cambios en la arquitectura de seguridad. |\n| UX / Mobile | 6.0 | 6.0 | = | Sin mejoras de UX o rendimiento. |\n| Performance | 6.5 | 6.5 | = | Sin optimización de la carga de datos. |\n| Seguridad | 7.0 | 7.0 | = | Sin cambios en las políticas de seguridad. |\n| Observabilidad | 8.5 | 8.5 | = | El sistema de logging permanece intacto. |\n| **DX** | **4.0** | **2.0** | **(-2.0)** | **Descubrimiento de `README.md` incorrecto (promueve `bun`/`Prisma` vs. `pnpm`/`Supabase` real), agravando la confusión del `schema.prisma` ya existente.** |\n| **Global Score** | **6.61**| **6.38**| **(-0.23)**| **El impacto negativo de la degradación severa de la DX supera la estabilidad de los otros dominios.**|\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "2. COMPARATIVA CON VERSIÓN ANTERIOR"
+  }
+}

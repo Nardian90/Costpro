@@ -1,0 +1,8 @@
+{
+  "id": "EXECUTIVE_SUMMARY_RLS_FIX_bug_1___is_admin____retorna_false",
+  "content": "### Bug 1: `is_admin()` retorna FALSE\n\n```sql\n-- ANTES (incorrecto)\nSELECT 1 FROM profiles\nWHERE id = auth.uid()\nAND role::text IN ('admin', 'superadmin')\n-- ❌ Falla: tipo ENUM no convierte correctamente\n```\n\n**Impacto:** Todas las políticas que usan `is_admin()` fallan → 403\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
+    "header": "Bug 1: `is_admin()` retorna FALSE"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_stores_useStoresView_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useStoresView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useStores\", \"@/types\", \"sonner\", \"@/lib/logger\", \"@/services/store-service\", \"@/services/user-service\", \"@tanstack/react-query\"], \"domain\": \"UI\", \"exports\": [\"StoreFormMode\", \"useStoresView\"], \"id\": \"src/components/views/terminal/views/stores/useStoresView.ts\", \"name\": \"useStoresView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useStoresView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useStoresView.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 45,
+    "domain": "components"
+  }
+}

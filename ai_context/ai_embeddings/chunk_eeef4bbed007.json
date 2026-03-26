@@ -1,0 +1,8 @@
+{
+  "id": "theme-audit_métricas_post_refactor",
+  "content": "## Métricas Post-Refactor\n- **Archivos actualizados:** > 100\n- **Violaciones remanentes:** Reducción drástica en componentes de UI.\n- **Consistencia en Modo Oscuro:** Alta\n\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/theme-audit.md",
+    "header": "Métricas Post-Refactor"
+  }
+}

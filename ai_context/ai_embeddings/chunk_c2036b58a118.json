@@ -1,0 +1,8 @@
+{
+  "id": "README_POS___cuentas_de_demo",
+  "content": "## 🔐 Cuentas de Demo\n\n| Rol | Email | Contraseña |\n|-----|-------|-----------|\n| Administrador | `admin@demo.com` | `demo123` |\n| Encargado | `encargado@demo.com` | `demo123` |\n| Cajero | `cajero@demo.com` | `demo123` |\n| Almacén | `almacen@demo.com` | `demo123` |\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "🔐 Cuentas de Demo"
+  }
+}

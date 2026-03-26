@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_api_useDocumentActions_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useDocumentActions.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/store\", \"sonner\", \"./base\", \"@/store\"], \"domain\": \"Domain\", \"exports\": [\"useInvertDocument\", \"useDuplicateDocument\"], \"id\": \"src/hooks/api/useDocumentActions.ts\", \"name\": \"useDocumentActions.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useDocumentActions.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useDocumentActions.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 333,
+    "domain": "components"
+  }
+}

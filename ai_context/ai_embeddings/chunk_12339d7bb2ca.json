@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_ipv_MatchingAuditView_tsx",
+  "content": "{\"actions\": [], \"components\": [\"ui/badge\", \"ui/button\", \"ui/card\", \"ui/input\"], \"id\": \"src/components/views/terminal/views/ipv/MatchingAuditView.tsx\", \"inputs\": [\"Input\"], \"name\": \"MatchingAuditView.tsx\", \"outputs\": [\"Card List\", \"Chart\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/MatchingAuditView.tsx\", \"servicesUsed\": [\"dexie\", \"matching-log-service\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 26,
+    "domain": "views"
+  }
+}

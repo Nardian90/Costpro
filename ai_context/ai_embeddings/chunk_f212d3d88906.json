@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_ipv_engine_ts",
+  "content": "{\"businessRules\": [\"Matching Engine 7-pass strategy: AUTO_COMPLETE (1.0), HARD_REF (0.95), EXACT_SUM (1.0), PRICE_FLEX (0.85), WILDCARDS (0.80), TOLERANCE (0.70), CASH_FILL (0.50).\", \"Implements stock limit checks and allows/disallows negative stock based on configuration.\", \"Automatic decomposition in createLine when physical stock is insufficient.\"], \"business_logic\": \"Implementa la l\\u00f3gica central de reconciliaci\\u00f3n de transacciones bancarias con productos del cat\\u00e1logo, manejando descomposiciones y ajustes de precio.\", \"dependencies\": [], \"domain\": \"Engine\", \"exports\": [\"MatchingResult\", \"DEFAULT_MATCHING_RULES\", \"MatchingEngine\"], \"id\": \"src/lib/ipv/engine.ts\", \"name\": \"engine.ts\", \"technical_description\": \"Motor de conciliaci\\u00f3n IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar engine.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 430,
+    "domain": "components"
+  }
+}

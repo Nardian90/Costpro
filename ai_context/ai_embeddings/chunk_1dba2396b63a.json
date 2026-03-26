@@ -1,0 +1,9 @@
+{
+  "id": "views_src_components_views_terminal_views_ipv_ManualReconciliationView_tsx",
+  "content": "{\"actions\": [\"handleSave\"], \"components\": [\"ui/badge\", \"ui/button\", \"ui/input\", \"ui/scroll-area\"], \"id\": \"src/components/views/terminal/views/ipv/ManualReconciliationView.tsx\", \"inputs\": [\"Input\"], \"name\": \"ManualReconciliationView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/ipv/ManualReconciliationView.tsx\", \"servicesUsed\": [\"dexie\", \"ipv/engine\", \"ipv/utils\", \"utils\"]}",
+  "metadata": {
+    "source": "knowledge/views.json",
+    "index": 28,
+    "domain": "views"
+  }
+}

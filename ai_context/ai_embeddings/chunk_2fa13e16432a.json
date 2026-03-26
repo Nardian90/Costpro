@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_ChatBot_tsx",
+  "content": "{\"business_logic\": \"Proporciona soporte interactivo al usuario mediante IA, integrando herramientas de consulta de arquitectura y ayuda operativa.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\", \"@/store\", \"@/lib/utils\", \"@/services/user-service\", \"sonner\", \"next/navigation\"], \"domain\": \"UI\", \"exports\": [\"ChatBot\"], \"id\": \"src/components/ui/ChatBot.tsx\", \"name\": \"ChatBot.tsx\", \"technical_description\": \"Interfaz de asistente virtual Darian.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ChatBot.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 260,
+    "domain": "components"
+  }
+}

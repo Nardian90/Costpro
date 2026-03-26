@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_auth_RegisterForm_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para RegisterForm.\", \"dependencies\": [\"react\", \"@/lib/supabaseClient\", \"sonner\", \"lucide-react\", \"@/lib/logger\", \"@/components/ui/input\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/auth/RegisterForm.tsx\", \"name\": \"RegisterForm.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico RegisterForm.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con RegisterForm.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 272,
+    "domain": "components"
+  }
+}

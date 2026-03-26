@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_test_1__policies_en__stores__consolidadas__",
+  "content": "### Test 1: Policies en `stores` consolidadas ✅\n\n```sql\nSELECT COUNT(*) FROM pg_policies\nWHERE tablename='stores' AND schemaname='public';\n-- Resultado: 4 policies\n```\n\n**Status:** ✅ PASS - Exactamente 4 policies (antes eran 3, pero conflictivas)\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "Test 1: Policies en `stores` consolidadas ✅"
+  }
+}

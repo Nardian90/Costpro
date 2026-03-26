@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_utils_pdf_export_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para pdf-export.\", \"dependencies\": [\"jspdf\", \"jspdf-autotable\", \"@/types\", \"date-fns\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/utils/pdf-export.ts\", \"name\": \"pdf-export.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico pdf-export.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar pdf-export.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 398,
+    "domain": "components"
+  }
+}

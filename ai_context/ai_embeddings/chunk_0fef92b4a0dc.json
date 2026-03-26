@@ -1,0 +1,8 @@
+{
+  "id": "TESTING_MANUAL_RLS_FIXES_problema__tiendas_usuarios_vacíos__sin_errores",
+  "content": "### Problema: Tiendas/Usuarios vacíos, sin errores\n\n**Causa probable:** is_admin() retorna false (check aún no propagado)\n\n**Qué hacer:**\n1. Verifica en Supabase:\n   ```sql\n   SELECT is_admin(); -- Como usuario logeado\n   ```\n2. Si retorna `false`, el rol no coincide. Verifica:\n   ```sql\n   SELECT role FROM profiles WHERE id = auth.uid();\n   -- Debe retornar 'admin' o 'superadmin'\n   ```\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
+    "header": "Problema: Tiendas/Usuarios vacíos, sin errores"
+  }
+}

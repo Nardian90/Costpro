@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_implementación_",
+  "content": "### Implementación:\n- **Función `getProductImageUrl()`**: Detecta automáticamente el tipo de URL\n  - URLs completas (http/https): Se usan directamente\n  - Rutas relativas: Se construyen usando Supabase Storage bucket 'products'\n\n- **Renderizado en tabla**:\n  - Muestra imagen real del producto (48x48px)\n  - Fallback automático al icono Package si la imagen falla o no existe\n  - Manejo de errores con `onError` para ocultar imagen rota\n\n- **Configuración Next.js**:\n  - Agregado dominio Supabase a `remotePatterns` en `next.config.ts`\n  - Permite cargar imágenes desde: `wthkddeleylijmonclxg.supabase.co`\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
+    "header": "Implementación:"
+  }
+}

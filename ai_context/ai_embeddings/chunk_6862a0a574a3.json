@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_IPV_BUILDER_2_2_motor_de_matching__capa_de_lógica_",
+  "content": "### 2.2 Motor de Matching (Capa de Lógica)\n*   **Algoritmo Multi-Pass**:\n    1.  **HARD_REF**: Búsqueda literal de códigos de producto en las observaciones de la transferencia.\n    2.  **EXACT_SUM**: Algoritmo de backtracking con poda dinámica (Límite: 6 niveles, 500ms timeout) para encontrar combinaciones exactas de productos.\n    3.  **TOLERANCE**: Gestión de diferencias mínimas configurables.\n    4.  **CASH_FILL**: Cierre de gaps mediante ajustes en efectivo, controlados por límites diarios definidos en los metadatos de las reglas.\n*   **Concurrencia**: La lógica pesada se ejecuta en un **Web Worker**, liberando el hilo principal de la UI y evitando bloqueos visuales.\n*   **Optimización**: Sistema de caché por `monto + hash_catálogo` para respuestas instantáneas en importes recurrentes.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
+    "header": "2.2 Motor de Matching (Capa de Lógica)"
+  }
+}

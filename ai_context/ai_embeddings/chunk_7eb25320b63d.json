@@ -1,0 +1,8 @@
+{
+  "id": "user_tasks_rssmanagementview",
+  "content": "## RSSManagementView\n**Propósito:** Interfaz para gestionar RSSManagementView.\n\n**Acciones clave:**\n- handleAddFeed\n- handleAddKeyword\n- handleDeleteFeed\n- handleRemoveKeyword\n- handleToggleFeed\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/user_tasks.md",
+    "header": "RSSManagementView"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_4_5_performance_metrics__obligatorio_",
+  "content": "### 4.5 Performance Metrics (Obligatorio)\nCada ejecución de fase debe registrar timing en `architecture_audit.json`:\n```json\n{\n  \"phaseExecutions\": [\n    {\n      \"phase\": 1,\n      \"phaseName\": \"Architecture Discovery\",\n      \"startTime\": \"2026-03-16T10:00:00Z\",\n      \"endTime\": \"2026-03-16T10:05:30Z\",\n      \"durationMs\": 330000,\n      \"status\": \"success\",\n      \"artifactsGenerated\": [\"system_architecture.json\", \"architecture_manifest.json\"]\n    }\n  ],\n  \"performanceSummary\": {\n    \"averagePhaseDurationMs\": 250000,\n    \"slowestPhase\": 7,\n    \"fastestPhase\": 4,\n    \"lastCycleDurationMs\": 4500000\n  }\n}\n```\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
+    "header": "4.5 Performance Metrics (Obligatorio)"
+  }
+}

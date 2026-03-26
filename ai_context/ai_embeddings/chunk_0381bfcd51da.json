@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ServiceWorkerRegister_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ServiceWorkerRegister.\", \"dependencies\": [\"react\", \"workbox-window\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/ServiceWorkerRegister.tsx\", \"name\": \"ServiceWorkerRegister.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ServiceWorkerRegister.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ServiceWorkerRegister.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 6,
+    "domain": "components"
+  }
+}

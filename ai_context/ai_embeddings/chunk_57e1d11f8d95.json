@@ -1,0 +1,9 @@
+{
+  "id": "components_src_hooks_logic_useSessionManager_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useSessionManager.\", \"dependencies\": [\"react\", \"@/store\", \"@/store/session-store\", \"@/lib/supabaseClient\", \"next/navigation\", \"@/lib/navigation\", \"@/contracts/user\", \"@/services/user-service\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"useSessionManager\"], \"id\": \"src/hooks/logic/useSessionManager.ts\", \"name\": \"useSessionManager.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useSessionManager.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useSessionManager.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 330,
+    "domain": "components"
+  }
+}

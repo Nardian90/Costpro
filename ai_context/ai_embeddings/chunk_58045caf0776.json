@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_LOG_2__comparativa_con_versión_anterior__v5_7_24_",
+  "content": "### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.24)\n\n| Dominio | v5.7.24 | v5.7.25 | Variación | Causa Concreta del Cambio |\n| :--- | :---: | :---: | :---: | :--- |\n| UX / Mobile | 9.5 | 9.6 | **(+0.1)** | Implementación de Modo Rápido para entrada express de datos. |\n| DX | 9.0 | 9.2 | **(+0.2)** | Nueva documentación didáctica y diagramas SVG de flujo. |\n| **Global Score** | **9.45**| **9.55**| **(+0.10)**| **Mejora en la eficiencia operativa y calidad de la documentación.**|\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_LOG.md",
+    "header": "2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.24)"
+  }
+}

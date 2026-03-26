@@ -1,0 +1,8 @@
+{
+  "id": "component-architecture_c4_component_diagram__frontend_core__end",
+  "content": "# C4 Component Diagram (Frontend Core)\n\n```mermaid\ngraph LR\n    subgraph UI_Shell [Shell de la Terminal]\n        TerminalShell[TerminalShell.tsx]\n        Sidebar[Sidebar.tsx]\n        Header[Header.tsx]\n    end\n\n    subgraph Engines [Motores de Lógica]\n        IPVEngine[IPV Engine: engine.ts]\n        CostEngine[Cost Engine: cost-engine/]\n        AIOrch[AI Orchestrator: orchestrator.ts]\n    end\n\n    subgraph State_Management [Gestión de Estado]\n        Zustand[Zustand Stores]\n        Dexie[Dexie.js: Local DB]\n        ReactQuery[TanStack Query: Cache]\n    end\n\n    TerminalShell -- \"Orquesta\" --> Engines\n    Engines -- \"Persistencia\" --> Dexie\n    Engines -- \"Estado Global\" --> Zustand\n    TerminalShell -- \"Datos Remotos\" --> ReactQuery\n```\n",
+  "metadata": {
+    "source": "knowledge/docs/explanation/component-architecture.md",
+    "header": "C4 Component Diagram (Frontend Core)"
+  }
+}

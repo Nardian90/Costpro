@@ -1,0 +1,8 @@
+{
+  "id": "reference_catalogview_tsx",
+  "content": "## CatalogView.tsx\n**Ruta:** `src/components/views/terminal/views/catalog/CatalogView.tsx`\n\n**Acciones disponibles:** handleAddVariant, handleDeleteProduct, handleDeleteVariant, handleImportFileChange, handlePrintLabel, handleToggleActive, handleUpdateImage, handleUpdateProduct\n\n**Salidas esperadas:** Card List, Table\n\n",
+  "metadata": {
+    "source": "knowledge/iso_manual/reference.md",
+    "header": "CatalogView.tsx"
+  }
+}

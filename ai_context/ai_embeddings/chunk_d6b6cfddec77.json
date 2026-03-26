@@ -1,0 +1,8 @@
+{
+  "id": "FRONTEND_THEME_AUDIT_1__estado_actual__legacy_indigo_blue_",
+  "content": "## 1. Estado Actual (Legacy Indigo/Blue)\n\nActualmente, la aplicación utiliza una paleta basada en **Indigo (Indigo 500/600)** para los elementos primarios y varios tonos de **Blue** para elementos informativos, botones secundarios y diagramas de ayuda. Esto crea una inconsistencia visual con el logo de la marca, que es predominantemente verde.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FRONTEND_THEME_AUDIT.md",
+    "header": "1. Estado Actual (Legacy Indigo/Blue)"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS___impacto_en_funcionalidad",
+  "content": "## 📊 IMPACTO EN FUNCIONALIDAD\n\n| Función | Antes | Después | Estado |\n|---------|-------|---------|--------|\n| **Admin VE tiendas** | ❌ No (is_admin()=false) | ✅ Sí (is_admin()=true) | 🟢 FIXED |\n| **Admin CREA tiendas** | ❌ No (is_admin()=false) | ✅ Sí (is_admin()=true) | 🟢 FIXED |\n| **Admin EDITA usuarios** | ❌ No (falta policy) | ✅ Sí (new policy) | 🟢 FIXED |\n| **Admin DESACTIVA usuarios** | ❌ No (falta policy + campo) | ✅ Sí (policy + campo en código) | 🟢 FIXED |\n| **User VE su tienda** | ⚠️ Dudoso | ✅ Sí (policy clara) | 🟢 FIXED |\n| **User NO VE tienda ajena** | ⚠️ Dudoso (policy true) | ✅ Sí (policy restrictiva) | 🟢 FIXED |\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "📊 IMPACTO EN FUNCIONALIDAD"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_c__robustez_de_inventario__10_10_",
+  "content": "### C. Robustez de Inventario (10/10)\n*   **Mecanismo:** Disparadores (Triggers) de endurecimiento (`fn_sync_inventory_on_movement`).\n*   **Justificación:** Se ha implementado un \"Guardrail\" a nivel de base de datos que lanza una excepción `ERR_INSUFFICIENT_STOCK` si cualquier operación (incluso manual o por error de código) intenta dejar el stock en negativo. Esto delega la seguridad en la capa de datos, la más confiable de la arquitectura.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
+    "header": "C. Robustez de Inventario (10/10)"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "components_src_lib_navigation_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para navigation.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"safeNavigate\"], \"id\": \"src/lib/navigation.ts\", \"name\": \"navigation.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico navigation.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar navigation.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 381,
+    "domain": "components"
+  }
+}

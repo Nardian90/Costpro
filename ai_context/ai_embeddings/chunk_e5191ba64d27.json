@@ -1,0 +1,9 @@
+{
+  "id": "user_help_5",
+  "content": "{\"acciones\": [\"Acceder al m\\u00f3dulo Academy\", \"Seleccionar categor\\u00eda de estudio\", \"Realizar sesiones de repaso con Flashcards\", \"Monitorear progreso en Mastery Panel de Control\"], \"descripcion_usuario\": \"Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetici\\u00f3n espaciada.\", \"feature\": \"Aprendizaje y Capacitaci\\u00f3n (Academy)\", \"resultados\": [\"Cumplimiento de: Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetici\\u00f3n espaciada.\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 5,
+    "domain": "user_help"
+  }
+}

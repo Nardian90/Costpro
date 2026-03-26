@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_views_audit_useAuditLogsView_ts",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useAuditLogsView.\", \"dependencies\": [\"react\", \"@/hooks/api/useAuditLogs\", \"@/hooks/ui/useDebounce\"], \"domain\": \"UI\", \"exports\": [\"useAuditLogsView\"], \"id\": \"src/components/views/terminal/views/audit/useAuditLogsView.ts\", \"name\": \"useAuditLogsView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useAuditLogsView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useAuditLogsView.ts.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 140,
+    "domain": "components"
+  }
+}

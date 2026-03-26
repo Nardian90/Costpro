@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_ui_dialog_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para dialog.\", \"dependencies\": [\"react\", \"@radix-ui/react-dialog\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/dialog.tsx\", \"name\": \"dialog.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico dialog.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con dialog.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 252,
+    "domain": "components"
+  }
+}

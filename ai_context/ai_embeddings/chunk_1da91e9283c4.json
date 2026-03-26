@@ -1,0 +1,9 @@
+{
+  "id": "user_help_14",
+  "content": "{\"acciones\": [\"handleExportExcel\", \"handleGenerate\", \"handleSave\"], \"descripcion_usuario\": \"Interfaz para gestionar ReportsView.\", \"feature\": \"ReportsView\", \"resultados\": [\"Card List\"]}",
+  "metadata": {
+    "source": "knowledge/user_help.json",
+    "index": 14,
+    "domain": "user_help"
+  }
+}

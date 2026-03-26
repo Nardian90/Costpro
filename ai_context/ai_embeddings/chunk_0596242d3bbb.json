@@ -1,0 +1,9 @@
+{
+  "id": "components_src_components_views_terminal_Sidebar_tsx",
+  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para Sidebar.\", \"dependencies\": [\"react\", \"react\", \"framer-motion\", \"lucide-react\", \"@/lib/utils\", \"@/components/CostProLogo\", \"@/store\", \"@/hooks/ui/useTerminalNavigation\"], \"domain\": \"UI\", \"exports\": [\"Sidebar\"], \"id\": \"src/components/views/terminal/Sidebar.tsx\", \"name\": \"Sidebar.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico Sidebar.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con Sidebar.tsx.\"}",
+  "metadata": {
+    "source": "knowledge/components.json",
+    "index": 16,
+    "domain": "components"
+  }
+}

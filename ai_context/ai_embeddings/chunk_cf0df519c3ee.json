@@ -1,0 +1,8 @@
+{
+  "id": "FLOW_IPV_MISMATCH_4__visualización_en_ui",
+  "content": "## 4. Visualización en UI\n- **Tabla de Transacciones:** Las filas muestran un badge de estado (`PENDIENTE`, `PARCIAL`).\n- **Alerta de Error:** Si hay un `fail_reason`, se muestra un icono de advertencia con el mensaje (ej: \"⚠️ FALTA STOCK VIRTUAL\").\n- **Stats:** El Dashboard actualiza los contadores de \"En Proceso\" y \"Pendientes\".\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
+    "header": "4. Visualización en UI"
+  }
+}

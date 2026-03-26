@@ -1,0 +1,8 @@
+{
+  "id": "HEALTH_RESOLUTION_PLAN_2__componentes_huérfanos__17_",
+  "content": "## 2. Componentes Huérfanos (17)\n\nEstos archivos no tienen dependencias entrantes ni salientes detectadas por el AST. Pueden ser archivos muertos o puntos de entrada desacoplados (como rutas de API).\n\n| Categoría | Archivos | Complejidad | Estrategia |\n| :--- | :--- | :--- | :--- |\n| **API Routes** | `api/route.ts`, `api/cost-sheets/import-anexo/route.ts`, `api/cost-sheets/export-pdf/route.ts`, `api/system-health/knowledge/route.ts`, `api/sync/batch/route.ts`, `api/logs/route.ts` | **Baja** | Son puntos de entrada. Validar si se usan desde el cliente (fetch) o si son obsoletos. Si se usan, marcarlos como `type: Integration`. |\n| **Views / UI** | `wiki/page.tsx`, `SystemDependencyGraph.tsx`, `UserFlowDiagram.tsx`, `MobileFlowDiagram.tsx`, `CashFlowDiagram.tsx` | **Baja** | Integrar en el `viewRegistry` o en la navegación principal si son funcionales. |\n| **Shadcn UI** | `ui/sonner.tsx`, `ui/aspect-ratio.tsx`, `ui/collapsible.tsx` | **Muy Baja** | Componentes base que aún no se han instanciado en ninguna vista. Mantener como librería. |\n| **Otros** | `lib/db.ts`, `mocks/matching-log-service.ts`, `types/react-syntax-highlighter.d.ts` | **Baja** | Verificar referencias dinámicas. El mock y los tipos son necesarios pero no forman parte del grafo de ejecución principal. |\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/HEALTH_RESOLUTION_PLAN.md",
+    "header": "2. Componentes Huérfanos (17)"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "SOLUCION_APLICADA_STATUS_4____policy_nueva_en__profiles____agregada",
+  "content": "### 4. ✅ Policy Nueva en `profiles` - AGREGADA\n\n**Nueva Policy:**\n```sql\nCREATE POLICY \"profiles_admin_full_access\"\n  ON public.profiles\n  FOR ALL\n  USING (is_admin())\n  WITH CHECK (is_admin());\n```\n\n**Propósito:** Permite a Admins editar/desactivar cualquier usuario\n\n**Validación:** ✅ Policy existe y funciona\n\n---\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
+    "header": "4. ✅ Policy Nueva en `profiles` - AGREGADA"
+  }
+}

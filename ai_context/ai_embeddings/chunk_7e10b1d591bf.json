@@ -1,0 +1,8 @@
+{
+  "id": "AUDIT_MATCHING_ENGINE_4__evaluación_técnica__md_",
+  "content": "## 4. Evaluación Técnica (MD)\n\n| Criterio | Puntuación | Comentario |\n| :--- | :--- | :--- |\n| **Cumplimiento de Reglas** | 9/10 | El motor es robusto y fiel a las reglas de negocio. |\n| **Sincronización Motor vs UI** | 4/10 | Falta transparencia. El motor decide pero no informa el \"por qué\". |\n| **Arquitectura de Descomposición** | 10/10 | La lógica recursiva de ancestros es excelente y previene errores manuales. |\n| **Auditabilidad** | 5/10 | Difícil de auditar sin entrar en la base de datos o usar la Simulación. |\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
+    "header": "4. Evaluación Técnica (MD)"
+  }
+}

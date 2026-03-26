@@ -1,0 +1,8 @@
+{
+  "id": "README_POS_estilo_neumórfico__soft_ui_",
+  "content": "### Estilo Neumórfico (Soft UI)\n- ✨ Sombras duales (light/dark) para efecto 3D suave\n- 🎨 Colores semánticos y tokens de diseño\n- 🌓 Modo claro/oscuro con tema neumórfico en ambos\n- 📱 Responsive design (mobile-first)\n- ♿ Accesibilidad WCAG AA\n- ⚡ Animaciones sutiles y transiciones fluidas\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/README_POS.md",
+    "header": "Estilo Neumórfico (Soft UI)"
+  }
+}

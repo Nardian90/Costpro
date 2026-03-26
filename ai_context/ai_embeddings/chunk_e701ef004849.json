@@ -1,0 +1,8 @@
+{
+  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_4_1_versionado_semántico",
+  "content": "### 4.1 Versionado Semántico\nTodos los artefactos JSON generados deben seguir `MAJOR.MINOR.PATCH`.\n- **MAJOR:** Cambios estructurales en arquitectura.\n- **MINOR:** Nueva información o nodos agregados.\n- **PATCH:** Correcciones menores o regeneración sin cambios estructurales.\n\n",
+  "metadata": {
+    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
+    "header": "4.1 Versionado Semántico"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_2____agregar_productos_a_recepción__",
+  "content": "#### 2. **Agregar Productos a Recepción**\n   - Click en botón \"Recibir\" de cualquier producto\n   - Se agrega a lista temporal (Map en estado)\n   - Producto se marca visualmente (fondo azul claro)\n   - No permite duplicados (toast informativo)\n\n",
+  "metadata": {
+    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
+    "header": "2. **Agregar Productos a Recepción**"
+  }
+}
