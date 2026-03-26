@@ -342,9 +342,21 @@ export interface IdentityAudit {
   timestamp: string;
 }
 
+export interface AuditLog {
+  id?: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  entity: string;
+  prev_value?: any;
+  new_value?: any;
+  metadata?: any;
+}
+
 export class IPVDatabase extends Dexie {
   customers!: Table<Customer>;
   identity_audit!: Table<IdentityAudit>;
+  audit_logs!: Table<AuditLog>;
   mapping_rules!: Table<MappingRuleType>;
   mapping_executions!: Table<MappingExecution>;
   catalog_audit!: Table<CatalogAudit>;
@@ -407,6 +419,10 @@ export class IPVDatabase extends Dexie {
 
     this.version(25).stores({
       catalog_audit: "&id, timestamp, action, userId"
+    });
+
+    this.version(26).stores({
+      audit_logs: "++id, timestamp, action, entity, actor"
     });
   }
 }

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./mobile-ipv-hardening.css";
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *, .fast-dark *, [data-theme='dark'] *, [data-theme='fast-dark'] *));
