@@ -447,7 +447,7 @@ export default function IPVView() {
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
 
 
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons">
         <div className="flex items-center gap-4">
             {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
                 <Button

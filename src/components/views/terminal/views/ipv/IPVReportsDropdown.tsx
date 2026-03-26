@@ -37,8 +37,7 @@ export function IPVReportsDropdown({ activeTab, onSelect }: Props) {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="outline"
-                    className={cn(
-                        "h-11 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-primary/20 hover:bg-primary/5 shrink-0",
+                    className={cn("ipv-reports-dropdown", "h-11 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-primary/20 hover:bg-primary/5 shrink-0",
                         activeReport && "bg-primary/10 text-primary border-primary shadow-sm"
                     )}
                 >
@@ -52,8 +51,7 @@ export function IPVReportsDropdown({ activeTab, onSelect }: Props) {
                     <DropdownMenuItem
                         key={tab.id}
                         onClick={() => onSelect(tab.id)}
-                        className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors mb-1 last:mb-0",
+                        className={cn("flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors mb-1 last:mb-0",
                             activeTab === tab.id ? "bg-primary/10 text-primary font-black" : "hover:bg-muted font-bold"
                         )}
                     >
