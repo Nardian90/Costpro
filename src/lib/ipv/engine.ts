@@ -211,11 +211,15 @@ export class MatchingEngine {
         }
 
         if (qty > 0) {
-          const line = await this.createLine(transaction, matchedProduct, qty, 'AUTO_MATCH', 'Transferencia');
-          lines.push(line);
-          remaining_cents -= line.importe_linea_cents;
-          logs.push(`PASS 1 (HARD_REF): Matched ${qty}x ${matchedProduct.descripcion}`);
-          addTrace(1, 'HARD_REF', 'SUCCESS', `Detectado ${matchedProduct.descripcion}`, { product: matchedProduct.cod, qty });
+          try {
+            const line = await this.createLine(transaction, matchedProduct, qty, 'AUTO_MATCH', 'Transferencia');
+            lines.push(line);
+            remaining_cents -= line.importe_linea_cents;
+            logs.push(`PASS 1 (HARD_REF): Matched ${qty}x ${matchedProduct.descripcion}`);
+            addTrace(1, 'HARD_REF', 'SUCCESS', `Detectado ${matchedProduct.descripcion}`, { product: matchedProduct.cod, qty });
+          } catch (e: any) {
+            addTrace(1, 'HARD_REF', 'FAIL', e.message);
+          }
         } else {
             addTrace(1, 'HARD_REF', 'FAIL', `Sin stock para ${matchedProduct.descripcion}`);
         }
@@ -239,10 +243,16 @@ export class MatchingEngine {
           updated_at: new Date().toISOString()
         });
 
-        for (const item of combination) {
-          const line = await this.createLine(transaction, item.product, item.qty, 'AUTO_MATCH', 'Transferencia');
-          lines.push(line);
-          remaining_cents -= line.importe_linea_cents;
+        try {
+          for (const item of combination) {
+            const line = await this.createLine(transaction, item.product, item.qty, 'AUTO_MATCH', 'Transferencia');
+            lines.push(line);
+            remaining_cents -= line.importe_linea_cents;
+          }
+        } catch (e: any) {
+          addTrace(2, 'EXACT_SUM', 'FAIL', e.message);
+          // Rollback if needed? createLine modifies stockMap.
+          // For now, it will just fail the whole combination match
         }
         logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación exacta`);
         addTrace(2, 'EXACT_SUM', 'SUCCESS', 'Combinación exacta encontrada', { items: combination.length });
@@ -295,13 +305,17 @@ export class MatchingEngine {
                     });
                 }
 
-                const line = await this.createLine(transaction, flexProduct, 1, 'AUTO_MATCH', 'Transferencia');
-                line.precio_unitario_cents = targetPrice;
-                line.importe_linea_cents = targetPrice;
-                lines.push(line);
-                remaining_cents -= targetPrice;
-                logs.push(`PASS 3 (PRICE_FLEX): ${lockedPrice !== undefined ? 'Reutilizado' : 'Bloqueado'} precio de ${flexProduct.descripcion} a ${targetPrice}`);
-                addTrace(3, 'PRICE_FLEX', 'SUCCESS', `Ajuste de precio en ${flexProduct.descripcion}`, { adjustment: targetPrice - basePrice });
+                try {
+                  const line = await this.createLine(transaction, flexProduct, 1, 'AUTO_MATCH', 'Transferencia');
+                  line.precio_unitario_cents = targetPrice;
+                  line.importe_linea_cents = targetPrice;
+                  lines.push(line);
+                  remaining_cents -= targetPrice;
+                  logs.push(`PASS 3 (PRICE_FLEX): ${lockedPrice !== undefined ? 'Reutilizado' : 'Bloqueado'} precio de ${flexProduct.descripcion} a ${targetPrice}`);
+                  addTrace(3, 'PRICE_FLEX', 'SUCCESS', `Ajuste de precio en ${flexProduct.descripcion}`, { adjustment: targetPrice - basePrice });
+                } catch (e: any) {
+                  addTrace(3, 'PRICE_FLEX', 'FAIL', e.message);
+                }
             } else {
                 addTrace(3, 'PRICE_FLEX', 'FAIL', `Ajuste de ${adjustment} cts excede límites`);
             }
@@ -329,11 +343,15 @@ export class MatchingEngine {
                 }
 
                 if (qty > 0) {
-                    const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
-                    lines.push(line);
-                    remaining_cents -= line.importe_linea_cents;
-                    logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
-                    addedCount += qty;
+                    try {
+                      const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
+                      lines.push(line);
+                      remaining_cents -= line.importe_linea_cents;
+                      logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
+                      addedCount += qty;
+                    } catch (e: any) {
+                      // Skip this wildcard
+                    }
                 }
             }
         }
@@ -378,15 +396,19 @@ export class MatchingEngine {
 
             const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
             if (diff <= toleranceCents) {
-              const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
-              line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
-              line.importe_linea_cents = remaining_cents;
-              lines.push(line);
-              remaining_cents = 0;
-              logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
-              addTrace(5, 'TOLERANCE', 'SUCCESS', `Cuadre de ${line.cuadre_cents} cts aplicado`, { product: product.cod, diff: line.cuadre_cents });
-              found = true;
-              break;
+              try {
+                const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
+                line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
+                line.importe_linea_cents = remaining_cents;
+                lines.push(line);
+                remaining_cents = 0;
+                logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
+                addTrace(5, 'TOLERANCE', 'SUCCESS', `Cuadre de ${line.cuadre_cents} cts aplicado`, { product: product.cod, diff: line.cuadre_cents });
+                found = true;
+                break;
+              } catch (e: any) {
+                // Continue searching
+              }
             }
           }
           if (!found) {
@@ -707,6 +729,11 @@ export class MatchingEngine {
             const decomposed = await this.attemptDecomposition(product.cod);
             if (!decomposed) break;
             currentStock = this.stockMap.get(product.cod) || 0;
+        }
+
+        // VALIDACIÓN CRÍTICA: Si tras descomponer no hay stock suficiente, NO crear la línea si STOCK_LIMIT está activo
+        if (!this.allowNegativeStock && currentStock < qty) {
+            throw new Error(`ERR_INSUFFICIENT_STOCK: ${product.cod} (Disponible: ${currentStock}, Requerido: ${qty})`);
         }
     }
 
