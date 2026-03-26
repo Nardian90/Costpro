@@ -9,20 +9,30 @@ export interface MVTExportContext {
     centro: string;
     concepto: string;
     cuenta_mn: string;
+    descripcion?: string;
+    entregado_a?: string;
+    deposito?: string;
+    talonario?: string;
+    importe?: number;
+    entidad?: any;
+    factura?: string;
+    moneda?: string;
   };
   products: any[];
   movements: any[];
 }
 
 /**
- * Generates the .mvt file content using CRLF for Windows compatibility (Versat)
+ * Generates the .mvt or .cyp file content using CRLF for Windows compatibility (Versat)
  */
 export function generateMVTContent(template: MVTTemplate, context: MVTExportContext): string {
   let output = "";
   const CRLF = "\r\n";
 
   for (const section of template.sections) {
-    output += `${section.title}` + CRLF;
+    if (!section.hideTitle) {
+      output += `${section.title}` + CRLF;
+    }
 
     const sectionContext = {
       ...context,
@@ -31,22 +41,25 @@ export function generateMVTContent(template: MVTTemplate, context: MVTExportCont
     };
 
     if (section.type === 'single') {
-      const mode = section.renderMode || (section.title === '[Documento]' ? 'key_value' : 'pipe_separated');
+      const mode = section.renderMode || (section.hideTitle ? 'none' : 'key_value');
 
       if (mode === 'key_value') {
         section.fields.forEach(field => {
           output += `${field.key}=${resolveField(field, sectionContext)}` + CRLF;
         });
+      } else if (mode === 'none') {
+        section.fields.forEach(field => {
+          output += `${resolveField(field, sectionContext)}` + CRLF;
+        });
       } else {
         const line = section.fields.map(field => resolveField(field, sectionContext)).join('|');
         output += line + CRLF;
       }
-      output += CRLF;
     } else if (section.type === 'repeatable') {
       const data = section.dataSource === 'products' ? context.products : context.movements;
 
       // Special handling for [Ubicacion] header as per requirement
-      if (section.title === '[Ubicacion]') {
+      if (section.showHeader && section.title === '[Ubicacion]') {
          output += "CODIGO|DESCRIPCION|UM|CUENTA|||||EXISTENCIA|" + CRLF;
       }
 
@@ -58,13 +71,19 @@ export function generateMVTContent(template: MVTTemplate, context: MVTExportCont
           // Extract calculated or raw values for expressions
           cantidad: item.cantidad ?? 0,
           costo: item.costo_unitario_cents ? item.costo_unitario_cents / 100 : (item.product?.costo_unitario_cents ? item.product.costo_unitario_cents / 100 : 0),
+          importe_cents: item.importe_cents ?? (item.cantidad * (item.costo_unitario_cents || 0))
         };
 
         const line = section.fields.map(field => resolveField(field, itemContext)).join('|');
         output += line + CRLF;
       });
-      output += CRLF;
     }
+
+    if (section.footer) {
+      output += evaluateExpression(section.footer, sectionContext) + CRLF;
+    }
+
+    output += CRLF;
   }
 
   return output.trim() + CRLF;
@@ -86,8 +105,6 @@ function resolveField(field: FieldConfig, context: any): string {
 
 /**
  * Downloads the content as a UTF-8 file.
- * Most Cuban ERPs (Versat) expect UTF-8 or Windows-1252.
- * We use standard UTF-8.
  */
 export function downloadMVT(content: string, fileName: string) {
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
