@@ -5,7 +5,7 @@ import * as path from 'path';
 
 describe('View Registry Consistency', () => {
   it('should have a corresponding case in TerminalShell.tsx for every registry item', () => {
-    const shellPath = path.resolve(/*turbopackIgnore:true*/process.cwd(), 'src/components/views/TerminalShell.tsx');
+    const shellPath = path.resolve(/*turbopackIgnore: true*/process.cwd(), 'src/components/views/TerminalShell.tsx');
     const shellContent = fs.readFileSync(shellPath, 'utf-8');
 
     VIEW_REGISTRY.forEach(view => {
