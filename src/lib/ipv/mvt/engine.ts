@@ -1,4 +1,4 @@
-import { MVTTemplate, FieldConfig } from "./types";
+import { MVTTemplate, FieldConfig, MVTSection } from "./types";
 import { evaluateExpression, resolveDynamicValue } from "./evaluator";
 
 export interface MVTExportContext {
@@ -31,7 +31,9 @@ export function generateMVTContent(template: MVTTemplate, context: MVTExportCont
     };
 
     if (section.type === 'single') {
-      if (section.title === '[Documento]') {
+      const mode = section.renderMode || (section.title === '[Documento]' ? 'key_value' : 'pipe_separated');
+
+      if (mode === 'key_value') {
         section.fields.forEach(field => {
           output += `${field.key}=${resolveField(field, sectionContext)}` + CRLF;
         });
