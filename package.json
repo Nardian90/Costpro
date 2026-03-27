@@ -140,10 +140,5 @@
     "@types/lodash": "^4.17.24",
     "@vitejs/plugin-react": "^6.0.1",
     "vitest": "^4.1.1"
-  },
-  "bun": {
-    "lockfile": {
-      "print": "text"
-    }
   }
 }
