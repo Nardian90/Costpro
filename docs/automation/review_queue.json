@@ -9,12 +9,27 @@
       "createdAt": "2026-03-16T14:42:44.949444Z",
       "status": "open",
       "priority": "normal"
+    },
+    {
+      "id": "rq-phase-15-consistency-20260326053000",
+      "artifactName": "Documentation Consistency",
+      "candidatePath": null,
+      "metaPath": null,
+      "confidenceScore": 100,
+      "createdAt": "2026-03-26T05:30:00Z",
+      "status": "open",
+      "priority": "high",
+      "description": "Detected 23 orphan views and 29 undocumented components during Phase 15 validation.",
+      "findings": {
+        "orphan_views_count": 23,
+        "undocumented_components_count": 29
+      }
     }
   ],
   "metadata": {
     "createdAt": "2026-03-16T00:00:00Z",
-    "lastUpdated": "2026-03-16T14:42:44.950939Z",
-    "totalReviews": 1,
-    "pendingReviews": 1
+    "lastUpdated": "2026-03-26T05:30:00Z",
+    "totalReviews": 2,
+    "pendingReviews": 2
   }
 }

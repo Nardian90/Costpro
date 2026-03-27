@@ -3,14 +3,23 @@ ai_vector_index_path: ai_context/ai_vector_index/
 archiveStore: public/_archive/
 artifactStore: public/
 confidenceThreshold: 90
-currentPhase: 15
+currentPhase: 16
 cycle: 1
 documentationModel: ISO_26514 + Diataxis
 humanFeedbackStore: docs/automation/human_feedback.json
-lastExecution: 2026-03-26T05:26:41.770191+00:00Z
+lastExecution: 2026-03-26T05:35:00.000Z
 metadataStore: public/_meta/
 pipelineVersion: 8.1.0
 quarantinePath: docs/automation/quarantine/
 repairThreshold: 80
 reviewQueue: docs/automation/review_queue.json
 schedulerMode: normal
+rag_engine:
+  mode: incremental
+  last_indexed_hash: ""
+  batch_size: 50
+  embedding_model: "text-embedding-3-small"
+  retry_policy:
+    max_attempts: 3
+    backoff_seconds: 60
+  non_blocking: true
