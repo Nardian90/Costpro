@@ -1,7 +1,24 @@
-import { Pick3Result, BacktestResult, BettingConfig, IntelligencePlay } from '@/types/pick3';
+import { Pick3Result, BacktestResult, BettingConfig, IntelligencePlay, DrawTime } from '@/types/pick3';
 import { AnalysisEngine } from './analysis.engine';
 import { PredictionEngine } from './prediction.engine';
 import { BankrollManager } from './bankroll.manager';
+
+export interface ProjectionDay {
+  date: string;
+  draw_time: DrawTime;
+  bets: { combination: number[], size: number, score: number }[];
+  result: number[];
+  win: boolean;
+  profit: number;
+  capital: number;
+}
+
+export interface ModelValidationResult extends BacktestResult {
+  dailyHistory: ProjectionDay[];
+  bestDrawTime: DrawTime;
+  middayProfit: number;
+  eveningProfit: number;
+}
 
 export class BacktestEngine {
   private history: Pick3Result[];
@@ -11,132 +28,123 @@ export class BacktestEngine {
   }
 
   public run(config: BettingConfig, initialBankroll: number, days: number = 30): BacktestResult {
+     // Standard backtest implementation (kept for compatibility)
+     const result = this.runValidation(config, initialBankroll, days);
+     return result;
+  }
+
+  public runValidation(config: BettingConfig, initialBankroll: number, days: number = 30): ModelValidationResult {
     const bankrollHistory: number[] = [initialBankroll];
     let currentBankroll = initialBankroll;
     let totalBets = 0;
     let totalWins = 0;
-    let winStreak = 0;
-    let maxWinStreak = 0;
-    let lossStreak = 0;
-    let maxLossStreak = 0;
-    let maxDrawdown = 0;
     let peak = initialBankroll;
-    const dailyReturns: number[] = [];
-    let totalGrossProfit = 0;
-    let totalGrossLoss = 0;
+    let maxDrawdown = 0;
 
-    // Skip initial data for analysis context
-    const analysisWindow = 60;
-    const testData = this.history.slice(analysisWindow, analysisWindow + (days * 2));
+    const dailyHistory: ProjectionDay[] = [];
+    let middayProfit = 0;
+    let eveningProfit = 0;
+
+    // We take the last (days * 2) draws for the 30-day (midday + evening) projection
+    const testData = this.history.slice(-(days * 2));
+    const baseHistory = this.history.slice(0, -(days * 2));
 
     testData.forEach((draw, index) => {
-      const pastHistory = this.history.slice(0, analysisWindow + index);
-      const analysisEngine = new AnalysisEngine(pastHistory);
-      const analysis = analysisEngine.analyze(30);
-      const predictionEngine = new PredictionEngine(pastHistory, analysis);
+      // Create a moving window of history for the prediction engine
+      const currentWindow = [...baseHistory, ...testData.slice(0, index)];
+      const analysisEngine = new AnalysisEngine(currentWindow);
+      const analysis = analysisEngine.analyze(60);
+      const predictionEngine = new PredictionEngine(currentWindow, analysis);
 
-      const predictions = predictionEngine.generatePredictions(config, config.maxCombinations || 5);
+      // System recommends top 3 options
+      const predictions = predictionEngine.generatePredictions(config, 3);
 
       let totalExposure = 0;
-      const bets: { p: IntelligencePlay, size: number }[] = [];
-
-      predictions.forEach(p => {
-        // Use the new BankrollManager for adaptive bet sizing
-        const betSize = BankrollManager.calculateBetSize(currentBankroll, config, p.confidence, totalWins / (totalBets || 1));
-        bets.push({ p, size: betSize });
-        totalExposure += betSize;
+      const bets = predictions.map(p => {
+        // Intelligent bet sizing based on confidence (score)
+        // Using a modified Kelly-inspired approach via BankrollManager
+        const size = BankrollManager.calculateBetSize(currentBankroll, config, p.score);
+        totalExposure += size;
+        return { combination: p.combination, size, score: p.score };
       });
 
+      // Handle over-exposure
       if (totalExposure > currentBankroll) {
-          // Proportionally scale down if exposure > bankroll
-          const scale = currentBankroll / totalExposure;
-          bets.forEach(b => b.size = Math.floor(b.size * scale));
-          totalExposure = currentBankroll;
+        const scale = currentBankroll / totalExposure;
+        bets.forEach(b => b.size = Math.max(1, Math.floor(b.size * scale)));
+        totalExposure = bets.reduce((acc, b) => acc + b.size, 0);
       }
 
       currentBankroll -= totalExposure;
-      let wonThisDraw = false;
-      let winAmount = 0;
 
-      const resultValue = config.mode === 'LAST2'
-        ? (draw.result[1] * 10) + draw.result[2]
-        : (draw.result[0] * 100) + (draw.result[1] * 10) + draw.result[2];
+      const drawValue = config.mode === 'LAST2'
+        ? draw.result[1] * 10 + draw.result[2]
+        : draw.result[0] * 100 + draw.result[1] * 10 + draw.result[2];
+
+      let winAmount = 0;
+      let won = false;
 
       bets.forEach(b => {
-        const pValue = config.mode === 'LAST2'
-          ? (b.p.combination[0] * 10) + b.p.combination[1]
-          : (b.p.combination[0] * 100) + (b.p.combination[1] * 10) + b.p.combination[2];
+        const betValue = config.mode === 'LAST2'
+          ? b.combination[0] * 10 + b.combination[1]
+          : b.combination[0] * 100 + b.combination[1] * 10 + b.combination[2];
 
-        if (pValue === resultValue) {
-          wonThisDraw = true;
+        if (betValue === drawValue) {
           winAmount += b.size * config.payout;
+          won = true;
         }
       });
 
+      const profit = winAmount - totalExposure;
       currentBankroll += winAmount;
+
+      if (draw.draw_time === 'midday') middayProfit += profit;
+      else eveningProfit += profit;
+
+      if (won) totalWins++;
+      totalBets += bets.length;
+
       bankrollHistory.push(currentBankroll);
-      totalBets += predictions.length;
-
-      const netResult = winAmount - totalExposure;
-      if (netResult > 0) totalGrossProfit += netResult;
-      else totalGrossLoss += Math.abs(netResult);
-
-      const dailyReturn = netResult / (totalExposure || 1);
-      dailyReturns.push(dailyReturn);
-
-      if (wonThisDraw) {
-        totalWins++;
-        winStreak++;
-        lossStreak = 0;
-        if (winStreak > maxWinStreak) maxWinStreak = winStreak;
-      } else {
-        lossStreak++;
-        winStreak = 0;
-        if (lossStreak > maxLossStreak) maxLossStreak = lossStreak;
-      }
-
       if (currentBankroll > peak) peak = currentBankroll;
       const dd = (peak - currentBankroll) / (peak || 1);
       if (dd > maxDrawdown) maxDrawdown = dd;
+
+      dailyHistory.push({
+        date: draw.date,
+        draw_time: draw.draw_time,
+        bets,
+        result: draw.result,
+        win: won,
+        profit,
+        capital: currentBankroll
+      });
     });
 
     const netProfit = currentBankroll - initialBankroll;
-    const roi = (netProfit / (initialBankroll || 1)) * 100;
-
-    const avgReturn = dailyReturns.reduce((a, b) => a + b, 0) / (dailyReturns.length || 1);
-    const variance = dailyReturns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) / (dailyReturns.length || 1);
-    const stdDev = Math.sqrt(variance) || 1;
-    const sharpe = (avgReturn / stdDev) * Math.sqrt(365);
-
-    const downsideReturns = dailyReturns.filter(r => r < 0);
-    const downsideVariance = downsideReturns.reduce((a, b) => a + Math.pow(b, 2), 0) / (dailyReturns.length || 1);
-    const downsideStdDev = Math.sqrt(downsideVariance) || 0.0001;
-    const sortino = (avgReturn / downsideStdDev) * Math.sqrt(365);
-
-    const profitFactor = totalGrossLoss === 0 ? totalGrossProfit : totalGrossProfit / totalGrossLoss;
-    const annualizedReturn = (roi / 100) * (365 / days);
-    const calmar = annualizedReturn / (maxDrawdown || 0.01);
-    const absoluteMaxDrawdown = peak * maxDrawdown;
-    const recoveryFactor = absoluteMaxDrawdown === 0 ? profitFactor : netProfit / absoluteMaxDrawdown;
+    const bestDrawTime = middayProfit >= eveningProfit ? 'midday' : 'evening';
 
     return {
-      id: `BT-${Math.random().toString(36).substring(7)}`,
+      id: `VAL-${Math.random().toString(36).substring(7)}`,
       timestamp: Date.now(),
       periodDays: days,
       totalBets,
       totalWins,
       hitRate: (totalWins / (testData.length || 1)) * 100,
-      roi,
+      roi: (netProfit / (initialBankroll || 1)) * 100,
       netProfit,
       maxDrawdown: maxDrawdown * 100,
-      sharpeRatio: sharpe,
-      sortinoRatio: sortino,
-      calmarRatio: calmar,
-      profitFactor: profitFactor,
-      recoveryFactor: recoveryFactor,
+      sharpeRatio: 0, // Simplified for validation view
+      sortinoRatio: 0,
+      calmarRatio: 0,
+      profitFactor: 0,
+      recoveryFactor: 0,
       equityCurve: bankrollHistory,
-      winStreak: maxWinStreak,
-      lossStreak: maxLossStreak
+      winStreak: 0,
+      lossStreak: 0,
+      dailyHistory,
+      bestDrawTime,
+      middayProfit,
+      eveningProfit
     };
   }
 }

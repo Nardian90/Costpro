@@ -6,6 +6,8 @@ import {
   Activity, Shield, RefreshCw, Zap,
   TrendingDown, Coins, AlertCircle, BarChart3, LineChart,
   Sparkles,
+  History,
+  Info
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,16 +18,21 @@ import { MIAMI_PICK3_HISTORICAL } from '@/services/pick3/seedData';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { Pick3ExternalService } from '@/services/pick3/external';
 import { SimulationResult, Pick3Result, BettingConfig, BacktestResult } from '@/types/pick3';
+import { ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
 import { Pick3Visuals } from './Pick3Visuals';
 import { Pick3HistorySection } from './Pick3HistorySection';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from 'recharts';
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
+  CartesianGrid, Tooltip, BarChart, Bar, Cell
+} from 'recharts';
 
 export default function Pick3IntelligenceView() {
   const [history, setHistory] = useState<Pick3Result[]>([]);
   const [backtest, setBacktest] = useState<BacktestResult | null>(null);
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
+  const [validation, setValidation] = useState<ModelValidationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -52,10 +59,9 @@ export default function Pick3IntelligenceView() {
         if (stored && stored.length > 0) {
           setHistory(stored);
         } else {
-          // Use seed data if Supabase is empty (for dev)
           setHistory(MIAMI_PICK3_HISTORICAL);
         }
-      } catch (err) {
+      } catch (e) {
         setHistory(MIAMI_PICK3_HISTORICAL);
       } finally {
         setLoading(false);
@@ -64,66 +70,57 @@ export default function Pick3IntelligenceView() {
     loadData();
   }, []);
 
-  const runAnalysis = async () => {
-    if (history.length === 0) return;
-
-    const bt = engine.runBacktest(bConfig, 1000, 60);
-    const sim = engine.simulateMonteCarlo({
-      budget: 1000,
-      horizonDays: 30,
-      riskLevel: 'medium',
-      costPerBet: 1,
-      bettingConfig: bConfig
-    }, bt);
-
-    setBacktest(bt);
-    setSimulation(sim);
-    toast.success("Análisis cuantitativo completado");
-  };
-
   const handleSync = async () => {
     setIsSyncing(true);
     try {
       const response = await fetch('/api/pick3/sync', { method: 'POST' });
       const data = await response.json();
-
       if (data.success) {
         const updated = await Pick3Storage.getHistory();
         setHistory(updated);
-        toast.success(`Sincronización exitosa: ${data.count} resultados actualizados`);
+        toast.success("Sincronización exitosa", {
+          description: "El historial se ha actualizado correctamente."
+        });
       } else {
-        toast.error("Error al sincronizar datos");
+        throw new Error(data.message);
       }
-    } catch (err) {
-      toast.error("Fallo crítico en la conexión");
+    } catch (e) {
+      toast.error("Error al sincronizar", {
+        description: "No se pudo conectar con el servidor oficial. Intente más tarde."
+      });
     } finally {
       setIsSyncing(false);
     }
   };
 
+  const runAnalysis = () => {
+    if (history.length < 30) return;
+    const bt = engine.runBacktest(bConfig, 1000, 30);
+    const val = engine.runValidation(bConfig, 1000, 30);
+    setBacktest(bt);
+    setValidation(val);
+    setSimulation(engine.simulateMonteCarlo({ budget: 1000, horizonDays: 30, riskLevel: 'medium', costPerBet: 1, bettingConfig: bConfig }, bt));
+    toast.success("Análisis completado", {
+        description: "Se han generado nuevas proyecciones de 30 días."
+    });
+  };
+
   const recommendation = useMemo(() => {
-    if (!backtest) return "Realice un análisis para obtener una recomendación";
+    if (!backtest) return "Inicie un análisis para obtener recomendaciones.";
     return engine.getCapitalRecommendation(backtest.roi, backtest.maxDrawdown, bConfig);
   }, [backtest, bConfig, engine]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <div className="p-12 text-center font-black animate-pulse uppercase tracking-widest opacity-40">Accediendo al Mercado...</div>;
 
   return (
-    <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
         <div>
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter text-primary flex items-center gap-2">
-            <BrainCircuit className="w-8 h-8" /> Pick 3 AI Engine
+          <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
+            <BrainCircuit className="w-10 h-10 text-primary" /> PICK 3 INTELLIGENCE
           </h1>
-          <p className="text-[10px] md:text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
-            <Shield className="w-3 h-3 inline mr-1 text-emerald-500" /> Quantitative Strategy v6.0
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60 flex items-center gap-2 mt-1">
+            <Shield className="w-3 h-3 inline mr-1 text-emerald-500" /> Quantitative Strategy v6.5 (Stable)
           </p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -136,9 +133,7 @@ export default function Pick3IntelligenceView() {
         </div>
       </div>
 
-      {/* PRIORITY #1: STRATEGY & TOP PLAYS (Mobile First) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* AI Recommendation Card */}
         <Card className="md:col-span-1 rounded-[32px] border-primary/20 bg-primary/5 shadow-inner overflow-hidden border-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-primary">
@@ -168,7 +163,6 @@ export default function Pick3IntelligenceView() {
           </CardContent>
         </Card>
 
-        {/* Top Plays Card */}
         <Card className="md:col-span-2 rounded-[32px] border-border bg-card shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
@@ -197,10 +191,10 @@ export default function Pick3IntelligenceView() {
         </Card>
       </div>
 
-      {/* TABS FOR DEEP ANALYSIS */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-full h-12 w-full overflow-x-auto justify-start md:justify-center border border-border mb-4">
           <TabsTrigger value="overview" className="rounded-full px-6 font-bold text-xs">Mercado</TabsTrigger>
+          <TabsTrigger value="validation" className="rounded-full px-6 font-bold text-xs">Validación 30d</TabsTrigger>
           <TabsTrigger value="history" className="rounded-full px-6 font-bold text-xs">Historial</TabsTrigger>
           <TabsTrigger value="backtest" className="rounded-full px-6 font-bold text-xs">Backtest</TabsTrigger>
           <TabsTrigger value="montecarlo" className="rounded-full px-6 font-bold text-xs">Simulación</TabsTrigger>
@@ -226,6 +220,129 @@ export default function Pick3IntelligenceView() {
             ))}
           </div>
           {analysis && <Pick3Visuals analysis={analysis} history={history} />}
+        </TabsContent>
+
+        <TabsContent value="validation" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="rounded-[32px] border-border bg-card p-6 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Balance Proyectado (30d)</h3>
+                <div className="flex items-end gap-2">
+                  <span className={cn("text-5xl font-black italic", (validation?.netProfit || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                    ${validation?.equityCurve[validation.equityCurve.length-1].toFixed(0) || "1,000"}
+                  </span>
+                  <span className="text-xs font-bold uppercase pb-2 opacity-60">Capital Final</span>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase opacity-60">ROI Estimado</span>
+                  <span className={cn("text-sm font-black", (validation?.roi || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                    {validation?.roi.toFixed(1) || 0}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase opacity-60">Mejor Horario</span>
+                  <Badge variant="outline" className="text-[10px] font-black uppercase bg-primary/10 text-primary border-primary/20">
+                    {validation?.bestDrawTime === 'midday' ? "DÍA (Midday)" : "NOCHE (Evening)"}
+                  </Badge>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="md:col-span-2 rounded-[32px] border-border bg-card overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <LineChart className="w-4 h-4 text-primary" /> Curva de Validación (Presupuesto $1000)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={validation?.equityCurve.map((v, i) => ({ d: i, c: v })) || []}>
+                    <defs>
+                      <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                    <XAxis dataKey="d" hide />
+                    <YAxis fontSize={10} axisLine={false} tickLine={false} domain={['dataMin - 100', 'dataMax + 100']} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                      formatter={(value: any) => [`${value.toFixed(0)}`, "Capital"]}
+                    />
+                    <Area isAnimationActive={false} type="monotone" dataKey="c" stroke="#10b981" fill="url(#colorVal)" strokeWidth={4} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="rounded-[32px] border-border bg-card overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <History className="w-4 h-4" /> Detalle de Proyección Diaria
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold uppercase opacity-60">
+                Simulación siguiendo las 3 opciones recomendadas por el sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="pb-3 text-[10px] font-black uppercase opacity-40">Fecha/Tirada</th>
+                      <th className="pb-3 text-[10px] font-black uppercase opacity-40">Apuestas (Size)</th>
+                      <th className="pb-3 text-[10px] font-black uppercase opacity-40 text-center">Resultado</th>
+                      <th className="pb-3 text-[10px] font-black uppercase opacity-40 text-right">Ganancia</th>
+                      <th className="pb-3 text-[10px] font-black uppercase opacity-40 text-right">Capital</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {validation?.dailyHistory.slice().reverse().map((day, i) => (
+                      <tr key={i} className="group hover:bg-muted/50 transition-colors">
+                        <td className="py-4">
+                          <p className="text-xs font-black italic">{day.date}</p>
+                          <p className="text-[9px] font-bold uppercase opacity-60">{day.draw_time}</p>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex gap-2">
+                            {day.bets.map((b, idx) => (
+                              <Badge key={idx} variant="outline" className="text-[9px] font-black bg-muted/30">
+                                {b.combination.join('')} (${b.size})
+                              </Badge>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-4 text-center">
+                          <div className="inline-flex gap-1">
+                            {day.result.map((n, idx) => (
+                              <span key={idx} className={cn(
+                                "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black",
+                                day.win ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                              )}>
+                                {n}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-4 text-right">
+                          <span className={cn("text-xs font-black italic", day.profit >= 0 ? "text-emerald-500" : "text-red-500")}>
+                            {day.profit >= 0 ? "+" : ""}{day.profit.toFixed(0)}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right text-xs font-black">
+                          ${day.capital.toFixed(0)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="history">
