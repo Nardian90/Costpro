@@ -32,6 +32,9 @@ def validate():
 
     # 2. Undocumented Components (In arch but not in components.json)
     if arch and components_doc:
+        # Comparison logic: system_architecture uses relative file paths as IDs (mostly),
+        # while components.json uses them as "id".
+        # We check if the filePath of a component is documented in components.json.
         arch_comp_paths = {c['filePath'] for c in arch['components']}
         documented_ids = {c['id'] for c in components_doc}
 
