@@ -12,6 +12,7 @@ export interface ParsedObservation {
 /**
  * Robustly parses the observations string from a bank transaction to extract
  * key information for the IPV dashboard.
+ * Returns commission in CENTS.
  */
 export function parseObservations(obs: string): ParsedObservation {
   if (!obs) {
@@ -47,12 +48,12 @@ export function parseObservations(obs: string): ParsedObservation {
     if (taxMatch) tax = parseFloat(taxMatch[1]) || 0;
   }
 
-  // 4. Commission Extraction
+  // 4. Commission Extraction (Returns in cents)
   let commission = 0;
   const commissionRegex = /COMISION[:\s]+([\d.]+)/i;
   const commissionMatch = obs.match(commissionRegex);
   if (commissionMatch) {
-    commission = parseFloat(commissionMatch[1]) || 0;
+    commission = Math.round(parseFloat(commissionMatch[1]) * 100) || 0;
   }
 
   return { payer, account, tax, commission, ci: id.ci };
@@ -73,7 +74,7 @@ export async function enrichTransactions(transactions: any[]): Promise<any[]> {
       carnet: identity.ci || parsed.ci,
       pagador: identity.nombre || parsed.payer,
       esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
-      comision: parsed.commission
+      comision: parsed.commission // This is now in cents
     });
   }
   return enriched;
