@@ -5,16 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   FolderOpen,
-  Cloud,
-  Lock,
+  Lock as LockIcon,
   FileText,
-  Plus,
-  Eye,
   Download,
   Upload,
   MoreVertical,
-  Trash2,
-  ChevronRight,
   Globe,
   Settings,
   RefreshCw,
@@ -234,14 +229,14 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     }
   }, [user?.activeStoreId]);
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     try {
       const data = await storeService.getStores();
       setStores(data);
     } catch (error) {
       console.error('Error fetching stores:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (activeCategory === 'public') {
@@ -250,7 +245,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     if (isAdmin) {
       fetchStores();
     }
-  }, [activeCategory, fetchPublicTemplates, isAdmin]);
+  }, [activeCategory, fetchPublicTemplates, isAdmin, fetchStores]);
 
   const handleSelectDirectory = async () => {
     try {
@@ -397,7 +392,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             )}
           >
             {cat === 'system' && <Settings className="w-4 h-4" />}
-            {cat === 'private' && <Lock className="w-4 h-4" />}
+            {cat === 'private' && <LockIcon className="w-4 h-4" />}
             {cat === 'public' && <Globe className="w-4 h-4" />}
             {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
           </button>
@@ -434,7 +429,6 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 <TemplateCard
                   key={template.id}
                   template={template}
-                  isAdmin={isAdmin}
                   onImport={() => handleImport(template)}
                   onPublish={activeCategory === 'private' && isAdmin ? () => handleOpenPublishDialog(template) : undefined}
                 />
@@ -522,12 +516,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
 interface TemplateCardProps {
   template: Template;
-  isAdmin?: boolean;
   onImport: () => void;
   onPublish?: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, isAdmin, onImport, onPublish }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPublish }) => {
   return (
     <motion.div
       layout
