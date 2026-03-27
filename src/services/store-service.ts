@@ -3,6 +3,21 @@ import { logger } from '@/lib/logger';
 import { Store } from '@/types';
 
 export const storeService = {
+  async getStores() {
+    const { data, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      logger.error('DATABASE', 'GET_STORES_FAILED', { error });
+      throw error;
+    }
+
+    return data as Store[];
+  },
+
   async createStore(name: string, address: string, createdBy?: string) {
     logger.info('DATABASE', 'CREATE_STORE', { name, address, createdBy });
     const { data, error } = await supabase
