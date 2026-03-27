@@ -11,6 +11,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { generateHash } from '@/lib/ipv/engine';
+import { syncCatalogFromTransactions } from '@/lib/ipv/identity/registry';
+import { enrichTransactions } from '@/lib/ipv/parser';
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -47,15 +49,18 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
       return;
     }
 
-    const importeNum = parseFloat(importe);
-    if (isNaN(importeNum)) {
+    const importeVal = parseFloat(importe);
+    if (isNaN(importeVal)) {
       toast.error('Importe inválido');
       return;
     }
 
+    // Convert to cents
+    const importeCents = Math.round(importeVal * 100);
+
     // Validation: Date must be posterior to last transaction
-    if (lastTransaction && fecha <= lastTransaction.fecha) {
-      toast.error(`La fecha debe ser posterior a ${lastTransaction.fecha}`);
+    if (lastTransaction && fecha < lastTransaction.fecha) {
+      toast.error(`La fecha no debe ser anterior a ${lastTransaction.fecha}`);
       return;
     }
 
@@ -81,17 +86,21 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
         referencia_corta: finalRef,
         referencia_origen: finalRef,
         observaciones: observaciones.trim(),
-        importe_cents: importeNum,
-        importe_venta_cents: importeNum,
+        importe_cents: importeCents,
+        importe_venta_cents: importeCents,
         tipo,
         estado_conciliacion: 'PENDIENTE',
         excluido: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        ingestion_hash: await generateHash(`${finalRef}-${fecha}-${importeNum}`)
+        ingestion_hash: await generateHash(`${finalRef}-${fecha}-${importeCents}`)
       };
 
-      await db.bank_statements.add(newTx);
+      // Enrich identity and sync catalog
+      const [enrichedTx] = await enrichTransactions([newTx]);
+      await db.bank_statements.add(enrichedTx);
+      await syncCatalogFromTransactions();
+
       toast.success('Transacción agregada correctamente');
       onOpenChange(false);
     } catch (error: any) {
@@ -104,7 +113,7 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
                 referencia_corta: referencia,
                 referencia_origen: referencia,
                 observaciones: observaciones.trim(),
-                importe_cents: importeNum,
+                importe_cents: importeCents,
                 tipo,
                 error_note: error.message || 'Error de persistencia',
                 raw_data: { fecha, referencia, importe, tipo, observaciones },
@@ -139,7 +148,7 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
             />
             {lastTransaction && (
               <p className="text-[10px] font-bold text-orange-500 uppercase italic">
-                Debe ser posterior a: {lastTransaction.fecha}
+                Última registrada: {lastTransaction.fecha}
               </p>
             )}
           </div>

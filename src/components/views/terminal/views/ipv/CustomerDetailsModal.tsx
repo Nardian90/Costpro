@@ -26,11 +26,9 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   User,
   Phone,
-  CreditCard,
   TrendingUp,
   History,
   AlertCircle
@@ -38,17 +36,9 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface CustomerDetailsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  customer: Customer | null;
-}
+interface CustomerDetailsModalProps { open: boolean; onOpenChange: (open: boolean) => void; customer: Customer | null; }
 
-export function CustomerDetailsModal({
-  open,
-  onOpenChange,
-  customer,
-}: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({ open, onOpenChange, customer }: CustomerDetailsModalProps) {
   const [stats, setStats] = useState<{ totalTransactions: number; totalAmountCents: number } | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,7 +60,7 @@ export function CustomerDetailsModal({
         .where('carnet')
         .equals(customer.ci)
         .reverse()
-        .limit(20)
+        .limit(50)
         .toArray();
       setTransactions(txs);
     } catch (error) {
@@ -84,7 +74,7 @@ export function CustomerDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] h-[80vh] flex flex-col p-0 overflow-hidden border-none rounded-3xl shadow-2xl" aria-describedby="dialog-description">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col p-0 overflow-hidden border-none rounded-3xl shadow-2xl" aria-describedby="dialog-description">
         <DialogHeader className="p-6 bg-primary/10 border-b border-primary/20 shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
@@ -100,8 +90,8 @@ export function CustomerDetailsModal({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto min-h-0 bg-background">
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="neu-card border-none bg-muted/30">
                 <CardHeader className="p-4 pb-2">
@@ -138,7 +128,7 @@ export function CustomerDetailsModal({
             <div className="space-y-4">
               <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                 <History className="w-4 h-4 text-primary" />
-                Historial de Transacciones (Últimas 20)
+                Historial de Transacciones (Últimas 50)
               </h3>
 
               <div className="rounded-2xl border border-border/40 overflow-hidden">
@@ -193,7 +183,7 @@ export function CustomerDetailsModal({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
