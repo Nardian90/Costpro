@@ -66,7 +66,7 @@ export const MVTExportView = () => {
 
   // Filtered data for the CURRENT export (movements section)
   const reconciliationLinesInRange = useMemo(() => {
-    return allReconciliationLines.filter(line => {
+    return [...allReconciliationLines].sort((a, b) => (a.created_at || "").localeCompare(b.created_at || "")).filter(line => {
       const date = line.fecha_operacion;
       return date >= dateRange.start && date <= dateRange.end;
     });
@@ -108,16 +108,24 @@ export const MVTExportView = () => {
         });
       });
 
-      const contextMovements = Array.from(movementMap.entries()).map(([cod, data]) => {
-        const prod = productData.find(p => p.cod === cod);
-        return {
-          product: prod || { cod, descripcion: "Desconocido", um: "U", existencia: 0 },
-          cantidad: data.cantidad,
-          importe_cents: data.total_cents,
-          costo_unitario: prod?.costo_unitario_cents ? prod.costo_unitario_cents / 100 : 0
-        };
+      const contextMovements: any[] = [];
+      const seenProductCodes = new Set<string>();
+
+      lines.forEach(line => {
+        const data = movementMap.get(line.product_cod)!;
+        if (!seenProductCodes.has(line.product_cod)) {
+          seenProductCodes.add(line.product_cod);
+          const prod = productData.find(p => p.cod === line.product_cod);
+          contextMovements.push({
+            product: prod || { cod: line.product_cod, descripcion: "Desconocido", um: "U", existencia: 0 },
+            cantidad: data.cantidad,
+            importe_cents: data.total_cents,
+            costo_unitario: prod?.costo_unitario_cents ? prod.costo_unitario_cents / 100 : 0
+          });
+        }
       });
 
+      const filteredProductData = contextMovements.map(m => m.product);
       const totalImporte = lines.reduce((acc, l) => acc + (l.importe_linea_cents / 100), 0);
 
       return {
@@ -133,7 +141,7 @@ export const MVTExportView = () => {
           deposito: "10140",
           descripcion: description || settings?.concepto || "210"
         },
-        products: productData,
+        products: filteredProductData,
         movements: contextMovements
       };
     };
