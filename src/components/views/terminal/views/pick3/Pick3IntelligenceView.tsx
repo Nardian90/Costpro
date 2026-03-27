@@ -19,6 +19,7 @@ import { SimulationResult, Pick3Result, BettingConfig, BacktestResult } from '@/
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
 import { Pick3Visuals } from './Pick3Visuals';
+import { Pick3HistorySection } from './Pick3HistorySection';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Cell } from 'recharts';
 
 export default function Pick3IntelligenceView() {
@@ -48,9 +49,14 @@ export default function Pick3IntelligenceView() {
       setLoading(true);
       try {
         const stored = await Pick3Storage.getHistory();
-        setHistory(stored && stored.length > 0 ? stored : MIAMI_PICK3_HISTORICAL);
-      } catch (e) {
-        toast.error("Error cargando datos");
+        if (stored && stored.length > 0) {
+          setHistory(stored);
+        } else {
+          // Use seed data if Supabase is empty (for dev)
+          setHistory(MIAMI_PICK3_HISTORICAL);
+        }
+      } catch (err) {
+        setHistory(MIAMI_PICK3_HISTORICAL);
       } finally {
         setLoading(false);
       }
@@ -58,42 +64,62 @@ export default function Pick3IntelligenceView() {
     loadData();
   }, []);
 
+  const runAnalysis = async () => {
+    if (history.length === 0) return;
+
+    const bt = engine.runBacktest(bConfig, 1000, 60);
+    const sim = engine.simulateMonteCarlo({
+      budget: 1000,
+      horizonDays: 30,
+      riskLevel: 'medium',
+      costPerBet: 1,
+      bettingConfig: bConfig
+    }, bt);
+
+    setBacktest(bt);
+    setSimulation(sim);
+    toast.success("Análisis cuantitativo completado");
+  };
+
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      const latest = await Pick3ExternalService.syncOfficialResults();
-      if (latest?.length) {
-        setHistory(latest);
-        toast.success("Sincronización exitosa");
+      const response = await fetch('/api/pick3/sync', { method: 'POST' });
+      const data = await response.json();
+
+      if (data.success) {
+        const updated = await Pick3Storage.getHistory();
+        setHistory(updated);
+        toast.success(`Sincronización exitosa: ${data.count} resultados actualizados`);
+      } else {
+        toast.error("Error al sincronizar datos");
       }
-    } catch (e) {
-      toast.error("Error de sincronización");
+    } catch (err) {
+      toast.error("Fallo crítico en la conexión");
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const runAnalysis = () => {
-    if (!history.length) return;
-    const bt = engine.runBacktest(bConfig, 1000, 60);
-    setBacktest(bt);
-    const sim = engine.simulateMonteCarlo({ budget: 1000, horizonDays: 30, riskLevel: 'medium', costPerBet: 1, bettingConfig: bConfig }, bt);
-    setSimulation(sim);
-    toast.success("Análisis Cuantitativo Completado");
-  };
-
   const recommendation = useMemo(() => {
-    return engine.getCapitalRecommendation(backtest?.roi || 0, backtest?.maxDrawdown || 0, bConfig);
+    if (!backtest) return "Realice un análisis para obtener una recomendación";
+    return engine.getCapitalRecommendation(backtest.roi, backtest.maxDrawdown, bConfig);
   }, [backtest, bConfig, engine]);
 
-  if (loading) return <div className="p-8 text-center animate-pulse font-black italic">CARGANDO INTELIGENCIA...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[400px]">
+        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 bg-background min-h-screen max-w-7xl mx-auto">
-      {/* HEADER - Compact & Mobile Friendly */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-[32px] border border-border shadow-xl">
+    <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-primary flex items-center gap-2">
+          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter text-primary flex items-center gap-2">
             <BrainCircuit className="w-8 h-8" /> Pick 3 AI Engine
           </h1>
           <p className="text-[10px] md:text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
@@ -175,6 +201,7 @@ export default function Pick3IntelligenceView() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-full h-12 w-full overflow-x-auto justify-start md:justify-center border border-border mb-4">
           <TabsTrigger value="overview" className="rounded-full px-6 font-bold text-xs">Mercado</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-full px-6 font-bold text-xs">Historial</TabsTrigger>
           <TabsTrigger value="backtest" className="rounded-full px-6 font-bold text-xs">Backtest</TabsTrigger>
           <TabsTrigger value="montecarlo" className="rounded-full px-6 font-bold text-xs">Simulación</TabsTrigger>
         </TabsList>
@@ -199,6 +226,10 @@ export default function Pick3IntelligenceView() {
             ))}
           </div>
           {analysis && <Pick3Visuals analysis={analysis} history={history} />}
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Pick3HistorySection history={history} />
         </TabsContent>
 
         <TabsContent value="backtest" className="space-y-6">
