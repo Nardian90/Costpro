@@ -94,6 +94,8 @@
     "jspdf-autotable": "^5.0.7",
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",
+    "lodash": "^4.17.23",
+    "@types/lodash": "^4.17.15",
     "lucide-react": "^0.525.0",
     "next": "^16.2.0",
     "next-auth": "^4.24.11",
@@ -137,7 +139,6 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/lodash": "^4.17.24",
     "@vitejs/plugin-react": "^6.0.1",
     "vitest": "^4.1.1"
   },
