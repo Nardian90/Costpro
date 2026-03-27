@@ -36,17 +36,9 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface CustomerDetailsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  customer: Customer | null;
-}
+interface CustomerDetailsModalProps { open: boolean; onOpenChange: (open: boolean) => void; customer: Customer | null; }
 
-export function CustomerDetailsModal({
-  open,
-  onOpenChange,
-  customer,
-}: CustomerDetailsModalProps) {
+export function CustomerDetailsModal({ open, onOpenChange, customer }: CustomerDetailsModalProps) {
   const [stats, setStats] = useState<{ totalTransactions: number; totalAmountCents: number } | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
