@@ -1,7 +1,7 @@
 import { Product } from '../dexie';
 
 /**
- * Extract commission from bank observations string.
+ * Extract commission from bank observations string and returns it in CENTS.
  * Supports formats like "comi 10.50", "comis 10.50" or "Comisión: 10.50"
  * Spec Regex: Comi(?:s(?:i[óo]n)?)?:?\s*([0-9]+(?:\.[0-9]{1,2})?)
  */
@@ -9,7 +9,7 @@ export function extractCommission(observations: string): number {
     if (!observations) return 0;
     const comisMatch = observations.match(/Comi(?:s(?:i[óo]n)?)?:?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
     if (comisMatch) {
-        return parseFloat(comisMatch[1]);
+        return Math.round(parseFloat(comisMatch[1]) * 100);
     }
     return 0;
 }
