@@ -8,7 +8,9 @@ export const DEFAULT_MVT_SETTINGS: MVTSettings = {
   globalCuenta: '7000050',
   almacen: '0109',
   centro: '0110200012611',
-  concepto: '210'
+  concepto: '210',
+  grouping: 'range',
+  fileStructure: 'single'
 };
 
 export const STANDARD_MVT_TEMPLATE: MVTTemplate = {
