@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
-  FileText, Download, Settings2, Calendar, AlertCircle,
+  FileText, Download, FolderArchive, Layers, Settings2, Calendar, AlertCircle,
   CheckCircle2, Play, Loader2, History, X, Search,
   ArrowRight, Layout
 } from "lucide-react";
@@ -19,6 +19,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
 
+import JSZip from "jszip";
 import { generateMVTContent, downloadMVT, MVTExportContext } from "@/lib/ipv/mvt/engine";
 import {
   STANDARD_MVT_TEMPLATE,
@@ -71,71 +72,114 @@ export const MVTExportView = () => {
     });
   }, [allReconciliationLines, dateRange]);
 
-  const prepareExportContext = (): MVTExportContext => {
-    // 1. Calculate Dynamic Existence for each product at the END date
-    const productData = products.map(p => {
-      let stock = p.stock_inicial_manual || 0;
+  const prepareExportContexts = (): MVTExportContext[] => {
+    const grouping = settings?.grouping || "range";
+    const baseExportNumber = (settings?.lastExportNumber || 0) + 1;
 
-      // Add entries (Movements) up to end date
-      allProductMovements.forEach(m => {
-        if (isBefore(parseISO(m.fecha), addDays(parseISO(dateRange.end), 1))) {
-           if (m.producto_destino_cod === p.cod) stock += m.cantidad_destino;
-           if (m.producto_origen_cod === p.cod) stock -= m.cantidad_origen;
-        }
+    const getProductDataAt = (cutoffDate: string) => {
+      return products.map(p => {
+        let stock = p.stock_inicial_manual || 0;
+
+        allProductMovements.forEach(m => {
+          if (isBefore(parseISO(m.fecha), addDays(parseISO(cutoffDate), 1))) {
+             if (m.producto_destino_cod === p.cod) stock += m.cantidad_destino;
+             if (m.producto_origen_cod === p.cod) stock -= m.cantidad_origen;
+          }
+        });
+
+        allReconciliationLines.forEach(l => {
+          if (l.product_cod === p.cod && isBefore(parseISO(l.fecha_operacion), addDays(parseISO(cutoffDate), 1))) {
+             stock -= l.cantidad;
+          }
+        });
+
+        return { ...p, existencia: stock };
       });
-
-      // Subtract sales (Reconciliation Lines) up to end date
-      allReconciliationLines.forEach(l => {
-        if (l.product_cod === p.cod && isBefore(parseISO(l.fecha_operacion), addDays(parseISO(dateRange.end), 1))) {
-           stock -= l.cantidad;
-        }
-      });
-
-      return { ...p, existencia: stock };
-    });
-
-    // 2. Group movements in range for the [Movimientos] section
-    const movementMap = new Map<string, { cantidad: number, total_cents: number }>();
-    reconciliationLinesInRange.forEach(line => {
-      const existing = movementMap.get(line.product_cod) || { cantidad: 0, total_cents: 0 };
-      movementMap.set(line.product_cod, {
-        cantidad: existing.cantidad + line.cantidad,
-        total_cents: existing.total_cents + line.importe_linea_cents
-      });
-    });
-
-    const contextMovements = Array.from(movementMap.entries()).map(([cod, data]) => {
-      const prod = productData.find(p => p.cod === cod);
-      return {
-        product: prod || { cod, descripcion: 'Desconocido', um: 'U', existencia: 0 },
-        cantidad: data.cantidad,
-        importe_cents: data.total_cents,
-        costo_unitario: prod?.costo_unitario_cents ? prod.costo_unitario_cents / 100 : 0
-      };
-    });
-
-    const totalImporte = reconciliationLinesInRange.reduce((acc, l) => acc + (l.importe_linea_cents / 100), 0);
-
-    return {
-      global: {
-        numero: (settings?.lastExportNumber || 0) + 1,
-        fecha: format(parseISO(dateRange.end), 'dd/MM/yyyy'),
-        almacen: settings?.almacen || '0109',
-        centro: settings?.centro || '0110200012611',
-        concepto: settings?.concepto || '210',
-        cuenta_mn: settings?.globalCuenta || '7000050',
-        importe: totalImporte,
-        entregado_a: 'ADMINISTRADOR', // Default or from user context if available
-        deposito: '10140' // Default or from settings
-      },
-      products: productData,
-      movements: contextMovements
     };
+
+    const createSingleContext = (lines: ReconciliationLine[], date: string, num: number, description?: string): MVTExportContext => {
+      const productData = getProductDataAt(date);
+      const movementMap = new Map<string, { cantidad: number, total_cents: number }>();
+      lines.forEach(line => {
+        const existing = movementMap.get(line.product_cod) || { cantidad: 0, total_cents: 0 };
+        movementMap.set(line.product_cod, {
+          cantidad: existing.cantidad + line.cantidad,
+          total_cents: existing.total_cents + line.importe_linea_cents
+        });
+      });
+
+      const contextMovements = Array.from(movementMap.entries()).map(([cod, data]) => {
+        const prod = productData.find(p => p.cod === cod);
+        return {
+          product: prod || { cod, descripcion: "Desconocido", um: "U", existencia: 0 },
+          cantidad: data.cantidad,
+          importe_cents: data.total_cents,
+          costo_unitario: prod?.costo_unitario_cents ? prod.costo_unitario_cents / 100 : 0
+        };
+      });
+
+      const totalImporte = lines.reduce((acc, l) => acc + (l.importe_linea_cents / 100), 0);
+
+      return {
+        global: {
+          numero: num,
+          fecha: format(parseISO(date), "dd/MM/yyyy"),
+          almacen: settings?.almacen || "0109",
+          centro: settings?.centro || "0110200012611",
+          concepto: settings?.concepto || "210",
+          cuenta_mn: settings?.globalCuenta || "7000050",
+          importe: totalImporte,
+          entregado_a: "ADMINISTRADOR",
+          deposito: "10140",
+          descripcion: description || settings?.concepto || "210"
+        },
+        products: productData,
+        movements: contextMovements
+      };
+    };
+
+    if (grouping === "range") {
+      return [createSingleContext(reconciliationLinesInRange, dateRange.end, baseExportNumber)];
+    }
+
+    if (grouping === "day") {
+      const daysMap = new Map<string, ReconciliationLine[]>();
+      reconciliationLinesInRange.forEach(line => {
+        const date = line.fecha_operacion;
+        const existing = daysMap.get(date) || [];
+        daysMap.set(date, [...existing, line]);
+      });
+
+      const sortedDates = Array.from(daysMap.keys()).sort();
+      return sortedDates.map((date, idx) => createSingleContext(daysMap.get(date)!, date, baseExportNumber + idx));
+    }
+
+    if (grouping === "transaction") {
+      const txMap = new Map<string, ReconciliationLine[]>();
+      const txOrder: string[] = [];
+      reconciliationLinesInRange.forEach(line => {
+        const txRef = line.transaction_ref;
+        if (!txMap.has(txRef)) {
+          txMap.set(txRef, []);
+          txOrder.push(txRef);
+        }
+        txMap.get(txRef)!.push(line);
+      });
+
+      return txOrder.map((txRef, idx) => {
+        const lines = txMap.get(txRef)!;
+        const date = lines[0].fecha_operacion;
+        return createSingleContext(lines, date, baseExportNumber + idx, `TRX: ${txRef}`);
+      });
+    }
+    return [];
   };
 
   const previewContent = useMemo(() => {
     try {
-      return generateMVTContent(currentTemplate, prepareExportContext());
+      const contexts = prepareExportContexts();
+      if (contexts.length === 0) return "No hay datos para el rango seleccionado";
+      return contexts.map(ctx => generateMVTContent(currentTemplate, ctx)).join("\r\n" + "=".repeat(40) + "\r\n");
     } catch (e) {
       return "Error generando vista previa: " + (e as Error).message;
     }
@@ -144,34 +188,72 @@ export const MVTExportView = () => {
   const handleExport = async () => {
     setIsGenerating(true);
     try {
-      const context = prepareExportContext();
-      const content = generateMVTContent(currentTemplate, context);
-      const ext = currentTemplate.fileExtension || 'mvt';
-      const fileName = `EXP_${context.global.numero}_${format(new Date(), 'yyyyMMdd')}.${ext}`;
+      const contexts = prepareExportContexts();
+      if (contexts.length === 0) {
+        toast.error("No hay datos para exportar en este rango");
+        return;
+      }
 
-      downloadMVT(content, fileName);
+      const structure = settings?.fileStructure || "single";
+      const ext = currentTemplate.fileExtension || "mvt";
 
-      const log: MVTExportLog = {
-        id: crypto.randomUUID(),
-        templateId: currentTemplate.id,
-        exportNumber: context.global.numero,
-        fileName,
-        dateRange: { ...dateRange },
-        timestamp: new Date().toISOString(),
-        status: 'SUCCESS'
-      };
+      if (structure === "single") {
+        const content = contexts.map(ctx => generateMVTContent(currentTemplate, ctx)).join("\r\n");
+        const firstNum = contexts[0].global.numero;
+        const lastNum = contexts[contexts.length - 1].global.numero;
+        const fileName = contexts.length > 1
+          ? `EXP_${firstNum}_TO_${lastNum}_${format(new Date(), "yyyyMMdd")}.${ext}`
+          : `EXP_${firstNum}_${format(new Date(), "yyyyMMdd")}.${ext}`;
 
-      await db.mvt_exports_log.add(log);
+        downloadMVT(content, fileName);
 
-      const newSettings: MVTSettings = {
-        ...(settings || DEFAULT_MVT_SETTINGS),
-        id: 'current',
-        lastExportNumber: context.global.numero
-      };
+        const log: MVTExportLog = {
+          id: crypto.randomUUID(),
+          templateId: currentTemplate.id,
+          exportNumber: lastNum,
+          fileName,
+          dateRange: { ...dateRange },
+          timestamp: new Date().toISOString(),
+          status: "SUCCESS"
+        };
+        await db.mvt_exports_log.add(log);
+        await db.mvt_settings.put({ ...(settings || DEFAULT_MVT_SETTINGS), id: "current", lastExportNumber: lastNum });
 
-      await db.mvt_settings.put(newSettings);
+      } else {
+        const zip = new JSZip();
+        contexts.forEach(ctx => {
+          const content = generateMVTContent(currentTemplate, ctx);
+          const fileName = `EXP_${ctx.global.numero}_${ctx.global.fecha.replace(/\//g, "")}.${ext}`;
+          zip.file(fileName, content);
+        });
 
-      toast.success(`Archivo .${ext} generado con éxito`);
+        const blob = await zip.generateAsync({ type: "blob" });
+        const zipFileName = `EXPORT_MVT_${format(new Date(), "yyyyMMdd_HHmm")}.zip`;
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = zipFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        const lastNum = contexts[contexts.length - 1].global.numero;
+        const log: MVTExportLog = {
+          id: crypto.randomUUID(),
+          templateId: currentTemplate.id,
+          exportNumber: lastNum,
+          fileName: zipFileName,
+          dateRange: { ...dateRange },
+          timestamp: new Date().toISOString(),
+          status: "SUCCESS"
+        };
+        await db.mvt_exports_log.add(log);
+        await db.mvt_settings.put({ ...(settings || DEFAULT_MVT_SETTINGS), id: "current", lastExportNumber: lastNum });
+      }
+
+      toast.success(`Exportación completada (${contexts.length} registros)`);
     } catch (error) {
       console.error(error);
       toast.error("Error en la exportación contable");
@@ -179,7 +261,6 @@ export const MVTExportView = () => {
       setIsGenerating(false);
     }
   };
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -308,24 +389,67 @@ export const MVTExportView = () => {
           <Card className="border-slate-200/60 shadow-sm overflow-hidden bg-white">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100">
               <CardTitle className="text-sm font-semibold flex items-center">
-                <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-500" />
-                Valores Globales
+                <Settings2 className="w-4 h-4 mr-2 text-indigo-500" />
+                Configuración de Reportes
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-4">
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400">Concepto</Label>
-                    <Input className="h-9" value={settings?.concepto || '210'} readOnly />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400">Almacén</Label>
-                    <Input className="h-9" value={settings?.almacen || '0109'} readOnly />
-                  </div>
-               </div>
                <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-slate-400">Centro de Costo</Label>
-                  <Input className="h-9" value={settings?.centro || '0110200012611'} readOnly />
+                  <Label className="text-[10px] uppercase text-slate-400">Agrupación de Datos</Label>
+                  <select
+                    className="w-full h-9 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    value={settings?.grouping || "range"}
+                    onChange={async (e) => {
+                      await db.mvt_settings.put({
+                        ...(settings || DEFAULT_MVT_SETTINGS),
+                        id: "current",
+                        grouping: e.target.value as any
+                      });
+                    }}
+                  >
+                    <option value="range">Un solo comprobante (Rango completo)</option>
+                    <option value="day">Un comprobante por día</option>
+                    <option value="transaction">Un comprobante por transferencia</option>
+                  </select>
+               </div>
+
+               <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-slate-400">Estructura de Archivos</Label>
+                  <select
+                    className="w-full h-9 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    value={settings?.fileStructure || "single"}
+                    onChange={async (e) => {
+                      await db.mvt_settings.put({
+                        ...(settings || DEFAULT_MVT_SETTINGS),
+                        id: "current",
+                        fileStructure: e.target.value as any
+                      });
+                    }}
+                  >
+                    <option value="single">Un solo archivo (.mvt / .cyp)</option>
+                    <option value="multiple">Varios archivos (empaquetados en .zip)</option>
+                  </select>
+               </div>
+
+               <div className="pt-2 border-t border-slate-100 mt-2">
+                 <div className="flex items-center gap-2 mb-2">
+                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                   <span className="text-[10px] uppercase font-bold text-slate-500">Valores Globales</span>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase text-slate-400">Concepto</Label>
+                      <Input className="h-9 bg-slate-50" value={settings?.concepto || "210"} readOnly />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase text-slate-400">Almacén</Label>
+                      <Input className="h-9 bg-slate-50" value={settings?.almacen || "0109"} readOnly />
+                    </div>
+                 </div>
+                 <div className="space-y-1 mt-2">
+                    <Label className="text-[10px] uppercase text-slate-400">Centro de Costo</Label>
+                    <Input className="h-9 bg-slate-50" value={settings?.centro || "0110200012611"} readOnly />
+                 </div>
                </div>
             </CardContent>
           </Card>

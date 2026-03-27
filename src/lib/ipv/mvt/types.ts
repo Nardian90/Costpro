@@ -37,6 +37,8 @@ export interface MVTSettings {
   globalCuenta?: string;
   almacen: string;
   centro: string;
+  grouping?: "range" | "day" | "transaction";
+  fileStructure?: "single" | "multiple";
   concepto: string;
 }
 
