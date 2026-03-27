@@ -14,11 +14,14 @@ import {
   Settings,
   RefreshCw,
   HardDrive,
-  Store as StoreIcon
+  Store as StoreIcon,
+  Plus,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useCostSheetStore, useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
@@ -77,10 +80,14 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+
+  // Naming state for new templates
+  const [publishName, setPublishName] = useState('');
+  const [publishDescription, setPublishDescription] = useState('');
   const [selectedTemplateToPublish, setSelectedTemplateToPublish] = useState<Template | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
 
-  const setSheet = useCostSheetStore(state => state.setSheet);
+  const { data: currentSheetData, setSheet } = useCostSheetStore();
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.role === 'admin';
 
@@ -299,13 +306,35 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     toast.success(`Plantilla "${template.name}" cargada correctamente`);
   };
 
-  const handleOpenPublishDialog = (template: Template) => {
-    setSelectedTemplateToPublish(template);
+  const handleOpenPublishDialog = (template: Template | null) => {
+    if (template) {
+      setSelectedTemplateToPublish(template);
+      setPublishName(template.name);
+      setPublishDescription(template.description || '');
+    } else {
+      // New template from current sheet
+      if (!currentSheetData) {
+          toast.error("No hay ninguna ficha activa para guardar como plantilla.");
+          return;
+      }
+      setSelectedTemplateToPublish(null);
+      setPublishName(currentSheetData.name || '');
+      setPublishDescription('');
+    }
     setIsPublishDialogOpen(true);
   };
 
   const handlePublish = async () => {
-    if (!selectedTemplateToPublish) return;
+    if (!isAdmin) {
+      toast.error('Solo los administradores pueden publicar plantillas en Supabase');
+      return;
+    }
+
+    if (!publishName.trim()) {
+        toast.error("El nombre de la plantilla es obligatorio.");
+        return;
+    }
+
     setIsLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -314,18 +343,15 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         return;
       }
 
-      if (!isAdmin) {
-        toast.error('Solo los administradores pueden publicar plantillas en Supabase');
-        return;
-      }
+      const templateData = selectedTemplateToPublish ? selectedTemplateToPublish.data : currentSheetData;
 
       const { error } = await supabase
         .from('cost_sheet_templates')
         .insert({
-          name: selectedTemplateToPublish.name,
-          description: selectedTemplateToPublish.description,
-          category: selectedTemplateToPublish.category || 'General',
-          data: selectedTemplateToPublish.data,
+          name: publishName,
+          description: publishDescription,
+          category: (selectedTemplateToPublish?.category || 'General'),
+          data: templateData,
           type: 'public',
           created_by: userData.user.id,
           store_id: selectedStoreId === 'all' ? null : selectedStoreId
@@ -378,25 +404,42 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         </div>
       </div>
 
-      {/* Categories Tabs */}
-      <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit mx-auto">
-        {(['system', 'private', 'public'] as const).map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={cn(
-              "px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
-              activeCategory === cat
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-            )}
-          >
-            {cat === 'system' && <Settings className="w-4 h-4" />}
-            {cat === 'private' && <LockIcon className="w-4 h-4" />}
-            {cat === 'public' && <Globe className="w-4 h-4" />}
-            {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
-          </button>
-        ))}
+      {/* Categories Tabs & Admin Action */}
+      <div className="flex flex-col items-center gap-6">
+          <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit">
+            {(['system', 'private', 'public'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                {cat === 'system' && <Settings className="w-4 h-4" />}
+                {cat === 'private' && <LockIcon className="w-4 h-4" />}
+                {cat === 'public' && <Globe className="w-4 h-4" />}
+                {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
+              </button>
+            ))}
+          </div>
+
+          {activeCategory === 'public' && isAdmin && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                  <Button
+                    onClick={() => handleOpenPublishDialog(null)}
+                    className="rounded-2xl h-14 px-8 bg-success hover:bg-success/90 text-white font-black uppercase tracking-widest shadow-xl shadow-success/20 group"
+                  >
+                    <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
+                    Nueva Plantilla (Desde Editor)
+                  </Button>
+              </motion.div>
+          )}
       </div>
 
       {/* Main Content Area */}
@@ -451,22 +494,49 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
       {/* Publish Dialog */}
       <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+        <DialogContent className="sm:max-w-[500px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
               <Globe className="w-6 h-6" />
               Publicar Plantilla
             </DialogTitle>
             <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Define la visibilidad de la plantilla en Supabase
+              Configura los detalles y visibilidad de la plantilla en la nube
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-6 py-4">
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
-                Destino de Publicación
-              </label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Nombre de la Plantilla
+                </label>
+                <Input
+                    value={publishName}
+                    onChange={(e) => setPublishName(e.target.value)}
+                    placeholder="Ej: Ficha Base de Carpintería"
+                    className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest"
+                />
+            </div>
+
+            <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Descripción (Opcional)
+                </label>
+                <Textarea
+                    value={publishDescription}
+                    onChange={(e) => setPublishDescription(e.target.value)}
+                    placeholder="Describe para qué sirve este modelo..."
+                    className="min-h-[100px] rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest resize-none"
+                />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Destino de Publicación
+                  </label>
+                  <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+              </div>
               <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
                 <SelectTrigger className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest">
                   <SelectValue placeholder="Selecciona visibilidad" />
@@ -501,11 +571,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             </Button>
             <Button
               onClick={handlePublish}
-              disabled={isLoading}
+              disabled={isLoading || !publishName.trim()}
               className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-              Publicar Ahora
+              Guardar en Supabase
             </Button>
           </DialogFooter>
         </DialogContent>
