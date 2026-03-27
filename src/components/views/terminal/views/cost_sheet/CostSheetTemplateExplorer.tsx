@@ -1,30 +1,48 @@
 'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   FolderOpen,
-  Cloud,
-  Lock,
+  Lock as LockIcon,
   FileText,
-  Plus,
-  Eye,
   Download,
   Upload,
   MoreVertical,
-  Trash2,
-  ChevronRight,
   Globe,
   Settings,
   RefreshCw,
-  HardDrive
+  HardDrive,
+  Store as StoreIcon,
+  Plus,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCostSheetStore } from '@/store';
+import { Textarea } from '@/components/ui/textarea';
+import { useCostSheetStore, useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
+import { storeService } from '@/services/store-service';
+import { Store } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 // Import Templates
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import exampleTemplate from '@/lib/data/costpro-ejemplo';
@@ -39,7 +57,9 @@ import repairTemplate from '@/lib/data/template-repair';
 import shoesTemplate from '@/lib/data/template-shoes';
 import logisticsTemplate from '@/lib/data/template-logistics';
 import lavarTemplate from "@/lib/data/template-lavar";
+
 type TemplateCategory = 'system' | 'private' | 'public';
+
 interface Template {
   id: string;
   name: string;
@@ -48,7 +68,9 @@ interface Template {
   type: TemplateCategory;
   data: any;
   updated_at?: string;
+  store_id?: string | null;
 }
+
 export const CostSheetTemplateExplorer: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('system');
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,7 +78,19 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const [privateTemplates, setPrivateTemplates] = useState<Template[]>([]);
   const [localDirectory, setLocalDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const setSheet = useCostSheetStore(state => state.setSheet);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+
+  // Naming state for new templates
+  const [publishName, setPublishName] = useState('');
+  const [publishDescription, setPublishDescription] = useState('');
+  const [selectedTemplateToPublish, setSelectedTemplateToPublish] = useState<Template | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
+
+  const { data: currentSheetData, setSheet } = useCostSheetStore();
+  const user = useAuthStore(state => state.user);
+  const isAdmin = user?.role === 'admin';
+
   // System Templates
   const systemTemplates: Template[] = [
     {
@@ -168,10 +202,20 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const fetchPublicTemplates = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('cost_sheet_templates')
         .select('*')
         .eq('type', 'public');
+
+      // Filtrado según requerimiento: null (para todos) o la tienda activa del usuario
+      if (user?.activeStoreId) {
+        query = query.or(`store_id.is.null,store_id.eq.${user.activeStoreId}`);
+      } else {
+        query = query.is('store_id', null);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       if (data) {
         setPublicTemplates(data.map((t: any) => ({
@@ -179,11 +223,10 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           name: t.name,
           description: t.description,
           category: t.category,
-
-      type: 'public',
-
-      data: t.data,
-          updated_at: t.created_at
+          type: 'public',
+          data: t.data,
+          updated_at: t.created_at,
+          store_id: t.store_id
         })));
       }
     } catch (error) {
@@ -191,12 +234,26 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  }, [user?.activeStoreId]);
+
+  const fetchStores = useCallback(async () => {
+    try {
+      const data = await storeService.getStores();
+      setStores(data);
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+    }
   }, []);
+
   useEffect(() => {
     if (activeCategory === 'public') {
       fetchPublicTemplates();
     }
-  }, [activeCategory, fetchPublicTemplates]);
+    if (isAdmin) {
+      fetchStores();
+    }
+  }, [activeCategory, fetchPublicTemplates, isAdmin, fetchStores]);
+
   const handleSelectDirectory = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
@@ -209,6 +266,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       }
     }
   };
+
   const loadPrivateTemplates = async (directoryHandle: FileSystemDirectoryHandle) => {
     setIsLoading(true);
     try {
@@ -224,10 +282,8 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 id: entry.name,
                 name: data.name || entry.name.replace('.json', ''),
                 description: data.metadata?.description || 'Plantilla guardada localmente',
-
-      type: 'private',
-
-      data: data,
+                type: 'private',
+                data: data,
                 updated_at: new Date(file.lastModified).toISOString()
               });
             }
@@ -244,11 +300,41 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   const handleImport = (template: Template) => {
     setSheet(template.data);
     toast.success(`Plantilla "${template.name}" cargada correctamente`);
   };
-  const handlePublish = async (template: Template) => {
+
+  const handleOpenPublishDialog = (template: Template | null) => {
+    if (template) {
+      setSelectedTemplateToPublish(template);
+      setPublishName(template.name);
+      setPublishDescription(template.description || '');
+    } else {
+      // New template from current sheet
+      if (!currentSheetData) {
+          toast.error("No hay ninguna ficha activa para guardar como plantilla.");
+          return;
+      }
+      setSelectedTemplateToPublish(null);
+      setPublishName(currentSheetData.name || '');
+      setPublishDescription('');
+    }
+    setIsPublishDialogOpen(true);
+  };
+
+  const handlePublish = async () => {
+    if (!isAdmin) {
+      toast.error('Solo los administradores pueden publicar plantillas en Supabase');
+      return;
+    }
+
+    if (!publishName.trim()) {
+        toast.error("El nombre de la plantilla es obligatorio.");
+        return;
+    }
+
     setIsLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -256,20 +342,26 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         toast.error('Debes iniciar sesión para publicar plantillas');
         return;
       }
+
+      const templateData = selectedTemplateToPublish ? selectedTemplateToPublish.data : currentSheetData;
+
       const { error } = await supabase
         .from('cost_sheet_templates')
         .insert({
-          name: template.name,
-          description: template.description,
-          category: template.category || 'General',
-
-      data: template.data,
-
-      type: 'public',
-          created_by: userData.user.id
+          name: publishName,
+          description: publishDescription,
+          category: (selectedTemplateToPublish?.category || 'General'),
+          data: templateData,
+          type: 'public',
+          created_by: userData.user.id,
+          store_id: selectedStoreId === 'all' ? null : selectedStoreId
         });
+
       if (error) throw error;
+
       toast.success('Plantilla publicada con éxito');
+      setIsPublishDialogOpen(false);
+      setSelectedTemplateToPublish(null);
       if (activeCategory === 'public') fetchPublicTemplates();
     } catch (error) {
       console.error('Error publishing template:', error);
@@ -278,6 +370,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   const filteredTemplates = (
     activeCategory === 'system' ? systemTemplates :
     activeCategory === 'private' ? privateTemplates :
@@ -286,6 +379,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 p-4">
       {/* Header & Search */}
@@ -309,26 +403,45 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           />
         </div>
       </div>
-      {/* Categories Tabs */}
-      <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit mx-auto">
-        {(['system', 'private', 'public'] as const).map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={cn(
-              "px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
-              activeCategory === cat
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-            )}
-          >
-            {cat === 'system' && <Settings className="w-4 h-4" />}
-            {cat === 'private' && <Lock className="w-4 h-4" />}
-            {cat === 'public' && <Globe className="w-4 h-4" />}
-            {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
-          </button>
-        ))}
+
+      {/* Categories Tabs & Admin Action */}
+      <div className="flex flex-col items-center gap-6">
+          <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit">
+            {(['system', 'private', 'public'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                {cat === 'system' && <Settings className="w-4 h-4" />}
+                {cat === 'private' && <LockIcon className="w-4 h-4" />}
+                {cat === 'public' && <Globe className="w-4 h-4" />}
+                {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
+              </button>
+            ))}
+          </div>
+
+          {activeCategory === 'public' && isAdmin && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                  <Button
+                    onClick={() => handleOpenPublishDialog(null)}
+                    className="rounded-2xl h-14 px-8 bg-success hover:bg-success/90 text-white font-black uppercase tracking-widest shadow-xl shadow-success/20 group"
+                  >
+                    <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
+                    Nueva Plantilla (Desde Editor)
+                  </Button>
+              </motion.div>
+          )}
       </div>
+
       {/* Main Content Area */}
       <div className="min-h-[400px]">
         {activeCategory === 'private' && !localDirectory ? (
@@ -360,7 +473,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                   key={template.id}
                   template={template}
                   onImport={() => handleImport(template)}
-                  onPublish={activeCategory === 'private' ? () => handlePublish(template) : undefined}
+                  onPublish={activeCategory === 'private' && isAdmin ? () => handleOpenPublishDialog(template) : undefined}
                 />
               ))}
             </AnimatePresence>
@@ -378,14 +491,105 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Publish Dialog */}
+      <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+              <Globe className="w-6 h-6" />
+              Publicar Plantilla
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Configura los detalles y visibilidad de la plantilla en la nube
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-6 py-4">
+            <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Nombre de la Plantilla
+                </label>
+                <Input
+                    value={publishName}
+                    onChange={(e) => setPublishName(e.target.value)}
+                    placeholder="Ej: Ficha Base de Carpintería"
+                    className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest"
+                />
+            </div>
+
+            <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Descripción (Opcional)
+                </label>
+                <Textarea
+                    value={publishDescription}
+                    onChange={(e) => setPublishDescription(e.target.value)}
+                    placeholder="Describe para qué sirve este modelo..."
+                    className="min-h-[100px] rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest resize-none"
+                />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                    Destino de Publicación
+                  </label>
+                  <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+              </div>
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest">
+                  <SelectValue placeholder="Selecciona visibilidad" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+                  <SelectItem value="all" className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-blue-500" />
+                      Pública (Todas las tiendas)
+                    </div>
+                  </SelectItem>
+                  {stores.map(store => (
+                    <SelectItem key={store.id} value={store.id} className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
+                      <div className="flex items-center gap-2">
+                        <StoreIcon className="w-4 h-4 text-primary" />
+                        Solo Tienda: {store.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setIsPublishDialogOpen(false)}
+              className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePublish}
+              disabled={isLoading || !publishName.trim()}
+              className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20"
+            >
+              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+              Guardar en Supabase
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 interface TemplateCardProps {
   template: Template;
   onImport: () => void;
   onPublish?: () => void;
 }
+
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPublish }) => {
   return (
     <motion.div
@@ -404,10 +608,15 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
         )}>
           <FileText className="w-6 h-6" />
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-col items-end gap-1">
           <span className="px-3 py-1 rounded-full bg-primary/5 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/10">
             {template.category || (template.type === 'private' ? 'Local' : 'General')}
           </span>
+          {template.store_id && (
+            <span className="px-3 py-1 rounded-full bg-amber-500/10 text-[8px] font-black uppercase tracking-widest text-amber-500 border border-amber-500/10">
+              Tienda Específica
+            </span>
+          )}
         </div>
       </div>
       <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 line-clamp-1 group-hover:text-primary transition-colors">
