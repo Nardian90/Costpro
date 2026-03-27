@@ -11,7 +11,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { generateHash } from '@/lib/ipv/engine';
-import { syncCatalogFromTransactions, enrichTransactions } from '@/lib/ipv/identity/registry';
+import { syncCatalogFromTransactions } from '@/lib/ipv/identity/registry';
+import { enrichTransactions } from '@/lib/ipv/parser';
 
 interface AddTransactionModalProps {
   open: boolean;
