@@ -192,12 +192,12 @@ export default function Pick3IntelligenceView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-full h-12 w-full overflow-x-auto justify-start md:justify-center border border-border mb-4">
-          <TabsTrigger value="overview" className="rounded-full px-6 font-bold text-xs">Mercado</TabsTrigger>
-          <TabsTrigger value="validation" className="rounded-full px-6 font-bold text-xs">Validación 30d</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-full px-6 font-bold text-xs">Historial</TabsTrigger>
-          <TabsTrigger value="backtest" className="rounded-full px-6 font-bold text-xs">Backtest</TabsTrigger>
-          <TabsTrigger value="montecarlo" className="rounded-full px-6 font-bold text-xs">Simulación</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1 rounded-full h-12 w-full pick3-tabs-list border border-border mb-4">
+          <TabsTrigger value="overview" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Mercado</TabsTrigger>
+          <TabsTrigger value="validation" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Validación 30d</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Historial</TabsTrigger>
+          <TabsTrigger value="backtest" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Backtest</TabsTrigger>
+          <TabsTrigger value="montecarlo" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Simulación</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
