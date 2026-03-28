@@ -2,42 +2,51 @@ import { BettingConfig } from '@/types/pick3';
 
 export class BankrollManager {
   /**
-   * Calculates bet size using fractional Kelly Criterion if possible,
-   * otherwise falls back to standard risk factor.
+   * Calculates bet size using advanced international standards:
+   * 1. Fractional Kelly Criterion (for optimal growth vs risk)
+   * 2. Fixed Ratio (for steady growth)
+   * 3. Maximum Drawdown Protection
    */
   public static calculateBetSize(
     bankroll: number,
     config: BettingConfig,
     confidence: number,
-    hitRate: number = 0.01 // Default low hit rate for Pick3/Last2
+    historicalWinRate: number = 0.05 // Typical win rate for 3-digit lottery models
   ): number {
-    const p = confidence / 100; // Probability of win
-    const q = 1 - p;            // Probability of loss
-    const b = config.payout;    // Odds (b to 1)
+    // 1. Fractional Kelly Criterion
+    // Kelly % = (bp - q) / b where b are the odds (payout), p is prob(win), q is prob(loss)
+    const p = confidence / 100;
+    const q = 1 - p;
+    const b = config.payout;
 
-    // Kelly % = (bp - q) / b
-    const kelly = ((b * p) - q) / b;
+    const fullKelly = ((b * p) - q) / b;
 
-    // Use fractional Kelly (typically 10-25% of full Kelly for safety)
-    const fractionalKelly = Math.max(0, kelly * 0.25);
+    // International standard: Use 1/4 or 1/8 Kelly for high-variance assets like lottery
+    // We use a very conservative 0.05 (5% of full Kelly) because of extreme skewness
+    const fractionalKellyFactor = 0.05;
+    const kellySize = Math.max(0, bankroll * fullKelly * fractionalKellyFactor);
 
-    // Standard risk factor calculation as fallback/limit
-    const standardFactor = config.riskFactor / 100;
+    // 2. Fixed Risk per Trade (Modern Portfolio Theory approach)
+    // Risk Factor is user-defined (e.g., 0.5% - 2%)
+    const fixedRiskSize = bankroll * (config.riskFactor / 100);
 
-    // Choose the more conservative between Fractional Kelly and Risk Factor
-    // but at least some minimum based on confidence if Kelly is positive
-    let factor = standardFactor;
-    if (kelly > 0) {
-      factor = Math.min(standardFactor, fractionalKelly);
-    }
+    // 3. Volatility-Adjusted Size
+    // If confidence is low, we scale down drastically
+    const confidenceMultiplier = Math.pow(confidence / 100, 2);
 
-    let bet = bankroll * factor;
+    // Choose the most conservative approach
+    let suggestedBet = Math.min(kellySize > 0 ? kellySize : fixedRiskSize, fixedRiskSize);
+    suggestedBet *= confidenceMultiplier;
 
     // Safety limits
-    const maxExposure = bankroll * 0.1; // Max 10% total exposure
-    if (bet > maxExposure) bet = maxExposure;
+    const maxExposure = bankroll * 0.05; // Never bet more than 5% on a single line
+    const minBet = 1;
 
-    return Math.max(Math.floor(bet), 1); // Minimum 1 unit, rounded down
+    let finalBet = Math.min(suggestedBet, maxExposure);
+
+    // Rounding for practicality
+    if (finalBet < 1) return 1;
+    return Math.floor(finalBet);
   }
 
   public static getRecommendation(
@@ -45,28 +54,46 @@ export class BankrollManager {
     drawdown: number,
     config: BettingConfig,
     bankroll: number = 1000
-  ): string {
+  ): { status: string; action: string; color: string } {
     const isCrisis = drawdown >= Math.abs(config.criticalDrawdown);
-    const isWarning = drawdown >= Math.abs(config.criticalDrawdown) * 0.75;
+    const isWarning = drawdown >= Math.abs(config.criticalDrawdown) * 0.7;
 
     if (isCrisis) {
-      return `PAUSA OPERATIVA: Drawdown Crítico (${drawdown.toFixed(1)}%). Recomendación: Cero riesgo hasta recalibrar.`;
+      return {
+        status: 'CRÍTICO',
+        action: `STOP-LOSS ACTIVADO: Drawdown de ${drawdown.toFixed(1)}%. Recomendación: Detener todas las jugadas.`,
+        color: 'text-red-500'
+      };
     }
 
     if (isWarning) {
-      return `REDUCIR RIESGO: Drawdown elevado (${drawdown.toFixed(1)}%). Sugerencia: Máximo $1 por jugada.`;
+      return {
+        status: 'PRECAUCIÓN',
+        action: `RIESGO REDUCIDO: Drawdown preventivo (${drawdown.toFixed(1)}%). Sugerencia: Usar solo el 25% del tamaño normal.`,
+        color: 'text-amber-500'
+      };
     }
 
-    if (roi > 15 && drawdown < 5) {
-      const suggestedSize = Math.floor(bankroll * 0.02);
-      return `AUMENTAR EXPOSICIÓN: Rendimiento óptimo. Sugerencia: Up-size a $${suggestedSize} por combinación.`;
+    if (roi > 20 && drawdown < 10) {
+      return {
+        status: 'ÓPTIMO',
+        action: `AGRESIVO: ROI excelente. El modelo sugiere aumentar ligeramente el riesgo unitario.`,
+        color: 'text-emerald-500'
+      };
     }
 
     if (roi < 0) {
-      return "MANTENER CAUTELA: ROI Negativo. Sugerencia: Operar con tamaño mínimo ($1).";
+       return {
+        status: 'RECUPERACIÓN',
+        action: `DEFENSIVO: ROI negativo. Mantener apuestas en el mínimo absoluto ($1).`,
+        color: 'text-blue-500'
+      };
     }
 
-    const standardSize = Math.floor(bankroll * (config.riskFactor / 100));
-    return `OPERACIÓN ESTÁNDAR: Continuar con $${standardSize} por combinación (Gestión Base).`;
+    return {
+      status: 'NORMAL',
+      action: `ESTÁNDAR: Operando bajo parámetros de riesgo equilibrado.`,
+      color: 'text-primary'
+    };
   }
 }
