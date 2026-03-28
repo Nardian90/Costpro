@@ -32,3 +32,7 @@ La implementación se ha corregido para que la columna **Clasificación** en los
 **Evaluación de Calidad:**
 - **Integridad:** Se mantiene la relación lógica entre el anexo y la sección de costo sin forzar estructuras inexistentes.
 - **Usabilidad:** Al ser solo una sugerencia, el usuario mantiene la flexibilidad pero con datos de referencia correctos y literales.
+
+## Nota sobre el Despliegue (Render)
+
+Durante el proceso de despliegue inicial en Render, se detectó una falta de sincronización en el archivo de bloqueo (`bun.lock`) debido a dependencias agregadas durante el desarrollo (`decimal.js`). Se ha procedido a regenerar y verificar el build en modo producción localmente para asegurar que el despliegue final sea exitoso.
