@@ -4,6 +4,7 @@ export interface Pick3Result {
   date: string;
   draw_time: DrawTime;
   result: [number, number, number];
+  source?: string;
 }
 
 export type BetType = 'straight' | 'box' | 'last2';

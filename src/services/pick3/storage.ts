@@ -20,7 +20,8 @@ export class Pick3Storage {
       const rows = results.map(r => ({
         draw_date: r.date,
         draw_time: r.draw_time,
-        result: r.result
+        result: r.result as [number, number, number],
+        source: r.source || 'official'
       }));
 
       const { error } = await supabase
@@ -65,7 +66,8 @@ export class Pick3Storage {
       const results = data.map(r => ({
         date: r.draw_date,
         draw_time: r.draw_time as any,
-        result: r.result as [number, number, number]
+        result: r.result as [number, number, number],
+        source: r.source || 'official'
       }));
 
       // Update cache
@@ -151,5 +153,45 @@ export class Pick3Storage {
   static clear() {
     if (!isBrowser) return;
     Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+  }
+}
+
+export class UserPlayStorage {
+  static async savePlay(userId: string | undefined, play: any, isAdmin: boolean) {
+    if (isAdmin && userId) {
+      const { error } = await supabase
+        .from('pick3_user_plays')
+        .insert({
+          user_id: userId,
+          combination: play.combination,
+          amount: play.amount,
+          status: 'pending'
+        });
+      if (error) throw error;
+    }
+
+    // Always save to local for immediate UI feedback
+    const localPlays = this.getLocalPlays();
+    const updated = [play, ...localPlays].slice(0, 50);
+    localStorage.setItem('pick3_saved_plays', JSON.stringify(updated));
+  }
+
+  static getLocalPlays(): any[] {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem('pick3_saved_plays');
+    return data ? JSON.parse(data) : [];
+  }
+
+  static async syncPlays(userId: string) {
+    const { data, error } = await supabase
+      .from('pick3_user_plays')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return;
+    if (data) {
+       localStorage.setItem('pick3_saved_plays', JSON.stringify(data));
+    }
   }
 }

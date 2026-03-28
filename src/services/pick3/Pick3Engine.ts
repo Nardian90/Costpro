@@ -65,7 +65,7 @@ export class Pick3Engine {
     return SimulationEngine.runMonteCarlo(config, backtest);
   }
 
-  public getCapitalRecommendation(roi: number, drawdown: number, config: BettingConfig): string {
+  public getCapitalRecommendation(roi: number, drawdown: number, config: BettingConfig): { status: string; action: string; color: string } {
     return BankrollManager.getRecommendation(roi, drawdown, config);
   }
 
