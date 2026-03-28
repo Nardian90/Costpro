@@ -213,8 +213,8 @@ export default function Pick3IntelligenceView() {
               <Card className="rounded-[24px] border-border bg-card/50 p-4">
                  <p className="text-[9px] font-black uppercase opacity-40 mb-1">Status Sistema</p>
                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full animate-pulse", bankrollStatus?.color.replace('text-', 'bg-'))}></div>
-                    <span className={cn("text-xs font-black italic", bankrollStatus?.color)}>{bankrollStatus?.status}</span>
+                    <div className={cn("w-2 h-2 rounded-full animate-pulse", bankrollStatus ? bankrollStatus.color.replace('text-', 'bg-') : '')}></div>
+                    <span className={cn("text-xs font-black italic", bankrollStatus ? bankrollStatus.color : '')}>{bankrollStatus?.status}</span>
                  </div>
               </Card>
               <Card className="rounded-[24px] border-border bg-card/50 p-4">
@@ -423,7 +423,7 @@ export default function Pick3IntelligenceView() {
         </TabsContent>
 
         <TabsContent value="intel" className="space-y-6 pt-4">
-           <Pick3Visuals history={history} />
+           <Pick3Visuals history={history} analysis={analysis || ({} as any)} />
         </TabsContent>
 
         <TabsContent value="history" className="pt-4">
