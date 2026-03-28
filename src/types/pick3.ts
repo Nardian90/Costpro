@@ -102,3 +102,22 @@ export interface AdvancedAnalysis extends FrequencyAnalysis {
   };
   strategyAccuracy?: Record<string, number>;
 }
+
+export type SyncSourceStatus = 'pending' | 'success' | 'error' | 'syncing';
+
+export interface Pick3Source {
+  id: string;
+  name: string;
+  url: string;
+  status: SyncSourceStatus;
+  lastSync?: string;
+  error?: string;
+  isOfficial?: boolean;
+}
+
+export interface Pick3SyncState {
+  isSyncing: boolean;
+  lastGlobalSync?: string;
+  sources: Pick3Source[];
+  activeSourceId?: string;
+}
