@@ -15,7 +15,7 @@ export class AnalysisEngine {
     const expected = totalDigits / 10;
     const biasScore: Record<number, number> = {};
     Object.entries(baseFreq.global).forEach(([num, freq]) => {
-      biasScore[parseInt(num)] = ((freq - expected) / (expected || 1)) * 100;
+      biasScore[parseInt(num)] = (((freq as number) - expected) / (expected || 1)) * 100;
     });
 
     const digitMarkov: Record<number, Record<number, number>> = {};
@@ -52,8 +52,9 @@ export class AnalysisEngine {
 
     let entropy = 0;
     Object.values(baseFreq.global).forEach(freq => {
-      if (freq > 0) {
-        const p = freq / totalDigits;
+      const f = freq as number;
+      if (f > 0) {
+        const p = f / totalDigits;
         entropy -= p * Math.log2(p);
       }
     });
@@ -129,7 +130,7 @@ export class AnalysisEngine {
       if (found.size === 10) break;
     }
 
-    const sortedGlobal = Object.entries(globalFreq).sort((a, b) => b[1] - a[1]);
+    const sortedGlobal = Object.entries(globalFreq).sort((a, b) => (b[1] as number) - (a[1] as number));
     const hotNumbers = sortedGlobal.slice(0, 3).map(([num]) => parseInt(num));
     const coldNumbers = sortedGlobal.slice(-3).map(([num]) => parseInt(num));
 

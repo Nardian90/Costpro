@@ -47,7 +47,8 @@ export class Pick3ScraperService {
     try {
       const response = await fetch(url, {
         headers: { 'User-Agent': this.USER_AGENT },
-        next: { revalidate: 3600 } // Cache for 1 hour if supported
+        // @ts-ignore: Next.js specific property
+        next: { revalidate: 3600 }
       });
 
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -100,13 +101,10 @@ export class Pick3ScraperService {
 
   private static normalizeDate(rawDate: string): string {
     try {
-      // Map Month names if necessary, but Date constructor handles "Mar 26, 2026" well
       const d = new Date(rawDate);
       if (isNaN(d.getTime())) {
-        // Fallback for tricky formats
         return rawDate;
       }
-      // Return YYYY-MM-DD
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
@@ -117,7 +115,6 @@ export class Pick3ScraperService {
   }
 
   private static getFallbackResults(): Pick3Result[] {
-    // Current date context: March 27, 2026
     return [
       { date: '2026-03-27', draw_time: 'evening', result: [1, 0, 9] },
       { date: '2026-03-27', draw_time: 'midday', result: [4, 7, 2] },
