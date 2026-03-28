@@ -78,17 +78,25 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
         // Strategy 1: Find rows in all sections that explicitly reference this annex via baseRef
         const traverseByBaseRef = (rows: any[], parentNumbering?: string) => {
+            if (!rows || !Array.isArray(rows)) return;
             rows.forEach((r, idx) => {
+                if (!r) return;
                 const numbering = r.id || (parentNumbering
                     ? `${parentNumbering}.${idx + 1}`
                     : `${idx + 1}`);
 
                 if (r.baseRef === activeAnnexId || r.baseRef === `Anexo${activeAnnexId}`) {
-                    suggestions.push({ id: numbering, label: r.label });
-                    // Also suggest a sub-level if it feeds from an annex
+                    if (numbering) {
+                        suggestions.push({
+                            id: String(numbering),
+                            label: String(r.label || r.title || numbering)
+                        });
+                    }
                 }
 
-                if (r.children) traverseByBaseRef(r.children, numbering);
+                if (r.children && Array.isArray(r.children)) {
+                    traverseByBaseRef(r.children, numbering);
+                }
             });
         };
 
@@ -136,25 +144,37 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
         const sectionRows = findSectionRows(targetSectionId);
         const traverse = (rows: any[], parentNumbering?: string) => {
+            if (!rows || !Array.isArray(rows)) return;
+
             rows.forEach((r, idx) => {
+                if (!r) return;
+
                 const numbering = r.id || (parentNumbering
                     ? `${parentNumbering}.${idx + 1}`
                     : (targetSectionId && !targetSectionId.startsWith('s') ? `${targetSectionId}.${idx + 1}` : `${idx + 1}`));
 
                 // Avoid duplicates and ensure we don't suggest empty labels
-                if (!suggestions.some(s => s.id === numbering)) {
-                    suggestions.push({ id: numbering, label: r.label });
+                if (numbering && !suggestions.some(s => s.id === numbering)) {
+                    suggestions.push({
+                        id: String(numbering),
+                        label: String(r.label || r.title || numbering)
+                    });
                 }
 
-                if (r.children) traverse(r.children, numbering);
+                if (r.children && Array.isArray(r.children)) {
+                    traverse(r.children, numbering);
+                }
             });
         };
         traverse(sectionRows);
 
         // Remove duplicates just in case and sort by ID
         return suggestions
-            .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
-            .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+            .filter((v, i, a) => v.id && a.findIndex(t => t.id === v.id) === i)
+            .sort((a, b) => {
+                if (!a.id || !b.id) return 0;
+                return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+            });
     };
 
     return getSuggestions();
