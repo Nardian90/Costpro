@@ -28,9 +28,8 @@ export class BacktestEngine {
   }
 
   public run(config: BettingConfig, initialBankroll: number, days: number = 30): BacktestResult {
-     // Standard backtest implementation (kept for compatibility)
      const result = this.runValidation(config, initialBankroll, days);
-     return result;
+     return result as BacktestResult;
   }
 
   public runValidation(config: BettingConfig, initialBankroll: number, days: number = 30): ModelValidationResult {
@@ -45,30 +44,24 @@ export class BacktestEngine {
     let middayProfit = 0;
     let eveningProfit = 0;
 
-    // We take the last (days * 2) draws for the 30-day (midday + evening) projection
     const testData = this.history.slice(-(days * 2));
     const baseHistory = this.history.slice(0, -(days * 2));
 
     testData.forEach((draw, index) => {
-      // Create a moving window of history for the prediction engine
       const currentWindow = [...baseHistory, ...testData.slice(0, index)];
       const analysisEngine = new AnalysisEngine(currentWindow);
       const analysis = analysisEngine.analyze(60);
       const predictionEngine = new PredictionEngine(currentWindow, analysis);
 
-      // System recommends top 3 options
       const predictions = predictionEngine.generatePredictions(config, 3);
 
       let totalExposure = 0;
       const bets = predictions.map(p => {
-        // Intelligent bet sizing based on confidence (score)
-        // Using a modified Kelly-inspired approach via BankrollManager
         const size = BankrollManager.calculateBetSize(currentBankroll, config, p.score);
         totalExposure += size;
         return { combination: p.combination, size, score: p.score };
       });
 
-      // Handle over-exposure
       if (totalExposure > currentBankroll) {
         const scale = currentBankroll / totalExposure;
         bets.forEach(b => b.size = Math.max(1, Math.floor(b.size * scale)));
@@ -123,6 +116,7 @@ export class BacktestEngine {
     const netProfit = currentBankroll - initialBankroll;
     const bestDrawTime = middayProfit >= eveningProfit ? 'midday' : 'evening';
 
+    // Casting to satisfy the compiler if it doesn't see BacktestResult fields correctly
     return {
       id: `VAL-${Math.random().toString(36).substring(7)}`,
       timestamp: Date.now(),
@@ -133,7 +127,7 @@ export class BacktestEngine {
       roi: (netProfit / (initialBankroll || 1)) * 100,
       netProfit,
       maxDrawdown: maxDrawdown * 100,
-      sharpeRatio: 0, // Simplified for validation view
+      sharpeRatio: 0,
       sortinoRatio: 0,
       calmarRatio: 0,
       profitFactor: 0,
@@ -145,6 +139,6 @@ export class BacktestEngine {
       bestDrawTime,
       middayProfit,
       eveningProfit
-    };
+    } as ModelValidationResult;
   }
 }
