@@ -102,7 +102,8 @@ export class Pick3ScraperService {
           return data.draws.map((d: any) => ({
             date: this.normalizeDate(d.date),
             draw_time: d.time.toLowerCase().includes('midday') ? 'midday' : 'evening',
-            result: d.numbers.split(',').map((n: string) => parseInt(n.trim())) as [number, number, number]
+            result: d.numbers.split(',').map((n: string) => parseInt(n.trim())) as [number, number, number],
+            source: 'official'
           }));
         }
       }
@@ -141,7 +142,8 @@ export class Pick3ScraperService {
       }
 
       if (balls.length >= 3) {
-        results.push({ date, draw_time, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+        results.push({
+             date, draw_time, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'official' });
       }
     }
     return results;
@@ -195,7 +197,8 @@ export class Pick3ScraperService {
       }
 
       if (balls.length >= 3) {
-        results.push({ date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+        results.push({
+             date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
       }
     }
 
@@ -219,7 +222,8 @@ export class Pick3ScraperService {
         }
 
         if (balls.length >= 3) {
-          results.push({ date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+          results.push({
+             date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
         }
       }
     }
@@ -253,6 +257,7 @@ export class Pick3ScraperService {
         if (dateMatch && balls.length >= 3) {
            const date = dateMatch[1].includes('T') ? dateMatch[1].split('T')[0] : this.normalizeDate(dateMatch[1]);
            results.push({
+             source: 'lotterypost',
              date,
              draw_time: content.toLowerCase().includes('midday') ? 'midday' : 'evening',
              result: [balls[0], balls[1], balls[2]] as [number, number, number]
@@ -296,7 +301,8 @@ export class Pick3ScraperService {
       }
 
       if (balls.length >= 3) {
-        results.push({ date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+        results.push({
+             date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'usatoday' });
       }
     }
     return results;
