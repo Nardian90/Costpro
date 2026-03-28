@@ -1,0 +1,1 @@
+  serverExternalPackages: ["jspdf", "fflate", "pdf-parse", "d3", "chart.js", "react-chartjs-2"],

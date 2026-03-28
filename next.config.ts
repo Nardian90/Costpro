@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   reactStrictMode: true,
-  serverExternalPackages: ["jspdf", "fflate", "pdf-parse", "d3", "chart.js", "react-chartjs-2"],
+  serverExternalPackages: ["jspdf", "fflate", "pdf-parse", "d3", "chart.js", "react-chartjs-2", "decimal.js"],
   async headers() {
     return [
       {
