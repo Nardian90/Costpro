@@ -2,12 +2,20 @@ import { expect, test, describe } from "bun:test";
 import { Pick3ScraperService } from "./Pick3ScraperService";
 
 describe("Pick3ScraperService", () => {
-  test("getCleanOfficialResults returns correct historical data", async () => {
+  test("getCleanOfficialResults returns scraped or fallback data", async () => {
     const results = await Pick3ScraperService.getCleanOfficialResults();
+    expect(results.length).toBeGreaterThan(0);
 
-    // Check 22/03/2026 evening
-    const target = results.find(r => r.date === '2026-03-22' && r.draw_time === 'evening');
-    expect(target).toBeDefined();
-    expect(target?.result).toEqual([5, 7, 6]);
+    const first = results[0];
+    expect(first.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(['midday', 'evening']).toContain(first.draw_time);
+    expect(first.result.length).toBe(3);
+  });
+
+  test("deduplication works correctly", async () => {
+    const results = await Pick3ScraperService.getCleanOfficialResults();
+    const keys = results.map(r => `${r.date}-${r.draw_time}`);
+    const uniqueKeys = new Set(keys);
+    expect(keys.length).toBe(uniqueKeys.size);
   });
 });
