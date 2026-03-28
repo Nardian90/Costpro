@@ -143,7 +143,7 @@ export class Pick3ScraperService {
 
       if (balls.length >= 3) {
         results.push({
-             source: 'lotterypost', date, draw_time, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'official' });
+             date, draw_time, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'official' });
       }
     }
     return results;
@@ -198,7 +198,7 @@ export class Pick3ScraperService {
 
       if (balls.length >= 3) {
         results.push({
-             source: 'lotterypost', date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
+             date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
       }
     }
 
@@ -223,7 +223,7 @@ export class Pick3ScraperService {
 
         if (balls.length >= 3) {
           results.push({
-             source: 'lotterypost', date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
+             date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
         }
       }
     }
@@ -302,7 +302,7 @@ export class Pick3ScraperService {
 
       if (balls.length >= 3) {
         results.push({
-             source: 'lotterypost', date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+             date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'usatoday' });
       }
     }
     return results;

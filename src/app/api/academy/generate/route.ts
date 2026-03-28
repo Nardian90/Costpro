@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 // @ts-ignore
-import pdf from 'pdf-parse/lib/pdf-parse.js';
+import pdf from 'pdf-parse';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
