@@ -141,17 +141,17 @@ export default function Pick3IntelligenceView() {
       <Pick3ControlPanel syncState={syncState} onSync={handleSync} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-full border border-border/50 mb-6">
-          <TabsTrigger value="overview" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="pick3-tabs-list bg-muted/50 p-1 rounded-full border border-border/50 mb-6">
+          <TabsTrigger className="pick3-tabs-trigger rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" value="overview">
             Resumen de IA
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger className="pick3-tabs-trigger rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" value="history">
             Historial de Resultados
           </TabsTrigger>
-          <TabsTrigger value="backtest" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger className="pick3-tabs-trigger rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" value="backtest">
             Rendimiento (30D)
           </TabsTrigger>
-          <TabsTrigger value="montecarlo" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger className="pick3-tabs-trigger rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" value="montecarlo">
             Simulación Montecarlo
           </TabsTrigger>
         </TabsList>

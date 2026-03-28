@@ -1,6 +1,7 @@
 import { Pick3Result, Pick3Source, Pick3SyncState } from '@/types/pick3';
 import { logger } from '@/lib/logger';
 import { Pick3Storage } from './storage';
+import { MIAMI_PICK3_HISTORICAL } from "./seedData";
 
 export class Pick3ScraperService {
   private static readonly USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -52,16 +53,14 @@ export class Pick3ScraperService {
         if (results.length > 0) {
           source.status = 'success';
           source.lastSync = new Date().toISOString();
-          allResults = results;
+
+          allResults = this.deduplicate([...allResults, ...results]);
+
           logger.info('PICK3', `Sync successful with ${source.name}. Found ${results.length} results.`);
 
-          try {
-            await Pick3Storage.saveHistory(results);
-          } catch (storageError: any) {
-            logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
+          if (allResults.length >= 60) {
+            break;
           }
-
-          break; // Stop at the first successful source
         } else {
           throw new Error('No results found');
         }
@@ -72,12 +71,21 @@ export class Pick3ScraperService {
       }
     }
 
+    if (allResults.length > 0) {
+      try {
+        await Pick3Storage.saveHistory(allResults);
+      } catch (storageError: any) {
+        logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
+      }
+    }
+
     this.syncState.isSyncing = false;
     this.syncState.activeSourceId = undefined;
 
     if (allResults.length === 0) {
-      logger.warn('PICK3', 'All sources failed, using local cache');
-      return await Pick3Storage.getHistory();
+      logger.warn('PICK3', 'All sources failed, using local cache or seed data');
+      const history = await Pick3Storage.getHistory();
+      return history.length > 0 ? history : MIAMI_PICK3_HISTORICAL;
     }
 
     return allResults;
@@ -85,11 +93,24 @@ export class Pick3ScraperService {
 
   private static async scrapeOfficial(): Promise<Pick3Result[]> {
     try {
-      const response = await fetch('https://floridalottery.com/games/draw-games/pick-3', {
+      const response = await fetch('https://floridalottery.com/content/flalottery-web/us/en/games/draw-games/pick-3.draw-games.json', {
         headers: { 'User-Agent': this.USER_AGENT }
       });
-      if (!response.ok) return [];
-      const html = await response.text();
+      if (response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.draws)) {
+          return data.draws.map((d: any) => ({
+            date: this.normalizeDate(d.date),
+            draw_time: d.time.toLowerCase().includes('midday') ? 'midday' : 'evening',
+            result: d.numbers.split(',').map((n: string) => parseInt(n.trim())) as [number, number, number]
+          }));
+        }
+      }
+
+      const htmlResponse = await fetch('https://floridalottery.com/games/draw-games/pick-3', {
+        headers: { 'User-Agent': this.USER_AGENT }
+      });
+      const html = await htmlResponse.text();
       return this.parseOfficial(html);
     } catch (e) {
       return [];
@@ -98,12 +119,10 @@ export class Pick3ScraperService {
 
   private static parseOfficial(html: string): Pick3Result[] {
     const results: Pick3Result[] = [];
-    // The official site often uses a data structure or specific classes
-    // Looking for something like: <div class="winning-numbers">...</div>
-    // This is a heuristic parser based on typical Florida Lottery patterns
-    const blockRegex = /<div class="winning-numbers-item">([\s\S]*?)<\/div>/g;
-    const dateRegex = /<p class="draw-date">([^<]+)<\/p>/;
-    const ballsRegex = /<span class="ball">(\d)<\/span>/g;
+    const blockRegex = /<div class="winning-numbers-item"[^>]*>([\s\S]*?)<\/div>/g;
+    const dateRegex = /<p class="draw-date"[^>]*>([^<]+)<\/p>/;
+    const ballsRegex = /<span class="ball"[^>]*>(\d)<\/span>/g;
+    const timeRegex = /<p class="draw-time"[^>]*>([^<]+)<\/p>/;
 
     let match;
     while ((match = blockRegex.exec(html)) !== null) {
@@ -112,6 +131,9 @@ export class Pick3ScraperService {
       if (!dateMatch) continue;
 
       const date = this.normalizeDate(dateMatch[1].trim());
+      const timeMatch = timeRegex.exec(content);
+      const draw_time = (timeMatch && timeMatch[1].toLowerCase().includes('midday')) ? 'midday' : 'evening';
+
       const balls: number[] = [];
       let bMatch;
       while ((bMatch = ballsRegex.exec(content)) !== null) {
@@ -119,9 +141,7 @@ export class Pick3ScraperService {
       }
 
       if (balls.length >= 3) {
-        // Official site usually groups midday and evening. We'd need to detect draw time.
-        // For now we assume evening if not specified, or we'd need more specific selectors.
-        results.push({ date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+        results.push({ date, draw_time, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
       }
     }
     return results;
@@ -133,7 +153,7 @@ export class Pick3ScraperService {
         this.fetchFromUrl('https://www.lotteryusa.com/florida/pick-3/', 'evening'),
         this.fetchFromUrl('https://www.lotteryusa.com/florida/midday-pick-3/', 'midday')
       ]);
-      return this.deduplicate([...eveningResults, ...middayResults]);
+      return [...eveningResults, ...middayResults];
     } catch {
       return [];
     }
@@ -141,7 +161,12 @@ export class Pick3ScraperService {
 
   private static async fetchFromUrl(url: string, drawTime: 'midday' | 'evening'): Promise<Pick3Result[]> {
     try {
-      const response = await fetch(url, { headers: { 'User-Agent': this.USER_AGENT } });
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': this.USER_AGENT,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+        }
+      });
       if (!response.ok) return [];
       const html = await response.text();
       return this.parseLotteryUSA(html, drawTime);
@@ -152,26 +177,53 @@ export class Pick3ScraperService {
 
   private static parseLotteryUSA(html: string, drawTime: 'midday' | 'evening'): Pick3Result[] {
     const results: Pick3Result[] = [];
-    const trRegex = /<tr class="[^"]*c-draw-card"[^>]*>([\s\S]*?)<\/tr>/g;
-    const dateRegex = /<span class="c-draw-card__draw-date-sub">([^<]+)<\/span>/;
-    const singleBallRegex = /<li class="c-ball c-ball--sm">(\d)<\/li>/g;
+    const cardRegex = /<li class="c-draw-card[^"]*">([\s\S]*?)<\/li>/g;
+    const dateRegex = /<time[^>]*datetime="([^"]+)"/;
+    const ballRegex = /<span class="c-ball__text">(\d)<\/span>/g;
 
-    let trMatch;
-    while ((trMatch = trRegex.exec(html)) !== null) {
-      const trContent = trMatch[1];
-      const dateMatch = dateRegex.exec(trContent);
+    let match;
+    while ((match = cardRegex.exec(html)) !== null) {
+      const content = match[1];
+      const dateMatch = dateRegex.exec(content);
       if (!dateMatch) continue;
-      const date = this.normalizeDate(dateMatch[1].trim());
+
+      const date = dateMatch[1].split('T')[0];
       const balls: number[] = [];
-      singleBallRegex.lastIndex = 0;
       let bMatch;
-      while ((bMatch = singleBallRegex.exec(trContent)) !== null) {
+      while ((bMatch = ballRegex.exec(content)) !== null) {
         balls.push(parseInt(bMatch[1]));
       }
+
       if (balls.length >= 3) {
         results.push({ date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
       }
     }
+
+    if (results.length === 0) {
+      const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+      const tdDateRegex = /<td[^>]*class="[^"]*date[^"]*"[^>]*>([\s\S]*?)<\/td>/;
+      const tdBallsRegex = /<span class="[^"]*ball[^"]*"[^>]*>(\d)<\/span>/g;
+
+      while ((match = trRegex.exec(html)) !== null) {
+        const content = match[1];
+        const dateMatch = tdDateRegex.exec(content);
+        if (!dateMatch) continue;
+
+        const dateText = dateMatch[1].replace(/<[^>]*>/g, '').trim();
+        const date = this.normalizeDate(dateText);
+
+        const balls: number[] = [];
+        let bMatch;
+        while ((bMatch = tdBallsRegex.exec(content)) !== null) {
+          balls.push(parseInt(bMatch[1]));
+        }
+
+        if (balls.length >= 3) {
+          results.push({ date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+        }
+      }
+    }
+
     return results;
   }
 
@@ -190,20 +242,19 @@ export class Pick3ScraperService {
 
   private static parseLotteryPost(html: string): Pick3Result[] {
     const results: Pick3Result[] = [];
-    // LotteryPost structure: often has a table with game names and results
-    // This is a simplified heuristic
     const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
     let match;
     while ((match = rowRegex.exec(html)) !== null) {
       const content = match[1];
       if (content.includes('Pick 3')) {
-        // Extract date and results
-        const dateMatch = />([A-Z][a-z]+, [A-Z][a-z]+ \d+, \d{4})</.exec(content);
+        const dateMatch = /<time[^>]*datetime="([^"]+)"/.exec(content) || />([A-Z][a-z]+, [A-Z][a-z]+ \d+, \d{4})</.exec(content);
         const balls = content.match(/>(\d)</g)?.map(b => parseInt(b.replace(/[><]/g, ''))) || [];
+
         if (dateMatch && balls.length >= 3) {
+           const date = dateMatch[1].includes('T') ? dateMatch[1].split('T')[0] : this.normalizeDate(dateMatch[1]);
            results.push({
-             date: this.normalizeDate(dateMatch[1]),
-             draw_time: content.includes('Midday') ? 'midday' : 'evening',
+             date,
+             draw_time: content.toLowerCase().includes('midday') ? 'midday' : 'evening',
              result: [balls[0], balls[1], balls[2]] as [number, number, number]
            });
         }
@@ -227,15 +278,26 @@ export class Pick3ScraperService {
 
   private static parseUSAToday(html: string): Pick3Result[] {
     const results: Pick3Result[] = [];
-    // USA Today structure heuristic
-    const dateMatch = html.match(/class="draw-date">([^<]+)</);
-    const balls = html.match(/class="ball">(\d)</g)?.map(b => parseInt(b.replace(/[^0-9]/g, ''))) || [];
-    if (dateMatch && balls.length >= 3) {
-       results.push({
-         date: this.normalizeDate(dateMatch[1]),
-         draw_time: 'evening',
-         result: [balls[0], balls[1], balls[2]] as [number, number, number]
-       });
+    const blockRegex = /<div class="draw-result"[^>]*>([\s\S]*?)<\/div>/g;
+    const dateRegex = /<span class="draw-date"[^>]*>([^<]+)<\/span>/;
+    const ballRegex = /<span class="ball"[^>]*>(\d)<\/span>/g;
+
+    let match;
+    while ((match = blockRegex.exec(html)) !== null) {
+      const content = match[1];
+      const dateMatch = dateRegex.exec(content);
+      if (!dateMatch) continue;
+
+      const date = this.normalizeDate(dateMatch[1].trim());
+      const balls: number[] = [];
+      let bMatch;
+      while ((bMatch = ballRegex.exec(content)) !== null) {
+        balls.push(parseInt(bMatch[1]));
+      }
+
+      if (balls.length >= 3) {
+        results.push({ date, draw_time: 'evening', result: [balls[0], balls[1], balls[2]] as [number, number, number] });
+      }
     }
     return results;
   }
@@ -258,7 +320,12 @@ export class Pick3ScraperService {
   private static normalizeDate(rawDate: string): string {
     try {
       const d = new Date(rawDate);
-      if (isNaN(d.getTime())) return rawDate;
+      if (isNaN(d.getTime())) {
+        const clean = rawDate.replace(/^[A-Za-z]+, /, '');
+        const d2 = new Date(clean);
+        if (isNaN(d2.getTime())) return rawDate;
+        return d2.toISOString().split('T')[0];
+      }
       return d.toISOString().split('T')[0];
     } catch {
       return rawDate;
