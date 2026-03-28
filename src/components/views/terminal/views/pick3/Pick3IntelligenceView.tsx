@@ -2,27 +2,23 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  TrendingUp, DollarSign, BrainCircuit, Target,
-  Activity, Shield, RefreshCw, Zap,
-  TrendingDown, Coins, AlertCircle, BarChart3, LineChart,
-  Sparkles,
-  History,
-  Info
+  TrendingUp, Activity, Shield, RefreshCw, Zap,
+  Coins, AlertCircle, LineChart, Sparkles, History, Info
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pick3Engine } from '@/services/pick3/Pick3Engine';
-import { MIAMI_PICK3_HISTORICAL } from '@/services/pick3/seedData';
 import { Pick3Storage } from '@/services/pick3/storage';
-import { Pick3ExternalService } from '@/services/pick3/external';
-import { SimulationResult, Pick3Result, BettingConfig, BacktestResult } from '@/types/pick3';
+import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
+import { SimulationResult, Pick3Result, BettingConfig, BacktestResult, Pick3SyncState } from '@/types/pick3';
 import { ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
 import { Pick3Visuals } from './Pick3Visuals';
 import { Pick3HistorySection } from './Pick3HistorySection';
+import { Pick3ControlPanel } from './Pick3ControlPanel';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, BarChart, Bar, Cell
@@ -34,7 +30,7 @@ export default function Pick3IntelligenceView() {
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [validation, setValidation] = useState<ModelValidationResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncState, setSyncState] = useState<Pick3SyncState>(Pick3ScraperService.getSyncState());
   const [activeTab, setActiveTab] = useState('overview');
 
   const [bConfig, setBConfig] = useState<BettingConfig>({
@@ -48,212 +44,138 @@ export default function Pick3IntelligenceView() {
   });
 
   const engine = useMemo(() => new Pick3Engine(history), [history]);
-  const analysis = useMemo(() => history.length > 0 ? engine.analyzeAdvanced(30) : null, [engine, history.length]);
-  const plays = useMemo(() => analysis ? engine.generatePlays(analysis, bConfig, bConfig.maxCombinations) : [], [engine, analysis, bConfig]);
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const stored = await Pick3Storage.getHistory();
-        if (stored && stored.length > 0) {
-          setHistory(stored);
-        } else {
-          setHistory(MIAMI_PICK3_HISTORICAL);
-        }
-      } catch (e) {
-        setHistory(MIAMI_PICK3_HISTORICAL);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    loadInitialData();
   }, []);
 
-  const handleSync = async () => {
-    setIsSyncing(true);
+  const loadInitialData = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/pick3/sync', { method: 'POST' });
-      const data = await response.json();
-      if (data.success) {
-        const updated = await Pick3Storage.getHistory();
-        setHistory(updated);
-        toast.success("Sincronización exitosa", {
-          description: "El historial se ha actualizado correctamente."
-        });
+      const stored = await Pick3Storage.getHistory();
+      if (stored && stored.length > 0) {
+        setHistory(stored);
       } else {
-        throw new Error(data.message);
+        // If no history, trigger first sync
+        handleSync();
       }
-    } catch (e) {
-      toast.error("Error al sincronizar", {
-        description: "No se pudo conectar con el servidor oficial. Intente más tarde."
-      });
+    } catch (error) {
+      console.error("Failed to load history", error);
     } finally {
-      setIsSyncing(false);
+      setLoading(false);
     }
   };
 
-  const runAnalysis = () => {
-    if (history.length < 30) return;
-    const bt = engine.runBacktest(bConfig, 1000, 30);
-    const val = engine.runValidation(bConfig, 1000, 30);
-    setBacktest(bt);
-    setValidation(val);
-    setSimulation(engine.simulateMonteCarlo({ budget: 1000, horizonDays: 30, riskLevel: 'medium', costPerBet: 1, bettingConfig: bConfig }, bt));
-    toast.success("Análisis completado", {
-        description: "Se han generado nuevas proyecciones de 30 días."
-    });
+  const handleSync = async () => {
+    setSyncState(Pick3ScraperService.getSyncState());
+
+    try {
+      const results = await Pick3ScraperService.scrapeLatestResults();
+      setSyncState(Pick3ScraperService.getSyncState());
+
+      if (results.length > 0) {
+        setHistory(results);
+        toast.success("Sincronización exitosa");
+      } else {
+        toast.error("No se pudieron obtener resultados nuevos");
+      }
+    } catch (error) {
+      setSyncState(Pick3ScraperService.getSyncState());
+      toast.error("Error en la sincronización");
+    }
   };
 
-  const recommendation = useMemo(() => {
-    if (!backtest) return "Inicie un análisis para obtener recomendaciones.";
-    return engine.getCapitalRecommendation(backtest.roi, backtest.maxDrawdown, bConfig);
-  }, [backtest, bConfig, engine]);
+  useEffect(() => {
+    if (history.length > 0) {
+      runAnalysis();
+    }
+  }, [history, bConfig]);
 
-  if (loading) return <div className="p-12 text-center font-black animate-pulse uppercase tracking-widest opacity-40">Accediendo al Mercado...</div>;
+  const runAnalysis = () => {
+    try {
+      const backtestRes = engine.runBacktest(30);
+      setBacktest(backtestRes);
+
+      const simRes = engine.runSimulation({
+        budget: 1000,
+        horizonDays: 30,
+        riskLevel: 'medium',
+        costPerBet: 1,
+        bettingConfig: bConfig
+      });
+      setSimulation(simRes);
+
+      const valRes = engine.runValidation();
+      setValidation(valRes);
+    } catch (error) {
+      console.error("Analysis failed", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[600px] gap-4">
+        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-xs font-black uppercase tracking-widest opacity-50">Cargando Inteligencia Pick3...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter italic flex items-center gap-3">
-            <BrainCircuit className="w-10 h-10 text-primary" /> PICK 3 INTELLIGENCE
+          <h1 className="text-2xl font-black italic tracking-tighter flex items-center gap-3">
+            <BrainCircuit className="w-8 h-8 text-primary" /> PICK3 INTELLIGENCE <Badge className="bg-primary text-primary-foreground text-[10px] font-black italic">v8.1</Badge>
           </h1>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60 flex items-center gap-2 mt-1">
-            <Shield className="w-3 h-3 inline mr-1 text-emerald-500" /> Quantitative Strategy v6.5 (Stable)
+          <p className="text-xs font-bold uppercase opacity-60 tracking-widest mt-1">
+            Análisis Cuantitativo y Proyección Probabilística de Florida Pick 3
           </p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" size="sm" onClick={handleSync} disabled={isSyncing} className="flex-1 md:flex-none rounded-full font-bold">
-            <RefreshCw className={cn("w-3 h-3 mr-2", isSyncing && "animate-spin")} /> Sync
-          </Button>
-          <Button size="sm" onClick={runAnalysis} className="flex-1 md:flex-none rounded-full font-bold shadow-lg shadow-primary/20">
-            <Zap className="w-3 h-3 mr-2" /> Analizar
-          </Button>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1 rounded-[32px] border-primary/20 bg-primary/5 shadow-inner overflow-hidden border-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-primary">
-              <Target className="w-4 h-4" /> Recomendación Estratégica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 rounded-2xl bg-background/80 border border-primary/10 shadow-sm">
-              <p className={cn("text-sm font-black italic leading-tight",
-                recommendation.includes("PAUSA") ? "text-red-500" :
-                recommendation.includes("AUMENTAR") ? "text-emerald-500" : "text-primary")}>
-                {recommendation}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-[10px] font-black uppercase opacity-60">
-                <span>Riesgo sugerido</span>
-                <span>{bConfig.riskFactor}%</span>
-              </div>
-              <input
-                type="range" min="0.2" max="5" step="0.1"
-                value={bConfig.riskFactor}
-                onChange={(e) => setBConfig({...bConfig, riskFactor: parseFloat(e.target.value)})}
-                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2 rounded-[32px] border-border bg-card shadow-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-500" /> Sugerencias de Alta Confianza
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {plays.slice(0, 3).map((play, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-muted/20 border border-border/50 relative group">
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="outline" className="text-[8px] font-black border-primary/30 text-primary px-1.5 py-0">
-                      {play.score.toFixed(0)}%
-                    </Badge>
-                  </div>
-                  <div className="text-3xl font-black italic tracking-tighter mb-1 text-center">
-                    {play.combination.join('')}
-                  </div>
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase text-center leading-none opacity-80">
-                    {play.justification.split('|')[0]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Pick3ControlPanel syncState={syncState} onSync={handleSync} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-full h-12 w-full pick3-tabs-list border border-border mb-4">
-          <TabsTrigger value="overview" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Mercado</TabsTrigger>
-          <TabsTrigger value="validation" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Validación 30d</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Historial</TabsTrigger>
-          <TabsTrigger value="backtest" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Backtest</TabsTrigger>
-          <TabsTrigger value="montecarlo" className="rounded-full px-6 font-bold text-xs pick3-tabs-trigger">Simulación</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1 rounded-full border border-border/50 mb-6">
+          <TabsTrigger value="overview" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Resumen de IA
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Historial de Resultados
+          </TabsTrigger>
+          <TabsTrigger value="backtest" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Rendimiento (30D)
+          </TabsTrigger>
+          <TabsTrigger value="montecarlo" className="rounded-full px-6 text-[10px] font-black uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Simulación Montecarlo
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Trend', val: 'Bullish', icon: TrendingUp, color: 'text-emerald-500' },
-              { label: 'Volatilidad', val: 'Media', icon: Activity, color: 'text-orange-500' },
-              { label: 'Entropía', val: analysis?.entropy.toFixed(3) || '0.000', icon: Shield, color: 'text-blue-500' },
-              { label: 'Hits 24h', val: '12/100', icon: Target, color: 'text-primary' },
-            ].map((s, i) => (
-              <Card key={i} className="rounded-2xl border-border bg-card p-4">
-                <div className="flex items-center gap-3">
-                  <s.icon className={cn("w-4 h-4", s.color)} />
-                  <div>
-                    <p className="text-[9px] font-black uppercase text-muted-foreground leading-none">{s.label}</p>
-                    <p className="text-sm font-black italic">{s.val}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-          {analysis && <Pick3Visuals analysis={analysis} history={history} />}
-        </TabsContent>
+          <Pick3Visuals history={history} bConfig={bConfig} setBConfig={setBConfig} />
 
-        <TabsContent value="validation" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="rounded-[32px] border-border bg-card p-6 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Balance Proyectado (30d)</h3>
-                <div className="flex items-end gap-2">
-                  <span className={cn("text-5xl font-black italic", (validation?.netProfit || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
-                    ${validation?.equityCurve[validation.equityCurve.length-1].toFixed(0) || "1,000"}
-                  </span>
-                  <span className="text-xs font-bold uppercase pb-2 opacity-60">Capital Final</span>
-                </div>
-              </div>
-              <div className="mt-6 pt-6 border-t space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase opacity-60">ROI Estimado</span>
-                  <span className={cn("text-sm font-black", (validation?.roi || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
-                    {validation?.roi.toFixed(1) || 0}%
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase opacity-60">Mejor Horario</span>
+            <Card className="rounded-[32px] border-border bg-card overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Recomendación de Modelo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
+                  <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Mejor Horario Detectado</p>
                   <Badge variant="outline" className="text-[10px] font-black uppercase bg-primary/10 text-primary border-primary/20">
                     {validation?.bestDrawTime === 'midday' ? "DÍA (Midday)" : "NOCHE (Evening)"}
                   </Badge>
                 </div>
-              </div>
+              </CardContent>
             </Card>
 
             <Card className="md:col-span-2 rounded-[32px] border-border bg-card overflow-hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                  <LineChart className="w-4 h-4 text-primary" /> Curva de Validación (Presupuesto $1000)
+                  <LineChart className="w-4 h-4 text-primary" /> Curva de Validación (Presupuesto 000)
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[250px]">
