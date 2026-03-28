@@ -1,5 +1,5 @@
 /**
- * Pick3Engine v6.0 - Advanced Quantitative Analysis Engine
+ * Pick3Engine v7.0 - Advanced Quantitative & Strategy-Based Analysis Engine
  */
 
 import {
@@ -23,6 +23,8 @@ export class Pick3RuleEngine {
       { id: 'hot', name: 'Números Calientes', description: 'Basado en dígitos con mayor frecuencia histórica.' },
       { id: 'cold', name: 'Números Fríos', description: 'Dígitos con mayor tiempo sin aparecer (Reversión).' },
       { id: 'mixed', name: 'Mixto (Caliente + Frío)', description: 'Balance entre tendencia y reversión.' },
+      { id: 'rundown', name: 'Estrategia Rundown (123/317)', description: 'Basado en progresiones matemáticas cíclicas.' },
+      { id: 'lottodds', name: 'Patrones Lottodds', description: 'Filtra por patrones de Pares/Impares y Altos/Bajos.' },
       { id: 'exclude_last', name: 'Exclusión de Último', description: 'Filtra combinaciones que aparecieron recientemente.' }
     ];
   }
