@@ -86,7 +86,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                 if (r.baseRef === activeAnnexId || r.baseRef === `Anexo${activeAnnexId}`) {
                     suggestions.push({ id: numbering, label: r.label });
                     // Also suggest a sub-level if it feeds from an annex
-                    suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
                 }
 
                 if (r.children) traverseByBaseRef(r.children, numbering);
@@ -95,9 +94,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
         sections.forEach(s => traverseByBaseRef(s.rows || []));
 
-        if (suggestions.length > 0) return suggestions;
-
-        // Strategy 2: Fallback to hardcoded section mapping if no baseRef found
+        // Strategy 2: Supplement with hardcoded section mapping
         let targetSectionId = '';
         if (activeAnnexId === 'I') targetSectionId = '1';
         else if (activeAnnexId === 'II') targetSectionId = '2';
@@ -118,7 +115,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             for (const s of sections) {
                 const search = (rows: any[]): any[] | null => {
                     for (const r of rows) {
-                        if (r.id === targetId) return r.children || [r];
+                        if (r.id === targetId) {
+                            // If it's Otros Gastos (Annex IV), we want the direct children of Section 3
+                            // but if targetId is '3', we already handle it.
+                            // The user says "literal what is in the section"
+                            return r.children || [r];
+                        }
                         if (r.children) {
                             const res = search(r.children);
                             if (res) return res;
@@ -137,18 +139,22 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             rows.forEach((r, idx) => {
                 const numbering = r.id || (parentNumbering
                     ? `${parentNumbering}.${idx + 1}`
-                    : (targetSectionId.includes('.') ? targetSectionId : `${targetSectionId.replace('s','')}.${idx + 1}`));
+                    : (targetSectionId && !targetSectionId.startsWith('s') ? `${targetSectionId}.${idx + 1}` : `${idx + 1}`));
 
-                suggestions.push({ id: numbering, label: r.label });
-                // If it's a leaf row in the section mapping, suggest a sub-level for the annex
-                if (!r.children || r.children.length === 0) {
-                     suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
+                // Avoid duplicates and ensure we don't suggest empty labels
+                if (!suggestions.some(s => s.id === numbering)) {
+                    suggestions.push({ id: numbering, label: r.label });
                 }
+
                 if (r.children) traverse(r.children, numbering);
             });
         };
         traverse(sectionRows);
-        return suggestions;
+
+        // Remove duplicates just in case and sort by ID
+        return suggestions
+            .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+            .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
     };
 
     return getSuggestions();
