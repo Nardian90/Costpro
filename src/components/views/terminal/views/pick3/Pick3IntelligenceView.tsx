@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   TrendingUp, Activity, Shield, RefreshCw, Zap,
-  Coins, AlertCircle, LineChart, Sparkles, History, Info
+  Coins, AlertCircle, LineChart, Sparkles, History, Info,
+  BrainCircuit
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Pick3Engine } from '@/services/pick3/Pick3Engine';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
-import { SimulationResult, Pick3Result, BettingConfig, BacktestResult, Pick3SyncState } from '@/types/pick3';
+import { SimulationResult, Pick3Result, BettingConfig, BacktestResult, Pick3SyncState, AdvancedAnalysis } from '@/types/pick3';
 import { ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ export default function Pick3IntelligenceView() {
   const [backtest, setBacktest] = useState<BacktestResult | null>(null);
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [validation, setValidation] = useState<ModelValidationResult | null>(null);
+  const [analysis, setAnalysis] = useState<AdvancedAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncState, setSyncState] = useState<Pick3SyncState>(Pick3ScraperService.getSyncState());
   const [activeTab, setActiveTab] = useState('overview');
@@ -56,7 +58,6 @@ export default function Pick3IntelligenceView() {
       if (stored && stored.length > 0) {
         setHistory(stored);
       } else {
-        // If no history, trigger first sync
         handleSync();
       }
     } catch (error) {
@@ -93,19 +94,22 @@ export default function Pick3IntelligenceView() {
 
   const runAnalysis = () => {
     try {
-      const backtestRes = engine.runBacktest(30);
+      const advAnalysis = engine.analyzeAdvanced(30);
+      setAnalysis(advAnalysis);
+
+      const backtestRes = engine.runBacktest(bConfig, 1000, 30);
       setBacktest(backtestRes);
 
-      const simRes = engine.runSimulation({
+      const simRes = engine.simulateMonteCarlo({
         budget: 1000,
         horizonDays: 30,
         riskLevel: 'medium',
         costPerBet: 1,
         bettingConfig: bConfig
-      });
+      }, backtestRes);
       setSimulation(simRes);
 
-      const valRes = engine.runValidation();
+      const valRes = engine.runValidation(bConfig, 1000, 30);
       setValidation(valRes);
     } catch (error) {
       console.error("Analysis failed", error);
@@ -153,7 +157,7 @@ export default function Pick3IntelligenceView() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <Pick3Visuals history={history} bConfig={bConfig} setBConfig={setBConfig} />
+          {analysis && <Pick3Visuals analysis={analysis} history={history} />}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="rounded-[32px] border-border bg-card overflow-hidden">
@@ -175,7 +179,7 @@ export default function Pick3IntelligenceView() {
             <Card className="md:col-span-2 rounded-[32px] border-border bg-card overflow-hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                  <LineChart className="w-4 h-4 text-primary" /> Curva de Validación (Presupuesto 000)
+                  <LineChart className="w-4 h-4 text-primary" /> Curva de Validación (Presupuesto $1000)
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[250px]">
