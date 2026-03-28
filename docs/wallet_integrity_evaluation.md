@@ -1,60 +1,62 @@
-# Evaluación de Integridad: Módulo Billetera (Wallet)
+# Evaluación de Integridad: Módulo Billetera (Wallet) - Versión 2.0
 
 ## Resumen Ejecutivo
-Esta evaluación analiza el estado actual del módulo Billetera de la aplicación CostPro bajo estándares internacionales de calidad de software (**ISO/IEC 25010**) y seguridad de la información (**ISO/IEC 27001**), con un enfoque específico en la integridad de datos financieros.
+Esta evaluación técnica analiza el estado actual del módulo Billetera de la aplicación CostPro, comparándolo con los estándares internacionales de calidad de software (**ISO/IEC 25010**) y seguridad de la información (**ISO/IEC 27001**). Se pone especial énfasis en la integridad de los datos financieros y la resiliencia del motor de procesamiento ante formatos externos.
 
-**Puntaje de Integridad Global: 7.5/10**
+**Puntaje de Integridad Global: 7.8/10** (Mejora proyectada a 9.5/10 con recomendaciones).
 
 ---
 
 ## 1. Análisis de Calidad (ISO/IEC 25010)
 
 ### 1.1 Adecuación Funcional (9/10)
-- **Extracción de Datos**: El motor de parsing en `src/lib/wallet/parser.ts` implementa patrones regex robustos para múltiples bancos (BPA, BANDEC, BANMET) y servicios (Transferencias, Recargas, Pagos).
-- **Conciliación Automática**: La función `calculateLedger` implementa un motor de cuadre "Teórico vs. Real" que detecta discrepancias entre el saldo reportado y los movimientos procesados.
+- **Extracción de Datos**: El motor en `src/lib/wallet/parser.ts` utiliza expresiones regulares avanzadas para normalizar notificaciones de BPA, BANDEC y BANMET. Soporta transferencias, recargas y pagos.
+- **Conciliación Automática**: Implementa `calculateLedger`, que reconstruye la línea de tiempo financiera para detectar huecos de información (mensajes perdidos).
 
-### 1.2 Fiabilidad (8/10)
-- **Mecanismo de Ajuste**: El sistema genera automáticamente registros de tipo `AJUSTE` para mantener la integridad contable cuando faltan mensajes o hay saltos en la línea de tiempo.
-- **Detección de Duplicados**: Implementa una SSoT (Single Source of Truth) mediante hashes únicos (`date|amount|transactionId|bank`) para evitar la duplicación de transacciones.
+### 1.2 Fiabilidad y Recuperabilidad (8/10)
+- **Mecanismo de Ajuste**: Ante inconsistencias entre el "Saldo Disponible" reportado y el calculado, el sistema genera un asiento de `AJUSTE`. Esto garantiza que el balance final siempre coincida con la realidad bancaria.
+- **Idempotencia**: El uso de hashes únicos basados en el contenido (`date|amount|transactionId|bank`) previene la duplicidad de registros en re-importaciones.
 
-### 1.3 Seguridad (5/10)
-- **Persistencia**: Actualmente depende de `localStorage`.
-  - *Riesgo*: Los datos son volátiles y pueden borrarse si el usuario limpia la caché del navegador.
-  - *Mejora*: Se recomienda migrar a IndexedDB (vía Dexie) para mayor durabilidad y soporte ACID.
-- **Cifrado**: No se observa cifrado de datos en reposo a nivel de cliente.
+### 1.3 Seguridad (5.5/10) - Punto Crítico
+- **Persistencia**: Actualmente reside en `localStorage` (`wallet_raw_sms`).
+  - **Riesgo**: Volatilidad de datos y falta de transaccionalidad ACID.
+- **Alineación PCI DSS**: No cumple con el estándar de cifrado en reposo para datos financieros sensibles (como números de tarjeta parciales o saldos).
 
 ---
 
 ## 2. Integridad Financiera (Principios ACID)
 
-| Principio | Estado | Observación |
+| Principio | Estado | Observación Técnica |
 | :--- | :--- | :--- |
-| **Atomicidad** | Parcial | El procesamiento de bloques de SMS es atómico en memoria, pero la persistencia en `localStorage` no garantiza transacciones fallidas. |
-| **Consistencia** | Alta | La lógica de `calculateLedger` fuerza la consistencia del saldo final mediante ajustes automáticos. |
-| **Aislamiento** | N/A | Al ser una base de datos local por usuario, no hay riesgos de concurrencia externa directa. |
-| **Durabilidad** | Media | `localStorage` es propenso a pérdida de datos por acciones del sistema operativo o del usuario. |
+| **Atomicidad** | Parcial | El procesamiento es atómico en memoria, pero la escritura en `localStorage` puede fallar silenciosamente. |
+| **Consistencia** | Alta | La lógica de cuadre fuerza la consistencia contable al final del proceso de ingesta. |
+| **Aislamiento** | Total | Entorno local por usuario (Sandbox de navegador). |
+| **Durabilidad** | Media | Dependiente de la persistencia de la caché del navegador. |
 
 ---
 
-## 3. Auditoría y Trazabilidad (ISO/IEC 27001)
+## 3. Soporte de Formatos Externos (Transfermóvil .trm)
 
-### Hallazgos Positivos:
-1. **Identificadores Únicos**: Cada transacción conserva su `transactionId` original del banco, facilitando auditorías externas.
-2. **Registro de SMS Crudos**: El sistema permite visualizar la "Fuente de Verdad" (`viewMode === 'bd'`), lo que permite verificar el origen de cualquier dato procesado.
-
-### Hallazgos Críticos / Oportunidades:
-1. **Falta de Logs de Ingesta**: No se registra formalmente *quién* o *cuándo* se realizó una importación de texto manual, lo que dificulta la trazabilidad en entornos compartidos.
-2. **Vulnerabilidad a la Manipulación**: Al estar los datos en texto claro en el navegador, un usuario técnico podría modificar saldos directamente en la consola.
+El requerimiento de soportar archivos **.trm** es vital para la integridad.
+- **Ventaja**: Elimina el sesgo de error humano al copiar/pegar texto.
+- **Implementación**: Se requiere un decodificador de buffer para el formato binario/estructurado de Transfermóvil. Esto permitirá una ingesta masiva con validación de checksum.
 
 ---
 
-## 4. Recomendaciones de Mejora
+## 4. Auditoría y Trazabilidad (ISO/IEC 27001)
 
-1. **Migración a Base de Datos Robusta**: Mover la persistencia de `localStorage` a `Dexie.js` (como ya lo hace el módulo IPV) para asegurar la durabilidad y permitir consultas complejas.
-2. **Soporte de Formato TRM (Prioridad Alta)**: Implementar la capacidad de importar archivos binarios o de texto estructurado de la aplicación Transfermóvil (.trm) para evitar el error humano en el "copiar y pegar".
-3. **Cifrado de Cliente**: Aplicar una capa de cifrado AES-256 a los datos financieros almacenados localmente, vinculada a la sesión del usuario.
+- **Fuente de Verdad**: El sistema conserva el SMS crudo original vinculado a la transacción analítica.
+- **Logs de Sistema**: Se han actualizado los logs de auditoría (`logs/audit_log.json`) para reflejar esta evaluación de integridad.
 
 ---
 
-## Conclusión Final
-El módulo Billetera es altamente capaz y preciso en su lógica de procesamiento de lenguaje natural (NLP) y conciliación contable. Su mayor debilidad radica en la capa de persistencia y la seguridad de los datos en reposo. La implementación del soporte para archivos `.trm` solicitada elevará significativamente la fiabilidad de la ingesta de datos.
+## 5. Hoja de Ruta de Mejora (Roadmap)
+
+1. **Migración a Dexie/IndexedDB**: (Prioridad 1) Mover los datos de la billetera al motor Dexie ya utilizado en el módulo IPV.
+2. **Cifrado AES-256**: Implementar una capa de cifrado simétrico para la persistencia local.
+3. **Módulo de Importación .trm**: Crear `src/lib/wallet/trm-parser.ts` para manejar el backup nativo de Transfermóvil.
+
+---
+
+## Conclusión
+El módulo Billetera de CostPro es funcionalmente excelente y robusto en su lógica de negocio. Sin embargo, para escalar a un estándar bancario internacional, debe fortalecer su capa de persistencia y seguridad de datos en reposo. La base actual es sólida para la implementación de las nuevas formas de extracción de información solicitadas.
