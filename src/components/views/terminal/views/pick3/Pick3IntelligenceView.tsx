@@ -87,11 +87,14 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(Pick3ScraperService.getSyncState());
     try {
-      const results = await Pick3ScraperService.scrapeLatestResults();
+      const response = await fetch('/api/pick3/sync', { method: 'POST' });
+      if (!response.ok) throw new Error('Sync API failed');
+
+      const results = await Pick3Storage.getHistory();
       setSyncState(Pick3ScraperService.getSyncState());
       if (results.length > 0) {
         setHistory(results);
-        toast.success("Sincronización exitosa");
+        toast.success("Sincronización robusta completada (PDF + Web)");
       } else {
         toast.error("No se pudieron obtener resultados nuevos");
       }
