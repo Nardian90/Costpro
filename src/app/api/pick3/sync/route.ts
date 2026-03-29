@@ -5,13 +5,14 @@ import { Pick3Storage } from '@/services/pick3/storage';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs'; // Required for pdf-parse (fs, Buffer)
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
     const url = new URL(req.url);
     const forceFull = url.searchParams.get('full') === 'true';
-    const isCron = req.headers.get('Authorization') === `Bearer ${process.env.CRON_SECRET}`;
+    const authHeader = req.headers.get('Authorization');
+    const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
 
     logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
@@ -40,13 +41,10 @@ export async function POST(req: Request) {
         }
     }
 
-    const totalCount = Math.max(webResults.length, pdfResults.length);
-
     return NextResponse.json({
       success: true,
       web_count: webResults.length,
       pdf_count: pdfResults.length,
-      total_processed: totalCount,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
