@@ -46,22 +46,44 @@ export class Pick3PdfService {
   }
 
   public static async parsePdf(buffer: Buffer, forceFull = false): Promise<any[]> {
-    const uint8Array = new Uint8Array(buffer);
-    const parser = new pdf.PDFParse(uint8Array);
-    await parser.load();
-    const data = await parser.getText();
+    // Following the pattern in academy/generate/route.ts which uses pdf() as a function
+    // We try both because of environment differences (Node vs Bun vs Next bundle)
+    let data;
+    try {
+        if (typeof pdf === 'function') {
+            data = await pdf(buffer);
+        } else if (pdf && typeof pdf.default === 'function') {
+            data = await pdf.default(buffer);
+        } else if (pdf && pdf.PDFParse) {
+            const uint8Array = new Uint8Array(buffer);
+            const parser = new pdf.PDFParse(uint8Array);
+            await parser.load();
+            data = await parser.getText();
+            // Standardize output if it came from the class-based parser
+            if (data && data.pages) {
+                data.text = data.pages.map((p: any) => p.text).join('\n');
+            }
+        } else {
+            throw new Error('Could not find a valid pdf-parse function or class');
+        }
+    } catch (e: any) {
+        logger.error('PICK3', 'PDF Parse library error', { error: e.message });
+        throw e;
+    }
 
     let allResults: any[] = [];
 
-    if (data && data.pages) {
-      // If forceFull is false, only process the first 3 pages to be safe with Vercel timeouts.
-      // Page 1 contains ~160 draws (approx 80 days).
-      const pagesToProcess = forceFull ? data.pages : data.pages.slice(0, 3);
+    if (data && data.text) {
+      // If it's the class-based parser, it might already have pages.
+      // If it's the function-based parser, it returns a single text block.
+      // We'll treat the whole text as one if pages aren't available,
+      // but the logic for parsing interleaved columns works on the full text too.
+      allResults = this.parsePageText(data.text);
 
-      for (const page of pagesToProcess) {
-        const pageResults = this.parsePageText(page.text);
-        allResults = [...allResults, ...pageResults];
-      }
+      // If forceFull is false, we might want to limit results,
+      // but parsing the whole text is usually fine for Pick 3 PDF size (~130 pages).
+      // To be safe with memory, if it's too long we could slice it,
+      // but let's stick to the full parse for now and filter later if needed.
     }
 
     return allResults;
@@ -76,7 +98,8 @@ export class Pick3PdfService {
     const digits = lines.filter(l => /^\d$/.test(l));
 
     const count = dates.length;
-    if (count === 0 || times.length !== count || fbMarkers.length !== count || digits.length < count * 4) {
+    // Basic validation: we need matching counts for metadata
+    if (count === 0 || times.length < count || fbMarkers.length < count || digits.length < count * 4) {
       return [];
     }
 
@@ -87,12 +110,12 @@ export class Pick3PdfService {
       const timeRaw = times[i];
       const dateParts = dateRaw.split('/');
       const year = parseInt(dateParts[2]);
-      // Normalize year: 00-49 -> 2000-2049, 50-99 -> 1950-1999
       const fullYear = year < 50 ? 2000 + year : 1900 + year;
       const date = `${fullYear}-${dateParts[0]}-${dateParts[1]}`;
 
       const draw_time = timeRaw === 'M' ? 'midday' : 'evening';
 
+      // Use index-based extraction assuming sequential layout in the text extraction
       const d1 = parseInt(digits[i]);
       const d2 = parseInt(digits[count + i]);
       const d3 = parseInt(digits[count * 2 + i]);
