@@ -16,32 +16,61 @@ export class Pick3Storage {
     if (!results.length) return;
 
     try {
-      // Map to DB schema
-      const rows = results.map(r => ({
+      // 1. If we are saving 'web' data, we should check what's already in the DB
+      // to avoid overwriting 'pdf' verified data.
+      const isWebSync = results.every(r => (r as any).sync_method !== 'pdf');
+
+      let rowsToUpsert = results.map(r => ({
         draw_date: r.date,
         draw_time: r.draw_time,
         result: r.result as [number, number, number],
-        source: r.source || 'official'
+        source: r.source || 'official',
+        fireball: (r as any).fireball,
+        sync_method: (r as any).sync_method || 'web',
+        raw_text: (r as any).raw_text
       }));
+
+      if (isWebSync) {
+        // Fetch existing records for these dates to check sync_method
+        const dates = [...new Set(results.map(r => r.date))];
+        const { data: existing } = await supabase
+          .from('pick3_history')
+          .select('draw_date, draw_time, sync_method')
+          .in('draw_date', dates);
+
+        if (existing && existing.length > 0) {
+          const pdfRecords = new Set(
+            existing
+              .filter(e => e.sync_method === 'pdf')
+              .map(e => `${e.draw_date}-${e.draw_time}`)
+          );
+
+          // Filter out rows that would overwrite a PDF record
+          rowsToUpsert = rowsToUpsert.filter(r => !pdfRecords.has(`${r.draw_date}-${r.draw_time}`));
+        }
+      }
+
+      if (rowsToUpsert.length === 0) {
+        logger.info('PICK3', 'No new rows to upsert (all protected by PDF sync)');
+        return;
+      }
 
       const { error } = await supabase
         .from('pick3_history')
-        .upsert(rows, { onConflict: 'draw_date,draw_time' });
+        .upsert(rowsToUpsert, { onConflict: 'draw_date,draw_time' });
 
       if (error) {
-        logger.error('PICK3', 'Error saving history to Supabase', { error, rows });
+        logger.error('PICK3', 'Error saving history to Supabase', { error, count: rowsToUpsert.length });
         throw error;
       }
 
-      logger.info('PICK3', 'History saved successfully', { count: results.length });
+      logger.info('PICK3', 'History saved successfully', { count: rowsToUpsert.length });
 
-      // Fallback/Cache
       if (isBrowser) {
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
       }
     } catch (err) {
        console.error('[Pick3Storage] Critical error saving history:', err);
-       // We still cache locally if possible even if Supabase fails
        if (isBrowser) {
          localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
        }
@@ -67,10 +96,12 @@ export class Pick3Storage {
         date: r.draw_date,
         draw_time: r.draw_time as any,
         result: r.result as [number, number, number],
-        source: r.source || 'official'
+        source: r.source || 'official',
+        fireball: r.fireball,
+        sync_method: r.sync_method,
+        raw_text: r.raw_text
       }));
 
-      // Update cache
       if (isBrowser) {
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
       }
@@ -170,7 +201,6 @@ export class UserPlayStorage {
       if (error) throw error;
     }
 
-    // Always save to local for immediate UI feedback
     const localPlays = this.getLocalPlays();
     const updated = [play, ...localPlays].slice(0, 50);
     localStorage.setItem('pick3_saved_plays', JSON.stringify(updated));
