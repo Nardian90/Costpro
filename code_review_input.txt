@@ -1,3 +1,447 @@
+--- src/services/pick3/Pick3PdfService.ts ---
+import { Pick3Result } from '@/types/pick3';
+import { logger } from '@/lib/logger';
+import { supabase } from '@/lib/supabaseClient';
+// @ts-ignore
+import pdf from 'pdf-parse';
+
+export class Pick3PdfService {
+  private static readonly PDF_URL = 'https://files.floridalottery.com/exptkt/p3.pdf';
+
+  static async syncFromPdf(forceFull = false): Promise<Pick3Result[]> {
+    try {
+      logger.info('PICK3', 'Starting PDF sync process...');
+
+      const pdfBuffer = await this.downloadPdf();
+
+      const results = await this.parsePdf(pdfBuffer, forceFull);
+
+      if (results.length === 0) {
+        throw new Error('No se pudieron extraer resultados del PDF');
+      }
+
+      logger.info('PICK3', `Extracted ${results.length} results from PDF.`);
+
+      await this.saveWithConflictResolution(results);
+
+      return results.map(r => ({
+          date: r.date,
+          draw_time: r.draw_time as any,
+          result: r.result as [number, number, number],
+          source: r.source
+      }));
+    } catch (error: any) {
+      logger.error('PICK3', 'Failed sync from PDF', { error: error.message });
+      throw error;
+    }
+  }
+
+  private static async downloadPdf(): Promise<Buffer> {
+    logger.info('PICK3', `Downloading PDF from ${this.PDF_URL}`);
+    const response = await fetch(this.PDF_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to download PDF: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  public static async parsePdf(buffer: Buffer, forceFull = false): Promise<any[]> {
+    const uint8Array = new Uint8Array(buffer);
+    const parser = new pdf.PDFParse(uint8Array);
+    await parser.load();
+    const data = await parser.getText();
+
+    let allResults: any[] = [];
+
+    if (data && data.pages) {
+      // If forceFull is false, only process the first 3 pages to be safe with Vercel timeouts.
+      // Page 1 contains ~160 draws (approx 80 days).
+      const pagesToProcess = forceFull ? data.pages : data.pages.slice(0, 3);
+
+      for (const page of pagesToProcess) {
+        const pageResults = this.parsePageText(page.text);
+        allResults = [...allResults, ...pageResults];
+      }
+    }
+
+    return allResults;
+  }
+
+  private static parsePageText(text: string): any[] {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    const dates = lines.filter(l => /^\d{2}\/\d{2}\/\d{2}$/.test(l));
+    const times = lines.filter(l => l === 'M' || l === 'E');
+    const fbMarkers = lines.filter(l => l === 'FB');
+    const digits = lines.filter(l => /^\d$/.test(l));
+
+    const count = dates.length;
+    if (count === 0 || times.length !== count || fbMarkers.length !== count || digits.length < count * 4) {
+      return [];
+    }
+
+    const results: any[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const dateRaw = dates[i];
+      const timeRaw = times[i];
+      const dateParts = dateRaw.split('/');
+      const year = parseInt(dateParts[2]);
+      // Normalize year: 00-49 -> 2000-2049, 50-99 -> 1950-1999
+      const fullYear = year < 50 ? 2000 + year : 1900 + year;
+      const date = `${fullYear}-${dateParts[0]}-${dateParts[1]}`;
+
+      const draw_time = timeRaw === 'M' ? 'midday' : 'evening';
+
+      const d1 = parseInt(digits[i]);
+      const d2 = parseInt(digits[count + i]);
+      const d3 = parseInt(digits[count * 2 + i]);
+      const fb = parseInt(digits[count * 3 + i]);
+
+      results.push({
+        date,
+        draw_time,
+        result: [d1, d2, d3],
+        fireball: fb,
+        source: 'pdf',
+        sync_method: 'pdf',
+        raw_text: `${dateRaw} ${timeRaw} ${d1}-${d2}-${d3} FB ${fb}`
+      });
+    }
+
+    return results;
+  }
+
+  private static async saveWithConflictResolution(results: any[]) {
+    if (results.length === 0) return;
+
+    const rows = results.map(r => ({
+      draw_date: r.date,
+      draw_time: r.draw_time,
+      result: r.result,
+      fireball: r.fireball,
+      source: r.source,
+      sync_method: r.sync_method,
+      raw_text: r.raw_text
+    }));
+
+    const chunkSize = 100;
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+      const { error } = await supabase
+        .from('pick3_history')
+        .upsert(chunk, {
+            onConflict: 'draw_date,draw_time'
+        });
+
+      if (error) {
+        logger.error('PICK3', 'Error upserting PDF data', { error });
+      }
+    }
+
+    logger.info('PICK3', 'PDF data saved successfully with priority.');
+  }
+}
+
+
+
+--- src/services/pick3/storage.ts ---
+import { SimulationResult, StrategyConfig, Pick3Result } from '@/types/pick3';
+import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
+
+const STORAGE_KEYS = {
+  HISTORY: 'pick3_draw_history',
+  SIMULATIONS: 'pick3_simulations',
+  CONFIG: 'pick3_current_config',
+  PLAYS: 'pick3_saved_plays'
+};
+
+const isBrowser = typeof window !== 'undefined';
+
+export class Pick3Storage {
+  static async saveHistory(results: Pick3Result[]) {
+    if (!results.length) return;
+
+    try {
+      // 1. If we are saving 'web' data, we should check what's already in the DB
+      // to avoid overwriting 'pdf' verified data.
+      const isWebSync = results.every(r => (r as any).sync_method !== 'pdf');
+
+      let rowsToUpsert = results.map(r => ({
+        draw_date: r.date,
+        draw_time: r.draw_time,
+        result: r.result as [number, number, number],
+        source: r.source || 'official',
+        fireball: (r as any).fireball,
+        sync_method: (r as any).sync_method || 'web',
+        raw_text: (r as any).raw_text
+      }));
+
+      if (isWebSync) {
+        // Fetch existing records for these dates to check sync_method
+        const dates = [...new Set(results.map(r => r.date))];
+        const { data: existing } = await supabase
+          .from('pick3_history')
+          .select('draw_date, draw_time, sync_method')
+          .in('draw_date', dates);
+
+        if (existing && existing.length > 0) {
+          const pdfRecords = new Set(
+            existing
+              .filter(e => e.sync_method === 'pdf')
+              .map(e => `${e.draw_date}-${e.draw_time}`)
+          );
+
+          // Filter out rows that would overwrite a PDF record
+          rowsToUpsert = rowsToUpsert.filter(r => !pdfRecords.has(`${r.draw_date}-${r.draw_time}`));
+        }
+      }
+
+      if (rowsToUpsert.length === 0) {
+        logger.info('PICK3', 'No new rows to upsert (all protected by PDF sync)');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('pick3_history')
+        .upsert(rowsToUpsert, { onConflict: 'draw_date,draw_time' });
+
+      if (error) {
+        logger.error('PICK3', 'Error saving history to Supabase', { error, count: rowsToUpsert.length });
+        throw error;
+      }
+
+      logger.info('PICK3', 'History saved successfully', { count: rowsToUpsert.length });
+
+      if (isBrowser) {
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+      }
+    } catch (err) {
+       console.error('[Pick3Storage] Critical error saving history:', err);
+       if (isBrowser) {
+         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+       }
+       throw err;
+    }
+  }
+
+  static async getHistory(): Promise<Pick3Result[]> {
+    try {
+      const { data, error } = await supabase
+        .from('pick3_history')
+        .select('*')
+        .order('draw_date', { ascending: false });
+
+      if (error) {
+        logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
+        return this.getHistoryLocal();
+      }
+
+      if (!data) return this.getHistoryLocal();
+
+      const results = data.map(r => ({
+        date: r.draw_date,
+        draw_time: r.draw_time as any,
+        result: r.result as [number, number, number],
+        source: r.source || 'official',
+        fireball: r.fireball,
+        sync_method: r.sync_method,
+        raw_text: r.raw_text
+      }));
+
+      if (isBrowser) {
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+      }
+
+      return results;
+    } catch (err) {
+      logger.error('PICK3', 'Critical error fetching history', { error: err });
+      return this.getHistoryLocal();
+    }
+  }
+
+  private static getHistoryLocal(): Pick3Result[] {
+    if (isBrowser) {
+      const local = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      return local ? JSON.parse(local) : [];
+    }
+    return [];
+  }
+
+  static async saveSimulation(userId: string, simulation: SimulationResult) {
+    try {
+      const { error } = await supabase
+        .from('pick3_simulations')
+        .insert({
+          user_id: userId,
+          config: simulation.config,
+          result: simulation,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        logger.error('PICK3', 'Error saving simulation to Supabase', { error, userId });
+        throw error;
+      }
+
+      if (isBrowser) {
+        const existing = this.getSimulationsLocal();
+        const updated = [simulation, ...existing].slice(0, 10);
+        localStorage.setItem(STORAGE_KEYS.SIMULATIONS, JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error('[Pick3Storage] Error saving simulation:', err);
+      throw err;
+    }
+  }
+
+  static getSimulationsLocal(): SimulationResult[] {
+    if (!isBrowser) return [];
+    const data = localStorage.getItem(STORAGE_KEYS.SIMULATIONS);
+    return data ? JSON.parse(data) : [];
+  }
+
+  static async getSimulations(userId: string): Promise<SimulationResult[]> {
+    try {
+      const { data, error } = await supabase
+        .from('pick3_simulations')
+        .select('result')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error || !data) return this.getSimulationsLocal();
+      return data.map(d => d.result as unknown as SimulationResult);
+    } catch (err) {
+      return this.getSimulationsLocal();
+    }
+  }
+
+  static saveConfig(config: StrategyConfig) {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
+  }
+
+  static getConfig(): StrategyConfig | null {
+    if (!isBrowser) return null;
+    const data = localStorage.getItem(STORAGE_KEYS.CONFIG);
+    return data ? JSON.parse(data) : null;
+  }
+
+  static clear() {
+    if (!isBrowser) return;
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+  }
+}
+
+export class UserPlayStorage {
+  static async savePlay(userId: string | undefined, play: any, isAdmin: boolean) {
+    if (isAdmin && userId) {
+      const { error } = await supabase
+        .from('pick3_user_plays')
+        .insert({
+          user_id: userId,
+          combination: play.combination,
+          amount: play.amount,
+          status: 'pending'
+        });
+      if (error) throw error;
+    }
+
+    const localPlays = this.getLocalPlays();
+    const updated = [play, ...localPlays].slice(0, 50);
+    localStorage.setItem('pick3_saved_plays', JSON.stringify(updated));
+  }
+
+  static getLocalPlays(): any[] {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem('pick3_saved_plays');
+    return data ? JSON.parse(data) : [];
+  }
+
+  static async syncPlays(userId: string) {
+    const { data, error } = await supabase
+      .from('pick3_user_plays')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) return;
+    if (data) {
+       localStorage.setItem('pick3_saved_plays', JSON.stringify(data));
+    }
+  }
+}
+
+
+
+--- src/app/api/pick3/sync/route.ts ---
+import { NextResponse } from 'next/server';
+import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
+import { Pick3PdfService } from '@/services/pick3/Pick3PdfService';
+import { Pick3Storage } from '@/services/pick3/storage';
+import { logger } from '@/lib/logger';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Required for pdf-parse (fs, Buffer)
+
+export async function POST(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const forceFull = url.searchParams.get('full') === 'true';
+    const isCron = req.headers.get('Authorization') === `Bearer ${process.env.CRON_SECRET}`;
+
+    logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
+
+    // 1. Fetch from Web Sources (Fast)
+    let webResults = [];
+    try {
+        webResults = await Pick3ScraperService.getCleanOfficialResults();
+        if (webResults.length > 0) {
+            await Pick3Storage.saveHistory(webResults);
+        }
+    } catch (webError) {
+        logger.error('PICK3', 'Web sync failed, continuing to PDF', { error: webError });
+    }
+
+    // 2. Fetch from PDF (Source of Truth)
+    let pdfResults = [];
+    try {
+        pdfResults = await Pick3PdfService.syncFromPdf(forceFull);
+    } catch (pdfError) {
+        logger.error('PICK3', 'PDF sync failed', { error: pdfError });
+        if (webResults.length === 0) {
+            return NextResponse.json({
+                success: false,
+                message: 'Error crítico: Fallaron todas las fuentes de sincronización (Web y PDF).'
+            }, { status: 500 });
+        }
+    }
+
+    const totalCount = Math.max(webResults.length, pdfResults.length);
+
+    return NextResponse.json({
+      success: true,
+      web_count: webResults.length,
+      pdf_count: pdfResults.length,
+      total_processed: totalCount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('PICK3', 'Sync API failed with critical error', { error });
+    return NextResponse.json({
+      success: false,
+      message: 'Error interno del servidor durante la sincronización.',
+      error: String(error)
+    }, { status: 500 });
+  }
+}
+
+
+
+--- src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx ---
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -550,4 +994,16 @@ export default function Pick3IntelligenceView() {
       </Tabs>
     </div>
   );
+}
+
+
+
+--- vercel.json ---
+{
+  "crons": [
+    {
+      "path": "/api/pick3/sync",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }
