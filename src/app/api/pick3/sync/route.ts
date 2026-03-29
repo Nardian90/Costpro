@@ -1,43 +1,52 @@
 import { NextResponse } from 'next/server';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
+import { Pick3PdfService } from '@/services/pick3/Pick3PdfService';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Required for pdf-parse (fs, Buffer)
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    logger.info('PICK3', 'Manual sync triggered via API');
+    const url = new URL(req.url);
+    const forceFull = url.searchParams.get('full') === 'true';
+    const isCron = req.headers.get('Authorization') === `Bearer ${process.env.CRON_SECRET}`;
 
-    // 1. Get clean official results from real sources
-    const results = await Pick3ScraperService.getCleanOfficialResults();
+    logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
-    if (!results || results.length === 0) {
-      logger.warn('PICK3', 'Sync failed: No results found from sources');
-      return NextResponse.json({
-        success: false,
-        message: 'No se encontraron resultados en las fuentes oficiales o de respaldo.'
-      }, { status: 404 });
-    }
-
-    // 2. Save to Supabase (upsert logic handles deduplication)
+    // 1. Fetch from Web Sources (Fast)
+    let webResults = [];
     try {
-      await Pick3Storage.saveHistory(results);
-    } catch (dbError) {
-      logger.error('PICK3', 'Database save failed during sync', { dbError });
-      // We still return success if at least we fetched them, as they might be in localStorage fallback
-      return NextResponse.json({
-        success: true,
-        partial: true,
-        count: results.length,
-        message: 'Resultados obtenidos pero hubo un error al guardar en la base de datos central.',
-        timestamp: new Date().toISOString()
-      });
+        webResults = await Pick3ScraperService.getCleanOfficialResults();
+        if (webResults.length > 0) {
+            await Pick3Storage.saveHistory(webResults);
+        }
+    } catch (webError) {
+        logger.error('PICK3', 'Web sync failed, continuing to PDF', { error: webError });
     }
+
+    // 2. Fetch from PDF (Source of Truth)
+    let pdfResults = [];
+    try {
+        pdfResults = await Pick3PdfService.syncFromPdf(forceFull);
+    } catch (pdfError) {
+        logger.error('PICK3', 'PDF sync failed', { error: pdfError });
+        if (webResults.length === 0) {
+            return NextResponse.json({
+                success: false,
+                message: 'Error crítico: Fallaron todas las fuentes de sincronización (Web y PDF).'
+            }, { status: 500 });
+        }
+    }
+
+    const totalCount = Math.max(webResults.length, pdfResults.length);
 
     return NextResponse.json({
       success: true,
-      count: results.length,
+      web_count: webResults.length,
+      pdf_count: pdfResults.length,
+      total_processed: totalCount,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
