@@ -5,6 +5,9 @@ export interface Pick3Result {
   draw_time: DrawTime;
   result: [number, number, number];
   source?: string;
+  fireball?: number | null;
+  sync_method?: string;
+  raw_text?: string;
 }
 
 export type BetType = 'straight' | 'box' | 'last2';

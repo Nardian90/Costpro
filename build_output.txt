@@ -1,0 +1,89 @@
+$ next build && sh scripts/bundle_standalone.sh
+▲ Next.js 16.2.1 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 32.5s
+  Running TypeScript ...
+  Finished TypeScript in 39.0s ...
+  Collecting page data using 3 workers ...
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+  Generating static pages using 3 workers (0/29) ...
+  Generating static pages using 3 workers (7/29)
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+  Generating static pages using 3 workers (14/29)
+  Generating static pages using 3 workers (21/29)
+✓ Generating static pages using 3 workers (29/29) in 890ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/academy/generate
+├ ƒ /api/academy/review
+├ ƒ /api/academy/review/[cardId]
+├ ƒ /api/bot/chat
+├ ƒ /api/cost-sheets/ai/chat
+├ ƒ /api/cost-sheets/calculate
+├ ƒ /api/cost-sheets/export-pdf
+├ ƒ /api/cost-sheets/import-anexo
+├ ƒ /api/cost-sheets/import-json
+├ ƒ /api/cost-sheets/save
+├ ƒ /api/help-docs
+├ ƒ /api/intelligence
+├ ƒ /api/inventory
+├ ƒ /api/inventory/[productId]/history
+├ ƒ /api/inventory/adjust
+├ ƒ /api/inventory/adjustments
+├ ƒ /api/inventory/products
+├ ƒ /api/logs
+├ ƒ /api/pick3/sync
+├ ƒ /api/reports/generate
+├ ƒ /api/rss
+├ ƒ /api/sync/batch
+├ ƒ /api/system-health
+├ ƒ /api/system-health/knowledge
+├ ƒ /api/users/delete
+├ ƒ /api/users/managed-create
+├ ƒ /api/users/reset-password
+├ ƒ /api/users/toggle-status
+├ ○ /cashier/close-session
+├ ○ /cost-sheets
+├ ○ /demo/calculate
+├ ○ /demo/executive
+├ ○ /login
+├ ○ /system/health
+├ ○ /verify-dashboard
+└ ○ /wiki
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+Bundling standalone build...
+Copying .next/static...
+Copying public...
+Copying knowledge...
+Copying docs...
+Copying ai_context...
+Bundling complete.
