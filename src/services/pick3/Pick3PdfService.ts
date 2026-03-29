@@ -1,8 +1,6 @@
 import { Pick3Result } from '@/types/pick3';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
-// @ts-ignore
-import pdf from 'pdf-parse';
 
 export class Pick3PdfService {
   private static readonly PDF_URL = 'https://files.floridalottery.com/exptkt/p3.pdf';
@@ -46,20 +44,31 @@ export class Pick3PdfService {
   }
 
   public static async parsePdf(buffer: Buffer, forceFull = false): Promise<any[]> {
-    // Following the pattern in academy/generate/route.ts which uses pdf() as a function
-    // We try both because of environment differences (Node vs Bun vs Next bundle)
+    // Dynamic import to handle environment differences and avoid build-time errors
+    let pdfParse: any;
+    try {
+        const mod = await import('pdf-parse');
+        // @ts-ignore
+        pdfParse = mod.default || mod;
+    } catch (e) {
+        try {
+            // @ts-ignore
+            pdfParse = require('pdf-parse');
+        } catch (re) {
+            logger.error('PICK3', 'Could not load pdf-parse library');
+            throw re;
+        }
+    }
+
     let data;
     try {
-        if (typeof pdf === 'function') {
-            data = await pdf(buffer);
-        } else if (pdf && typeof pdf.default === 'function') {
-            data = await pdf.default(buffer);
-        } else if (pdf && pdf.PDFParse) {
+        if (typeof pdfParse === 'function') {
+            data = await pdfParse(buffer);
+        } else if (pdfParse && pdfParse.PDFParse) {
             const uint8Array = new Uint8Array(buffer);
-            const parser = new pdf.PDFParse(uint8Array);
+            const parser = new pdfParse.PDFParse(uint8Array);
             await parser.load();
             data = await parser.getText();
-            // Standardize output if it came from the class-based parser
             if (data && data.pages) {
                 data.text = data.pages.map((p: any) => p.text).join('\n');
             }
@@ -67,26 +76,15 @@ export class Pick3PdfService {
             throw new Error('Could not find a valid pdf-parse function or class');
         }
     } catch (e: any) {
-        logger.error('PICK3', 'PDF Parse library error', { error: e.message });
+        logger.error('PICK3', 'PDF Parse execution error', { error: e.message });
         throw e;
     }
 
-    let allResults: any[] = [];
-
     if (data && data.text) {
-      // If it's the class-based parser, it might already have pages.
-      // If it's the function-based parser, it returns a single text block.
-      // We'll treat the whole text as one if pages aren't available,
-      // but the logic for parsing interleaved columns works on the full text too.
-      allResults = this.parsePageText(data.text);
-
-      // If forceFull is false, we might want to limit results,
-      // but parsing the whole text is usually fine for Pick 3 PDF size (~130 pages).
-      // To be safe with memory, if it's too long we could slice it,
-      // but let's stick to the full parse for now and filter later if needed.
+      return this.parsePageText(data.text);
     }
 
-    return allResults;
+    return [];
   }
 
   private static parsePageText(text: string): any[] {
@@ -98,7 +96,6 @@ export class Pick3PdfService {
     const digits = lines.filter(l => /^\d$/.test(l));
 
     const count = dates.length;
-    // Basic validation: we need matching counts for metadata
     if (count === 0 || times.length < count || fbMarkers.length < count || digits.length < count * 4) {
       return [];
     }
@@ -115,7 +112,6 @@ export class Pick3PdfService {
 
       const draw_time = timeRaw === 'M' ? 'midday' : 'evening';
 
-      // Use index-based extraction assuming sequential layout in the text extraction
       const d1 = parseInt(digits[i]);
       const d2 = parseInt(digits[count + i]);
       const d3 = parseInt(digits[count * 2 + i]);
