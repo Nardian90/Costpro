@@ -33,6 +33,12 @@ export class BacktestEngine {
     this.history = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 
+  // Restore run method to satisfy Pick3Engine.ts
+  public run(config: BettingConfig, initialBankroll: number, days: number = 30): BacktestResult {
+     const result = this.runValidation(config, initialBankroll, days);
+     return result as BacktestResult;
+  }
+
   public runValidation(config: BettingConfig, initialBankroll: number, days: number = 30): ModelValidationResult {
     const bankrollHistory: number[] = [initialBankroll];
     let currentBankroll = initialBankroll;
@@ -45,32 +51,26 @@ export class BacktestEngine {
     let middayProfit = 0;
     let eveningProfit = 0;
 
-    // Sliding window: For each draw in the last 'days', use history prior to it
-    // Note: Pick 3 has 2 draws per day. 30 days = 60 draws.
     const testData = this.history.slice(-(days * 2));
     const baseHistory = this.history.slice(0, -(days * 2));
 
     testData.forEach((draw, index) => {
       const windowHistory = [...baseHistory, ...testData.slice(0, index)];
-      // Ensure we have enough data for a valid analysis
       if (windowHistory.length < 30) return;
 
       const analysisEngine = new AnalysisEngine(windowHistory);
       const analysis = analysisEngine.analyze(60);
       const predictionEngine = new PredictionEngine(windowHistory, analysis);
 
-      // CRITICAL: Top 3 recommended plays as per requirement
       const predictions = predictionEngine.generatePredictions(config, 3);
 
       let dailyExposure = 0;
       const bets = predictions.map(p => {
-        // Use Kelly Fraccional logic from BankrollManager
         const size = BankrollManager.calculateBetSize(currentBankroll, config, p.score);
         dailyExposure += size;
         return { combination: p.combination, size, score: p.score };
       });
 
-      // Constraint: Stay within budget
       if (dailyExposure > currentBankroll && currentBankroll > 0) {
         const scale = currentBankroll / dailyExposure;
         bets.forEach(b => b.size = Math.max(1, Math.floor(b.size * scale)));
@@ -95,13 +95,11 @@ export class BacktestEngine {
         const betStr = b.combination.join('');
         const betSorted = [...b.combination].sort().join('');
 
-        // 1. Straight Match (Exact)
         if (betStr === drawStr) {
           winAmount += b.size * config.payout;
           won = true;
           isStraight = true;
         }
-        // 2. Box Match (Any order) - Assume 1/6 payout for Box if not defined
         else if (betSorted === drawSorted) {
           winAmount += b.size * (config.payout / 6);
           won = true;
