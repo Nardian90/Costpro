@@ -346,7 +346,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
 
-          {user?.plan === 'free' && (
+          {user?.plan === 'free' && user?.role !== 'admin' && (
             <button
               onClick={() => {
                 const whatsappNumber = "+5353183215";
