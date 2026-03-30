@@ -22,8 +22,10 @@
 | AuditTimeline | src/components/views/terminal/views/audit/AuditTimeline.tsx | component | Óptimo | AuditEventCard, utils | 2026-03-30 |
 | AutomationWorkflowDiagram | src/components/auth/diagrams/AutomationWorkflowDiagram.tsx | component | Óptimo |  | 2026-03-30 |
 | BankIngestion | src/components/views/terminal/views/ipv/BankIngestion.tsx | component | Advertencia | BaseModal, backup, badge, bandecParser, button, card, dexie, engine, import-validator, importUtils, parser, registry, utils | 2026-03-30 |
+| BankrollDashboard | src/components/views/terminal/views/pick3/BankrollDashboard.tsx | component | Óptimo | badge, card, scroll-area, utils | 2026-03-30 |
 | BarcodeScanner | src/components/modals/BarcodeScanner.tsx | component | Óptimo | BaseModal, index | 2026-03-30 |
 | BaseModal | src/components/ui/BaseModal.tsx | component | Óptimo | dialog, utils | 2026-03-30 |
+| BetEntryDialog | src/components/views/terminal/views/pick3/BetEntryDialog.tsx | component | Óptimo | button, dialog, input, label, select, supabaseClient | 2026-03-30 |
 | CatalogImportPreview | src/components/views/terminal/views/ipv/CatalogImportPreview.tsx | component | Óptimo | BaseModal, badge, button, import-validator, table | 2026-03-30 |
 | CatalogModals | src/components/views/terminal/views/catalog/CatalogModals.tsx | component | Advertencia | BaseModal, ProductImage, index, utils | 2026-03-30 |
 | CatalogTable | src/components/views/terminal/views/ipv/CatalogTable.tsx | component | Advertencia | ActionMenu, BaseModal, badge, button, card, dexie, engine, import-validator, importUtils, input, intelligence, label, roles, select, supabaseClient, switch, table, tooltip, utils, utils | 2026-03-30 |
@@ -136,6 +138,7 @@
 | PWAInstallModal | src/components/ui/PWAInstallModal.tsx | component | Óptimo | dialog, utils | 2026-03-30 |
 | Pick3ControlPanel | src/components/views/terminal/views/pick3/Pick3ControlPanel.tsx | component | Óptimo | badge, button, card, utils | 2026-03-30 |
 | Pick3HistorySection | src/components/views/terminal/views/pick3/Pick3HistorySection.tsx | component | Óptimo | badge, button, card, input, table, utils | 2026-03-30 |
+| Pick3OnboardingWizard | src/components/views/terminal/views/pick3/Pick3OnboardingWizard.tsx | component | Óptimo | button, card, input, label, supabaseClient | 2026-03-30 |
 | Pick3StrategySection | src/components/views/terminal/views/pick3/Pick3StrategySection.tsx | component | Óptimo | badge, card, progress | 2026-03-30 |
 | Pick3Visuals | src/components/views/terminal/views/pick3/Pick3Visuals.tsx | component | Óptimo | button, card, dialog | 2026-03-30 |
 | PipelineTab | src/components/views/health/tabs/PipelineTab.tsx | component | Óptimo | useHealthData, utils | 2026-03-30 |
@@ -361,7 +364,7 @@
 | NewsView | src/components/views/terminal/views/rss/NewsView.tsx | view | Óptimo | StateRenderer, utils | 2026-03-30 |
 | POSTableView | src/components/views/terminal/views/pos/POSTableView.tsx | view | Óptimo | ProductImage, utils | 2026-03-30 |
 | POSView | src/components/views/terminal/views/pos/POSView.tsx | view | Advertencia | ActionMenu, BarcodeScanner, BaseModal, POSCart, POSTableView, Portal, PriceSelectorModal, QueryInspector, SearchBar, SpeedDial, StateRenderer, StickyCartSummary, ViewSwitcher, drawer, index, skeleton, usePOSView, utils | 2026-03-30 |
-| Pick3IntelligenceView | src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx | view | Advertencia | Pick3ControlPanel, Pick3HistorySection, Pick3Visuals, badge, button, card, input, label, popover, switch, tabs, utils | 2026-03-30 |
+| Pick3IntelligenceView | src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx | view | Óptimo | BankrollDashboard, BetEntryDialog, Pick3ControlPanel, Pick3HistorySection, Pick3OnboardingWizard, Pick3StrategySection, Pick3Visuals, badge, button, card, supabaseClient, tabs, utils | 2026-03-30 |
 | PivotStatementView | src/components/views/terminal/views/ipv/PivotStatementView.tsx | view | Advertencia | button, card, dexie, input, table, utils | 2026-03-30 |
 | ProductReceptionView | src/components/views/terminal/views/inventory/ProductReceptionView.tsx | view | Advertencia | ActionMenu, BaseModal, SecurityScrollContainer, index, supabaseClient, utils | 2026-03-30 |
 | RSSManagementView | src/components/views/terminal/views/rss/RSSManagementView.tsx | view | Óptimo | StateRenderer, utils | 2026-03-30 |

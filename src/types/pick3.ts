@@ -1,6 +1,7 @@
 export type DrawTime = 'midday' | 'evening';
 
 export interface Pick3Result {
+  id?: string;
   date: string;
   draw_time: DrawTime;
   result: [number, number, number];
@@ -104,7 +105,34 @@ export interface AdvancedAnalysis extends FrequencyAnalysis {
   movingAverages: {
     global: Record<number, number[]>;
   };
+  lawOfThirds?: {
+    absent: number[];
+    appearingOnce: number[];
+    repeating: number[];
+  };
   strategyAccuracy?: Record<string, number>;
+}
+
+export interface Pick3Profile {
+  user_id: string;
+  initial_bankroll: number;
+  current_bankroll: number;
+  onboarding_completed: boolean;
+  updated_at: string;
+}
+
+export interface Pick3LedgerEntry {
+  id: string;
+  user_id: string;
+  type: 'initial_deposit' | 'bet' | 'win' | 'adjustment' | 'withdrawal';
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  reference_draw_id?: string;
+  reference_play_id?: string;
+  notes?: string;
+  metadata?: any;
+  created_at: string;
 }
 
 export type SyncSourceStatus = 'pending' | 'success' | 'error' | 'syncing';

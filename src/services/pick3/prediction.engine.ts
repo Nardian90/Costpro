@@ -1,6 +1,9 @@
 import { Pick3Result, AdvancedAnalysis, IntelligencePlay, BettingConfig } from '@/types/pick3';
 import { LotteryMath } from './lottery.math';
 
+/**
+ * PredictionEngine v8.0 - Statistical Filtering & Law of Thirds Implementation
+ */
 export class PredictionEngine {
   private history: Pick3Result[];
   private analysis: AdvancedAnalysis;
@@ -10,31 +13,33 @@ export class PredictionEngine {
     this.analysis = analysis;
   }
 
-  public generatePredictions(config: BettingConfig, count: number = 5): IntelligencePlay[] {
+  public generatePredictions(config: BettingConfig, count: number = 10): IntelligencePlay[] {
     const universe = config.mode === 'LAST2' ? 100 : 1000;
     const scoredCombinations: IntelligencePlay[] = [];
 
-    // Weights configuration - Enhanced with Strategy Patterns
+    // Weights configuration for scoring
     const w = {
-      freq: 0.25,
-      markov: 0.25,
-      trend: 0.15,
+      freq: 0.30,
+      markov: 0.30,
+      trend: 0.20,
       recency: 0.10,
-      patterns: 0.25 // Lottodds & Strategy Patterns (Rundowns, Sums)
+      patterns: 0.10
     };
 
     const lastResult = this.history[0]?.result || [0, 0, 0];
     const last3 = this.history.slice(0, 3).map(d => d.result);
     const dateSum = LotteryMath.calculateDateSum(new Date().toISOString());
-    const hotNumbers = this.analysis.hotNumbers;
-    const coldNumbers = this.analysis.coldNumbers;
 
-    // Pre-calculate Rundowns from last draw
+    // 1. Law of Thirds Filter: Identify digits to EXCLUDE
+    // We exclude digits that have already repeated many times or are in the "heavy" part of the distribution
+    // that might be due for a "rest" (Law of Thirds: ~3 digits stay absent in 30 draws).
+    // Or as per user: "Identify which 1/3 is likely NOT to come out and exclude them".
+    // Usually, digits that haven't appeared in 20+ draws are high risk (Gaps).
+    const excludedDigits = new Set(this.analysis.lawOfThirds?.repeating.slice(0, 2) || []); // Exclude top repeaters
+
+    // 2. Strategic Buffers
     const rd123 = LotteryMath.rundown123(lastResult).map(r => r.join(''));
     const rd317 = LotteryMath.rundown317(lastResult).map(r => r.join(''));
-    const rdP1 = LotteryMath.rundownPlusOne(lastResult).map(r => r.join(''));
-
-    // Pre-calculate Tic-Tac-Toe
     const ttt = LotteryMath.generateTicTacToe(last3).map(r => r.join(''));
 
     for (let i = 0; i < universe; i++) {
@@ -42,134 +47,90 @@ export class PredictionEngine {
         ? [Math.floor(i / 10), i % 10]
         : [Math.floor(i / 100), Math.floor((i % 100) / 10), i % 10];
 
-      let score = this.calculateScore(combination, config, w);
+      // FILTER: Exclude if it contains excluded digits (Law of Thirds Filter)
+      if (combination.some(d => excludedDigits.has(d))) continue;
 
-      // Strategy Patterns Score Boost
-      let strategyBoost = 0;
-      const combStr = combination.join('');
-
-      // 1. Rundowns match
-      if (rd123.includes(combStr)) strategyBoost += 15;
-      if (rd317.includes(combStr)) strategyBoost += 15;
-      if (rdP1.includes(combStr)) strategyBoost += 10;
-
-      // 2. Date Sum match (Lottery strategy)
-      if (LotteryMath.calculateHitSum(combination) === dateSum) strategyBoost += 20;
-
-      // 3. Mirror numbers match from last draw
-      const mirrors = lastResult.map(n => LotteryMath.mirror(n));
-      if (combination.every(n => mirrors.includes(n))) strategyBoost += 10;
-
-      // 4. Tic-Tac-Toe match
-      if (ttt.includes(combStr)) strategyBoost += 20;
-
-      // 5. Lottodds Filters (Odd/Even & High/Low Patterns)
+      // FILTER: Reduce universe to a subset of 100-150 by discarding low-probability patterns
       const oe = combination.map(n => n % 2 === 0 ? 'E' : 'O').join('-');
       const hl = combination.map(n => n >= 5 ? 'H' : 'L').join('-');
 
-      const oePatternFreq = this.analysis.patterns.oddEven[oe] || 0;
-      const hlPatternFreq = this.analysis.patterns.highLow[hl] || 0;
+      // Extreme patterns (All Odd/Even or All High/Low) occur less frequently (~12.5% each)
+      // We filter them out if they haven't appeared recently or are over-saturated
+      const oeFreq = this.analysis.patterns.oddEven[oe] || 0;
+      if (oeFreq > (this.history.length * 0.20)) continue; // Filter over-saturated patterns
 
-      if (oePatternFreq < (this.history.length / 8)) strategyBoost += 10;
-      if (hlPatternFreq < (this.history.length / 8)) strategyBoost += 10;
+      let score = this.calculateScore(combination, config, w);
 
-      score = score * (1 - w.patterns) + (Math.min(strategyBoost, 100) * w.patterns);
+      // Strategy Boosters
+      let strategyBoost = 0;
+      const combStr = combination.join('');
+      if (rd123.includes(combStr)) strategyBoost += 15;
+      if (rd317.includes(combStr)) strategyBoost += 15;
+      if (ttt.includes(combStr)) strategyBoost += 20;
+      if (LotteryMath.calculateHitSum(combination) === dateSum) strategyBoost += 10;
+
+      score = (score * 0.8) + (Math.min(strategyBoost, 100) * 0.2);
 
       scoredCombinations.push({
         combination,
         score,
         confidence: score,
-        justification: this.generateJustification(combination, score, config, { rd123, rd317, rdP1, ttt, dateSum, mirrors, oe, hl })
+        justification: this.generateJustification(combination, score, { rd123, rd317, ttt, dateSum, oe, hl })
       });
     }
 
+    // Return the top 'count' (max 10)
     return scoredCombinations
       .sort((a, b) => b.score - a.score)
-      .slice(0, count);
+      .slice(0, Math.min(count, 10));
   }
 
   private calculateScore(combination: number[], config: BettingConfig, w: any): number {
     let score = 0;
     const is2D = config.mode === 'LAST2';
 
+    // 1. Frequency Score (Z-Score approach: bias from expected)
     let freqScore = 0;
-    if (is2D) {
-      freqScore = (
-        (this.analysis.positional[1][combination[0]] || 0) +
-        (this.analysis.positional[2][combination[1]] || 0)
-      ) / (this.history.length / 5);
-    } else {
-      freqScore = (
-        (this.analysis.positional[0][combination[0]] || 0) +
-        (this.analysis.positional[1][combination[1]] || 0) +
-        (this.analysis.positional[2][combination[2]] || 0)
-      ) / (this.history.length / 3.33);
-    }
+    combination.forEach((num, pos) => {
+      const bias = this.analysis.biasScore[num] || 0;
+      freqScore += (100 + bias) / 2; // Normalize to 0-100 range roughly
+    });
+    freqScore /= combination.length;
 
-    let markovScore = 0;
+    // 2. Markov Chain Score (Transition Probability)
     const lastDraw = this.history[0]?.result || [0, 0, 0];
-    if (is2D) {
-      const last2D = (lastDraw[1] * 10) + lastDraw[2];
-      const current2D = (combination[0] * 10) + combination[1];
+    let markovScore = 0;
+    combination.forEach((num, pos) => {
+      const prevNum = lastDraw[pos];
+      const transitions = this.analysis.markovTransitions.digits[prevNum] || {};
+      const total = Object.values(transitions).reduce((a, b) => a + b, 0);
+      markovScore += ((transitions[num] || 0) / (total || 1)) * 100;
+    });
+    markovScore /= combination.length;
 
-      if (this.analysis.markovTransitions.full2D && this.analysis.markovTransitions.full2D[last2D]) {
-        markovScore = (this.analysis.markovTransitions.full2D[last2D][current2D] || 0) / 5;
-      } else {
-        markovScore = (
-          (this.analysis.markovTransitions.digits[lastDraw[1]]?.[combination[0]] || 0) +
-          (this.analysis.markovTransitions.digits[lastDraw[2]]?.[combination[1]] || 0)
-        ) / 10;
-      }
-    } else {
-       markovScore = (
-          (this.analysis.markovTransitions.digits[lastDraw[0]]?.[combination[0]] || 0) +
-          (this.analysis.markovTransitions.digits[lastDraw[1]]?.[combination[1]] || 0) +
-          (this.analysis.markovTransitions.digits[lastDraw[2]]?.[combination[2]] || 0)
-        ) / 15;
-    }
-
+    // 3. Gap Analysis Score (Recency vs Expected Cycle)
     let gapScore = 0;
     combination.forEach(num => {
-      gapScore += (this.analysis.gaps[num] || 0);
+      const gap = this.analysis.gaps[num] || 0;
+      // Ideal gap is around 7-10 for a digit. Too long = cold, too short = hot.
+      if (gap > 15) gapScore += 40; // Reversion potential
+      else if (gap < 3) gapScore += 60; // Momentum
+      else gapScore += 80; // Optimal cycle
     });
-    gapScore = gapScore / (combination.length * 45);
+    gapScore /= combination.length;
 
-    let recencyPenalty = 0;
-    const last10 = this.history.slice(0, 10);
-    last10.forEach((draw, idx) => {
-      const draw2D = (draw.result[1] * 10) + draw.result[2];
-      const comb2D = (combination[0] * 10) + (combination[1] || 0);
-      const draw3D = (draw.result[0] * 100) + (draw.result[1] * 10) + draw.result[2];
-      const comb3D = (combination[0] * 100) + (combination[1] * 10) + (combination[2] || 0);
+    score = (freqScore * w.freq) + (markovScore * w.markov) + (gapScore * w.trend);
 
-      const penaltyWeight = 1 / (idx + 1);
-
-      if (is2D && draw2D === comb2D) recencyPenalty += penaltyWeight * 1.5;
-      if (!is2D && draw3D === comb3D) recencyPenalty += penaltyWeight * 2.0;
-    });
-
-    score = (freqScore * w.freq) + (markovScore * w.markov) + (gapScore * w.trend) - (recencyPenalty * w.recency);
-
-    return Math.min(Math.max(score * 100, 0), 100);
+    return Math.min(Math.max(score, 0), 100);
   }
 
-  private generateJustification(combination: number[], score: number, config: BettingConfig, context: any): string {
+  private generateJustification(combination: number[], score: number, ctx: any): string {
     const reasons: string[] = [];
-    const combStr = combination.join('');
+    if (ctx.rd123.includes(combination.join(''))) reasons.push("Rundown 123");
+    if (ctx.ttt.includes(combination.join(''))) reasons.push("Tic-Tac-Toe Grid");
+    if (score > 80) reasons.push("Alta Prob. Estadística");
+    if (reasons.length === 0) reasons.push("Filtro Ley del Tercio");
 
-    if (context.rd123.includes(combStr)) reasons.push("Rundown 1-2-3");
-    if (context.rd317.includes(combStr)) reasons.push("Rundown 3-1-7");
-    if (context.ttt.includes(combStr)) reasons.push("Tic-Tac-Toe Grid");
-    if (LotteryMath.calculateHitSum(combination) === context.dateSum) reasons.push("Alineación Suma Fecha");
-    if (combination.every(n => context.mirrors.includes(n))) reasons.push("Número Espejo (Mirror)");
-
-    if (context.oe === 'O-O-O' || context.oe === 'E-E-E') reasons.push(`Patrón Lottodds ${context.oe}`);
-
-    if (reasons.length === 0) {
-      if (score > 60) reasons.push("Convergencia Técnica");
-      else reasons.push("Micro-Ciclo Probabilístico");
-    }
-
-    return reasons.slice(0, 3).join(" | ");
+    return reasons.join(" | ");
   }
 }
