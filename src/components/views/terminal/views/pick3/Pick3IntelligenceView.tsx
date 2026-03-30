@@ -124,7 +124,7 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      const { data, error } = await supabase.functions.invoke('pick3-sync');
+      const response = await fetch('/api/pick3/sync', { method: 'POST' }); const data = await response.json(); const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
       if (error) throw error;
       toast.success("Sincronización completada");
       fetchData();
