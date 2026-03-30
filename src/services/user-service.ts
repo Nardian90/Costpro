@@ -54,7 +54,7 @@ export const userService = {
    */
   async getUserProfile(userId: string): Promise<Profile | null> {
     // Incluimos tanto 'role' como 'role_id' para compatibilidad con diferentes versiones del esquema
-    const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
+    const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key, plan';
     const storeColumns = 'id, name, address, logo_url, is_active, created_at';
 
     // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
