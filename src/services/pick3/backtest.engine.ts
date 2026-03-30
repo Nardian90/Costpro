@@ -9,13 +9,14 @@ import { BankrollManager } from './bankroll.manager';
 export interface ProjectionDay {
   date: string;
   draw_time: DrawTime;
-  bets: { combination: number[], size: number, score: number }[];
+  bets: { combination: number[], size: number, score: number, strategy?: string }[];
   result: number[];
   win: boolean;
   isStraight: boolean;
   isBox: boolean;
   profit: number;
   capital: number;
+  winningStrategy?: string;
 }
 
 export interface ModelValidationResult extends BacktestResult {
@@ -68,7 +69,7 @@ export class BacktestEngine {
       const bets = predictions.map(p => {
         const size = BankrollManager.calculateBetSize(currentBankroll, config, p.score);
         dailyExposure += size;
-        return { combination: p.combination, size, score: p.score };
+        return { combination: p.combination, size, score: p.score, strategy: p.strategyLabel };
       });
 
       if (dailyExposure > currentBankroll && currentBankroll > 0) {
@@ -90,6 +91,7 @@ export class BacktestEngine {
       let won = false;
       let isStraight = false;
       let isBox = false;
+      let winningStrategy = "";
 
       bets.forEach(b => {
         const betStr = b.combination.join('');
@@ -99,11 +101,13 @@ export class BacktestEngine {
           winAmount += b.size * config.payout;
           won = true;
           isStraight = true;
+          winningStrategy = b.strategy || "";
         }
         else if (betSorted === drawSorted) {
           winAmount += b.size * (config.payout / 6);
           won = true;
           isBox = true;
+          winningStrategy = b.strategy || "";
         }
       });
 
@@ -130,7 +134,8 @@ export class BacktestEngine {
         isStraight,
         isBox,
         profit: dailyProfit,
-        capital: currentBankroll
+        capital: currentBankroll,
+        winningStrategy
       });
     });
 
