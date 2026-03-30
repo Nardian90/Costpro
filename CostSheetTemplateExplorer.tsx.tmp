@@ -7,15 +7,15 @@ import {
   FolderOpen,
   Lock as LockIcon,
   FileText,
+  Trash,
+  Copy,
+  Save,
   Download,
   Upload,
   MoreVertical,
   Globe,
   Settings,
   RefreshCw,
-  Trash,
-  Copy,
-  Save,
   HardDrive,
   Store as StoreIcon,
   Plus,
@@ -32,27 +32,71 @@ import { storeService } from '@/services/store-service';
 import { Store } from '@/types';
 import {
   Dialog,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DialogContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DialogHeader,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DialogDescription,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DialogFooter,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   SelectContent,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   SelectItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -317,7 +361,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const handleImport = (template: Template) => {
     setSheet(template.data);
-    toast.success(`Plantilla "\"${template.name}\"" cargada correctamente`);
+    toast.success(`Plantilla "${template.name}" cargada correctamente`);
   };
 
   const handleOpenPublishDialog = (template: Template | null) => {
@@ -385,107 +429,6 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     }
   };
 
-
-  const handleUpdateTemplate = async (template: Template) => {
-    if (!isAdmin) return;
-    if (!currentSheetData) {
-      toast.error("No hay ninguna ficha activa para guardar.");
-      return;
-    }
-
-    if (!confirm(`¿Estás seguro de que deseas sobrescribir la plantilla \"${template.name}\" con los datos actuales del editor?`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .update({ data: currentSheetData })
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Plantilla actualizada correctamente");
-      fetchPublicTemplates();
-    } catch (error) {
-      console.error("Error updating template:", error);
-      toast.error("Error al actualizar la plantilla");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteTemplate = async (template: Template) => {
-    if (!isAdmin) return;
-    if (!confirm(`¿Estás seguro de que deseas eliminar la plantilla \"${template.name}\"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .delete()
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Plantilla eliminada correctamente");
-      fetchPublicTemplates();
-    } catch (error) {
-      console.error("Error deleting template:", error);
-      toast.error("Error al eliminar la plantilla");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDuplicateTemplate = async (template: Template) => {
-    if (!isAdmin) return;
-    setIsLoading(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .insert({
-          name: `\"${template.name}\" (Copia)`,
-          description: template.description,
-          category: template.category,
-          data: template.data,
-          type: "public",
-          created_by: userData.user?.id,
-          store_id: template.store_id
-        });
-
-      if (error) throw error;
-      toast.success("Plantilla duplicada correctamente");
-      fetchPublicTemplates();
-    } catch (error) {
-      console.error("Error duplicating template:", error);
-      toast.error("Error al duplicar la plantilla");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChangeTemplateStore = async (template: Template, storeId: string | null) => {
-    if (!isAdmin) return;
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .update({ store_id: storeId })
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Tienda de la plantilla actualizada");
-      fetchPublicTemplates();
-    } catch (error) {
-      console.error("Error updating template store:", error);
-      toast.error("Error al actualizar la tienda");
-    } finally {
-      setIsLoading(false);
-    }
-  };
   const filteredTemplates = (
     activeCategory === 'system' ? systemTemplates :
     activeCategory === 'private' ? privateTemplates :
@@ -588,13 +531,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                   key={template.id}
                   template={template}
                   onImport={() => handleImport(template)}
-                  onPublish={activeCategory === "private" && isAdmin ? () => handleOpenPublishDialog(template) : undefined}
-                  isAdmin={isAdmin}
-                  onUpdate={template.type === "public" ? () => handleUpdateTemplate(template) : undefined}
-                  onDelete={template.type === "public" ? () => handleDeleteTemplate(template) : undefined}
-                  onDuplicate={template.type === "public" ? () => handleDuplicateTemplate(template) : undefined}
-                  onChangeStore={template.type === "public" ? (storeId) => handleChangeTemplateStore(template, storeId) : undefined}
-                  stores={stores}
+                  onPublish={activeCategory === 'private' && isAdmin ? () => handleOpenPublishDialog(template) : undefined}
                 />
               ))}
             </AnimatePresence>
@@ -709,25 +646,9 @@ interface TemplateCardProps {
   template: Template;
   onImport: () => void;
   onPublish?: () => void;
-  isAdmin: boolean;
-  onUpdate?: () => void;
-  onDelete?: () => void;
-  onDuplicate?: () => void;
-  onChangeStore?: (storeId: string | null) => void;
-  stores: Store[];
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({
-  template,
-  onImport,
-  onPublish,
-  isAdmin,
-  onUpdate,
-  onDelete,
-  onDuplicate,
-  onChangeStore,
-  stores
-}) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPublish }) => {
   return (
     <motion.div
       layout
@@ -780,81 +701,12 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             Publicar
           </Button>
         )}
-        {template.type === "public" && isAdmin ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
-              <DropdownMenuItem
-                onClick={onUpdate}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
-              >
-                <Save className="w-3.5 h-3.5 mr-2" />
-                Guardar Cambios (Sobrescribir)
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDuplicate}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
-              >
-                <Copy className="w-3.5 h-3.5 mr-2" />
-                Duplicar
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator className="bg-primary/5" />
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary">
-                  <StoreIcon className="w-3.5 h-3.5 mr-2" />
-                  Cambiar Tienda
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
-                    <DropdownMenuItem
-                      onClick={() => onChangeStore?.(null)}
-                      className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-blue-500/10 focus:text-blue-500"
-                    >
-                      <Globe className="w-3.5 h-3.5 mr-2" />
-                      Pública (General)
-                    </DropdownMenuItem>
-                    {stores.map(store => (
-                      <DropdownMenuItem
-                        key={store.id}
-                        onClick={() => onChangeStore?.(store.id)}
-                        className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
-                      >
-                        <StoreIcon className="w-3.5 h-3.5 mr-2" />
-                        Solo: {store.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-
-              <DropdownMenuSeparator className="bg-primary/5" />
-
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-destructive/10 focus:text-destructive"
-              >
-                <Trash className="w-3.5 h-3.5 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button
-            variant="ghost"
-            className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5 cursor-not-allowed opacity-50"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5"
+        >
+          <MoreVertical className="w-4 h-4" />
+        </Button>
       </div>
       {template.updated_at && (
         <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
