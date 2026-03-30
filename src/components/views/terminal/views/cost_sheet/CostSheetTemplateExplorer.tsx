@@ -746,14 +746,17 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <FileText className="w-6 h-6" />
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="px-3 py-1 rounded-full bg-primary/5 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/10">
-            {template.category || (template.type === 'private' ? 'Local' : 'General')}
+          <span className={cn(
+            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+            template.store_id
+              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+              : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+          )}>
+            {template.store_id ? "Tienda Específica" : "Pública (General)"}
           </span>
-          {template.store_id && (
-            <span className="px-3 py-1 rounded-full bg-amber-500/10 text-[8px] font-black uppercase tracking-widest text-amber-500 border border-amber-500/10">
-              Tienda Específica
-            </span>
-          )}
+          <span className="px-3 py-1 rounded-full bg-primary/5 text-[8px] font-black uppercase tracking-widest text-primary border border-primary/10">
+            {template.category || "General"}
+          </span>
         </div>
       </div>
       <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 line-clamp-1 group-hover:text-primary transition-colors">
@@ -857,9 +860,9 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         )}
       </div>
       {template.updated_at && (
-        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-            {new Date(template.updated_at).toLocaleDateString()}
+        <div className="absolute bottom-24 right-6 opacity-0 group-hover:opacity-100 transition-opacity bg-sidebar/80 backdrop-blur-sm px-2 py-1 rounded-lg z-10">
+          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">
+            Actualizado: {new Date(template.updated_at).toLocaleDateString()}
           </p>
         </div>
       )}
