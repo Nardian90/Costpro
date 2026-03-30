@@ -185,7 +185,7 @@ const CostSheetView = () => {
   const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
     // Usage Quota Check
     if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan);
+        const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan, user.role);
         if (!allowed) {
             setIsUpgradeModalOpen(true);
             return;
@@ -236,7 +236,7 @@ const CostSheetView = () => {
             const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
             if (success) {
                 toast.success("PDF consolidado generado con éxito", { id: toastId });
-                if (user) await usageService.trackUsage(user.id, "fc_export", user.plan);
+                if (user) await usageService.trackUsage(user.id, "fc_export", user.plan, user.role);
                 return;
             }
         } else {
@@ -350,14 +350,14 @@ const CostSheetView = () => {
 
     const handleQuickGenerate = React.useCallback(async (rows: any[]) => {
     if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan);
+        const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan, user.role);
         if (!allowed) {
             setIsUpgradeModalOpen(true);
             return;
         }
     }
 
-        if (user) await usageService.trackUsage(user.id, "fc_create", user.plan);
+        if (user) await usageService.trackUsage(user.id, "fc_create", user.plan, user.role);
         setQuickModeProducts(rows.map(r => ({
             name: r.product,
             sku: `QM-${r.id}`,
@@ -846,6 +846,7 @@ const CostSheetView = () => {
       />
       <SpeedDial actions={speedDialActions} />
 
+      <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
       <BaseModal
         open={confirmation.isOpen}
         onOpenChange={(open) => setConfirmation({ ...confirmation, isOpen: open })}

@@ -7,8 +7,9 @@ export const usageService = {
    * Checks if a user has enough quota to perform an action.
    * Returns { allowed: boolean, count: number, limit: number }
    */
-  async checkQuota(userId: string, action: UsageAction, plan: string = 'free') {
-    if (plan === 'pro' || plan === 'enterprise') {
+  async checkQuota(userId: string, action: UsageAction, plan: string = 'free', role: string = 'usuario') {
+    // Admins, Pro and Enterprise have unlimited access
+    if (plan === 'pro' || plan === 'enterprise' || role === 'admin') {
       return { allowed: true, count: 0, limit: -1 };
     }
 
@@ -39,8 +40,8 @@ export const usageService = {
    * Increments usage for a specific action.
    * Returns true if successful and within limit.
    */
-  async trackUsage(userId: string, action: UsageAction, plan: string = 'free') {
-    if (plan === 'pro' || plan === 'enterprise') {
+  async trackUsage(userId: string, action: UsageAction, plan: string = 'free', role: string = 'usuario') {
+    if (plan === 'pro' || plan === 'enterprise' || role === 'admin') {
       return true;
     }
 
