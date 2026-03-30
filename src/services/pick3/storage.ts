@@ -16,42 +16,47 @@ export class Pick3Storage {
     if (!results.length) return;
 
     try {
-      // 1. If we are saving 'web' data, we should check what's already in the DB
-      // to avoid overwriting 'pdf' verified data.
-      const isWebSync = results.every(r => (r as any).sync_method !== 'pdf');
+      // 1. Fetch existing records to check sync_method priority
+      const dates = [...new Set(results.map(r => r.date))];
+      const { data: existing } = await supabase
+        .from('pick3_history')
+        .select('draw_date, draw_time, sync_method')
+        .in('draw_date', dates);
 
-      let rowsToUpsert = results.map(r => ({
+      const existingMap = new Map<string, string>();
+      existing?.forEach(e => {
+        existingMap.set(`${e.draw_date}-${e.draw_time}`, e.sync_method);
+      });
+
+      // Priority Logic:
+      // - PDF: Overwrites everything (Ultimate truth).
+      // - Manual: Overwrites Web or Gaps. "Permaneces hasta que se pueda actualizar del PDF".
+      // - Web: Overwrites only Gaps. If Manual exists, Web waits for PDF to verify.
+      const rowsToUpsert = results.filter(r => {
+        const key = `${r.date}-${r.draw_time}`;
+        const existingSync = existingMap.get(key);
+        const incomingSync = r.sync_method || 'web';
+
+        if (!existingSync) return true; // New record
+        if (incomingSync === 'pdf') return true; // PDF always wins
+        if (existingSync === 'pdf') return false; // PDF is locked
+
+        if (incomingSync === 'manual') return true; // User manual entry can correct Web or Gap
+        if (incomingSync === 'web') return (existingSync !== 'manual'); // Web fills gaps or updates web, but doesn't touch manual
+
+        return false;
+      }).map(r => ({
         draw_date: r.date,
         draw_time: r.draw_time,
         result: r.result as [number, number, number],
         source: r.source || 'official',
         fireball: (r as any).fireball,
-        sync_method: (r as any).sync_method || 'web',
+        sync_method: r.sync_method || 'web',
         raw_text: (r as any).raw_text
       }));
 
-      if (isWebSync) {
-        // Fetch existing records for these dates to check sync_method
-        const dates = [...new Set(results.map(r => r.date))];
-        const { data: existing } = await supabase
-          .from('pick3_history')
-          .select('draw_date, draw_time, sync_method')
-          .in('draw_date', dates);
-
-        if (existing && existing.length > 0) {
-          const pdfRecords = new Set(
-            existing
-              .filter(e => e.sync_method === 'pdf')
-              .map(e => `${e.draw_date}-${e.draw_time}`)
-          );
-
-          // Filter out rows that would overwrite a PDF record
-          rowsToUpsert = rowsToUpsert.filter(r => !pdfRecords.has(`${r.draw_date}-${r.draw_time}`));
-        }
-      }
-
       if (rowsToUpsert.length === 0) {
-        logger.info('PICK3', 'No new rows to upsert (all protected by PDF sync)');
+        logger.info('PICK3', 'No new rows to upsert (all protected by priority rules)');
         return;
       }
 
@@ -67,14 +72,30 @@ export class Pick3Storage {
       logger.info('PICK3', 'History saved successfully', { count: rowsToUpsert.length });
 
       if (isBrowser) {
-        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
+        // Refresh local history
+        await this.getHistory();
       }
     } catch (err) {
        console.error('[Pick3Storage] Critical error saving history:', err);
-       if (isBrowser) {
-         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(results));
-       }
        throw err;
+    }
+  }
+
+  static async deleteHistoryEntry(date: string, drawTime: string) {
+    try {
+      const { error } = await supabase
+        .from('pick3_history')
+        .delete()
+        .match({ draw_date: date, draw_time: drawTime });
+
+      if (error) throw error;
+
+      if (isBrowser) {
+        await this.getHistory();
+      }
+    } catch (err) {
+      logger.error('PICK3', 'Error deleting history entry', { error: err, date, drawTime });
+      throw err;
     }
   }
 

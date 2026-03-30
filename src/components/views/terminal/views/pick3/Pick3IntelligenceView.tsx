@@ -107,7 +107,7 @@ export default function Pick3IntelligenceView() {
         const currentBConfig = savedConfig?.bettingConfig || bConfig;
         if (savedConfig?.bettingConfig) setBConfig(savedConfig.bettingConfig);
 
-        const genPlays = engine.generatePlays(advAnalysis, currentBConfig, currentBConfig.maxCombinations);
+        const genPlays = engine.generateSimulatedPicks(currentBConfig);
         setPlays(genPlays);
 
         // Run simulation by default
@@ -198,7 +198,7 @@ export default function Pick3IntelligenceView() {
 
         {/* Hero Card - Next Recommended Play */}
         {plays.length > 0 && profile && (
-          <Pick3HeroCard play={plays[0]} config={bConfig} bankroll={profile.current_bankroll / 100} />
+          <Pick3HeroCard plays={plays} config={bConfig} bankroll={profile.current_bankroll / 100} />
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -250,7 +250,7 @@ export default function Pick3IntelligenceView() {
           </TabsContent>
 
           <TabsContent value="history" className="pt-6 space-y-6">
-             <Pick3HistorySection history={history} />
+             <Pick3HistorySection history={history} onRefresh={fetchData} />
              <Pick3ControlPanel syncState={syncState as any} onSync={handleSync} />
           </TabsContent>
 
