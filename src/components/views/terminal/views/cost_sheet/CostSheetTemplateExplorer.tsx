@@ -492,7 +492,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     publicTemplates
   ).filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (t.store_id ? stores.find(s => s.id === t.store_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) : "pública general".includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -749,10 +749,12 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <span className={cn(
             "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
             template.store_id
-              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-              : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+              ? "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-lg shadow-amber-500/5"
+              : "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-lg shadow-blue-500/5"
           )}>
-            {template.store_id ? "Tienda Específica" : "Pública (General)"}
+            {template.store_id
+              ? `Tienda: ${stores.find(s => s.id === template.store_id)?.name || "Específica"}`
+              : "Pública (General)"}
           </span>
           <span className="px-3 py-1 rounded-full bg-primary/5 text-[8px] font-black uppercase tracking-widest text-primary border border-primary/10">
             {template.category || "General"}
@@ -860,10 +862,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         )}
       </div>
       {template.updated_at && (
-        <div className="absolute bottom-24 right-6 opacity-0 group-hover:opacity-100 transition-opacity bg-sidebar/80 backdrop-blur-sm px-2 py-1 rounded-lg z-10">
-          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">
-            Actualizado: {new Date(template.updated_at).toLocaleDateString()}
-          </p>
+        <div className="absolute -bottom-4 left-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
+          <div className="bg-primary/95 text-primary-foreground px-4 py-2 rounded-xl shadow-xl shadow-primary/20 backdrop-blur-xl border border-primary/20 text-center">
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+              <RefreshCw className="w-3 h-3 animate-spin-slow" />
+              Actualizado: {new Date(template.updated_at).toLocaleDateString()}
+            </p>
+          </div>
         </div>
       )}
     </motion.div>
