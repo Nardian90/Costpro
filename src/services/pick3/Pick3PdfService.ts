@@ -1,163 +1,76 @@
 import { Pick3Result } from '@/types/pick3';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
+
+const execAsync = promisify(exec);
 
 export class Pick3PdfService {
   private static readonly PDF_URL = 'https://files.floridalottery.com/exptkt/p3.pdf';
+  private static readonly PARSER_SCRIPT = 'scripts/pick3_pdf_parser.py';
 
-  static async syncFromPdf(forceFull = false): Promise<Pick3Result[]> {
+  /**
+   * Performs a robust sync from the official PDF using the Python coordinate-based pipeline.
+   * This method replaces the legacy pdf-parse implementation.
+   */
+  static async syncFromPdf(): Promise<Pick3Result[]> {
     try {
-      logger.info('PICK3', 'Starting PDF sync process...');
+      logger.info('PICK3', 'Starting Robust PDF sync process...');
 
-      const pdfBuffer = await this.downloadPdf();
-
-      const results = await this.parsePdf(pdfBuffer, forceFull);
-
-      if (results.length === 0) {
-        throw new Error('No se pudieron extraer resultados del PDF');
+      // Ensure the Python script exists
+      if (!fs.existsSync(this.PARSER_SCRIPT)) {
+        throw new Error(`Robust parser script not found: ${this.PARSER_SCRIPT}`);
       }
 
-      logger.info('PICK3', `Extracted ${results.length} results from PDF.`);
+      // Execute the Python pipeline
+      // We assume the Python environment is set up (pdfplumber, supabase installed)
+      logger.info('PICK3', 'Executing Python robust parser...');
+      const { stdout, stderr } = await execAsync(`python3 ${this.PARSER_SCRIPT}`);
 
-      await this.saveWithConflictResolution(results);
+      if (stderr && !stderr.includes('UserWarning')) {
+        logger.warn('PICK3', 'Python parser stderr output', { stderr });
+      }
 
-      return results.map(r => ({
-          date: r.date,
+      // The Python script already handles the upsert to Supabase and saves a report
+      const reportPath = 'PICK3_PDF_AUDIT.json';
+      if (fs.existsSync(reportPath)) {
+        const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+        logger.info('PICK3', `Sync completed. Extracted ${report.metrics.total_detected} records.`);
+
+        // Return latest results for UI feedback
+        const { data: latestRecords, error } = await supabase
+          .from('pick3_history')
+          .select('*')
+          .order('draw_date', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+
+        return (latestRecords || []).map(r => ({
+          date: r.draw_date,
           draw_time: r.draw_time as any,
           result: r.result as [number, number, number],
-          source: r.source
-      }));
+          source: r.source,
+          fireball: r.fireball
+        }));
+      }
+
+      throw new Error('Sync finished but no audit report was generated.');
     } catch (error: any) {
-      logger.error('PICK3', 'Failed sync from PDF', { error: error.message });
+      logger.error('PICK3', 'Failed robust sync from PDF', { error: error.message });
       throw error;
     }
   }
 
-  private static async downloadPdf(): Promise<Buffer> {
-    logger.info('PICK3', `Downloading PDF from ${this.PDF_URL}`);
-    const response = await fetch(this.PDF_URL);
-    if (!response.ok) {
-      throw new Error(`Failed to download PDF: ${response.statusText}`);
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  }
-
-  public static async parsePdf(buffer: Buffer, forceFull = false): Promise<any[]> {
-    // Dynamic import to handle environment differences and avoid build-time errors
-    let pdfParse: any;
-    try {
-        const mod = await import('pdf-parse');
-        // @ts-ignore
-        pdfParse = mod.default || mod;
-    } catch (e) {
-        try {
-            // @ts-ignore
-            pdfParse = require('pdf-parse');
-        } catch (re) {
-            logger.error('PICK3', 'Could not load pdf-parse library');
-            throw re;
-        }
-    }
-
-    let data;
-    try {
-        if (typeof pdfParse === 'function') {
-            data = await pdfParse(buffer);
-        } else if (pdfParse && pdfParse.PDFParse) {
-            const uint8Array = new Uint8Array(buffer);
-            const parser = new pdfParse.PDFParse(uint8Array);
-            await parser.load();
-            data = await parser.getText();
-            if (data && data.pages) {
-                data.text = data.pages.map((p: any) => p.text).join('\n');
-            }
-        } else {
-            throw new Error('Could not find a valid pdf-parse function or class');
-        }
-    } catch (e: any) {
-        logger.error('PICK3', 'PDF Parse execution error', { error: e.message });
-        throw e;
-    }
-
-    if (data && data.text) {
-      return this.parsePageText(data.text);
-    }
-
+  /**
+   * Legacy parser method - now deprecated in favor of the Python coordinate pipeline.
+   * Kept for internal reference during transition.
+   */
+  public static async parsePdf(buffer: Buffer): Promise<any[]> {
+    logger.warn('PICK3', 'Legacy parsePdf called. Please use syncFromPdf() instead.');
     return [];
-  }
-
-  private static parsePageText(text: string): any[] {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-    const dates = lines.filter(l => /^\d{2}\/\d{2}\/\d{2}$/.test(l));
-    const times = lines.filter(l => l === 'M' || l === 'E');
-    const fbMarkers = lines.filter(l => l === 'FB');
-    const digits = lines.filter(l => /^\d$/.test(l));
-
-    const count = dates.length;
-    if (count === 0 || times.length < count || fbMarkers.length < count || digits.length < count * 4) {
-      return [];
-    }
-
-    const results: any[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const dateRaw = dates[i];
-      const timeRaw = times[i];
-      const dateParts = dateRaw.split('/');
-      const year = parseInt(dateParts[2]);
-      const fullYear = year < 50 ? 2000 + year : 1900 + year;
-      const date = `${fullYear}-${dateParts[0]}-${dateParts[1]}`;
-
-      const draw_time = timeRaw === 'M' ? 'midday' : 'evening';
-
-      const d1 = parseInt(digits[i]);
-      const d2 = parseInt(digits[count + i]);
-      const d3 = parseInt(digits[count * 2 + i]);
-      const fb = parseInt(digits[count * 3 + i]);
-
-      results.push({
-        date,
-        draw_time,
-        result: [d1, d2, d3],
-        fireball: fb,
-        source: 'pdf',
-        sync_method: 'pdf',
-        raw_text: `${dateRaw} ${timeRaw} ${d1}-${d2}-${d3} FB ${fb}`
-      });
-    }
-
-    return results;
-  }
-
-  private static async saveWithConflictResolution(results: any[]) {
-    if (results.length === 0) return;
-
-    const rows = results.map(r => ({
-      draw_date: r.date,
-      draw_time: r.draw_time,
-      result: r.result,
-      fireball: r.fireball,
-      source: r.source,
-      sync_method: r.sync_method,
-      raw_text: r.raw_text
-    }));
-
-    const chunkSize = 100;
-    for (let i = 0; i < rows.length; i += chunkSize) {
-      const chunk = rows.slice(i, i + chunkSize);
-      const { error } = await supabase
-        .from('pick3_history')
-        .upsert(chunk, {
-            onConflict: 'draw_date,draw_time'
-        });
-
-      if (error) {
-        logger.error('PICK3', 'Error upserting PDF data', { error });
-      }
-    }
-
-    logger.info('PICK3', 'PDF data saved successfully with priority.');
   }
 }
