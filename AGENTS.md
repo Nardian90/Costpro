@@ -1,38 +1,13 @@
-# PROTOCOLO DE MANTENIMIENTO: OPERACIÓN QUIRÚRGICA MOBILE
+# Pick 3 Module Standards (v9.0)
 
-## ROL
-Actúa como un Ingeniero de QA Frontend Senior especializado en estabilidad visual y CSS Legacy.
+## UI/UX
+- All technical terms must have a `Tooltip` providing a layperson's explanation.
+- The "Hero Card" is the primary entry point for users, showing exactly WHAT to play and HOW MUCH to bet.
+- The "Guía de Usuario" tab is the source of truth for strategy documentation.
 
-## OBJETIVO
-Tu única misión es elevar la robustez de la responsividad móvil (Mobile Hardening).
+## Engine Logic
+- Every prediction MUST include a `strategyLabel` to maintain transparency.
+- The `BacktestEngine` must track `winningStrategy` during simulations to allow users to verify model performance.
 
-## REGLAS DE ORO (INVARIANTES)
-1.  **ESTRUCTURA INTOCABLE:** Bajo ninguna circunstancia puedes alterar el orden del DOM HTML, eliminar elementos, o mover botones de su posición lógica actual.
-2.  **VISIBILIDAD SEGURA:** Si un elemento excede el ancho del viewport (320px - 420px), NO lo ocultes ni lo encjas a la fuerza. Aplica `overflow-x: auto` al contenedor inmediato para permitir scroll horizontal suave.
-3.  **TOCAR, NO MOVER:** Los ajustes de tamaño (padding, font-size) no deben desplazar el layout acumulado (CLS - Cumulative Layout Shift) más de 0.01.
-4.  **UNIDADES RELATIVAS:** Usa `clamp()` para textos y `rem` para espaciados. Prohibido usar `px` para anchos de contenedores.
-
-## MANEJO DE DESBORDAMIENTO (OVERFLOW)
-* Detecta contenedores hijos que rompen el ancho del padre.
-* Solución estándar: `width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;`
-* Nunca apliques `overflow: hidden` si eso implica cortar texto o botones funcionales.
-
-## FORMATO DE SALIDA
-Entrega únicamente el CSS modificado o las clases de utilidad necesarias. No refactorices lógica JS.
-## AI System Auditor Protocol
-The project includes an automated AI Auditor script located at `scripts/audit-agent.py`.
-This script should be run daily to maintain:
-1. **Mapa Arquitectónico Vivo**: `docs/mapa_vistas.md`
-2. **Registro Técnico de Auditoría**: `logs/audit_log.json`
-3. **Estado de Salud del Sistema**: `public/system_health.json`
-4. **Línea de Tiempo de Mantenimientos**: `public/health_timeline.json`
-5. **Modelo de Arquitectura Visual**: `public/system_architecture.json`
-
-To execute the audit manually, run `npm run audit`.
-
-## Repository Structure & Documentation (v5.8.0)
-- **scripts/remediation/**: Contains one-off scripts for bug fixes and data migrations.
-- **docs/audits/archive/**: Historical audit reports from previous development cycles.
-- **docs/technical/patches/**: Archive of Git patches and diffs used for specific fixes.
-- **public/system_architecture.json**: Enriched with `business_logic` descriptions for the Health View.
-- **Health View**: The `ArchitectureAuditTable` component now includes a side panel to display the "Business Logic Context" of each system component.
+## Testing
+- Use `bun test` for rapid verification of `lottery.math.ts` and `backtest.engine.ts`.
