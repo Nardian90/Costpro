@@ -492,7 +492,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     publicTemplates
   ).filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (t.store_id ? stores.find(s => s.id === t.store_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) : "pública general".includes(searchQuery.toLowerCase()))
+    t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (t.store_id ? (stores || []).find(s => s.id === t.store_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) : "pública general".includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -548,7 +548,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
               >
                   <Button
                     onClick={() => handleOpenPublishDialog(null)}
-                    className="rounded-2xl h-14 px-8 bg-success hover:bg-success/90 text-white font-black uppercase tracking-widest shadow-xl shadow-success/20 group"
+                    className="rounded-2xl h-14 px-8 bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20 group"
                   >
                     <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
                     Nueva Plantilla (Desde Editor)
@@ -730,11 +730,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
 }) => {
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -2, scale: 1.01 }}
       className="group relative bg-sidebar/40 backdrop-blur-xl border border-sidebar-border/50 rounded-[2rem] p-6 hover:border-primary/30 transition-all duration-300"
     >
       <div className="flex justify-between items-start mb-4">
@@ -779,7 +778,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <Button
             onClick={onPublish}
             variant="outline"
-            className="rounded-xl h-10 border-sidebar-border hover:bg-success/10 hover:text-success hover:border-success/30 font-black uppercase tracking-widest text-[10px]"
+            className="rounded-xl h-10 border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-black uppercase tracking-widest text-[10px]"
           >
             <Globe className="w-3.5 h-3.5 mr-2" />
             Publicar
@@ -865,7 +864,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         <div className="absolute -bottom-4 left-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
           <div className="bg-primary/95 text-primary-foreground px-4 py-2 rounded-xl shadow-xl shadow-primary/20 backdrop-blur-xl border border-primary/20 text-center">
             <p className="text-[8px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-              <RefreshCw className="w-3 h-3 animate-spin-slow" />
+              <RefreshCw className="w-3 h-3 animate-spin" />
               Actualizado: {new Date(template.updated_at).toLocaleDateString()}
             </p>
           </div>
