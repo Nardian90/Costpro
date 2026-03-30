@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // 2. Fetch from PDF (Source of Truth)
     let pdfResults = [];
     try {
-        pdfResults = await Pick3PdfService.syncFromPdf(forceFull);
+        pdfResults = await Pick3PdfService.syncFromPdf();
     } catch (pdfError) {
         logger.error('PICK3', 'PDF sync failed', { error: pdfError });
         if (webResults.length === 0) {

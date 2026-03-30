@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-03-30T05:01:28.183195",
+  "metrics": {
+    "total_detected": 20367,
+    "valid": 20367,
+    "rejected": 0,
+    "pages": 0,
+    "pages_processed": 129,
+    "total_pages": 129
+  },
+  "sample_first": {
+    "draw_date": "1988-04-29",
+    "draw_time": "evening",
+    "result": [
+      8,
+      0,
+      6
+    ],
+    "fireball": null,
+    "source": "florida_pick3_pdf",
+    "sync_method": "pdf_pipeline_v2",
+    "raw_text": "04/29/88 8- 0- 6 E"
+  },
+  "sample_last": {
+    "draw_date": "2026-03-28",
+    "draw_time": "midday",
+    "result": [
+      1,
+      7,
+      0
+    ],
+    "fireball": 1,
+    "source": "florida_pick3_pdf",
+    "sync_method": "pdf_pipeline_v2",
+    "raw_text": "03/28/26 1- 7- 0 M FB1"
+  },
+  "total_records_ingested": 20367
+}

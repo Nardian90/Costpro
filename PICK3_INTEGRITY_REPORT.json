@@ -1,0 +1,9 @@
+{
+  "total_records": 20367,
+  "integrity_metrics": {
+    "duplicate_count": 0,
+    "gap_count": 0,
+    "invalid_data_count": 0
+  },
+  "status": "PASS"
+}
