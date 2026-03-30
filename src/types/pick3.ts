@@ -37,6 +37,7 @@ export interface IntelligencePlay {
   score: number;
   confidence: number;
   justification: string;
+  strategyLabel?: string;
 }
 
 export interface BacktestResult {

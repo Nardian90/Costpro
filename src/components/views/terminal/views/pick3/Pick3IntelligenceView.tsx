@@ -10,7 +10,8 @@ import {
   Wallet,
   Target,
   Plus,
-  PlayCircle
+  PlayCircle,
+  BookOpen
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,9 +30,12 @@ import { Pick3OnboardingWizard } from './Pick3OnboardingWizard';
 import { BankrollDashboard } from './BankrollDashboard';
 import { BetEntryDialog } from './BetEntryDialog';
 import { Pick3SimulationDashboard } from './Pick3SimulationDashboard';
+import { Pick3HeroCard } from './Pick3HeroCard';
+import { Pick3HelpSection } from './Pick3HelpSection';
 import { BacktestEngine, ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function Pick3IntelligenceView() {
   const { user } = useAuthStore();
@@ -124,7 +128,9 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      const response = await fetch('/api/pick3/sync', { method: 'POST' }); const data = await response.json(); const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
+      const response = await fetch('/api/pick3/sync', { method: 'POST' });
+      const data = await response.json();
+      const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
       if (error) throw error;
       toast.success("Sincronización completada");
       fetchData();
@@ -159,144 +165,158 @@ export default function Pick3IntelligenceView() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
-      {/* Header & Main Stats */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black italic tracking-tighter uppercase flex items-center gap-3">
-            <BrainCircuit className="w-10 h-10 text-primary" />
-            Pick 3 Intelligence <span className="text-primary">v9.0</span>
-          </h1>
-          <p className="text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
+    <TooltipProvider>
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
+        {/* Header & Main Stats */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black italic tracking-tighter uppercase flex items-center gap-3">
+              <BrainCircuit className="w-10 h-10 text-primary" />
+              Pick 3 Intelligence <span className="text-primary">v9.0</span>
+            </h1>
+            <p className="text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+             <Button
+              variant="outline"
+              className="rounded-full font-black uppercase h-12 px-6 border-primary/20 hover:bg-primary/5 group"
+              onClick={handleSync}
+              disabled={syncState.isSyncing}
+            >
+              <RefreshCw className={cn("w-4 h-4 mr-2", syncState.isSyncing && "animate-spin")} />
+              {syncState.isSyncing ? "Sincronizando..." : "Sincronizar"}
+            </Button>
+            <Button
+              className="rounded-full font-black uppercase h-12 px-8 shadow-lg shadow-primary/20 group"
+              onClick={() => setShowBetDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" /> Registrar Apuesta
+            </Button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-           <Button
-            variant="outline"
-            className="rounded-full font-black uppercase h-12 px-6 border-primary/20 hover:bg-primary/5 group"
-            onClick={handleSync}
-            disabled={syncState.isSyncing}
-          >
-            <RefreshCw className={cn("w-4 h-4 mr-2", syncState.isSyncing && "animate-spin")} />
-            {syncState.isSyncing ? "Sincronizando..." : "Sincronizar"}
-          </Button>
-          <Button
-            className="rounded-full font-black uppercase h-12 px-8 shadow-lg shadow-primary/20 group"
-            onClick={() => setShowBetDialog(true)}
-          >
-            <Plus className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" /> Registrar Apuesta
-          </Button>
+        {/* Hero Card - Next Recommended Play */}
+        {plays.length > 0 && profile && (
+          <Pick3HeroCard play={plays[0]} config={bConfig} bankroll={profile.current_bankroll / 100} />
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 md:grid-cols-7 h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md">
+            <TabsTrigger value="dashboard" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <Wallet className="w-3.5 h-3.5 mr-2" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="prediction" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <Target className="w-3.5 h-3.5 mr-2" /> Predicciones
+            </TabsTrigger>
+            <TabsTrigger value="simulation" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <PlayCircle className="w-3.5 h-3.5 mr-2" /> Simulación
+            </TabsTrigger>
+            <TabsTrigger value="intel" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <TrendingUp className="w-3.5 h-3.5 mr-2" /> Análisis
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <History className="w-3.5 h-3.5 mr-2" /> Histórico
+            </TabsTrigger>
+            <TabsTrigger value="help" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider bg-primary/5 text-primary">
+              <BookOpen className="w-3.5 h-3.5 mr-2" /> Guía de Usuario
+            </TabsTrigger>
+            <TabsTrigger value="config" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+              <Settings className="w-3.5 h-3.5 mr-2" /> Ajustes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="pt-6">
+            {profile && <BankrollDashboard profile={profile} ledger={ledger} />}
+          </TabsContent>
+
+          <TabsContent value="prediction" className="pt-6">
+             {analysis && <Pick3StrategySection analysis={analysis} plays={plays} />}
+          </TabsContent>
+
+          <TabsContent value="simulation" className="pt-6">
+             {simResult ? (
+                <Pick3SimulationDashboard result={simResult} initialBankroll={1000} />
+             ) : (
+                <div className="p-12 text-center opacity-40">
+                  <PlayCircle className="w-16 h-16 mx-auto mb-4" />
+                  <p className="text-sm font-black uppercase">No hay datos suficientes para simular (Mínimo 60 sorteos)</p>
+                </div>
+             )}
+          </TabsContent>
+
+          <TabsContent value="intel" className="pt-6">
+             <Pick3Visuals history={history} analysis={analysis || ({} as any)} />
+          </TabsContent>
+
+          <TabsContent value="history" className="pt-6 space-y-6">
+             <Pick3HistorySection history={history} />
+             <Pick3ControlPanel syncState={syncState as any} onSync={handleSync} />
+          </TabsContent>
+
+          <TabsContent value="help" className="pt-6">
+             <Pick3HelpSection />
+          </TabsContent>
+
+          <TabsContent value="config" className="pt-6">
+             <Card className="rounded-[32px] p-6">
+                <CardHeader className="px-0">
+                   <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                      <Settings className="w-4 h-4" /> Configuración Estratégica
+                   </CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 space-y-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase ml-1">Modo de Juego</label>
+                         <select
+                            className="w-full h-12 rounded-xl border-border bg-background px-4 text-sm font-black italic uppercase"
+                            value={bConfig.mode}
+                            onChange={(e) => setBConfig({...bConfig, mode: e.target.value as any})}
+                         >
+                            <option value="PICK3">Florida Lottery Pick 3 (Official)</option>
+                            <option value="LAST2">Terminal / Bolita (Last 2)</option>
+                         </select>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase ml-1">Riesgo por Jugada (%)</label>
+                         <input
+                            type="number" step="0.1"
+                            value={bConfig.riskFactor}
+                            onChange={(e) => setBConfig({...bConfig, riskFactor: parseFloat(e.target.value)})}
+                            className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"
+                         />
+                      </div>
+                   </div>
+                   <Button
+                      className="w-full h-14 rounded-full font-black uppercase shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => {
+                         Pick3Storage.saveConfig({ budget: (profile?.current_bankroll || 0)/100, horizonDays: 30, riskLevel: 'medium', costPerBet: 1, bettingConfig: bConfig });
+                         toast.success("Estrategia actualizada correctamente");
+                         fetchData();
+                      }}
+                   >
+                      Guardar Perfil Estratégico
+                   </Button>
+                </CardContent>
+             </Card>
+          </TabsContent>
+        </Tabs>
+
+        <BetEntryDialog
+          open={showBetDialog}
+          onOpenChange={setShowBetDialog}
+          userId={user?.id || ''}
+          onSuccess={fetchData}
+          history={history}
+        />
+
+        <div className="text-center opacity-30 group hover:opacity-100 transition-opacity duration-700">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] italic flex items-center justify-center gap-2">
+            <ShieldAlert className="w-3 h-3" /> Statistical simulation engine for educational purposes
+          </p>
         </div>
       </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md">
-          <TabsTrigger value="dashboard" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <Wallet className="w-3.5 h-3.5 mr-2" /> Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="prediction" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <Target className="w-3.5 h-3.5 mr-2" /> Predicciones
-          </TabsTrigger>
-          <TabsTrigger value="simulation" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <PlayCircle className="w-3.5 h-3.5 mr-2" /> Simulación
-          </TabsTrigger>
-          <TabsTrigger value="intel" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <TrendingUp className="w-3.5 h-3.5 mr-2" /> Análisis
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <History className="w-3.5 h-3.5 mr-2" /> Histórico
-          </TabsTrigger>
-          <TabsTrigger value="config" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-            <Settings className="w-3.5 h-3.5 mr-2" /> Ajustes
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="dashboard" className="pt-6">
-          {profile && <BankrollDashboard profile={profile} ledger={ledger} />}
-        </TabsContent>
-
-        <TabsContent value="prediction" className="pt-6">
-           {analysis && <Pick3StrategySection analysis={analysis} plays={plays} />}
-        </TabsContent>
-
-        <TabsContent value="simulation" className="pt-6">
-           {simResult ? (
-              <Pick3SimulationDashboard result={simResult} initialBankroll={1000} />
-           ) : (
-              <div className="p-12 text-center opacity-40">
-                <PlayCircle className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-sm font-black uppercase">No hay datos suficientes para simular (Mínimo 60 sorteos)</p>
-              </div>
-           )}
-        </TabsContent>
-
-        <TabsContent value="intel" className="pt-6">
-           <Pick3Visuals history={history} analysis={analysis || ({} as any)} />
-        </TabsContent>
-
-        <TabsContent value="history" className="pt-6 space-y-6">
-           <Pick3HistorySection history={history} />
-           <Pick3ControlPanel syncState={syncState as any} onSync={handleSync} />
-        </TabsContent>
-
-        <TabsContent value="config" className="pt-6">
-           <Card className="rounded-[32px] p-6">
-              <CardHeader className="px-0">
-                 <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                    <Settings className="w-4 h-4" /> Configuración Estratégica
-                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase ml-1">Modo de Juego</label>
-                       <select
-                          className="w-full h-12 rounded-xl border-border bg-background px-4 text-sm font-black italic uppercase"
-                          value={bConfig.mode}
-                          onChange={(e) => setBConfig({...bConfig, mode: e.target.value as any})}
-                       >
-                          <option value="PICK3">Florida Lottery Pick 3 (Official)</option>
-                          <option value="LAST2">Terminal / Bolita (Last 2)</option>
-                       </select>
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase ml-1">Riesgo por Jugada (%)</label>
-                       <input
-                          type="number" step="0.1"
-                          value={bConfig.riskFactor}
-                          onChange={(e) => setBConfig({...bConfig, riskFactor: parseFloat(e.target.value)})}
-                          className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"
-                       />
-                    </div>
-                 </div>
-                 <Button
-                    className="w-full h-14 rounded-full font-black uppercase shadow-lg hover:shadow-xl transition-all"
-                    onClick={() => {
-                       Pick3Storage.saveConfig({ budget: (profile?.current_bankroll || 0)/100, horizonDays: 30, riskLevel: 'medium', costPerBet: 1, bettingConfig: bConfig });
-                       toast.success("Estrategia actualizada correctamente");
-                       fetchData();
-                    }}
-                 >
-                    Guardar Perfil Estratégico
-                 </Button>
-              </CardContent>
-           </Card>
-        </TabsContent>
-      </Tabs>
-
-      <BetEntryDialog
-        open={showBetDialog}
-        onOpenChange={setShowBetDialog}
-        userId={user?.id || ''}
-        onSuccess={fetchData}
-        history={history}
-      />
-
-      <div className="text-center opacity-30 group hover:opacity-100 transition-opacity duration-700">
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] italic flex items-center justify-center gap-2">
-          <ShieldAlert className="w-3 h-3" /> Statistical simulation engine for educational purposes
-        </p>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }

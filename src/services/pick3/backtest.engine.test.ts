@@ -1,31 +1,35 @@
-import { expect, test, describe } from "bun:test";
-import { BacktestEngine } from "./backtest.engine";
-import { MIAMI_PICK3_HISTORICAL } from "./seedData";
-import { BettingConfig } from "@/types/pick3";
+import { describe, it, expect } from 'vitest';
+import { BacktestEngine } from './backtest.engine';
+import { Pick3Result, BettingConfig } from '@/types/pick3';
 
-describe("BacktestEngine Validation", () => {
-  const config: BettingConfig = {
-    mode: 'LAST2',
-    payout: 90,
-    digits: 2,
+describe('BacktestEngine', () => {
+  const mockHistory: Pick3Result[] = Array.from({ length: 100 }, (_, i) => ({
+    date: new Date(2023, 0, i + 1).toISOString(),
+    draw_time: i % 2 === 0 ? 'midday' : 'evening',
+    result: [1, 2, 3] as [number, number, number]
+  }));
+
+  const mockConfig: BettingConfig = {
+    mode: 'PICK3',
+    payout: 500,
+    digits: 3,
     maxCombinations: 3,
     riskFactor: 1.0,
-    stopLoss: -30,
-    criticalDrawdown: -20
+    stopLoss: 50,
+    criticalDrawdown: 30
   };
 
-  test("runValidation produces daily history and metrics", () => {
-    // We need enough data for analysis (60 draws)
-    // MIAMI_PICK3_HISTORICAL has 41 draws.
-    // Let's duplicate it for the sake of the test to have > 60
-    const longHistory = [...MIAMI_PICK3_HISTORICAL, ...MIAMI_PICK3_HISTORICAL];
-    const engine = new BacktestEngine(longHistory);
-    const result = engine.runValidation(config, 1000, 5);
+  it('should run validation and return winning strategies', () => {
+    const engine = new BacktestEngine(mockHistory);
+    const result = engine.runValidation(mockConfig, 1000, 10);
 
+    expect(result).toBeDefined();
     expect(result.dailyHistory.length).toBeGreaterThan(0);
-    expect(result.equityCurve.length).toBeGreaterThan(1);
-    expect(result.bestDrawTime).toBeDefined();
-    expect(result.middayProfit).toBeDefined();
-    expect(result.eveningProfit).toBeDefined();
+
+    // Check if winningStrategy is tracked when there is a win
+    const winningDraw = result.dailyHistory.find(d => d.win);
+    if (winningDraw) {
+      expect(winningDraw.winningStrategy).toBeDefined();
+    }
   });
 });

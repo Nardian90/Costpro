@@ -2,12 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Target, AlertTriangle, Table as TableIcon, AreaChart } from 'lucide-react';
+import { TrendingUp, Target, AreaChart, Table as TableIcon, Info, HelpCircle } from 'lucide-react';
 import { ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { cn } from '@/lib/utils';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,6 +14,11 @@ import {
   Area,
   AreaChart as RechartsAreaChart
 } from 'recharts';
+import {
+  Tooltip as UI_Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Pick3SimulationDashboardProps {
   result: ModelValidationResult;
@@ -39,7 +42,15 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
         <div className="grid grid-cols-1 lg:grid-cols-2">
           <div className="p-8 lg:p-12 space-y-6 border-b lg:border-b-0 lg:border-r border-primary/5 bg-primary/5">
             <div className="space-y-2">
-              <h3 className="text-sm font-black uppercase tracking-widest opacity-60 italic">Resultado Final Proyectado</h3>
+              <h3 className="text-sm font-black uppercase tracking-widest opacity-60 italic flex items-center gap-2">
+                Resultado Final Proyectado
+                <UI_Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="w-3 h-3" />
+                  </TooltipTrigger>
+                  <TooltipContent className="text-[10px] font-bold max-w-[200px]">Simulamos apostar en los últimos 30 días siguiendo estrictamente las 3 mejores recomendaciones de la IA cada día.</TooltipContent>
+                </UI_Tooltip>
+              </h3>
               <div className="text-5xl lg:text-6xl font-black italic tracking-tighter text-primary">
                 {formatMoney(result.finalCapital)}
               </div>
@@ -126,7 +137,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
           <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
             <TableIcon className="w-4 h-4 text-primary" /> Bitácora de Aciertos Simulados
           </CardTitle>
-          <CardDescription className="text-[10px]">Detalle sorteo a sorteo en la ventana de 30 días</CardDescription>
+          <CardDescription className="text-[10px] font-bold uppercase opacity-60">Detalle sorteo a sorteo en la ventana de 30 días</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -136,7 +147,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                   <th className="px-6 py-4">Fecha / Turno</th>
                   <th className="px-6 py-4">Sugerencias (Top 3)</th>
                   <th className="px-6 py-4 text-center">Resultado Real</th>
-                  <th className="px-6 py-4 text-center">Tipo</th>
+                  <th className="px-6 py-4 text-center">Modelo Ganador</th>
                   <th className="px-6 py-4 text-right">P&L</th>
                 </tr>
               </thead>
@@ -152,7 +163,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                         {day.bets.map((b, idx) => (
                           <Badge key={idx} variant="outline" className={cn(
                             "text-[9px] font-black italic rounded-lg px-2",
-                            day.win && day.result.join('') === b.combination.join('') ? "bg-emerald-500 text-white border-none" : "bg-muted/50"
+                            day.win && (day.result.join('') === b.combination.join('') || [...day.result].sort().join('') === [...b.combination].sort().join('')) ? "bg-emerald-500 text-white border-none" : "bg-muted/50"
                           )}>
                             {b.combination.join('')}
                           </Badge>
@@ -172,13 +183,18 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {day.win && (
-                        <Badge className={cn(
-                          "text-[9px] font-black uppercase italic",
-                          day.isStraight ? "bg-emerald-600" : "bg-blue-600"
-                        )}>
-                          {day.isStraight ? "Straight" : "Box"}
-                        </Badge>
+                      {day.win ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className={cn(
+                            "text-[9px] font-black uppercase italic",
+                            day.isStraight ? "bg-emerald-600" : "bg-blue-600"
+                          )}>
+                            {day.isStraight ? "Straight" : "Box"}
+                          </Badge>
+                          <span className="text-[8px] font-black text-muted-foreground uppercase italic">{day.winningStrategy || "Estadístico"}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold opacity-20 uppercase">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
