@@ -18,6 +18,7 @@ export class AnalysisEngine {
       biasScore[parseInt(num)] = (((freq as number) - expected) / (expected || 1)) * 100;
     });
 
+    // Markov Transitions
     const digitMarkov: Record<number, Record<number, number>> = {};
     for (let i = 0; i < 10; i++) {
       digitMarkov[i] = {};
@@ -33,32 +34,31 @@ export class AnalysisEngine {
       });
     }
 
-    let full2D: Record<number, Record<number, number>> | undefined = undefined;
-    if (subset.length >= 200) {
-      full2D = {};
-      for (let i = 0; i < 100; i++) {
-        full2D[i] = {};
-        for (let j = 0; j < 100; j++) full2D[i][j] = 1;
-      }
+    // Law of Thirds Analysis
+    // In a cycle of 27-30 draws, 1/3 of numbers usually stay absent, 1/3 appear once, 1/3 repeat.
+    const cycleSize = 30;
+    const cycleSubset = this.history.slice(0, cycleSize);
+    const digitCounts: Record<number, number> = {};
+    for (let i = 0; i < 10; i++) digitCounts[i] = 0;
 
-      for (let i = 1; i < subset.length; i++) {
-        const current2D = (subset[i].result[1] * 10) + subset[i].result[2];
-        const next2D = (subset[i - 1].result[1] * 10) + subset[i - 1].result[2];
-        if (full2D[current2D]) {
-          full2D[current2D][next2D] = (full2D[current2D][next2D] || 0) + 1;
-        }
-      }
-    }
-
-    let entropy = 0;
-    Object.values(baseFreq.global).forEach(freq => {
-      const f = freq as number;
-      if (f > 0) {
-        const p = f / totalDigits;
-        entropy -= p * Math.log2(p);
-      }
+    cycleSubset.forEach(draw => {
+      draw.result.forEach(n => digitCounts[n]++);
     });
 
+    const lawOfThirds = {
+      absent: [] as number[],
+      appearingOnce: [] as number[],
+      repeating: [] as number[]
+    };
+
+    Object.entries(digitCounts).forEach(([num, count]) => {
+      const n = parseInt(num);
+      if (count === 0) lawOfThirds.absent.push(n);
+      else if (count === 1) lawOfThirds.appearingOnce.push(n);
+      else lawOfThirds.repeating.push(n);
+    });
+
+    // Patterns
     const sums: Record<number, number> = {};
     const oddEven: Record<string, number> = { 'O-O-O': 0, 'E-E-E': 0, 'Mixed': 0 };
     const highLow: Record<string, number> = { 'H-H-H': 0, 'L-L-L': 0, 'Mixed': 0 };
@@ -80,11 +80,10 @@ export class AnalysisEngine {
 
     return {
       ...baseFreq,
-      entropy,
+      entropy: this.calculateEntropy(baseFreq.global, totalDigits),
       biasScore,
       markovTransitions: {
-        digits: digitMarkov,
-        full2D
+        digits: digitMarkov
       },
       patterns: {
         sums,
@@ -92,8 +91,20 @@ export class AnalysisEngine {
         highLow,
         lastDigitTransitions: {}
       },
-      movingAverages: { global: {} }
+      movingAverages: { global: {} },
+      lawOfThirds
     };
+  }
+
+  private calculateEntropy(global: Record<number, number>, total: number): number {
+    let entropy = 0;
+    Object.values(global).forEach(freq => {
+      if (freq > 0) {
+        const p = freq / total;
+        entropy -= p * Math.log2(p);
+      }
+    });
+    return entropy;
   }
 
   private calculateFrequency(subset: Pick3Result[]): FrequencyAnalysis {
