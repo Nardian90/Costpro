@@ -9,7 +9,8 @@ import {
   ShieldAlert,
   Wallet,
   Target,
-  Plus
+  Plus,
+  PlayCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,8 @@ import { Pick3StrategySection } from './Pick3StrategySection';
 import { Pick3OnboardingWizard } from './Pick3OnboardingWizard';
 import { BankrollDashboard } from './BankrollDashboard';
 import { BetEntryDialog } from './BetEntryDialog';
+import { Pick3SimulationDashboard } from './Pick3SimulationDashboard';
+import { BacktestEngine, ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 
@@ -40,6 +43,7 @@ export default function Pick3IntelligenceView() {
   const [profile, setProfile] = useState<Pick3Profile | null>(null);
   const [ledger, setLedger] = useState<Pick3LedgerEntry[]>([]);
   const [showBetDialog, setShowBetDialog] = useState(false);
+  const [simResult, setSimResult] = useState<ModelValidationResult | null>(null);
 
   const [bConfig, setBConfig] = useState<BettingConfig>({
     mode: 'PICK3',
@@ -56,6 +60,13 @@ export default function Pick3IntelligenceView() {
     lastGlobalSync: undefined,
     sources: []
   });
+
+  const runSimulation = useCallback((hist: Pick3Result[], config: BettingConfig) => {
+    if (hist.length < 60) return;
+    const backtestEngine = new BacktestEngine(hist);
+    const result = backtestEngine.runValidation(config, 1000, 30);
+    setSimResult(result);
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -94,6 +105,9 @@ export default function Pick3IntelligenceView() {
 
         const genPlays = engine.generatePlays(advAnalysis, currentBConfig, currentBConfig.maxCombinations);
         setPlays(genPlays);
+
+        // Run simulation by default
+        runSimulation(hist, currentBConfig);
       }
     } catch (err) {
       console.error("Error fetching Pick 3 data:", err);
@@ -101,7 +115,7 @@ export default function Pick3IntelligenceView() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, runSimulation]);
 
   useEffect(() => {
     fetchData();
@@ -110,7 +124,6 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      // In a real app, this would trigger the edge function
       const { data, error } = await supabase.functions.invoke('pick3-sync');
       if (error) throw error;
       toast.success("Sincronización completada");
@@ -131,7 +144,6 @@ export default function Pick3IntelligenceView() {
     );
   }
 
-  // Mandatory Onboarding Check
   if (user && (!profile || !profile.onboarding_completed)) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -153,7 +165,7 @@ export default function Pick3IntelligenceView() {
         <div className="space-y-1">
           <h1 className="text-4xl font-black italic tracking-tighter uppercase flex items-center gap-3">
             <BrainCircuit className="w-10 h-10 text-primary" />
-            Pick 3 Intelligence <span className="text-primary">v8.1</span>
+            Pick 3 Intelligence <span className="text-primary">v9.0</span>
           </h1>
           <p className="text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
         </div>
@@ -178,12 +190,15 @@ export default function Pick3IntelligenceView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md">
+        <TabsList className="grid grid-cols-2 md:grid-cols-6 h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md">
           <TabsTrigger value="dashboard" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
             <Wallet className="w-3.5 h-3.5 mr-2" /> Dashboard
           </TabsTrigger>
           <TabsTrigger value="prediction" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
             <Target className="w-3.5 h-3.5 mr-2" /> Predicciones
+          </TabsTrigger>
+          <TabsTrigger value="simulation" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
+            <PlayCircle className="w-3.5 h-3.5 mr-2" /> Simulación
           </TabsTrigger>
           <TabsTrigger value="intel" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
             <TrendingUp className="w-3.5 h-3.5 mr-2" /> Análisis
@@ -204,6 +219,17 @@ export default function Pick3IntelligenceView() {
            {analysis && <Pick3StrategySection analysis={analysis} plays={plays} />}
         </TabsContent>
 
+        <TabsContent value="simulation" className="pt-6">
+           {simResult ? (
+              <Pick3SimulationDashboard result={simResult} initialBankroll={1000} />
+           ) : (
+              <div className="p-12 text-center opacity-40">
+                <PlayCircle className="w-16 h-16 mx-auto mb-4" />
+                <p className="text-sm font-black uppercase">No hay datos suficientes para simular (Mínimo 60 sorteos)</p>
+              </div>
+           )}
+        </TabsContent>
+
         <TabsContent value="intel" className="pt-6">
            <Pick3Visuals history={history} analysis={analysis || ({} as any)} />
         </TabsContent>
@@ -214,13 +240,11 @@ export default function Pick3IntelligenceView() {
         </TabsContent>
 
         <TabsContent value="config" className="pt-6">
-           {/* Reuse existing config card with some style enhancements */}
            <Card className="rounded-[32px] p-6">
               <CardHeader className="px-0">
                  <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                     <Settings className="w-4 h-4" /> Configuración Estratégica
                  </CardTitle>
-                 <CardDescription className="text-[10px] font-bold uppercase opacity-60 italic">Los parámetros de riesgo afectan el cálculo de Kelly fraccional.</CardDescription>
               </CardHeader>
               <CardContent className="px-0 space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -268,10 +292,9 @@ export default function Pick3IntelligenceView() {
         history={history}
       />
 
-      {/* Persistent Disclaimer */}
       <div className="text-center opacity-30 group hover:opacity-100 transition-opacity duration-700">
         <p className="text-[9px] font-black uppercase tracking-[0.2em] italic flex items-center justify-center gap-2">
-          <ShieldAlert className="w-3 h-3" /> Tool provided for statistical simulation purposes only
+          <ShieldAlert className="w-3 h-3" /> Statistical simulation engine for educational purposes
         </p>
       </div>
     </div>

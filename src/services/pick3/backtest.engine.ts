@@ -3,15 +3,19 @@ import { AnalysisEngine } from './analysis.engine';
 import { PredictionEngine } from './prediction.engine';
 import { BankrollManager } from './bankroll.manager';
 
+/**
+ * Enhanced BacktestEngine for Strategy Validation
+ */
 export interface ProjectionDay {
   date: string;
   draw_time: DrawTime;
   bets: { combination: number[], size: number, score: number }[];
   result: number[];
   win: boolean;
+  isStraight: boolean;
+  isBox: boolean;
   profit: number;
   capital: number;
-  filterAccuracy: number; // Percentage of universe remaining after filtering
 }
 
 export interface ModelValidationResult extends BacktestResult {
@@ -19,16 +23,17 @@ export interface ModelValidationResult extends BacktestResult {
   bestDrawTime: DrawTime;
   middayProfit: number;
   eveningProfit: number;
-  averageFilterPrecision: number;
+  finalCapital: number;
 }
 
 export class BacktestEngine {
   private history: Pick3Result[];
 
   constructor(history: Pick3Result[]) {
-    this.history = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(a.date).getTime());
+    this.history = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 
+  // Restore run method to satisfy Pick3Engine.ts
   public run(config: BettingConfig, initialBankroll: number, days: number = 30): BacktestResult {
      const result = this.runValidation(config, initialBankroll, days);
      return result as BacktestResult;
@@ -41,69 +46,72 @@ export class BacktestEngine {
     let totalWins = 0;
     let peak = initialBankroll;
     let maxDrawdown = 0;
-    let totalFilterPrecision = 0;
 
     const dailyHistory: ProjectionDay[] = [];
     let middayProfit = 0;
     let eveningProfit = 0;
 
-    // Use a sliding window for backtesting
-    // We take the last 'days' draws and for each, we analyze the history BEFORE that draw.
-    const testData = this.history.slice(-(days * 2)); // Last 30 days = 60 draws approx
+    const testData = this.history.slice(-(days * 2));
     const baseHistory = this.history.slice(0, -(days * 2));
 
     testData.forEach((draw, index) => {
-      // History available at the time of this draw
-      const currentWindow = [...baseHistory, ...testData.slice(0, index)];
-      if (currentWindow.length < 60) return;
+      const windowHistory = [...baseHistory, ...testData.slice(0, index)];
+      if (windowHistory.length < 30) return;
 
-      const analysisEngine = new AnalysisEngine(currentWindow);
+      const analysisEngine = new AnalysisEngine(windowHistory);
       const analysis = analysisEngine.analyze(60);
-      const predictionEngine = new PredictionEngine(currentWindow, analysis);
+      const predictionEngine = new PredictionEngine(windowHistory, analysis);
 
-      // Generate up to 10 plays as per user requirement
-      const predictions = predictionEngine.generatePredictions(config, 10);
+      const predictions = predictionEngine.generatePredictions(config, 3);
 
-      // Calculate bet sizes using BankrollManager (Kelly Fraccional)
-      let totalExposure = 0;
+      let dailyExposure = 0;
       const bets = predictions.map(p => {
         const size = BankrollManager.calculateBetSize(currentBankroll, config, p.score);
-        totalExposure += size;
+        dailyExposure += size;
         return { combination: p.combination, size, score: p.score };
       });
 
-      // Constraint: Never bet more than current bankroll
-      if (totalExposure > currentBankroll && currentBankroll > 0) {
-        const scale = currentBankroll / totalExposure;
-        bets.forEach(b => b.size = Math.max(0, Math.floor(b.size * scale)));
-        totalExposure = bets.reduce((acc, b) => acc + b.size, 0);
+      if (dailyExposure > currentBankroll && currentBankroll > 0) {
+        const scale = currentBankroll / dailyExposure;
+        bets.forEach(b => b.size = Math.max(1, Math.floor(b.size * scale)));
+        dailyExposure = bets.reduce((acc, b) => acc + b.size, 0);
       }
 
-      currentBankroll -= totalExposure;
+      currentBankroll -= dailyExposure;
 
       const drawValue = config.mode === 'LAST2'
-        ? draw.result[1] * 10 + draw.result[2]
-        : draw.result[0] * 100 + draw.result[1] * 10 + draw.result[2];
+        ? draw.result.slice(1)
+        : draw.result;
+
+      const drawStr = drawValue.join('');
+      const drawSorted = [...drawValue].sort().join('');
 
       let winAmount = 0;
       let won = false;
+      let isStraight = false;
+      let isBox = false;
 
       bets.forEach(b => {
-        const betValue = config.mode === 'LAST2'
-          ? b.combination[0] * 10 + b.combination[1]
-          : b.combination[0] * 100 + b.combination[1] * 10 + b.combination[2];
+        const betStr = b.combination.join('');
+        const betSorted = [...b.combination].sort().join('');
 
-        if (betValue === drawValue) {
+        if (betStr === drawStr) {
           winAmount += b.size * config.payout;
           won = true;
+          isStraight = true;
+        }
+        else if (betSorted === drawSorted) {
+          winAmount += b.size * (config.payout / 6);
+          won = true;
+          isBox = true;
         }
       });
 
-      const profit = winAmount - totalExposure;
+      const dailyProfit = winAmount - dailyExposure;
       currentBankroll += winAmount;
 
-      if (draw.draw_time === 'midday') middayProfit += profit;
-      else eveningProfit += profit;
+      if (draw.draw_time === 'midday') middayProfit += dailyProfit;
+      else eveningProfit += dailyProfit;
 
       if (won) totalWins++;
       totalBets += bets.length;
@@ -119,9 +127,10 @@ export class BacktestEngine {
         bets,
         result: draw.result,
         win: won,
-        profit,
-        capital: currentBankroll,
-        filterAccuracy: 15 // Placeholder for filtered universe %
+        isStraight,
+        isBox,
+        profit: dailyProfit,
+        capital: currentBankroll
       });
     });
 
@@ -129,7 +138,7 @@ export class BacktestEngine {
     const bestDrawTime = middayProfit >= eveningProfit ? 'midday' : 'evening';
 
     return {
-      id: `VAL-${Math.random().toString(36).substring(7)}`,
+      id: `SIM-${Date.now()}`,
       timestamp: Date.now(),
       periodDays: days,
       totalBets,
@@ -138,19 +147,19 @@ export class BacktestEngine {
       roi: (netProfit / (initialBankroll || 1)) * 100,
       netProfit,
       maxDrawdown: maxDrawdown * 100,
+      finalCapital: currentBankroll,
+      equityCurve: bankrollHistory,
+      dailyHistory,
+      bestDrawTime,
+      middayProfit,
+      eveningProfit,
       sharpeRatio: 0,
       sortinoRatio: 0,
       calmarRatio: 0,
       profitFactor: totalBets > 0 ? (totalWins * config.payout) / totalBets : 0,
       recoveryFactor: 0,
-      equityCurve: bankrollHistory,
       winStreak: 0,
-      lossStreak: 0,
-      dailyHistory,
-      bestDrawTime,
-      middayProfit,
-      eveningProfit,
-      averageFilterPrecision: 15
+      lossStreak: 0
     } as ModelValidationResult;
   }
 }
