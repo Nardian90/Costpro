@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -7,7 +6,7 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, Download, Upload } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
@@ -22,300 +21,143 @@ interface CostSheetAnnexEditorProps {
 }
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
-    activeAnnexId,
-    layoutMode = 'grid',
-    calculatedAnnexes: providedCalculatedAnnexes
+  activeAnnexId,
+  layoutMode = 'table',
+  calculatedAnnexes = []
 }) => {
-  const annexes = useCostSheetStore(state => state.data?.annexes ?? []);
-  const sections = useCostSheetStore(state => state.data?.sections ?? []);
-  const header = useCostSheetStore(state => state.data?.header);
+  const data = useCostSheetStore(state => state.data);
   const updateValue = useCostSheetStore(state => state.updateValue);
-
-  if (!activeAnnexId) {
-    return (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center animate-in fade-in duration-500">
-            <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Anexo no seleccionado</p>
-        </div>
-    );
-  }
   const addRow = useCostSheetStore(state => state.addRow);
   const removeRow = useCostSheetStore(state => state.removeRow);
   const reorderRow = useCostSheetStore(state => state.reorderRow);
-
+  const setSheet = useCostSheetStore(state => state.setSheet);
   const { user } = useAuthStore();
+
+  const annexIndex = data.annexes.findIndex((a: CostSheetAnnex) => a.id === activeAnnexId);
+  const annex = data.annexes[annexIndex] as CostSheetAnnex;
+
+  const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeAnnexId);
+  const totalValue = calculatedAnnex ? calculatedAnnex.data.reduce((sum: number, row: any) => {
+    const val = [row.total, row.amount, row.depreciation_cost, row.price_total, row.importe].find(v => v !== undefined && v !== null);
+    return sum + (parseFloat(String(val ?? 0)) || 0);
+  }, 0) : 0;
+
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
-  const annexInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Fallback to internal calculator only if not provided by parent (optimization)
-  const internalData = React.useMemo(() => ({ annexes, header, sections: [] } as any), [annexes, header]);
-  const { calculatedAnnexes: internalCalculatedAnnexes } = useCostSheetCalculator(providedCalculatedAnnexes ? null as any : internalData);
+  if (!annex) return null;
 
-  const calculatedAnnexes = providedCalculatedAnnexes || internalCalculatedAnnexes;
+  const handleInputChange = (path: (string | number)[], value: any) => {
+    const finalValue = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
+    updateValue(path, finalValue);
+  };
 
-  const handleInputChange = React.useCallback((path: (string | number)[], value: any) => {
-    if (typeof value === 'string') {
-        const trimmed = value.trim();
-        // If it's a simple number, store as number
-        if (/^-?\d*\.?\d+$/.test(trimmed)) {
-            updateValue(path, parseFloat(trimmed));
-            return;
-        }
-        // Otherwise store as string (could be a formula)
-        updateValue(path, value);
-    } else {
-        updateValue(path, value);
+  const handleProductSelect = (product: any) => {
+    if (targetRowIndex !== null && annexIndex !== -1) {
+      updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'description'], product.name);
+      updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'um'], product.unit || 'u');
+      updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'price'], product.price || 0);
+      setIsPickerOpen(false);
     }
-  }, [updateValue]);
+  };
 
-  const annex = React.useMemo(() => (annexes || []).find((a: CostSheetAnnex) => a?.id === activeAnnexId), [annexes, activeAnnexId]);
-  const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a?.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
+  const classificationSuggestions = [
+    { id: '1.1', label: 'Insumos / Materiales' },
+    { id: '1.2', label: 'Combustible' },
+    { id: '1.3', label: 'Energía' },
+    { id: '2.1', label: 'Salarios Directos' },
+    { id: '3.1', label: 'Amortización' },
+    { id: '3.2', label: 'Otros Gastos Directos' }
+  ];
 
-  // Extract classifications from sections based on annex ID
-        const classificationSuggestions = React.useMemo(() => {
-    const getSuggestions = () => {
-        const suggestions: { id: string, label: string }[] = [];
+  const handleExport = () => {
+    exportAnnexToExcel(annex);
+  };
 
-        // Strategy 1: Find rows in all sections that explicitly reference this annex via baseRef
-        const traverseByBaseRef = (rows: any[], parentNumbering?: string) => {
-            rows.forEach((r, idx) => {
-                const numbering = r.id || (parentNumbering
-                    ? `${parentNumbering}.${idx + 1}`
-                    : `${idx + 1}`);
-
-                if (r.baseRef === activeAnnexId || r.baseRef === `Anexo${activeAnnexId}`) {
-                    suggestions.push({ id: numbering, label: r.label });
-                    // Also suggest a sub-level if it feeds from an annex
-                    suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
-                }
-
-                if (r.children) traverseByBaseRef(r.children, numbering);
-            });
-        };
-
-        sections.forEach(s => traverseByBaseRef(s.rows || []));
-
-        if (suggestions.length > 0) return suggestions;
-
-        // Strategy 2: Fallback to hardcoded section mapping if no baseRef found
-        let targetSectionId = '';
-        if (activeAnnexId === 'I') targetSectionId = '1';
-        else if (activeAnnexId === 'II') targetSectionId = '2';
-        else if (activeAnnexId === 'III') targetSectionId = '3.1';
-        else if (activeAnnexId === 'IV') targetSectionId = '3';
-        else if (activeAnnexId === 'V') targetSectionId = '3.7';
-        else {
-            const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-            const num = roman.indexOf(activeAnnexId) + 1;
-            if (num > 0) targetSectionId = `s${num}`;
-        }
-
-        const findSectionRows = (targetId: string) => {
-            const section = sections.find(s => s.id === targetId || s.id === (targetId.startsWith('s') ? targetId : 's' + targetId));
-            if (section) return section.rows || [];
-
-            // Look for specific row ID
-            for (const s of sections) {
-                const search = (rows: any[]): any[] | null => {
-                    for (const r of rows) {
-                        if (r.id === targetId) return r.children || [r];
-                        if (r.children) {
-                            const res = search(r.children);
-                            if (res) return res;
-                        }
-                    }
-                    return null;
-                };
-                const res = search(s.rows || []);
-                if (res) return res;
-            }
-            return [];
-        };
-
-        const sectionRows = findSectionRows(targetSectionId);
-        const traverse = (rows: any[], parentNumbering?: string) => {
-            rows.forEach((r, idx) => {
-                const numbering = r.id || (parentNumbering
-                    ? `${parentNumbering}.${idx + 1}`
-                    : (targetSectionId.includes('.') ? targetSectionId : `${targetSectionId.replace('s','')}.${idx + 1}`));
-
-                suggestions.push({ id: numbering, label: r.label });
-                // If it's a leaf row in the section mapping, suggest a sub-level for the annex
-                if (!r.children || r.children.length === 0) {
-                     suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
-                }
-                if (r.children) traverse(r.children, numbering);
-            });
-        };
-        traverse(sectionRows);
-        return suggestions;
-    };
-
-    return getSuggestions();
-  }, [sections, activeAnnexId]);
-
-  if (!annex) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center animate-in fade-in duration-500">
-            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
-                <Database className="w-8 h-8 text-muted-foreground opacity-20" />
-            </div>
-            <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Anexo no disponible</p>
-            <p className="text-xs text-muted-foreground/60 mt-1 uppercase">Verifique la configuración de la ficha</p>
-        </div>
-      );
-  }
-
-  const displayData = calculatedAnnex ? (calculatedAnnex.data ?? []) : (annex?.data ?? []);
-  const annexIndex = React.useMemo(() => annexes.indexOf(annex!), [annexes, annex]);
-
-  const totalValue = React.useMemo(() => {
-    if (!annex?.columns || !displayData) return 0;
-
-
-    const totalCol = annex.columns.find((c: CostSheetColumn) =>
-        ['total', 'amount', 'depreciation_cost', 'price_total', 'value', 'importe'].includes(c.key)
-    );
-    const key = totalCol?.key;
-    if (!key) return 0;
-
-    return displayData.reduce((acc: number, row: any) => {
-        return acc + (Number(row[key]) || 0);
-    }, 0);
-  }, [displayData, annex?.columns]);
-
-  const handleProductSelect = React.useCallback((product: any) => {
-    if (targetRowIndex === null) return;
-
-    // Map product fields to annex columns
-    // We update the original data in the store
-    const basePath = ['annexes', annexIndex, 'data', targetRowIndex];
-
-    updateValue([...basePath, 'description'], product.name);
-    if (product.sku) {
-        updateValue([...basePath, 'code'], product.sku);
-    }
-    if (product.unit_of_measure) {
-        updateValue([...basePath, 'um'], product.unit_of_measure);
-    }
-    if (product.cost_price !== undefined) {
-        updateValue([...basePath, 'price'], product.cost_price);
-    }
-
-    setTargetRowIndex(null);
-  }, [targetRowIndex, annexIndex, updateValue]);
-
-  const handleImportExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && annex) {
-      try {
-        const newData = await importAnnexFromExcel(file, annex);
-        updateValue(['annexes', annexIndex, 'data'], newData);
-      } catch (err) {
-        console.error(err);
-      }
+    if (file) {
+      const updatedAnnex = await importAnnexFromExcel(file, annex);
+      const newData = { ...data } as any;
+      newData.annexes[annexIndex] = updatedAnnex;
+      setSheet(newData);
     }
-    e.target.value = '';
-  }, [annex, annexIndex, updateValue]);
+  };
 
   return (
-    <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
-      <ProductInventoryPicker
-        open={isPickerOpen}
-        onOpenChange={setIsPickerOpen}
-        onSelect={handleProductSelect}
-        storeId={user?.activeStoreId}
-      />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-              <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
+          <div className="flex flex-col">
+            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-muted-foreground mb-1">Editor de Anexo</h2>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-1 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{annex.title}</p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              {annex.id === 'I' && (
-                <Button
-                    onClick={() => {
-                        const currentLength = annexes[annexIndex].data.length;
-                        addRow(annex.id);
-                        setTargetRowIndex(currentLength);
-                        setIsPickerOpen(true);
-                    }}
-                    variant="outline"
-                    className="neu-button flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
-                >
-                    <Database className="w-4 h-4 text-primary" />
-                    Importar Inventario
-                </Button>
-              )}
-
-              <Button
-                onClick={() => exportAnnexToExcel(annex)}
-                variant="outline"
-                className="neu-button flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
-              >
-                  <Download className="w-4 h-4 text-primary" />
-                  Exportar
-              </Button>
-
-              <div className="relative flex-1 sm:flex-none">
-                <Button
-                  onClick={() => annexInputRef.current?.click()}
-                  variant="outline"
-                  className="neu-button w-full flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
-                >
-                    <Upload className="w-4 h-4 text-primary" />
-                    Importar
-                </Button>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+             <div className="relative group">
                 <input
                   type="file"
-                  ref={annexInputRef}
+                  id={`import-${annex.id}`}
                   className="hidden"
-                  accept=".xlsx,.xls"
-                  onChange={handleImportExcel}
+                  onChange={handleImport}
+                  accept=".xlsx, .xls"
                 />
-              </div>
-
-              <Button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="rounded-xl border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px]"
+                >
+                  <label htmlFor={`import-${annex.id}`} className="cursor-pointer flex items-center gap-2">
+                    <Upload className="w-3.5 h-3.5" />
+                    Importar Excel
+                  </label>
+                </Button>
+             </div>
+             <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                className="rounded-xl border-primary/20 hover:bg-primary/10 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px] gap-2"
+             >
+                <Download className="w-3.5 h-3.5" />
+                Exportar
+             </Button>
+             <Button
                 onClick={() => addRow(annex.id)}
-                className="neu-btn-primary !py-3 !px-5 rounded-xl flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"
-              >
-                  <Plus className="w-4 h-4" />
-                  Añadir Fila
-              </Button>
+                className="rounded-xl bg-primary hover:bg-primary/90 text-foreground h-10 px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 w-full sm:w-auto active:scale-95 transition-all"
+             >
+                <Plus className="w-4 h-4" />
+                Añadir Fila
+             </Button>
           </div>
        </div>
 
-       <div className="w-full">
-         <div className={cn(
-           "table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30",
-           layoutMode === 'table' && "force-table"
-         )}>
-            <Table className={cn(layoutMode === "grid" && "sm:data-table")}>
-                <TableHeader className={cn(
-                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-foreground font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
-                  layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
-                )}>
-                    <TableRow className="border-b border-border/50">
-                        {annex.columns.map((col: CostSheetColumn) => {
-                             const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
-                             const widthClass = col.key === 'no' ? 'w-12' :
-                                               (col.key === 'um' ? 'w-16' :
-                                               (col.key === 'total' || col.key === 'amount' ? 'w-32' :
-                                               (!isMain ? 'w-24' : '')));
-                             return (
-                                <TableHead key={col.key} className={cn(
-                                    "font-black py-2 px-2 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap",
-                                    widthClass
-                                )}>
-                                    {col.label || col.title || col.key}
-                                </TableHead>
-                             );
-                        })}
-                        <TableHead className="text-center w-[1%] whitespace-nowrap uppercase tracking-widest">Acciones</TableHead>
+       <ProductInventoryPicker
+         open={isPickerOpen}
+         onOpenChange={setIsPickerOpen}
+         onSelect={handleProductSelect}
+       />
+
+       <div className={cn(
+         "rounded-3xl border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden shadow-2xl",
+         layoutMode === 'grid' && "border-none bg-transparent shadow-none backdrop-blur-none"
+       )}>
+         <div className="overflow-x-auto no-scrollbar">
+            <Table className={cn(layoutMode === 'grid' && "hidden sm:table")}>
+                <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
+                        {annex.columns.map((col: CostSheetColumn) => (
+                            <TableHead key={col.key} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground p-4 h-14">
+                                {col.label || col.title}
+                            </TableHead>
+                        ))}
+                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground p-4 text-center h-14 w-24">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {displayData.map((row: any, rowIndex: number) => {
+                    {annex.data.map((row: any, rowIndex: number) => {
                         const isZero = (colKey: string) => Number(row[colKey]) === 0;
                         return (
                         <TableRow key={rowIndex} className="h-auto sm:h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
@@ -341,8 +183,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                     ) : (
                                         <div className="relative group/cell">
                                             <Input
-                                                type={typeof (annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
-                                                value={annexes[annexIndex].data[rowIndex][col.key] ?? ''}
+                                                type={typeof (annex.data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
+                                                value={annex.data[rowIndex][col.key] ?? ''}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
                                                 list={(() => {
                                                     const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
@@ -354,10 +196,10 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 })()}
                                                 className={cn(
                                                     "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
-                                                    typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
+                                                    typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
                                                 )}
                                             />
-                                            {typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && (
+                                            {typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && (
                                                 <FunctionSquare className="absolute top-1 right-1 w-2.5 h-2.5 text-primary/40" />
                                             )}
                                         </div>
@@ -420,9 +262,20 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <TableCell colSpan={annex.columns.length} className="p-0">
                       <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-4 p-6 min-w-full">
                         <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
-                        <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
-                          {formatCurrency(totalValue)}
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                                {formatCurrency(totalValue)}
+                            </span>
+                            {annex.coefficient && annex.coefficient !== 1 && (
+                                <div className="flex flex-col items-end print:hidden animate-in fade-in slide-in-from-right-2 duration-500">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 mb-1 opacity-80">Ajuste Aplicado</span>
+                                    <div className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 group/coef">
+                                    <RefreshCw className="w-3 h-3 text-amber-500 group-hover/coef:rotate-180 transition-transform duration-500" />
+                                    <span className="text-xs font-black font-mono text-amber-500">x{annex.coefficient.toFixed(4)}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="bg-primary/5"></TableCell>
@@ -448,6 +301,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(totalValue)}
                     </span>
+                    {annex.coefficient && annex.coefficient !== 1 && (
+                        <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-1.5 print:hidden">
+                            <RefreshCw className="w-2.5 h-2.5 text-amber-500" />
+                            <span className="text-[10px] font-black font-mono text-amber-500">x{annex.coefficient.toFixed(4)}</span>
+                        </div>
+                    )}
                 </div>
             </div>
          </div>
@@ -455,5 +314,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     </div>
   );
 });
+
+CostSheetAnnexEditor.displayName = 'CostSheetAnnexEditor';
 
 export default CostSheetAnnexEditor;
