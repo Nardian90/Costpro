@@ -31,10 +31,6 @@ export class PredictionEngine {
     const dateSum = LotteryMath.calculateDateSum(new Date().toISOString());
 
     // 1. Law of Thirds Filter: Identify digits to EXCLUDE
-    // We exclude digits that have already repeated many times or are in the "heavy" part of the distribution
-    // that might be due for a "rest" (Law of Thirds: ~3 digits stay absent in 30 draws).
-    // Or as per user: "Identify which 1/3 is likely NOT to come out and exclude them".
-    // Usually, digits that haven't appeared in 20+ draws are high risk (Gaps).
     const excludedDigits = new Set(this.analysis.lawOfThirds?.repeating.slice(0, 2) || []); // Exclude top repeaters
 
     // 2. Strategic Buffers
@@ -50,24 +46,33 @@ export class PredictionEngine {
       // FILTER: Exclude if it contains excluded digits (Law of Thirds Filter)
       if (combination.some(d => excludedDigits.has(d))) continue;
 
-      // FILTER: Reduce universe to a subset of 100-150 by discarding low-probability patterns
+      // FILTER: Reduce universe to a subset by discarding low-probability patterns
       const oe = combination.map(n => n % 2 === 0 ? 'E' : 'O').join('-');
       const hl = combination.map(n => n >= 5 ? 'H' : 'L').join('-');
 
-      // Extreme patterns (All Odd/Even or All High/Low) occur less frequently (~12.5% each)
-      // We filter them out if they haven't appeared recently or are over-saturated
       const oeFreq = this.analysis.patterns.oddEven[oe] || 0;
-      if (oeFreq > (this.history.length * 0.20)) continue; // Filter over-saturated patterns
+      if (oeFreq > (this.history.length * 0.20)) continue;
 
       let score = this.calculateScore(combination, config, w);
 
       // Strategy Boosters
       let strategyBoost = 0;
+      let appliedStrategy = "Análisis Estadístico";
       const combStr = combination.join('');
-      if (rd123.includes(combStr)) strategyBoost += 15;
-      if (rd317.includes(combStr)) strategyBoost += 15;
-      if (ttt.includes(combStr)) strategyBoost += 20;
-      if (LotteryMath.calculateHitSum(combination) === dateSum) strategyBoost += 10;
+
+      if (ttt.includes(combStr)) {
+        strategyBoost += 20;
+        appliedStrategy = "Tic-Tac-Toe Grid";
+      } else if (rd123.includes(combStr)) {
+        strategyBoost += 15;
+        appliedStrategy = "Rundown 123";
+      } else if (rd317.includes(combStr)) {
+        strategyBoost += 15;
+        appliedStrategy = "Rundown 317";
+      } else if (LotteryMath.calculateHitSum(combination) === dateSum) {
+        strategyBoost += 10;
+        appliedStrategy = "Suma de Fecha";
+      }
 
       score = (score * 0.8) + (Math.min(strategyBoost, 100) * 0.2);
 
@@ -75,7 +80,8 @@ export class PredictionEngine {
         combination,
         score,
         confidence: score,
-        justification: this.generateJustification(combination, score, { rd123, rd317, ttt, dateSum, oe, hl })
+        justification: this.generateJustification(combination, score, { rd123, rd317, ttt, dateSum, oe, hl }),
+        strategyLabel: appliedStrategy
       });
     }
 
@@ -87,17 +93,16 @@ export class PredictionEngine {
 
   private calculateScore(combination: number[], config: BettingConfig, w: any): number {
     let score = 0;
-    const is2D = config.mode === 'LAST2';
 
-    // 1. Frequency Score (Z-Score approach: bias from expected)
+    // 1. Frequency Score
     let freqScore = 0;
     combination.forEach((num, pos) => {
       const bias = this.analysis.biasScore[num] || 0;
-      freqScore += (100 + bias) / 2; // Normalize to 0-100 range roughly
+      freqScore += (100 + bias) / 2;
     });
     freqScore /= combination.length;
 
-    // 2. Markov Chain Score (Transition Probability)
+    // 2. Markov Chain Score
     const lastDraw = this.history[0]?.result || [0, 0, 0];
     let markovScore = 0;
     combination.forEach((num, pos) => {
@@ -108,14 +113,13 @@ export class PredictionEngine {
     });
     markovScore /= combination.length;
 
-    // 3. Gap Analysis Score (Recency vs Expected Cycle)
+    // 3. Gap Analysis Score
     let gapScore = 0;
     combination.forEach(num => {
       const gap = this.analysis.gaps[num] || 0;
-      // Ideal gap is around 7-10 for a digit. Too long = cold, too short = hot.
-      if (gap > 15) gapScore += 40; // Reversion potential
-      else if (gap < 3) gapScore += 60; // Momentum
-      else gapScore += 80; // Optimal cycle
+      if (gap > 15) gapScore += 40;
+      else if (gap < 3) gapScore += 60;
+      else gapScore += 80;
     });
     gapScore /= combination.length;
 
