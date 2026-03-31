@@ -18,11 +18,22 @@ import {
   Users,
   Zap,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw,
+  Target
 } from 'lucide-react';
 import { CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import HealthBattery from './HealthBattery';
 import CostSheetMasterRing, { CostSheetTelemetry } from './CostSheetMasterRing';
 
@@ -45,6 +56,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 }) => {
   const updateUtilityFormula = useCostSheetStore(state => state.updateUtilityFormula);
   const updateValues = useCostSheetStore(state => state.updateValues);
+  const updateAnnexAdjustment = useCostSheetStore(state => state.updateAnnexAdjustment);
   const data = useCostSheetStore(state => state.data);
 
   // Current markup (utility over cost)
@@ -53,25 +65,20 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const [localPrice, setLocalPrice] = useState(totalPrice.toFixed(2));
   const [isEditingPrice, setIsEditingPrice] = useState(false);
 
+  // Auto-adjustment state
+  const [selectedAnnexId, setSelectedAnnexId] = useState<string>(data?.annexes?.[0]?.id || '');
+  const [targetValue, setTargetValue] = useState<string>('');
+  const [targetRowId, setTargetRowId] = useState<string>('14.1');
+  const [adjustmentColumn, setAdjustmentColumn] = useState<string>('PRECIO UNITARIO');
+
   // Indirect Coefficient logic
   const row2 = telemetry['2']?.total || 0;
   const row4 = telemetry['4']?.total || 0;
   const row6 = telemetry['6']?.total || 0;
   const row7 = telemetry['7']?.total || 0;
   const indirectSum = row4 + row6 + row7;
-  const indirectCoef = row2 > 0 ? indirectSum / row2 : 0;
-
-  const [localCoef, setLocalCoef] = useState(() => {
-    // Try to extract current multiplier from section 4 formulas
-    const s4 = data.sections.find(s => s.id === '4' || s.id === 's4');
-    if (s4 && s4.rows.length > 0) {
-      const firstRow = s4.rows[0];
-      const formula = firstRow.formula || '';
-      const match = formula.match(/\*\s*([\d.]+)$/);
-      if (match) return parseFloat(match[1]);
-    }
-    return 1.0;
-  });
+  const indirectCoef = row2 > 0 ? (indirectSum / row2) : 0;
+  const [localCoef, setLocalCoef] = useState(indirectCoef);
 
   useEffect(() => {
     setSliderValue(currentMarkup);
@@ -83,57 +90,9 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     }
   }, [totalPrice, isEditingPrice]);
 
-  // Decoupled from indirectCoef to allow manual multiplier setting
-
-  const handleCoefChange = (newCoef: number) => {
-    setLocalCoef(newCoef);
-
-    const updates: { path: (string | number)[]; value: any }[] = [];
-
-    ['4', '6', '7'].forEach(sectionId => {
-      const sectionIndex = data.sections.findIndex(s => s.id === sectionId || s.id === `s${sectionId}`);
-      if (sectionIndex !== -1) {
-        const section = data.sections[sectionIndex];
-
-        const walk = (rows: any[], pathBase: (string | number)[]) => {
-          rows.forEach((row, rowIndex) => {
-            const rowPath = [...pathBase, rowIndex];
-            if (row.children && row.children.length > 0) {
-              walk(row.children, [...rowPath, 'children']);
-            } else {
-              // Get current formula or fallback to value
-              let currentFormula = row.formula || row.totalFormula || String(row.value || 0);
-              let baseFormula = currentFormula.trim();
-              if (baseFormula.startsWith('=')) baseFormula = baseFormula.substring(1).trim();
-
-              // Extract base if already wrapped: (base) * coefficient
-              const wrappedRegex = /^\((.*)\)\s*\*\s*[\d.]+$/;
-              const match = baseFormula.match(wrappedRegex);
-              const innerFormula = match ? match[1].trim() : baseFormula;
-
-              // Inject the new coefficient wrapping the inner formula
-              const finalFormula = `=(${innerFormula}) * ${newCoef.toFixed(4)}`;
-
-              updates.push({
-                path: [...rowPath, 'formula'],
-                value: finalFormula
-              });
-              updates.push({
-                path: [...rowPath, 'calculationMethod'],
-                value: 'FORMULA'
-              });
-            }
-          });
-        };
-
-        walk(section.rows, ['sections', sectionIndex, 'rows']);
-      }
-    });
-
-    if (updates.length > 0) {
-      updateValues(updates);
-    }
-  };
+  useEffect(() => {
+    setLocalCoef(indirectCoef);
+  }, [indirectCoef]);
 
   const handleSliderChange = (val: number[]) => {
     const newValue = val[0];
@@ -141,87 +100,48 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     updateUtilityFormula(newValue);
   };
 
-  const goalSeek = (target: number) => {
-    if (isNaN(target) || target <= 0 || totalCost <= 0) return;
-
-    // Use tax factor to estimate relationship: Price = (Cost + Utility) * Factor
-    const baseVal = totalCost + utility;
-
-    // Dynamic tax factor detection
-    let safeTaxFactor = 1.1111; // Default fallback
-
-    const currentTaxFactor = baseVal > 0 ? totalPrice / baseVal : 1.0;
-    if (currentTaxFactor > 1.0001) {
-      safeTaxFactor = currentTaxFactor;
-    } else {
-      // Try to extract it from row 13.2 formula (Impuesto sobre Ventas)
-      const s13 = data.sections.find(s => s.id === "13" || s.id === "s13");
-      const row13_2 = s13?.rows.find(r => r.id === "13.2");
-      const formula = row13_2?.formula || row13_2?.totalFormula || "";
-
-      // Standard pattern: ref("13.1")/0.9*0.1
-      const match = formula.match(/\/([\d.]+)\*([\d.]+)$/);
-      if (match) {
-        const divisor = parseFloat(match[1]);
-        const multiplier = parseFloat(match[2]);
-        if (divisor > 0) {
-          safeTaxFactor = 1 + (multiplier / divisor);
-        }
-      }
-    }
-
-    const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * safeTaxFactor;
-    // Numerical approximation using Binary Search for efficiency and precision
-    let low = 0.0001;
-    let high = 5000;
-    let iterations = 0;
-    const tolerance = 0.0001;
-
-    while (iterations < 40) {
-      const mid = (low + high) / 2;
-      const currentPrice = getPriceForMargin(mid);
-
-      if (Math.abs(currentPrice - target) < tolerance) {
-        low = mid;
-        break;
-      }
-
-      if (currentPrice < target) {
-        low = mid;
-      } else {
-        high = mid;
-      }
-      iterations++;
-    }
-
-    const clampedMargin = Math.max(0.0001, Math.min(2000, low));
-    setSliderValue(clampedMargin);
-    updateUtilityFormula(clampedMargin);
+  const handleCoefChange = (val: number) => {
+    setLocalCoef(val);
+    const updates = [
+      { path: ['sections', 0, 'rows', 3, 'value'], value: val }, // Row 4
+      { path: ['sections', 0, 'rows', 5, 'value'], value: val }, // Row 6
+      { path: ['sections', 0, 'rows', 6, 'value'], value: val }  // Row 7
+    ];
+    updateValues(updates);
   };
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setLocalPrice(val);
-    goalSeek(parseFloat(val));
+  const goalSeek = (targetPrice: number) => {
+    if (totalCost <= 0) return;
+    const requiredMarkup = ((targetPrice / totalCost) - 1) * 100;
+    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
+    handleSliderChange([clampedMarkup]);
   };
 
-  const handlePriceAdjust = (delta: number) => {
-    const current = parseFloat(localPrice) || totalPrice;
-    const next = Math.max(0, current + delta);
-    setLocalPrice(next.toFixed(2));
-    goalSeek(next);
+  const handlePriceAdjust = (newPrice: number) => {
+    setLocalPrice(newPrice.toFixed(2));
+    goalSeek(newPrice);
+  };
+
+  const handleAutoAdjust = () => {
+    const target = parseFloat(targetValue);
+    if (isNaN(target) || !selectedAnnexId) return;
+
+    const currentTargetValue = telemetry[targetRowId]?.total || 0;
+    if (currentTargetValue === 0) return;
+
+    const annex = data.annexes.find(a => a.id === selectedAnnexId);
+    if (!annex) return;
+
+    const currentCoef = annex.coefficient || 1;
+    // Linear approximation: target / currentTargetValue = newCoef / currentCoef
+    const newCoef = (target / currentTargetValue) * currentCoef;
+
+    updateAnnexAdjustment(selectedAnnexId, newCoef, adjustmentColumn);
   };
 
   const getFeedback = (pct: number) => {
-    if (pct >= 20 && pct <= 30) return {
-      text: "Precio para venta con productos normales.",
-      icon: CheckCircle2,
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20"
-    };
-    if (pct < 12) return {
-      text: "Riesgo de pérdida. Margen insuficiente.",
+    if (pct < 10) return {
+      text: "Margen bajo. Verifique si cubre los gastos operativos de forma sostenible.",
       icon: AlertCircle,
       color: "text-red-500",
       bg: "bg-red-500/10",
@@ -312,7 +232,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
           />
         </div>
 
-        <div className="w-full lg:w-[600px]">
+        <div className="w-full lg:w-[600px] space-y-8">
+          {/* Main Adjustment Card */}
           <div className="glass-card-stitch rounded-3xl p-10 relative overflow-hidden group shadow-2xl">
             <header className="mb-10">
               <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
@@ -323,8 +244,6 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
             </header>
-
-
 
             <div className="space-y-10 mb-12">
               <div className="space-y-4">
@@ -428,6 +347,121 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 </p>
               </div>
             </footer>
+          </div>
+
+          {/* Auto-Adjustment Card */}
+          <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden border border-primary/20 shadow-xl bg-primary/5">
+            <header className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-primary mb-1 font-bold">Ajuste por Coeficiente</p>
+                <h3 className="text-lg font-black uppercase tracking-tighter italic text-foreground flex items-center gap-2">
+                   <RefreshCw className="w-4 h-4 text-primary" /> Auto-ajuste de Anexos
+                </h3>
+              </div>
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Wand2 className="w-5 h-5 text-primary animate-pulse" />
+              </div>
+            </header>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Seleccionar Anexo</label>
+                  <Select value={selectedAnnexId} onValueChange={setSelectedAnnexId}>
+                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
+                      <SelectValue placeholder="Anexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {data?.annexes?.map(annex => (
+                        <SelectItem key={annex.id} value={annex.id} className="text-xs font-bold uppercase">
+                          Anexo {annex.id}: {annex.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Columna base</label>
+                  <Select value={adjustmentColumn} onValueChange={setAdjustmentColumn}>
+                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
+                      <SelectValue placeholder="Columna" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PRECIO UNITARIO" className="text-xs font-bold uppercase">Precio Unitario</SelectItem>
+                      <SelectItem value="VALOR" className="text-xs font-bold uppercase">Valor</SelectItem>
+                      <SelectItem value="IMPORTE" className="text-xs font-bold uppercase">Importe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Variable Objetivo</label>
+                  <Select value={targetRowId} onValueChange={setTargetRowId}>
+                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
+                      <SelectValue placeholder="Target" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="14.1" className="text-xs font-bold uppercase">14.1 - Precio Final</SelectItem>
+                      <SelectItem value="12" className="text-xs font-bold uppercase">12 - Costo Total</SelectItem>
+                      <SelectItem value="13.1" className="text-xs font-bold uppercase">13.1 - Utilidad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Valor Objetivo</label>
+                  <div className="relative">
+                    <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      value={targetValue}
+                      onChange={(e) => setTargetValue(e.target.value)}
+                      placeholder="Ej: 500.00"
+                      className="h-10 pl-9 bg-background/50 border-border rounded-xl text-xs font-bold font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
+                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-muted-foreground">Valor Actual (Target):</span>
+                    <span className="text-foreground">{(telemetry[targetRowId]?.total || 0).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}</span>
+                 </div>
+                 {targetValue && !isNaN(parseFloat(targetValue)) && (
+                   <>
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                        <span className="text-muted-foreground">Diferencia:</span>
+                        <span className={cn(
+                          parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0) > 0 ? "text-emerald-500" : "text-red-500"
+                        )}>
+                          {(parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0)).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}
+                          {" ("}{(((parseFloat(targetValue) / (telemetry[targetRowId]?.total || 1)) - 1) * 100).toFixed(2)}%{")"}
+                        </span>
+                    </div>
+                    <div className="h-px bg-white/5" />
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                        <span className="text-primary italic">Coeficiente sugerido:</span>
+                        <span className="text-primary font-mono">
+                          {((parseFloat(targetValue) / (telemetry[targetRowId]?.total || 1)) * (data.annexes.find(a => a.id === selectedAnnexId)?.coefficient || 1)).toFixed(4)}
+                        </span>
+                    </div>
+                   </>
+                 )}
+              </div>
+
+              <Button
+                onClick={handleAutoAdjust}
+                disabled={!targetValue || isNaN(parseFloat(targetValue))}
+                className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-3 group active:scale-95 transition-all"
+              >
+                <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                Auto-ajustar al objetivo
+              </Button>
+            </div>
           </div>
         </div>
       </div>

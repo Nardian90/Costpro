@@ -89,6 +89,7 @@ interface CostSheetState {
   loadExample: () => void;
   reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
+  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -305,6 +306,19 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract }); // Fallback
         }
       },
+      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data?.annexes) return;
+            const annex = draft.data.annexes.find(
+              (a: CostSheetAnnexContract) => a.id === annexId
+            );
+            if (annex) {
+              annex.coefficient = coefficient;
+              annex.adjustmentColumn = adjustmentColumn;
+            }
+          })
+        ),
       updateUtilityFormula: (percentage) =>
         set(
           produce((draft: CostSheetState) => {
