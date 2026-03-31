@@ -455,7 +455,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
                         <Button
                           onClick={handleAutoAdjust}
-                          className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-3 group active:scale-95 transition-all"
+                          className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 gap-3 group active:scale-95 transition-all"
                         >
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                           Simular Sugerencia
