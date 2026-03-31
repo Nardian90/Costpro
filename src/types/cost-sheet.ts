@@ -48,6 +48,7 @@ export interface CostSheetAnnex {
   title: string;
   coefficient?: number;
   adjustmentColumn?: string;
+  isAdjustmentActive?: boolean;
   columns: CostSheetColumn[];
   data: any[]; // Data rows can have dynamic keys based on columns
 }
