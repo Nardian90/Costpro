@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Info,
@@ -20,7 +20,10 @@ import {
   Settings,
   AlertTriangle,
   RefreshCw,
-  Target
+  Target,
+  ChevronRight,
+  ArrowRight,
+  Save
 } from 'lucide-react';
 import { CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -71,6 +74,17 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const [targetRowId, setTargetRowId] = useState<string>('14.1');
   const [adjustmentColumn, setAdjustmentColumn] = useState<string>('PRECIO UNITARIO');
 
+  // Coeficiente manual/slider state
+  const annex = useMemo(() => data?.annexes?.find(a => a.id === selectedAnnexId), [data, selectedAnnexId]);
+  const [manualCoef, setManualCoef] = useState<number>(annex?.coefficient || 1);
+
+  // Sync manualCoef when annex changes
+  useEffect(() => {
+    if (annex) {
+      setManualCoef(annex.coefficient || 1);
+    }
+  }, [selectedAnnexId, annex]);
+
   // Indirect Coefficient logic
   const row2 = telemetry['2']?.total || 0;
   const row4 = telemetry['4']?.total || 0;
@@ -110,16 +124,11 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     updateValues(updates);
   };
 
-  const goalSeek = (targetPrice: number) => {
-    if (totalCost <= 0) return;
-    const requiredMarkup = ((targetPrice / totalCost) - 1) * 100;
-    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
-    handleSliderChange([clampedMarkup]);
-  };
-
   const handlePriceAdjust = (newPrice: number) => {
-    setLocalPrice(newPrice.toFixed(2));
-    goalSeek(newPrice);
+    if (totalCost <= 0) return;
+    const requiredMarkup = ((newPrice / totalCost) - 1) * 100;
+    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
+    updateUtilityFormula(clampedMarkup);
   };
 
   const handleAutoAdjust = () => {
@@ -137,6 +146,21 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     const newCoef = (target / currentTargetValue) * currentCoef;
 
     updateAnnexAdjustment(selectedAnnexId, newCoef, adjustmentColumn);
+    setManualCoef(newCoef);
+  };
+
+  const handleManualCoefAdjust = (val: number) => {
+    setManualCoef(val);
+    if (selectedAnnexId) {
+       updateAnnexAdjustment(selectedAnnexId, val, adjustmentColumn);
+    }
+  };
+
+  const handleCommitAdjustment = () => {
+    if (selectedAnnexId) {
+       updateAnnexAdjustment(selectedAnnexId, manualCoef, adjustmentColumn, true);
+       setManualCoef(1);
+    }
   };
 
   const getFeedback = (pct: number) => {
@@ -144,331 +168,438 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
       text: "Margen bajo. Verifique si cubre los gastos operativos de forma sostenible.",
       icon: AlertCircle,
       color: "text-red-500",
-      bg: "bg-red-500/10",
-      border: "border-red-500/20"
+      bg: "bg-red-500/10"
     };
-    if (pct > 30) return {
-      text: "Margen abusivo o de alto riesgo comercial.",
-      icon: AlertCircle,
+    if (pct < 20) return {
+      text: "Margen moderado. Típico para productos de alta rotación.",
+      icon: AlertTriangle,
       color: "text-amber-500",
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/20"
+      bg: "bg-amber-500/10"
     };
     return {
-      text: "Precio de venta mayorista o competitivo.",
-      icon: Info,
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/20"
+      text: "Margen saludable. Garantiza rentabilidad y crecimiento.",
+      icon: CheckCircle2,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10"
     };
   };
 
   const feedback = getFeedback(sliderValue);
+  const healthPercent = providedHealthPercent !== undefined ? providedHealthPercent : 85;
 
-  // Health calculation - Use provided or fallback to simple if not available (legacy)
-  const healthPercent = providedHealthPercent !== undefined ? providedHealthPercent : (() => {
-    const structuralIntegrity = !Object.values(telemetry).some(r => r.hasWarnings);
-    const profitability = totalCost > 0 ? (utility / totalCost) <= 0.3 : true;
-    const dest = header?.destino || header?.destination || '';
-    const maxCoef = (String(dest).toLowerCase() === 'servicios') ? 1.0 : 1.5;
-    const indirectLimitPassed = indirectCoef <= maxCoef;
-
-    const validations = [
-      { name: 'Integridad Estructural', passed: structuralIntegrity },
-      { name: 'Rentabilidad', passed: profitability },
-      { name: 'Gasto Indirecto', passed: indirectLimitPassed }
-    ];
-    const passedCount = validations.filter(v => v.passed).length;
-    return (passedCount / validations.length) * 100;
-  })();
-
-  // Map telemetry to array for CostSheetTelemetry component
   const telemetryItems = [
     {
-      label: 'Materiales',
-      value: telemetry['1']?.total || 0,
-      percent: totalCost > 0 ? ((telemetry['1']?.total || 0) / totalCost) * 100 : 0,
-      color: 'text-emerald-500',
+      label: 'Costo Total',
+      value: totalCost,
+      percent: totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0,
+      color: 'text-blue-500',
       icon: Package
     },
     {
-      label: 'Mano de Obra',
-      value: telemetry['2']?.total || 0,
-      percent: totalCost > 0 ? ((telemetry['2']?.total || 0) / totalCost) * 100 : 0,
-      color: 'text-blue-500',
-      icon: Users
+      label: 'Utilidad',
+      value: utility,
+      percent: totalPrice > 0 ? (utility / totalPrice) * 100 : 0,
+      color: 'text-emerald-500',
+      icon: TrendingUp
     },
     {
-      label: 'Gastos Directos',
-      value: telemetry['3']?.total || 0,
-      percent: totalCost > 0 ? ((telemetry['3']?.total || 0) / totalCost) * 100 : 0,
-      color: 'text-cyan-500',
-      icon: Zap
-    },
-    {
-      label: 'Gastos Indirectos',
-      value: indirectSum,
-      percent: totalCost > 0 ? (indirectSum / totalCost) * 100 : 0,
-      color: 'text-amber-500',
-      icon: Settings
+      label: 'Precio Final',
+      value: totalPrice,
+      percent: 100,
+      color: 'text-primary',
+      icon: DollarSign
     }
   ];
 
-  return (
-    <div className="flex flex-col gap-12 max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-12 items-center lg:items-start">
-        <div className="flex-1 w-full space-y-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(22,163,74,0.1)]">
-              <span className="text-xs font-black uppercase tracking-[0.3em] text-primary animate-pulse">Margen Activo</span>
-            </div>
-          </div>
-          <CostSheetMasterRing
-            totalPrice={totalPrice}
-            utility={utility}
-            totalCost={totalCost}
-            onPriceChange={goalSeek}
-            onPriceAdjust={handlePriceAdjust}
-          />
+  const suggestedCoef = useMemo(() => {
+    const target = parseFloat(targetValue);
+    if (isNaN(target) || !selectedAnnexId || !telemetry[targetRowId]) return 1;
+    const currentTargetValue = telemetry[targetRowId]?.total || 0;
+    if (currentTargetValue === 0) return 1;
+    const currentCoef = annex?.coefficient || 1;
+    return (target / currentTargetValue) * currentCoef;
+  }, [targetValue, selectedAnnexId, targetRowId, telemetry, annex]);
+
+      return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Master View Header: Ring & Key Metrics */}
+      <div className="bg-card/30 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-6 sm:p-12 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Zap className="w-64 h-64 text-primary" />
         </div>
 
-        <div className="w-full lg:w-[600px] space-y-8">
-          {/* Main Adjustment Card */}
-          <div className="glass-card-stitch rounded-3xl p-10 relative overflow-hidden group shadow-2xl">
-            <header className="mb-10">
-              <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
-              <div className="flex items-baseline gap-1">
-                <h1 className="font-display text-[clamp(2rem,10vw,3.75rem)] font-bold tracking-tighter neon-glow text-foreground leading-none">
-                  {sliderValue.toFixed(3)}<span className="text-primary text-[clamp(1.25rem,5vw,2.25rem)] ml-1">%</span>
-                </h1>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="flex justify-center lg:justify-start">
+            <CostSheetMasterRing
+              totalPrice={totalPrice}
+              utility={utility}
+              totalCost={totalCost}
+              onPriceChange={handlePriceAdjust}
+              onPriceAdjust={(step) => handlePriceAdjust(totalPrice + step)}
+            />
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter italic text-foreground leading-[0.9]">
+                Resumen de <span className="text-primary">Rentabilidad</span>
+              </h2>
+              <p className="text-xs sm:text-sm font-black uppercase tracking-[0.3em] text-muted-foreground mt-4 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" /> Análisis de Margen y Coeficientes
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Markup Real</span>
+                <span className="text-3xl font-black font-mono">+{((utility / totalCost) * 100).toFixed(1)}%</span>
               </div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
+              <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Salud Ficha</span>
+                <span className={cn("text-3xl font-black font-mono", healthPercent > 80 ? "text-emerald-500" : "text-amber-500")}>
+                  {healthPercent}%
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+               <div className="flex justify-between items-center px-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Ajuste de Margen Deseado</h4>
+                  <span className="text-sm font-black font-mono text-primary">{((utility / totalCost) * 100).toFixed(1)}%</span>
+               </div>
+               <Slider
+                 value={[ (utility / totalCost) * 100 ]}
+                 min={1}
+                 max={100}
+                 step={0.5}
+                 onValueChange={(val) => updateUtilityFormula(val[0])}
+                 className="py-4"
+               />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        {/* Main Controls */}
+        <div className="xl:col-span-7 space-y-8">
+          <div className="glass-card-stitch rounded-[2.5rem] p-8 sm:p-10 border border-white/10 shadow-2xl bg-card/40 backdrop-blur-md relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+
+            <header className="mb-10 relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Activity className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70">Panel de Control Financiero</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter italic text-foreground leading-none">
+                Ajuste Dinámico
+              </h2>
             </header>
 
-            <div className="space-y-10 mb-12">
-              <div className="space-y-4">
+            <div className="space-y-12">
+              {/* Price Goal */}
+              <div className="space-y-6">
                 <div className="flex justify-between items-end">
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
-                  <span className="text-primary font-display font-bold">{sliderValue.toFixed(3)}%</span>
+                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="w-3 h-3" /> Precio de Venta Objetivo
+                  </label>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase mr-1">CUP</span>
+                    <Input
+                      type="number"
+                      value={localPrice}
+                      onFocus={() => setIsEditingPrice(true)}
+                      onBlur={() => setIsEditingPrice(false)}
+                      onChange={(e) => handlePriceAdjust(parseFloat(e.target.value) || 0)}
+                      className="w-32 h-10 bg-transparent border-none text-right text-2xl font-black font-mono p-0 focus-visible:ring-0"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleSliderChange([Math.max(1, sliderValue - 1)])}
-                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
+                <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+              </div>
+
+              {/* Markup Slider */}
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Margen de Utilidad</h4>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Impacto directo en rentabilidad</p>
+                  </div>
+                  <span className="text-2xl font-black italic text-primary drop-shadow-[0_0_15px_rgba(22,163,74,0.3)]">
+                    {sliderValue.toFixed(1)}%
+                  </span>
+                </div>
+
+                <div className="px-2">
                   <Slider
-                  value={[sliderValue]}
-                  min={1}
-                  max={100}
-                  step={0.5}
-                  onValueChange={handleSliderChange}
-                  className="w-full"
-                />
-                  <button
-                    onClick={() => handleSliderChange([Math.min(100, sliderValue + 1)])}
-                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground uppercase font-bold tracking-tighter">
-                  <span>mín 1%</span>
-                  <span>máx 100%</span>
+                    value={[sliderValue]}
+                    min={1}
+                    max={100}
+                    step={0.1}
+                    onValueChange={handleSliderChange}
+                    className="py-4"
+                  />
+                  <div className="flex justify-between mt-2 px-1">
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Conservador (1%)</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Agresivo (100%)</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
-                  <span className="text-primary font-display font-bold">{localCoef.toFixed(4)}</span>
+              {/* Indirect Coef */}
+              <div className="p-6 rounded-3xl bg-muted/30 border border-white/5 space-y-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <Users className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground leading-tight">Coef. Gastos Indirectos</h4>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter italic">Relación Gtos/Salario</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleCoefChange(Math.max(0, localCoef - 0.05))}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-xl font-black font-mono w-16 text-center text-primary">{localCoef.toFixed(4)}</span>
+                    <button
+                      onClick={() => handleCoefChange(localCoef + 0.05)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleCoefChange(Math.max(0, localCoef - 0.0001))}
-                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <Slider
-                  value={[localCoef]}
-                  min={0}
-                  max={4}
-                  step={0.0001}
-                  onValueChange={(val) => handleCoefChange(val[0])}
-                  className="w-full"
-                />
-                  <button
-                    onClick={() => handleCoefChange(Math.min(4, localCoef + 0.0001))}
-                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex justify-between text-xs text-muted-foreground uppercase font-bold tracking-tighter">
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-black tracking-widest">
                     <span>mín 0.0</span>
                     <span>máx 4.0</span>
                   </div>
-                  <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.1)]">
-                    <p className="text-xs text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
-                      <span>Relación Actual (Gtos Ind. / Salario):</span>
-                      <span className="text-primary font-black text-xs">{indirectCoef.toFixed(4)}</span>
-                    </p>
-                  </div>
+                  <Slider
+                    value={[localCoef]}
+                    min={0}
+                    max={4}
+                    step={0.0001}
+                    onValueChange={(val) => handleCoefChange(val[0])}
+                  />
                 </div>
               </div>
             </div>
 
             <div className={cn(
-              "amber-glow-border p-5 rounded-r-xl mb-auto transition-all duration-500",
-              sliderValue > 30 ? "bg-amber-500/5 opacity-100" : "bg-primary/5 border-primary opacity-80"
+              "mt-8 p-6 rounded-3xl transition-all duration-500 flex gap-4 border",
+              sliderValue > 30 ? "bg-amber-500/5 border-amber-500/20" : "bg-primary/5 border-primary/20"
             )}>
-              <div className="flex gap-4">
-                <feedback.icon className={cn("shrink-0 w-6 h-6", feedback.color)} />
-                <div>
-                  <h3 className={cn("text-xs font-bold uppercase tracking-widest mb-2", feedback.color)}>Análisis de Margen</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feedback.text}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <footer className="mt-12 pt-6 border-t border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </div>
-                <p className="text-[clamp(0.7rem,2vw,0.75rem)] text-muted-foreground uppercase tracking-widest leading-tight">
-                  El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
+              <feedback.icon className={cn("shrink-0 w-6 h-6 mt-1", feedback.color)} />
+              <div>
+                <h3 className={cn("text-[10px] font-black uppercase tracking-widest mb-1", feedback.color)}>Análisis de Margen</h3>
+                <p className="text-xs text-muted-foreground font-medium leading-relaxed uppercase tracking-tight">
+                  {feedback.text}
                 </p>
               </div>
-            </footer>
+            </div>
           </div>
+        </div>
 
-          {/* Auto-Adjustment Card */}
-          <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden border border-primary/20 shadow-xl bg-primary/5">
-            <header className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-primary mb-1 font-bold">Ajuste por Coeficiente</p>
-                <h3 className="text-lg font-black uppercase tracking-tighter italic text-foreground flex items-center gap-2">
-                   <RefreshCw className="w-4 h-4 text-primary" /> Auto-ajuste de Anexos
-                </h3>
-              </div>
-              <div className="p-2 rounded-xl bg-primary/10">
-                <Wand2 className="w-5 h-5 text-primary animate-pulse" />
+        {/* Right Side: Auto-adjustment & Health */}
+        <div className="xl:col-span-5 space-y-8">
+          {/* Auto-Adjustment Card - Redesigned Mobile-First/Desktop-First */}
+          <div className="glass-card-stitch rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden border border-primary/20 shadow-2xl bg-card/40 backdrop-blur-xl">
+            <header className="mb-10">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30">
+                    <Wand2 className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-primary/70 font-black">AI Finance Assistant</p>
+                    <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter italic text-foreground leading-tight">Auto-ajuste</h3>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Live Engine</span>
+                </div>
               </div>
             </header>
 
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Seleccionar Anexo</label>
+            <div className="space-y-8">
+              {/* Configuration Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black flex items-center gap-2 px-1">
+                    <Package className="w-3 h-3" /> Anexo
+                  </label>
                   <Select value={selectedAnnexId} onValueChange={setSelectedAnnexId}>
-                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
-                      <SelectValue placeholder="Anexo" />
+                    <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-2xl text-xs font-bold uppercase hover:bg-background/80 transition-colors">
+                      <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border-border/50">
                       {data?.annexes?.map(annex => (
-                        <SelectItem key={annex.id} value={annex.id} className="text-xs font-bold uppercase">
-                          Anexo {annex.id}: {annex.title}
+                        <SelectItem key={annex.id} value={annex.id} className="text-xs font-bold uppercase py-3">
+                          {annex.id} - {annex.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Columna base</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black flex items-center gap-2 px-1">
+                    <Settings className="w-3 h-3" /> Columna
+                  </label>
                   <Select value={adjustmentColumn} onValueChange={setAdjustmentColumn}>
-                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
+                    <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-2xl text-xs font-bold uppercase hover:bg-background/80 transition-colors">
                       <SelectValue placeholder="Columna" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PRECIO UNITARIO" className="text-xs font-bold uppercase">Precio Unitario</SelectItem>
-                      <SelectItem value="VALOR" className="text-xs font-bold uppercase">Valor</SelectItem>
-                      <SelectItem value="IMPORTE" className="text-xs font-bold uppercase">Importe</SelectItem>
+                    <SelectContent className="rounded-2xl border-border/50">
+                      <SelectItem value="PRECIO UNITARIO" className="text-xs font-bold uppercase py-3">Precio Unitario</SelectItem>
+                      <SelectItem value="VALOR" className="text-xs font-bold uppercase py-3">Valor</SelectItem>
+                      <SelectItem value="IMPORTE" className="text-xs font-bold uppercase py-3">Importe</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Variable Objetivo</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black flex items-center gap-2 px-1">
+                    <ShieldCheck className="w-3 h-3" /> Objetivo
+                  </label>
                   <Select value={targetRowId} onValueChange={setTargetRowId}>
-                    <SelectTrigger className="h-10 bg-background/50 border-border rounded-xl text-xs font-bold uppercase">
+                    <SelectTrigger className="h-12 bg-background/50 border-border/50 rounded-2xl text-xs font-bold uppercase hover:bg-background/80 transition-colors">
                       <SelectValue placeholder="Target" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="14.1" className="text-xs font-bold uppercase">14.1 - Precio Final</SelectItem>
-                      <SelectItem value="12" className="text-xs font-bold uppercase">12 - Costo Total</SelectItem>
-                      <SelectItem value="13.1" className="text-xs font-bold uppercase">13.1 - Utilidad</SelectItem>
+                    <SelectContent className="rounded-2xl border-border/50">
+                      <SelectItem value="14.1" className="text-xs font-bold uppercase py-3">14.1 - Precio Final</SelectItem>
+                      <SelectItem value="12" className="text-xs font-bold uppercase py-3">12 - Costo Total</SelectItem>
+                      <SelectItem value="13.1" className="text-xs font-bold uppercase py-3">13.1 - Utilidad</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Valor Objetivo</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-black flex items-center gap-2 px-1">
+                    <Target className="w-3 h-3" /> Valor
+                  </label>
                   <div className="relative">
-                    <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <Input
                       type="number"
                       value={targetValue}
                       onChange={(e) => setTargetValue(e.target.value)}
-                      placeholder="Ej: 500.00"
-                      className="h-10 pl-9 bg-background/50 border-border rounded-xl text-xs font-bold font-mono"
+                      placeholder="Ej: 500"
+                      className="h-12 pl-4 bg-background/50 border-border/50 rounded-2xl text-sm font-black font-mono focus:bg-background/80 transition-all"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
-                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                    <span className="text-muted-foreground">Valor Actual (Target):</span>
-                    <span className="text-foreground">{(telemetry[targetRowId]?.total || 0).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}</span>
-                 </div>
-                 {targetValue && !isNaN(parseFloat(targetValue)) && (
-                   <>
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                        <span className="text-muted-foreground">Diferencia:</span>
-                        <span className={cn(
-                          parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0) > 0 ? "text-emerald-500" : "text-red-500"
-                        )}>
-                          {(parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0)).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}
-                          {" ("}{(((parseFloat(targetValue) / (telemetry[targetRowId]?.total || 1)) - 1) * 100).toFixed(2)}%{")"}
-                        </span>
-                    </div>
-                    <div className="h-px bg-white/5" />
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                        <span className="text-primary italic">Coeficiente sugerido:</span>
-                        <span className="text-primary font-mono">
-                          {((parseFloat(targetValue) / (telemetry[targetRowId]?.total || 1)) * (data.annexes.find(a => a.id === selectedAnnexId)?.coefficient || 1)).toFixed(4)}
-                        </span>
-                    </div>
-                   </>
-                 )}
-              </div>
+              {/* Analysis & Slider */}
+              <div className="space-y-6">
+                <div className="p-6 rounded-3xl bg-black/20 border border-white/5 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Actual:</span>
+                    <span className="text-sm font-black font-mono">{(telemetry[targetRowId]?.total || 0).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}</span>
+                  </div>
 
-              <Button
-                onClick={handleAutoAdjust}
-                disabled={!targetValue || isNaN(parseFloat(targetValue))}
-                className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-3 group active:scale-95 transition-all"
-              >
-                <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                Auto-ajustar al objetivo
-              </Button>
+                  {targetValue && !isNaN(parseFloat(targetValue)) && (
+                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-500">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Desviación:</span>
+                        <div className={cn(
+                          "flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
+                          parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0) > 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                        )}>
+                          {parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0) > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingUp className="w-3 h-3 rotate-180" />}
+                          {(parseFloat(targetValue) - (telemetry[targetRowId]?.total || 0)).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' })}
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-white/5" />
+
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary italic">Ajuste Sugerido:</span>
+                          <span className="text-lg font-black font-mono text-primary drop-shadow-[0_0_10px_rgba(22,163,74,0.2)]">
+                            x{suggestedCoef.toFixed(4)}
+                          </span>
+                        </div>
+
+                        <Button
+                          onClick={handleAutoAdjust}
+                          className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 gap-3 group active:scale-95 transition-all"
+                        >
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          Simular Sugerencia
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fine Tuning Slider - Mobile Friendly Grid */}
+                <div className="space-y-6 pt-4 border-t border-white/5">
+                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                      <div className="space-y-1">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                           <Settings className="w-3 h-3 text-primary" /> Ajuste de Precisión
+                        </h4>
+                        <p className="text-[8px] text-muted-foreground uppercase font-black">Control manual de granularidad fina</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-lg bg-primary/10 text-xs font-black font-mono text-primary border border-primary/20">
+                          x{manualCoef.toFixed(4)}
+                        </span>
+                      </div>
+                   </div>
+
+                   <div className="px-1">
+                     <Slider
+                       value={[manualCoef]}
+                       min={0.1}
+                       max={5.0}
+                       step={0.0001}
+                       onValueChange={(val) => handleManualCoefAdjust(val[0])}
+                       className="py-4"
+                     />
+                     <div className="flex justify-between text-[8px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                        <span>- Reducción (0.1x)</span>
+                        <span>+ Ampliación (5.0x)</span>
+                     </div>
+                   </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    onClick={handleCommitAdjustment}
+                    disabled={manualCoef === 1 && !annex?.coefficient}
+                    className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-emerald-500/30 gap-3 active:scale-95 transition-all group border-b-4 border-emerald-700"
+                  >
+                    <Save className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                    Aplicar Cambios Permanentes
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-3">
+              <ShieldCheck className="w-4 h-4 text-primary/50" />
+              <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest leading-tight">
+                "Simular" aplica el coeficiente dinámicamente. "Aplicar Permanentemente" multiplica físicamente los valores de la columna base y reinicia el coeficiente a 1.
+              </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <HealthBattery percent={healthPercent} />
-        <CostSheetTelemetry telemetry={telemetryItems} />
+          <div className="grid grid-cols-1 gap-8">
+            <HealthBattery percent={healthPercent} />
+            <CostSheetTelemetry telemetry={telemetryItems} />
+          </div>
+        </div>
       </div>
     </div>
   );
