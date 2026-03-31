@@ -6,10 +6,10 @@ import {
   CostSheetAnnex as CostSheetAnnexContract,
   CostSheetRow
 } from '@/types/cost-sheet';
-import { costSheetDataSchema } from '@/types/schemas/cost-sheet';
+import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
-import { reinicioTemplate } from './templates/reinicio';
-import { exampleTemplate } from './templates/example';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import exampleTemplate from '@/lib/data/costpro-ejemplo';
 
 interface UpdateValuePayload {
   path: (string | number)[];
@@ -38,7 +38,7 @@ interface CostSheetState {
 export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
-      data: reinicioTemplate,
+      data: reinicioTemplate as CostSheetDataContract,
       updateValue: (path, value) =>
         set(
           produce((draft: CostSheetState) => {
@@ -249,26 +249,20 @@ export const useCostSheetStore = create<CostSheetState>()(
               (a: CostSheetAnnexContract) => a.id === annexId
             );
             if (annex) {
-              const oldCoef = annex.coefficient || 1;
               annex.coefficient = coefficient;
               annex.adjustmentColumn = adjustmentColumn;
 
               if (commit) {
-                // Determine target column key
                 const colKey = adjustmentColumn === 'PRECIO UNITARIO' ? 'price_unit' :
                                (adjustmentColumn === 'VALOR' ? 'value' :
                                (adjustmentColumn === 'IMPORTE' ? 'importe' : 'price_unit'));
 
-                // Recalculate ALL rows in the selected column
-                // Ratio is needed if we are applying "on top" of current state
-                // But usually commit means "make current coefficient permanent"
                 annex.data.forEach((row: any) => {
                   if (row && row[colKey] !== undefined && typeof row[colKey] === 'number') {
                     row[colKey] = Number((row[colKey] * coefficient).toFixed(4));
                   }
                 });
 
-                // Reset coefficient to 1 since it's now "baked" into the values
                 annex.coefficient = 1;
                 toast.success(`Ajuste aplicado permanentemente al Anexo ${annexId}`);
               }
