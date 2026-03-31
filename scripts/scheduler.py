@@ -38,12 +38,13 @@ def load_state():
         return yaml.safe_load(f)
 
 def save_state(state):
-    # Preserve the original structure and keys from the v8.0 spec
+    # Preserve the original structure and keys from the v8.1 spec
     spec_keys = [
         "currentPhase", "lastExecution", "pipelineVersion", "cycle", "schedulerMode",
         "documentationModel", "repairThreshold", "confidenceThreshold", "quarantinePath",
         "artifactStore", "metadataStore", "archiveStore", "reviewQueue",
-        "ai_embeddings_path", "ai_vector_index_path", "humanFeedbackStore"
+        "ai_embeddings_path", "ai_vector_index_path", "humanFeedbackStore",
+        "rag_engine"
     ]
 
     clean_state = {}
@@ -106,8 +107,11 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
         audit["performanceSummary"] = {
             "averagePhaseDurationMs": sum(durations) // len(durations),
             "slowestPhase": slowest_exec["phase"],
+            "slowestPhaseDurationMs": slowest_exec["durationMs"],
             "fastestPhase": fastest_exec["phase"],
-            "lastCycleDurationMs": sum(current_cycle_durations)
+            "fastestPhaseDurationMs": fastest_exec["durationMs"],
+            "lastCycleDurationMs": sum(current_cycle_durations),
+            "lastUpdated": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         }
 
     with open(AUDIT_PATH, 'w', encoding='utf-8') as f:
@@ -243,14 +247,15 @@ def main():
             new_state["currentPhase"] = current_phase
             new_state["cycle"] = cycle
 
+            timestamp = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             if status == "re_execute":
                 print("Major change detected. Resetting to Phase 1.")
                 new_state["currentPhase"] = 1
-                new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                new_state["lastExecution"] = timestamp
                 save_state(new_state)
             elif status in ["success", "quarantined", "committed", "skipped", "degraded"]:
                 new_state["currentPhase"] = current_phase + 1
-                new_state["lastExecution"] = datetime.now(timezone.utc).isoformat() + 'Z'
+                new_state["lastExecution"] = timestamp
                 save_state(new_state)
                 print(f"Fase {current_phase} completada con estado: {status}")
             else:
