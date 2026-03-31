@@ -252,7 +252,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             <div className="grid grid-cols-1 gap-4">
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Markup Real</span>
-                <span className="text-3xl font-black font-mono">+{Math.round((utility / totalCost) * 100)}%</span>
+                <span className="text-3xl font-black font-mono">+{totalCost > 0 ? Math.round((utility / totalCost) * 100) : 0}%</span>
               </div>
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Salud Ficha</span>
@@ -265,7 +265,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             <div className="space-y-6">
                <div className="flex justify-between items-center px-2">
                   <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Ajuste de Margen Deseado</h4>
-                  <span className="text-sm font-black font-mono text-primary">{Math.round((utility / totalCost) * 100)}%</span>
+                  <span className="text-sm font-black font-mono text-primary">{totalCost > 0 ? Math.round((utility / totalCost) * 100) : 0}%</span>
                </div>
                <Slider
                  value={[ (utility / totalCost) * 100 ]}

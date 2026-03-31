@@ -252,24 +252,30 @@ export const useCostSheetStore = create<CostSheetState>()(
               annex.coefficient = coefficient;
               annex.adjustmentColumn = adjustmentColumn;
 
-              if (commit) {
-                const colKey = adjustmentColumn === 'PRECIO UNITARIO' ? 'price_unit' :
-                               (adjustmentColumn === 'VALOR' ? 'value' :
-                               (adjustmentColumn === 'IMPORTE' ? 'importe' : 'price_unit'));
-
+                            if (commit) {
+                const coef = coefficient;
                 annex.data.forEach((row: any) => {
-                  if (row && row[colKey] !== undefined) {
-                    const currentVal = row[colKey];
-                    const coefStr = coefficient.toFixed(4);
-
-                    if (typeof currentVal === 'number') {
-                        // Transform number to formula for traceability
-                        row[colKey] = `=${currentVal}*${coefStr}`;
-                    } else if (typeof currentVal === 'string' && currentVal.startsWith('=')) {
-                        // Append to existing formula
-                        const baseExpr = currentVal.substring(1);
-                        row[colKey] = `=(${baseExpr})*${coefStr}`;
+                  const applyCoef = (key: string, c: number) => {
+                    if (row[key] !== undefined) {
+                      const currentVal = row[key];
+                      const cStr = c.toFixed(4);
+                      if (typeof currentVal === 'number') {
+                        row[key] = `=${currentVal}*${cStr}`;
+                      } else if (typeof currentVal === 'string' && currentVal.startsWith('=')) {
+                        row[key] = `=(${currentVal.substring(1)})*${cStr}`;
+                      }
                     }
+                  };
+
+                  if (adjustmentColumn === 'AMBOS') {
+                    const sqrtCoef = Math.sqrt(coef);
+                    ['price_unit', 'rate', 'norm', 'consumption', 'quantity'].forEach(k => applyCoef(k, sqrtCoef));
+                  } else {
+                    const keys = adjustmentColumn === 'PRECIO UNITARIO' ? ['price_unit', 'rate'] :
+                                 (adjustmentColumn === 'NORMA DE CONSUMO' ? ['norm', 'consumption', 'quantity'] :
+                                 (adjustmentColumn === 'VALOR' ? ['value'] :
+                                 (adjustmentColumn === 'IMPORTE' ? ['importe', 'amount', 'total'] : [])));
+                    keys.forEach(k => applyCoef(k, coef));
                   }
                 });
 

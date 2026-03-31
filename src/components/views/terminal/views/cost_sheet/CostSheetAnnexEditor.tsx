@@ -204,17 +204,28 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
                                                     typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
                                                 )}
+
                                                 placeholder={(() => {
                                                     const val = annex.data[rowIndex][col.key];
                                                     const coef = annex.coefficient || 1;
-                                                    const isAdjusted =
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"));
+                                                    if (coef === 1 || typeof val !== "number") return "";
 
-                                                    if (isAdjusted && coef !== 1 && typeof val === "number") {
-                                                        return (val * coef).toFixed(4);
+                                                    const isPrice = col.key === "price_unit" || col.key === "rate" || col.label === "PRECIO UNITARIO";
+                                                    const isNorm = col.key === "norm" || col.key === "consumption" || col.key === "quantity" || col.label === "NORMA DE CONSUMO";
+
+                                                    if (annex.adjustmentColumn === "AMBOS") {
+                                                        if (isPrice || isNorm) {
+                                                            return (val * Math.sqrt(coef)).toFixed(4);
+                                                        }
+                                                    } else {
+                                                        const isAdjusted =
+                                                            (col.label === annex.adjustmentColumn) ||
+                                                            (annex.adjustmentColumn === "PRECIO UNITARIO" && isPrice) ||
+                                                            (annex.adjustmentColumn === "NORMA DE CONSUMO" && isNorm) ||
+                                                            (annex.adjustmentColumn === "VALOR" && col.key === "value") ||
+                                                            (annex.adjustmentColumn === "IMPORTE" && col.key === "importe");
+
+                                                        if (isAdjusted) return (val * coef).toFixed(4);
                                                     }
                                                     return "";
                                                 })()} />
