@@ -1,5 +1,5 @@
 /**
- * Pick3Engine v7.0 - Advanced Quantitative & Strategy-Based Analysis Engine
+ * Pick3Engine v9.0 - Advanced Quantitative & Strategy-Based Analysis Engine
  */
 
 import {
@@ -48,6 +48,13 @@ export class Pick3Engine {
   public generatePlays(analysis: AdvancedAnalysis, config: BettingConfig, count: number = 5): IntelligencePlay[] {
     const predictionEngine = new PredictionEngine(this.history, analysis);
     return predictionEngine.generatePredictions(config, count);
+  }
+
+  /**
+   * Generates simulation-backed recommendations for the top 3 picks.
+   */
+  public generateSimulatedPicks(config: BettingConfig): IntelligencePlay[] {
+    return SimulationEngine.simulateTopPicks(this.history, config, 10000);
   }
 
   public runBacktest(config: BettingConfig, initialBankroll: number, days: number = 30): BacktestResult {
