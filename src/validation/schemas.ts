@@ -561,6 +561,8 @@ export const costSheetAnnexSchema = z
   .object({
     id: z.string(),
     title: z.string(),
+    coefficient: z.number().optional().default(1),
+    adjustmentColumn: z.string().optional().default("PRECIO UNITARIO"),
     columns: z.array(costSheetColumnSchema),
     data: z.array(z.record(z.string(), z.any())),
   })
