@@ -74,6 +74,7 @@ export interface CostSheetAnnexContract {
   title: string;
   coefficient?: number;
   adjustmentColumn?: string;
+  isAdjustmentActive?: boolean;
   columns: CostSheetColumnContract[];
   data: any[]; // Se mantiene flexible por su naturaleza dinámica.
 }
