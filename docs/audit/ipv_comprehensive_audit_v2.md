@@ -116,3 +116,11 @@ Durante la ejecución de `bun test`, se detectaron errores críticos de resoluci
 3. **Variables de Entorno:** Se añadió un `DATABASE_URL` dummy en la configuración de construcción para evitar errores de validación de Prisma durante el build.
 
 *Estado Final:* Despliegue estabilizado y validado localmente en modo producción.
+
+### 8.3. Hardening Definitive de Construcción
+Debido a la persistencia del "Dashboard Override Trap" en Render (donde los comandos de la UI ignoran `render.yaml`), se han tomado las siguientes medidas de refuerzo definitivas:
+1. **Inyección en Scripts de NPM:** Se modificó el script `"build"` en `package.json` para incluir `bun x prisma generate` antes de `next build`. Esto garantiza la generación del cliente de base de datos independientemente de los comandos configurados en el Dashboard de Render.
+2. **Runtime Unificado:** Se cambió el script `"start"` a `bun` para mantener coherencia en todo el ciclo de vida del proceso.
+3. **Validación Previa:** Se confirmó que la cadena completa de construcción es exitosa incluso en entornos de CI con variables de entorno mínimas.
+
+*Nota para el usuario:* Se recomienda encarecidamente eliminar cualquier comando manual en **Settings -> Build & Deploy** del Dashboard de Render para permitir que el sistema use los scripts optimizados en `package.json`.
