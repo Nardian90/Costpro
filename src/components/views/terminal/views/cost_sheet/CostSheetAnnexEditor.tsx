@@ -147,23 +147,11 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
        />
 
        <div className={cn(
-                                                    (annex.coefficient && annex.coefficient !== 1 && (
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"))
-                                                    )) && "ring-1 ring-primary/30 bg-primary/5",
          "rounded-3xl border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden shadow-2xl",
          layoutMode === 'grid' && "border-none bg-transparent shadow-none backdrop-blur-none"
        )}>
          <div className="overflow-x-auto no-scrollbar">
-            <Table className={cn(
-                                                    (annex.coefficient && annex.coefficient !== 1 && (
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"))
-                                                    )) && "ring-1 ring-primary/30 bg-primary/5",layoutMode === 'grid' && "hidden sm:table")}>
+            <Table className={cn(layoutMode === 'grid' && "hidden sm:table")}>
                 <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
                         {annex.columns.map((col: CostSheetColumn) => (
@@ -186,22 +174,10 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                (col.key === 'total' || col.key === 'amount' ? 'w-32' :
                                                (!isMain ? 'w-24' : '')));
                                 return (
-                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn(
-                                                    (annex.coefficient && annex.coefficient !== 1 && (
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"))
-                                                    )) && "ring-1 ring-primary/30 bg-primary/5","p-3 sm:p-4", widthClass)}>
+                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", widthClass)}>
                                     {col.formula ? (
                                         <div className="relative group/cell">
-                                            <div className={cn(
-                                                    (annex.coefficient && annex.coefficient !== 1 && (
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"))
-                                                    )) && "ring-1 ring-primary/30 bg-primary/5","neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                                            <div className={cn("neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
                                                 {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
                                             </div>
                                             <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
@@ -225,12 +201,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     return undefined;
                                                 })()}
                                                 className={cn(
-                                                    (annex.coefficient && annex.coefficient !== 1 && (
-                                                        (annex.adjustmentColumn === "AMBOS" && (col.key.includes("norm") || col.key.includes("price") || col.key.includes("unit"))) ||
-                                                        (col.label === annex.adjustmentColumn) ||
-                                                        (annex.adjustmentColumn === "PRECIO UNITARIO" && (col.key === "price_unit" || col.key === "rate")) ||
-                                                        (annex.adjustmentColumn === "NORMA DE CONSUMO" && (col.key === "norm" || col.key === "consumption" || col.key === "quantity"))
-                                                    )) && "ring-1 ring-primary/30 bg-primary/5",
                                                     "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
                                                     typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
                                                 )}
@@ -363,7 +333,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => updateAnnexAdjustment(annex.id, annex.coefficient, annex.adjustmentColumn || 'PRECIO UNITARIO', true)}
+                                                    onClick={() => updateAnnexAdjustment(annex.id, annex.coefficient || 1, annex.adjustmentColumn || 'PRECIO UNITARIO', true)}
                                                     className="h-9 px-3 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 transition-all font-black text-[10px] uppercase tracking-widest"
                                                 >
                                                     Commit
@@ -373,7 +343,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         </div>
                       </div>
                     </TableCell>
