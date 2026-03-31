@@ -7,7 +7,7 @@ STATE_PATH = "docs/automation/pipeline_state.yaml"
 AUDIT_PATH = "public/architecture_audit.json"
 
 def update_system_dynamic(phase_num, phase_name, artifacts, status="success", start_time=None):
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     if not start_time:
         start_time = now
 
@@ -62,12 +62,15 @@ def update_system_dynamic(phase_num, phase_name, artifacts, status="success", st
 
     durations = [e.get("durationMs", 0) for e in audit_data["phaseExecutions"]]
     if durations:
+        slowest_idx = max(range(len(audit_data["phaseExecutions"])), key=lambda i: audit_data["phaseExecutions"][i].get("durationMs", 0))
+        fastest_idx = min(range(len(audit_data["phaseExecutions"])), key=lambda i: audit_data["phaseExecutions"][i].get("durationMs", 0))
+
         audit_data["performanceSummary"] = {
             "averagePhaseDurationMs": sum(durations) // len(durations),
-            "slowestPhase": max(range(len(durations)), key=durations.__getitem__) + 1,
-            "slowestPhaseDurationMs": max(durations),
-            "fastestPhase": min(range(len(durations)), key=durations.__getitem__) + 1,
-            "fastestPhaseDurationMs": min(durations),
+            "slowestPhase": audit_data["phaseExecutions"][slowest_idx]["phase"],
+            "slowestPhaseDurationMs": audit_data["phaseExecutions"][slowest_idx]["durationMs"],
+            "fastestPhase": audit_data["phaseExecutions"][fastest_idx]["phase"],
+            "fastestPhaseDurationMs": audit_data["phaseExecutions"][fastest_idx]["durationMs"],
             "lastCycleDurationMs": sum(durations),
             "lastUpdated": now
         }

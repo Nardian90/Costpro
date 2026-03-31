@@ -400,16 +400,55 @@
         "PIPELINE_IMPROVEMENTS.md"
       ],
       "cycle": 1
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-31T01:06:14.456835+00:00Z",
+      "endTime": "2026-03-31T01:06:20.365877+00:00Z",
+      "durationMs": 5909,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 2
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-31T01:16:07.648455+00:00Z",
+      "endTime": "2026-03-31T01:16:17.492535+00:00Z",
+      "durationMs": 9844,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 2
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-03-31T01:17:54.651264+00:00Z",
+      "endTime": "2026-03-31T01:18:01.923458+00:00Z",
+      "durationMs": 7272,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 2
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 47653,
+    "averagePhaseDurationMs": 44321,
     "slowestPhase": 7,
     "slowestPhaseDurationMs": 1200000,
     "fastestPhase": 14,
     "fastestPhaseDurationMs": 0,
-    "lastCycleDurationMs": 1572558,
-    "lastUpdated": "2026-03-30T01:20:55.784681+00:00Z"
+    "lastCycleDurationMs": 23025,
+    "lastUpdated": "2026-03-31T01:18:01.923931Z"
   },
   "healthMetrics": {
     "integrityScore": 84.0,
