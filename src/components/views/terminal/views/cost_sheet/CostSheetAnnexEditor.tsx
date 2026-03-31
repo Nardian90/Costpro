@@ -31,6 +31,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const removeRow = useCostSheetStore(state => state.removeRow);
   const reorderRow = useCostSheetStore(state => state.reorderRow);
   const setSheet = useCostSheetStore(state => state.setSheet);
+  const updateAnnexAdjustment = useCostSheetStore(state => state.updateAnnexAdjustment);
   const { user } = useAuthStore();
 
   const annexIndex = data.annexes.findIndex((a: CostSheetAnnex) => a.id === activeAnnexId);
