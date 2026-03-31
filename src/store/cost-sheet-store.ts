@@ -5,11 +5,11 @@ import {
   CostSheetData as CostSheetDataContract,
   CostSheetAnnex as CostSheetAnnexContract,
   CostSheetRow
-} from '../types/cost-sheet';
-import { costSheetDataSchema } from '../validation/schemas';
+} from '@/types/cost-sheet';
+import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
-import reinicioTemplate from '../lib/data/costpro-reinicio';
-import exampleTemplate from '../lib/data/costpro-ejemplo';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import exampleTemplate from '@/lib/data/costpro-ejemplo';
 
 interface UpdateValuePayload {
   path: (string | number)[];
