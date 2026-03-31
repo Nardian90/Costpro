@@ -2,14 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { produce } from 'immer';
 import {
-  CostSheetData as CostSheetDataContract,
-  CostSheetAnnex as CostSheetAnnexContract,
-  CostSheetRow
-} from '@/types/cost-sheet';
-import { costSheetDataSchema } from '@/validation/schemas';
+  CostSheetDataContract,
+  CostSheetAnnexContract,
+  CostSheetRowContract
+} from '../contracts/cost-sheet';
+import { costSheetDataSchema } from '../validation/schemas';
 import { toast } from 'sonner';
-import reinicioTemplate from '@/lib/data/costpro-reinicio';
-import exampleTemplate from '@/lib/data/costpro-ejemplo';
+import reinicioTemplate from '../lib/data/costpro-reinicio';
+import exampleTemplate from '../lib/data/costpro-ejemplo';
 
 interface UpdateValuePayload {
   path: (string | number)[];
