@@ -255,10 +255,44 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     };
 
     (template?.annexes || []).forEach(annex => {
+      const coef = (annex.id === 'I') ? (annex.coefficient || 1) : 1;
+      const adjCol = annex.adjustmentColumn || 'PRECIO UNITARIO';
+
+      const isPrice = (k: string) => k === 'price_unit' || k === 'rate';
+      const isNorm = (k: string) => k === 'norm' || k === 'consumption' || k === 'quantity';
+
       const calculatedAnnex = {
         ...annex,
         data: (annex.data || []).map(row => produce(row, (draft: any) => {
-          // First, pass through non-formula columns to see if they contain manual formulas
+          // A. Apply coefficient to base columns (simulation)
+          if (coef !== 1) {
+              if (adjCol === 'AMBOS') {
+                  const sqrt = Math.sqrt(coef);
+                  Object.keys(draft).forEach(k => {
+                      if ((isPrice(k) || isNorm(k)) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * sqrt;
+                      }
+                  });
+              } else if (adjCol === 'PRECIO UNITARIO') {
+                  Object.keys(draft).forEach(k => {
+                      if (isPrice(k) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * coef;
+                      }
+                  });
+              } else if (adjCol === 'NORMA DE CONSUMO') {
+                  Object.keys(draft).forEach(k => {
+                      if (isNorm(k) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * coef;
+                      }
+                  });
+              } else if (adjCol === 'VALOR' && typeof draft['value'] === 'number') {
+                  draft['value'] *= coef;
+              } else if (adjCol === 'IMPORTE' && typeof draft['importe'] === 'number') {
+                  draft['importe'] *= coef;
+              }
+          }
+
+          // B. Then, pass through non-formula columns to see if they contain manual formulas
           for (const col of annex.columns) {
             if (!col.formula && isNumericColumn(col.key)) {
               const val = draft[col.key];
@@ -438,7 +472,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             ...d,
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-            importe: (() => { const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(v => v !== undefined && v !== null); return (parseFloat(String(val ?? 0)) || 0) * (a.coefficient || 1); })()
+            importe: (() => { const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(v => v !== undefined && v !== null); return (parseFloat(String(val ?? 0)) || 0); })()
           }))
         })),
         rows: engineRows
