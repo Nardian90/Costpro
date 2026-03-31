@@ -25,7 +25,6 @@ import { CostSheetHelpPanel } from './CostSheetHelpPanel';
 import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
 import { FolderOpen } from "lucide-react";
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
-import { CostSheetBottomNav } from './CostSheetBottomNav';
 import { useUIStore } from '@/store';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
@@ -839,11 +838,6 @@ const CostSheetView = () => {
             </div>
         </div>
       )}
-      <CostSheetBottomNav
-        activeTab={activeSection}
-        onTabChange={handleSetActiveSection}
-        onAction={handleBottomAction}
-      />
       <SpeedDial actions={speedDialActions} />
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
