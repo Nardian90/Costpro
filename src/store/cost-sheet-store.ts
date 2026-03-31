@@ -1,85 +1,28 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import reinicioTemplate from '@/lib/data/costpro-reinicio';
-import exampleTemplate from '@/lib/data/costpro-ejemplo';
 import { produce } from 'immer';
 import {
-  CostSheetDataContract,
-  CostSheetDataFactory,
-  CostSheetAnnexContract,
-} from '@/contracts';
-import { costSheetDataSchema } from '@/validation/schemas';
+  CostSheetData as CostSheetDataContract,
+  CostSheetAnnex as CostSheetAnnexContract,
+  CostSheetRow
+} from '@/types/cost-sheet';
+import { costSheetDataSchema } from '@/types/schemas/cost-sheet';
 import { toast } from 'sonner';
+import { reinicioTemplate } from './templates/reinicio';
+import { exampleTemplate } from './templates/example';
 
-const clearTemplate = (template: any) => {
-    const cleared = JSON.parse(JSON.stringify(template));
-
-    // Clear header
-    if (cleared.header) {
-        // Default formulas for automated fields "a consideración del usuario"
-        cleared.header.code = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")";
-        cleared.header.name = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")";
-        cleared.header.quantity = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")";
-        cleared.header.product_code = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")";
-        cleared.header.unit = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")";
-        cleared.header.sale_price = "=GET_FILA_DATO(\"16.1\", \"total\")";
-
-        cleared.header.company = "";
-        cleared.header.organism = "";
-        cleared.header.union = "";
-        cleared.header.destination = "";
-        cleared.header.production_level = 0;
-        cleared.header.capacity_utilization = 0;
-        cleared.header.client = "";
-        cleared.header.category = "";
-    }
-
-    // Clear sections and rows
-    const clearRows = (rows: any[]) => {
-        rows.forEach(row => {
-            // Clear primary numeric values
-            if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
-            if (row.hasOwnProperty('value')) row.value = 0;
-
-            // Clear formulas if they are actually fixed numbers
-            if (row.formula && !row.formula.startsWith('=')) {
-                row.formula = "0";
-            }
-            if (row.totalFormula && !row.totalFormula.startsWith('=')) {
-                row.totalFormula = "0";
-            }
-
-            // Ensure calculation method reflects manual input if we cleared a fixed number
-            if (row.calculationMethod === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.totalFormula?.startsWith('='))) {
-                // If it's not a real formula, ensure it's treated as a clean slate
-            }
-
-            if (row.children) clearRows(row.children);
-        });
-    };
-
-    if (cleared.sections) {
-        cleared.sections.forEach((s: any) => clearRows(s.rows));
-    }
-
-    // Clear annexes - Total reset to empty data as requested
-    if (cleared.annexes) {
-        cleared.annexes.forEach((a: any) => {
-            a.data = [];
-        });
-    }
-
-    return cleared;
-};
+interface UpdateValuePayload {
+  path: (string | number)[];
+  value: any;
+}
 
 interface CostSheetState {
   data: CostSheetDataContract;
   updateValue: (path: (string | number)[], value: any) => void;
-  updateValues: (updates: { path: (string | number)[], value: any }[]) => void;
+  updateValues: (updates: UpdateValuePayload[]) => void;
+  reorderRow: (annexId: string, rowIndex: number, direction: 'up' | 'down') => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
-  reorderRow: (annexId: string, rowIndex: number, direction: 'up' | 'down') => void;
   addMainSection: () => void;
   removeMainSection: (index: number) => void;
   addMainRow: (parentPath: (string | number)[]) => void;
@@ -89,7 +32,7 @@ interface CostSheetState {
   loadExample: () => void;
   reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
-  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string) => void;
+  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, commit?: boolean) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -105,7 +48,6 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[path[i]] === undefined) return;
               current = current[path[i]];
             }
-            // Only update if value actually changed to prevent redundant renders
             if (current[path[path.length - 1]] !== value) {
               current[path[path.length - 1]] = value;
             }
@@ -194,13 +136,9 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[p] === undefined) return;
               current = current[p];
             }
-            // current should be an array (rows or children)
             if (Array.isArray(current)) {
                 const nextId = (current.length + 1).toString();
-                // We need to generate a somewhat unique ID for the engine
-                // Heuristic: use a timestamp or a combination
                 const uniqueId = `new-${Date.now()}-${nextId}`;
-
                 current.push({
                     id: uniqueId,
                     label: "Nuevo Concepto",
@@ -237,7 +175,6 @@ export const useCostSheetStore = create<CostSheetState>()(
             if (annex) {
               const newRow: any = {};
               if (annex.data.length > 0) {
-                // Clone from first row structure
                 const firstRow = annex.data[0];
                 Object.keys(firstRow).forEach((key) => {
                   const column = annex.columns.find((c) => c.key === key);
@@ -246,13 +183,11 @@ export const useCostSheetStore = create<CostSheetState>()(
                   } else if (!column) {
                     newRow[key] = typeof firstRow[key] === 'number' ? 0 : '';
                   } else {
-                    newRow[key] = 0; // Formula column
+                    newRow[key] = 0;
                   }
                 });
               } else {
-                // Initialize from columns
                 annex.columns.forEach((col) => {
-                  // Heuristic for default values based on common key names
                   const isNumeric = col.key === 'no' ||
                                     col.key.includes('norm') ||
                                     col.key.includes('price') ||
@@ -303,10 +238,10 @@ export const useCostSheetStore = create<CostSheetState>()(
             '[Zod Validation Error] example data:',
             result.error.format()
           );
-          set({ data: example as CostSheetDataContract }); // Fallback
+          set({ data: example as CostSheetDataContract });
         }
       },
-      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn) =>
+      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, commit = false) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -314,8 +249,29 @@ export const useCostSheetStore = create<CostSheetState>()(
               (a: CostSheetAnnexContract) => a.id === annexId
             );
             if (annex) {
+              const oldCoef = annex.coefficient || 1;
               annex.coefficient = coefficient;
               annex.adjustmentColumn = adjustmentColumn;
+
+              if (commit) {
+                // Determine target column key
+                const colKey = adjustmentColumn === 'PRECIO UNITARIO' ? 'price_unit' :
+                               (adjustmentColumn === 'VALOR' ? 'value' :
+                               (adjustmentColumn === 'IMPORTE' ? 'importe' : 'price_unit'));
+
+                // Recalculate ALL rows in the selected column
+                // Ratio is needed if we are applying "on top" of current state
+                // But usually commit means "make current coefficient permanent"
+                annex.data.forEach((row: any) => {
+                  if (row && row[colKey] !== undefined && typeof row[colKey] === 'number') {
+                    row[colKey] = Number((row[colKey] * coefficient).toFixed(4));
+                  }
+                });
+
+                // Reset coefficient to 1 since it's now "baked" into the values
+                annex.coefficient = 1;
+                toast.success(`Ajuste aplicado permanentemente al Anexo ${annexId}`);
+              }
             }
           })
         ),
@@ -323,7 +279,6 @@ export const useCostSheetStore = create<CostSheetState>()(
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
-            // Search for row with ID '13' in all sections
             for (const section of draft.data.sections) {
               const row = section.rows.find(r => r.id === '13');
               if (row) {
@@ -340,8 +295,8 @@ export const useCostSheetStore = create<CostSheetState>()(
       },
     }),
     {
-      name: 'cost-sheet-storage', // Name for the localStorage item
-      version: 2, // Versioning to avoid issues with older structures
+      name: 'cost-sheet-storage',
+      version: 2,
     }
   )
 );
