@@ -7,8 +7,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: NODE_ENV
+        value: production
       - key: DATABASE_URL
-        value: ''
+        value: 'postgresql://dummy:dummy@localhost:5432/dummy'
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY

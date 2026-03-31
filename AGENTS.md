@@ -1,13 +1,18 @@
-# Pick 3 Module Standards (v9.0)
+# CostPro Development & Deployment Rules
 
-## UI/UX
-- All technical terms must have a `Tooltip` providing a layperson's explanation.
-- The "Hero Card" is the primary entry point for users, showing exactly WHAT to play and HOW MUCH to bet.
-- The "Guía de Usuario" tab is the source of truth for strategy documentation.
-
-## Engine Logic
-- Every prediction MUST include a `strategyLabel` to maintain transparency.
-- The `BacktestEngine` must track `winningStrategy` during simulations to allow users to verify model performance.
+## Deployment (Render)
+- **Runtime:** `bun`
+- **Build Command:** `bun install && bun x prisma generate && bun run build`
+- **Start Command:** `bun .next/standalone/server.js`
+- **Environment:**
+  - `NODE_ENV=production`
+  - Ensure `DATABASE_URL` is configured for Prisma.
+  - Supabase variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) are mandatory.
 
 ## Testing
-- Use `bun test` for rapid verification of `lottery.math.ts` and `backtest.engine.ts`.
+- Use `bun test` for general unit tests.
+- Use `vitest` for the IpV module (src/lib/ipv/__tests__) to support Dexie/vi mocking correctly.
+
+## Repository Standards
+- Always run `bun run build` before submitting changes to catch build-time regressions.
+- All documentation artifacts must be registered in `public/_meta/`.

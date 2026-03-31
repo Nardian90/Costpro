@@ -103,3 +103,16 @@ Durante la ejecución de `bun test`, se detectaron errores críticos de resoluci
 - **Recomendación:** Sincronizar `package.json` y asegurar que `fake-indexeddb` esté disponible para las pruebas del motor que dependen de Dexie.
 
 *Última actualización de hallazgos: 2026-03-31*
+
+---
+## 8. Informe de Incidencia de Despliegue (Render)
+
+### 8.1. Fallo de Construcción Detectado
+**Causa Raíz:** Mismatch entre la configuración del Dashboard de Render (Overrides) y los requerimientos del proyecto. El comando de construcción previo no incluía la generación de Prisma (`npx prisma generate`), lo que provocaba fallos en rutas dinámicas.
+
+### 8.2. Resolución Aplicada
+1. **Sincronización de Comandos:** Se actualizó `render.yaml` y `AGENTS.md` para forzar el uso de `bun install && bun x prisma generate && bun run build`.
+2. **Runtime de Producción:** Se fijó el `startCommand` a `bun .next/standalone/server.js` para aprovechar el modo standalone de Next.js.
+3. **Variables de Entorno:** Se añadió un `DATABASE_URL` dummy en la configuración de construcción para evitar errores de validación de Prisma durante el build.
+
+*Estado Final:* Despliegue estabilizado y validado localmente en modo producción.
