@@ -42,7 +42,6 @@ import { UpgradeModal } from '@/components/modals/UpgradeModal';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { SpeedDial, SpeedDialAction } from "@/components/ui/SpeedDial";
 import { Bot } from "lucide-react";
 
 const CostSheetView = () => {
@@ -449,74 +448,8 @@ const CostSheetView = () => {
   const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
 
-  const handleBottomAction = React.useCallback((actionId: string) => {
-    switch (actionId) {
-        case "export-pdf":
-            setIsExportModalOpen(true);
-            break;
-        case "massive-pdf":
-            handleSetActiveSection("massive-gen");
-            break;
-        case "quick-mode":
-            setViewMode("quick");
-            break;
-        case "config":
-            setIsActionsPanelOpen(true);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            break;
-        case "calculator":
-            setIsCalculatorOpen(true);
-            break;
-        case "ai":
-            handleSetActiveSection("ai-chat");
-            break;
-    }
-  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen, setIsCalculatorOpen]);
 
-  const speedDialActions: SpeedDialAction[] = [
-    {
-      id: "sale-price-display",
-      label: `Precio: ${formatCurrency(calculatedValues["14"]?.total || 0)}`,
-      icon: Tag,
-      onClick: () => toast.info(`El precio de venta actual es ${formatCurrency(calculatedValues["14"]?.total || 0)}`),
-      category: "Gestión",
-      variant: "success"
-    },
-    {
-      id: "expert",
-      label: "Experto",
-      icon: ZapIcon,
-      onClick: () => {
-          setActiveSection("expert-content");
-          setViewMode("expert");
-          toast.success("Modo Experto Activado");
-      },
-      category: "Acción",
-      variant: "primary"
-    },
-    {
-      id: "ai-chat",
-      label: "Chat con Darian AI",
-      icon: Bot,
-      onClick: () => setIsChatBotOpen(true),
-      category: "Acción",
-    },
-    {
-      id: "export-pdf",
-      label: "Exportar a PDF",
-      icon: Download,
-      onClick: () => setIsExportModalOpen(true),
-      category: "Acción",
-      variant: "success"
-    },
-    {
-      id: "calculator",
-      label: "Calculadora",
-      icon: Calculator,
-      onClick: () => setIsCalculatorOpen(true),
-      category: "Acción"
-    }
-  ];
+
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
@@ -838,7 +771,6 @@ const CostSheetView = () => {
             </div>
         </div>
       )}
-      <SpeedDial actions={speedDialActions} />
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
       <BaseModal

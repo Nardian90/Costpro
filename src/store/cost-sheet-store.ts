@@ -258,8 +258,18 @@ export const useCostSheetStore = create<CostSheetState>()(
                                (adjustmentColumn === 'IMPORTE' ? 'importe' : 'price_unit'));
 
                 annex.data.forEach((row: any) => {
-                  if (row && row[colKey] !== undefined && typeof row[colKey] === 'number') {
-                    row[colKey] = Number((row[colKey] * coefficient).toFixed(4));
+                  if (row && row[colKey] !== undefined) {
+                    const currentVal = row[colKey];
+                    const coefStr = coefficient.toFixed(4);
+
+                    if (typeof currentVal === 'number') {
+                        // Transform number to formula for traceability
+                        row[colKey] = `=${currentVal}*${coefStr}`;
+                    } else if (typeof currentVal === 'string' && currentVal.startsWith('=')) {
+                        // Append to existing formula
+                        const baseExpr = currentVal.substring(1);
+                        row[colKey] = `=(${baseExpr})*${coefStr}`;
+                    }
                   }
                 });
 

@@ -124,16 +124,11 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     updateValues(updates);
   };
 
-  const goalSeek = (targetPrice: number) => {
-    if (totalCost <= 0) return;
-    const requiredMarkup = ((targetPrice / totalCost) - 1) * 100;
-    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
-    handleSliderChange([clampedMarkup]);
-  };
-
   const handlePriceAdjust = (newPrice: number) => {
-    setLocalPrice(newPrice.toFixed(2));
-    goalSeek(newPrice);
+    if (totalCost <= 0) return;
+    const requiredMarkup = ((newPrice / totalCost) - 1) * 100;
+    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
+    updateUtilityFormula(clampedMarkup);
   };
 
   const handleAutoAdjust = () => {
@@ -225,8 +220,66 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     return (target / currentTargetValue) * currentCoef;
   }, [targetValue, selectedAnnexId, targetRowId, telemetry, annex]);
 
-  return (
+      return (
     <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Master View Header: Ring & Key Metrics */}
+      <div className="bg-card/30 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-6 sm:p-12 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Zap className="w-64 h-64 text-primary" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="flex justify-center lg:justify-start">
+            <CostSheetMasterRing
+              totalPrice={totalPrice}
+              utility={utility}
+              totalCost={totalCost}
+              onPriceChange={handlePriceAdjust}
+              onPriceAdjust={(step) => handlePriceAdjust(totalPrice + step)}
+            />
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter italic text-foreground leading-[0.9]">
+                Resumen de <span className="text-primary">Rentabilidad</span>
+              </h2>
+              <p className="text-xs sm:text-sm font-black uppercase tracking-[0.3em] text-muted-foreground mt-4 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" /> Análisis de Margen y Coeficientes
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Markup Real</span>
+                <span className="text-3xl font-black font-mono">+{((utility / totalCost) * 100).toFixed(1)}%</span>
+              </div>
+              <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Salud Ficha</span>
+                <span className={cn("text-3xl font-black font-mono", healthPercent > 80 ? "text-emerald-500" : "text-amber-500")}>
+                  {healthPercent}%
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+               <div className="flex justify-between items-center px-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Ajuste de Margen Deseado</h4>
+                  <span className="text-sm font-black font-mono text-primary">{((utility / totalCost) * 100).toFixed(1)}%</span>
+               </div>
+               <Slider
+                 value={[ (utility / totalCost) * 100 ]}
+                 min={1}
+                 max={100}
+                 step={0.5}
+                 onValueChange={(val) => updateUtilityFormula(val[0])}
+                 className="py-4"
+               />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Main Controls */}
         <div className="xl:col-span-7 space-y-8">
@@ -358,15 +411,21 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
         {/* Right Side: Auto-adjustment & Health */}
         <div className="xl:col-span-5 space-y-8">
           {/* Auto-Adjustment Card - Redesigned Mobile-First/Desktop-First */}
-          <div className="glass-card-stitch rounded-[2.5rem] p-8 relative overflow-hidden border border-primary/20 shadow-2xl bg-primary/5 backdrop-blur-sm">
-            <header className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-                  <Wand2 className="w-5 h-5 animate-pulse" />
+          <div className="glass-card-stitch rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden border border-primary/20 shadow-2xl bg-card/40 backdrop-blur-xl">
+            <header className="mb-10">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30">
+                    <Wand2 className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-primary/70 font-black">AI Finance Assistant</p>
+                    <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter italic text-foreground leading-tight">Auto-ajuste</h3>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-primary/70 font-black">Asistente Inteligente</p>
-                  <h3 className="text-xl font-black uppercase tracking-tighter italic text-foreground">Auto-ajuste</h3>
+                <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Live Engine</span>
                 </div>
               </div>
             </header>
@@ -483,33 +542,48 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   )}
                 </div>
 
-                {/* Fine Tuning Slider */}
-                <div className="space-y-4 p-1">
-                   <div className="flex justify-between items-center">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Ajuste de Precisión</h4>
-                      <span className="text-xs font-black font-mono text-primary">x{manualCoef.toFixed(4)}</span>
+                {/* Fine Tuning Slider - Mobile Friendly Grid */}
+                <div className="space-y-6 pt-4 border-t border-white/5">
+                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                      <div className="space-y-1">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                           <Settings className="w-3 h-3 text-primary" /> Ajuste de Precisión
+                        </h4>
+                        <p className="text-[8px] text-muted-foreground uppercase font-black">Control manual de granularidad fina</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-lg bg-primary/10 text-xs font-black font-mono text-primary border border-primary/20">
+                          x{manualCoef.toFixed(4)}
+                        </span>
+                      </div>
                    </div>
-                   <Slider
-                     value={[manualCoef]}
-                     min={0.1}
-                     max={5.0}
-                     step={0.0001}
-                     onValueChange={(val) => handleManualCoefAdjust(val[0])}
-                   />
-                   <div className="flex justify-between text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
-                      <span>Reducción (0.1x)</span>
-                      <span>Ampliación (5.0x)</span>
+
+                   <div className="px-1">
+                     <Slider
+                       value={[manualCoef]}
+                       min={0.1}
+                       max={5.0}
+                       step={0.0001}
+                       onValueChange={(val) => handleManualCoefAdjust(val[0])}
+                       className="py-4"
+                     />
+                     <div className="flex justify-between text-[8px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                        <span>- Reducción (0.1x)</span>
+                        <span>+ Ampliación (5.0x)</span>
+                     </div>
                    </div>
                 </div>
 
-                <Button
-                  onClick={handleCommitAdjustment}
-                  disabled={manualCoef === 1 && !annex?.coefficient}
-                  className="w-full h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-emerald-500/20 gap-3 active:scale-95 transition-all"
-                >
-                  <Save className="w-4 h-4" />
-                  Aplicar Permanentemente
-                </Button>
+                <div className="pt-4">
+                  <Button
+                    onClick={handleCommitAdjustment}
+                    disabled={manualCoef === 1 && !annex?.coefficient}
+                    className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-emerald-500/30 gap-3 active:scale-95 transition-all group border-b-4 border-emerald-700"
+                  >
+                    <Save className="w-4 h-4 group-hover:scale-125 transition-transform" />
+                    Aplicar Cambios Permanentes
+                  </Button>
+                </div>
               </div>
             </div>
 
