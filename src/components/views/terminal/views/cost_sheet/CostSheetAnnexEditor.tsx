@@ -178,7 +178,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                     {col.formula ? (
                                         <div className="relative group/cell">
                                             <div className={cn("neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
-                                                {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
+                                                {formatCurrency((calculatedAnnex?.data[rowIndex]?.[col.key] ?? 0)).replace('$', '').trim()}
                                             </div>
                                             <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
                                         </div>
@@ -296,7 +296,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                             <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                                 {formatCurrency(totalValue)}
                             </span>
-                            <div className="flex flex-col items-end print:hidden animate-in fade-in slide-in-from-right-2 duration-500">
+                            <div className="flex flex-col items-end print:hidden animate-in fade-in slide-in-from-right-2 duration-500" style={{ display: annex.id === "I" ? "flex" : "none" }}>
                                 <div className="flex items-center gap-4 mb-1">
                                     <div className="flex flex-col items-start">
                                         <span className="text-[8px] font-black uppercase tracking-widest text-primary/50">Columna a Ajustar</span>
@@ -340,7 +340,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 />
                                                 <RefreshCw className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40 group-hover/coef:rotate-180 transition-transform duration-700" />
                                             </div>
-                                            {annex.coefficient && annex.coefficient !== 1 && (
+                                            {annex.id === "I" && annex.coefficient && annex.coefficient !== 1 && (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
@@ -380,7 +380,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(totalValue)}
                     </span>
-                    {annex.coefficient && annex.coefficient !== 1 && (
+                    {annex.id === "I" && annex.coefficient && annex.coefficient !== 1 && (
                         <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-1.5 print:hidden">
                             <RefreshCw className="w-2.5 h-2.5 text-amber-500" />
                             <span className="text-[10px] font-black font-mono text-amber-500">x{annex.coefficient.toFixed(4)}</span>
