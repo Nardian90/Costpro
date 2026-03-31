@@ -193,9 +193,27 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const healthPercent = providedHealthPercent !== undefined ? providedHealthPercent : 85;
 
   const telemetryItems = [
-    { label: 'Costo Total', value: totalCost, color: 'text-blue-500', icon: Package },
-    { label: 'Utilidad', value: utility, color: 'text-emerald-500', icon: TrendingUp },
-    { label: 'Precio Final', value: totalPrice, color: 'text-primary', icon: DollarSign }
+    {
+      label: 'Costo Total',
+      value: totalCost,
+      percent: totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0,
+      color: 'text-blue-500',
+      icon: Package
+    },
+    {
+      label: 'Utilidad',
+      value: utility,
+      percent: totalPrice > 0 ? (utility / totalPrice) * 100 : 0,
+      color: 'text-emerald-500',
+      icon: TrendingUp
+    },
+    {
+      label: 'Precio Final',
+      value: totalPrice,
+      percent: 100,
+      color: 'text-primary',
+      icon: DollarSign
+    }
   ];
 
   const suggestedCoef = useMemo(() => {
