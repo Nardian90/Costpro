@@ -83,7 +83,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     if (annex) {
       setManualCoef(annex.coefficient || 1);
     }
-  }, [selectedAnnexId, annex]);
+  }, [selectedAnnexId, annex?.coefficient]);
 
   // Indirect Coefficient logic
   const row2 = telemetry['2']?.total || 0;
@@ -249,15 +249,15 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Markup Real</span>
-                <span className="text-3xl font-black font-mono">+{((utility / totalCost) * 100).toFixed(1)}%</span>
+                <span className="text-3xl font-black font-mono">+{Math.round((utility / totalCost) * 100)}%</span>
               </div>
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Salud Ficha</span>
                 <span className={cn("text-3xl font-black font-mono", healthPercent > 80 ? "text-emerald-500" : "text-amber-500")}>
-                  {healthPercent}%
+                  {Math.round(healthPercent)}%
                 </span>
               </div>
             </div>
@@ -265,7 +265,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             <div className="space-y-6">
                <div className="flex justify-between items-center px-2">
                   <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Ajuste de Margen Deseado</h4>
-                  <span className="text-sm font-black font-mono text-primary">{((utility / totalCost) * 100).toFixed(1)}%</span>
+                  <span className="text-sm font-black font-mono text-primary">{Math.round((utility / totalCost) * 100)}%</span>
                </div>
                <Slider
                  value={[ (utility / totalCost) * 100 ]}
@@ -463,6 +463,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                       <SelectItem value="PRECIO UNITARIO" className="text-xs font-bold uppercase py-3">Precio Unitario</SelectItem>
                       <SelectItem value="VALOR" className="text-xs font-bold uppercase py-3">Valor</SelectItem>
                       <SelectItem value="IMPORTE" className="text-xs font-bold uppercase py-3">Importe</SelectItem>
+                      <SelectItem value="NORMA DE CONSUMO" className="text-xs font-bold uppercase py-3">Norma de Consumo</SelectItem>
+                      <SelectItem value="AMBOS" className="text-xs font-bold uppercase py-3">Ambos (Norma y Precio)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
