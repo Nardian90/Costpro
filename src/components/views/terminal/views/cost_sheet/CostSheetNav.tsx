@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { CostSheetFCDropdown } from './CostSheetFCDropdown';
 import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdown';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
@@ -33,8 +33,6 @@ interface CostSheetNavProps {
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
-  navItems,
-  annexes,
   activeSection,
   setActiveSection,
   viewMode,
@@ -54,10 +52,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   topOffset,
 }) => {
   const navActions: Action[] = React.useMemo(() => {
-    // Filter out all items from main nav as requested: "visible solo Ficha, Modo, Generar, Opciones Darian y Ayuda"
-    const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis', 'templates', 'ai-chat'].includes(s.id));
-
-        const actions: Action[] = [
+    const actions: Action[] = [
         {
             id: "open-actions",
             label: "",
@@ -73,7 +68,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             ),
             tooltip: "Panel de Control"
         },
-        // Fichas Dropdown (Vistas de la ficha)
         {
             id: 'fc-dropdown',
             label: 'Vistas',
@@ -87,16 +81,12 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 />
             )
         },
-
-        // 1. Modo Dropdown
         {
             id: 'mode-dropdown',
             label: '',
             onClick: () => {},
             component: <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
         },
-
-        // 2. Generar Dropdown
         {
             id: 'generate-dropdown',
             label: '',
@@ -108,8 +98,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 />
             )
         },
-
-        // 3. Opciones Dropdown (Renamed internally to Opciones Darian)
         {
             id: 'options-dropdown',
             label: '',
@@ -124,8 +112,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 />
             )
         },
-
-        // 4. Ayuda Dropdown
         {
             id: 'help-dropdown',
             label: '',
@@ -138,12 +124,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 />
             )
         },
-
     ];
-
     return actions;
   }, [
-    navItems, activeSection, setActiveSection, viewMode, setViewMode,
+    activeSection, setActiveSection, viewMode, setViewMode,
     onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, onOpenSystemHelp, onOpenAcademy,
     onImport, onSave, onExportExcel, onExportPdf, onQuickGenerate, onExpertGenerate
   ]);

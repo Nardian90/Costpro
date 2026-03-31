@@ -636,29 +636,6 @@ const CostSheetView = () => {
           {viewMode === 'expert' && (
             <>
                 <div className="mb-6 -mx-4 px-4 z-30">
-                    <CostSheetNav
-                        navItems={navItems}
-                        annexes={data?.annexes || []}
-                        activeSection={activeSection}
-                        setActiveSection={handleSetActiveSection}
-                        viewMode={viewMode}
-                        setViewMode={handleSetViewMode}
-                        onOpenActions={() => setIsActionsPanelOpen(true)}
-                        onOpenHelp={() => setIsHelpPanelOpen(true)}
-                        onOpenSystemHelp={() => setCurrentView("help")}
-                        onOpenAcademy={() => setCurrentView("academy")}
-                        onOpenAnnexes={onOpenAnnexes}
-                        onOpenSections={onOpenSections}
-                        onImport={handleImportJSON}
-                        onSave={handleExportJSON}
-                        onExportExcel={handleExportExcel}
-                        onExportPdf={() => setIsExportModalOpen(true)}
-                        onQuickGenerate={() => setViewMode('quick')}
-                        onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
-                    />
-                </div>
-
-                <div className="mt-4 w-full flex justify-center">
                     <div className="w-full max-w-6xl">
                     {activeSection === 'kpis' && (
                          <div className="animate-in zoom-in-95 duration-500 py-8">
