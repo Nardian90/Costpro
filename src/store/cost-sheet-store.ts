@@ -32,7 +32,7 @@ interface CostSheetState {
   loadExample: () => void;
   reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
-  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, commit?: boolean) => void;
+  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, commit?: boolean, isAdjustmentActive?: boolean) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -241,7 +241,7 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract });
         }
       },
-      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, commit = false) =>
+      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, commit = false, isAdjustmentActive) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -251,6 +251,9 @@ export const useCostSheetStore = create<CostSheetState>()(
             if (annex) {
               annex.coefficient = coefficient;
               annex.adjustmentColumn = adjustmentColumn;
+              if (isAdjustmentActive !== undefined) {
+                annex.isAdjustmentActive = isAdjustmentActive;
+              }
 
                             if (commit) {
                 const coef = coefficient;
