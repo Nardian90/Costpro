@@ -1,11 +1,11 @@
 {
   "artifactName": "components",
-  "version": "1.0.7",
-  "hash": "sha256:aae8a5275b4525cfca96987915454cfaff2105dd19c71f1d4c3d22501d632883",
-  "confidenceScore": 95.0,
+  "version": "1.0.8",
+  "hash": "sha256:aacc74a1d54b7a8041fcc65378ed6edd54db89cfa7845bc68d9e450b1b22ef16",
+  "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-03-20T13:42:21.395237+00:00Z",
-  "sourcePhase": 7,
+  "createdAt": "2026-04-01T01:04:19.758738+00:00Z",
+  "sourcePhase": 2,
   "createdBy": "architecture-scheduler/8.0",
   "confidenceModel": "ai-arch-v8.0",
   "provenance": {
@@ -14,7 +14,7 @@
       "architecture-scheduler/8.0"
     ]
   },
-  "explainabilitySummary": "Generado automáticamente en Fase 7",
+  "explainabilitySummary": "Generado automáticamente en Fase 2",
   "previousVersions": [
     {
       "version": "1.0.0",
@@ -50,6 +50,11 @@
       "version": "1.0.6",
       "hash": "sha256:9ffe8c76c647c9370c06675d04fe873c77af6d674ab4c19c556992dcafa77245",
       "createdAt": "2026-03-20T13:40:29.312319+00:00Z"
+    },
+    {
+      "version": "1.0.7",
+      "hash": "sha256:aae8a5275b4525cfca96987915454cfaff2105dd19c71f1d4c3d22501d632883",
+      "createdAt": "2026-03-20T13:42:21.395237+00:00Z"
     }
   ]
 }
