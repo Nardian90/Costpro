@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
 import { exportAnnexToExcel, importAnnexFromExcel } from '@/services/excel-service';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
+import { solveCoefficient } from '@/lib/cost-engine/solver';
 
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
@@ -47,6 +48,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [localCoef, setLocalCoef] = React.useState(String(annex?.coefficient !== undefined ? annex.coefficient : 1));
+  const [targetPrice, setTargetPrice] = React.useState('');
+  const [isSolving, setIsSolving] = React.useState(false);
+
   React.useEffect(() => {
     setLocalCoef(String(annex?.coefficient !== undefined ? annex.coefficient : 1));
   }, [annex?.coefficient]);
@@ -55,7 +59,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   if (!annex) return null;
 
   const handleInputChange = (path: (string | number)[], value: any) => {
-    // If it is '0' or '0.' it should be treated as string to allow typing decimals
     if (value === '0' || value === '0.') {
         updateValue(path, !isNaN(Number(value)) && value !== '' ? Number(value) : value);
         return;
@@ -71,6 +74,22 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
       updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'price'], product.price || 0);
       setIsPickerOpen(false);
     }
+  };
+
+  const handleSolve = () => {
+    const target = parseFloat(targetPrice);
+    if (isNaN(target) || target <= 0) return;
+
+    setIsSolving(true);
+    // Use a small timeout to let the UI update and then run the solver
+    setTimeout(() => {
+      try {
+        const bestCoef = solveCoefficient(data, annex.id, target);
+        updateAnnexAdjustment(annex.id, bestCoef, annex.adjustmentColumn || 'PRECIO UNITARIO', true);
+      } finally {
+        setIsSolving(false);
+      }
+    }, 100);
   };
 
   const classificationSuggestions = [
@@ -95,6 +114,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
       setSheet(newData);
     }
   };
+
+  const showTargetPriceInput = annex.id === 'I' || annex.id === 'II';
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -166,6 +187,36 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                         className="scale-90"
                     />
                 </div>
+
+                {showTargetPriceInput && (
+                  <div className="flex flex-row items-end gap-2 ml-4 animate-in fade-in slide-in-from-left-4 duration-700">
+                    <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Precio Venta Objetivo</span>
+                        <div className="relative group/target">
+                            <input
+                                type="number"
+                                value={targetPrice}
+                                onChange={(e) => setTargetPrice(e.target.value)}
+                                placeholder="Ej: 25"
+                                className="w-24 h-8 px-8 rounded-xl bg-background border border-primary/20 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-center placeholder:text-primary/20"
+                            />
+                            <Target className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40" />
+                        </div>
+                    </div>
+                    <Button
+                        size="sm"
+                        onClick={handleSolve}
+                        disabled={isSolving || !targetPrice}
+                        className="h-8 px-4 rounded-xl bg-primary text-foreground font-black uppercase tracking-widest text-[9px] shadow-lg shadow-primary/10 active:scale-95 transition-all gap-2"
+                    >
+                        {isSolving ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>Calcular</>
+                        )}
+                    </Button>
+                  </div>
+                )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto self-end lg:self-center">
@@ -304,43 +355,11 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     }
                                                     handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], val);
                                                 }}
-                                                list={(() => {
-                                                    const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
-                                                    if (activeAnnexId === 'I' && col.key === 'description') return undefined;
-                                                    if (activeAnnexId === 'II' && isDescriptionColumn) return undefined;
-                                                    if (['IV', 'V'].includes(activeAnnexId) && isDescriptionColumn) return undefined;
-                                                    if (col.key === 'classification' || col.key === 'description') return `classification-suggestions-${activeAnnexId}`;
-                                                    return undefined;
-                                                })()}
                                                 className={cn(
-                                                    "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
-                                                    typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
+                                                    "neu-inset-sm h-8 px-2 py-1 font-mono text-right bg-background/50 border border-border/50 focus:border-primary/30 focus:ring-1 focus:ring-primary/20",
+                                                    isZero(col.key) ? "text-muted-foreground opacity-60" : "text-foreground font-bold"
                                                 )}
-
-                                                placeholder={(() => {
-                                                    const val = annex.data[rowIndex][col.key];
-                                                    const coef = annex.coefficient !== undefined ? annex.coefficient : 1;
-                                                    if (coef === 1 || typeof val !== "number") return "";
-
-                                                    const isPrice = col.key === "price_unit" || col.key === "rate" || col.label === "PRECIO UNITARIO";
-                                                    const isNorm = col.key === "norm" || col.key === "consumption" || col.key === "quantity" || col.label === "NORMA DE CONSUMO";
-
-                                                    if (annex.adjustmentColumn === "AMBOS") {
-                                                        if (isPrice || isNorm) {
-                                                            return String((val * Math.sqrt(coef)).toFixed(4));
-                                                        }
-                                                    } else {
-                                                        const isAdjusted =
-                                                            (col.label === annex.adjustmentColumn) ||
-                                                            (annex.adjustmentColumn === "PRECIO UNITARIO" && isPrice) ||
-                                                            (annex.adjustmentColumn === "NORMA DE CONSUMO" && isNorm) ||
-                                                            (annex.adjustmentColumn === "VALOR" && col.key === "value") ||
-                                                            (annex.adjustmentColumn === "IMPORTE" && col.key === "importe");
-
-                                                        if (isAdjusted) return String((val * coef).toFixed(4));
-                                                    }
-                                                    return "";
-                                                })()} />
+                                            />
                                             {(() => {
                                                 const val = annex.data[rowIndex][col.key];
                                                 const coef = annex.coefficient !== undefined ? annex.coefficient : 1;
