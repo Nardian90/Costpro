@@ -1,0 +1,52 @@
+{
+  "phaseExecutions": [
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-04-01T13:43:11.602143+00:00Z",
+      "endTime": "2026-04-01T13:43:11.602167+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 3
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-04-01T13:46:07.170928+00:00Z",
+      "endTime": "2026-04-01T13:46:07.170953+00:00Z",
+      "durationMs": 0,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 3
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-04-01T13:51:16.833621+00:00Z",
+      "endTime": "2026-04-01T13:51:23.625655+00:00Z",
+      "durationMs": 6792,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 3
+    }
+  ],
+  "performanceSummary": {
+    "averagePhaseDurationMs": 2264,
+    "slowestPhase": 1,
+    "slowestPhaseDurationMs": 6792,
+    "fastestPhase": 1,
+    "fastestPhaseDurationMs": 0,
+    "lastCycleDurationMs": 6792,
+    "lastUpdated": "2026-04-01T13:51:23.625831Z"
+  }
+}

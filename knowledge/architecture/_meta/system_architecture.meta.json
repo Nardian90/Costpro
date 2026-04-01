@@ -1,0 +1,19 @@
+{
+  "artifactName": "system_architecture",
+  "version": "1.0.0",
+  "hash": "sha256:2360cadbbcd5e5413fe0757639e140b836ba90fb75087b06f5e42be41cefb815",
+  "confidenceScore": 100.0,
+  "reviewRequired": false,
+  "createdAt": "2026-04-01T13:51:23.611298+00:00Z",
+  "sourcePhase": 1,
+  "createdBy": "architecture-scheduler/8.0",
+  "confidenceModel": "ai-arch-v8.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/8.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 1",
+  "previousVersions": []
+}
