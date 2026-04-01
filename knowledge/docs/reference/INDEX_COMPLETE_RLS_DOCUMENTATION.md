@@ -94,7 +94,7 @@
 
 ### 📄 ARCHIVOS TÉCNICOS
 
-**7. [`supabase/migrations/20260209_fix_critical_rls_issues.sql`](supabase/migrations/20260209_fix_critical_rls_issues.sql)**
+**7. [`supabase/migrations/20260209_fix_critical_rls_issues.sql`](../../../supabase/migrations/20260209_fix_critical_rls_issues.sql)**
 
 - ✅ Migration aplicada en Supabase
 - 🔧 5 pasos de corrección
@@ -104,7 +104,7 @@
 
 ---
 
-**8. [`supabase/VERIFICATION_TESTS.sql`](supabase/VERIFICATION_TESTS.sql)**
+**8. [`supabase/VERIFICATION_TESTS.sql`](../../../supabase/VERIFICATION_TESTS.sql)**
 
 - 8 suite de tests SQL
 - Verificación de seguridad

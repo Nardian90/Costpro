@@ -73,13 +73,13 @@ Guía rápida de funcionalidades principales y sus propósitos:
 - handleToggleKeyStatus
 - handleUpdateKey
 
-## Panel de ControlView
+## Panel de Control
 **Propósito:** Interfaz para gestionar Panel de ControlView.
 
 **Acciones clave:**
 - Calendar
 
-## usePanel de ControlView.ts
+## usePanel de Control
 **Propósito:** Interfaz para gestionar usePanel de ControlView.ts.
 
 ## ConcentricPanel de ControlRing

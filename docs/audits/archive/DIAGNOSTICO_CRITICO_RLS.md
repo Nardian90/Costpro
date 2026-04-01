@@ -347,7 +347,7 @@ CREATE POLICY "Admin can manage any profile"
 
 ### SOLUCIÓN 4: Pasar `is_active` en `useUsersView.ts` (MEDIA)
 
-En [c:\xampp\htdocs\Costpro\src\components\views\terminal\views\users\useUsersView.ts](c:\xampp\htdocs\Costpro\src\components\views\terminal\views\users\useUsersView.ts#L70):
+En [../../src/components/views/terminal/views/users/useUsersView.ts](../../src/components/views/terminal/views/users/useUsersView.ts#L70):
 
 ```typescript
 // ANTES
@@ -405,7 +405,7 @@ $$;
 
 ### Fase 2: Frontend (React) - 5 minutos
 
-1. **Agregar `is_active` a payload de `useUpdateUser`** en [useUsersView.ts](c:\xampp\htdocs\Costpro\src\components\views\terminal\views\users\useUsersView.ts#L70)
+1. **Agregar `is_active` a payload de `useUpdateUser`** en [useUsersView.ts](../../src/components/views/terminal/views/users/useUsersView.ts#L70)
 
 **Estimado:** ~2 minutos
 
