@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2, Eye, Info, UserCheck, AlertCircle } from 'lucide-react';
 import { ObservationsModal } from "./ObservationsModal";
 import { toast } from 'sonner';
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate, formatCurrency, formatCurrencyCents } from "@/lib/utils";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -133,7 +133,7 @@ export function TransferQRReportView({ type }: Props) {
             formatDate(t.fecha),
             t.carnet || '',
             t.nombre_cliente || '',
-            formatCurrency(t.importe_venta_cents || t.importe_cents),
+            formatCurrencyCents(t.importe_venta_cents || t.importe_cents),
             t.referencia_origen,
             t.telefono_cliente || '',
             '',
@@ -253,7 +253,7 @@ export function TransferQRReportView({ type }: Props) {
                                             />
                                         </TableCell>
                                         <TableCell className="text-right font-black text-xs text-primary whitespace-nowrap">
-                                            {formatCurrency(t.importe_venta_cents || t.importe_cents)}
+                                            {formatCurrencyCents(t.importe_venta_cents || t.importe_cents)}
                                         </TableCell>
                                         <TableCell className="font-mono text-[9px] text-muted-foreground">{t.referencia_origen}</TableCell>
                                         <TableCell className="text-center">

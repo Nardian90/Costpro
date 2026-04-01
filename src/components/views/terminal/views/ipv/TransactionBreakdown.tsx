@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Trash2, Edit2, CheckCircle2, X, RotateCcw, Eye, Info } from 'lucide-react';
 import { ObservationsModal } from "./ObservationsModal";
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -337,25 +337,25 @@ export function TransactionBreakdown() {
                     <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
                     <TableCell className="text-right">
                       <div className="text-xs font-bold text-muted-foreground">
-                        {formatCurrency(basePrice)}
+                        {formatCurrencyCents(basePrice)}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                         {propina > 0 ? (
                             <div className="text-xs font-black text-green-600">
-                                +{formatCurrency(propina)}
+                                +{formatCurrencyCents(propina)}
                             </div>
                         ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
                         {descuento > 0 ? (
                             <div className="text-xs font-black text-red-600">
-                                -{formatCurrency(descuento)}
+                                -{formatCurrencyCents(descuento)}
                             </div>
                         ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
-                        <div className="font-black text-xs text-primary">{formatCurrency(l.importe_linea_cents)}</div>
+                        <div className="font-black text-xs text-primary">{formatCurrencyCents(l.importe_linea_cents)}</div>
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={`text-xs font-black uppercase ${
@@ -420,11 +420,12 @@ export function TransactionBreakdown() {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase text-muted-foreground">Importe Total (Cents)</label>
+                        <label className="text-xs font-black uppercase text-muted-foreground">Importe Total (Pesos)</label>
                         <Input
                             type="number"
-                            value={editAmount}
-                            onChange={(e) => setEditAmount(Number(e.target.value))}
+                            step="0.01"
+                            value={editAmount / 100}
+                            onChange={(e) => setEditAmount(Math.round(parseFloat(e.target.value) * 100))}
                             className="h-12 text-lg font-black"
                         />
                     </div>
@@ -441,7 +442,7 @@ export function TransactionBreakdown() {
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
                     <p className="text-xs text-muted-foreground italic">
-                        El precio base es {formatCurrency(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents)}.
+                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
                         Cualquier diferencia se guardará como Propina o Descuento.
                     </p>
                 </div>

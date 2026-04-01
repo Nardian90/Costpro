@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet, ChevronRight, ChevronDown, Calendar, Filter, CreditCard, Banknote, QrCode } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { useConsolidatedBalance, usePeriodClosure } from '@/hooks/logic/useConsolidatedBalance';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Lock, Unlock, CheckCircle2 } from 'lucide-react';
@@ -36,7 +36,9 @@ export function PivotStatementView() {
     const pivotData = useMemo(() => {
         if (!transactions) return [];
 
-        const filtered = transactions.filter(t => filterType === 'ALL' || t.tipo === filterType);
+        // Filter transactions for the selected month to ensure accurate reconciliation
+        const periodFiltered = transactions.filter(t => t.fecha.startsWith(selectedPeriod));
+        const filtered = periodFiltered.filter(t => filterType === 'ALL' || t.tipo === filterType);
 
         const groups: Record<string, {
             key: string;
@@ -125,9 +127,9 @@ export function PivotStatementView() {
             const tableBody = pivotData.map(g => [
                 g.label,
                 g.count,
-                formatCurrency(g.totalCr),
-                formatCurrency(g.totalDb),
-                formatCurrency(g.netAmount)
+                formatCurrencyCents(g.totalCr),
+                formatCurrencyCents(g.totalDb),
+                formatCurrencyCents(g.netAmount)
             ]);
 
             autoTable(doc, {
@@ -137,9 +139,9 @@ export function PivotStatementView() {
                 theme: 'grid',
                 headStyles: { fillColor: [22, 163, 74] },
                 foot: [['TOTAL', '',
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0)),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0)),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0))
+                    formatCurrencyCents(pivotData.reduce((s, g) => s + g.totalCr, 0)),
+                    formatCurrencyCents(pivotData.reduce((s, g) => s + g.totalDb, 0)),
+                    formatCurrencyCents(pivotData.reduce((s, g) => s + g.netAmount, 0))
                 ]],
                 footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
             });
@@ -150,6 +152,14 @@ export function PivotStatementView() {
             toast.error('Error al exportar PDF');
         }
     };
+
+    // Global totals for reconciliation (ignoring Cr/Db filters)
+    const reconciliationTotals = useMemo(() => {
+        if (!transactions) return 0;
+        return transactions
+            .filter(t => t.fecha.startsWith(selectedPeriod))
+            .reduce((sum, t) => sum + (t.tipo === 'Cr' ? t.importe_cents : -t.importe_cents), 0);
+    }, [transactions, selectedPeriod]);
 
     return (
         <div className="space-y-6">
@@ -230,6 +240,7 @@ export function PivotStatementView() {
                         <div className="flex items-center gap-2">
                             <Input
                                 type="number"
+                                step="0.01"
                                 value={account?.openingBalance || 0}
                                 onChange={(e) => updateOpeningBalance(Number(e.target.value))}
                                 disabled={isClosed}
@@ -250,7 +261,7 @@ export function PivotStatementView() {
                     <Card className="p-4 bg-primary/5 border-none">
                         <p className="text-[10px] font-black uppercase text-primary/60 mb-1">Saldo Final Calculado</p>
                         <h4 className="text-xl font-black">
-                            {formatCurrency((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0))}
+                            {formatCurrencyCents(Math.round((account?.openingBalance || 0) * 100) + reconciliationTotals)}
                         </h4>
                     </Card>
 
@@ -258,6 +269,7 @@ export function PivotStatementView() {
                         <p className="text-[10px] font-black uppercase text-blue-600/60 mb-1">Extracto Bancario (Real)</p>
                         <Input
                             type="number"
+                            step="0.01"
                             value={account?.bankStatementBalance || 0}
                             onChange={(e) => updateBankBalance(Number(e.target.value))}
                             className="h-8 font-black text-sm bg-transparent border-none p-0 focus-visible:ring-0 w-full"
@@ -265,18 +277,21 @@ export function PivotStatementView() {
                     </Card>
 
                     <Card className={`p-4 border-none ${
-                        Math.abs(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0)) < 0.01
+                        Math.abs((Math.round((account?.openingBalance || 0) * 100) + reconciliationTotals) - Math.round((account?.bankStatementBalance || 0) * 100)) < 1
                         ? 'bg-green-500/10 text-green-600'
                         : 'bg-red-500/10 text-red-600'
                     }`}>
                         <p className="text-[10px] font-black uppercase mb-1">Diferencia de Conciliación</p>
                         <div className="flex items-center gap-2">
                             <h4 className="text-xl font-black">
-                                {formatCurrency(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0))}
+                                {formatCurrencyCents((Math.round((account?.openingBalance || 0) * 100) + reconciliationTotals) - Math.round((account?.bankStatementBalance || 0) * 100))}
                             </h4>
-                            {Math.abs(((account?.openingBalance || 0) + pivotData.reduce((s, g) => s + g.netAmount, 0)) - (account?.bankStatementBalance || 0)) < 0.01
+                            {Math.abs((Math.round((account?.openingBalance || 0) * 100) + reconciliationTotals) - Math.round((account?.bankStatementBalance || 0) * 100)) < 1
                                 ? <CheckCircle2 className="w-5 h-5" />
-                                : <AlertTriangle className="w-5 h-5 animate-pulse" />}
+                                : <div className="flex items-center gap-1 animate-pulse">
+                                    <AlertTriangle className="w-5 h-5" />
+                                    <span className="text-[8px] font-black uppercase">Descuadre detectado</span>
+                                  </div>}
                         </div>
                     </Card>
                 </div>
@@ -312,13 +327,13 @@ export function PivotStatementView() {
                                             {g.count}
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-green-600">
-                                            {formatCurrency(g.totalCr)}
+                                            {formatCurrencyCents(g.totalCr)}
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-red-600">
-                                            {formatCurrency(g.totalDb)}
+                                            {formatCurrencyCents(g.totalDb)}
                                         </TableCell>
                                         <TableCell className="text-right font-black text-primary">
-                                            {formatCurrency(g.netAmount)}
+                                            {formatCurrencyCents(g.netAmount)}
                                         </TableCell>
                                     </TableRow>
                                     {expandedGroups.includes(g.key) && (
@@ -333,7 +348,7 @@ export function PivotStatementView() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-[10px] font-black uppercase text-green-600/60 leading-none mb-1">Transferencia</p>
-                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.transfer)}</p>
+                                                                <p className="text-sm font-black">{formatCurrencyCents(g.breakdown.transfer)}</p>
                                                             </div>
                                                         </Card>
                                                         <Card className="p-3 bg-blue-500/5 border-blue-500/10 flex items-center gap-3">
@@ -342,7 +357,7 @@ export function PivotStatementView() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-[10px] font-black uppercase text-blue-600/60 leading-none mb-1">Efectivo</p>
-                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.cash)}</p>
+                                                                <p className="text-sm font-black">{formatCurrencyCents(g.breakdown.cash)}</p>
                                                             </div>
                                                         </Card>
                                                         <Card className="p-3 bg-purple-500/5 border-purple-500/10 flex items-center gap-3">
@@ -351,7 +366,7 @@ export function PivotStatementView() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-[10px] font-black uppercase text-purple-600/60 leading-none mb-1">QR / Enlace</p>
-                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.qr)}</p>
+                                                                <p className="text-sm font-black">{formatCurrencyCents(g.breakdown.qr)}</p>
                                                             </div>
                                                         </Card>
                                                     </div>
@@ -377,7 +392,7 @@ export function PivotStatementView() {
                                                                             <span className="text-[10px] text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
                                                                         </div>
                                                                         <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
-                                                                            {t.tipo === 'Db' ? '-' : ''}{formatCurrency(t.importe_cents)}
+                                                                            {t.tipo === 'Db' ? '-' : ''}{formatCurrencyCents(t.importe_cents)}
                                                                         </span>
                                                                     </div>
                                                                 ))}
@@ -396,9 +411,9 @@ export function PivotStatementView() {
                                 <TableRow>
                                     <TableCell colSpan={2} className="text-xs font-black uppercase">Totales Generales</TableCell>
                                     <TableCell className="text-center font-black">{pivotData.reduce((s, g) => s + g.count, 0)}</TableCell>
-                                    <TableCell className="text-right font-black text-green-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0))}</TableCell>
-                                    <TableCell className="text-right font-black text-red-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0))}</TableCell>
-                                    <TableCell className="text-right font-black text-primary">{formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0))}</TableCell>
+                                    <TableCell className="text-right font-black text-green-600">{formatCurrencyCents(pivotData.reduce((s, g) => s + g.totalCr, 0))}</TableCell>
+                                    <TableCell className="text-right font-black text-red-600">{formatCurrencyCents(pivotData.reduce((s, g) => s + g.totalDb, 0))}</TableCell>
+                                    <TableCell className="text-right font-black text-primary">{formatCurrencyCents(pivotData.reduce((s, g) => s + g.netAmount, 0))}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         )}
