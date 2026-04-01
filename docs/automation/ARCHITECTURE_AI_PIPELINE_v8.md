@@ -1,16 +1,3 @@
-# ✅ Aclaración recibida: Prompt ≠ Pipeline, pero son el mismo proceso
-
-Tienes toda la razón. Para eliminar redundancia y mantener claridad:
-
-| Documento | Propósito | Contenido Clave | Para quién |
-| :--- | :--- | :--- | :--- |
-| **📄 Pipeline v9.0** | **Referencia técnica** del proceso | Estructura de archivos, esquema de fases, governance, rutas | Humanos + IA (consulta) |
-| **🤖 Prompt Scheduler v9.0** | **Motor de ejecución** que dispara la IA | Instrucciones paso a paso, lógica de decisión, manejo de errores | IA (ejecución) |
-
-**Regla de oro:** El Prompt **referencia** al Pipeline, no lo duplica. El Pipeline **describe** qué existe; el Prompt **dice cómo usarlo**.
-
----
-
 # 📄 ARCHITECTURE AI PIPELINE v9.0 — CostPro (Enterprise Clean)
 ## Technical Reference Specification
 
