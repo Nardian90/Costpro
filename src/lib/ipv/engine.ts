@@ -78,26 +78,31 @@ export class MatchingEngine {
   private async persistLog(
     transaction: BankTransaction,
     result: MatchingResult,
-    durationMs: number
+    durationMs: number,
+    retries = 3
   ) {
-    try {
-      await db.matching_logs.add({
-        id: uuidv4(),
-        transaction_ref: transaction.referencia_origen,
-        fecha_ejecucion: new Date().toISOString(),
-        resultado_estado: result.status,
-        trace: result.trace,
-        applied_rules: result.appliedRules,
-        matching_confidence: result.matchingConfidence,
-        fail_reason: result.failReason,
-        reconciliation_lines_count: result.lines.length,
-        duration_ms: durationMs,
-        engine_version: "2.4.0",
-        reglas_activas: this.rules.map(r => r.tipo),
-        created_at: new Date().toISOString()
-      });
-    } catch (e) {
-      console.error("Error persistiendo audit log:", e);
+    for (let i = 0; i < retries; i++) {
+        try {
+          await db.matching_logs.add({
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_ejecucion: new Date().toISOString(),
+            resultado_estado: result.status,
+            trace: result.trace,
+            applied_rules: result.appliedRules,
+            matching_confidence: result.matchingConfidence,
+            fail_reason: result.failReason,
+            reconciliation_lines_count: result.lines.length,
+            duration_ms: durationMs,
+            engine_version: "2.5.0",
+            reglas_activas: this.rules.map(r => r.tipo),
+            created_at: new Date().toISOString()
+          });
+          return;
+        } catch (e) {
+          console.error(`Error persistiendo audit log (intento ${i+1}/${retries}):`, e);
+          if (i < retries - 1) await new Promise(res => setTimeout(res, 500 * (i + 1)));
+        }
     }
   }
 
@@ -184,7 +189,7 @@ export class MatchingEngine {
         trace,
         appliedRules,
         matchingConfidence,
-        fail_reason: current_remaining > 0 ? `Faltan ${current_remaining} cts para completar` : undefined
+        failReason: current_remaining > 0 ? `Faltan ${current_remaining} cts para completar` : undefined
     };
 
     await this.persistLog(transaction, result, performance.now() - startTimeMs);
@@ -635,5 +640,76 @@ export class MatchingEngine {
       if (onProgress) onProgress(Math.round(((i + 1) / transactions.length) * 100));
     }
     return results;
+  }
+
+  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
+    const mockTx: BankTransaction = {
+      id: 'sim',
+      fecha: new Date().toISOString().split('T')[0],
+      referencia_corta: 'SIM',
+      referencia_origen: 'SIM-' + Date.now(),
+      observaciones: 'Simulación de matching',
+      importe_cents: targetAmount,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: new Date().toISOString(),
+      ingestion_hash: 'sim'
+    };
+    return this.matchTransaction(mockTx);
+  }
+
+  async distributeGlobalGoal(
+    targetTotal: number,
+    currentTotal: number,
+    dates: string[],
+    options?: { dayVolumes?: Record<string, number>; strategy?: "MIN_STOCK" | "MAX_VALUE" }
+  ): Promise<ReconciliationLine[]> {
+    let remainingDiff = targetTotal - currentTotal;
+    if (remainingDiff <= 0 || dates.length === 0) return [];
+
+    const lines: ReconciliationLine[] = [];
+    const sortedDates = [...dates].sort((a, b) => {
+      if (options?.dayVolumes) {
+        const volA = options.dayVolumes[a] || 0;
+        const volB = options.dayVolumes[b] || 0;
+        if (volA !== volB) return volA - volB;
+      }
+      return Math.random() - 0.5;
+    });
+
+    for (const date of sortedDates) {
+      if (remainingDiff <= 0) break;
+      const candidates = [...this.products]
+        .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
+        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+        .sort((a, b) => {
+          const sA = this.stockMap.get(a.cod) || 0;
+          const sB = this.stockMap.get(b.cod) || 0;
+          if (options?.strategy === "MAX_VALUE") {
+              return b.precio_cents - a.precio_cents;
+          }
+          if (sA !== sB) return sA - sB;
+          return b.precio_cents - a.precio_cents;
+        });
+
+      for (const p of candidates) {
+        if (remainingDiff <= 0) break;
+        let availableStock = this.useStockLimit ? this.getVirtualStock(p.cod) : 999999;
+        if (availableStock <= 0) continue;
+        const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
+        if (maxQtyPossible <= 0) continue;
+        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
+        const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
+        if (qtyToPick > 0) {
+          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo', undefined);
+          line.id = uuidv4();
+          line.cuadre_cents = 0;
+          line.importe_linea_cents = p.precio_cents * qtyToPick;
+          lines.push(line);
+          remainingDiff -= line.importe_linea_cents;
+        }
+      }
+    }
+    return lines;
   }
 }
