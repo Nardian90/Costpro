@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyCents } from '@/lib/utils';
 
 interface IncomeReceiptPreviewProps {
   data: {
@@ -90,7 +90,7 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
               <tr key={i}>
                 <td className="border border-black p-2 uppercase font-medium">{row.concepto}</td>
                 <td className="border border-black p-2 text-right font-bold">
-                  {row.importe.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCurrencyCents(row.importe)}
                 </td>
               </tr>
             ))
@@ -106,7 +106,7 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       <div className="flex justify-end gap-4 mb-6 items-center">
         <span className="font-bold text-lg tracking-tighter">TOTAL:</span>
         <span className="font-black text-xl border-b-2 border-black min-w-[140px] text-right bg-muted/50 px-2">
-          {data.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {formatCurrencyCents(data.total)}
         </span>
       </div>
 

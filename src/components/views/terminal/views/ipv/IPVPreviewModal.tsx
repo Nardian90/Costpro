@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { FileText, Download, Printer, CheckCircle2 } from 'lucide-react';
 import { DailyIPVReport } from '@/lib/dexie';
 
@@ -66,15 +66,15 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                     <div className="grid grid-cols-3 gap-4 mt-6">
                         <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Total Ventas</p>
-                            <p className="text-xl font-black text-primary">{formatCurrency(report.total_ventas_cents)}</p>
+                            <p className="text-xl font-black text-primary">{formatCurrencyCents(report.total_ventas_cents)}</p>
                         </div>
                         <div className="p-4 bg-green-500/5 rounded-2xl border border-green-500/10">
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Efectivo</p>
-                            <p className="text-xl font-black text-green-600">{formatCurrency(report.resumen_efectivo_cents)}</p>
+                            <p className="text-xl font-black text-green-600">{formatCurrencyCents(report.resumen_efectivo_cents)}</p>
                         </div>
                         <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Transferencia</p>
-                            <p className="text-xl font-black text-blue-600">{formatCurrency(report.resumen_transferencia_cents)}</p>
+                            <p className="text-xl font-black text-blue-600">{formatCurrencyCents(report.resumen_transferencia_cents)}</p>
                         </div>
                     </div>
                 </DialogHeader>
@@ -113,8 +113,8 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                             <TableCell className="text-center text-xs font-medium">{f.entrada_qty || 0}</TableCell>
                                             <TableCell className="text-center text-xs font-medium">{f.salida_qty || 0}</TableCell>
                                             <TableCell className="text-center font-black text-xs">{f.venta_cantidad_qty}</TableCell>
-                                            <TableCell className="text-right text-xs">{formatCurrency(f.precio_unitario_cents)}</TableCell>
-                                            <TableCell className="text-right font-black text-xs text-primary">{formatCurrency(f.importe_cents)}</TableCell>
+                                            <TableCell className="text-right text-xs">{formatCurrencyCents(f.precio_unitario_cents)}</TableCell>
+                                            <TableCell className="text-right font-black text-xs text-primary">{formatCurrencyCents(f.importe_cents)}</TableCell>
                                             <TableCell className="text-center text-xs font-medium">{f.existencia_final_qty}</TableCell>
                                         </TableRow>
                                     ))}

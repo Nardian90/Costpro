@@ -30,7 +30,7 @@ import { generateHash } from '@/lib/ipv/engine';
 import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -294,11 +294,11 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   )}
                               </div>
                               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
-                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Neto</p><p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p></div>
-                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p><p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p></div>
-                                  <div className="text-right"><p className="text-xs font-bold text-primary uppercase">Objetivo</p><p className="text-sm font-black">{formatCurrency(targetAmount)}</p></div>
+                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Neto</p><p className="text-xs font-bold">{formatCurrencyCents(tx.importe_cents)}</p></div>
+                                  <div><p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p><p className="text-xs font-bold text-red-500">{formatCurrencyCents(tx.comision_cents || 0)}</p></div>
+                                  <div className="text-right"><p className="text-xs font-bold text-primary uppercase">Objetivo</p><p className="text-sm font-black">{formatCurrencyCents(targetAmount)}</p></div>
                               </div>
-                              <div className="text-right"><p className="text-xs font-bold text-muted-foreground uppercase">Diferencia</p><p className={`text-lg font-black ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</p></div>
+                              <div className="text-right"><p className="text-xs font-bold text-muted-foreground uppercase">Diferencia</p><p className={`text-lg font-black ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrencyCents(diff)}</p></div>
                               <div className="flex justify-end gap-2 pt-2"><Button variant="outline" size="sm" className="h-11 px-4 text-xs font-bold uppercase gap-2 neu-btn" onClick={() => onReconcile(tx)}><Eye className="w-3 h-3" />Ver / Cuadrar</Button><Button variant="outline" size="icon" className="h-11 w-11 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => handleDelete(tx.referencia_origen)}><Trash2 className="w-3 h-3" /></Button></div>
                           </Card>
                       );
@@ -373,10 +373,10 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                 </Button>
             )}
 </TableCell>
-          <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrency(tx.importe_cents)}</TableCell>
-          <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrency(tx.comision_cents || 0)}</TableCell>
-          <TableCell className="text-right font-black text-sm text-primary">{formatCurrency(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
-          <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</TableCell>
+          <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrencyCents(tx.importe_cents)}</TableCell>
+          <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
+          <TableCell className="text-right font-black text-sm text-primary">{formatCurrencyCents(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
+          <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrencyCents(diff)}</TableCell>
           <TableCell><span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>{tx.tipo}</span></TableCell>
           <TableCell>{getStatusBadge(tx, diff, matchedTotal)}</TableCell>
           <TableCell><ActionBadges appliedRules={tx.applied_rules} /></TableCell>
@@ -433,6 +433,6 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
         <Popover><PopoverTrigger asChild><Button variant="ghost" size="sm" className="h-7 text-xs font-black uppercase text-primary hover:bg-primary/10"><Target className="w-3 h-3 mr-1" /> Forzar</Button></PopoverTrigger>
             <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
                 <div className="p-3 border-b bg-muted/20"><div className="relative"><Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" /><Input placeholder="Buscar producto..." className="pl-7 h-8 text-xs rounded-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div></div>
-                <ScrollArea className="h-64"><div className="p-1">{filtered.map(p => (<button key={p.cod} className="w-full text-left p-2 hover:bg-primary/5 rounded-lg transition-all flex justify-between items-center" onClick={() => handleForceMatch(p)}><div className="min-w-0 flex-1"><p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p><div className="flex gap-2"><span className="text-xs text-primary font-bold uppercase">${p.precio_cents}</span></div></div><Plus className="w-3 h-3 text-primary ml-2 shrink-0" /></button>))}</div></ScrollArea>
+                <ScrollArea className="h-64"><div className="p-1">{filtered.map(p => (<button key={p.cod} className="w-full text-left p-2 hover:bg-primary/5 rounded-lg transition-all flex justify-between items-center" onClick={() => handleForceMatch(p)}><div className="min-w-0 flex-1"><p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p><div className="flex gap-2"><span className="text-xs text-primary font-bold uppercase">{formatCurrencyCents(p.precio_cents)}</span></div></div><Plus className="w-3 h-3 text-primary ml-2 shrink-0" /></button>))}</div></ScrollArea>
             </PopoverContent></Popover>
     );}

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyCents } from '@/lib/utils';
 import { SC204Metadata, Product } from '@/lib/dexie';
 
 interface SC204PreviewProps {
@@ -28,8 +28,6 @@ interface SC204PreviewProps {
 }
 
 export function SC204Preview({ data, className }: SC204PreviewProps) {
-  const formatCurrency = (cents: number) => (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
     <div className={cn("bg-background text-foreground p-6 shadow-2xl border border-border font-sans max-w-[900px] mx-auto text-[10px]", className)}>
       {/* Header section */}
@@ -95,14 +93,14 @@ export function SC204Preview({ data, className }: SC204PreviewProps) {
                     <td className="border border-black p-1 uppercase">{item.product.descripcion}</td>
                     <td className="border border-black p-1 text-center">{item.product.um}</td>
                     <td className="border border-black p-1 text-right font-bold">{item.quantity}</td>
-                    <td className="border border-black p-1 text-right">{formatCurrency(item.unit_price_cents)}</td>
-                    <td className="border border-black p-1 text-right font-bold">{formatCurrency(item.total_price_cents)}</td>
+                    <td className="border border-black p-1 text-right">{formatCurrencyCents(item.unit_price_cents)}</td>
+                    <td className="border border-black p-1 text-right font-bold">{formatCurrencyCents(item.total_price_cents)}</td>
                     <td className="border border-black p-1 text-right italic">{item.stock_after}</td>
                 </tr>
             ))}
             <tr>
                 <td colSpan={5} className="border border-black p-1 font-bold text-right uppercase">Importe Total del Modelo:</td>
-                <td className="border border-black p-1 font-black text-right bg-muted/30">{formatCurrency(data.total_importe_cents)}</td>
+                <td className="border border-black p-1 font-black text-right bg-muted/30">{formatCurrencyCents(data.total_importe_cents)}</td>
                 <td className="border border-black p-1 bg-muted/10"></td>
             </tr>
         </tbody>

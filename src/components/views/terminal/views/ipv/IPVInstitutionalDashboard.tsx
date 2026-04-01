@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import {
     calculateIPVMetrics,
     getDailySalesHistory,
@@ -104,14 +104,14 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <MetricCard
                     title="Ventas Totales"
-                    value={formatCurrency(metrics.totalSales)}
+                    value={formatCurrencyCents(metrics.totalSales)}
                     icon={<DollarSign className="w-4 h-4" />}
                     subtitle="Desglose Declarado"
                     color="blue"
                 />
                 <MetricCard
                     title="Ingresos Banco"
-                    value={formatCurrency(metrics.bankCredits)}
+                    value={formatCurrencyCents(metrics.bankCredits)}
                     icon={<ArrowUpRight className="w-4 h-4" />}
                     subtitle="Realidad Bancaria"
                     color="emerald"
@@ -125,21 +125,21 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
                 />
                 <MetricCard
                     title="Débitos/Gastos"
-                    value={formatCurrency(metrics.bankDebits)}
+                    value={formatCurrencyCents(metrics.bankDebits)}
                     icon={<ArrowDownRight className="w-4 h-4" />}
                     subtitle="Egresos Bancarios"
                     color="rose"
                 />
                 <MetricCard
                     title="Impuestos Est."
-                    value={formatCurrency(metrics.totalTaxes)}
+                    value={formatCurrencyCents(metrics.totalTaxes)}
                     icon={<Percent className="w-4 h-4" />}
                     subtitle="Retenciones/Tasas"
                     color="purple"
                 />
                 <MetricCard
                     title="Comisiones"
-                    value={formatCurrency(metrics.totalCommissions)}
+                    value={formatCurrencyCents(metrics.totalCommissions)}
                     icon={<TrendingUp className="w-4 h-4" />}
                     subtitle="Costos Bancarios"
                     color="amber"
