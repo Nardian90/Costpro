@@ -265,7 +265,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
                                   <div className="flex flex-col items-end gap-1">
                                     {getStatusBadge(tx, diff, matchedTotal)}
-                                    <ActionBadges appliedRules={tx.applied_rules} />
+                                    <ActionBadges appliedRules={tx.applied_rules} trace={tx.trace} />
                                   </div>
                               </div>
                               <div className="space-y-2">
@@ -379,7 +379,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</TableCell>
           <TableCell><span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>{tx.tipo}</span></TableCell>
           <TableCell>{getStatusBadge(tx, diff, matchedTotal)}</TableCell>
-          <TableCell><ActionBadges appliedRules={tx.applied_rules} /></TableCell>
+          <TableCell><ActionBadges appliedRules={tx.applied_rules} trace={tx.trace} /></TableCell>
           <TableCell className="text-right"><div className="flex justify-end gap-1 items-center"><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={onView}><Eye className="w-4 h-4" /></Button>{matchedTotal > 0 && (<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500" onClick={onReset}><RotateCcw className="w-4 h-4" /></Button>)}<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div></TableCell>
         </TableRow>
     );

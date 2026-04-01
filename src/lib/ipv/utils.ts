@@ -1,9 +1,9 @@
-import { Product } from '../dexie';
+import { Product, db } from '../dexie';
+import { StockService } from './StockService';
 
 /**
  * Extract commission from bank observations string and returns it in CENTS.
  * Supports formats like "comi 10.50", "comis 10.50" or "Comisión: 10.50"
- * Spec Regex: Comi(?:s(?:i[óo]n)?)?:?\s*([0-9]+(?:\.[0-9]{1,2})?)
  */
 export function extractCommission(observations: string): number {
     if (!observations) return 0;
@@ -19,7 +19,6 @@ export function extractCommission(observations: string): number {
  */
 export function standardizeDate(dateStr: string): string {
     if (!dateStr) return '';
-    // Handle DD/MM/YYYY or DD/MM/YY
     if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length === 3) {
@@ -29,7 +28,6 @@ export function standardizeDate(dateStr: string): string {
             return `${year}-${month}-${day}`;
         }
     }
-    // Already YYYY-MM-DD or other
     return dateStr;
 }
 
@@ -39,60 +37,21 @@ export function standardizeDate(dateStr: string): string {
 export function isProductAMedida(um: string): boolean {
     if (!um) return false;
     const umLower = um.toLowerCase();
-    return umLower === 'm' || umLower === 'm2' || umLower === 'm3' || umLower === 'kg' || umLower === 'lb';
+    return ['m', 'm2', 'm3', 'kg', 'lb'].includes(umLower);
 }
 
 /**
- * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ * REFACTOR: Ahora delega en StockService para mantener una fuente única de verdad.
  */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
-    const product = await db.products.where('cod').equals(productCod).first();
-    if (!product) return 0;
-
-    const initialStock = product.stock_inicial_manual || 0;
-
-    // Ventas (salidas reales)
-    const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const sales = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
-
-    // Entradas y salidas de inventario (incluyendo recepciones inteligentes y descomposiciones)
-    const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
-    const entries = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
-
-    const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
-    const exits = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
-
-    return initialStock + entries - exits - sales;
+    return StockService.calculateProductStock(productCod);
 }
 
-
 /**
- * Calcula el mapa de stock completo para todos los productos activos.
- * Útil para alimentar el motor de matching con datos en tiempo real.
+ * REFACTOR: Ahora delega en StockService.
  */
 export async function getCompleteStockMap(db: any): Promise<Map<string, number>> {
-    const products = await db.products.toArray();
-    const lines = await db.reconciliation_lines.toArray();
-    const allMovements = await db.product_movements.toArray();
-    const map = new Map<string, number>();
-
-    for (const p of products) {
-        const sales = lines
-            .filter((l: any) => l.product_cod === p.cod)
-            .reduce((sum: number, l: any) => sum + l.cantidad, 0);
-
-        const entries = allMovements
-            .filter((m: any) => m.producto_destino_cod === p.cod)
-            .reduce((sum: number, m: any) => sum + m.cantidad_destino, 0);
-
-        const exits = allMovements
-            .filter((m: any) => m.producto_origen_cod === p.cod)
-            .reduce((sum: number, m: any) => sum + m.cantidad_origen, 0);
-
-        map.set(p.cod, (p.stock_inicial_manual || 0) + entries - exits - sales);
-    }
-
-    return map;
+    return StockService.getCompleteStockMap();
 }
 
 /**
@@ -102,8 +61,6 @@ export async function recalculateIPVReportsChain(db: any) {
     const allProducts: Product[] = await db.products.toArray();
     const productMap = new Map<string, Product>(allProducts.map((p) => [p.cod, p]));
     const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
-
-    // Pre-fetch all movements for the period
     const allMovements = await db.product_movements.toArray();
 
     for (let i = 0; i < allReports.length; i++) {
@@ -113,14 +70,11 @@ export async function recalculateIPVReportsChain(db: any) {
 
         const updatedFilas = report.filas.map((f: any) => {
             const product = productMap.get(f.cod);
-
-            // Sumar todas las entradas registradas en product_movements para esta fecha
             const totalEntries = allMovements
                 .filter((m: any) => m.producto_destino_cod === f.cod && m.fecha === reportDate &&
                     ['INTELLIGENT_RECEIPT', 'DECOMPOSITION', 'MANUAL', 'IMPORT'].includes(m.tipo))
                 .reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
 
-            // Sumar todas las salidas registradas en product_movements para esta fecha
             const totalExits = allMovements
                 .filter((m: any) => m.producto_origen_cod === f.cod && m.fecha === reportDate &&
                     ['DECOMPOSITION', 'MANUAL'].includes(m.tipo))
@@ -150,7 +104,6 @@ export async function recalculateIPVReportsChain(db: any) {
             updated_at: new Date().toISOString()
         });
 
-        // Actualizamos el objeto en memoria para el siguiente paso del bucle
         allReports[i].filas = updatedFilas;
     }
 }
@@ -161,8 +114,6 @@ export async function recalculateIPVReportsChain(db: any) {
  */
 export function classifyGroupHierarchy(products: Product[]): Product[] {
     const groups = new Map<string, Product[]>();
-
-    // Agrupar por id_grupo
     products.forEach(p => {
         if (p.id_grupo) {
             if (!groups.has(p.id_grupo)) groups.set(p.id_grupo, []);
@@ -170,19 +121,12 @@ export function classifyGroupHierarchy(products: Product[]): Product[] {
         }
     });
 
-    // Para cada grupo, ordenar por precio descendente y asignar cod_hijo
     const updatedProducts = [...products];
-
     groups.forEach((members) => {
         const sorted = [...members].sort((a, b) => b.precio_cents - a.precio_cents);
         for (let i = 0; i < sorted.length; i++) {
             const current = sorted[i];
             const next = sorted[i + 1];
-
-            // Si ya tiene un cod_hijo manual que existe en el grupo, respetarlo?
-            // El usuario pidió que el sistema clasifique inteligentemente.
-            // Vamos a asignar el siguiente si el cod_hijo actual está vacío.
-
             const productInOriginalArray = updatedProducts.find(p => p.cod === current.cod);
             if (productInOriginalArray) {
                 if (!productInOriginalArray.cod_hijo || productInOriginalArray.cod_hijo === '') {
@@ -191,6 +135,5 @@ export function classifyGroupHierarchy(products: Product[]): Product[] {
             }
         }
     });
-
     return updatedProducts;
 }
