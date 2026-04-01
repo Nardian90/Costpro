@@ -74,6 +74,7 @@ export interface CostSheetAnnexContract {
   title: string;
   coefficient?: number;
   adjustmentColumn?: string;
+  isAdjustmentActive?: boolean;
   columns: CostSheetColumnContract[];
   data: any[]; // Se mantiene flexible por su naturaleza dinámica.
 }
@@ -110,7 +111,7 @@ export const CostSheetRowFactory = {
     value: 0,
     baseDeCalculoRef: '',
     baseRef: '',
-    calculationMethod: 'Prorrateo',
+    calculationMethod: 'Prorrateo' as const,
     totalFormula: '',
     formula: '',
     isPercent: false,

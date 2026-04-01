@@ -136,7 +136,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     // Linear approximation: target / currentTargetValue = newCoef / currentCoef
     const newCoef = (target / currentTargetValue) * currentCoef;
 
-    updateAnnexAdjustment(selectedAnnexId, newCoef, adjustmentColumn);
+    updateAnnexAdjustment(selectedAnnexId, newCoef, adjustmentColumn, annex.isAdjustmentActive !== false);
   };
 
   const getFeedback = (pct: number) => {

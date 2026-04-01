@@ -438,7 +438,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             ...d,
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-            importe: (() => { const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(v => v !== undefined && v !== null); return (parseFloat(String(val ?? 0)) || 0) * (a.coefficient || 1); })()
+            importe: (() => { const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(v => v !== undefined && v !== null); const isAdjActive = a.isAdjustmentActive === undefined || !!a.isAdjustmentActive; const coef = isAdjActive ? (a.coefficient || 1) : 1; return (parseFloat(String(val ?? 0)) || 0) * coef; })()
           }))
         })),
         rows: engineRows

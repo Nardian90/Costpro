@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { CostSheetAnnexToggle } from './CostSheetAnnexToggle';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 
 type CostSheetAnnexesProps = {
@@ -18,16 +19,21 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
         const totalColumn = annex.columns.find(c => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost' || c.key === 'total_cost' || c.key === 'value' || c.key === 'importe');
 
         return (
-          <div key={annex.id} className="page-break-before space-y-6">
+          <div key={annex.id} className="page-break-before space-y-6 sm:space-y-8">
             <div className="text-center space-y-2">
               <h2 className="text-base font-black uppercase tracking-[0.4em] text-foreground text-foreground">
                 {annex.id} - {annex.title}
               </h2>
               <div className="h-1 w-24 bg-primary mx-auto rounded-full" />
+              {annex.id === "I" && (
+                <div className="flex justify-center mt-4">
+                  <CostSheetAnnexToggle annexId="I" />
+                </div>
+              )}
             </div>
 
-            <div className={cn("overflow-x-auto border table-to-cards border-border rounded-2xl overflow-hidden shadow-lg bg-card", forceTable && "force-table")}>
-              <table className="w-full text-xs">
+            <div className={cn("overflow-hidden border table-to-cards border-border rounded-2xl shadow-lg bg-card", forceTable && "force-table")}>
+              <table className="w-full text-xs border-collapse">
                 <thead className="bg-muted text-foreground text-foreground border-b border-border">
                   <tr>
                     {annex.columns.map((col: CostSheetColumn) => {
@@ -47,7 +53,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                     })}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/50 dark:divide-border">
+                <tbody className="divide-y divide-border/50 dark:divide-border p-4 sm:p-0">
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => {
                     const isZero = (val: any) => Number(val) === 0;
                     return (
@@ -59,7 +65,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                                             (col.key === 'total' || col.key === 'amount' ? 'w-32' :
                                             (!isMain ? 'w-24' : '')));
                             return (
-                            <td key={`${rowIndex}-${col.key}`} data-label={col.label || col.title || col.key} className={cn(
+                            <td key={`${rowIndex}-${col.key}`} data-label={col.label || col.title || col.key} title={col.label || col.title || col.key} className={cn(
                                 "py-0.5 px-2 font-mono text-xs text-foreground/80 text-foreground/70 whitespace-nowrap",
                                 widthClass
                             )}>
@@ -76,7 +82,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                     );
                   }) : (
                     <tr>
-                      <td colSpan={annex.columns.length} className="p-8 text-center italic text-muted-foreground">
+                      <td colSpan={annex.columns.length} data-label="Información" className="p-8 text-center italic text-muted-foreground">
                         No hay datos registrados en este anexo.
                       </td>
                     </tr>
@@ -93,7 +99,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                             // Label cell
                             if (totalColIndex > 0) {
                                 cells.push(
-                                    <td key="total-label" colSpan={totalColIndex} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-muted-foreground">
+                                    <td key="total-label" colSpan={totalColIndex} data-label="Resumen" className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-muted-foreground">
                                         TOTAL
                                     </td>
                                 );
@@ -101,7 +107,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
 
                             // Total value cell
                             cells.push(
-                                <td key="total-value" className="p-4 text-right font-mono font-black text-base text-foreground border-l border-border">
+                                <td key="total-value" data-label="Total Anexo" className="p-4 text-right font-mono font-black text-base text-foreground border-l border-border">
                                     {totalColIndex === 0 && <span className="mr-4 text-xs font-black text-muted-foreground uppercase tracking-widest">TOTAL</span>}
                                     {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)).replace('$', '').trim()}
                                 </td>

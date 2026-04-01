@@ -1,4 +1,5 @@
 'use client';
+import { CostSheetAnnexToggle } from "./CostSheetAnnexToggle";
 
 import React from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -48,6 +49,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   if (!annex) return null;
 
   const handleInputChange = (path: (string | number)[], value: any) => {
+    // Real-time inverse calculation if Auto-adjustment is active
+    if (activeAnnexId === "I" && annex.isAdjustmentActive !== false && annex.coefficient && annex.coefficient !== 1) {
+      const colKey = path[path.length - 1];
+      if (colKey === annex.adjustmentColumn) {
+          const numValue = parseFloat(value);
+          if (!isNaN(numValue)) {
+              value = numValue / annex.coefficient;
+          }
+      }
+    }
+
     const finalValue = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
     updateValue(path, finalValue);
   };
@@ -92,6 +104,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             <div className="flex items-center gap-3">
               <div className="h-8 w-1 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{annex.title}</p>
+              {activeAnnexId === "I" && <CostSheetAnnexToggle annexId="I" />}
+
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -183,9 +197,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                     ) : (
                                         <div className="relative group/cell">
                                             <Input
-                                                type={typeof (annex.data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
-                                                value={annex.data[rowIndex][col.key] ?? ''}
+                                                type={typeof (annex.data[rowIndex][col.key]) === "number" ? "number" : "text"}
+                                                value={(() => {
+                                                    const rawValue = annex.data[rowIndex][col.key];
+                                                    if (activeAnnexId === "I" && annex.isAdjustmentActive !== false && col.key === annex.adjustmentColumn && annex.coefficient && annex.coefficient !== 1) {
+                                                        return (parseFloat(String(rawValue ?? 0)) * annex.coefficient).toFixed(2);
+                                                    }
+                                                    return rawValue ?? "";
+                                                })()}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
+                                                step={col.key === annex.adjustmentColumn ? "0.01" : undefined}
+                                                placeholder={activeAnnexId === "I" && annex.isAdjustmentActive !== false && col.key === annex.adjustmentColumn && annex.coefficient && annex.coefficient !== 1 ? `Base: ${annex.data[rowIndex][col.key]}` : undefined}
                                                 list={(() => {
                                                     const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
                                                     if (activeAnnexId === 'I' && col.key === 'description') return undefined;
