@@ -97,3 +97,38 @@ describe('Cost Solver', () => {
     expect(coef).toBeCloseTo(2.0, 1);
   });
 });
+
+  it('should find the correct coefficient for target 25 when initial cost is 100 (decrease coefficient)', () => {
+    const mockData: CostSheetData = {
+      header: { quantity: 1 },
+      sections: [
+        {
+          id: 'S1',
+          rows: [
+            {
+              id: '14.1',
+              label: 'Precio Final',
+              calculationMethod: 'ANEXO',
+              baseDeCalculoRef: 'I',
+              formula: 'TotalAnexoI'
+            }
+          ]
+        }
+      ],
+      annexes: [
+        {
+          id: 'I',
+          title: 'Anexo I',
+          columns: [{ key: 'total', type: 'number', label: 'TOTAL' }],
+          data: [{ total: 100, classification: '1.1' }],
+          coefficient: 1,
+          isAdjustmentActive: false,
+          adjustmentColumn: 'PRECIO UNITARIO'
+        }
+      ],
+      signature: { prepared_by: '', approved_by: '' }
+    };
+
+    const coef = solveCoefficient(mockData, 'I', 25);
+    expect(coef).toBeCloseTo(0.25, 1);
+  });
