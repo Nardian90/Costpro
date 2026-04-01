@@ -373,13 +373,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                             <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                                 {formatCurrency(totalValue)}
                             </span>
-                            <div className="flex flex-col items-end print:hidden animate-in fade-in slide-in-from-right-2 duration-500" style={{ display: annex.id === "I" ? "flex" : "none" }}>
+                            <div className="flex flex-col items-end print:hidden animate-in fade-in slide-in-from-right-2 duration-500" >
                                 <div className="flex items-center gap-4 mb-1">
                                     <div className="flex flex-col items-start">
                                         <span className="text-[8px] font-black uppercase tracking-widest text-primary/50">Columna a Ajustar</span>
                                         <Select
                                             value={annex.adjustmentColumn || 'PRECIO UNITARIO'}
-                                            onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient ?? 1, val, false, annex.isAdjustmentActive)}
+                                            onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient ?? 1, val, annex.isAdjustmentActive)}
                                         >
                                             <SelectTrigger className="h-7 min-w-[120px] bg-background/50 border-primary/20 rounded-lg text-[9px] font-black uppercase">
                                                 <SelectValue />
@@ -397,7 +397,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                             <span className="text-[8px] font-black uppercase tracking-widest text-primary/50">Auto-ajuste</span>
                                             <Switch
                                                 checked={!!annex.isAdjustmentActive}
-                                                onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient ?? 1, annex.adjustmentColumn || 'PRECIO UNITARIO', false, checked)}
+                                                onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient ?? 1, annex.adjustmentColumn || 'PRECIO UNITARIO', checked)}
                                             />
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -408,32 +408,27 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     onChange={(e) => {
                                                         const val = e.target.value;
                                                         setLocalCoef(val);
-                                                        if (val === '0' || val === '0.') return;
+                                                        if (val === '' || val === '-' || val.endsWith('.')) return;
+                                                        if (val === '0') {
+                                                            updateAnnexAdjustment(annex.id, 0, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
+                                                            return;
+                                                        }
                                                         const numericVal = parseFloat(val);
                                                         if (!isNaN(numericVal)) {
-                                                            updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || 'PRECIO UNITARIO', false, annex.isAdjustmentActive);
+                                                            updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
                                                         }
                                                     }}
                                                     onBlur={() => {
                                                         if (localCoef === '' || isNaN(parseFloat(localCoef))) {
                                                             setLocalCoef('1');
-                                                            updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || 'PRECIO UNITARIO', false, annex.isAdjustmentActive);
+                                                            updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
                                                         }
                                                     }}
                                                     className="w-24 h-9 px-3 rounded-xl bg-background/50 border border-primary/20 text-xs font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-right"
                                                 />
                                                 <RefreshCw className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40 group-hover/coef:rotate-180 transition-transform duration-700" />
                                             </div>
-                                            {annex.id === "I" && annex.coefficient !== undefined && annex.coefficient !== 1 && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => updateAnnexAdjustment(annex.id, annex.coefficient || 1, annex.adjustmentColumn || 'PRECIO UNITARIO', true)}
-                                                    className="h-9 px-3 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 transition-all font-black text-[10px] uppercase tracking-widest"
-                                                >
-                                                    Commit
-                                                </Button>
-                                            )}
+
                                         </div>
                                     </div>
                                 </div>
@@ -464,7 +459,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(totalValue)}
                     </span>
-                    {annex.id === "I" && annex.coefficient && annex.coefficient !== 1 && (
+                    {annex.coefficient && annex.coefficient !== 1 && (
                         <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-1.5 print:hidden">
                             <RefreshCw className="w-2.5 h-2.5 text-amber-500" />
                             <span className="text-[10px] font-black font-mono text-amber-500">x{annex.coefficient.toFixed(4)}</span>

@@ -32,7 +32,7 @@ interface CostSheetState {
   loadExample: () => void;
   reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
-  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, commit?: boolean, isAdjustmentActive?: boolean) => void;
+  updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, isAdjustmentActive?: boolean) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -241,7 +241,7 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract });
         }
       },
-      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, commit = false, isAdjustmentActive) =>
+      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, isAdjustmentActive) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -253,37 +253,6 @@ export const useCostSheetStore = create<CostSheetState>()(
               annex.adjustmentColumn = adjustmentColumn;
               if (isAdjustmentActive !== undefined) {
                 annex.isAdjustmentActive = isAdjustmentActive;
-              }
-
-                            if (commit) {
-                const coef = coefficient;
-                annex.data.forEach((row: any) => {
-                  const applyCoef = (key: string, c: number) => {
-                    if (row[key] !== undefined) {
-                      const currentVal = row[key];
-                      const cStr = c.toFixed(4);
-                      if (typeof currentVal === 'number') {
-                        row[key] = `=${currentVal}*${cStr}`;
-                      } else if (typeof currentVal === 'string' && currentVal.startsWith('=')) {
-                        row[key] = `=(${currentVal.substring(1)})*${cStr}`;
-                      }
-                    }
-                  };
-
-                  if (adjustmentColumn === 'AMBOS') {
-                    const sqrtCoef = Math.sqrt(coef);
-                    ['price_unit', 'rate', 'norm', 'consumption', 'quantity'].forEach(k => applyCoef(k, sqrtCoef));
-                  } else {
-                    const keys = adjustmentColumn === 'PRECIO UNITARIO' ? ['price_unit', 'rate'] :
-                                 (adjustmentColumn === 'NORMA DE CONSUMO' ? ['norm', 'consumption', 'quantity'] :
-                                 (adjustmentColumn === 'VALOR' ? ['value'] :
-                                 (adjustmentColumn === 'IMPORTE' ? ['importe', 'amount', 'total'] : [])));
-                    keys.forEach(k => applyCoef(k, coef));
-                  }
-                });
-
-                annex.coefficient = 1;
-                toast.success(`Ajuste aplicado permanentemente al Anexo ${annexId}`);
               }
             }
           })

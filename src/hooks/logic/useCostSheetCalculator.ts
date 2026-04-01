@@ -256,7 +256,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
     (template?.annexes || []).forEach(annex => {
       const isAdjActive = !!annex.isAdjustmentActive;
-      const coef = (annex.id === 'I' && isAdjActive) ? (annex.coefficient ?? 1) : 1;
+      const coef = isAdjActive ? (annex.coefficient ?? 1) : 1;
       const adjCol = annex.adjustmentColumn || 'PRECIO UNITARIO';
 
       const isPrice = (k: string) => k === 'price_unit' || k === 'rate';
