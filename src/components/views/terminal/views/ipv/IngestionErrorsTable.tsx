@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Trash2, RefreshCw, Edit2, Check, X, AlertCircle } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { generateHash } from '@/lib/ipv/engine';
 import { extractCommission } from '@/lib/ipv/utils';
@@ -154,7 +154,7 @@ export function IngestionErrorsTable() {
                             {err.observaciones}
                         </TableCell>
                         <TableCell className="text-right font-black text-xs">
-                            {formatCurrency(err.importe_cents)}
+                            {formatCurrencyCents(err.importe_cents)}
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex justify-end gap-1">

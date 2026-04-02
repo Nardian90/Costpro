@@ -59,7 +59,7 @@ import { MappingRulesManager } from '@/components/views/shared/MappingRulesManag
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
 import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -513,7 +513,7 @@ export default function IPVView() {
                         title="Venta Total"
                         value={stats.totalSales}
                         icon={<FileText className="text-primary" />}
-                        subtitle={`T: ${formatCurrency(stats.totalTransferencias)} | E: ${formatCurrency(stats.totalEfectivo)}`}
+                        subtitle={`T: ${formatCurrencyCents(stats.totalTransferencias)} | E: ${formatCurrencyCents(stats.totalEfectivo)}`}
                         active={false}
                         isCurrency={true}
                     />
@@ -522,8 +522,8 @@ export default function IPVView() {
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
                 <p className="text-xs font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
                 <div className="space-y-1">
-                    <p className="text-xs"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
-                    <p className="text-xs"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
+                    <p className="text-xs"><strong>Transferencias:</strong> {formatCurrencyCents(stats.totalTransferencias)}</p>
+                    <p className="text-xs"><strong>Efectivo:</strong> {formatCurrencyCents(stats.totalEfectivo)}</p>
                 </div>
                 <p className="text-xs mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
             </TooltipContent>
@@ -823,10 +823,7 @@ export default function IPVView() {
 function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false, className = "" }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean, className?: string }) {
   const formattedValue = React.useMemo(() => {
     if (!isCurrency) return value.toString();
-    if (value > 9999) {
-        return `${(value / 1000).toFixed(1)} MP`;
-    }
-    return formatCurrency(value);
+    return formatCurrencyCents(value);
   }, [value, isCurrency]);
 
   return (

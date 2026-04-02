@@ -53,6 +53,13 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Formats a value in CENTS into a standard currency string (Pesos).
+ */
+export const formatCurrencyCents = (cents: number): string => {
+  return formatCurrency(cents / 100);
+};
+
+/**
  * Utility to strip formatting and return a raw number for exports or calculations.
  * Handles es-AR format (thousands: . decimal: ,)
  */

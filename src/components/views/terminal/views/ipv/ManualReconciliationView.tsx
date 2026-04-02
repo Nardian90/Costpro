@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { db, type BankTransaction, type Product, type ReconciliationLine } from '@/lib/dexie';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -298,7 +298,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black uppercase text-primary tracking-tighter">Conciliación Manual</h2>
                                 <Badge variant="outline" className="text-xs font-black border-primary/20 bg-primary/5 text-primary">
-                                    Meta: {targetAmount}
+                                    Meta: {formatCurrencyCents(targetAmount)}
                                 </Badge>
                             </div>
                             <div className="font-medium text-xs text-muted-foreground truncate max-w-[400px]">
@@ -310,12 +310,12 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/5 rounded-full border border-green-500/10">
                             <span className="text-xs font-black uppercase text-muted-foreground">Conciliado</span>
-                            <span className="text-xs font-black text-green-600">{currentTotal}</span>
+                            <span className="text-xs font-black text-green-600">{formatCurrencyCents(currentTotal)}</span>
                         </div>
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${Math.abs(remaining) < 0.001 ? 'bg-green-500/5 border-green-500/10' : 'bg-orange-500/5 border-orange-500/10'}`}>
                             <span className="text-xs font-black uppercase text-muted-foreground">Restante</span>
                             <span className={`text-xs font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
-                                {remaining.toFixed(2)}
+                                {formatCurrencyCents(remaining)}
                             </span>
                         </div>
                         {Math.abs(remaining) > 0.001 && (
@@ -383,7 +383,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     <div className="flex items-center gap-2 shrink-0">
                                         <div className="flex flex-col items-end">
                                             <span className="text-xs font-bold text-muted-foreground uppercase">Precio</span>
-                                            <span className="font-black text-xs text-primary">{p.precio_cents}</span>
+                                            <span className="font-black text-xs text-primary">{formatCurrencyCents(p.precio_cents)}</span>
                                         </div>
                                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-foreground transition-all">
                                             <Plus className="w-3.5 h-3.5" />
@@ -410,15 +410,15 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                         <div className="flex-1">
                                             <p className="font-black text-xs text-foreground mb-0.5 uppercase tracking-tighter">{l.product_cod}</p>
                                             <p className="text-xs font-medium text-muted-foreground uppercase">
-                                                {l.cantidad} {l.product_um} × {l.precio_unitario_cents}
+                                                {l.cantidad} {l.product_um} × {formatCurrencyCents(l.precio_unitario_cents)}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                                <span className="font-black text-xs text-green-600 block">{l.importe_linea_cents}</span>
+                                                <span className="font-black text-xs text-green-600 block">{formatCurrencyCents(l.importe_linea_cents)}</span>
                                                 {l.cuadre_cents && l.cuadre_cents !== 0 ? (
                                                     <Badge variant="outline" className={`text-xs font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
-                                                        {l.cuadre_cents > 0 ? `+${l.cuadre_cents}` : `${l.cuadre_cents}`}
+                                                        {l.cuadre_cents > 0 ? `+${formatCurrencyCents(l.cuadre_cents)}` : `${formatCurrencyCents(l.cuadre_cents)}`}
                                                     </Badge>
                                                 ) : null}
                                             </div>
@@ -482,19 +482,19 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                                     <Input
                                                         type="number"
                                                         step="0.01"
-                                                        value={l.importe_linea_cents || 0}
+                                                        value={l.importe_linea_cents ? l.importe_linea_cents / 100 : 0}
                                                         onChange={(e) => {
-                                                            const val = parseFloat(e.target.value) || 0;
+                                                            const val = Math.round(parseFloat(e.target.value) * 100) || 0;
                                                             setManualLines(manualLines.map(ml => ml.id === l.id ? { ...ml, importe_linea_cents: val, precio_unitario_cents: val } : ml));
                                                         }}
                                                         className="w-20 h-8 text-right font-black text-xs text-primary bg-background"
                                                     />
                                                 ) : (
-                                                    <span className="font-black text-sm text-primary">{(l.importe_linea_cents || 0)}</span>
+                                                    <span className="font-black text-sm text-primary">{formatCurrencyCents(l.importe_linea_cents || 0)}</span>
                                                 )}
                                                 {l.cuadre_cents && l.cuadre_cents !== 0 ? (
                                                     <Badge variant="outline" className={`text-xs font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
-                                                        {l.cuadre_cents > 0 ? `+${l.cuadre_cents}` : `${l.cuadre_cents}`}
+                                                        {l.cuadre_cents > 0 ? `+${formatCurrencyCents(l.cuadre_cents)}` : `${formatCurrencyCents(l.cuadre_cents)}`}
                                                     </Badge>
                                                 ) : null}
                                             </div>
@@ -520,7 +520,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                             <div className="flex flex-col">
                                 <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Diferencia</span>
                                 <span className={`text-lg font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
-                                    {remaining.toFixed(2)}
+                                    {formatCurrencyCents(remaining)}
                                 </span>
                             </div>
                             <div className="flex gap-2">

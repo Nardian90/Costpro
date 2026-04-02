@@ -15,7 +15,7 @@ import {
     ArrowRight, RotateCcw
 } from 'lucide-react';
 import { useFinancialPlanning } from '@/hooks/logic/useFinancialPlanning';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import { db } from '@/lib/dexie';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -160,7 +160,7 @@ export const FinancialPlanningView: React.FC = () => {
                     <div>
                         <p className="text-[10px] font-black uppercase text-primary/60 mb-1">Objetivo Total Anual</p>
                         <h3 className="text-4xl font-black tracking-tighter text-primary">
-                            {formatCurrency(totalYearly)}
+                            {formatCurrencyCents(totalYearly)}
                         </h3>
                     </div>
                     <div className="mt-4 flex items-center gap-2 text-xs font-bold text-primary/60 uppercase">
@@ -197,15 +197,15 @@ export const FinancialPlanningView: React.FC = () => {
                                     <div className="space-y-1 bg-muted/30 p-2 rounded-md">
                                         <div className="flex justify-between items-center">
                                             <span className="text-[9px] font-bold text-muted-foreground uppercase">Real Total</span>
-                                            <span className="text-[10px] font-black text-foreground">{formatCurrency(monthReal.total)}</span>
+                                            <span className="text-[10px] font-black text-foreground">{formatCurrencyCents(monthReal.total)}</span>
                                         </div>
                                         <div className="flex justify-between items-center opacity-70">
                                             <span className="text-[8px] font-bold text-muted-foreground uppercase">Efectivo</span>
-                                            <span className="text-[9px] font-bold">{formatCurrency(monthReal.efectivo)}</span>
+                                            <span className="text-[9px] font-bold">{formatCurrencyCents(monthReal.efectivo)}</span>
                                         </div>
                                         <div className="flex justify-between items-center opacity-70">
                                             <span className="text-[8px] font-bold text-muted-foreground uppercase">Transferencia</span>
-                                            <span className="text-[9px] font-bold">{formatCurrency(monthReal.transferencia)}</span>
+                                            <span className="text-[9px] font-bold">{formatCurrencyCents(monthReal.transferencia)}</span>
                                         </div>
                                     </div>
 
@@ -272,11 +272,11 @@ export const FinancialPlanningView: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-baseline">
                                                     <p className="text-sm font-black text-foreground">
-                                                        {formatCurrency(Number(simulations[g.month]) || g.goalAmount)}
+                                                        {formatCurrencyCents(Number(simulations[g.month]) || g.goalAmount)}
                                                     </p>
                                                     {((Number(simulations[g.month]) || g.goalAmount) - monthReal.total) > 0 && (
                                                         <span className="text-[9px] font-bold text-orange-600 animate-pulse">
-                                                            Faltan {formatCurrency((Number(simulations[g.month]) || g.goalAmount) - monthReal.total)}
+                                                            Faltan {formatCurrencyCents((Number(simulations[g.month]) || g.goalAmount) - monthReal.total)}
                                                         </span>
                                                     )}
                                                 </div>

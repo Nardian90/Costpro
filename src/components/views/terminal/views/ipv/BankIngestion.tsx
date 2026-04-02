@@ -89,9 +89,29 @@ export function BankIngestion() {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const text = e.target?.result as string;
-          const transactions = await parseBandecTxt(text);
-          if (transactions.length > 0) {
-            await processBankData(transactions);
+          const result = await parseBandecTxt(text);
+          if (result.transactions.length > 0) {
+            // Save balances to consolidated_accounts if available
+            if (result.period && result.openingBalance !== undefined) {
+              const existingAccount = await db.consolidated_accounts.where('period').equals(result.period).first();
+              const accountData = {
+                accountId: result.accountNumber || 'main',
+                period: result.period,
+                openingBalance: result.openingBalance,
+                bankStatementBalance: result.closingBalance,
+                updatedAt: new Date().toISOString()
+              };
+
+              if (existingAccount?.id) {
+                await db.consolidated_accounts.update(existingAccount.id, accountData);
+              } else {
+                await db.consolidated_accounts.add({
+                  ...accountData,
+                  createdAt: new Date().toISOString()
+                });
+              }
+            }
+            await processBankData(result.transactions);
           } else toast.error('No se encontraron transacciones');
         };
         reader.readAsText(file);
