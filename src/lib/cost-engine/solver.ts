@@ -49,7 +49,14 @@ export function solveCoefficient(
     low = 1;
     high = 2;
     let iterations = 0;
+    let lastVal = basePrice;
     while (simulate(high) < targetPrice && iterations < 50) {
+      const currentPrice = simulate(high);
+      // Safety: If changing the coefficient has no impact on the target price, stop.
+      if (Math.abs(currentPrice - lastVal) < (tolerance / 100)) {
+          break;
+      }
+      lastVal = currentPrice;
       low = high;
       high *= 2;
       iterations++;
@@ -59,7 +66,14 @@ export function solveCoefficient(
     low = 0;
     high = 1;
     let iterations = 0;
+    let lastVal = basePrice;
     while (simulate(low) > targetPrice && iterations < 50) {
+      const currentPrice = simulate(low);
+      // Safety: If changing the coefficient has no impact on the target price, stop.
+      if (Math.abs(currentPrice - lastVal) < (tolerance / 100)) {
+          break;
+      }
+      lastVal = currentPrice;
       high = low;
       low /= 2;
       iterations++;

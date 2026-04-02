@@ -100,13 +100,40 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         id: a.id,
         name: a.title,
         rows: (a.data || []).map(d => {
-          const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value, d.price_unit]
-            .find(v => v !== undefined && v !== null);
-          const baseImporte = (parseFloat(String(val ?? 0)) || 0);
+          // Try to find a numeric value for the total/importe using keys and common labels
+          const findValue = (row: any, searchKeys: string[], searchLabels: string[]) => {
+              // Priority 1: Direct key match with numeric value
+              for (const k of searchKeys) {
+                  if (typeof row[k] === 'number') return row[k];
+              }
+              // Priority 2: Case-insensitive search in keys/labels if we had column metadata (omitted for now)
+              return undefined;
+          };
+
+          const totalKeys = ['total', 'amount', 'importe', 'valor', 'value', 'price_total', 'depreciation_cost'];
+          let baseVal = findValue(d, totalKeys, []);
+
+          // Fallback: If no numeric total, try to calculate from norm * price
+          if (baseVal === undefined) {
+            const normKeys = ['norm', 'consumption', 'quantity', 'qty', 'norma', 'cantidad'];
+            const priceKeys = ['price_unit', 'rate', 'price', 'precio', 'costo_unitario'];
+
+            const norm = findValue(d, normKeys, []);
+            const price = findValue(d, priceKeys, []);
+
+            if (typeof norm === 'number' && typeof price === 'number') {
+              baseVal = norm * price;
+            } else {
+              // Last resort: find any numeric value in the priority list
+              const anyVal = findValue(d, [...totalKeys, ...priceKeys, ...normKeys], []);
+              baseVal = typeof anyVal === 'number' ? anyVal : 0;
+            }
+          }
+
           return {
             ...d,
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-            importe: baseImporte * coef
+            importe: (baseVal || 0) * coef
           };
         })
       };
