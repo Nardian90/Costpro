@@ -26,7 +26,7 @@ import {
   RefreshCw,
   Eye
 } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { IPVPreviewModal } from './IPVPreviewModal';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
@@ -283,15 +283,15 @@ export function IPVReportView() {
               startY: 55,
               head: [['Concepto', 'Monto']],
               body: [
-                ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
-                ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
-                ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
+                ['Total Ventas', formatCurrencyCents(report.total_ventas_cents)],
+                ['Resumen Efectivo', formatCurrencyCents(report.resumen_efectivo_cents)],
+                ['Resumen Transferencia', formatCurrencyCents(report.resumen_transferencia_cents)],
               ],
               theme: 'grid',
               headStyles: { fillColor: [22, 163, 74] }
             });
             const tableData = report.filas.map((f: any) => [
-              f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, `$ ${(f.precio_unitario_cents).toFixed(2)}`, `$ ${(f.importe_cents).toFixed(2)}`, f.existencia_final_qty
+              f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, formatCurrencyCents(f.precio_unitario_cents), formatCurrencyCents(f.importe_cents), f.existencia_final_qty
             ]);
             autoTable(doc, {
               startY: (doc as any).lastAutoTable.finalY + 15,
@@ -336,15 +336,15 @@ export function IPVReportView() {
         startY: 55,
         head: [['Concepto', 'Monto']],
         body: [
-          ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
-          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
-          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
+          ['Total Ventas', formatCurrencyCents(report.total_ventas_cents)],
+          ['Resumen Efectivo', formatCurrencyCents(report.resumen_efectivo_cents)],
+          ['Resumen Transferencia', formatCurrencyCents(report.resumen_transferencia_cents)],
         ],
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] }
       });
       const tableData = report.filas.map((f: any) => [
-        f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, `$ ${(f.precio_unitario_cents).toFixed(2)}`, `$ ${(f.importe_cents).toFixed(2)}`, f.existencia_final_qty
+        f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, formatCurrencyCents(f.precio_unitario_cents), formatCurrencyCents(f.importe_cents), f.existencia_final_qty
       ]);
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 15,
@@ -366,7 +366,7 @@ export function IPVReportView() {
           doc.text(`Fecha: ${report.fecha_reporte}`, 14, 30);
           const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
           const detailData = lines.map(l => [
-              l.transaction_ref.substring(0, 15), l.product_cod, l.cantidad, formatCurrency(l.precio_unitario_cents), formatCurrency(l.importe_linea_cents), l.clasificacion
+              l.transaction_ref.substring(0, 15), l.product_cod, l.cantidad, formatCurrencyCents(l.precio_unitario_cents), formatCurrencyCents(l.importe_linea_cents), l.clasificacion
           ]);
           autoTable(doc, {
               startY: 40,
@@ -533,9 +533,9 @@ export function IPVReportView() {
             startY: 30,
             head: [['Concepto', 'Total Mensual']],
             body: [
-                ['Total Ventas Brutas', formatCurrency(totalVentas)],
-                ['Total Efectivo', formatCurrency(totalEfectivo)],
-                ['Total Transferencias', formatCurrency(totalTransferencia)],
+                ['Total Ventas Brutas', formatCurrencyCents(totalVentas)],
+                ['Total Efectivo', formatCurrencyCents(totalEfectivo)],
+                ['Total Transferencias', formatCurrencyCents(totalTransferencia)],
                 ['Días Reportados', monthReports.length]
             ],
             theme: 'grid',
@@ -555,7 +555,7 @@ export function IPVReportView() {
             });
         });
         const tableData = Object.values(productSummary).map((f: any) => [
-            f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, formatCurrency(f.precio_unitario_cents), formatCurrency(f.importe_cents), f.existencia_final_qty
+            f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.salida_qty || 0, f.venta_cantidad_qty, formatCurrencyCents(f.precio_unitario_cents), formatCurrencyCents(f.importe_cents), f.existencia_final_qty
         ]);
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 15,
@@ -717,9 +717,9 @@ export function IPVReportView() {
                 reports.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="sticky-column-1 font-bold">{formatDate(r.fecha_reporte)}</TableCell>
-                    <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents)}</TableCell>
+                    <TableCell className="text-right font-black">{formatCurrencyCents(r.total_ventas_cents)}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyCents(r.resumen_efectivo_cents)}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyCents(r.resumen_transferencia_cents)}</TableCell>
                     <TableCell><Badge variant={r.estado === 'CERRADO' ? 'default' : 'outline'} className={r.estado === 'CERRADO' ? 'bg-green-500' : ''}>{r.estado}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
