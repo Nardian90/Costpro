@@ -132,3 +132,109 @@ describe('Cost Solver', () => {
     const coef = solveCoefficient(mockData, 'I', 25);
     expect(coef).toBeCloseTo(0.25, 1);
   });
+
+  it('should find a correct coefficient for Annex I with Spanish labels (norma/precio)', () => {
+    const mockData: CostSheetData = {
+      header: {
+          code: 'ES-TEST',
+          name: 'Prueba',
+          date: '2023-01-01',
+          quantity: 1,
+          currency: 'CUP',
+          category: 'Test',
+          type: 'Test',
+          unit: 'U'
+      },
+      sections: [
+        {
+          id: 'S1',
+          rows: [
+            {
+              id: '1.1',
+              label: 'Costo Base',
+              value: 1000,
+              calculationMethod: 'FIJO'
+            },
+            {
+              id: '14.1',
+              label: 'Precio Final',
+              calculationMethod: 'FORMULA',
+              formula: 'ref("1.1") + TotalAnexoI'
+            }
+          ]
+        }
+      ],
+      annexes: [
+        {
+          id: 'I',
+          title: 'Anexo I',
+          columns: [
+              { key: 'norma', type: 'number', label: 'NORMA' },
+              { key: 'precio', type: 'number', label: 'PRECIO' },
+              { key: 'importe', type: 'formula', label: 'IMPORTE', formula: '=norma * precio' }
+          ],
+          data: [{ norma: 2, precio: 500, importe: '=norma * precio', classification: '1.1' }],
+          coefficient: 1,
+          isAdjustmentActive: true,
+          adjustmentColumn: 'PRECIO UNITARIO'
+        }
+      ],
+      signature: { prepared_by: '', approved_by: '' }
+    };
+
+    const coef = solveCoefficient(mockData, 'I', 2500);
+    expect(coef).toBeCloseTo(1.5, 2);
+
+  it('should find a correct coefficient for Annex I with Spanish labels (norma/precio)', () => {
+    const mockData: any = {
+      header: {
+          code: 'ES-TEST',
+          name: 'Prueba',
+          date: '2023-01-01',
+          quantity: 1,
+          currency: 'CUP',
+          category: 'Test',
+          type: 'Test',
+          unit: 'U'
+      },
+      sections: [
+        {
+          id: 'S1',
+          rows: [
+            {
+              id: '1.1',
+              label: 'Costo Base',
+              value: 1000,
+              calculationMethod: 'FIJO'
+            },
+            {
+              id: '14.1',
+              label: 'Precio Final',
+              calculationMethod: 'FORMULA',
+              formula: 'ref("1.1") + TotalAnexoI'
+            }
+          ]
+        }
+      ],
+      annexes: [
+        {
+          id: 'I',
+          title: 'Anexo I',
+          columns: [
+              { key: 'norma', type: 'number', label: 'NORMA' },
+              { key: 'precio', type: 'number', label: 'PRECIO' },
+              { key: 'importe', type: 'formula', label: 'IMPORTE', formula: '=norma * precio' }
+          ],
+          data: [{ norma: 2, precio: 500, importe: '=norma * precio', classification: '1.1' }],
+          coefficient: 1,
+          isAdjustmentActive: true,
+          adjustmentColumn: 'PRECIO UNITARIO'
+        }
+      ],
+      signature: { prepared_by: '', approved_by: '' }
+    };
+
+    const coef = solveCoefficient(mockData, 'I', 2500);
+    expect(coef).toBeCloseTo(1.5, 2);
+  });
+});
