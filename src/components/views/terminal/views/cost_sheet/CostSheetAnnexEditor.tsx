@@ -8,15 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target } from 'lucide-react';
+import { solveCoefficient } from '@/lib/cost-engine/solver';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
 import { exportAnnexToExcel, importAnnexFromExcel } from '@/services/excel-service';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
-import { solveCoefficient } from '@/lib/cost-engine/solver';
-import { Target } from 'lucide-react';
 
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
@@ -40,6 +39,29 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
   const annexIndex = data.annexes.findIndex((a: CostSheetAnnex) => a.id === activeAnnexId);
   const annex = data.annexes[annexIndex] as CostSheetAnnex;
+  const [targetPrice, setTargetPrice] = React.useState('');
+  const [isSolving, setIsSolving] = React.useState(false);
+  const showTargetPriceInput = annex?.id === 'I' || annex?.id === 'II';
+
+  const handleSolve = () => {
+    const target = parseFloat(targetPrice);
+    if (isNaN(target) || target <= 0) return;
+
+    setIsSolving(true);
+    setTimeout(() => {
+      try {
+        const bestCoef = solveCoefficient(data, annex.id, target);
+        const finalCoef = parseFloat(bestCoef.toFixed(6));
+        updateAnnexAdjustment(annex.id, finalCoef, annex.adjustmentColumn || "PRECIO UNITARIO", true);
+        setLocalCoef(String(finalCoef));
+      } catch (err) {
+        console.error("Solver error:", err);
+      } finally {
+        setIsSolving(false);
+      }
+    }, 100);
+  };
+
 
   const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeAnnexId);
   const totalValue = calculatedAnnex ? calculatedAnnex.data.reduce((sum: number, row: any) => {
@@ -53,8 +75,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     setLocalCoef(String(annex?.coefficient !== undefined ? annex.coefficient : 1));
   }, [annex?.coefficient]);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
-  const [targetPrice, setTargetPrice] = React.useState('');
-  const [isSolving, setIsSolving] = React.useState(false);
 
   if (!annex) return null;
 
@@ -86,26 +106,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     { id: '3.2', label: 'Otros Gastos Directos' }
   ];
 
-  const handleSolve = () => {
-    const target = parseFloat(targetPrice);
-    if (isNaN(target) || target <= 0) return;
-
-    setIsSolving(true);
-    // Use a small timeout to let the UI update and then run the solver
-    setTimeout(() => {
-      try {
-        const bestCoef = solveCoefficient(data, annex.id, target);
-        const finalCoef = parseFloat(bestCoef.toFixed(6));
-        updateAnnexAdjustment(annex.id, finalCoef, annex.adjustmentColumn || "PRECIO UNITARIO", true);
-        setLocalCoef(String(finalCoef));
-      } catch (err) {
-        console.error("Solver failed:", err);
-      } finally {
-        setIsSolving(false);
-      }
-    }, 100);
-  };
-
   const handleExport = () => {
     exportAnnexToExcel(annex);
   };
@@ -120,17 +120,15 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     }
   };
 
-  const showTargetPriceInput = annex.id === 'I' || annex.id === 'II';
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="flex flex-col gap-6 bg-card/50 p-6 rounded-[2.5rem] border border-border/50 shadow-xl backdrop-blur-md">
+       <div className="flex flex-col gap-6 bg-card/50 p-8 rounded-[2.5rem] border border-border/50 shadow-xl backdrop-blur-md">
           {/* Action Buttons Row */}
-          <div className="flex flex-wrap items-center gap-3 w-full border-b border-primary/10 pb-4">
+          <div className="flex flex-wrap items-center gap-3 w-full border-b border-primary/10 pb-6">
              <div className="relative group">
                 <input
                   type="file"
-                  id={`import-${annex.id}`}
+                  id={`import-${annex.id}-top`}
                   className="hidden"
                   onChange={handleImport}
                   accept=".xlsx, .xls"
@@ -139,10 +137,10 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="rounded-xl border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px]"
+                  className="rounded-xl border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary h-12 px-4 font-black uppercase tracking-widest text-[10px]"
                 >
-                  <label htmlFor={`import-${annex.id}`} className="cursor-pointer flex items-center gap-2">
-                    <Upload className="w-3.5 h-3.5" />
+                  <label htmlFor={`import-${annex.id}-top`} className="cursor-pointer flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
                     Importar Excel
                   </label>
                 </Button>
@@ -151,158 +149,121 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
-                className="rounded-xl border-primary/20 hover:bg-primary/10 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px] gap-2"
+                className="rounded-xl border-primary/20 hover:bg-primary/10 text-primary h-12 px-4 font-black uppercase tracking-widest text-[10px] gap-2"
              >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
                 Exportar
              </Button>
              <Button
                 onClick={() => addRow(annex.id)}
-                className="rounded-xl bg-primary text-foreground h-10 px-4 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
+                className="rounded-xl bg-primary text-foreground h-12 px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
              >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 Añadir Fila
              </Button>
           </div>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-                <div className="h-4 w-1 bg-primary rounded-full" />
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">Editor de Anexo</h2>
-            </div>
-            <h3 className="text-xl font-black text-foreground uppercase tracking-tighter italic">
-                {annex.id}: {annex.title}
-            </h3>
-
-            <div className="flex flex-wrap items-center gap-4 mt-2 p-3 rounded-2xl bg-primary/5 border border-primary/10 animate-in fade-in slide-in-from-left-4 duration-500">
-                <div className="flex flex-col">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Columna a Ajustar</span>
-                    <Select
-                        value={annex.adjustmentColumn || 'PRECIO UNITARIO'}
-                        onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, val, annex.isAdjustmentActive)}
-                    >
-                        <SelectTrigger className="h-8 min-w-[140px] bg-background border-primary/20 rounded-xl text-[9px] font-black uppercase hover:border-primary/40 transition-colors">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-primary/20">
-                            <SelectItem value="PRECIO UNITARIO" className="text-[10px] font-bold uppercase">Precio Unitario</SelectItem>
-                            <SelectItem value="NORMA DE CONSUMO" className="text-[10px] font-bold uppercase">Norma de Consumo</SelectItem>
-                            <SelectItem value="AMBOS" className="text-[10px] font-bold uppercase">Ambos</SelectItem>
-                            <SelectItem value="VALOR" className="text-[10px] font-bold uppercase">Valor</SelectItem>
-                        </SelectContent>
-                    </Select>
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 w-full">
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-1 bg-primary rounded-full" />
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">Editor de Anexo</h2>
                 </div>
+                <h3 className="text-xl font-black text-foreground uppercase tracking-tighter italic">
+                    {annex.id}: {annex.title}
+                </h3>
 
-                <div className="flex flex-col">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Coeficiente</span>
-                    <div className="relative group/coef">
-                        <input
-                            type="text"
-                            value={localCoef}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setLocalCoef(val);
-                                if (val === '' || val === '-' || val.endsWith('.')) return;
-                                if (val === '0' || val === '0.' || val === '0.0') {
-                                    updateAnnexAdjustment(annex.id, 0, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
-                                    return;
-                                }
-                                const numericVal = parseFloat(val);
-                                if (!isNaN(numericVal)) {
-                                    updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
-                                }
-                            }}
-                            onBlur={() => {
-                                if (localCoef === '' || isNaN(parseFloat(localCoef))) {
-                                    setLocalCoef('1');
-                                    updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
-                                }
-                            }}
-                            className="w-24 h-8 px-8 rounded-xl bg-background border border-primary/20 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-center"
-                        />
-                        <RefreshCw className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40 group-hover/coef:rotate-180 transition-transform duration-700" />
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3 bg-background/50 px-4 py-1.5 rounded-xl border border-primary/10 ml-2">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-primary/70">Auto-ajuste</span>
-                    <Switch
-                        checked={!!annex.isAdjustmentActive}
-                        onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, annex.adjustmentColumn || 'PRECIO UNITARIO', checked)}
-                        className="scale-90"
-                    />
-                </div>
-
-                {showTargetPriceInput && (
-                  <div className="flex flex-row items-end gap-2 ml-4 animate-in fade-in slide-in-from-left-4 duration-700">
+                <div className="flex flex-wrap items-center gap-4 mt-2 p-3 rounded-2xl bg-primary/5 border border-primary/10 animate-in fade-in slide-in-from-left-4 duration-500">
                     <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Precio Venta Objetivo</span>
-                        <div className="relative group/target">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Columna a Ajustar</span>
+                        <Select
+                            value={annex.adjustmentColumn || 'PRECIO UNITARIO'}
+                            onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, val, annex.isAdjustmentActive)}
+                        >
+                            <SelectTrigger className="h-8 min-w-[140px] bg-background border-primary/20 rounded-xl text-[9px] font-black uppercase hover:border-primary/40 transition-colors">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl border-primary/20">
+                                <SelectItem value="PRECIO UNITARIO" className="text-[10px] font-bold uppercase">Precio Unitario</SelectItem>
+                                <SelectItem value="NORMA DE CONSUMO" className="text-[10px] font-bold uppercase">Norma de Consumo</SelectItem>
+                                <SelectItem value="AMBOS" className="text-[10px] font-bold uppercase">Ambos</SelectItem>
+                                <SelectItem value="VALOR" className="text-[10px] font-bold uppercase">Valor</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Coeficiente</span>
+                        <div className="relative group/coef">
                             <input
-                                disabled={isSolving}
-                                type="number"
-                                value={targetPrice}
-                                onChange={(e) => setTargetPrice(e.target.value)}
-                                placeholder="Ej: 25"
-                                className="w-32 h-8 px-2 rounded-xl bg-background border border-primary/40 text-sm font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center placeholder:text-primary/20 shadow-inner"
+                                type="text"
+                                value={localCoef}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setLocalCoef(val);
+                                    if (val === '' || val === '-' || val.endsWith('.')) return;
+                                    if (val === '0' || val === '0.' || val === '0.0') {
+                                        updateAnnexAdjustment(annex.id, 0, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
+                                        return;
+                                    }
+                                    const numericVal = parseFloat(val);
+                                    if (!isNaN(numericVal)) {
+                                        updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (localCoef === '' || isNaN(parseFloat(localCoef))) {
+                                        setLocalCoef('1');
+                                        updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || 'PRECIO UNITARIO', annex.isAdjustmentActive);
+                                    }
+                                }}
+                                className="w-24 h-8 px-8 rounded-xl bg-background border border-primary/20 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-center"
                             />
-                            <Target className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40" />
+                            <RefreshCw className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40 group-hover/coef:rotate-180 transition-transform duration-700" />
                         </div>
                     </div>
-                    <Button
-                        size="sm"
-                        onClick={handleSolve}
-                        disabled={isSolving || !targetPrice}
-                        className="h-8 px-4 rounded-xl bg-primary text-foreground font-black uppercase tracking-widest text-[9px] shadow-lg shadow-primary/10 active:scale-95 transition-all gap-2"
-                    >
-                        {isSolving ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <>Calcular</>
-                        )}
-                    </Button>
-                  </div>
-                )}
+
+                    <div className="flex items-center gap-3 bg-background/50 px-4 py-1.5 rounded-xl border border-primary/10 ml-2">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-primary/70">Auto-ajuste</span>
+                        <Switch
+                            checked={!!annex.isAdjustmentActive}
+                            onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, annex.adjustmentColumn || 'PRECIO UNITARIO', checked)}
+                            className="scale-90"
+                        />
+                    </div>
+
+                    {showTargetPriceInput && (
+                      <div className="flex flex-row items-end gap-2 ml-4 animate-in fade-in slide-in-from-left-4 duration-700">
+                        <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Precio Venta Objetivo</span>
+                            <div className="relative group/target">
+                                <input
+                                    disabled={isSolving}
+                                    type="number"
+                                    value={targetPrice}
+                                    onChange={(e) => setTargetPrice(e.target.value)}
+                                    placeholder="Ej: 25"
+                                    className="w-32 h-10 px-2 rounded-xl bg-background border border-primary/40 text-sm font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center placeholder:text-primary/20 shadow-inner"
+                                />
+                                <Target className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40" />
+                            </div>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={handleSolve}
+                            disabled={isSolving || !targetPrice}
+                            className="h-10 px-4 rounded-xl bg-primary text-foreground font-black uppercase tracking-widest text-[9px] shadow-lg shadow-primary/10 active:scale-95 transition-all gap-2"
+                        >
+                            {isSolving ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>Calcular</>
+                            )}
+                        </Button>
+                      </div>
+                    )}
+                </div>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto self-end lg:self-center">
-             <div className="relative group">
-                <input
-                  type="file"
-                  id={`import-${annex.id}`}
-                  className="hidden"
-                  onChange={handleImport}
-                  accept=".xlsx, .xls"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="rounded-xl border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px]"
-                >
-                  <label htmlFor={`import-${annex.id}`} className="cursor-pointer flex items-center gap-2">
-                    <Upload className="w-3.5 h-3.5" />
-                    Importar Excel
-                  </label>
-                </Button>
-             </div>
-             <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                className="rounded-xl border-primary/20 hover:bg-primary/10 text-primary h-10 px-4 font-black uppercase tracking-widest text-[10px] gap-2"
-             >
-                <Download className="w-3.5 h-3.5" />
-                Exportar
-             </Button>
-             <Button
-                onClick={() => addRow(annex.id)}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-foreground h-10 px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 w-full lg:w-auto active:scale-95 transition-all"
-             >
-                <Plus className="w-4 h-4" />
-                Añadir Fila
-             </Button>
           </div>
        </div>
 
@@ -331,9 +292,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                 <TableBody>
                     {annex.data.map((row: any, rowIndex: number) => {
                         const isZero = (colKey: string) => Number(row[colKey]) === 0;
-                        const showTargetPriceInput = annex.id === 'I' || annex.id === 'II';
-
-  return (
+                        return (
                         <TableRow key={rowIndex} className="h-auto sm:h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
                             {annex.columns.map((col: CostSheetColumn) => {
                                 const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
@@ -341,9 +300,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                (col.key === 'um' ? 'w-16' :
                                                (col.key === 'total' || col.key === 'amount' ? 'w-32' :
                                                (!isMain ? 'w-24' : '')));
-                                const showTargetPriceInput = annex.id === 'I' || annex.id === 'II';
-
-  return (
+                                return (
                                 <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", widthClass)}>
                                     {col.formula ? (
                                         <div className="relative group/cell">
@@ -464,9 +421,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 }
 
                                                 if (!show) return null;
-                                                const showTargetPriceInput = annex.id === 'I' || annex.id === 'II';
-
-  return (
+                                                return (
                                                     <div className="absolute -bottom-4 right-0 text-[8px] font-bold text-muted-foreground whitespace-nowrap opacity-70">
                                                         Orig: {val.toFixed(4)}
                                                     </div>
