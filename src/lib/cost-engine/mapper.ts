@@ -100,20 +100,32 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         id: a.id,
         name: a.title,
         rows: (a.data || []).map(d => {
-          // Try to find a numeric value for the total/importe
-          let baseVal = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value]
-            .find(v => typeof v === 'number');
+          // Try to find a numeric value for the total/importe using keys and common labels
+          const findValue = (row: any, searchKeys: string[], searchLabels: string[]) => {
+              // Priority 1: Direct key match with numeric value
+              for (const k of searchKeys) {
+                  if (typeof row[k] === 'number') return row[k];
+              }
+              // Priority 2: Case-insensitive search in keys/labels if we had column metadata (omitted for now)
+              return undefined;
+          };
+
+          const totalKeys = ['total', 'amount', 'importe', 'valor', 'value', 'price_total', 'depreciation_cost'];
+          let baseVal = findValue(d, totalKeys, []);
 
           // Fallback: If no numeric total, try to calculate from norm * price
           if (baseVal === undefined) {
-            const norm = [d.norm, d.consumption, d.quantity, d.qty].find(v => typeof v === 'number');
-            const price = [d.price_unit, d.rate, d.price].find(v => typeof v === 'number');
+            const normKeys = ['norm', 'consumption', 'quantity', 'qty', 'norma', 'cantidad'];
+            const priceKeys = ['price_unit', 'rate', 'price', 'precio', 'costo_unitario'];
+
+            const norm = findValue(d, normKeys, []);
+            const price = findValue(d, priceKeys, []);
+
             if (typeof norm === 'number' && typeof price === 'number') {
               baseVal = norm * price;
             } else {
               // Last resort: find any numeric value in the priority list
-              const anyVal = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value, d.price_unit]
-                .find(v => typeof v === 'number');
+              const anyVal = findValue(d, [...totalKeys, ...priceKeys, ...normKeys], []);
               baseVal = typeof anyVal === 'number' ? anyVal : 0;
             }
           }
