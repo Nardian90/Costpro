@@ -100,13 +100,28 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         id: a.id,
         name: a.title,
         rows: (a.data || []).map(d => {
-          const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value, d.price_unit]
-            .find(v => v !== undefined && v !== null);
-          const baseImporte = (parseFloat(String(val ?? 0)) || 0);
+          // Try to find a numeric value for the total/importe
+          let baseVal = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value]
+            .find(v => typeof v === 'number');
+
+          // Fallback: If no numeric total, try to calculate from norm * price
+          if (baseVal === undefined) {
+            const norm = [d.norm, d.consumption, d.quantity, d.qty].find(v => typeof v === 'number');
+            const price = [d.price_unit, d.rate, d.price].find(v => typeof v === 'number');
+            if (typeof norm === 'number' && typeof price === 'number') {
+              baseVal = norm * price;
+            } else {
+              // Last resort: find any numeric value in the priority list
+              const anyVal = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value, d.price_unit]
+                .find(v => typeof v === 'number');
+              baseVal = typeof anyVal === 'number' ? anyVal : 0;
+            }
+          }
+
           return {
             ...d,
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-            importe: baseImporte * coef
+            importe: (baseVal || 0) * coef
           };
         })
       };
