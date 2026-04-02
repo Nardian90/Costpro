@@ -34,7 +34,7 @@ export function CatalogImportPreview({ isOpen, onClose, onConfirm, result, produ
           <div className="text-xs font-black uppercase flex items-center gap-2 mb-2"><Info className="w-3 h-3" />Vista Previa</div>
           <div className="border rounded-lg overflow-hidden">
             <Table><TableHeader className="bg-muted/50"><TableRow><TableHead className="text-[10px] font-black uppercase">Cod</TableHead><TableHead className="text-[10px] font-black uppercase">Descripción</TableHead><TableHead className="text-[10px] font-black uppercase text-right">Precio</TableHead></TableRow></TableHeader>
-              <TableBody>{previewProducts.map((p, i) => <TableRow key={i} className="text-xs"><TableCell className="font-mono font-bold text-primary">{p.cod}</TableCell><TableCell>{p.descripcion}</TableCell><TableCell className=\"text-right font-black\">{formatCurrencyCents(p.precio_cents || 0)}</TableCell></TableRow>)}</TableBody>
+              <TableBody>{previewProducts.map((p, i) => <TableRow key={i} className="text-xs"><TableCell className="font-mono font-bold text-primary">{p.cod}</TableCell><TableCell>{p.descripcion}</TableCell><TableCell className="text-right font-black">{formatCurrencyCents(p.precio_cents || 0)}</TableCell></TableRow>)}</TableBody>
             </Table>
           </div>
         </div>
