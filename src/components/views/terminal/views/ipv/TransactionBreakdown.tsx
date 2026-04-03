@@ -1,279 +1,210 @@
-'use client';
-
-import * as XLSX from "xlsx";
-import { FileSpreadsheet } from "lucide-react";
+import { StockService } from '../../../../../lib/ipv/StockService';
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/dexie';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2, Edit2, CheckCircle2, X, RotateCcw, Eye, Info } from 'lucide-react';
-import { ObservationsModal } from "./ObservationsModal";
-import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
-import { toast } from 'sonner';
+import { db, ReconciliationLine } from '../../../../../lib/dexie';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '../../../../ui/table';
+import { Card } from '../../../../ui/card';
+import { Badge } from '../../../../ui/badge';
+import { Button } from '../../../../ui/button';
+import { Input } from '../../../../ui/input';
+import {
+  Search,
+  Filter,
+  Trash2,
+  Edit2,
+  Info,
+  ArrowRightLeft
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { formatCurrencyCents } from '../../../../../lib/utils';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+} from '../../../../ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '../../../../ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from '../../../../ui/tooltip';
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 
-export function TransactionBreakdown() {
-  const [classificationFilter, setClassificationFilter] = useState<'ALL' | 'Efectivo' | 'Transferencia' | 'QR'>('ALL');
+const ObservationsModal = ({ open, onOpenChange, observations, reference }: { open: boolean, onOpenChange: (open: boolean) => void, observations: string, reference: string }) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle className="text-xl font-black uppercase text-primary">Detalle de Transacción</DialogTitle>
+      </DialogHeader>
+      <div className="py-4 space-y-4">
+        <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-muted-foreground/30">
+            <p className="text-xs font-black uppercase text-muted-foreground mb-1">Referencia Origen</p>
+            <p className="font-mono text-sm font-bold text-primary break-all">{reference}</p>
+        </div>
+        <div className="space-y-1">
+            <p className="text-xs font-black uppercase text-muted-foreground">Observaciones / Concepto</p>
+            <div className="p-4 bg-background border rounded-2xl text-sm min-h-[100px] whitespace-pre-wrap leading-relaxed italic">
+                {observations || "Sin observaciones adicionales registradas."}
+            </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={() => onOpenChange(false)} className="font-bold uppercase text-xs">Cerrar</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
+export default function TransactionBreakdown() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingLine, setEditingLine] = useState<any>(null);
+  const [classificationFilter, setClassificationFilter] = useState<string>('ALL');
+  const [editingLine, setEditingLine] = useState<ReconciliationLine | null>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editDate, setEditDate] = useState<string>('');
-  const [obsModal, setObsModal] = useState<{ open: boolean; observations: string; reference: string }>({ open: false, observations: "", reference: "" });
+  const [obsModal, setObsModal] = useState({ open: false, observations: "", reference: "" });
 
   const lines = useLiveQuery(() => db.reconciliation_lines.toArray());
-  const products = useLiveQuery(() => db.products.toArray());
   const transactions = useLiveQuery(() => db.bank_statements.toArray());
+  const products = useLiveQuery(() => db.products.toArray());
 
-  const txMap = useMemo(() => {
-    if (!transactions) return new Map();
-    return new Map(transactions.map(t => [t.referencia_origen, t]));
-  }, [transactions]);
-
-  const productMap = useMemo(() => {
-    if (!products) return new Map();
-    return new Map(products.map(p => [p.cod, p]));
-  }, [products]);
+  const txMap = useMemo(() => new Map(transactions?.map(t => [t.referencia_origen, t])), [transactions]);
+  const productMap = useMemo(() => new Map(products?.map(p => [p.cod, p])), [products]);
 
   const filteredLines = useMemo(() => {
     if (!lines) return [];
     return lines.filter(l => {
-      const tx = txMap.get(l.transaction_ref);
       const prod = productMap.get(l.product_cod);
+      const tx = txMap.get(l.transaction_ref);
       const search = searchTerm.toLowerCase();
 
-      const matchesSearch = (
+      const matchesSearch =
         l.transaction_ref.toLowerCase().includes(search) ||
         l.product_cod.toLowerCase().includes(search) ||
         (prod?.descripcion.toLowerCase().includes(search)) ||
-        (tx?.observaciones.toLowerCase().includes(search))
-      );
-      const matchesClassification = classificationFilter === "ALL" || l.clasificacion === classificationFilter;
+        (tx?.observaciones?.toLowerCase().includes(search));
+
+      const matchesClassification = classificationFilter === 'ALL' || l.clasificacion === classificationFilter;
+
       return matchesSearch && matchesClassification;
     }).sort((a, b) => b.fecha_operacion.localeCompare(a.fecha_operacion));
   }, [lines, txMap, productMap, searchTerm, classificationFilter]);
 
   const handleDeleteLine = async (line: any) => {
-    if (!confirm('¿Deseas eliminar este registro?')) return;
-    await db.reconciliation_lines.delete(line.id);
-
-    // Update status of the affected transaction
-    const tx = await db.bank_statements.get(line.transaction_ref);
-    if (tx) {
-        const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(line.transaction_ref).toArray();
-        const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const target = tx.importe_venta_cents || tx.importe_cents;
-        const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
-        await db.bank_statements.update(line.transaction_ref, { estado_conciliacion: newStatus });
-    }
-
-    toast.success('Línea eliminada');
-  };
-
-  const handleExportXLS = () => {
-    if (!filteredLines || filteredLines.length === 0) {
-        toast.error("No hay datos para exportar");
-        return;
-    }
-
-    const dataToExport = filteredLines.map(l => {
-        const prod = productMap.get(l.product_cod);
-        const tx = txMap.get(l.transaction_ref);
-        return {
-            "Fecha": l.fecha_operacion,
-            "Referencia": l.transaction_ref,
-            "Producto": prod?.descripcion || l.product_cod,
-            "Código": l.product_cod,
-            "Cantidad": l.cantidad,
-            "Precio Unit": Number(l.precio_unitario_cents),
-            "Importe Total": Number(l.importe_linea_cents),
-            "Ajuste/Cuadre": Number(l.cuadre_cents || 0),
-            "Tipo": l.clasificacion,
-            "Origen": l.origen_dato,
-            "Observaciones": tx?.observaciones || ""
-        };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-
-    // Apply numeric formatting to currency columns (F, G, H)
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      ['F', 'G', 'H'].forEach(col => {
-        const addr = col + (R + 1);
-        if (worksheet[addr]) {
-            worksheet[addr].t = 'n';
-
-            worksheet[addr].z = '#,##0.00';
-        }
-      });
-    }
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Desglose");
-    XLSX.writeFile(workbook, `IPV_Desglose_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
-  const handleResetCash = async () => {
-    if (!confirm('¿Deseas eliminar TODOS los registros de efectivo generados automáticamente? Los ajustes manuales no se verán afectados.')) {
-        return;
-    }
-
+    if (!confirm("¿Deseas revertir este registro mediante compensación?")) return;
     try {
-        const allCashLines = lines?.filter(l =>
-            l.clasificacion === 'Efectivo' ||
-            l.origen_dato === 'CASH_FILLER' ||
-            l.product_cod === 'CASH_MANUAL'
-        ) || [];
+        const snapshot = await StockService.takeSnapshot(line.product_cod);
+        await StockService.revertReconciliationLine(line.id, snapshot);
 
-        if (allCashLines.length === 0) {
-            toast.info('No hay registros de efectivo para eliminar.');
-            return;
+        const tx = await db.bank_statements.get(line.transaction_ref);
+        if (tx) {
+            const remainingLines = await db.reconciliation_lines.where("transaction_ref").equals(line.transaction_ref).toArray();
+            const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+            const target = tx.importe_venta_cents || tx.importe_cents;
+            const newStatus = txTotal >= target - 0.001 ? "COMPLETO" : (txTotal > 0 ? "PARCIAL" : "PENDIENTE");
+            await db.bank_statements.update(line.transaction_ref, { estado_conciliacion: newStatus });
         }
 
-        const ids = allCashLines.map(l => l.id);
-        const affectedTxRefs = Array.from(new Set(allCashLines.map(l => l.transaction_ref)));
-
-        await db.reconciliation_lines.bulkDelete(ids);
-
-        // Actualizar estados de transacciones afectadas
-        for (const ref of affectedTxRefs) {
-            const tx = await db.bank_statements.get(ref);
-            if (tx) {
-                const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(ref).toArray();
-                const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-                const target = tx.importe_venta_cents || tx.importe_cents;
-                const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
-                await db.bank_statements.update(ref, { estado_conciliacion: newStatus });
-            }
-        }
-
-        toast.success(`${ids.length} registros de efectivo eliminados correctamente.`);
-    } catch (error) {
-        console.error('Error resetting cash:', error);
-        toast.error('Error al eliminar registros de efectivo');
-    }
-  };
-
-  const handleRandomizeDates = async () => {
-    if (!confirm('¿Deseas reacomodar aleatoriamente las fechas de todos los registros de efectivo? Se priorizarán los días con menos transferencias para un look natural.')) {
-        return;
-    }
-
-    try {
-        const allCashLines = lines?.filter(l =>
-            l.clasificacion === 'Efectivo' ||
-            l.origen_dato === 'CASH_FILLER' ||
-            l.product_cod === 'CASH_MANUAL'
-        ) || [];
-
-        if (allCashLines.length === 0) {
-            toast.info('No hay registros de efectivo para reacomodar.');
-            return;
-        }
-
-        // 1. Obtener fechas disponibles y sus volúmenes de transferencias
-        const dailyVolumes: Record<string, number> = {};
-        for (const tx of transactions || []) {
-            if (tx.tipo === 'Cr') {
-                dailyVolumes[tx.fecha] = (dailyVolumes[tx.fecha] || 0) + 1;
-            }
-        }
-
-        const availableDates = Object.keys(dailyVolumes).length > 0
-            ? Object.keys(dailyVolumes)
-            : Array.from(new Set(lines?.map(l => l.fecha_operacion) || []));
-
-        if (availableDates.length === 0) return;
-
-        // 2. Re-distribuir
-        for (const line of allCashLines) {
-            const randomDate = availableDates[Math.floor(Math.random() * availableDates.length)];
-            await db.reconciliation_lines.update(line.id, { fecha_operacion: randomDate });
-        }
-
-        toast.success(`${allCashLines.length} registros de efectivo reubicados exitosamente.`);
-    } catch (error) {
-        toast.error('Error al reubicar registros');
+        toast.success("Línea revertida exitosamente");
+    } catch (error: any) {
+        toast.error(error.message || "Error al revertir la línea");
     }
   };
 
   const handleSaveEdit = async () => {
     if (!editingLine) return;
+    try {
+        await db.reconciliation_lines.update(editingLine.id, {
+            importe_linea_cents: editAmount,
+            fecha_operacion: editDate,
+            cuadre_cents: editAmount - (editingLine.precio_unitario_cents * editingLine.cantidad)
+        });
+        toast.success('Línea actualizada');
+        setEditingLine(null);
+    } catch (error) {
+        toast.error('Error al actualizar');
+    }
+  };
 
-    const prod = productMap.get(editingLine.product_cod);
-    const basePrice = prod?.precio_cents || editingLine.precio_unitario_cents;
-    const diff = editAmount - (basePrice * editingLine.cantidad);
-
-    await db.reconciliation_lines.update(editingLine.id, {
-        importe_linea_cents: editAmount,
-        fecha_operacion: editDate,
-        cuadre_cents: diff
+  const exportToExcel = () => {
+    const data = filteredLines.map(l => {
+        const prod = productMap.get(l.product_cod);
+        return {
+            "Fecha": l.fecha_operacion,
+            "Referencia": l.transaction_ref,
+            "Producto": prod?.descripcion || l.product_cod,
+            "Cantidad": l.cantidad,
+            "UM": l.product_um,
+            "Precio Unit": l.precio_unitario_cents / 100,
+            "Importe Real": l.importe_linea_cents / 100,
+            "Cuadre": l.cuadre_cents / 100,
+            "Clasificación": l.clasificacion,
+            "Origen": l.origen_dato,
+            "Observaciones": l.observaciones || ""
+        };
     });
 
-    const tx = await db.bank_statements.get(editingLine.transaction_ref);
-    if (tx) {
-        const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(editingLine.transaction_ref).toArray();
-        const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const target = tx.importe_venta_cents || tx.importe_cents;
-        const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
-        await db.bank_statements.update(editingLine.transaction_ref, { estado_conciliacion: newStatus });
-    }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Desglose IPV");
+    XLSX.writeFile(wb, `desglose_ipv_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
-    toast.success('Cambios guardados');
-    setEditingLine(null);
+  const formatDate = (dateStr: string) => {
+    try {
+        return format(new Date(dateStr), 'dd/MM/yyyy');
+    } catch {
+        return dateStr;
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar referencia o producto..."
-             className="pl-10 h-10 font-medium"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <select
-            value={classificationFilter}
-            onChange={(e) => setClassificationFilter(e.target.value as any)}
-            className="h-10 text-xs font-bold border rounded-md bg-background px-3 outline-none min-w-[140px] uppercase shadow-sm border-primary/10"
-          >
-            <option value="ALL">TODOS LOS TIPOS</option>
-            <option value="Efectivo">EFECTIVO</option>
-            <option value="Transferencia">TRANSFERENCIA</option>
-            <option value="QR">QR</option>
-          </select>
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-background/50 p-4 border-b">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar por ref, producto o concepto..."
+                    className="pl-10 h-10 text-xs font-bold"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Select value={classificationFilter} onValueChange={setClassificationFilter}>
+                <SelectTrigger className="w-40 h-10 text-xs font-bold">
+                    <SelectValue placeholder="Tipo Pago" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="ALL">Todos</SelectItem>
+                    <SelectItem value="Transferencia">Transferencia</SelectItem>
+                    <SelectItem value="Efectivo">Efectivo</SelectItem>
+                    <SelectItem value="QR">QR</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={handleRandomizeDates} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2">
-                <RotateCcw className="w-3 h-3 text-orange-500" /> Mezclar Fechas
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleResetCash} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 text-destructive border-destructive/20 hover:bg-destructive/5">
-                <Trash2 className="w-3 h-3" /> Limpiar Efectivo
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleExportXLS} className="h-10 text-[10px] font-black uppercase tracking-widest gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-green-600" /> Exportar Excel
-            </Button>
-            <Badge variant="outline" className="h-10 px-4 font-black text-xs gap-2 bg-background/50 border-primary/20">
-                <Filter className="w-3 h-3 text-primary" />
-                {filteredLines.length} Líneas
-            </Badge>
-        </div>
+        <Button onClick={exportToExcel} variant="outline" className="text-xs font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5">
+            Exportar Excel
+        </Button>
       </div>
 
-      <div className="table-scroll-wrapper">
+      <div className="px-4">
         <Table className="data-table">
           <TableHeader>
             <TableRow>
@@ -305,11 +236,12 @@ export function TransactionBreakdown() {
                 const propina = l.cuadre_cents > 0 ? l.cuadre_cents : 0;
                 const descuento = l.cuadre_cents < 0 ? Math.abs(l.cuadre_cents) : 0;
 
-                const canEditDelete = l.clasificacion === 'Efectivo' || l.origen_dato === 'CASH_FILLER';
+                const isReversion = l.observaciones?.startsWith('[REVERSIÓN]');
+                const canEditDelete = (l.clasificacion === 'Efectivo' || l.origen_dato === 'CASH_FILLER') && !isReversion;
 
                 return (
-                  <TableRow key={l.id}>
-                    <TableCell className="text-xs font-medium">{formatDate(l.fecha_operacion)}</TableCell>
+                  <TableRow key={l.id} className={isReversion ? "bg-muted/10" : ""}>
+                    <TableCell className={`text-xs font-medium ${isReversion ? "opacity-40" : ""}`}>{formatDate(l.fecha_operacion)}</TableCell>
                     <TableCell>
                       <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
                         {l.transaction_ref}
@@ -331,7 +263,7 @@ export function TransactionBreakdown() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs font-bold">{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
+                      <div className={`text-xs font-bold ${isReversion ? "text-muted-foreground line-through" : ""}`}>{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
                       <div className="text-xs text-muted-foreground font-mono">{l.product_cod}</div>
                     </TableCell>
                     <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
@@ -365,6 +297,9 @@ export function TransactionBreakdown() {
                         }`}>
                             {l.origen_dato}
                         </Badge>
+                        {isReversion && (
+                            <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-pulse">REVERTIDO</Badge>
+                        )}
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
@@ -442,7 +377,7 @@ export function TransactionBreakdown() {
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
                     <p className="text-xs text-muted-foreground italic">
-                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
+                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod || "")?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
                         Cualquier diferencia se guardará como Propina o Descuento.
                     </p>
                 </div>
