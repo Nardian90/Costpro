@@ -15,9 +15,9 @@ from datetime import datetime, timezone
 sys.path.append('scripts')
 from commit_artifact import commit_artifact
 
-GRAPH_PATH = 'public/architecture_graph.json'
-METRICS_PATH = 'public/architecture_metrics.json'
-AUDIT_PATH = 'public/architecture_audit.json'
+GRAPH_PATH = 'knowledge/architecture/architecture_graph.json'
+METRICS_PATH = 'knowledge/architecture/architecture_metrics.json'
+AUDIT_PATH = 'docs/audits/architecture_audit.json'
 STATE_PATH = 'docs/automation/pipeline_state.yaml'
 
 def find_cycles(nodes, links):
@@ -120,7 +120,7 @@ def evaluate_health():
     audit["healthMetrics"] = health_metrics
 
     # Guardar temporalmente para commit_artifact
-    temp_audit_path = 'public/architecture_audit.temp.json'
+    temp_audit_path = 'docs/audits/architecture_audit.temp.json'
     with open(temp_audit_path, 'w', encoding='utf-8') as f:
         json.dump(audit, f, indent=2, ensure_ascii=False)
 

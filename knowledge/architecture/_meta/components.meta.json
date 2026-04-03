@@ -1,9 +1,25 @@
 {
-  "artifactName": "components.json",
-  "confidenceScore": 100,
-  "createdAt": "2026-04-02T01:05:41.965660Z",
-  "hash": "sha256:cd5e0b260f5fc303f334c95122f42b9650f4cb00215811f09fe264c4f9c791be",
+  "artifactName": "components",
+  "version": "1.0.1",
+  "hash": "sha256:b22c7457cec7b64ca9f579e3ef5683803758d59d03a64245258de201e99a79b4",
+  "confidenceScore": 100.0,
   "reviewRequired": false,
+  "createdAt": "2026-04-03T01:29:19.730986+00:00Z",
   "sourcePhase": 2,
-  "version": "1.0.0"
+  "createdBy": "architecture-scheduler/9.0",
+  "confidenceModel": "ai-arch-v9.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/9.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 2",
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:cd5e0b260f5fc303f334c95122f42b9650f4cb00215811f09fe264c4f9c791be",
+      "createdAt": "2026-04-02T01:05:41.965660Z"
+    }
+  ]
 }
