@@ -5,48 +5,21 @@ import { produce } from 'immer';
 
 /**
  * Solves for the coefficient needed in an annex to reach a target price.
- * Uses a hybrid approach: Linear estimation for starting bounds, followed by binary search.
+ *
+ * This version uses an exhaustive incremental search (as requested by the user)
+ * to handle the discrete step-function nature of the cost engine caused by rounding.
  */
 export function solveCoefficient(
   uiData: CostSheetData,
   annexId: string,
   targetPrice: number,
   options: {
-    maxIterations?: number;
-    tolerance?: number;
     targetRowId?: string;
   } = {}
 ): number {
-  const { maxIterations = 80, tolerance = 0.000001, targetRowId } = options;
+  const { targetRowId } = options;
 
-  const getTargetValue = (result: any): number => {
-    // If a specific row ID was requested (e.g. from the Summary view)
-    if (targetRowId) {
-        const specificRow = result.rows.find((r: any) => r.id === targetRowId || r.classification === targetRowId);
-        if (specificRow) return specificRow.total;
-    }
-
-    // Priority list of rows that usually represent the final price or target
-    const targetIds = ['14.1', '14', '16', '13.1', '12'];
-    for (const id of targetIds) {
-        const row = result.rows.find((r: any) => r.id === id || r.classification === id);
-        if (row) return row.total;
-    }
-
-    // Fallback to label search
-    const labelTarget = result.rows.find((r: any) =>
-        r.label?.toLowerCase().includes('precio final') ||
-        r.label?.toLowerCase().includes('venta unitaria') ||
-        r.label?.toLowerCase().includes('tarifa final')
-    );
-
-    if (labelTarget) return labelTarget.total;
-
-    // Last resort
-    return result.summary.grandTotal;
-  };
-
-  const simulate = (coef: number): number => {
+  const simulateBase = (coef: number): any => {
     const simulatedData = produce(uiData, draft => {
       const annex = (draft.annexes as any[]).find(a => a.id === annexId);
       if (annex) {
@@ -54,85 +27,78 @@ export function solveCoefficient(
         annex.isAdjustmentActive = true;
       }
     });
-
-    const ficha = mapUIToFicha(simulatedData as any);
-    const result = calculateFicha(ficha);
-    return getTargetValue(result);
+    return calculateFicha(mapUIToFicha(simulatedData as any));
   };
 
-  const basePrice = simulate(1);
-  if (Math.abs(basePrice - targetPrice) < tolerance) return 1;
+  // Step 1: Identify the Target Row
+  const rRef1 = simulateBase(1);
+  const rRef2 = simulateBase(1.1);
 
-  // Linear estimation step to get closer bounds
-  const zeroPrice = simulate(0);
-  const delta = basePrice - zeroPrice;
+  const getCandidates = (result: any) => {
+    const ids = ['14.1', '14', '16.1', '16', '13.1', '12.1', '12'];
+    const searchIds = targetRowId ? [targetRowId, ...ids] : ids;
 
-  let low = 0;
-  let high = 1;
+    return result.rows.filter((r: any) =>
+        searchIds.includes(r.id) || searchIds.includes(r.classification)
+    ).sort((a: any, b: any) => {
+        if (targetRowId) {
+            if (a.id === targetRowId || a.classification === targetRowId) return -1;
+            if (b.id === targetRowId || b.classification === targetRowId) return 1;
+        }
+        if (a.id === '14.1' || a.classification === '14.1') return -1;
+        if (b.id === '14.1' || b.classification === '14.1') return 1;
+        return 0;
+    });
+  };
 
-  if (Math.abs(delta) > tolerance) {
-      const initialGuess = (targetPrice - zeroPrice) / delta;
-      if (initialGuess > 0) {
-          low = Math.max(0, initialGuess * 0.95);
-          high = initialGuess * 1.05;
+  const candidates1 = getCandidates(rRef1);
+  const candidates2 = getCandidates(rRef2);
+  let resolvedTargetId = null;
+
+  for (const c1 of candidates1) {
+      const c2 = candidates2.find((c: any) => c.id === c1.id);
+      if (c2 && Math.abs(c1.total - c2.total) > 0.0001) {
+          resolvedTargetId = c1.id;
+          break;
       }
   }
+  if (!resolvedTargetId) resolvedTargetId = candidates1[0]?.id || '14.1';
 
-  // Bounding search
-  let iter = 0;
-  const isIncreasing = simulate(high + 0.1) > simulate(high);
+  const simulate = (coef: number): number => {
+    const res = simulateBase(coef);
+    const row = res.rows.find((r: any) => r.id === resolvedTargetId);
+    return row ? row.total : res.summary.grandTotal;
+  };
 
-  if (isIncreasing) {
-      let vHigh = simulate(high);
-      while (vHigh < targetPrice && iter < 15) {
-          low = high;
-          high = high === 0 ? 1 : high * 2;
-          vHigh = simulate(high);
-          iter++;
-      }
-      let vLow = simulate(low);
-      while (vLow > targetPrice && iter < 30) {
-          high = low;
-          low = low / 2;
-          vLow = simulate(low);
-          iter++;
-      }
-  } else {
-      let vLow = simulate(low);
-      while (vLow < targetPrice && iter < 15) {
-          high = low;
-          low = low === 0 ? -1 : low * 2;
-          vLow = simulate(low);
-          iter++;
-      }
-      let vHigh = simulate(high);
-      while (vHigh > targetPrice && iter < 30) {
-          low = high;
-          high = high * 2;
-          vHigh = simulate(high);
-          iter++;
-      }
-  }
+  // Step 2: Incremental Search (The User Way)
+  // We sweep a broad range with 0.001 precision.
+  let bestCoef = 1;
+  let minDiff = Infinity;
 
-  // Refine with Binary Search
-  for (let i = 0; i < maxIterations; i++) {
-    const mid = (low + high) / 2;
-    const currentPrice = simulate(mid);
-
-    if (Math.abs(currentPrice - targetPrice) < tolerance) {
-      return mid;
+  const check = (c: number) => {
+    const val = simulate(c);
+    const diff = Math.abs(val - targetPrice);
+    if (diff < minDiff) {
+        minDiff = diff;
+        bestCoef = c;
+    } else if (Math.abs(diff - minDiff) < 1e-10) {
+        // Prefer "cleaner" numbers (fewer decimals)
+        if (String(c).length < String(bestCoef).length) {
+            bestCoef = c;
+        }
     }
+  };
 
-    if (isIncreasing) {
-        if (currentPrice < targetPrice) low = mid;
-        else high = mid;
-    } else {
-        if (currentPrice > targetPrice) low = mid;
-        else high = mid;
-    }
-
-    if (Math.abs(high - low) < 1e-15) break;
+  // Broad sweep: 0.000 to 5.000 with 0.001 steps
+  for (let i = 0; i <= 5000; i++) {
+      check(i / 1000);
   }
 
-  return (low + high) / 2;
+  // Refinement sweep: around the best found so far with 0.0001 steps
+  const center = bestCoef;
+  for (let i = -10; i <= 10; i++) {
+      check(center + i / 10000);
+  }
+
+  return bestCoef;
 }
