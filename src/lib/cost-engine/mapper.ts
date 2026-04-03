@@ -104,7 +104,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
           const findValue = (row: any, searchKeys: string[], searchLabels: string[]) => {
               // Priority 1: Direct key match with numeric value
               for (const k of searchKeys) {
-                  if (typeof row[k] === 'number') return row[k];
+                  if (typeof row[k] === 'number' && row[k] !== 0) return row[k];
               }
               // Priority 2: Case-insensitive search in keys/labels if we had column metadata (omitted for now)
               return undefined;
@@ -115,8 +115,8 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
 
           // Fallback: If no numeric total, try to calculate from norm * price
           if (baseVal === undefined) {
-            const normKeys = ['norm', 'consumption', 'quantity', 'qty', 'norma', 'cantidad'];
-            const priceKeys = ['price_unit', 'rate', 'price', 'precio', 'costo_unitario'];
+            const normKeys = ["consumption_norm", "consumption_norm", 'norm', 'consumption', 'quantity', 'qty', 'norma', 'cantidad'];
+            const priceKeys = ["price", "price", 'price_unit', 'rate', 'price', 'precio', 'costo_unitario'];
 
             const norm = findValue(d, normKeys, []);
             const price = findValue(d, priceKeys, []);
