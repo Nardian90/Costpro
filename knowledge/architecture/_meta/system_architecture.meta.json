@@ -1,19 +1,30 @@
 {
   "artifactName": "system_architecture",
-  "version": "1.0.0",
-  "hash": "sha256:2360cadbbcd5e5413fe0757639e140b836ba90fb75087b06f5e42be41cefb815",
+  "version": "1.0.2",
+  "hash": "sha256:acac0e902abb1bf50b09cf8f12379e289ab38ea4da5978308eb2d1b063a0171d",
   "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-04-01T13:51:23.611298+00:00Z",
+  "createdAt": "2026-04-03T01:29:19.353709+00:00Z",
   "sourcePhase": 1,
-  "createdBy": "architecture-scheduler/8.0",
-  "confidenceModel": "ai-arch-v8.0",
+  "createdBy": "architecture-scheduler/9.0",
+  "confidenceModel": "ai-arch-v9.0",
   "provenance": {
     "inputs": [],
     "tools": [
-      "architecture-scheduler/8.0"
+      "architecture-scheduler/9.0"
     ]
   },
   "explainabilitySummary": "Generado automáticamente en Fase 1",
-  "previousVersions": []
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:2360cadbbcd5e5413fe0757639e140b836ba90fb75087b06f5e42be41cefb815",
+      "createdAt": "2026-04-01T13:51:23.611298+00:00Z"
+    },
+    {
+      "version": "1.0.1",
+      "hash": "sha256:73bbe7271af91e08f65d89a956756c791f401686054115210315b6d0b910e5fc",
+      "createdAt": "2026-04-03T01:27:03.813000+00:00Z"
+    }
+  ]
 }

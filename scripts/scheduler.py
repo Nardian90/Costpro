@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 # Configuración
 STATE_PATH = "docs/automation/pipeline_state.yaml"
-AUDIT_PATH = "public/architecture_audit.json"
+AUDIT_PATH = "docs/audits/architecture_audit.json"
 
 PHASE_DEFINITIONS = {
     1: {"name": "Architecture Discovery", "engine": "static", "outputs": ["system_architecture", "architecture_manifest"]},
@@ -70,16 +70,44 @@ def unlock_state(lock_file):
     if os.name != 'nt':
         fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
     lock_file.close()
+    lock_path = STATE_PATH + '.lock'
+    if os.path.exists(lock_path):
+        os.remove(lock_path)
 
 def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, status, artifacts, cycle):
-    audit = {"phaseExecutions": [], "performanceSummary": {}}
+    audit = {
+        "phaseExecutions": [],
+        "performanceSummary": {
+            "averagePhaseDurationMs": 0,
+            "slowestPhase": 0,
+            "slowestPhaseDurationMs": 0,
+            "fastestPhase": 0,
+            "fastestPhaseDurationMs": 0,
+            "lastCycleDurationMs": 0,
+            "lastUpdated": ""
+        },
+        "systemHealth": {
+            "integrityScore": 0,
+            "documentationCoverage": 0,
+            "ragIndexStatus": "offline",
+            "quarantineCount": 0,
+            "rollbackCount": 0
+        }
+    }
 
     if os.path.exists(AUDIT_PATH):
         try:
             with open(AUDIT_PATH, 'r', encoding='utf-8') as f:
                 content = json.load(f)
-                if isinstance(content, dict) and "phaseExecutions" in content:
-                    audit = content
+                if isinstance(content, dict):
+                    # Prioritize keeping existing structure
+                    for k in audit:
+                        if k in content:
+                            audit[k] = content[k]
+                    # Also keep other keys like healthMetrics if present
+                    for k in content:
+                        if k not in audit:
+                            audit[k] = content[k]
         except: pass
 
     execution_record = {
@@ -104,7 +132,7 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
         fastest_exec = min(executions, key=lambda x: x.get("durationMs", 0))
         current_cycle_durations = [e["durationMs"] for e in executions if e.get("cycle") == cycle]
 
-        audit["performanceSummary"] = {
+        audit["performanceSummary"].update({
             "averagePhaseDurationMs": sum(durations) // len(durations),
             "slowestPhase": slowest_exec["phase"],
             "slowestPhaseDurationMs": slowest_exec["durationMs"],
@@ -112,7 +140,12 @@ def update_audit(phase_num, phase_name, start_time, end_time, duration_ms, statu
             "fastestPhaseDurationMs": fastest_exec["durationMs"],
             "lastCycleDurationMs": sum(current_cycle_durations),
             "lastUpdated": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        }
+        })
+
+    # Sync systemHealth with healthMetrics if healthMetrics was updated by phase_6
+    if "healthMetrics" in audit:
+        audit["systemHealth"]["integrityScore"] = audit["healthMetrics"].get("integrityScore", 0)
+        audit["systemHealth"]["quarantineCount"] = audit["healthMetrics"].get("quarantineCount", 0)
 
     with open(AUDIT_PATH, 'w', encoding='utf-8') as f:
         json.dump(audit, f, indent=2, ensure_ascii=False)

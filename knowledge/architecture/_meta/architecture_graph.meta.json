@@ -1,0 +1,30 @@
+{
+  "artifactName": "architecture_graph",
+  "version": "1.0.2",
+  "hash": "sha256:9ea156128dcdc727bdd266adfc890a1a90f7ff263d0a5d4e0783c2254e0dad61",
+  "confidenceScore": 100.0,
+  "reviewRequired": false,
+  "createdAt": "2026-04-03T01:29:20.107540+00:00Z",
+  "sourcePhase": 3,
+  "createdBy": "architecture-scheduler/9.0",
+  "confidenceModel": "ai-arch-v9.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/9.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 3",
+  "previousVersions": [
+    {
+      "version": "1.0.0",
+      "hash": "sha256:e070f0bf658dfd5aea56870a7a664110ee1ccd0f89dcb6392ddd7f3a0c20dcd2",
+      "createdAt": "2026-04-03T01:21:46.184395+00:00Z"
+    },
+    {
+      "version": "1.0.1",
+      "hash": "sha256:be82a7949aa56efeea9ec7b15324d8a7691a9a5b5894d06514653aeff18c0bf1",
+      "createdAt": "2026-04-03T01:26:06.048861+00:00Z"
+    }
+  ]
+}
