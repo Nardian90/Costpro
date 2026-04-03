@@ -41,7 +41,9 @@ def load_config():
 STATE = load_config()
 
 def get_destination_base(name, source_phase):
-    if name in ["system_architecture", "architecture_manifest", "architecture_graph", "architecture_audit", "architecture_changes", "architecture_metrics"]:
+    if name == "architecture_audit":
+        return "docs/audits/"
+    if name in ["system_architecture", "architecture_manifest", "architecture_graph", "architecture_changes", "architecture_metrics"]:
         return STATE.get("artifactStore", "public/")
     if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
         return "knowledge/"
@@ -132,7 +134,7 @@ def append_review_queue(entry):
     with open(queue_path, 'w', encoding='utf-8') as f:
         json.dump(queue, f, indent=2, ensure_ascii=False)
 
-def commit_artifact(name, artifact_path, confidence_score, source_phase, created_by="architecture-scheduler/8.0"):
+def commit_artifact(name, artifact_path, confidence_score, source_phase, created_by="architecture-scheduler/9.0"):
     if not os.path.exists(artifact_path):
         print(f"Error: Artifact path not found: {artifact_path}")
         return "error"
@@ -150,8 +152,8 @@ def commit_artifact(name, artifact_path, confidence_score, source_phase, created
         "createdAt": datetime.now(timezone.utc).isoformat() + 'Z',
         "sourcePhase": int(source_phase),
         "createdBy": created_by,
-        "confidenceModel": "ai-arch-v8.0",
-        "provenance": {"inputs": [], "tools": ["architecture-scheduler/8.0"]},
+        "confidenceModel": "ai-arch-v9.0",
+        "provenance": {"inputs": [], "tools": ["architecture-scheduler/9.0"]},
         "explainabilitySummary": f"Generado automáticamente en Fase {source_phase}",
         "previousVersions": meta.get("previousVersions", []) if meta else []
     }
