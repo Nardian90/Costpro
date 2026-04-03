@@ -64,7 +64,7 @@
 | CostSheetSidebarNav | src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx | component | Óptimo | button, sheet, utils | 2026-04-03 |
 | CostSheetSignature | src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx | component | Óptimo |  | 2026-04-03 |
 | CostSheetSignatureEditor | src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx | component | Óptimo | input | 2026-04-03 |
-| CostSheetSummary | src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx | component | Advertencia | CostSheetMasterRing, HealthBattery, button, input, select, slider, utils | 2026-04-03 |
+| CostSheetSummary | src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx | component | Advertencia | CostSheetMasterRing, HealthBattery, button, input, select, slider, solver, utils | 2026-04-03 |
 | CostSheetTemplateExplorer | src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx | component | Advertencia | button, costpro-ejemplo, costpro-reinicio, dialog, dropdown-menu, input, select, supabaseClient, template-consultancy, template-furniture, template-icecream, template-industrial, template-juice, template-lavar, template-logistics, template-pastry, template-pizza, template-repair, template-shoes, textarea, utils | 2026-04-03 |
 | CostSheetWizard | src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx | component | Óptimo | CostSheetAnnexEditor, CostSheetHeaderEditor, CostSheetInteractiveTable, CostSheetSidebarNav, CostSheetSignatureEditor, button, progress | 2026-04-03 |
 | CreateProductModal | src/components/modals/CreateProductModal.tsx | component | Óptimo | BaseModal, index | 2026-04-03 |
