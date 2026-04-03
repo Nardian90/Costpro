@@ -377,7 +377,7 @@ export default function TransactionBreakdown() {
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
                     <p className="text-xs text-muted-foreground italic">
-                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
+                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod || "")?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
                         Cualquier diferencia se guardará como Propina o Descuento.
                     </p>
                 </div>
