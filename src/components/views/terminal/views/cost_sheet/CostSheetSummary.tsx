@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import HealthBattery from './HealthBattery';
+import { solveCoefficient } from '@/lib/cost-engine/solver';
 import CostSheetMasterRing, { CostSheetTelemetry } from './CostSheetMasterRing';
 
 interface CostSheetSummaryProps {
@@ -135,18 +136,13 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     const target = parseFloat(targetValue);
     if (isNaN(target) || !selectedAnnexId) return;
 
-    const currentTargetValue = telemetry[targetRowId]?.total || 0;
-    if (currentTargetValue === 0) return;
-
-    const annex = data.annexes.find(a => a.id === selectedAnnexId);
-    if (!annex) return;
-
-    const currentCoef = annex.coefficient || 1;
-    // Linear approximation: target / currentTargetValue = newCoef / currentCoef
-    const newCoef = (target / currentTargetValue) * currentCoef;
-
-    updateAnnexAdjustment(selectedAnnexId, newCoef, adjustmentColumn);
-    setManualCoef(newCoef);
+    try {
+      const bestCoef = solveCoefficient(data, selectedAnnexId, target, { targetRowId });
+      updateAnnexAdjustment(selectedAnnexId, bestCoef, adjustmentColumn);
+      setManualCoef(bestCoef);
+    } catch (err) {
+      console.error("Auto adjust error:", err);
+    }
   };
 
   const handleManualCoefAdjust = (val: number) => {
@@ -214,11 +210,13 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const suggestedCoef = useMemo(() => {
     const target = parseFloat(targetValue);
     if (isNaN(target) || !selectedAnnexId || !telemetry[targetRowId]) return 1;
-    const currentTargetValue = telemetry[targetRowId]?.total || 0;
-    if (currentTargetValue === 0) return 1;
-    const currentCoef = annex?.coefficient || 1;
-    return (target / currentTargetValue) * currentCoef;
-  }, [targetValue, selectedAnnexId, targetRowId, telemetry, annex]);
+    try {
+      return solveCoefficient(data, selectedAnnexId, target, { targetRowId });
+    } catch (e) {
+      console.error("Summary solver error:", e);
+      return 1;
+    }
+  }, [targetValue, selectedAnnexId, targetRowId, telemetry, annex, data]);
 
       return (
     <div className="space-y-8 animate-in fade-in duration-700">
