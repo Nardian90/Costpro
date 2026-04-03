@@ -9,7 +9,7 @@ from commit_artifact import commit_artifact
 def execute_phase_3():
     print("Executing Phase 3: Dependency Graph Generation...")
 
-    arch_path = "public/system_architecture.json"
+    arch_path = "knowledge/architecture/system_architecture.json"
     if not os.path.exists(arch_path):
         print(f"Error: {arch_path} not found. Ensure Phase 1 has been executed.")
         sys.exit(1)

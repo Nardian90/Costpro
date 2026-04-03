@@ -9,7 +9,7 @@ import sys
 sys.path.append('scripts')
 from commit_artifact import commit_artifact
 
-BASE_PATHS = ["src/app", "src/components", "src/lib", "src/services", "src/store", "src/types", "src/hooks"]
+BASE_PATHS = ["src/app", "src/components", "src/lib", "src/services", "src/store", "src/types", "src/hooks", "src/contracts", "src/types"]
 
 def get_type(path):
     if "components/views/terminal/views" in path:
@@ -71,17 +71,27 @@ def extract_all_dependencies_ast(file_paths):
     for i in range(0, len(file_paths), batch_size):
         batch = file_paths[i:i + batch_size]
         try:
+            # Using Bun with --no-install to avoid overhead if possible, or just standard run
             result = subprocess.run(
-                ["bun", "scripts/extract_imports.ts"] + batch,
+                ["bun", "run", "scripts/extract_imports.ts"] + batch,
                 capture_output=True, text=True
             )
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
-                for line in reversed(lines):
-                    if line.startswith('{') and line.endswith('}'):
-                        batch_results = json.loads(line)
-                        all_imports.update(batch_results)
-                        break
+                # Find the line that looks like JSON
+                output = result.stdout.strip()
+                try:
+                    batch_results = json.loads(output)
+                    all_imports.update(batch_results)
+                except json.JSONDecodeError:
+                    # Try splitting lines if there's noise
+                    lines = output.split('\n')
+                    for line in reversed(lines):
+                        if line.startswith('{') and line.endswith('}'):
+                            batch_results = json.loads(line)
+                            all_imports.update(batch_results)
+                            break
+            else:
+                print(f"Bun error on batch starting with {batch[0]}: {result.stderr}")
         except Exception as e:
             print(f"Error in batch: {e}")
     return all_imports

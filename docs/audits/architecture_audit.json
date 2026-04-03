@@ -1,23 +1,4 @@
 {
-  "healthMetrics": {
-    "cyclicDependencies": 0,
-    "details": {
-      "cycles": [],
-      "orphanCount": 16
-    },
-    "integrityScore": 84.0,
-    "orphanComponents": 16,
-    "updatedAt": "2026-03-28T02:10:10.812948+00:00Z"
-  },
-  "performanceSummary": {
-    "averagePhaseDurationMs": 44321,
-    "fastestPhase": 14,
-    "fastestPhaseDurationMs": 0,
-    "lastCycleDurationMs": 23025,
-    "lastUpdated": "2026-04-02T01:07:03.032029Z",
-    "slowestPhase": 7,
-    "slowestPhaseDurationMs": 1200000
-  },
   "phaseExecutions": [
     {
       "artifactsGenerated": [
@@ -470,6 +451,81 @@
       "phaseName": "Domain Classification",
       "startTime": "2026-04-01T15:00:00Z",
       "status": "success"
+    },
+    {
+      "phase": 3,
+      "phaseName": "Dependency Graph",
+      "startTime": "2026-04-03T01:21:46.068839+00:00Z",
+      "endTime": "2026-04-03T01:21:46.196084+00:00Z",
+      "durationMs": 127,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_graph"
+      ],
+      "cycle": 3
+    },
+    {
+      "phase": 1,
+      "phaseName": "Architecture Discovery",
+      "startTime": "2026-04-03T01:26:04.773842+00:00Z",
+      "endTime": "2026-04-03T01:26:05.222986+00:00Z",
+      "durationMs": 449,
+      "status": "success",
+      "artifactsGenerated": [
+        "system_architecture",
+        "architecture_manifest"
+      ],
+      "cycle": 3
+    },
+    {
+      "phase": 2,
+      "phaseName": "Domain Classification",
+      "startTime": "2026-04-03T01:26:05.569484+00:00Z",
+      "endTime": "2026-04-03T01:26:05.668395+00:00Z",
+      "durationMs": 98,
+      "status": "success",
+      "artifactsGenerated": [
+        "components"
+      ],
+      "cycle": 3
+    },
+    {
+      "phase": 3,
+      "phaseName": "Dependency Graph",
+      "startTime": "2026-04-03T01:26:05.982796+00:00Z",
+      "endTime": "2026-04-03T01:26:06.057398+00:00Z",
+      "durationMs": 74,
+      "status": "success",
+      "artifactsGenerated": [
+        "architecture_graph"
+      ],
+      "cycle": 3
     }
-  ]
+  ],
+  "performanceSummary": {
+    "averagePhaseDurationMs": 46251,
+    "slowestPhase": 7,
+    "slowestPhaseDurationMs": 1200000,
+    "fastestPhase": 14,
+    "fastestPhaseDurationMs": 0,
+    "lastCycleDurationMs": 300748,
+    "lastUpdated": "2026-04-03T01:26:06.057751Z"
+  },
+  "systemHealth": {
+    "integrityScore": 84.0,
+    "documentationCoverage": 0,
+    "ragIndexStatus": "offline",
+    "quarantineCount": 0,
+    "rollbackCount": 0
+  },
+  "healthMetrics": {
+    "cyclicDependencies": 0,
+    "details": {
+      "cycles": [],
+      "orphanCount": 16
+    },
+    "integrityScore": 84.0,
+    "orphanComponents": 16,
+    "updatedAt": "2026-03-28T02:10:10.812948+00:00Z"
+  }
 }
