@@ -1,3 +1,4 @@
+import { StockService } from './StockService';
 import { Product } from '../dexie';
 
 /**
@@ -46,23 +47,7 @@ export function isProductAMedida(um: string): boolean {
  * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
  */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
-    const product = await db.products.where('cod').equals(productCod).first();
-    if (!product) return 0;
-
-    const initialStock = product.stock_inicial_manual || 0;
-
-    // Ventas (salidas reales)
-    const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const sales = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
-
-    // Entradas y salidas de inventario (incluyendo recepciones inteligentes y descomposiciones)
-    const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
-    const entries = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
-
-    const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
-    const exits = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
-
-    return initialStock + entries - exits - sales;
+    return StockService.calculateCurrentStock(productCod);
 }
 
 
