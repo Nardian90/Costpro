@@ -27,7 +27,8 @@ export async function parseBandecTxt(text: string): Promise<{
     const dateHeaderRegex = /^(\d{2}\/\d{2}\/\d{2,4})\s*$/;
     // Regex to match a transaction line.
     // Captures: Ref Corriente, Ref Original, Amount (with dots and commas), Type (Cr/Db)
-    const txLineRegex = /^\s+([A-Z0-9]+)\s+([A-Z0-9]+)\s+([0-9,.]+)\s+(Cr|Db)/;
+    // Updated to be more flexible with whitespace and handle potential variations.
+    const txLineRegex = /^\s*([A-Z0-9]+)\s+([A-Z0-9]+)\s+([0-9,.]+)\s+(Cr|Db)/;
 
     // Regex for balances and period
     const openingBalanceRegex = /SALDO INICIAL:\s+([0-9,.]+)\s+(?:Cr|Db)/;

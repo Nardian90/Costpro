@@ -55,24 +55,37 @@ export class MatchingEngine {
     result: MatchingResult,
     durationMs: number
   ) {
-    try {
-      await db.matching_logs.add({
-        id: uuidv4(),
-        transaction_ref: transaction.referencia_origen,
-        fecha_ejecucion: new Date().toISOString(),
-        resultado_estado: result.status,
-        trace: result.trace,
-        applied_rules: result.appliedRules,
-        matching_confidence: result.matchingConfidence,
-        fail_reason: result.failReason,
-        reconciliation_lines_count: result.lines.length,
-        duration_ms: durationMs,
-        engine_version: "2.1.0",
-        reglas_activas: this.rules.map(r => r.tipo),
-        created_at: new Date().toISOString()
-      });
-    } catch (e) {
-      console.error("Error persistiendo log de matching:", e);
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+          await db.matching_logs.add({
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_ejecucion: new Date().toISOString(),
+            resultado_estado: result.status,
+            trace: result.trace,
+            applied_rules: result.appliedRules,
+            matching_confidence: result.matchingConfidence,
+            fail_reason: result.failReason,
+            reconciliation_lines_count: result.lines.length,
+            duration_ms: durationMs,
+            engine_version: "2.1.0",
+            reglas_activas: this.rules.map(r => r.tipo),
+            created_at: new Date().toISOString()
+          });
+          return;
+        } catch (e: any) {
+          if (i === maxRetries - 1) {
+              console.error("Error persistiendo log de matching después de reintentos:", e);
+          } else if (e.name === 'DatabaseClosedError' || e.message?.includes('Database is closed')) {
+              const delay = Math.pow(2, i) * 100;
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+          } else {
+              console.error("Error persistiendo log de matching:", e);
+              break;
+          }
+        }
     }
   }
 
