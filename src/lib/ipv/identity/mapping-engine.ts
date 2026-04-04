@@ -22,11 +22,16 @@ export interface MappingRule {
  */
 function normalizeBankName(name: string): string {
   if (!name) return "";
-  // Artifact: Single letter followed by space and rest of word (e.g. "C LAUDIA")
-  // Or two letters followed by space and rest of word (e.g. "CL AUDIA")
-  // This is common in some PDF exports and BPA strings.
+
+  // The goal is to fix artifacts like "ARN ALDO" -> "ARNALDO"
+  // but avoid "DE AVI" -> "DEAVI" or "G. AGUILERA" -> "G.AGUILERA"
+
+  // We'll use a more targeted replacement for known artifact patterns
+  // or use the space-insensitive matching later in the registry for deduplication.
+
+  // For now, let's just keep the name as is (but uppercase and trimmed)
+  // and handle the artifacts in the normalization/registry layer.
   return name
-    .replace(/\b([A-Z]{1,2})\s+([A-Z]{3,})\b/g, '$1$2')
     .replace(/\s+/g, " ")
     .trim()
     .toUpperCase();
@@ -60,8 +65,8 @@ const RULES: MappingRule[] = [
   },
   {
     name: 'TRANSFER_FROM',
-    // Updated to include "OR DENANTE NOMBRE:" (with optional space in OR DENANTE) and "NOMBRE:"
-    regex: /(?:TRANSFERENCIA DE:|PAGO DE:|DE:|ORDENADA POR:|OR\s?DENANTE NOMBRE:|ORDENANTE NOMBRE:|NOMBRE:)\s*([A-Z\s,]+?)(?=\s*(?:NIT|PAN:|CUENTA|\||\d{11}|\d{4,16}|\n|$))/i,
+    // Updated to include dots (.) in the name capture group
+    regex: /(?:TRANSFERENCIA DE:|PAGO DE:|DE:|ORDENADA POR:|OR\s?DENANTE NOMBRE:|ORDENANTE NOMBRE:|NOMBRE:)\s*([A-Z\s,.]+?)(?=\s*(?:NIT|PAN:|CUENTA|\||\d{11}|\d{4,16}|\n|$))/i,
     extractor: (match) => ({ nombre: normalizeBankName(match[1].trim()) })
   },
   {
