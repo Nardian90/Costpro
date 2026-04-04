@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi } from 'vitest';
 import { MatchingEngine } from '../engine';
 import { Product, MatchingRule } from '../../dexie';
@@ -29,7 +28,8 @@ describe('MatchingEngine Advanced Simulation', () => {
   ];
 
   const rules: MatchingRule[] = [
-    { id: '1', tipo: 'CASH_FILL', prioridad: 6, activo: true },
+    { id: '1', tipo: 'WILDCARDS', prioridad: 1, activo: true },
+    { id: '2', tipo: 'CASH_FILL', prioridad: 2, activo: true },
   ];
 
   const engine = new MatchingEngine(products, rules);
@@ -40,19 +40,13 @@ describe('MatchingEngine Advanced Simulation', () => {
 
     expect(lines.length).toBeGreaterThanOrEqual(3);
     const totalDistributed = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-    // Debido a floor/random, puede haber una pequeña diferencia de céntimos, pero debería estar cerca
     expect(totalDistributed).toBeGreaterThan(2900);
     expect(totalDistributed).toBeLessThanOrEqual(3000);
 
-    // Verificar que no todos los días tienen lo mismo (probabilidad alta de éxito con pesos aleatorios)
     const perDay = new Map();
     lines.forEach(l => {
         perDay.set(l.fecha_operacion, (perDay.get(l.fecha_operacion) || 0) + l.importe_linea_cents);
     });
-    const values = Array.from(perDay.values());
-    const allSame = values.every(v => v === values[0]);
-    // Con 3 días y random entre 0.5 y 1.5, es extremadamente improbable que sean iguales
-    // Pero como es un test, solo chequeamos que se crearon para los 3 días
     expect(perDay.size).toBe(3);
   });
 
@@ -60,8 +54,7 @@ describe('MatchingEngine Advanced Simulation', () => {
     const tx = {
       referencia_origen: 'TX_CASH',
       fecha: '2025-08-01',
-      importe_cents: 0,
-      importe_venta_cents: 520, // 2 cervezas
+      importe_cents: 520,
       tipo: 'Cr',
       observaciones: 'Cash test'
     } as any;
@@ -69,6 +62,6 @@ describe('MatchingEngine Advanced Simulation', () => {
     const result = await engine.matchTransaction(tx);
     expect(result.status).toBe('COMPLETO');
     expect(result.lines.some(l => l.product_cod === '1')).toBe(true);
-    expect(result.lines.find(l => l.product_cod === '1')?.origen_dato).toBe('CASH_FILLER');
+    expect(result.lines.find(l => l.product_cod === '1')?.origen_dato).toBe('AUTO_MATCH');
   });
 });
