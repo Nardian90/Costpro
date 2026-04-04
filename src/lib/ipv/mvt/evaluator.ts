@@ -13,7 +13,7 @@ export function evaluateExpression(expression: string, context: Record<string, a
         // Remove whitespace and check for safety
         const safeExpr = resolved.replace(/\s/g, '');
         if (/^[0-9+\-*/().]+$/.test(safeExpr)) {
-             const result = new Function(`return ${safeExpr}`)();
+             const result = simpleMathEval(safeExpr);
              return isNaN(result) ? resolved : String(result);
         }
         return resolved;
@@ -27,6 +27,62 @@ export function evaluateExpression(expression: string, context: Record<string, a
     console.error("Expression evaluation error:", e, expression);
     return expression;
   }
+}
+
+/**
+ * A safe, simple math evaluator for basic arithmetic.
+ * Implements a basic Shunting-yard-like approach or simple recursive descent.
+ */
+function simpleMathEval(expr: string): number {
+  // Simple regex-based tokenizer for numbers and operators
+  const tokens = expr.match(/\d+\.?\d*|[+\-*/()]/g);
+  if (!tokens) return NaN;
+
+  const ops: string[] = [];
+  const values: number[] = [];
+
+  const precedence: Record<string, number> = {
+    '+': 1, '-': 1,
+    '*': 2, '/': 2
+  };
+
+  const applyOp = () => {
+    const op = ops.pop();
+    const b = values.pop();
+    const a = values.pop();
+    if (a === undefined || b === undefined) return;
+    switch (op) {
+      case '+': values.push(a + b); break;
+      case '-': values.push(a - b); break;
+      case '*': values.push(a * b); break;
+      case '/': values.push(a / b); break;
+    }
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (/\d/.test(t)) {
+      values.push(parseFloat(t));
+    } else if (t === '(') {
+      ops.push(t);
+    } else if (t === ')') {
+      while (ops.length > 0 && ops[ops.length - 1] !== '(') {
+        applyOp();
+      }
+      ops.pop(); // pop '('
+    } else {
+      while (ops.length > 0 && precedence[ops[ops.length - 1]] >= precedence[t]) {
+        applyOp();
+      }
+      ops.push(t);
+    }
+  }
+
+  while (ops.length > 0) {
+    applyOp();
+  }
+
+  return values[0];
 }
 
 export function resolveDynamicValue(path: string, context: any): string {
