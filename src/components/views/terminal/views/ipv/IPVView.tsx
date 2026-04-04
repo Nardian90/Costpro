@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { StockService } from '@/lib/ipv/StockService';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
@@ -92,27 +93,11 @@ export default function IPVView() {
     }
   }, [rules]);
 
-  const currentStockMap = useMemo(() => {
-    const map = new Map<string, number>();
-    if (!products || !reconciliationLines || !productMovements) return map;
-
-    products.forEach(p => {
-        const sold = reconciliationLines
-            .filter(l => l.product_cod === p.cod)
-            .reduce((sum, l) => sum + l.cantidad, 0);
-
-        const entries = productMovements
-            .filter(m => m.producto_destino_cod === p.cod)
-            .reduce((sum, m) => sum + m.cantidad_destino, 0);
-
-        const exits = productMovements
-            .filter(m => m.producto_origen_cod === p.cod)
-            .reduce((sum, m) => sum + m.cantidad_origen, 0);
-
-        map.set(p.cod, (p.stock_inicial_manual || 0) + entries - exits - sold);
-    });
-    return map;
-  }, [products, reconciliationLines, productMovements]);
+  const currentStockMap = useLiveQuery(
+    () => StockService.getCompleteStockMap(),
+    [products, reconciliationLines, productMovements],
+    new Map<string, number>()
+  );
 
   const txTotals = useMemo(() => {
     if (!reconciliationLines) return {} as Record<string, number>;
