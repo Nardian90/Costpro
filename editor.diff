@@ -1,0 +1,43 @@
+<<<<<<< SEARCH
+    const getDescription = (tipo: string) => {
+        switch (tipo) {
+=======
+    const getDescription = (rule: MatchingRule) => {
+        if (rule.descripcion) return rule.descripcion;
+        switch (rule.tipo) {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                        <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
+=======
+                        <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule)}</p>
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                                <select
+                                    value={rule.prioridad}
+                                    onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
+                                    className="h-6 text-[10px] border rounded bg-background px-1"
+                                >
+=======
+                                <select
+                                    value={rule.prioridad}
+                                    onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
+                                    className="h-6 text-[10px] border rounded bg-background px-1"
+                                >
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                        <div className="sm:hidden">
+                            <Switch
+                                checked={rule.activo}
+                                onCheckedChange={(checked) => toggleRule(rule.id, checked)}
+                            />
+                        </div>
+=======
+                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-tight">{getDescription(rule)}</p>
+                        </div>
+                        <div className="sm:hidden">
+                            <Switch
+                                checked={rule.activo}
+                                onCheckedChange={(checked) => toggleRule(rule.id, checked)}
+                            />
+                        </div>
+>>>>>>> REPLACE

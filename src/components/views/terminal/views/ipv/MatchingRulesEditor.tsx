@@ -66,8 +66,9 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
         }
     };
 
-    const getDescription = (tipo: string) => {
-        switch (tipo) {
+    const getDescription = (rule: MatchingRule) => {
+        if (rule.descripcion) return rule.descripcion;
+        switch (rule.tipo) {
             case 'STOCK_LIMIT': return 'Prioriza productos con bajo stock o según su jerarquía virtual.';
             case 'HARD_REF': return 'Busca referencias exactas entre el mensaje bancario y el catálogo.';
             case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen el importe exacto de la transacción.';
@@ -113,6 +114,13 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                                 checked={rule.activo}
                                 onCheckedChange={(checked) => toggleRule(rule.id, checked)}
                             />
+                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-tight">{getDescription(rule)}</p>
+                        </div>
+                        <div className="sm:hidden">
+                            <Switch
+                                checked={rule.activo}
+                                onCheckedChange={(checked) => toggleRule(rule.id, checked)}
+                            />
                         </div>
                         <div
                             className="sm:hidden text-muted-foreground cursor-grab active:cursor-grabbing p-2"
@@ -139,7 +147,7 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                                 </select>
                             </div>
                         </div>
-                        <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
+                        <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule)}</p>
                     </div>
 
                     <div className="hidden sm:flex items-center gap-3">

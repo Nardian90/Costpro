@@ -31,6 +31,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { formatCurrency, formatCurrencyCents, formatDate, cn } from '@/lib/utils';
+import { isTransactionSelected } from '@/lib/ipv/rules/rules-types';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -104,14 +105,15 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const filtered = React.useMemo(() => {
     return transactions.filter(t => {
-        if (!showExcluded && t.excluido) return false;
+        const isSelected = isTransactionSelected(t);
+        if (!showExcluded && !isSelected) return false;
         const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) || t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
         const matched = txReconciliationTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
         const diff = target - matched;
         let matchesKpi = true;
-        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') {
+        if (!isSelected || t.estado_conciliacion === 'NO_PROCESAR') {
             matchesKpi = kpiFilter === 'ALL';
         } else {
             if (kpiFilter === 'CUADRADAS') matchesKpi = matched > 0 && Math.abs(diff) < 0.001;
@@ -149,8 +151,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     }, 'destructive');
   };
 
-  const toggleExclusion = async (tx: BankTransaction, excluded: boolean) => {
-      await db.bank_statements.update(tx.referencia_origen, { excluido: !excluded });
+  const toggleExclusion = async (tx: BankTransaction, isSelected: boolean) => {
+      await db.bank_statements.update(tx.referencia_origen, { excluido: !isSelected });
   };
 
   const getStatusBadge = (tx: BankTransaction, diffCents: number, matchedTotal: number) => {
@@ -262,7 +264,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <Card key={tx.id} className="p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden">
                               <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
                               <div className="flex justify-between items-start">
-                                  <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
+                                  <div className="flex items-start gap-3"><Checkbox checked={isTransactionSelected(tx)} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
                                   <div className="flex flex-col items-end gap-1">
                                     {getStatusBadge(tx, diff, matchedTotal)}
                                     <ActionBadges appliedRules={tx.applied_rules} />
@@ -349,8 +351,8 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
 
 const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff, onForceMatchInternal, onViewObservations }: any) => {
     return (
-        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
-          <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
+        <TableRow className={`${!isTransactionSelected(tx) ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+          <TableCell className="text-center"><Checkbox checked={isTransactionSelected(tx)} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
           <TableCell className="text-xs max-w-[150px]">

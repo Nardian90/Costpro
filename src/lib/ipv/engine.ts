@@ -2,6 +2,7 @@ import { db, BankTransaction, ReconciliationLine, Product, MatchingRule, Product
 import { v4 as uuidv4 } from 'uuid';
 import { generateHash } from '../utils';
 import { isProductAMedida } from './utils';
+import { getDefaultIPVRulesConfig } from './rules/rules-config';
 
 export { generateHash };
 
@@ -17,15 +18,7 @@ export interface MatchingResult {
   logs: string[];
 }
 
-export const DEFAULT_MATCHING_RULES: MatchingRule[] = [
-  { id: "1", tipo: "HARD_REF", prioridad: 1, activo: true },
-  { id: "2", tipo: "EXACT_SUM", prioridad: 2, activo: true },
-  { id: "3", tipo: "PRICE_FLEX", prioridad: 3, activo: true, meta: { range: 0.1 } },
-  { id: "4", tipo: "STOCK_LIMIT", prioridad: 4, activo: true },
-  { id: "5", tipo: "WILDCARDS", prioridad: 5, activo: true },
-  { id: "6", tipo: "TOLERANCE", prioridad: 6, activo: true, meta: { tolerance_cents: 100 } },
-  { id: "7", tipo: "CASH_FILL", prioridad: 7, activo: false, meta: { daily_limit: 500 } }
-];
+export const DEFAULT_MATCHING_RULES: MatchingRule[] = getDefaultIPVRulesConfig();
 
 export class MatchingEngine {
   private products: Product[];

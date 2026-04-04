@@ -1,0 +1,44 @@
+<<<<<<< SEARCH
+import { formatCurrency, formatCurrencyCents, formatDate, cn } from '@/lib/utils';
+import { toast } from 'sonner';
+=======
+import { formatCurrency, formatCurrencyCents, formatDate, cn } from '@/lib/utils';
+import { isTransactionSelected } from '@/lib/ipv/rules/rules-types';
+import { toast } from 'sonner';
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  const filtered = React.useMemo(() => {
+    return transactions.filter(t => {
+        if (!showExcluded && t.excluido) return false;
+=======
+  const filtered = React.useMemo(() => {
+    return transactions.filter(t => {
+        const isSelected = isTransactionSelected(t);
+        if (!showExcluded && !isSelected) return false;
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') {
+=======
+        if (!isSelected || t.estado_conciliacion === 'NO_PROCESAR') {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  const toggleExclusion = async (tx: BankTransaction, excluded: boolean) => {
+      await db.bank_statements.update(tx.referencia_origen, { excluido: !excluded });
+  };
+=======
+  const toggleExclusion = async (tx: BankTransaction, isSelected: boolean) => {
+      await db.bank_statements.update(tx.referencia_origen, { excluido: !isSelected });
+  };
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                                  <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
+=======
+                                  <div className="flex items-start gap-3"><Checkbox checked={isTransactionSelected(tx)} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+          <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
+=======
+        <TableRow className={`${!isTransactionSelected(tx) ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+          <TableCell className="text-center"><Checkbox checked={isTransactionSelected(tx)} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
+>>>>>>> REPLACE

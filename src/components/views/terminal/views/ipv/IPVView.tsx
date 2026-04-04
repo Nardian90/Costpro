@@ -60,6 +60,8 @@ import { MappingRulesManager } from '@/components/views/shared/MappingRulesManag
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
 import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
+import { mergeWithDefaults } from "@/lib/ipv/rules/rules-config";
+import { isTransactionSelected } from "@/lib/ipv/rules/rules-types";
 import { formatCurrency, formatCurrencyCents, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
@@ -87,9 +89,13 @@ export default function IPVView() {
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
   const productMovements = useLiveQuery(() => db.product_movements.toArray());
   React.useEffect(() => {
-    if (rules && rules.length === 0) {
-      db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
-      seedMappingRules();
+    if (rules) {
+      const merged = mergeWithDefaults(rules, DEFAULT_MATCHING_RULES);
+      db.matching_rules.bulkPut(merged);
+
+      if (rules.length === 0) {
+        seedMappingRules();
+      }
     }
   }, [rules]);
 
@@ -123,7 +129,7 @@ export default function IPVView() {
     for (let i = 0; i < transactions.length; i++) {
         const t = transactions[i];
 
-        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
+        if (!isTransactionSelected(t) || t.estado_conciliacion === 'NO_PROCESAR') continue;
 
         checkedTxRefs.add(t.referencia_origen);
         activeTotal++;
@@ -228,7 +234,7 @@ export default function IPVView() {
     setMatchMessage('Ejecutando algoritmos de matching...');
 
     const transactionsToProcess = transactions
-        .filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido)
+        .filter(t => t.estado_conciliacion !== 'COMPLETO' && isTransactionSelected(t))
         .map(t => ({
             ...t,
             current_reconciled_cents: txTotalsMap[t.referencia_origen] || 0

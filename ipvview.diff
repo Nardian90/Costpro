@@ -1,0 +1,44 @@
+<<<<<<< SEARCH
+import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
+import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
+import { formatCurrency, formatCurrencyCents, cn } from '@/lib/utils';
+=======
+import { exportFullBackup, importFullBackup } from "@/lib/ipv/backup";
+import { MatchingEngine, DEFAULT_MATCHING_RULES } from "@/lib/ipv/engine";
+import { mergeWithDefaults } from "@/lib/ipv/rules/rules-config";
+import { isTransactionSelected } from "@/lib/ipv/rules/rules-types";
+import { formatCurrency, formatCurrencyCents, cn } from '@/lib/utils';
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  React.useEffect(() => {
+    if (rules && rules.length === 0) {
+      db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
+      seedMappingRules();
+    }
+  }, [rules]);
+=======
+  React.useEffect(() => {
+    if (rules) {
+      const merged = mergeWithDefaults(rules, DEFAULT_MATCHING_RULES);
+      db.matching_rules.bulkPut(merged);
+
+      if (rules.length === 0) {
+        seedMappingRules();
+      }
+    }
+  }, [rules]);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
+=======
+        if (!isTransactionSelected(t) || t.estado_conciliacion === 'NO_PROCESAR') continue;
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    const transactionsToProcess = transactions
+        .filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido)
+        .map(t => ({
+=======
+    const transactionsToProcess = transactions
+        .filter(t => t.estado_conciliacion !== 'COMPLETO' && isTransactionSelected(t))
+        .map(t => ({
+>>>>>>> REPLACE
