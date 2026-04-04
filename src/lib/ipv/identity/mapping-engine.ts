@@ -60,13 +60,26 @@ const RULES: MappingRule[] = [
   },
   {
     name: 'TRANSFER_FROM',
-    regex: /(?:TRANSFERENCIA DE:|PAGO DE:|DE:|ORDENADA POR:|ORDENANTE NOMBRE:)\s*([A-Z\s,]+?)(?=\s*(?:NIT|PAN:|CUENTA|\||\d{11}|\d{4,16}|\n|$))/i,
+    // Updated to include "OR DENANTE NOMBRE:" (with optional space in OR DENANTE) and "NOMBRE:"
+    regex: /(?:TRANSFERENCIA DE:|PAGO DE:|DE:|ORDENADA POR:|OR\s?DENANTE NOMBRE:|ORDENANTE NOMBRE:|NOMBRE:)\s*([A-Z\s,]+?)(?=\s*(?:NIT|PAN:|CUENTA|\||\d{11}|\d{4,16}|\n|$))/i,
     extractor: (match) => ({ nombre: normalizeBankName(match[1].trim()) })
   },
   {
     name: 'CARNET_LABEL',
     regex: /(?:CI|CARNET|ID|DNI)[:\s]+(\d{7,11})/i,
     extractor: (match) => ({ ci: match[1] })
+  },
+  {
+    name: 'TARJETA_RED',
+    // Extract numbers after "Tarjeta RED:", allowing spaces.
+    regex: /Tarjeta RED:\s*([\d\s]{16,20})/i,
+    extractor: (match) => {
+      const card = match[1].replace(/\s+/g, '');
+      if (card.length === 16) {
+        return { card };
+      }
+      return {};
+    }
   }
 ];
 
