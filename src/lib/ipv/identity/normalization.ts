@@ -17,6 +17,14 @@ export function normalizeName(name: string): string {
 }
 
 /**
+ * Strips all spaces and special characters for a "canonical" representation
+ * to identify duplicates across different spacing formats.
+ */
+export function getCanonicalName(name: string): string {
+    return normalizeName(name).replace(/\s+/g, "");
+}
+
+/**
  * Unified normalization for customer data.
  * Handles different field names from various sources (localStorage legacy, Dexie, raw imports).
  */
