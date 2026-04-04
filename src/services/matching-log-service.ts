@@ -1,4 +1,5 @@
 import { db, MatchingLog, MatchingTrace } from '@/lib/dexie';
+import { PersistenceService } from '@/lib/persistenceService';
 
 export class MatchingLogService {
   /**
@@ -31,7 +32,7 @@ export class MatchingLogService {
       created_at: new Date().toISOString()
     };
 
-    await db.matching_logs.add(log);
+    await PersistenceService.writeSafe(db.matching_logs, log);
     return log.id;
   }
 
@@ -39,11 +40,13 @@ export class MatchingLogService {
    * Obtener historial de matching para una transacción
    */
   static async getTransactionHistory(transactionRef: string): Promise<MatchingLog[]> {
-    return db.matching_logs
-      .where('transaction_ref')
-      .equals(transactionRef)
-      .reverse()
-      .sortBy('fecha_ejecucion');
+    return PersistenceService.readSafe(() =>
+        db.matching_logs
+            .where('transaction_ref')
+            .equals(transactionRef)
+            .reverse()
+            .sortBy('fecha_ejecucion')
+    );
   }
 
   /**
@@ -53,11 +56,13 @@ export class MatchingLogService {
     fecha: string,
     estado?: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE'
   ): Promise<MatchingLog[]> {
-    let query = db.matching_logs.where('fecha_ejecucion').startsWith(fecha);
-    if (estado) {
-      query = query.filter(log => log.resultado_estado === estado);
-    }
-    return query.toArray();
+    return PersistenceService.readSafe(() => {
+        let query = db.matching_logs.where('fecha_ejecucion').startsWith(fecha);
+        if (estado) {
+            query = query.filter(log => log.resultado_estado === estado);
+        }
+        return query.toArray();
+    });
   }
 
   /**
