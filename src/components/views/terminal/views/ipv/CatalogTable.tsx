@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { StockService } from '@/lib/ipv/StockService';
 import { db, type Product } from '@/lib/dexie';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import {
@@ -99,47 +100,19 @@ export function CatalogTable() {
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const productMovements = useLiveQuery(() => db.product_movements.toArray());
 
+    const inventoryStatsMap = useLiveQuery(
+        () => StockService.getDetailedStockStatsMap(),
+        [products, reconciliationLines, productMovements],
+        new Map<string, any>()
+    );
+
     const inventoryStats = React.useMemo(() => {
-    if (!products || !reports || !reconciliationLines || !productMovements) return {};
-    const stats: Record<string, { initial: number; entradas: number; salidas: number; sales: number; final: number }> = {};
-
-    // 1. Encontrar el primer reporte IPV para el saldo inicial global
-    const firstReport = reports.length > 0 ? reports[reports.length - 1] : null;
-
-    products.forEach(p => {
-        // Saldo Inicial: Si hay reportes, el inicial es el del primer reporte.
-        // Si no hay reportes, es el stock_inicial_manual del catálogo.
-        let initial = p.stock_inicial_manual || 0;
-        if (firstReport) {
-            const firstRow = firstReport.filas.find(f => f.cod === p.cod);
-            if (firstRow) initial = firstRow.saldo_inicial_qty;
-        }
-
-        // Entradas y Salidas de trazabilidad (descomposiciones)
-        const entradas = productMovements
-            .filter(m => m.producto_destino_cod === p.cod &&  (m.tipo === 'DECOMPOSITION' || m.tipo === 'INTELLIGENT_RECEIPT'))
-            .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
-
-        const salidas = productMovements
-            .filter(m => m.producto_origen_cod === p.cod &&  (m.tipo === 'DECOMPOSITION' || m.tipo === 'INTELLIGENT_RECEIPT'))
-            .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
-
-        // Ventas: Todas las líneas de reconciliación desde el inicio
-        const sales = reconciliationLines
-            .filter(l => l.product_cod === p.cod)
-            .reduce((sum, l) => sum + (l.cantidad || 0), 0);
-
-        // Saldo Final: Inicial + Entradas - Salidas - Ventas
-        stats[p.cod] = {
-            initial,
-            entradas,
-            salidas,
-            sales,
-            final: initial + entradas - salidas - sales
-        };
-    });
-    return stats;
-  }, [products, reports, reconciliationLines, productMovements]);
+        const stats: Record<string, any> = {};
+        inventoryStatsMap.forEach((v, k) => {
+            stats[k] = v;
+        });
+        return stats;
+    }, [inventoryStatsMap]);
 
     const sortedAndFiltered = React.useMemo(() => {
     let result = products?.filter(p =>
