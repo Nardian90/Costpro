@@ -1,6 +1,7 @@
-import { db, BankTransaction, ReconciliationLine, Product, MatchingRule, ProductMovement } from '../dexie';
+import { db, BankTransaction, ReconciliationLine, Product, MatchingRule, ProductMovement, MatchingTrace } from '../dexie';
 import { v4 as uuidv4 } from 'uuid';
 import { generateHash } from '../utils';
+import { isProductAMedida } from './utils';
 
 export { generateHash };
 
@@ -13,14 +14,7 @@ export interface MatchingResult {
   trace: MatchingTrace[];
   appliedRules: string[];
   matchingConfidence: number;
-}
-
-export interface MatchingTrace {
-  pass: number;
-  rule: string;
-  status: 'SUCCESS' | 'FAIL' | 'SKIPPED';
-  reason?: string;
-  details?: any;
+  logs: string[];
 }
 
 export const DEFAULT_MATCHING_RULES: MatchingRule[] = [
@@ -92,9 +86,10 @@ export class MatchingEngine {
     const lines: ReconciliationLine[] = [];
     const trace: MatchingTrace[] = [];
     const appliedRules: string[] = [];
+    const logs: string[] = [];
 
     const addTrace = (pass: number, rule: string, status: 'SUCCESS' | 'FAIL' | 'SKIPPED', reason?: string, details?: any) => {
-      trace.push({ pass, rule, status, reason, details });
+      trace.push({ pass, rule, status, reason, details, timestamp: Date.now() });
     };
 
     if (transaction.tipo === 'Db') {
@@ -105,7 +100,8 @@ export class MatchingEngine {
             movements: [],
             trace,
             appliedRules: ['AUTO_DB'],
-            matchingConfidence: 100
+            matchingConfidence: 100,
+            logs: ["Transacción de débito procesada automáticamente."]
         };
         return result;
     }
@@ -118,7 +114,8 @@ export class MatchingEngine {
         movements: [],
         trace,
         appliedRules,
-        matchingConfidence: 100
+        matchingConfidence: 100,
+        logs: ["La transacción ya está conciliada."]
       };
       return result;
     }
@@ -133,25 +130,25 @@ export class MatchingEngine {
 
         switch (rule.tipo) {
             case 'HARD_REF':
-                remaining = await this.applyHardRef(rule, transaction, remaining, lines, [], addTrace, pass);
+                remaining = await this.applyHardRef(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'EXACT_SUM':
-                remaining = await this.applyExactSum(rule, transaction, remaining, lines, [], addTrace, pass);
+                remaining = await this.applyExactSum(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'STOCK_LIMIT':
                 addTrace(pass, 'STOCK_LIMIT', 'SUCCESS', 'Modo de control de stock activado');
                 break;
             case 'PRICE_FLEX':
-                remaining = await this.applyPriceFlex(rule, transaction, remaining, lines, [], addTrace, pass);
+                remaining = await this.applyPriceFlex(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'WILDCARDS':
-                remaining = await this.applyWildcards(rule, transaction, remaining, lines, [], addTrace, pass);
+                remaining = await this.applyWildcards(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'TOLERANCE':
-                remaining = await this.applyTolerance(rule, transaction, remaining, lines, [], addTrace, pass);
+                remaining = await this.applyTolerance(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'CASH_FILL':
-                remaining = await this.applyCashFill(rule, transaction, remaining, lines, [], addTrace, pass, cashFillUsedTodayInMemory);
+                remaining = await this.applyCashFill(rule, transaction, remaining, lines, logs, addTrace, pass, cashFillUsedTodayInMemory);
                 break;
         }
 
@@ -168,7 +165,8 @@ export class MatchingEngine {
       movements: [...this.pendingMovements],
       trace,
       appliedRules,
-      matchingConfidence: status === 'COMPLETO' ? 100 : (status === 'PARCIAL' ? 50 : 0)
+      matchingConfidence: status === 'COMPLETO' ? 100 : (status === 'PARCIAL' ? 50 : 0),
+      logs
     };
     this.pendingMovements = [];
 
@@ -176,6 +174,85 @@ export class MatchingEngine {
     await this.persistLog(transaction, result, duration);
 
     return result;
+  }
+
+  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
+    const mockTx: BankTransaction = {
+      id: 'sim',
+      fecha: new Date().toISOString().split('T')[0],
+      referencia_corta: 'SIM',
+      referencia_origen: 'SIM-' + Date.now(),
+      observaciones: 'Simulación de matching',
+      importe_cents: targetAmount,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: new Date().toISOString(),
+      ingestion_hash: 'sim'
+    };
+    return this.matchTransaction(mockTx);
+  }
+
+  async distributeGlobalGoal(
+    targetTotal: number,
+    currentTotal: number,
+    dates: string[],
+    options?: { dayVolumes?: Record<string, number>; strategy?: "MIN_STOCK" | "MAX_VALUE" }
+  ): Promise<ReconciliationLine[]> {
+    let remainingDiff = targetTotal - currentTotal;
+    if (remainingDiff <= 0 || dates.length === 0) return [];
+
+    const lines: ReconciliationLine[] = [];
+    const sortedDates = [...dates].sort((a, b) => {
+      if (options?.dayVolumes) {
+        const volA = options.dayVolumes[a] || 0;
+        const volB = options.dayVolumes[b] || 0;
+        if (volA !== volB) return volA - volB;
+      }
+      return Math.random() - 0.5;
+    });
+
+    for (const date of sortedDates) {
+      if (remainingDiff <= 0) break;
+      const candidates = [...this.products]
+        .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
+        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+        .sort((a, b) => {
+          const sA = this.stockMap.get(a.cod) || 0;
+          const sB = this.stockMap.get(b.cod) || 0;
+          if (options?.strategy === "MAX_VALUE") {
+              return b.precio_cents - a.precio_cents;
+          }
+          if (sA !== sB) return sA - sB;
+          return b.precio_cents - a.precio_cents;
+        });
+
+      for (const p of candidates) {
+        if (remainingDiff <= 0) break;
+        let availableStock = this.useStockLimit ? this.getVirtualStock(p.cod) : 999999;
+        if (availableStock <= 0) {
+            const success = await this.attemptDecomposition(p.cod);
+            if (success) {
+                availableStock = this.getVirtualStock(p.cod);
+            }
+        }
+        if (availableStock <= 0) continue;
+
+        const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
+        if (maxQtyPossible <= 0) continue;
+        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
+        const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
+        if (qtyToPick > 0) {
+          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}`, importe_cents: p.precio_cents * qtyToPick } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo');
+          line.id = uuidv4();
+          line.cuadre_cents = 0;
+          line.importe_linea_cents = p.precio_cents * qtyToPick;
+          lines.push(line);
+          remainingDiff -= line.importe_linea_cents;
+          this.updateVirtualStock(p.cod, qtyToPick, `GOAL-${date}`);
+        }
+      }
+    }
+    return lines;
   }
 
   private async applyHardRef(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
@@ -198,6 +275,7 @@ export class MatchingEngine {
             lines.push(line);
             this.updateVirtualStock(match.cod, qty, tx.referencia_origen);
             addTrace(pass, 'HARD_REF', 'SUCCESS', `Match por referencia directa con ${match.cod}`);
+            logs.push(`PASS ${pass} (HARD_REF): Match directo con ${match.cod} (${qty} unidades)`);
             return remaining - line.importe_linea_cents;
         }
     }
@@ -223,6 +301,7 @@ export class MatchingEngine {
             lines.push(line);
             this.updateVirtualStock(p.cod, qty, tx.referencia_origen);
             addTrace(pass, 'EXACT_SUM', 'SUCCESS', `Match exacto por suma: ${qty}x ${p.cod}`);
+            logs.push(`PASS ${pass} (EXACT_SUM): Match exacto con ${qty}x ${p.cod}`);
             return 0;
         }
     }
@@ -231,36 +310,44 @@ export class MatchingEngine {
   }
 
   private async attemptDecomposition(productCod: string): Promise<boolean> {
-    const p = this.products.find(x => x.cod === productCod);
-    if (!p || !p.id_grupo) return false;
+    const targetProduct = this.products.find(p => p.cod === productCod);
+    if (!targetProduct || !targetProduct.id_grupo) return false;
 
-    const isAMedida = ['kg', 'lb', 'm', 'm2', 'm3'].includes(p.um?.toLowerCase() || '');
-    if (isAMedida) return false;
+    if (isProductAMedida(targetProduct.um)) return false;
+    const ancestors = this.products.filter(p => p.cod_hijo === productCod);
 
-    const ancestors = this.products
-        .filter(x => x.id_grupo === p.id_grupo && x.cod_hijo === p.cod && (this.getVirtualStock(x.cod) > 0));
+    for (const ancestor of ancestors) {
+      let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+      if (availableAncestorStock <= 0) {
+          const success = await this.attemptDecomposition(ancestor.cod);
+          if (success) {
+              availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+          }
+      }
 
-    if (ancestors.length > 0) {
-        const ancestor = ancestors[0];
-        const factor = ancestor.contenido_paquete || 1;
+      if (availableAncestorStock > 0) {
+        const conversionFactor = ancestor.contenido_paquete || 1;
 
-        const currentAncestorStock = this.getVirtualStock(ancestor.cod);
-        this.stockMap.set(ancestor.cod, currentAncestorStock - 1);
+        if (this.useStockLimit && !this.allowNegativeStock) {
+          if (availableAncestorStock < 1) continue;
+        }
 
-        const currentChildStock = this.getVirtualStock(p.cod);
-        this.stockMap.set(p.cod, currentChildStock + factor);
+        this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
+        const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
+        this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
 
         this.pendingMovements.push({
             id: uuidv4(),
             fecha: new Date().toISOString(),
             producto_origen_cod: ancestor.cod,
-            producto_destino_cod: p.cod,
+            producto_destino_cod: targetProduct.cod,
             cantidad_origen: 1,
-            cantidad_destino: factor,
+            cantidad_destino: conversionFactor,
             tipo: 'DECOMPOSITION',
             created_at: new Date().toISOString()
         });
         return true;
+      }
     }
 
     return false;
@@ -288,6 +375,7 @@ export class MatchingEngine {
         lines.push(line);
         this.updateVirtualStock(best.cod, 1, tx.referencia_origen);
         addTrace(pass, 'PRICE_FLEX', 'SUCCESS', `Match por precio flexible con ${best.cod}`);
+        logs.push(`PASS ${pass} (PRICE_FLEX): Match flexible con ${best.cod} (ajustado a ${remaining} cts)`);
         return 0;
     }
     addTrace(pass, 'PRICE_FLEX', 'SKIPPED');
@@ -312,6 +400,7 @@ export class MatchingEngine {
                 lines.push(line);
                 this.updateVirtualStock(p.cod, qty, tx.referencia_origen);
                 addTrace(pass, 'WILDCARDS', 'SUCCESS', `Match por wildcard con ${qty}x ${p.cod}`);
+                logs.push(`PASS ${pass} (WILDCARDS): Match wildcard con ${qty}x ${p.cod}`);
                 remaining -= line.importe_linea_cents;
                 if (remaining <= 0) return 0;
             }
@@ -325,6 +414,7 @@ export class MatchingEngine {
     const tolerance = rule.meta?.tolerance_cents || 100;
     if (remaining <= tolerance) {
         addTrace(pass, 'TOLERANCE', 'SUCCESS', `Saldo de ${remaining} cts cubierto por tolerancia`);
+        logs.push(`PASS ${pass} (TOLERANCE): Saldo restante de ${remaining} cts cubierto.`);
         return 0;
     }
     addTrace(pass, 'TOLERANCE', 'SKIPPED');
@@ -368,6 +458,7 @@ export class MatchingEngine {
     };
     lines.push(line);
     addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubiertos ${remaining_cents} cts como efectivo`);
+    logs.push(`PASS ${pass} (CASH_FILL): Cubierto saldo restante como efectivo.`);
     return 0;
   }
 
@@ -386,13 +477,13 @@ export class MatchingEngine {
         producto_destino_cod: '',
         cantidad_origen: qty,
         cantidad_destino: 0,
-        tipo: 'AUTO_MATCH',
+        tipo: 'MANUAL',
         referencia_transaccion: txRef,
         created_at: new Date().toISOString()
     });
   }
 
-  private async createLine(tx: BankTransaction, p: Product, qty: number, origin: any, classif: any): Promise<ReconciliationLine> {
+  private async createLine(tx: BankTransaction, p: Product, qty: number, origin: any, classif: any, observaciones?: string): Promise<ReconciliationLine> {
     return {
         id: uuidv4(),
         transaction_ref: tx.referencia_origen,
@@ -408,6 +499,7 @@ export class MatchingEngine {
         cuadre_cents: 0,
         clasificacion: classif,
         origen_dato: origin,
+        observaciones: observaciones,
         reconciliation_hash: await generateHash(`${tx.referencia_origen}-${p.cod}-${qty}`),
         created_at: new Date().toISOString()
     };
@@ -454,7 +546,8 @@ export class MatchingEngine {
               movements: [],
               trace: [],
               appliedRules: [],
-              matchingConfidence: 0
+              matchingConfidence: 0,
+              logs: ["Error inesperado en el motor."]
           });
       }
 
