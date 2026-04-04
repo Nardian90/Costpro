@@ -1,5 +1,5 @@
 import { db, type Customer } from "@/lib/dexie";
-import { normalizeName, similarity, normalizeCliente } from "./normalization";
+import { normalizeName, similarity, getCanonicalName } from "./normalization";
 import { v4 as uuidv4 } from 'uuid';
 
 export type ResolutionSource = 'CATALOG' | 'NEW' | 'PARTIAL' | 'CONFLICT' | 'FUZZY';
@@ -63,6 +63,7 @@ export async function resolveIdentity(
   inputCard?: string
 ): Promise<IdentityResult> {
   const normalizedInputName = normalizeName(rawNombre || "");
+  const canonicalInputName = getCanonicalName(rawNombre || "");
   const phone = inputPhone?.trim();
   const card = inputCard?.trim();
 
@@ -80,8 +81,12 @@ export async function resolveIdentity(
     if (fromCatalog) {
       const isNameConflict = normalizedInputName && fromCatalog.normalized_name !== normalizedInputName && !isPlaceholder(rawNombre);
       if (isNameConflict) {
-          await logAudit(transactionRef, 'CONFLICT',
-            `Conflicto de nombre para CI ${cleanCi}: Importado '${rawNombre}' vs Catálogo '${fromCatalog.nombre}'`);
+          // Check if it's just a spacing artifact
+          const canonicalCatalog = getCanonicalName(fromCatalog.nombre);
+          if (canonicalCatalog !== canonicalInputName) {
+            await logAudit(transactionRef, 'CONFLICT',
+              `Conflicto de nombre para CI ${cleanCi}: Importado '${rawNombre}' vs Catálogo '${fromCatalog.nombre}'`);
+          }
       }
 
       const updates: Partial<Customer> = {};
@@ -103,6 +108,25 @@ export async function resolveIdentity(
         source: isNameConflict ? 'CONFLICT' : 'CATALOG'
       };
     } else if (cleanNombre) {
+      // Before creating a new record by CI, check if this CI exists under a different canonical name?
+      // Unlikely since CI is PK.
+      // But let's check if the NAME already exists under a DIFFERENT CI to prevent duplicates.
+      const allCustomers = await db.customers.toArray();
+      const duplicateByName = allCustomers.find(c => getCanonicalName(c.nombre) === canonicalInputName);
+
+      if (duplicateByName && !duplicateByName.ci.startsWith('_GEN_')) {
+          // Found a duplicate by name that has a real CI.
+          await logAudit(transactionRef, 'AUTO_CORRECTION',
+            `Detección de duplicado por nombre: '${rawNombre}' ya existe con CI ${duplicateByName.ci}`);
+          return {
+            ci: duplicateByName.ci,
+            nombre: duplicateByName.nombre,
+            phone: duplicateByName.phone || (isPlaceholder(phone) ? undefined : phone),
+            card_number: duplicateByName.card_number || (isPlaceholder(card) ? undefined : card),
+            source: 'CATALOG'
+          };
+      }
+
       const newCustomer: Customer = {
         ci: cleanCi,
         nombre: cleanNombre.toUpperCase(),
@@ -121,12 +145,14 @@ export async function resolveIdentity(
     }
   }
 
-  if (normalizedInputName && !isPlaceholder(rawNombre)) {
-    const matches = await db.customers.where('normalized_name').equals(normalizedInputName).toArray();
-    if (matches.length === 1) {
-      const found = matches[0];
+  // No CI provided, try to find by canonical name
+  if (canonicalInputName && !isPlaceholder(rawNombre)) {
+    const allCustomers = await db.customers.toArray();
+    const found = allCustomers.find(c => getCanonicalName(c.nombre) === canonicalInputName);
+
+    if (found) {
       await logAudit(transactionRef, 'AUTO_CORRECTION',
-        `Enriquecimiento automático para ${rawNombre}: Encontrado CI ${found.ci}`);
+        `Enriquecimiento automático para ${rawNombre}: Encontrado CI ${found.ci} (Match Canónico)`);
       return {
           ci: found.ci,
           nombre: found.nombre,
@@ -134,10 +160,6 @@ export async function resolveIdentity(
           card_number: found.card_number || (isPlaceholder(card) ? undefined : card),
           source: 'CATALOG'
       };
-    } else if (matches.length > 1) {
-       await logAudit(transactionRef, 'CONFLICT',
-          `Ambigüedad: Múltiples CIs encontrados para el nombre '${rawNombre}'`);
-       return { nombre: cleanNombre?.toUpperCase(), phone: isPlaceholder(phone) ? undefined : phone, card_number: isPlaceholder(card) ? undefined : card, source: 'CONFLICT' };
     }
   }
 
@@ -338,7 +360,13 @@ export async function syncCatalogFromTransactions(): Promise<number> {
 
   let importedCount = 0;
   for (const tx of txCustomers) {
-    const effectiveCi = tx.carnet || `_GEN_${normalizeName(tx.nombre_cliente || "").slice(0, 3)}_${tx.referencia_origen.slice(-4)}`;
+    const canonicalName = getCanonicalName(tx.nombre_cliente || "");
+    const allCustomers = await db.customers.toArray();
+
+    // Check if this identity already exists under a different CI or if the name is a spacing variant
+    const existingByName = allCustomers.find(c => getCanonicalName(c.nombre) === canonicalName);
+
+    const effectiveCi = tx.carnet || (existingByName ? existingByName.ci : `_GEN_${normalizeName(tx.nombre_cliente || "").slice(0, 3)}_${tx.referencia_origen.slice(-4)}`);
     const existing = await db.customers.get(effectiveCi);
 
     if (!existing) {
