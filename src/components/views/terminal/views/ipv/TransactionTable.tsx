@@ -1,4 +1,5 @@
 'use client';
+import { parseTransactionMetadata } from '@/lib/ipv/metadata-parser';
 
 import React, { useState } from 'react';
 import * as XLSX from "xlsx";
@@ -272,9 +273,16 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                               </div>
                               <div className="space-y-2">
                                   <div className="space-y-1">
-                                  <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
-                                    {tx.observaciones || "Sin observaciones"}
-                                  </p>
+                                  {(() => {
+                                    const metadata = parseTransactionMetadata(tx.observaciones);
+                                    const isMipyme = !!metadata.nit;
+                                    return (
+                                      <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
+                                        {isMipyme && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase mb-1 mr-1">Mipyme</Badge>}
+                                        {tx.observaciones || "Sin observaciones"}
+                                      </p>
+                                    );
+                                  })()}
                                   {tx.observaciones && tx.observaciones.length > 60 && (
                                     <button
                                       onClick={() => toggleExpand(tx.referencia_origen)}
@@ -357,9 +365,16 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
           <TableCell className="text-xs max-w-[150px]">
     <div className="flex items-center gap-2 group">
-    <div className="truncate font-medium cursor-pointer flex-1" onClick={onViewObservations} title={tx.observaciones}>
-      {tx.observaciones || "Sin observaciones"}
-    </div>
+    {(() => {
+      const metadata = parseTransactionMetadata(tx.observaciones);
+      const isMipyme = !!metadata.nit;
+      return (
+        <div className="truncate font-medium cursor-pointer flex-1" onClick={onViewObservations} title={tx.observaciones}>
+          {isMipyme ? <span className="text-primary font-black uppercase mr-2">[Mipyme]</span> : null}
+          {tx.observaciones || "Sin observaciones"}
+        </div>
+      );
+    })()}
     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={onViewObservations}>
       <Info className="w-3 h-3 text-primary" />
     </Button>

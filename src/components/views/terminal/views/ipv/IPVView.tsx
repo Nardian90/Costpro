@@ -44,6 +44,7 @@ import { IPVReportView } from './IPVReportView';
 import { IntelligentReceiptsSection } from './IntelligentReceipts/IntelligentReceiptsSection';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { PivotStatementView } from './PivotStatementView';
+import { MipymeTransactionsView } from './MipymeTransactionsView';
 import { FinancialPlanningView } from './FinancialPlanningView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import ManualReconciliationView from './ManualReconciliationView';
@@ -424,6 +425,7 @@ export default function IPVView() {
     { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
     { id: 'mapping-rules', label: 'Mapeo Reglas', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules' },
     { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers' },
+    { id: 'mipyme', label: 'Transacciones Mipyme', icon: Users, onClick: () => setActiveTab('mipyme'), active: activeTab === 'mipyme' },
     { id: 'mvt', label: 'Exportación MVT', icon: FileText, onClick: () => setActiveTab('mvt'), active: activeTab === 'mvt' },
     {
         id: 'reports-dropdown',
@@ -791,6 +793,11 @@ export default function IPVView() {
           {activeTab === 'mapping-rules' && (
             <div className="m-0 p-6 animate-in fade-in duration-500">
                 <MappingRulesManager />
+            </div>
+          )}
+          {activeTab === 'mipyme' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MipymeTransactionsView />
             </div>
           )}
           {activeTab === 'customers' && (
