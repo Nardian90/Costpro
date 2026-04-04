@@ -13,6 +13,14 @@ export interface IntegrityReport {
     issues: string[];
 }
 
+export interface DetailedStockStats {
+    initial: number;
+    entradas: number;
+    salidas: number;
+    sales: number;
+    final: number;
+}
+
 export class StockService {
     /**
      * Helper para reintentar operaciones de base de datos en caso de DatabaseClosedError.
@@ -24,7 +32,6 @@ export class StockService {
                 return await fn();
             } catch (error: any) {
                 lastError = error;
-                // Dexie DatabaseClosedError o mensajes similares
                 if (error.name === 'DatabaseClosedError' || error.message?.includes('Database is closed')) {
                     const delay = Math.pow(2, i) * 100;
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -41,25 +48,36 @@ export class StockService {
      * Centraliza la lógica para evitar drift entre vistas.
      */
     static async calculateCurrentStock(productCod: string): Promise<number> {
+        const stats = await this.getProductDetailedStats(productCod);
+        return stats.final;
+    }
+
+    /**
+     * Obtiene estadísticas detalladas para un producto específico.
+     */
+    static async getProductDetailedStats(productCod: string): Promise<DetailedStockStats> {
         return this.executeWithRetry(async () => {
             const product = await db.products.where('cod').equals(productCod).first();
-            if (!product) return 0;
+            if (!product) return { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
 
-            const initialStock = product.stock_inicial_manual || 0;
+            const initial = product.stock_inicial_manual || 0;
 
-            // Impacto de reconciliation_lines (Ventas/Ajustes)
             const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-            const salesImpact = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+            const sales = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
 
-            // Impacto de product_movements (Entradas/Salidas/Transferencias)
             const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
-            const entries = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
+            const entradas = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
 
             const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
-            const exits = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
+            const salidas = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
 
-            // Stock = Inicial + Movimientos (Entradas - Salidas) - Ventas
-            return initialStock + entries - exits - salesImpact;
+            return {
+                initial,
+                entradas,
+                salidas,
+                sales,
+                final: initial + entradas - salidas - sales
+            };
         });
     }
 
@@ -68,34 +86,59 @@ export class StockService {
      * Optimizado para performance.
      */
     static async getCompleteStockMap(): Promise<Map<string, number>> {
+        const statsMap = await this.getDetailedStockStatsMap();
+        const map = new Map<string, number>();
+        statsMap.forEach((stats, cod) => map.set(cod, stats.final));
+        return map;
+    }
+
+    /**
+     * Calcula el mapa detallado de stock para todos los productos en un solo pase O(N).
+     */
+    static async getDetailedStockStatsMap(): Promise<Map<string, DetailedStockStats>> {
         return this.executeWithRetry(async () => {
             const products = await db.products.toArray();
             const lines = await db.reconciliation_lines.toArray();
             const movements = await db.product_movements.toArray();
 
-            const map = new Map<string, number>();
+            const map = new Map<string, DetailedStockStats>();
 
-            // 1. Inicializar con stock inicial del catálogo
+            // 1. Inicializar
             for (const p of products) {
-                map.set(p.cod, p.stock_inicial_manual || 0);
+                map.set(p.cod, {
+                    initial: p.stock_inicial_manual || 0,
+                    entradas: 0,
+                    salidas: 0,
+                    sales: 0,
+                    final: p.stock_inicial_manual || 0
+                });
             }
 
-            // 2. Aplicar movimientos de inventario
+            // 2. Movimientos
             for (const m of movements) {
                 if (m.producto_destino_cod) {
-                    const current = map.get(m.producto_destino_cod) || 0;
-                    map.set(m.producto_destino_cod, current + (m.cantidad_destino || 0));
+                    const stats = map.get(m.producto_destino_cod);
+                    if (stats) {
+                        stats.entradas += (m.cantidad_destino || 0);
+                        stats.final += (m.cantidad_destino || 0);
+                    }
                 }
                 if (m.producto_origen_cod) {
-                    const current = map.get(m.producto_origen_cod) || 0;
-                    map.set(m.producto_origen_cod, current - (m.cantidad_origen || 0));
+                    const stats = map.get(m.producto_origen_cod);
+                    if (stats) {
+                        stats.salidas += (m.cantidad_origen || 0);
+                        stats.final -= (m.cantidad_origen || 0);
+                    }
                 }
             }
 
-            // 3. Aplicar impacto de conciliaciones (ventas)
+            // 3. Ventas (Reconciliation Lines)
             for (const l of lines) {
-                const current = map.get(l.product_cod) || 0;
-                map.set(l.product_cod, current - (l.cantidad || 0));
+                const stats = map.get(l.product_cod);
+                if (stats) {
+                    stats.sales += (l.cantidad || 0);
+                    stats.final -= (l.cantidad || 0);
+                }
             }
 
             return map;
@@ -111,7 +154,6 @@ export class StockService {
             const movements = await db.product_movements.toArray();
             const lines = await db.reconciliation_lines.toArray();
 
-            // Caso A: Movimientos con referencia de transacción que no tienen línea de conciliación
             const lineRefs = new Set(lines.map(l => l.transaction_ref));
             movements.forEach(m => {
                 if (m.referencia_transaccion && !m.referencia_transaccion.startsWith('REV_') && !lineRefs.has(m.referencia_transaccion)) {
@@ -119,11 +161,9 @@ export class StockService {
                 }
             });
 
-            // Caso B: Conciliaciones de tipo AUTO_MATCH o CASH_FILLER que deberían tener movimientos pero no los tienen
             const movementRefs = new Set(movements.map(m => m.referencia_transaccion));
             lines.forEach(l => {
                 if ((l.origen_dato === 'AUTO_MATCH' || l.origen_dato === 'CASH_FILLER') && !movementRefs.has(l.transaction_ref)) {
-                    // Solo reportar si no es una reversión
                     if (!l.observaciones?.includes('[REVERSIÓN]')) {
                         issues.push(`Conciliación ${l.id} (${l.origen_dato}) no tiene movimientos de inventario asociados.`);
                     }
