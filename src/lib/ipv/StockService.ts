@@ -1,5 +1,6 @@
 import { db, ProductMovement, ReconciliationLine, Product } from '../dexie';
 import { v4 as uuidv4 } from 'uuid';
+import { PersistenceService } from '../persistenceService';
 
 export interface StockSnapshot {
     productCod: string;
@@ -21,27 +22,11 @@ export interface DetailedStockStats {
     final: number;
 }
 
+/**
+ * Servicio centralizado para gestión de Stock e Inventario.
+ * Proporciona una única fuente de verdad para el cálculo de existencias.
+ */
 export class StockService {
-    /**
-     * Helper para reintentar operaciones de base de datos en caso de DatabaseClosedError.
-     */
-    private static async executeWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-        let lastError: any;
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                return await fn();
-            } catch (error: any) {
-                lastError = error;
-                if (error.name === 'DatabaseClosedError' || error.message?.includes('Database is closed')) {
-                    const delay = Math.pow(2, i) * 100;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    continue;
-                }
-                throw error;
-            }
-        }
-        throw lastError;
-    }
 
     /**
      * Calcula la existencia actual de un producto basándose en su stock inicial, movimientos y conciliaciones.
@@ -56,7 +41,7 @@ export class StockService {
      * Obtiene estadísticas detalladas para un producto específico.
      */
     static async getProductDetailedStats(productCod: string): Promise<DetailedStockStats> {
-        return this.executeWithRetry(async () => {
+        return PersistenceService.readSafe(async () => {
             const product = await db.products.where('cod').equals(productCod).first();
             if (!product) return { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
 
@@ -96,7 +81,7 @@ export class StockService {
      * Calcula el mapa detallado de stock para todos los productos en un solo pase O(N).
      */
     static async getDetailedStockStatsMap(): Promise<Map<string, DetailedStockStats>> {
-        return this.executeWithRetry(async () => {
+        return PersistenceService.readSafe(async () => {
             const products = await db.products.toArray();
             const lines = await db.reconciliation_lines.toArray();
             const movements = await db.product_movements.toArray();
@@ -149,7 +134,7 @@ export class StockService {
      * Valida la integridad y sincronización entre product_movements y reconciliation_lines.
      */
     static async validateIntegrity(): Promise<IntegrityReport> {
-        return this.executeWithRetry(async () => {
+        return PersistenceService.readSafe(async () => {
             const issues: string[] = [];
             const movements = await db.product_movements.toArray();
             const lines = await db.reconciliation_lines.toArray();
@@ -211,7 +196,7 @@ export class StockService {
 
         await this.validateReversal(line.product_cod, qtyToRemove, snapshot);
 
-        await db.transaction('rw', [db.reconciliation_lines, db.product_movements], async () => {
+        await PersistenceService.transactionSafe([db.reconciliation_lines, db.product_movements, db.audit_logs], async () => {
             const reversalLine: ReconciliationLine = {
                 ...line,
                 id: uuidv4(),
@@ -244,7 +229,7 @@ export class StockService {
             await this.validateReversal(m.producto_destino_cod, m.cantidad_destino, snapshot);
         }
 
-        await db.transaction('rw', [db.product_movements], async () => {
+        await PersistenceService.transactionSafe([db.product_movements, db.audit_logs], async () => {
             const reversal: ProductMovement = {
                 id: uuidv4(),
                 fecha: new Date().toISOString(),

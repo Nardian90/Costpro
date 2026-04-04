@@ -1,5 +1,6 @@
-import { db, Product, IntelligentReceipt, ReconciliationLine } from '../dexie';
+import { db, Product, IntelligentReceipt, ProductMovement } from '../dexie';
 import { v4 as uuidv4 } from 'uuid';
+import { PersistenceService } from '../persistenceService';
 
 export interface SimulationResult {
     receipts: IntelligentReceipt[];
@@ -8,27 +9,7 @@ export interface SimulationResult {
 }
 
 /**
- * Analiza las ventas en un período determinado.
- * @param startDate Fecha inicio YYYY-MM-DD
- * @param endDate Fecha fin YYYY-MM-DD
- */
-export async function analizarVentas(startDate: string, endDate: string) {
-    const lines = await db.reconciliation_lines
-        .where('fecha_operacion')
-        .between(startDate, endDate, true, true)
-        .toArray();
-
-    const demandMap = new Map<string, number>();
-    lines.forEach(line => {
-        const current = demandMap.get(line.product_cod) || 0;
-        demandMap.set(line.product_cod, current + line.cantidad);
-    });
-
-    return demandMap;
-}
-
-/**
- * Descompone unidades totales en niveles (BOX, PACK, UNIT) usando algoritmo greedy.
+ * Decompone unidades totales en niveles (BOX, PACK, UNIT) usando algoritmo greedy.
  */
 export function descomponerUnidades(totalUnits: number, product: Product, hierarchy: Product[]): { level: 'BOX' | 'PACK' | 'UNIT', quantity: number, units: number }[] {
     const results: { level: 'BOX' | 'PACK' | 'UNIT', quantity: number, units: number }[] = [];
@@ -71,13 +52,13 @@ export async function corregirNegativos(
     mode: 'A' | 'B' | 'C',
     simulationId: string
 ): Promise<IntelligentReceipt[]> {
-    const product = await db.products.where('cod').equals(productCod).first();
+    const product = await PersistenceService.readSafe(() => db.products.where('cod').equals(productCod).first());
     if (!product) return [];
 
     // Get product hierarchy (all products in the same group)
     let hierarchy: Product[] = [];
     if (product.id_grupo) {
-        hierarchy = await db.products.where('id_grupo').equals(product.id_grupo).toArray();
+        hierarchy = await PersistenceService.readSafe(() => db.products.where('id_grupo').equals(product.id_grupo).toArray());
     } else {
         hierarchy = [product];
     }
@@ -117,7 +98,7 @@ export async function reconstruirRecepciones(
     stockGoals?: Map<string, number>
 ): Promise<SimulationResult> {
     const simulationId = uuidv4();
-    const products = await db.products.toArray();
+    const products = await PersistenceService.readSafe(() => db.products.toArray());
     const receipts: IntelligentReceipt[] = [];
     const stockImpact = new Map<string, { current: number; simulated: number }>();
     const correctedProducts = new Set<string>();
@@ -137,11 +118,11 @@ export async function reconstruirRecepciones(
     }
 
     // Pre-load all movements and sales
-    const allLines = await db.reconciliation_lines.where('fecha_operacion').between(startDate, endDate, true, true).toArray();
+    const allLines = await PersistenceService.readSafe(() => db.reconciliation_lines.where('fecha_operacion').between(startDate, endDate, true, true).toArray());
 
     // Mode B: include existing manual receipts
     const existingReceipts = mode === 'B'
-        ? await db.product_movements.where('fecha').between(startDate, endDate, true, true).toArray()
+        ? await PersistenceService.readSafe(() => db.product_movements.where('fecha').between(startDate, endDate, true, true).toArray())
         : [];
 
     // Simulate day by day
@@ -214,13 +195,13 @@ export async function reconstruirRecepciones(
 }
 
 async function calculateActualStock(productCod: string): Promise<number> {
-    const product = await db.products.get(productCod);
+    const product = await PersistenceService.readSafe(() => db.products.get(productCod));
     if (!product) return 0;
-    const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+    const lines = await PersistenceService.readSafe(() => db.reconciliation_lines.where('product_cod').equals(productCod).toArray());
     const sales = lines.reduce((sum, l) => sum + l.cantidad, 0);
-    const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
+    const movementsDest = await PersistenceService.readSafe(() => db.product_movements.where('producto_destino_cod').equals(productCod).toArray());
     const entries = movementsDest.reduce((sum, m) => sum + m.cantidad_destino, 0);
-    const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
+    const movementsOrig = await PersistenceService.readSafe(() => db.product_movements.where('producto_origen_cod').equals(productCod).toArray());
     const exits = movementsOrig.reduce((sum, m) => sum + m.cantidad_origen, 0);
 
     return (product.stock_inicial_manual || 0) + entries - exits - sales;
@@ -230,7 +211,7 @@ async function calculateActualStock(productCod: string): Promise<number> {
  * Persiste las recepciones confirmadas en la base de datos.
  */
 export async function aplicarRecepciones(receipts: IntelligentReceipt[]) {
-    await db.transaction('rw', [db.intelligent_receipts, db.product_movements], async () => {
+    await PersistenceService.transactionSafe([db.intelligent_receipts, db.product_movements, db.audit_logs], async () => {
         for (const r of receipts) {
             // 1. Marcar como aplicada
             r.applied = 1;
@@ -266,7 +247,7 @@ export async function simularImpacto(receipts: IntelligentReceipt[]): Promise<Si
  * Genera recepciones simuladas basadas en el stock inicial manual del catálogo.
  */
 export async function generarRecepcionDesdeSaldoInicial(): Promise<SimulationResult> {
-    const products = await db.products.where('stock_inicial_manual').above(0).toArray();
+    const products = await PersistenceService.readSafe(() => db.products.where('stock_inicial_manual').above(0).toArray());
     const simulationId = uuidv4();
     const today = new Date().toISOString().split('T')[0];
 
