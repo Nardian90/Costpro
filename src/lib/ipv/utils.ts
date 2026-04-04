@@ -44,7 +44,8 @@ export function isProductAMedida(um: string): boolean {
 }
 
 /**
- * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos.
+ * Redirigido a StockService para centralización.
  */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
     return StockService.calculateCurrentStock(productCod);
@@ -53,31 +54,10 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 
 /**
  * Calcula el mapa de stock completo para todos los productos activos.
- * Útil para alimentar el motor de matching con datos en tiempo real.
+ * Redirigido a StockService para centralización y optimización.
  */
 export async function getCompleteStockMap(db: any): Promise<Map<string, number>> {
-    const products = await db.products.toArray();
-    const lines = await db.reconciliation_lines.toArray();
-    const allMovements = await db.product_movements.toArray();
-    const map = new Map<string, number>();
-
-    for (const p of products) {
-        const sales = lines
-            .filter((l: any) => l.product_cod === p.cod)
-            .reduce((sum: number, l: any) => sum + l.cantidad, 0);
-
-        const entries = allMovements
-            .filter((m: any) => m.producto_destino_cod === p.cod)
-            .reduce((sum: number, m: any) => sum + m.cantidad_destino, 0);
-
-        const exits = allMovements
-            .filter((m: any) => m.producto_origen_cod === p.cod)
-            .reduce((sum: number, m: any) => sum + m.cantidad_origen, 0);
-
-        map.set(p.cod, (p.stock_inicial_manual || 0) + entries - exits - sales);
-    }
-
-    return map;
+    return StockService.getCompleteStockMap();
 }
 
 /**
@@ -163,10 +143,6 @@ export function classifyGroupHierarchy(products: Product[]): Product[] {
         for (let i = 0; i < sorted.length; i++) {
             const current = sorted[i];
             const next = sorted[i + 1];
-
-            // Si ya tiene un cod_hijo manual que existe en el grupo, respetarlo?
-            // El usuario pidió que el sistema clasifique inteligentemente.
-            // Vamos a asignar el siguiente si el cod_hijo actual está vacío.
 
             const productInOriginalArray = updatedProducts.find(p => p.cod === current.cod);
             if (productInOriginalArray) {
