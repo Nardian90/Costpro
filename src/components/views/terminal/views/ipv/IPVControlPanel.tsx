@@ -1,79 +1,84 @@
 'use client';
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useRef } from 'react';
 import {
     TrendingUp,
-    History,
-    Play,
-    FileText,
-    LayoutGrid,
-    FileUp,
-    AlertCircle,
-    ClipboardList,
-    Settings,
-    ChevronRight, ArrowRight,
     Database,
-    Download,
-    Upload,
-    CheckCircle2,
-    HelpCircle,
-    RefreshCw,
-    PlayCircle,
-    Package,
-    Network,
-    ShieldCheck,
-    Workflow,
-    PackageSearch,
     Table2,
     Cpu,
     Zap,
     BarChart4,
     FileSearch,
+    AlertCircle,
+    FileText,
+    Users,
+    PackageSearch,
+    Workflow,
+    HelpCircle,
+    Settings,
+    Play,
+    RefreshCw,
+    Download,
+    Upload,
     Receipt,
     ArrowRightLeft,
-    QrCode, Users
+    QrCode
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { exportFullBackup } from '@/lib/ipv/backup';
-import { db } from '@/lib/dexie';
-import { motion } from 'framer-motion';
-
-
-
-const ActionCard = ({ title, description, icon, onClick, id, variant = 'dark' }: any) => (
-    <Card
-        onClick={() => onClick(id)}
-        className={`group relative p-8 flex items-center gap-6 border-none cursor-pointer overflow-hidden transition-all hover:scale-[1.02] rounded-[2.5rem] ${variant === 'primary' ? 'bg-primary text-primary-foreground shadow-2xl shadow-primary/20' : 'bg-card/50 backdrop-blur-sm border border-border/50 hover:bg-card/80'}`}
-    >
-        {variant === 'primary' && (
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
-        )}
-        <div className={`p-5 rounded-[2rem] transition-transform group-hover:scale-110 ${variant === 'primary' ? 'bg-white/20' : 'bg-primary/10 text-primary'}`}>
-            {React.cloneElement(icon, { className: 'w-8 h-8' })}
-        </div>
-        <div className="space-y-1 text-left relative z-10">
-            <h3 className="text-lg font-black uppercase tracking-tight">{title}</h3>
-            <p className={`text-xs font-medium leading-snug max-w-[200px] ${variant === 'primary' ? 'text-white/80' : 'text-muted-foreground'}`}>
-                {description}
-            </p>
-        </div>
-        <ChevronRight className={`ml-auto w-6 h-6 transition-all group-hover:translate-x-1 ${variant === 'primary' ? 'text-foreground' : 'text-primary opacity-50 group-hover:opacity-100'}`} />
-    </Card>
-);
+import { cn } from '@/lib/utils';
 
 interface Props {
     onSelect: (id: string) => void;
     onExportBackup: () => void;
     onImportBackup: (file: File) => void;
-    hasTransactions?: boolean;
-    hasProducts?: boolean;
+    hasTransactions: boolean;
+    hasProducts: boolean;
 }
 
-export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasTransactions, hasProducts }: Props) {
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
+type ActionVariant = 'default' | 'primary' | 'dark';
+
+interface ActionItem {
+    id: string;
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    variant: ActionVariant;
+}
+
+function ActionCard({ title, description, icon, onClick, id, variant = 'default' }: { title: string, description: string, icon: React.ReactNode, onClick: (id: string) => void, id: string, variant?: ActionVariant }) {
+    return (
+        <Card
+            onClick={() => onClick(id)}
+            className={cn(
+                "p-6 group cursor-pointer transition-all duration-300 border-2 rounded-[2rem] hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl flex flex-col gap-4 relative overflow-hidden",
+                variant === 'primary' ? "bg-primary/5 border-primary/20 hover:border-primary/40" : "bg-card/50 backdrop-blur-sm border-transparent hover:border-primary/10"
+            )}
+        >
+            <div className={cn(
+                "p-4 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:rotate-12",
+                variant === 'primary' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+            )}>
+                {React.cloneElement(icon as React.ReactElement<any>, { size: 28, strokeWidth: 2.5 })}
+            </div>
+
+            <div className="space-y-1.5 relative z-10">
+                <h3 className="text-lg font-black uppercase tracking-tight text-foreground">{title}</h3>
+                <p className="text-xs text-muted-foreground font-medium leading-relaxed opacity-70 group-hover:opacity-100 transition-opacity">
+                    {description}
+                </p>
+            </div>
+
+            <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
+                {React.cloneElement(icon as React.ReactElement<any>, { size: 120, strokeWidth: 1 })}
+            </div>
+        </Card>
+    );
+}
+
+export default function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasTransactions, hasProducts }: Props) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -84,17 +89,17 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
     };
 
 
-    const mainActions = [
+    const mainActions: ActionItem[] = [
         {
             id: 'dashboard',
-            title: 'Flujo',
+            title: 'Panel de Control',
             description: 'Panel de control con acceso directo a todos los módulos del sistema.',
             icon: <Workflow />,
             variant: 'primary'
         },
         {
             id: 'analytics',
-            title: 'Dashboard',
+            title: 'Dashboard Institucional',
             description: 'Cuadro de mando institucional con KPIs financieros y liquidez.',
             icon: <TrendingUp />,
             variant: 'dark'
