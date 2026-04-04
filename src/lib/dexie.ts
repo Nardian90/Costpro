@@ -39,6 +39,8 @@ export interface BankTransaction {
   matching_trace?: MatchingTrace[];
   applied_rules?: string[];
   matching_confidence?: number;
+  nit?: string;
+  impuesto?: string;
 }
 
 export interface Product {
@@ -426,7 +428,7 @@ export class IPVDatabase extends Dexie {
     });
 
     this.version(27).stores({
-      bank_statements: "&referencia_origen, fecha, importe_cents, ingestion_hash, carnet, nombre_cliente"
+      bank_statements: "&referencia_origen, fecha, importe_cents, ingestion_hash, carnet, nombre_cliente, nit, impuesto"
     });
   }
 }

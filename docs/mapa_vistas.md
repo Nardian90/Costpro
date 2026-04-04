@@ -28,7 +28,7 @@
 | BetEntryDialog | src/components/views/terminal/views/pick3/BetEntryDialog.tsx | component | Óptimo | button, dialog, input, label, select, supabaseClient | 2026-04-04 |
 | CatalogImportPreview | src/components/views/terminal/views/ipv/CatalogImportPreview.tsx | component | Óptimo | BaseModal, badge, button, import-validator, table, utils | 2026-04-04 |
 | CatalogModals | src/components/views/terminal/views/catalog/CatalogModals.tsx | component | Advertencia | BaseModal, ProductImage, index, utils | 2026-04-04 |
-| CatalogTable | src/components/views/terminal/views/ipv/CatalogTable.tsx | component | Advertencia | ActionMenu, BaseModal, badge, button, card, dexie, engine, import-validator, importUtils, input, intelligence, label, roles, select, supabaseClient, switch, table, tooltip, utils, utils | 2026-04-04 |
+| CatalogTable | src/components/views/terminal/views/ipv/CatalogTable.tsx | component | Advertencia | ActionMenu, BaseModal, StockService, badge, button, card, dexie, engine, import-validator, importUtils, input, intelligence, label, roles, select, supabaseClient, switch, table, tooltip, utils, utils | 2026-04-04 |
 | ChatBot | src/components/ui/ChatBot.tsx | component | Advertencia | utils | 2026-04-04 |
 | CircularProgress | src/components/views/terminal/views/cost_sheet/CircularProgress.tsx | component | Óptimo | utils | 2026-04-04 |
 | ClasificadorModule | src/components/views/terminal/views/wiki/ClasificadorModule.tsx | component | Óptimo | accordion, types, utils | 2026-04-04 |
@@ -183,7 +183,7 @@
 | ThemeToggle | src/components/ThemeToggle.tsx | component | Óptimo | dropdown-menu, utils | 2026-04-04 |
 | TransactionBreakdown | src/components/views/terminal/views/ipv/TransactionBreakdown.tsx | component | Advertencia | StockService, badge, button, card, dexie, dialog, input, select, table, tooltip, utils | 2026-04-04 |
 | TransactionDetailsModal | src/components/views/terminal/views/sales/TransactionDetailsModal.tsx | component | Óptimo | BaseModal, badge, supabaseClient, table, utils | 2026-04-04 |
-| TransactionTable | src/components/views/terminal/views/ipv/TransactionTable.tsx | component | Advertencia | ActionBadges, AddTransactionModal, BaseModal, MatchingTracePopover, ObservationsModal, badge, button, card, checkbox, dexie, dialog, engine, input, label, popover, scroll-area, switch, table, tooltip, utils | 2026-04-04 |
+| TransactionTable | src/components/views/terminal/views/ipv/TransactionTable.tsx | component | Advertencia | ActionBadges, AddTransactionModal, BaseModal, MatchingTracePopover, ObservationsModal, badge, button, card, checkbox, dexie, dialog, engine, input, label, metadata-parser, popover, scroll-area, switch, table, tooltip, utils | 2026-04-04 |
 | TransferDetailsModal | src/components/views/terminal/views/transfers/TransferDetailsModal.tsx | component | Óptimo | BaseModal, StateRenderer, utils | 2026-04-04 |
 | UpgradeModal | src/components/modals/UpgradeModal.tsx | component | Óptimo | BaseModal, button | 2026-04-04 |
 | UserForm | src/components/views/terminal/views/users/UserForm.tsx | component | Óptimo | utils | 2026-04-04 |
@@ -259,7 +259,7 @@
 | useStoresView | src/components/views/terminal/views/stores/useStoresView.ts | component | Óptimo | logger | 2026-04-04 |
 | useUsersView | src/components/views/terminal/views/users/useUsersView.ts | component | Advertencia | UserForm, roles, supabaseClient | 2026-04-04 |
 | ReleaseGatePdfExporter | src/lib/release_gate/ReleaseGatePdfExporter.ts | utility | Óptimo |  | 2026-04-04 |
-| StockService | src/lib/ipv/StockService.ts | utility | Óptimo | dexie | 2026-04-04 |
+| StockService | src/lib/ipv/StockService.ts | utility | Óptimo | dexie, persistenceService | 2026-04-04 |
 | audit | src/lib/ipv/audit.ts | utility | Óptimo | dexie | 2026-04-04 |
 | auth | src/lib/auth.ts | utility | Óptimo | supabaseClient | 2026-04-04 |
 | backup | src/lib/ipv/backup.ts | utility | Óptimo |  | 2026-04-04 |
@@ -275,7 +275,7 @@
 | definitions | src/lib/ai/tools/definitions.ts | utility | Óptimo | types | 2026-04-04 |
 | demo-products | src/lib/data/demo-products.ts | utility | Óptimo |  | 2026-04-04 |
 | dexie | src/lib/dexie.ts | utility | Advertencia | types | 2026-04-04 |
-| engine | src/lib/ipv/engine.ts | utility | Advertencia | dexie, utils | 2026-04-04 |
+| engine | src/lib/ipv/engine.ts | utility | Advertencia | dexie, utils, utils | 2026-04-04 |
 | engine | src/lib/ipv/mvt/engine.ts | utility | Óptimo | evaluator, types | 2026-04-04 |
 | errorHandler | src/lib/errorHandler.ts | utility | Óptimo | logger | 2026-04-04 |
 | evaluator | src/lib/ipv/mvt/evaluator.ts | utility | Óptimo |  | 2026-04-04 |
@@ -289,13 +289,14 @@
 | importUtils | src/lib/ipv/importUtils.ts | utility | Óptimo | catalog-audit, dexie, import-validator | 2026-04-04 |
 | index | src/lib/cost-engine/index.ts | utility | Advertencia | formula-utils, mapper, solver, types | 2026-04-04 |
 | intelligence | src/lib/ipv/intelligence.ts | utility | Óptimo | dexie | 2026-04-04 |
-| intelligentEngine | src/lib/ipv/intelligentEngine.ts | utility | Óptimo | dexie | 2026-04-04 |
+| intelligentEngine | src/lib/ipv/intelligentEngine.ts | utility | Óptimo | dexie, persistenceService | 2026-04-04 |
 | inventory-logic | src/lib/inventory-logic.ts | utility | Óptimo |  | 2026-04-04 |
 | kimi-adapter | src/lib/ai/adapters/kimi-adapter.ts | utility | Óptimo | openai-compatible-adapter | 2026-04-04 |
 | logger | src/lib/logger.ts | utility | Óptimo |  | 2026-04-04 |
 | mapper | src/lib/cost-engine/mapper.ts | utility | Advertencia | types | 2026-04-04 |
 | mapping-engine | src/lib/ipv/identity/mapping-engine.ts | utility | Óptimo |  | 2026-04-04 |
 | matching.worker | src/lib/ipv/matching.worker.ts | utility | Óptimo | engine | 2026-04-04 |
+| metadata-parser | src/lib/ipv/metadata-parser.ts | utility | Advertencia |  | 2026-04-04 |
 | metrics | src/lib/ipv/identity/metrics.ts | utility | Óptimo | dexie | 2026-04-04 |
 | mri-engine | src/lib/release_gate/mri-engine.ts | utility | Óptimo |  | 2026-04-04 |
 | navigation | src/lib/navigation.ts | utility | Óptimo |  | 2026-04-04 |
@@ -305,8 +306,9 @@
 | openai-compatible-adapter | src/lib/ai/adapters/openai-compatible-adapter.ts | utility | Óptimo | types | 2026-04-04 |
 | orchestrator | src/lib/ai/orchestrator.ts | utility | Óptimo | deepseek-adapter, fallback-adapter, gemini-adapter, gpt-adapter, kimi-adapter, qwen-adapter, types | 2026-04-04 |
 | parser | src/lib/wallet/parser.ts | utility | Advertencia | types | 2026-04-04 |
-| parser | src/lib/ipv/parser.ts | utility | Óptimo | mapping-engine, registry | 2026-04-04 |
+| parser | src/lib/ipv/parser.ts | utility | Óptimo | dexie, mapping-engine, metadata-parser, registry | 2026-04-04 |
 | pdf-export | src/lib/utils/pdf-export.ts | utility | Óptimo |  | 2026-04-04 |
+| persistenceService | src/lib/persistenceService.ts | utility | Óptimo | dexie | 2026-04-04 |
 | plan-utils | src/lib/plan-utils.ts | utility | Óptimo |  | 2026-04-04 |
 | query-inspector-utils | src/lib/query-inspector-utils.ts | utility | Óptimo |  | 2026-04-04 |
 | qwen-adapter | src/lib/ai/adapters/qwen-adapter.ts | utility | Óptimo | types | 2026-04-04 |
@@ -353,7 +355,7 @@
 | FinancialPlanningView | src/components/views/terminal/views/ipv/FinancialPlanningView.tsx | view | Óptimo | button, card, dexie, engine, input, utils | 2026-04-04 |
 | HelpView | src/components/views/terminal/views/help/HelpView.tsx | view | Óptimo | HelpContent, HelpLayout, HelpSidebar, ThemeToggle, useHelpContent, utils | 2026-04-04 |
 | IPVReportView | src/components/views/terminal/views/ipv/IPVReportView.tsx | view | Advertencia | BaseModal, IPVPreviewModal, LoadingOverlay, badge, button, dexie, input, table, tooltip, utils | 2026-04-04 |
-| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, BankIngestion, CatalogTable, CustomerCatalog, FinancialPlanningView, HorizontalScroll, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVReportView, IPVReportsDropdown, IPVRightSidebar, IncomeReceiptSection, IngestionErrorsTable, IntelligentReceiptsSection, LoadingOverlay, MVTExportView, ManualReconciliationView, MappingRulesManager, MatchingAuditView, MatchingRulesEditor, MatchingSimulation, MovementsView, PivotStatementView, TransactionBreakdown, TransactionTable, TransferQRReportView, backup, badge, button, card, dexie, engine, seedMappingRules, tabs, tooltip, utils, utils | 2026-04-04 |
+| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, BankIngestion, CatalogTable, CustomerCatalog, FinancialPlanningView, HorizontalScroll, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVReportView, IPVReportsDropdown, IPVRightSidebar, IncomeReceiptSection, IngestionErrorsTable, IntelligentReceiptsSection, LoadingOverlay, MVTExportView, ManualReconciliationView, MappingRulesManager, MatchingAuditView, MatchingRulesEditor, MatchingSimulation, MipymeTransactionsView, MovementsView, PivotStatementView, StockService, TransactionBreakdown, TransactionTable, TransferQRReportView, backup, badge, button, card, dexie, engine, seedMappingRules, tabs, tooltip, utils, utils | 2026-04-04 |
 | InventoryAdjustmentsView | src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx | view | Óptimo | ActionMenu, QueryInspector, SearchBar, utils | 2026-04-04 |
 | InventoryCardView | src/components/views/terminal/views/inventory/InventoryCardView.tsx | view | Óptimo | CostProLoader, index, utils | 2026-04-04 |
 | InventoryCountCardView | src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx | view | Óptimo | useInventoryCount, utils | 2026-04-04 |
@@ -365,6 +367,7 @@
 | MVTExportView | src/components/views/terminal/views/ipv/mvt/MVTExportView.tsx | view | Advertencia | MVTPreview, TemplateEditor, TemplateManager, badge, button, card, defaults, dexie, dialog, engine, input, label, tabs, types | 2026-04-04 |
 | ManualReconciliationView | src/components/views/terminal/views/ipv/ManualReconciliationView.tsx | view | Óptimo | StockService, badge, button, card, dexie, input, scroll-area, utils | 2026-04-04 |
 | MatchingAuditView | src/components/views/terminal/views/ipv/MatchingAuditView.tsx | view | Óptimo | badge, button, card, dexie, input, table | 2026-04-04 |
+| MipymeTransactionsView | src/components/views/terminal/views/ipv/MipymeTransactionsView.tsx | view | Óptimo | badge, card, dexie, metadata-parser, table, utils | 2026-04-04 |
 | MovementsView | src/components/views/terminal/views/ipv/MovementsView.tsx | view | Óptimo | StockService, badge, button, card, dexie, input, table | 2026-04-04 |
 | NewsView | src/components/views/terminal/views/rss/NewsView.tsx | view | Óptimo | StateRenderer, utils | 2026-04-04 |
 | POSTableView | src/components/views/terminal/views/pos/POSTableView.tsx | view | Óptimo | ProductImage, utils | 2026-04-04 |
