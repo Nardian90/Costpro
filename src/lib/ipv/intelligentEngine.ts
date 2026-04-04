@@ -58,7 +58,7 @@ export async function corregirNegativos(
     // Get product hierarchy (all products in the same group)
     let hierarchy: Product[] = [];
     if (product.id_grupo) {
-        hierarchy = await PersistenceService.readSafe(() => db.products.where('id_grupo').equals(product.id_grupo).toArray());
+        hierarchy = await PersistenceService.readSafe(() => db.products.where('id_grupo').equals(product.id_grupo!).toArray());
     } else {
         hierarchy = [product];
     }
