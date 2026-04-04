@@ -1,3 +1,5 @@
+import { parseTransactionMetadata } from './metadata-parser';
+import { db } from '../dexie';
 import { extractIdentity } from './identity/mapping-engine';
 import { resolveIdentity } from './identity/registry';
 
@@ -86,6 +88,21 @@ export async function enrichTransactions(transactions: any[]): Promise<any[]> {
       parsed.card
     );
 
+    const metadata = parseTransactionMetadata(tx.observaciones || '');
+    if (metadata.inconsistencies.length > 0) {
+      await db.audit_logs.add({
+        timestamp: new Date().toISOString(),
+        actor: 'SYSTEM_PARSER',
+        action: 'METADATA_INCONSISTENCY',
+        entity: 'bank_statements',
+        metadata: {
+          transaction_ref: tx.referencia_origen,
+          inconsistencies: metadata.inconsistencies,
+          raw_observations: tx.observaciones
+        }
+      });
+    }
+
     enriched.push({
       ...tx,
       nombre_cliente: identity.nombre || parsed.payer,
@@ -94,7 +111,9 @@ export async function enrichTransactions(transactions: any[]): Promise<any[]> {
       telefono_cliente: identity.phone || parsed.phone,
       tarjeta_cliente: identity.card_number || parsed.card || parsed.account,
       esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
-      comision: parsed.commission // This is now in cents
+      comision: parsed.commission, // This is now in cents
+      nit: metadata.nit,
+      impuesto: metadata.rf
     });
   }
   return enriched;

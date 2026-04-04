@@ -1,4 +1,5 @@
 'use client';
+import { parseTransactionMetadata } from '@/lib/ipv/metadata-parser';
 
 import React, { useState } from 'react';
 import * as XLSX from "xlsx";
@@ -262,7 +263,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <Card key={tx.id} className="p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden">
                               <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
                               <div className="flex justify-between items-start">
-                                  <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
+                                  <div className="flex items-start gap-3"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" /><div><p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)} • {tx.tipo === "Cr" ? "CR" : "DB"}</p><p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p></div></div>
                                   <div className="flex flex-col items-end gap-1">
                                     {getStatusBadge(tx, diff, matchedTotal)}
                                     <ActionBadges appliedRules={tx.applied_rules} />
@@ -270,9 +271,16 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                               </div>
                               <div className="space-y-2">
                                   <div className="space-y-1">
-                                  <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
-                                    {tx.observaciones || "Sin observaciones"}
-                                  </p>
+                                  {(() => {
+                                    const metadata = parseTransactionMetadata(tx.observaciones);
+                                    const isMipyme = !!metadata.nit;
+                                    return (
+                                      <p className={cn("text-xs text-muted-foreground transition-all duration-300", expandedCards[tx.referencia_origen] ? "" : "line-clamp-2")} title={tx.observaciones}>
+                                        {isMipyme && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase mb-1 mr-1">Mipyme</Badge>}
+                                        {tx.observaciones || "Sin observaciones"}
+                                      </p>
+                                    );
+                                  })()}
                                   {tx.observaciones && tx.observaciones.length > 60 && (
                                     <button
                                       onClick={() => toggleExpand(tx.referencia_origen)}
@@ -355,9 +363,16 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
           <TableCell className="text-xs max-w-[150px]">
     <div className="flex items-center gap-2 group">
-    <div className="truncate font-medium cursor-pointer flex-1" onClick={onViewObservations} title={tx.observaciones}>
-      {tx.observaciones || "Sin observaciones"}
-    </div>
+    {(() => {
+      const metadata = parseTransactionMetadata(tx.observaciones);
+      const isMipyme = !!metadata.nit;
+      return (
+        <div className="truncate font-medium cursor-pointer flex-1" onClick={onViewObservations} title={tx.observaciones}>
+          {isMipyme ? <span className="text-primary font-black uppercase mr-2">[Mipyme]</span> : null}
+          {tx.observaciones || "Sin observaciones"}
+        </div>
+      );
+    })()}
     <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={onViewObservations}>
       <Info className="w-3 h-3 text-primary" />
     </Button>
