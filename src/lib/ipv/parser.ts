@@ -7,6 +7,8 @@ export interface ParsedObservation {
   tax: number;
   commission: number;
   ci?: string;
+  phone?: string;
+  card?: string;
 }
 
 /**
@@ -33,11 +35,13 @@ export function parseObservations(obs: string): ParsedObservation {
   }
 
   // 2. Account/Card Identification
-  let account = '';
-  const accountRegex = /(?:PAN:|Cuenta:)\s*([\d*]+)/i;
-  const accountMatch = obs.match(accountRegex);
-  if (accountMatch && accountMatch[1]) {
-    account = accountMatch[1].trim();
+  let account = id.card || '';
+  if (!account) {
+    const accountRegex = /(?:PAN:|Cuenta:)\s*([\d*]+)/i;
+    const accountMatch = obs.match(accountRegex);
+    if (accountMatch && accountMatch[1]) {
+      account = accountMatch[1].trim();
+    }
   }
 
   // 3. Tax Extraction (e.g., from NIT references or explicit tags)
@@ -56,7 +60,15 @@ export function parseObservations(obs: string): ParsedObservation {
     commission = Math.round(parseFloat(commissionMatch[1]) * 100) || 0;
   }
 
-  return { payer, account, tax, commission, ci: id.ci };
+  return {
+    payer,
+    account,
+    tax,
+    commission,
+    ci: id.ci,
+    phone: id.phone,
+    card: id.card
+  };
 }
 
 /**
@@ -66,13 +78,21 @@ export async function enrichTransactions(transactions: any[]): Promise<any[]> {
   const enriched = [];
   for (const tx of transactions) {
     const parsed = parseObservations(tx.observaciones || '');
-    const identity = await resolveIdentity(tx.referencia_origen || tx.id, parsed.ci, parsed.payer);
+    const identity = await resolveIdentity(
+      tx.referencia_origen || tx.id,
+      parsed.ci,
+      parsed.payer,
+      parsed.phone,
+      parsed.card
+    );
 
     enriched.push({
       ...tx,
       nombre_cliente: identity.nombre || parsed.payer,
       carnet: identity.ci || parsed.ci,
       pagador: identity.nombre || parsed.payer,
+      telefono_cliente: identity.phone || parsed.phone,
+      tarjeta_cliente: identity.card_number || parsed.card || parsed.account,
       esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
       comision: parsed.commission // This is now in cents
     });
