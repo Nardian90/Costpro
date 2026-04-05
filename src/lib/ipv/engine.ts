@@ -282,16 +282,14 @@ export class MatchingEngine {
     const match = this.products.find(p => tx.observaciones?.includes(p.cod) || p.cod === ref);
     if (match) {
         let available = this.getVirtualStock(match.cod);
-        if (this.useStockLimit && available <= 0 && !this.allowNegativeStock) {
-            const decomposed = await this.attemptDecomposition(match.cod);
-            if (!decomposed) {
-                addTrace(pass, 'HARD_REF', 'FAIL', `Sin stock para ${match.cod} y no se pudo descomponer.`);
-                return remaining;
-            }
+        let qty = Math.floor(remaining / match.precio_cents);
+
+        if (this.useStockLimit && available < qty && !this.allowNegativeStock) {
+            await this.attemptDecomposition(match.cod);
             available = this.getVirtualStock(match.cod);
+            qty = Math.min(qty, Math.max(0, available));
         }
 
-        const qty = Math.floor(remaining / match.precio_cents);
         if (qty > 0) {
             const line = await this.createLine(tx, match, qty, 'AUTO_MATCH', 'Transferencia');
             lines.push(line);
@@ -299,6 +297,9 @@ export class MatchingEngine {
             addTrace(pass, 'HARD_REF', 'SUCCESS', `Match por referencia directa con ${match.cod}`);
             logs.push(`PASS ${pass} (HARD_REF): Match directo con ${match.cod} (${qty} unidades)`);
             return remaining - line.importe_linea_cents;
+        } else if (this.useStockLimit && !this.allowNegativeStock) {
+            addTrace(pass, 'HARD_REF', 'FAIL', `Sin stock para ${match.cod}`);
+            return remaining;
         }
     }
     addTrace(pass, 'HARD_REF', 'SKIPPED');
