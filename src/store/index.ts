@@ -21,6 +21,7 @@ interface UIState {
   isCreateProductModalOpen: boolean;
   initialProductName: string;
   isChatBotOpen: boolean;
+  ipvActiveTab: string;
   setCurrentView: (view: ViewType) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -31,6 +32,7 @@ interface UIState {
   setIsCreateProductModalOpen: (open: boolean) => void;
   setInitialProductName: (name: string) => void;
   setIsChatBotOpen: (open: boolean) => void;
+  setIpvActiveTab: (tab: string) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -46,6 +48,7 @@ export const useUIStore = create<UIState>()(
       isCreateProductModalOpen: false,
       initialProductName: '',
       isChatBotOpen: false,
+      ipvActiveTab: 'dashboard',
       setCurrentView: (view) => set((state) => ({
         previousView: state.currentView,
         currentView: view
@@ -61,6 +64,7 @@ export const useUIStore = create<UIState>()(
       setIsCreateProductModalOpen: (isCreateProductModalOpen) => set({ isCreateProductModalOpen }),
       setInitialProductName: (initialProductName) => set({ initialProductName }),
       setIsChatBotOpen: (isChatBotOpen) => set({ isChatBotOpen }),
+      setIpvActiveTab: (ipvActiveTab) => set({ ipvActiveTab }),
     }),
     {
       name: 'costpro-ui-storage',

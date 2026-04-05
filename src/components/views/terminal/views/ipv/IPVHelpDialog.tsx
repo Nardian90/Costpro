@@ -77,7 +77,7 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
             <div className="space-y-6">
               <h3 className="font-black text-primary uppercase text-sm tracking-widest flex items-center gap-2">
                 <ArrowRight className="w-4 h-4" />
-                Flujo Recomendado
+                Panel de Control
               </h3>
 
               <div className="grid gap-4">
@@ -130,7 +130,6 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
                   <span>Desactive transacciones <strong>Débito (DB)</strong> si solo desea cuadrar ingresos.</span>
                 </li>
                 <li className="text-xs text-muted-foreground flex gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1 shrink-0" />
                   <span>Sincronice el IPV periódicamente para refrescar las estadísticas del panel.</span>
                 </li>
               </ul>
