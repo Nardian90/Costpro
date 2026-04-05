@@ -40,9 +40,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   logoScale,
   navRef
 }) => {
-  const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
+  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab } = useUIStore();
   const { user } = useAuthStore();
-  const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico']);
+  const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico', 'ipv_module']);
 
   const STRUCTURE = useMemo(() => {
     interface NavSubmenu {
@@ -65,7 +65,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id: 'estrategico',
         label: 'MÓDULO ESTRATÉGICO',
         isDirect: true,
-        items: ['dashboard', 'pick3-intelligence', 'wallet', 'cost-sheets', 'ipv']
+        items: ['dashboard', 'pick3-intelligence', 'wallet', 'cost-sheets']
+      },
+      {
+        id: 'ipv_module',
+        label: 'IPV BUILDER',
+        items: [
+          {
+            id: 'ipv_reporting',
+            label: '📊 Reportes & Extractos',
+            isSubmenu: true,
+            items: ['analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot']
+          },
+          {
+            id: 'ipv_operaciones',
+            label: '⚙️ Operaciones',
+            isSubmenu: true,
+            items: ['dashboard_ipv', 'transactions']
+          },
+          {
+            id: 'ipv_datos',
+            label: '👥 Catálogos',
+            isSubmenu: true,
+            items: ['catalog_ipv', 'customers']
+          },
+          {
+            id: 'ipv_procesamiento',
+            label: '🔄 Procesamiento',
+            isSubmenu: true,
+            items: ['rules', 'sim', 'intelligent-receipts', 'breakdown']
+          },
+          {
+            id: 'ipv_avanzado',
+            label: '⚡ Avanzado',
+            isSubmenu: true,
+            items: ['audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme']
+          }
+        ]
       },
       {
         id: 'punto_venta',
@@ -141,17 +177,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const renderNavItem = (itemId: string) => {
+    // Map IPV sub-ids to the actual 'ipv' view while setting the tab
+    const isIpvSubItem = [
+        'analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot',
+        'dashboard_ipv', 'transactions', 'catalog_ipv', 'customers',
+        'rules', 'sim', 'intelligent-receipts', 'breakdown',
+        'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
+    ].includes(itemId);
+
     const item = navigationItems.find(i => i.id === itemId);
     if (!item) return null;
 
-    const isActive = currentView === item.id;
+    // Use internal state for active check if it's an IPV sub-item
+    const { ipvActiveTab } = useUIStore.getState();
+    const effectiveItemId = isIpvSubItem ? itemId.replace('_ipv', '').replace('reports_ipv', 'reports').replace('dashboard_ipv', 'dashboard').replace('catalog_ipv', 'catalog').replace('audit_ipv', 'audit') : itemId;
+
+    const isActive = isIpvSubItem
+        ? (currentView === 'ipv' && ipvActiveTab === effectiveItemId)
+        : currentView === item.id;
+
+    const handleItemClick = () => {
+        if (isIpvSubItem) {
+            setIpvActiveTab(effectiveItemId);
+            onViewChange('ipv');
+        } else {
+            onViewChange(item.id as ViewType);
+        }
+    };
 
     return (
       <button
         key={item.id}
         data-testid={`nav-${item.id}`}
-        onClick={() => onViewChange(item.id as ViewType)}
-        onMouseEnter={() => onPrefetchView?.(item.id as ViewType)}
+        onClick={handleItemClick}
+        onMouseEnter={() => onPrefetchView?.((isIpvSubItem ? 'ipv' : item.id) as ViewType)}
         className={cn(
           "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
           isActive
@@ -179,8 +238,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </button>
     );
   };
-
-  const navRefInternal = React.useRef<HTMLDivElement>(null);
 
   return (
     <aside className={cn(
@@ -345,7 +402,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
-
           {user?.plan === 'free' && user?.role !== 'admin' && (
             <button
               onClick={() => {
