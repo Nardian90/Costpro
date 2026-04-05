@@ -129,7 +129,7 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const handleRunMatching = async () => {
-    if (!transactions || !products || !rules) {
+    if (!transactions || !products) {
       toast.error('Cargando datos, intente de nuevo en un momento.');
       return;
     }
@@ -150,7 +150,7 @@ export default function IPVView() {
     setMatchProgress(5);
 
     try {
-        const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
+        const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : (rules || DEFAULT_MATCHING_RULES));
 
         // Calculate daily cash fill used so far
         const cashFillMap = new Map<string, number>();
