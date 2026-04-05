@@ -40,7 +40,7 @@ const PivotStatementView = lazy(() => import('./PivotStatementView').then(m => (
 const FinancialPlanningView = lazy(() => import('./FinancialPlanningView').then(m => ({ default: m.FinancialPlanningView })));
 const CatalogTable = lazy(() => import('./CatalogTable').then(m => ({ default: m.CatalogTable })));
 const MatchingAuditView = lazy(() => import('./MatchingAuditView').then(m => ({ default: m.MatchingAuditView })));
-const MovementsView = lazy(() => import('./MovementsView'));
+const MovementsViewLazy = lazy(() => import('./MovementsView'));
 const BankIngestion = lazy(() => import('./BankIngestion').then(m => ({ default: m.BankIngestion })));
 const IPVReportView = lazy(() => import('./IPVReportView').then(m => ({ default: m.IPVReportView })));
 const IntelligentReceiptsSection = lazy(() => import('./IntelligentReceipts/IntelligentReceiptsSection').then(m => ({ default: m.IntelligentReceiptsSection })));
@@ -91,7 +91,6 @@ export default function IPVView() {
   const [selectedReconTx, setSelectedReconTx] = useState<any>(null);
   const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
   const [isCardsExpanded, setIsCardsExpanded] = useState(true);
-  const [isStarted, setIsStarted] = useState(true);
 
   // Sync internal activeTab with global ipvActiveTab
   useEffect(() => {
@@ -116,9 +115,9 @@ export default function IPVView() {
     if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, totalSales: 0, totalEfectivo: 0, totalTransferencias: 0, percentage: 0, negativeStock: 0 };
 
     const total = transactions.length;
-    const squared = transactions.filter((t: any) => t.estado_cuadre === 'CUADRADA').length;
-    const inProcess = transactions.filter((t: any) => t.estado_cuadre === 'PARCIAL').length;
-    const pending = transactions.filter((t: any) => t.estado_cuadre === 'PENDIENTE').length;
+    const squared = transactions.filter((t: any) => t.estado_conciliacion === 'COMPLETO').length;
+    const inProcess = transactions.filter((t: any) => t.estado_conciliacion === 'PARCIAL').length;
+    const pending = transactions.filter((t: any) => t.estado_conciliacion === 'PENDIENTE').length;
 
     const totalSales = reconciliationLines?.reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
     const totalEfectivo = reconciliationLines?.filter(l => l.clasificacion === 'Efectivo').reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
@@ -202,7 +201,7 @@ export default function IPVView() {
                     <Database className="w-4 h-4" />
                     Extracto
                     {errorCount > 0 && (
-                        <Badge variant="warning" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full">
+                        <Badge className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full bg-orange-500 text-white border-none">
                             !
                         </Badge>
                     )}
@@ -576,7 +575,7 @@ export default function IPVView() {
           )}
           {activeTab === 'movements' && (
             <div className="m-0 animate-in fade-in duration-500">
-                <MovementsView />
+                <MovementsViewLazy />
             </div>
           )}
 
