@@ -1,10 +1,10 @@
 {
   "artifactName": "architecture_manifest",
-  "version": "1.0.4",
-  "hash": "sha256:4f78db24c2c3fdc615dd0e13338446335a04107c3edd2b27402aaeaf554b1067",
+  "version": "1.0.7",
+  "hash": "sha256:1cc71320f60b458b3d59f5355a97d5c3245b8928e01985434b107d3784a2a8eb",
   "confidenceScore": 100.0,
   "reviewRequired": false,
-  "createdAt": "2026-04-03T01:29:19.355449+00:00Z",
+  "createdAt": "2026-04-05T01:34:41.071711+00:00Z",
   "sourcePhase": 1,
   "createdBy": "architecture-scheduler/9.0",
   "confidenceModel": "ai-arch-v9.0",
@@ -35,6 +35,21 @@
       "version": "1.0.3",
       "hash": "sha256:a4bc40366b2cfd327336a1b3679030c85fc4564353dae99c0642d48e7d9f8792",
       "createdAt": "2026-04-03T01:27:03.815466+00:00Z"
+    },
+    {
+      "version": "1.0.4",
+      "hash": "sha256:4f78db24c2c3fdc615dd0e13338446335a04107c3edd2b27402aaeaf554b1067",
+      "createdAt": "2026-04-03T01:29:19.355449+00:00Z"
+    },
+    {
+      "version": "1.0.5",
+      "hash": "sha256:43ef75138ebaece55abaf6068e383bc92788a077b12533259209fd1de50e5fe5",
+      "createdAt": "2026-04-05T01:27:29.959508+00:00Z"
+    },
+    {
+      "version": "1.0.6",
+      "hash": "sha256:292348c637d5a1fa016f28bda5eb9d3796714b73b89b939374ad8ae7f6ac1b23",
+      "createdAt": "2026-04-05T01:29:48.547491+00:00Z"
     }
   ]
 }
