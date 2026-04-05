@@ -95,7 +95,7 @@
 | HelpSectionRenderer | src/components/views/terminal/views/help/HelpSectionRenderer.tsx | component | Óptimo | tooltip, utils | 2026-04-05 |
 | HelpSidebar | src/components/views/terminal/views/help/HelpSidebar.tsx | component | Óptimo | accordion, utils | 2026-04-05 |
 | HorizontalScroll | src/components/ui/HorizontalScroll.tsx | component | Óptimo | utils | 2026-04-05 |
-| IPVControlPanel | src/components/views/terminal/views/ipv/IPVControlPanel.tsx | component | Óptimo | backup, badge, button, card, dexie, tooltip | 2026-04-05 |
+| IPVControlPanel | src/components/views/terminal/views/ipv/IPVControlPanel.tsx | component | Óptimo | badge, button, card, utils | 2026-04-05 |
 | IPVHelpDialog | src/components/views/terminal/views/ipv/IPVHelpDialog.tsx | component | Óptimo | badge, button, dialog, scroll-area, tooltip | 2026-04-05 |
 | IPVInstitutionalDashboard | src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx | component | Óptimo | badge, button, calculations, card, dexie, utils | 2026-04-05 |
 | IPVPreviewModal | src/components/views/terminal/views/ipv/IPVPreviewModal.tsx | component | Óptimo | badge, button, checkbox, dexie, dialog, label, scroll-area, table, utils | 2026-04-05 |
@@ -163,7 +163,7 @@
 | SecurityGRCPanel | src/components/HealthDashboard/SecurityGRCPanel.tsx | component | Óptimo |  | 2026-04-05 |
 | SecurityScrollContainer | src/components/ui/SecurityScrollContainer.tsx | component | Óptimo | utils | 2026-04-05 |
 | ServiceWorkerRegister | src/components/ServiceWorkerRegister.tsx | component | Óptimo |  | 2026-04-05 |
-| Sidebar | src/components/views/terminal/Sidebar.tsx | component | Óptimo | CostProLogo, utils | 2026-04-05 |
+| Sidebar | src/components/views/terminal/Sidebar.tsx | component | Advertencia | CostProLogo, utils | 2026-04-05 |
 | SimulationPreview | src/components/views/terminal/views/ipv/IntelligentReceipts/SimulationPreview.tsx | component | Óptimo | badge, card, dexie, scroll-area, table | 2026-04-05 |
 | SpeedDial | src/components/ui/SpeedDial.tsx | component | Óptimo | Portal, utils | 2026-04-05 |
 | SpeedScaleDiagram | src/components/auth/diagrams/SpeedScaleDiagram.tsx | component | Óptimo |  | 2026-04-05 |
@@ -355,7 +355,7 @@
 | FinancialPlanningView | src/components/views/terminal/views/ipv/FinancialPlanningView.tsx | view | Óptimo | button, card, dexie, engine, input, utils | 2026-04-05 |
 | HelpView | src/components/views/terminal/views/help/HelpView.tsx | view | Óptimo | HelpContent, HelpLayout, HelpSidebar, ThemeToggle, useHelpContent, utils | 2026-04-05 |
 | IPVReportView | src/components/views/terminal/views/ipv/IPVReportView.tsx | view | Advertencia | BaseModal, IPVPreviewModal, LoadingOverlay, badge, button, dexie, input, table, tooltip, utils | 2026-04-05 |
-| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, BankIngestion, CatalogTable, CustomerCatalog, FinancialPlanningView, HorizontalScroll, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVReportView, IPVReportsDropdown, IPVRightSidebar, IncomeReceiptSection, IngestionErrorsTable, IntelligentReceiptsSection, LoadingOverlay, MVTExportView, ManualReconciliationView, MappingRulesManager, MatchingAuditView, MatchingRulesEditor, MatchingSimulation, MipymeTransactionsView, MovementsView, PivotStatementView, StockService, TransactionBreakdown, TransactionTable, TransferQRReportView, backup, badge, button, card, dexie, engine, seedMappingRules, tabs, tooltip, utils, utils | 2026-04-05 |
+| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVRightSidebar, LoadingOverlay, backup, badge, button, card, dexie, tooltip, utils | 2026-04-05 |
 | InventoryAdjustmentsView | src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx | view | Óptimo | ActionMenu, QueryInspector, SearchBar, utils | 2026-04-05 |
 | InventoryCardView | src/components/views/terminal/views/inventory/InventoryCardView.tsx | view | Óptimo | CostProLoader, index, utils | 2026-04-05 |
 | InventoryCountCardView | src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx | view | Óptimo | useInventoryCount, utils | 2026-04-05 |
