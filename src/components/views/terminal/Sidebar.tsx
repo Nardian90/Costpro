@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LogOut, Zap, ChevronDown, Calculator, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
+import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -25,7 +26,9 @@ interface SidebarProps {
   navRef: any;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
+const STORAGE_KEY = 'costpro.sidebar.state';
+
+export const Sidebar: React.FC<SidebarProps> = React.memo(({
   sidebarOpen,
   sidebarSearch,
   setSidebarSearch,
@@ -40,127 +43,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
   logoScale,
   navRef
 }) => {
-  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab } = useUIStore();
+  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab } = useUIStore();
   const { user } = useAuthStore();
-  const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico', 'ipv_module']);
 
-  const STRUCTURE = useMemo(() => {
-    interface NavSubmenu {
-      id: string;
-      label: string;
-      items: string[];
-      isSubmenu?: boolean;
-    }
-
-    interface NavModule {
-      id: string;
-      label: string;
-      sublabel?: string;
-      isDirect?: boolean;
-      items: (string | NavSubmenu)[];
-    }
-
-    const structure: NavModule[] = [
-      {
-        id: 'estrategico',
-        label: 'MÓDULO ESTRATÉGICO',
-        isDirect: true,
-        items: ['dashboard', 'pick3-intelligence', 'wallet', 'cost-sheets']
-      },
-      {
-        id: 'ipv_module',
-        label: 'IPV BUILDER',
-        items: [
-          {
-            id: 'ipv_reporting',
-            label: '📊 Reportes & Extractos',
-            isSubmenu: true,
-            items: ['analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot']
-          },
-          {
-            id: 'ipv_operaciones',
-            label: '⚙️ Operaciones',
-            isSubmenu: true,
-            items: ['dashboard_ipv', 'transactions']
-          },
-          {
-            id: 'ipv_datos',
-            label: '👥 Catálogos',
-            isSubmenu: true,
-            items: ['catalog_ipv', 'customers']
-          },
-          {
-            id: 'ipv_procesamiento',
-            label: '🔄 Procesamiento',
-            isSubmenu: true,
-            items: ['rules', 'sim', 'intelligent-receipts', 'breakdown']
-          },
-          {
-            id: 'ipv_avanzado',
-            label: '⚡ Avanzado',
-            isSubmenu: true,
-            items: ['audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme']
-          }
-        ]
-      },
-      {
-        id: 'punto_venta',
-        label: 'Punto de Venta',
-        items: ['pos', 'sales', 'cash']
-      },
-      {
-        id: 'almacen',
-        label: 'Módulo almacén',
-        items: ['catalog', 'inventory', 'recepcion', 'reception_list', 'transferencias', 'inventory_count', 'history', 'inventory_adjustments']
-      },
-      {
-        id: 'administracion',
-        label: 'Administración',
-        items: [
-          'users',
-          'roles',
-          'stores',
-          'reports', 'health',
-          'audit',
-          'settings',
-          {
-            id: 'comunicacion',
-            label: 'Comunicación',
-            isSubmenu: true,
-            items: ['news', 'rss_management']
-          }
-        ]
-      },
-      {
-        id: 'legal_module',
-        label: 'NORMATIVAS / LEGAL',
-        isDirect: true,
-        items: ['legal', 'help', 'wiki', 'academy']
+  // Persistence logic
+  const [expandedModules, setExpandedModules] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return ['estrategico', 'ipv_module'];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.expanded || ['estrategico', 'ipv_module'];
       }
-    ];
-    return structure;
-  }, []);
+    } catch (e) {
+      console.error('Error loading sidebar state', e);
+    }
+    return ['estrategico', 'ipv_module'];
+  });
 
   useEffect(() => {
-    const findParentModule = (viewId: string) => {
-      for (const module of STRUCTURE) {
-        if (module.items.some(item => {
-          if (typeof item === 'string') return item === viewId;
-          return item.items.includes(viewId);
-        })) {
-          return module.id;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ expanded: expandedModules }));
+  }, [expandedModules]);
+
+  // Expand parent modules of current view
+  useEffect(() => {
+    const findParents = (modules: NavModule[], targetId: string, parents: string[] = []): string[] | null => {
+      for (const module of modules) {
+        if (module.id === targetId) return parents;
+        if (module.children) {
+          const result = findParents(module.children, targetId, [...parents, module.id]);
+          if (result) return result;
         }
       }
       return null;
     };
 
-    const parentId = findParentModule(currentView);
-    if (parentId && !expandedModules.includes(parentId)) {
-      setExpandedModules(prev => [...prev, parentId]);
-    }
-  }, [currentView, STRUCTURE]);
+    // Special handling for IPV sub-items to match them to their virtual IDs in the structure
+    const effectiveViewId = currentView === 'ipv' ? ipvActiveTab : currentView;
+    // We also need to account for the mapping done in renderNavItem
+    const mappedViewId = ipvActiveTab ?
+        (ipvActiveTab === 'reports' ? 'reports_ipv' :
+         ipvActiveTab === 'dashboard' ? 'dashboard_ipv' :
+         ipvActiveTab === 'catalog' ? 'catalog_ipv' :
+         ipvActiveTab === 'audit' ? 'audit_ipv' : ipvActiveTab) : currentView;
 
-  const toggleModule = (moduleId: string, isSubmenu = false) => {
+    const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId);
+    if (parents) {
+      setExpandedModules(prev => {
+        const newExpanded = [...prev];
+        let changed = false;
+        parents.forEach(p => {
+          if (!newExpanded.includes(p)) {
+            newExpanded.push(p);
+            changed = true;
+          }
+        });
+        return changed ? newExpanded : prev;
+      });
+    }
+  }, [currentView, ipvActiveTab]);
+
+  const toggleModule = useCallback((moduleId: string, isSubmenu = false) => {
     setExpandedModules(prev => {
       if (prev.includes(moduleId)) {
         return prev.filter(id => id !== moduleId);
@@ -168,29 +111,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         if (isSubmenu) {
           return [...prev, moduleId];
         } else {
-          const topLevelIds = STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
+          // Collapse other top-level modules if not direct
+          const topLevelIds = SIDEBAR_STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
           const filtered = prev.filter(id => !topLevelIds.includes(id));
           return [...filtered, moduleId];
         }
       }
     });
-  };
+  }, []);
 
-  const renderNavItem = (itemId: string) => {
-    // Map IPV sub-ids to the actual 'ipv' view while setting the tab
+  const renderNavItem = useCallback((moduleId: string) => {
     const isIpvSubItem = [
         'analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot',
         'dashboard_ipv', 'transactions', 'catalog_ipv', 'customers',
         'rules', 'sim', 'intelligent-receipts', 'breakdown',
         'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
-    ].includes(itemId);
+    ].includes(moduleId);
 
-    const item = navigationItems.find(i => i.id === itemId);
+    const item = navigationItems.find(i => i.id === moduleId);
     if (!item) return null;
 
-    // Use internal state for active check if it's an IPV sub-item
-    const { ipvActiveTab } = useUIStore.getState();
-    const effectiveItemId = isIpvSubItem ? itemId.replace('_ipv', '').replace('reports_ipv', 'reports').replace('dashboard_ipv', 'dashboard').replace('catalog_ipv', 'catalog').replace('audit_ipv', 'audit') : itemId;
+    const effectiveItemId = isIpvSubItem ? moduleId.replace('_ipv', '').replace('reports_ipv', 'reports').replace('dashboard_ipv', 'dashboard').replace('catalog_ipv', 'catalog').replace('audit_ipv', 'audit') : moduleId;
 
     const isActive = isIpvSubItem
         ? (currentView === 'ipv' && ipvActiveTab === effectiveItemId)
@@ -237,7 +178,82 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </button>
     );
-  };
+  }, [currentView, ipvActiveTab, navigationItems, onViewChange, onPrefetchView, setIpvActiveTab]);
+
+  const renderModule = useCallback((module: NavModule, depth = 0): React.ReactNode => {
+    // Check feature flag if present (dummy check for now, can be expanded)
+    if (module.featureFlag && !(window as any).CONFIG?.features?.[module.featureFlag]) {
+       // Optional: return null if flag is required but not present
+       // For now, visible by default as per instructions
+    }
+
+    const hasAvailableItems = (m: NavModule): boolean => {
+      if (m.type === 'item') {
+        return navigationItems.some(ni => ni.id === m.id);
+      }
+      return m.children?.some(child => hasAvailableItems(child)) || false;
+    };
+
+    if (!hasAvailableItems(module)) return null;
+
+    if (module.type === 'item') {
+      return renderNavItem(module.id);
+    }
+
+    const isExpanded = expandedModules.includes(module.id) || !!sidebarSearch;
+
+    if (module.type === 'group' && module.isDirect) {
+      return (
+        <div key={module.id} className="space-y-1">
+          {module.label && (
+            <div className="px-4 flex flex-col items-start mb-2 mt-4 first:mt-0">
+              <span className="text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
+            </div>
+          )}
+          <div className="space-y-1">
+            {module.children?.map(child => renderModule(child, depth + 1))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={module.id} className="space-y-1">
+        <button
+          onClick={() => toggleModule(module.id, module.type === 'submenu')}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
+            depth === 0 ? "mt-2" : "mt-1",
+            isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+          )}
+        >
+          <div className="flex flex-col items-start">
+            <span className={cn(
+                "font-black tracking-[0.2em] uppercase",
+                depth === 0 ? "text-xs" : "text-[11px] opacity-80"
+            )}>{module.label}</span>
+          </div>
+          <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isExpanded && "rotate-180")} />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className={cn("overflow-hidden", depth === 0 ? "pl-2" : "pl-4")}
+            >
+              <div className="pt-1 pb-2 space-y-1">
+                {module.children?.map(child => renderModule(child, depth + 1))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem]);
 
   return (
     <aside className={cn(
@@ -293,111 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="flex-1 overflow-y-auto p-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <div className="space-y-4">
-            {STRUCTURE.map(module => {
-              const hasAvailableItems = module.items.some(item => {
-                if (typeof item === 'string') {
-                  return navigationItems.some(ni => ni.id === item);
-                } else {
-                  return item.items.some(subItem => navigationItems.some(ni => ni.id === subItem));
-                }
-              });
-
-              if (!hasAvailableItems) return null;
-
-              const isExpanded = expandedModules.includes(module.id) || !!sidebarSearch;
-              const hasSublabel = !!module.sublabel;
-
-              return (
-                <div key={module.id} className="space-y-1">
-                  {module.isDirect ? (
-                    <div className="space-y-2">
-                      {module.label && (
-                        <div className="px-4 flex flex-col items-start mb-2">
-                          <span className="text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
-                          {module.sublabel && (
-                            <span className="text-[9px] font-medium opacity-40 uppercase tracking-tighter mt-0.5">{module.sublabel}</span>
-                          )}
-                        </div>
-                      )}
-                      {module.items.map(itemId => typeof itemId === 'string' && renderNavItem(itemId))}
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => toggleModule(module.id)}
-                        className={cn(
-                          "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
-                          isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
-                        )}
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="text-xs font-black tracking-[0.2em] uppercase">{module.label}</span>
-                          {hasSublabel && (
-                            <span className="text-xs font-medium opacity-60 uppercase tracking-tighter">{module.sublabel}</span>
-                          )}
-                        </div>
-                        <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isExpanded && "rotate-180")} />
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                            className="overflow-hidden pl-2"
-                          >
-                            <div className="pt-1 pb-2 space-y-1">
-                              {module.items.map((item, idx) => {
-                                if (typeof item === 'string') {
-                                  return renderNavItem(item);
-                                } else {
-                                  const isSubExpanded = expandedModules.includes(item.id) || !!sidebarSearch;
-                                  const hasAvailableSubItems = item.items.some(subItem =>
-                                    navigationItems.some(ni => ni.id === subItem)
-                                  );
-                                  if (!hasAvailableSubItems) return null;
-
-                                  return (
-                                    <div key={item.id} className="mt-1">
-                                      <button
-                                        onClick={() => toggleModule(item.id, true)}
-                                        className={cn(
-                                          "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-xs font-black tracking-widest uppercase transition-all",
-                                          isSubExpanded ? "text-primary" : "text-sidebar-foreground/50 hover:text-sidebar-foreground"
-                                        )}
-                                      >
-                                        <span>{item.label}</span>
-                                        <ChevronDown className={cn("w-3 h-3 transition-transform", isSubExpanded && "rotate-180")} />
-                                      </button>
-                                      <AnimatePresence initial={false}>
-                                        {isSubExpanded && (
-                                          <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden pl-4"
-                                          >
-                                            <div className="pt-1 space-y-1">
-                                              {item.items.map(subId => renderNavItem(subId))}
-                                            </div>
-                                          </motion.div>
-                                        )}
-                                      </AnimatePresence>
-                                    </div>
-                                  );
-                                }
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+            {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
           </div>
         </nav>
 
@@ -442,4 +354,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </aside>
   );
-};
+});
+
+Sidebar.displayName = 'Sidebar';
