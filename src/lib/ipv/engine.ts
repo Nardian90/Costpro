@@ -46,8 +46,18 @@ export class MatchingEngine {
   private dailyAdjustedPrices: Map<string, number> = new Map();
 
   constructor(products: Product[], rules: MatchingRule[]) {
+    console.log(`[MatchingEngine] Initializing with ${products.length} products and ${rules.length} rules.`);
     this.products = products.filter(p => p.activo);
-    this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
+
+    // Ensure deterministic rule execution by freezing the configuration and sorting strictly by priority
+    const activeRules = rules.filter(r => r.activo);
+    this.rules = [...activeRules].sort((a, b) => {
+      if (a.prioridad !== b.prioridad) return a.prioridad - b.prioridad;
+      return a.tipo.localeCompare(b.tipo); // Tie-breaker for same priority
+    });
+
+    Object.freeze(this.rules);
+
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
     const stockLimitRule = this.rules.find(r => r.tipo === 'STOCK_LIMIT');
     this.allowNegativeStock = this.useStockLimit ? (stockLimitRule?.meta?.allow_negative === true) : true;
@@ -57,6 +67,8 @@ export class MatchingEngine {
     for (const p of this.products) {
         this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
     }
+
+    console.log(`[MatchingEngine] Active rules: ${this.rules.map(r => r.tipo).join(' -> ')}`);
   }
 
   private async persistLog(
@@ -539,6 +551,7 @@ export class MatchingEngine {
 
     const inMemoryCashFillByDate = cashFillUsedByDate || new Map<string, number>();
 
+    console.log(`[MatchingEngine] Starting batch reconciliation of ${transactions.length} transactions.`);
     for (let i = 0; i < transactions.length; i++) {
       const tx = transactions[i];
       try {

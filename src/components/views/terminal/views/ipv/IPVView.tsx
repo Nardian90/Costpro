@@ -53,7 +53,7 @@ const MipymeTransactionsView = lazy(() => import('./MipymeTransactionsView').the
 const CustomerCatalog = lazy(() => import('./CustomerCatalog').then(m => ({ default: m.CustomerCatalog })));
 const MVTExportView = lazy(() => import('./mvt/MVTExportView').then(m => ({ default: m.MVTExportView })));
 
-const DEFAULT_MATCHING_RULES: any[] = [];
+import { DEFAULT_MATCHING_RULES, MatchingEngine } from "@/lib/ipv/engine";
 
 export default function IPVView() {
   const { ipvActiveTab, setIpvActiveTab } = useUIStore();
@@ -84,6 +84,14 @@ export default function IPVView() {
   const rules = useLiveQuery(() => db.matching_rules.toArray());
   const settings = useLiveQuery(() => db.ipv_settings.get('current'));
   const errorCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
+
+  // Auto-initialize rules if empty
+  useEffect(() => {
+    if (rules !== undefined && rules.length === 0) {
+      console.log("Initializing default IPV matching rules...");
+      db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES);
+    }
+  }, [rules]);
 
   const stats = useMemo(() => {
     if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, totalSales: 0, totalEfectivo: 0, totalTransferencias: 0, percentage: 0, negativeStock: 0 };
@@ -121,24 +129,72 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const handleRunMatching = async () => {
+    if (!transactions || !products || !rules) {
+      toast.error('Cargando datos, intente de nuevo en un momento.');
+      return;
+    }
+
+    const pendingTxs = transactions.filter(t =>
+      t.estado_conciliacion !== 'COMPLETO' &&
+      !t.excluido &&
+      t.tipo === 'Cr'
+    );
+
+    if (pendingTxs.length === 0) {
+      toast.info('No hay transacciones pendientes para procesar.');
+      return;
+    }
+
     setIsMatching(true);
-    setMatchMessage('Iniciando matching masivo...');
-    setMatchProgress(10);
+    setMatchMessage('Iniciando matching real...');
+    setMatchProgress(5);
 
     try {
-        // Mock matching logic for demo purposes
-        await new Promise(r => setTimeout(r, 1500));
-        setMatchMessage('Analizando patrones bancarios...');
-        setMatchProgress(40);
-        await new Promise(r => setTimeout(r, 1000));
-        setMatchMessage('Asociando productos inteligentes...');
-        setMatchProgress(75);
-        await new Promise(r => setTimeout(r, 1000));
-        toast.success('Matching completado con éxito');
-    } catch (e) {
-        toast.error('Error durante el matching');
+        const engine = new MatchingEngine(products, settings?.copiloto_activo ? DEFAULT_MATCHING_RULES : rules);
+
+        // Calculate daily cash fill used so far
+        const cashFillMap = new Map<string, number>();
+        reconciliationLines?.filter(l => l.origen_dato === 'CASH_FILLER').forEach(l => {
+          cashFillMap.set(l.fecha_operacion, (cashFillMap.get(l.fecha_operacion) || 0) + l.importe_linea_cents);
+        });
+
+        const results = await engine.reconcileAll(
+          pendingTxs,
+          (progress) => setMatchProgress(progress),
+          undefined,
+          cashFillMap
+        );
+
+        setMatchMessage('Persistiendo resultados...');
+
+        for (const res of results) {
+          if (res.lines.length > 0) {
+            // Add lines
+            await db.reconciliation_lines.bulkPut(res.lines);
+
+            // Add movements
+            if (res.movements && res.movements.length > 0) {
+              await db.product_movements.bulkPut(res.movements);
+            }
+          }
+
+          // Update transaction status
+          await db.bank_statements.update(res.transactionId, {
+            estado_conciliacion: res.status,
+            applied_rules: res.appliedRules,
+            matching_confidence: res.matchingConfidence,
+            fail_reason: res.failReason
+          });
+        }
+
+        const successCount = results.filter(r => r.status === 'COMPLETO').length;
+        toast.success(`Matching completado: ${successCount} transacciones cuadradas.`);
+    } catch (e: any) {
+        console.error('Error durante el matching:', e);
+        toast.error('Error durante el matching: ' + e.message);
     } finally {
         setIsMatching(false);
+        setMatchProgress(0);
     }
   };
 
