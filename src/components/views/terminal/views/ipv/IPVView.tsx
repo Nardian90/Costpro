@@ -6,7 +6,7 @@ import {
   FileSearch, Target, AlertCircle, ListFilter, Users, History,
   Settings, CheckCircle2, PackageSearch, Workflow,
   ChevronDown, ChevronUp, Clock, PackageX, BarChart3, BarChart, Brain, Plus, Play, Search,
-  ZapIcon, ClipboardList
+  ZapIcon, ClipboardList, Receipt, ArrowRightLeft, QrCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -52,32 +52,6 @@ const MappingRulesManager = lazy(() => import('@/components/views/shared/Mapping
 const MipymeTransactionsView = lazy(() => import('./MipymeTransactionsView').then(m => ({ default: m.MipymeTransactionsView })));
 const CustomerCatalog = lazy(() => import('./CustomerCatalog').then(m => ({ default: m.CustomerCatalog })));
 const MVTExportView = lazy(() => import('./mvt/MVTExportView').then(m => ({ default: m.MVTExportView })));
-
-// Placeholder dropdown
-function IPVReportsDropdown({ activeTab, onSelect }: { activeTab: string, onSelect: (id: string) => void }) {
-    return (
-        <div className="flex items-center gap-2">
-            <Button
-                variant={activeTab === 'reports' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onSelect('reports')}
-                className="h-9 px-3 rounded-xl font-bold uppercase tracking-widest text-[10px]"
-            >
-                <FileText className="w-3.5 h-3.5 mr-2" />
-                Reportes
-            </Button>
-            <Button
-                variant={activeTab === 'receipts' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onSelect('receipts')}
-                className="h-9 px-3 rounded-xl font-bold uppercase tracking-widest text-[10px]"
-            >
-                <Table2 className="w-3.5 h-3.5 mr-2" />
-                Ventas
-            </Button>
-        </div>
-    );
-}
 
 const DEFAULT_MATCHING_RULES: any[] = [];
 
@@ -179,7 +153,10 @@ export default function IPVView() {
   const menuActions: Action[] = useMemo(() => [
     // Reporting
     { id: 'analytics', label: 'Dashboard Institucional', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics', group: 'reporting' },
-    { id: 'reports', label: 'Reportes', icon: ClipboardList, onClick: () => setActiveTab('reports'), active: activeTab === 'reports', group: 'reporting' },
+    { id: 'reports', label: 'Reportes IPV', icon: ClipboardList, onClick: () => setActiveTab('reports'), active: activeTab === 'reports', group: 'reporting' },
+    { id: 'receipts', label: 'Recibos SC-3-01', icon: Receipt, onClick: () => setActiveTab('receipts'), active: activeTab === 'receipts', group: 'reporting' },
+    { id: 'transfers', label: 'Transferencias', icon: ArrowRightLeft, onClick: () => setActiveTab('transfers'), active: activeTab === 'transfers', group: 'reporting' },
+    { id: 'qr', label: 'Pagos QR', icon: QrCode, onClick: () => setActiveTab('qr'), active: activeTab === 'qr', group: 'reporting' },
     {
         id: 'ingestion',
         label: 'Extracto',

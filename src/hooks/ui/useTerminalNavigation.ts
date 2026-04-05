@@ -5,7 +5,8 @@ import {
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse, Wallet,
-  Database, Table2, Cpu, Zap, BarChart4, Wand2, FileSearch, Target, AlertCircle, ListFilter, Workflow, PackageSearch
+  Database, Table2, Cpu, Zap, BarChart4, Wand2, FileSearch, Target, AlertCircle, ListFilter, Workflow, PackageSearch,
+  QrCode, ArrowRightLeft
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -59,7 +60,10 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       // IPV Sub-items
       { id: 'analytics', icon: TrendingUp, label: 'Dashboard Institucional', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
-      { id: 'reports_ipv', icon: ClipboardList, label: 'Reportes', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
+      { id: 'reports_ipv', icon: ClipboardList, label: 'Reportes IPV', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
+      { id: 'receipts', icon: Receipt, label: 'Recibos SC-3-01', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
+      { id: 'transfers', icon: ArrowRightLeft, label: 'Transferencias', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
+      { id: 'qr', icon: QrCode, label: 'Pagos QR', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
       { id: 'ingestion', icon: Database, label: 'Extracto', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
       { id: 'pivot', icon: FileSearch, label: 'Consolidado', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
       { id: 'dashboard_ipv', icon: Workflow, label: 'Panel de Control', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
@@ -76,6 +80,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'errors', icon: AlertCircle, label: 'Errores', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
       { id: 'mapping-rules', icon: ListFilter, label: 'Mapeo', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
       { id: 'mvt', icon: FileText, label: 'Exportación', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
+      { id: 'mipyme', icon: Users, label: 'Transacciones Mipyme', roles: ['admin', 'manager', 'costo'], category: 'IPV' },
 
       { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
