@@ -56,3 +56,19 @@ Acciones destacadas en la parte superior para acceso inmediato sin colapsar secc
 
 ---
 *Nota: Se han mantenido todas las funcionalidades originales, optimizando su jerarquía y reduciendo la carga cognitiva mediante la consolidación de dropdowns y el uso de códigos de color.*
+
+## 7. Integración en Menú Lateral (Izquierdo)
+Se ha convertido el acceso a "Fichas de Costo" en un submenú desplegable para acceso directo a secciones críticas, alineado con el estándar IPV.
+
+| Ítem en Menú Lateral | Acción / Destino |
+|----------------------|------------------|
+| **Fichas de Costo** | Submenú Principal |
+| ∟ Principal | Vista general de la ficha |
+| ∟ Tablero KPI | Sección de indicadores y rentabilidad |
+| ∟ Encabezado | Editor de metadatos de la ficha |
+| ∟ Secciones | Listado y navegación de secciones (Abre sidebar) |
+| ∟ Anexos | Listado y navegación de anexos (Abre sidebar) |
+| ∟ Firmas | Sección de firmas y aprobación |
+
+---
+*Esta integración permite una navegación bi-direccional fluida entre el panel de acciones derecho y el menú de navegación izquierdo.*

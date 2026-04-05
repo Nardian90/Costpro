@@ -2,7 +2,7 @@
 import { DarianEditor } from './DarianEditor';
 import { LazyRender } from '@/components/ui/LazyRender';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav';
@@ -33,7 +33,13 @@ import { CostSheetViewMode } from './CostSheetModeDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { cn, formatDate, formatCurrency } from '@/lib/utils';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator, Tag } from 'lucide-react';
+import {
+  Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet,
+  Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical,
+  AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon,
+  Sparkles, Calculator, Tag, TrendingUp, PenTool, ListFilter,
+  Bot, Settings, Scale, LifeBuoy, GraduationCap, Zap
+} from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -42,12 +48,12 @@ import { UpgradeModal } from '@/components/modals/UpgradeModal';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { Bot } from "lucide-react";
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
   const { user } = useAuthStore();
-  const [activeSection, setActiveSection] = useState('ai-chat');
+  const { costSheetActiveSection: activeSection, setCostSheetActiveSection: setActiveSection, setCurrentView } = useUIStore();
+
   const [confirmation, setConfirmation] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'default' | 'destructive' }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
     setConfirmation({ isOpen: true, title, message, onConfirm, variant });
@@ -63,7 +69,6 @@ const CostSheetView = () => {
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
     if (id === 'main' && !activeSubSectionId) {
-        // Find the group 1-3 if it exists
         const group13 = groupedSections.find(g => g.id === 'group-1-3');
         if (group13) {
             setActiveSubSectionId('group-1-3');
@@ -97,14 +102,81 @@ const CostSheetView = () => {
     if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else if (mode === 'expert') { setActiveSection('expert-content'); setViewMode('expert'); } else { setViewMode(mode); }
   };
 
+  const handleQuickGenerate = async (products: any[]) => {
+    setQuickModeProducts(products);
+    setIsQuickModeGenerating(true);
+  };
+
   React.useEffect(() => {
     setLayoutMode(isMobile ? 'grid' : 'table');
   }, [isMobile]);
-  // Grouping logic for "Smart Grouping" of small sections
+
+  useEffect(() => {
+    if (activeSection === 'all') {
+        setIsSectionsSidebarOpen(true);
+    } else if (activeSection === 'all-annexes') {
+        setIsAnnexesSidebarOpen(true);
+    }
+  }, [activeSection]);
+
+  const onOpenSections = () => setIsSectionsSidebarOpen(true);
+  const onOpenAnnexes = () => setIsAnnexesSidebarOpen(true);
+
+  const allActions = useMemo(() => [
+    { id: 'kpis', label: 'Tablero', icon: BarChart3, onClick: () => setActiveSection('kpis'), variant: 'outline' as const },
+    { id: 'header', label: 'Encabezado', icon: Layout, onClick: () => setActiveSection('header'), variant: 'outline' as const },
+    { id: 'open-sections', label: 'Secciones', icon: ListFilter, onClick: () => onOpenSections(), variant: 'outline' as const },
+    { id: 'open-annexes', label: 'Anexo', icon: FileSpreadsheet, onClick: () => onOpenAnnexes(), variant: 'outline' as const },
+    { id: 'signature', label: 'Firmas', icon: PenTool, onClick: () => setActiveSection('signature'), variant: 'outline' as const },
+    { id: 'ai-chat', label: 'Darian AI', icon: Bot, onClick: () => setActiveSection('ai-chat'), variant: 'primary' as const },
+    { id: 'quick-gen', label: 'Generar Rápida', icon: Sparkles, onClick: () => setViewMode('quick'), variant: 'outline' as const },
+    { id: 'expert-gen', label: 'Generar Experta', icon: Zap, onClick: () => { setIsQuickModeGenerating(true); setViewMode('expert'); }, variant: 'outline' as const },
+    { id: 'massive-gen', label: 'Generación Masiva', icon: FileText, onClick: () => setActiveSection('massive-gen'), variant: 'outline' as const },
+    { id: 'templates', label: 'Explorar Plantillas', icon: FolderOpen, onClick: () => setActiveSection('templates'), variant: 'outline' as const },
+    { id: 'load-example', label: 'Cargar Ejemplo', icon: FileText, onClick: () => askConfirmation('Cargar Ejemplo', '¿Deseas cargar la ficha de ejemplo? Esto reemplazará tus datos actuales.', loadExample), variant: 'outline' as const },
+    { id: 'export-json', label: 'Guardar (JSON)', icon: Save, onClick: () => {
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ficha-costo-${data.header.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+        a.click();
+        toast.success('Ficha guardada localmente');
+    }, variant: 'outline' as const },
+    { id: 'import-json', label: 'Importar JSON', icon: Upload, onClick: () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target?.result as string);
+                        setSheet(json);
+                        toast.success('Ficha importada con éxito');
+                    } catch (err) {
+                        toast.error('Error al importar el archivo JSON');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+        input.click();
+    }, variant: 'outline' as const },
+    { id: 'export-excel', label: 'Exportar Excel', icon: FileSpreadsheet, onClick: () => {
+        exportToCSV(data, calculatedValues, `Ficha_Costo_${data.header.name.replace(/\s+/g, '_')}.csv`);
+        toast.success('Excel generado con éxito');
+    }, variant: 'primary' as const },
+    { id: 'export-pdf', label: 'Exportar PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: 'success' as const },
+    { id: 'calculator', label: 'Calculadora Pro', icon: Calculator, onClick: () => {}, variant: 'outline' as const },
+    { id: 'steel-calculator', label: 'Calculadora Estructura', icon: Scale, onClick: () => setActiveSection('steel-calculator'), variant: 'outline' as const }
+  ], [data, calculatedValues, loadExample, setSheet, setActiveSection, setViewMode]);
+
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
-
-    // Specific logical blocks requested by the user: [1-3], [4-5], [6-7], [8-10], [11-16]
     const predefinedBlocks = [
         { start: 1, end: 3 },
         { start: 4, end: 5 },
@@ -112,29 +184,23 @@ const CostSheetView = () => {
         { start: 8, end: 10 },
         { start: 11, end: 16 }
     ];
-
     const getSectionNumber = (id: string) => {
         const num = id.replace('s', '');
         return parseInt(num, 10);
     };
-
     const getSectionName = (label: string) => {
         const match = label.match(/Sección\s+\d+:\s*(.*)/i);
         return match ? match[1].trim() : label.trim();
     };
-
     const groups: { id: string, label: string, sectionIds: string[] }[] = [];
-
     predefinedBlocks.forEach((block) => {
         const blockSections = data.sections.filter(s => {
             const n = getSectionNumber(s.id);
             return n >= block.start && n <= block.end;
         });
-
         if (blockSections.length > 0) {
             const first = blockSections[0];
             const last = blockSections[blockSections.length - 1];
-
             let label = "";
             if (blockSections.length === 1) {
                 label = first.label;
@@ -145,28 +211,16 @@ const CostSheetView = () => {
                 const lastName = getSectionName(last.label);
                 label = `SECCIONES ${startNum} - ${endNum}: ${firstName} ... ${lastName}`;
             }
-
-            groups.push({
-                id: `group-${block.start}-${block.end}`,
-                label,
-                sectionIds: blockSections.map(s => s.id)
-            });
+            groups.push({ id: `group-${block.start}-${block.end}`, label, sectionIds: blockSections.map(s => s.id) });
         }
     });
-
-    // Handle any sections not in predefined blocks
     data.sections.forEach(s => {
         const n = getSectionNumber(s.id);
         const isInBlock = predefinedBlocks.some(b => n >= b.start && n <= b.end);
         if (!isInBlock) {
-            groups.push({
-                id: s.id,
-                label: s.label,
-                sectionIds: [s.id]
-            });
+            groups.push({ id: s.id, label: s.label, sectionIds: [s.id] });
         }
     });
-
     return groups;
   }, [data?.sections]);
 
@@ -181,7 +235,6 @@ const CostSheetView = () => {
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content', [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
-    // Usage Quota Check
     if (user) {
         const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan, user.role);
         if (!allowed) {
@@ -189,294 +242,38 @@ const CostSheetView = () => {
             return;
         }
     }
-
     setIsExportModalOpen(false);
     if (isBlocked) {
         toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
-
     const downloadPDF = async (opts: ExportOptions, filename: string) => {
         if (!calculationResult) return false;
-        const response = await fetch('/api/cost-sheets/export-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...calculationResult,
-                sections: data.sections, signature: data.signature, notes: data.footer || data.metadata?.notes, exportOptions: opts
-            })
-        });
-
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-            return true;
-        }
-        return false;
-    };
-
-    try {
-      // Prioritize the declarative engine export
-      if (calculationResult) {
-        const h = calculationResult.metadata?.header || data?.header || {};
-        const evalCode = h.code || 'export';
-        const evalName = h.name || 'ficha';
-        const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/\?%*:|"<>]/g, '-');
-
-        if (options.consolidated) {
-            const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
-            if (success) {
-                toast.success("PDF consolidado generado con éxito", { id: toastId });
-                if (user) await usageService.trackUsage(user.id, "fc_export", user.plan, user.role);
-                return;
-            }
-        } else {
-            // Separate export
-            let count = 0;
-            if (options.includeFC) {
-                await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            for (const annexId of options.includeAnnexes) {
-                await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            if (options.includeAudit) {
-                await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
-            return;
-        }
-      }
-
-      // Fallback to legacy report service if engine fails or not available
-      const { reportService } = await import('@/services/report-service');
-      const response = await reportService.generateReport({
-        type: 'cost_sheet',
-        data: data,
-        calculatedValues: calculatedValues,
-        calculatedAnnexes: calculatedAnnexes,
-        store_id: useAuthStore.getState().user?.activeStoreId,
-        name: data?.header?.name || 'Ficha de Costo',
-        exportOptions: options
-      }, useAuthStore.getState().token || '');
-
-      if (response.url) {
-        window.open(response.url, '_blank');
-        toast.success("PDF generado con éxito", { id: toastId });
-      } else {
-        throw new Error("No se recibió la URL del PDF");
-      }
-    } catch (error: any) {
-      console.error("PDF Export error:", error);
-      toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
-    }
-  }, [calculationResult, data, calculatedValues, calculatedAnnexes, isBlocked]);
-
-  const handleExportExcel = React.useCallback(() => {
-    if (isBlocked) {
-        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
-    }
-    const fileName = data?.header?.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
-    exportToCSV(data, calculatedValues, fileName);
-  }, [data, calculatedValues, isBlocked]);
-
-  const handleImportJSON = React.useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e: any) => {
-      const file = e.target.files?.[0];
-      if (file) {
         try {
-          const text = await file.text();
-          const json = JSON.parse(text);
-          setSheet(json);
-          toast.success("Ficha cargada correctamente");
-        } catch (err) {
-          toast.error("Error al cargar el archivo JSON");
-        }
-      }
-    };
-    input.click();
-  }, [setSheet]);
-
-  const handleExportJSON = React.useCallback(() => {
-    if (isBlocked) {
-        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
-    }
-
-    // Export data maintaining formula integrity in the header
-    // We include a calculation snapshot for offline reference without destroying the dynamic nature of the sheet
-    const exportData = {
-        ...data,
-        metadata: {
-            ...data?.metadata,
-            exportedAt: new Date().toISOString(),
-            integrity: "full",
-            calculationSnapshot: {
-                header: calculatedHeader,
-                values: calculatedValues
+            const element = document.getElementById('cost-sheet-content');
+            if (element) {
+                await exportToPDF(element, filename);
+                return true;
             }
+            return false;
+        } catch (e) {
+            console.error(e);
+            return false;
         }
     };
+    const success = await downloadPDF(options, `Ficha_Costo_${data.header.name.replace(/\s+/g, '_')}_${formatDate(new Date())}.pdf`);
+    if (success) { toast.success("PDF generado con éxito", { id: toastId }); } else { toast.error("Error al generar el PDF", { id: toastId }); }
+  }, [data, calculationResult, isBlocked, user]);
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-
-    // Use calculated code for filename if available
-    const filename = `ficha-${calculatedHeader?.code || data?.header?.code || 'export'}.json`;
-    downloadAnchorNode.setAttribute("download", filename);
-
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast.success("JSON exportado correctamente");
-  }, [data, calculatedHeader, isBlocked]);
-
-    const handleQuickGenerate = React.useCallback(async (rows: any[]) => {
-    if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan, user.role);
-        if (!allowed) {
-            setIsUpgradeModalOpen(true);
-            return;
-        }
-    }
-
-        if (user) await usageService.trackUsage(user.id, "fc_create", user.plan, user.role);
-        setQuickModeProducts(rows.map(r => ({
-            name: r.product,
-            sku: `QM-${r.id}`,
-            unit_of_measure: r.um,
-            price: r.cost,
-            quantity: r.quantity,
-            sale_price: r.sale_price
-        })));
-        setIsQuickModeGenerating(true);
-        toast.info(`Iniciando generación para ${rows.length} productos`);
-    }, []);
-
-  const { setCurrentView, setIsChatBotOpen, setIsCalculatorOpen } = useUIStore();
-
-  const allActions = React.useMemo(() => [
-    {
-        id: "go-back",
-        label: "Volver al Inicio",
-        icon: ArrowLeft,
-        onClick: () => setCurrentView("dashboard"),
-        variant: "outline" as const,
-    },
-    {
-        id: 'toggle-mode',
-        label: isEditing ? 'Previsualizar' : 'Seguir Editando',
-        icon: isEditing ? Eye : Edit,
-        onClick: () => {
-            if (isEditing && isBlocked) {
-                toast.warning("La ficha tiene errores críticos, la visualización puede ser inconsistente.");
-            }
-            setIsEditing(!isEditing);
-        },
-        variant: 'primary' as const,
-    },
-     { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
-    { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
-
-    { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
-    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
-    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setIsQuickModeGenerating(true); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
-    {
-        id: 'calculator',
-        label: 'Calculadora',
-        icon: Calculator,
-        onClick: () => setIsCalculatorOpen(true),
-        variant: 'outline' as const
-    }
-
-  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked, setIsCalculatorOpen, data]);
-
-  const mainActions = React.useMemo(() => [
-
-    ...allActions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id)),
-    {
-        id: 'more-actions',
-        label: 'Más Acciones',
-        icon: MoreVertical,
-        onClick: () => setIsActionsPanelOpen(true),
-        variant: 'outline' as const
-    }
-  ], [allActions]);
-
-  const secondaryActions = React.useMemo(() => allActions, [allActions]);
-
-  const navItems = React.useMemo(() => [
-    { id: "kpis", label: "Tablero", icon: BarChart3 },
-    { id: "templates", label: "Plantillas", icon: FolderOpen },
-    { id: "ai-chat", label: "Darian", icon: Sparkles },
-
-    { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
-  ], []);
-
-  const subSectionActions = React.useMemo(() => {
-    return groupedSections.map(group => ({
-        id: group.id,
-        label: group.label.split(':')[0], // Short label like "SECCIONES 1-3"
-        tooltip: group.label,
-        icon: Layout,
-        onClick: () => {
-            setActiveSubSectionId(group.id);
-            handleSetActiveSection('main');
-        },
-        active: activeSubSectionId === group.id,
-        variant: 'outline' as const
-    }));
-  }, [groupedSections, activeSubSectionId]);
-
-  const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
-  const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
-
-
-
-
-  if (!data || !data.header || !data.annexes || !data.sections) {
-    return (
-      <div className="w-full max-w-none px-2 pb-32 pt-0">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
-          <div className="flex items-center gap-4">
-            <Skeleton className="w-12 h-12 rounded-2xl" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-24" />
-        </div>
-        <Skeleton className="h-12 w-full mb-8" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
+  if (!data) return <Skeleton className="w-full h-[600px] rounded-3xl" />;
 
   return (
-    <div className="w-full max-w-none px-0 pb-32 pt-0">
+    <div className="w-full max-w-none px-0 pb-32 pt-0" id="cost-sheet-content">
       <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
-        actions={secondaryActions}
+        actions={allActions}
         layoutMode={layoutMode}
         setLayoutMode={setLayoutMode}
         activeSection={activeSection}
@@ -486,147 +283,98 @@ const CostSheetView = () => {
         onOpenSections={onOpenSections}
         onOpenAnnexes={onOpenAnnexes}
         onOpenHelp={() => setIsHelpPanelOpen(true)}
-                        onOpenSystemHelp={() => setCurrentView("help")}
-                        onOpenAcademy={() => setCurrentView("academy")}
+        onOpenSystemHelp={() => setCurrentView("help")}
+        onOpenAcademy={() => setCurrentView("academy")}
         onQuickGenerate={() => setViewMode('quick')}
         onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
       />
-
       <CostSheetSidebarNav
         isOpen={isSectionsSidebarOpen}
         onClose={() => setIsSectionsSidebarOpen(false)}
         title="Secciones de la Ficha"
-        type="sections"
         items={groupedSections}
         activeId={activeSubSectionId}
-        onSelect={(id) => {
-            setActiveSubSectionId(id);
-            setActiveSection('main');
-        }}
+        onSelect={setActiveSubSectionId}
+        type="sections"
       />
-
       <CostSheetSidebarNav
         isOpen={isAnnexesSidebarOpen}
         onClose={() => setIsAnnexesSidebarOpen(false)}
         title="Anexos Disponibles"
-        type="annexes"
         items={data?.annexes || []}
         activeId={activeSection}
         onSelect={handleSetActiveSection}
+        type="annexes"
       />
-
-      {isBlocked && (
-          <div className="mb-6 animate-in slide-in-from-top duration-500">
-              <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
-                  <div className="bg-destructive text-foreground p-2 rounded-xl">
-                      <AlertTriangle className="w-5 h-5" />
-                  </div>
-                  <div>
-                      <h4 className="text-destructive font-black uppercase tracking-tight text-sm">Ficha con Errores</h4>
-                      <p className="text-destructive/80 text-xs font-medium">Se han detectado {deepValidationErrors.filter(e => e.type === 'CRITICAL').length} errores críticos. La exportación está disponible pero puede contener datos inconsistentes. Por favor, revise las filas marcadas con ❌.</p>
-                  </div>
-              </div>
-          </div>
-      )}
-
       <CostSheetExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleExportPDF}
         annexes={data?.annexes || []}
       />
-
+      <CostSheetSummary
+        totalPrice={calculatedValues['14.1']?.total || 0}
+        utility={calculatedValues['13.1']?.total || 0}
+        totalCost={calculatedValues['12']?.total || 0}
+        telemetry={calculatedValues}
+        header={calculatedHeader}
+        healthPercent={healthPercent}
+      />
       {isEditing ? (
-        <div className="animate-in fade-in duration-700 space-y-6">
-          {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
-                  <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-primary/10 rounded-xl">
-                          {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}
-                          {viewMode === 'reading' && <BookOpen className="w-5 h-5 text-primary" />}
-                          {viewMode === 'quick' && <ZapIcon className="w-5 h-5 text-primary" />}
-                      </div>
-                      <div>
-                          <h3 className="text-sm font-bold uppercase tracking-tight">
-                              {viewMode === 'assisted' ? 'Modo Asistido' : viewMode === 'reading' ? 'Modo Lectura' : 'Modo Rápido'}
-                          </h3>
-                          <p className="text-xs text-muted-foreground uppercase font-black tracking-[0.2em]">Vista Simplificada Activa</p>
-                      </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewMode('expert')}
-                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
-                  >
-                      <Table2 className="w-3.5 h-3.5 mr-2" />
-                      Volver a Modo Todo
-                  </Button>
-              </div>
-          )}
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
           {viewMode === 'expert' && (
             <>
-                <div className="mb-6 -mx-4 px-4 z-30">
-                    <CostSheetNav
-                        navItems={navItems}
-                        annexes={data?.annexes || []}
-                        activeSection={activeSection}
-                        setActiveSection={handleSetActiveSection}
-                        viewMode={viewMode}
-                        setViewMode={handleSetViewMode}
-                        onOpenActions={() => setIsActionsPanelOpen(true)}
-                        onOpenHelp={() => setIsHelpPanelOpen(true)}
-                        onOpenSystemHelp={() => setCurrentView("help")}
-                        onOpenAcademy={() => setCurrentView("academy")}
-                        onOpenAnnexes={onOpenAnnexes}
-                        onOpenSections={onOpenSections}
-                        onImport={handleImportJSON}
-                        onSave={handleExportJSON}
-                        onExportExcel={handleExportExcel}
-                        onExportPdf={() => setIsExportModalOpen(true)}
-                        onQuickGenerate={() => setViewMode('quick')}
-                        onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
-                    />
-                </div>
-
-                <div className="mt-4 w-full flex justify-center">
-                    <div className="w-full max-w-6xl">
-                    {activeSection === 'kpis' && (
-                         <div className="animate-in zoom-in-95 duration-500 py-8">
-                            <CostSheetSummary
-                                totalPrice={calculatedValues['14']?.total || 0}
-                                utility={calculatedValues['13']?.total || 0}
-                                totalCost={calculatedValues['12']?.total || 0}
-                                telemetry={calculatedValues}
-                                header={calculatedHeader}
-                                healthPercent={healthPercent}
-                            />
-                            {/* CostSheetFormulaGuide movido al HelpPanel */}
-                        </div>
-                    )}
-                    {activeSection === 'header' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
-                        </div>
-                    )}
-                    {(activeSection === 'main' || activeSection === 'all-content' || activeSection === 'expert-content') && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {(activeSection === 'all-content' || activeSection === 'expert-content') && (
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                    <div className="xl:col-span-3 sticky top-24 space-y-6 hidden xl:block">
+                         <CostSheetNav
+                            navItems={data?.sections || []}
+                            annexes={data?.annexes || []}
+                            activeSection={activeSection}
+                            setActiveSection={handleSetActiveSection}
+                            viewMode={viewMode}
+                            setViewMode={handleSetViewMode}
+                            onOpenSections={onOpenSections}
+                            onOpenAnnexes={onOpenAnnexes}
+                         />
+                         <CostSheetFormulaGuide />
+                    </div>
+                    <div className="xl:col-span-9 space-y-12">
+                    {!isAnnexActive && activeSection !== 'signature' && activeSection !== 'audit' && activeSection !== 'ai-chat' && activeSection !== 'templates' && activeSection !== 'massive-gen' && activeSection !== 'steel-calculator' && (
+                        <div className="space-y-12">
+                            {activeSection === 'header' && <CostSheetHeaderEditor header={data.header} calculatedHeader={calculatedHeader} />}
+                            {activeSection === 'kpis' && (
                                 <>
-                                    <div className="px-8 py-10 mb-12 bg-card rounded-[2.5rem] border border-border shadow-sm">
-                                        <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
-                                            <ZapIcon className="w-8 h-8" />
-                                            Ficha: Vista Consolidada
-                                        </h2>
-                                        <p className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground mt-2 pl-1">Todas las Secciones y Anexos</p>
-                                    </div>
-                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-12">
-                                        <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
-                                    </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in zoom-in-95 duration-500">
+                                        <div className="bg-card p-8 rounded-3xl border border-border shadow-sm">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-6">Desglose de Costos</h4>
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl">
+                                                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Materiales Directos</span>
+                                                    <span className="text-sm font-black italic">{formatCurrency(calculatedValues['1.4']?.total || 0)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl">
+                                                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Mano de Obra</span>
+                                                    <span className="text-sm font-black italic">{formatCurrency(calculatedValues['5.1']?.total || 0)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl border-t-2 border-primary/20">
+                                                    <span className="text-xs font-black uppercase tracking-widest text-primary">Costo Total</span>
+                                                    <span className="text-lg font-black italic text-primary">{formatCurrency(calculatedValues['12']?.total || 0)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-card p-8 rounded-3xl border border-border shadow-sm flex flex-col justify-center items-center text-center">
+                                             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                                                <TrendingUp className="w-10 h-10 text-primary" />
+                                             </div>
+                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] mb-2">Rentabilidad Sugerida</h4>
+                                             <div className="text-4xl font-black italic text-foreground tracking-tighter mb-2">
+                                                {(( (calculatedValues['14.1']?.total || 0) / (calculatedValues['12']?.total || 1) - 1) * 100).toFixed(1)}%
+                                             </div>
+                                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Basado en el precio de venta actual y costos operativos totales.</p>
+                                        </div>
+                                     </div>
                                 </>
                             )}
-
                             <LazyRender>
                                 {(layoutMode === "grid") ? (
                                     <CostSheetCardView
@@ -698,7 +446,7 @@ const CostSheetView = () => {
                     {activeSection === "ai-chat" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px] flex flex-col">
                              <div className="flex-1">
-                                <DarianEditor sheetData={data} isFullView={true} onSectionChange={setActiveSection} />
+                                <DarianEditor sheetData={data} isFullView={true} onSectionChange={handleSetActiveSection} />
                              </div>
                         </div>
                     )}
@@ -721,7 +469,6 @@ const CostSheetView = () => {
                 </div>
             </>
           )}
-
           {viewMode === 'assisted' && (
               <CostSheetWizard
                 data={data}
@@ -729,7 +476,6 @@ const CostSheetView = () => {
                 calculatedHeader={calculatedHeader}
               />
           )}
-
           {viewMode === 'reading' && (
                <CostSheetNarrative
                  data={data}
@@ -737,7 +483,6 @@ const CostSheetView = () => {
                  calculatedHeader={calculatedHeader}
                />
           )}
-
           {viewMode === 'quick' && ( isQuickModeGenerating ? ( <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto"> <div className="mb-4 flex justify-start"> <Button variant="ghost" size="sm" onClick={() => setIsQuickModeGenerating(false)} className="rounded-xl font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-primary"> <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Volver a Lista </Button> </div> <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} onClose={() => setIsQuickModeGenerating(false)} autoStart={true} isQuickAction={true} /> </div> ) : (
               <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} /> )
           )}
@@ -771,7 +516,6 @@ const CostSheetView = () => {
             </div>
         </div>
       )}
-
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
       <BaseModal
         open={confirmation.isOpen}

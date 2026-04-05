@@ -22,6 +22,7 @@ interface UIState {
   initialProductName: string;
   isChatBotOpen: boolean;
   ipvActiveTab: string;
+  costSheetActiveSection: string;
   setCurrentView: (view: ViewType) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -33,6 +34,7 @@ interface UIState {
   setInitialProductName: (name: string) => void;
   setIsChatBotOpen: (open: boolean) => void;
   setIpvActiveTab: (tab: string) => void;
+  setCostSheetActiveSection: (section: string) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -49,6 +51,7 @@ export const useUIStore = create<UIState>()(
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
+      costSheetActiveSection: 'kpis',
       setCurrentView: (view) => set((state) => ({
         previousView: state.currentView,
         currentView: view
@@ -65,6 +68,7 @@ export const useUIStore = create<UIState>()(
       setInitialProductName: (initialProductName) => set({ initialProductName }),
       setIsChatBotOpen: (isChatBotOpen) => set({ isChatBotOpen }),
       setIpvActiveTab: (ipvActiveTab) => set({ ipvActiveTab }),
+      setCostSheetActiveSection: (costSheetActiveSection) => set({ costSheetActiveSection }),
     }),
     {
       name: 'costpro-ui-storage',

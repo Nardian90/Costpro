@@ -5,7 +5,7 @@ import {
   Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
   Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
   Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard
+  LayoutDashboard, Layout, PenTool, FileSpreadsheet
 } from 'lucide-react';
 
 export type NavItemType = 'group' | 'submenu' | 'item';
@@ -32,7 +32,21 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño' },
       { id: 'pick3-intelligence', label: 'Pick 3 Intelligence', type: 'item', icon: BarChart3, ariaLabel: 'Inteligencia de picking' },
       { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera' },
-      { id: 'cost-sheets', label: 'Fichas de Costo', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' }
+      {
+        id: 'cost-sheets-module',
+        label: 'Fichas de Costo',
+        type: 'submenu',
+        icon: FileText,
+        ariaLabel: 'Gestión de costos',
+        children: [
+            { id: 'cost-sheets', label: 'Principal', type: 'item', icon: FileText },
+            { id: 'cs_kpis', label: 'Tablero KPI', type: 'item', icon: BarChart3 },
+            { id: 'cs_header', label: 'Encabezado', type: 'item', icon: Layout },
+            { id: 'cs_sections', label: 'Secciones', type: 'item', icon: ListFilter },
+            { id: 'cs_annexes', label: 'Anexos', type: 'item', icon: FileSpreadsheet },
+            { id: 'cs_signature', label: 'Firmas', type: 'item', icon: PenTool }
+        ]
+      }
     ]
   },
   {

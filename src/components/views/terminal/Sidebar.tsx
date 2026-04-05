@@ -3,7 +3,10 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, Zap, ChevronDown, Calculator, X } from 'lucide-react';
+import {
+  Search, LogOut, Zap, ChevronDown, Calculator, X,
+  BarChart3, Layout, ListFilter, FileSpreadsheet, PenTool, TrendingUp
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
@@ -43,29 +46,34 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   logoScale,
   navRef
 }) => {
-  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab } = useUIStore();
+  const {
+    isCalculatorOpen,
+    setIsCalculatorOpen,
+    setIpvActiveTab,
+    ipvActiveTab,
+    costSheetActiveSection,
+    setCostSheetActiveSection
+  } = useUIStore();
   const { user } = useAuthStore();
 
-  // Persistence logic with error handling
   const [expandedModules, setExpandedModules] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return ['estrategico', 'ipv_module'];
+    if (typeof window === 'undefined') return ['estrategico', 'ipv_module', 'cost-sheets-module'];
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return Array.isArray(parsed.expanded) ? parsed.expanded : ['estrategico', 'ipv_module'];
+        return Array.isArray(parsed.expanded) ? parsed.expanded : ['estrategico', 'ipv_module', 'cost-sheets-module'];
       }
     } catch (e) {
       console.warn('Sidebar state load failed, using defaults', e);
     }
-    return ['estrategico', 'ipv_module'];
+    return ['estrategico', 'ipv_module', 'cost-sheets-module'];
   });
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ expanded: expandedModules }));
   }, [expandedModules]);
 
-  // Accessibility: Handle keyboard ESC to close sidebar if open
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && sidebarOpen && onClose) {
@@ -76,7 +84,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     return () => window.removeEventListener('keydown', handleEsc);
   }, [sidebarOpen, onClose]);
 
-  // Deep search for parents to expand when view changes
   useEffect(() => {
     const findParents = (modules: NavModule[], targetId: string, parents: string[] = []): string[] | null => {
       for (const module of modules) {
@@ -89,44 +96,38 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       return null;
     };
 
-    const effectiveViewId = currentView === 'ipv' ? ipvActiveTab : currentView;
-    const mappedViewId = ipvActiveTab ?
-        (ipvActiveTab === 'reports' ? 'reports_ipv' :
-         ipvActiveTab === 'dashboard' ? 'dashboard_ipv' :
-         ipvActiveTab === 'catalog' ? 'catalog_ipv' :
-         ipvActiveTab === 'audit' ? 'audit_ipv' : ipvActiveTab) : currentView;
+    const getMappedViewId = () => {
+        if (currentView === 'ipv') {
+            return ipvActiveTab === 'reports' ? 'reports_ipv' :
+                   ipvActiveTab === 'dashboard' ? 'dashboard_ipv' :
+                   ipvActiveTab === 'catalog' ? 'catalog_ipv' :
+                   ipvActiveTab === 'audit' ? 'audit_ipv' : ipvActiveTab;
+        }
+        if (currentView === 'cost-sheets') {
+            return costSheetActiveSection === 'kpis' ? 'cs_kpis' :
+                   costSheetActiveSection === 'header' ? 'cs_header' :
+                   costSheetActiveSection === 'sections' || costSheetActiveSection === 'all' ? 'cs_sections' :
+                   costSheetActiveSection === 'annexes' || costSheetActiveSection === 'all-annexes' ? 'cs_annexes' :
+                   costSheetActiveSection === 'signature' ? 'cs_signature' : 'cost-sheets';
+        }
+        return currentView;
+    };
 
-    const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId);
+    const parents = findParents(SIDEBAR_STRUCTURE, getMappedViewId());
     if (parents) {
       setExpandedModules(prev => {
-        const newExpanded = [...prev];
-        let changed = false;
-        parents.forEach(p => {
-          if (!newExpanded.includes(p)) {
-            newExpanded.push(p);
-            changed = true;
-          }
-        });
-        return changed ? newExpanded : prev;
+        const newExpanded = [...new Set([...prev, ...parents])];
+        return JSON.stringify(newExpanded) === JSON.stringify(prev) ? prev : newExpanded;
       });
     }
-  }, [currentView, ipvActiveTab]);
+  }, [currentView, ipvActiveTab, costSheetActiveSection]);
 
   const toggleModule = useCallback((moduleId: string, isSubmenu = false) => {
-    setExpandedModules(prev => {
-      if (prev.includes(moduleId)) {
-        return prev.filter(id => id !== moduleId);
-      } else {
-        if (isSubmenu) {
-          return [...prev, moduleId];
-        } else {
-          // UX: Accordion behavior for Level 1 groups
-          const topLevelIds = SIDEBAR_STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
-          const filtered = prev.filter(id => !topLevelIds.includes(id));
-          return [...filtered, moduleId];
-        }
-      }
-    });
+    setExpandedModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(m => m !== moduleId)
+        : [...prev, moduleId]
+    );
   }, []);
 
   const renderNavItem = useCallback((moduleId: string) => {
@@ -137,33 +138,67 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
     ].includes(moduleId);
 
+    const isCostSheetSubItem = [
+        'cs_kpis', 'cs_header', 'cs_sections', 'cs_annexes', 'cs_signature'
+    ].includes(moduleId);
+
     const item = navigationItems.find(i => i.id === moduleId);
-    if (!item) return null;
+    if (!item && !isCostSheetSubItem && !isIpvSubItem) return null;
+
+    const label = item?.label ||
+                 (moduleId === 'cs_kpis' ? 'Tablero KPI' :
+                  moduleId === 'cs_header' ? 'Encabezado' :
+                  moduleId === 'cs_sections' ? 'Secciones' :
+                  moduleId === 'cs_annexes' ? 'Anexos' :
+                  moduleId === 'cs_signature' ? 'Firmas' : '');
+
+    const Icon = item?.icon ||
+                (moduleId === 'cs_kpis' ? BarChart3 :
+                 moduleId === 'cs_header' ? Layout :
+                 moduleId === 'cs_sections' ? ListFilter :
+                 moduleId === 'cs_annexes' ? FileSpreadsheet :
+                 moduleId === 'cs_signature' ? PenTool : TrendingUp);
 
     const effectiveItemId = isIpvSubItem ? moduleId.replace('_ipv', '').replace('reports_ipv', 'reports').replace('dashboard_ipv', 'dashboard').replace('catalog_ipv', 'catalog').replace('audit_ipv', 'audit') : moduleId;
 
     const isActive = isIpvSubItem
         ? (currentView === 'ipv' && ipvActiveTab === effectiveItemId)
-        : currentView === item.id;
+        : isCostSheetSubItem
+            ? (currentView === 'cost-sheets' && (
+                (moduleId === 'cs_kpis' && costSheetActiveSection === 'kpis') ||
+                (moduleId === 'cs_header' && costSheetActiveSection === 'header') ||
+                (moduleId === 'cs_sections' && (costSheetActiveSection === 'sections' || costSheetActiveSection === 'all')) ||
+                (moduleId === 'cs_annexes' && (costSheetActiveSection === 'annexes' || costSheetActiveSection === 'all-annexes')) ||
+                (moduleId === 'cs_signature' && costSheetActiveSection === 'signature')
+            ))
+            : currentView === moduleId;
 
     const handleItemClick = () => {
         if (isIpvSubItem) {
             setIpvActiveTab(effectiveItemId);
             onViewChange('ipv');
+        } else if (isCostSheetSubItem) {
+            const sectionMap: Record<string, string> = {
+                'cs_kpis': 'kpis',
+                'cs_header': 'header',
+                'cs_sections': 'all',
+                'cs_annexes': 'all-annexes',
+                'cs_signature': 'signature'
+            };
+            setCostSheetActiveSection(sectionMap[moduleId]);
+            onViewChange('cost-sheets');
         } else {
-            onViewChange(item.id as ViewType);
+            onViewChange(moduleId as ViewType);
         }
     };
 
     return (
       <button
-        key={item.id}
+        key={moduleId}
         role="menuitem"
         aria-current={isActive ? 'page' : undefined}
-        aria-label={item.label}
-        data-testid={`nav-${item.id}`}
+        aria-label={label}
         onClick={handleItemClick}
-        onMouseEnter={() => onPrefetchView?.((isIpvSubItem ? 'ipv' : item.id) as ViewType)}
         className={cn(
           "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
           isActive
@@ -171,7 +206,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-primary/5"
         )}
       >
-        <item.icon className={cn(
+        <Icon className={cn(
           "w-4 h-4 transition-transform duration-200 group-hover:scale-110",
           isActive ? "text-primary-foreground" : "text-muted-foreground/50 group-hover:text-primary"
         )} />
@@ -179,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           "text-[10px] font-black uppercase tracking-[0.2em] truncate",
           isActive ? "translate-x-1" : "group-hover:translate-x-1"
         )}>
-          {item.label}
+          {label}
         </span>
         {isActive && (
           <motion.div
@@ -190,17 +225,18 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, navigationItems, onViewChange, onPrefetchView, setIpvActiveTab]);
+  }, [currentView, ipvActiveTab, costSheetActiveSection, navigationItems, onViewChange, setIpvActiveTab, setCostSheetActiveSection]);
 
   const renderModule = useCallback((module: NavModule, depth = 0): React.ReactNode => {
-    // Feature Flag validation (future-ready)
-    if (module.featureFlag && !(window as any).CONFIG?.features?.[module.featureFlag]) {
-       // Support for hidden features
-    }
-
     const hasAvailableItems = (m: NavModule): boolean => {
       if (m.type === 'item') {
-        return navigationItems.some(ni => ni.id === m.id);
+        const isSpecialSubItem = m.id.startsWith('cs_') || [
+            'analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot',
+            'dashboard_ipv', 'transactions', 'catalog_ipv', 'customers',
+            'rules', 'sim', 'intelligent-receipts', 'breakdown',
+            'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
+        ].includes(m.id);
+        return isSpecialSubItem || navigationItems.some(ni => ni.id === m.id);
       }
       return m.children?.some(child => hasAvailableItems(child)) || false;
     };
