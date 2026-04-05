@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             id: 'ipv_reporting',
             label: '📊 Reportes & Extractos',
             isSubmenu: true,
-            items: ['analytics', 'reports_ipv', 'ingestion', 'pivot']
+            items: ['analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot']
           },
           {
             id: 'ipv_operaciones',
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             id: 'ipv_avanzado',
             label: '⚡ Avanzado',
             isSubmenu: true,
-            items: ['audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt']
+            items: ['audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme']
           }
         ]
       },
@@ -179,10 +179,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderNavItem = (itemId: string) => {
     // Map IPV sub-ids to the actual 'ipv' view while setting the tab
     const isIpvSubItem = [
-        'analytics', 'reports_ipv', 'ingestion', 'pivot',
+        'analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot',
         'dashboard_ipv', 'transactions', 'catalog_ipv', 'customers',
         'rules', 'sim', 'intelligent-receipts', 'breakdown',
-        'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt'
+        'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
     ].includes(itemId);
 
     const item = navigationItems.find(i => i.id === itemId);
