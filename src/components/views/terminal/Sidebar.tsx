@@ -3,12 +3,13 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, Zap, ChevronDown, Calculator, X } from 'lucide-react';
+import { Search, LogOut, Zap, ChevronDown, Calculator, X, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
+import { SidebarFocusMode } from './SidebarFocusMode';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -27,6 +28,7 @@ interface SidebarProps {
 }
 
 const STORAGE_KEY = 'costpro.sidebar.state';
+const FOCUS_STORAGE_KEY = 'costpro.sidebar.focus';
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(({
   sidebarOpen,
@@ -46,7 +48,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab } = useUIStore();
   const { user } = useAuthStore();
 
-  // Persistence logic with error handling
+  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(FOCUS_STORAGE_KEY);
+  });
+
   const [expandedModules, setExpandedModules] = useState<string[]>(() => {
     if (typeof window === 'undefined') return ['estrategico', 'ipv_module'];
     try {
@@ -65,16 +71,36 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ expanded: expandedModules }));
   }, [expandedModules]);
 
-  // Accessibility: Handle keyboard ESC to close sidebar if open
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && sidebarOpen && onClose) {
-        onClose();
+    if (focusedModuleId) {
+      localStorage.setItem(FOCUS_STORAGE_KEY, focusedModuleId);
+    } else {
+      localStorage.removeItem(FOCUS_STORAGE_KEY);
+    }
+  }, [focusedModuleId]);
+
+  // Accessibility: Handle keyboard ESC to close sidebar or focus mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (focusedModuleId) {
+          setFocusedModuleId(null);
+        } else if (sidebarOpen && onClose) {
+          onClose();
+        }
+      }
+
+      // Shortcuts Alt+1, Alt+2, etc.
+      if (e.altKey && !isNaN(Number(e.key))) {
+        const index = Number(e.key) - 1;
+        if (index >= 0 && index < SIDEBAR_STRUCTURE.length) {
+          setFocusedModuleId(SIDEBAR_STRUCTURE[index].id);
+        }
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [sidebarOpen, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen, onClose, focusedModuleId]);
 
   // Deep search for parents to expand when view changes
   useEffect(() => {
@@ -96,63 +122,48 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
          ipvActiveTab === 'catalog' ? 'catalog_ipv' :
          ipvActiveTab === 'audit' ? 'audit_ipv' : ipvActiveTab) : currentView;
 
-    const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId);
+    const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId as string);
     if (parents) {
-      setExpandedModules(prev => {
-        const newExpanded = [...prev];
-        let changed = false;
-        parents.forEach(p => {
-          if (!newExpanded.includes(p)) {
-            newExpanded.push(p);
-            changed = true;
-          }
-        });
-        return changed ? newExpanded : prev;
-      });
+      setExpandedModules(prev => Array.from(new Set([...prev, ...parents])));
+      // If the view belongs to a module, we could automatically focus it, but
+      // per requirements, focus is user-triggered.
     }
   }, [currentView, ipvActiveTab]);
 
   const toggleModule = useCallback((moduleId: string, isSubmenu = false) => {
-    setExpandedModules(prev => {
-      if (prev.includes(moduleId)) {
-        return prev.filter(id => id !== moduleId);
-      } else {
-        if (isSubmenu) {
-          return [...prev, moduleId];
-        } else {
-          // UX: Accordion behavior for Level 1 groups
-          const topLevelIds = SIDEBAR_STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
-          const filtered = prev.filter(id => !topLevelIds.includes(id));
-          return [...filtered, moduleId];
-        }
-      }
-    });
+    if (!isSubmenu) {
+      setFocusedModuleId(moduleId);
+      return;
+    }
+
+    setExpandedModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(id => id !== moduleId)
+        : [...prev, moduleId]
+    );
   }, []);
 
-  const renderNavItem = useCallback((moduleId: string) => {
-    const isIpvSubItem = [
-        'analytics', 'reports_ipv', 'receipts', 'transfers', 'qr', 'ingestion', 'pivot',
-        'dashboard_ipv', 'transactions', 'catalog_ipv', 'customers',
-        'rules', 'sim', 'intelligent-receipts', 'breakdown',
-        'audit_ipv', 'movements', 'planning', 'errors', 'mapping-rules', 'mvt', 'mipyme'
-    ].includes(moduleId);
+  const renderNavItem = useCallback((itemId: string) => {
+    const item = SIDEBAR_STRUCTURE.flatMap(m => [m, ...(m.children || [])])
+      .flatMap(m => [m, ...(m.children || [])])
+      .find(m => m.id === itemId);
 
-    const item = navigationItems.find(i => i.id === moduleId);
-    if (!item) return null;
+    if (!item || !item.icon) return null;
 
-    const effectiveItemId = isIpvSubItem ? moduleId.replace('_ipv', '').replace('reports_ipv', 'reports').replace('dashboard_ipv', 'dashboard').replace('catalog_ipv', 'catalog').replace('audit_ipv', 'audit') : moduleId;
-
-    const isActive = isIpvSubItem
-        ? (currentView === 'ipv' && ipvActiveTab === effectiveItemId)
-        : currentView === item.id;
+    const isActive = currentView === item.id || (item.id === 'cost-sheets' && currentView === 'cost-sheets');
+    const isIpvSubItem = SIDEBAR_STRUCTURE.find(m => m.id === 'ipv_module')?.children?.some(c =>
+      c.id === item.id || c.children?.some(gc => gc.id === item.id)
+    );
 
     const handleItemClick = () => {
-        if (isIpvSubItem) {
-            setIpvActiveTab(effectiveItemId);
-            onViewChange('ipv');
-        } else {
-            onViewChange(item.id as ViewType);
-        }
+      if (item.id === 'cost-sheets') {
+        onViewChange('cost-sheets');
+      } else {
+        onViewChange(item.id as ViewType);
+      }
+      if (isIpvSubItem) {
+        setIpvActiveTab(item.id);
+      }
     };
 
     return (
@@ -190,14 +201,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, navigationItems, onViewChange, onPrefetchView, setIpvActiveTab]);
+  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab]);
 
   const renderModule = useCallback((module: NavModule, depth = 0): React.ReactNode => {
-    // Feature Flag validation (future-ready)
-    if (module.featureFlag && !(window as any).CONFIG?.features?.[module.featureFlag]) {
-       // Support for hidden features
-    }
-
     const hasAvailableItems = (m: NavModule): boolean => {
       if (m.type === 'item') {
         return navigationItems.some(ni => ni.id === m.id);
@@ -213,7 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
     const isExpanded = expandedModules.includes(module.id) || !!sidebarSearch;
 
-    if (module.type === 'group' && module.isDirect) {
+    if (module.type === 'group' && module.isDirect && !focusedModuleId) {
       return (
         <div key={module.id} className="space-y-1" role="group" aria-label={module.ariaLabel}>
           {module.label && (
@@ -270,7 +276,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         </AnimatePresence>
       </div>
     );
-  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem]);
+  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem, focusedModuleId]);
+
+  const focusedModule = useMemo(() =>
+    SIDEBAR_STRUCTURE.find(m => m.id === focusedModuleId),
+  [focusedModuleId]);
 
   return (
     <aside
@@ -282,7 +292,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       )}
     >
       <div className="relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
-        {onClose && (
+        {onClose && !focusedModuleId && (
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -291,6 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             <X className="w-5 h-5" />
           </button>
         )}
+
         <motion.div
           id="sidebar-logo-container"
           style={{
@@ -300,15 +311,42 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           }}
           className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar max-w-full overflow-x-hidden"
         >
-          <motion.div
-            style={{ scale: logoScale }}
-            className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
-          >
-            <CostProLogo size={50} animated={true} />
-            <div className="mt-4">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-            </div>
-          </motion.div>
+          <AnimatePresence mode="wait">
+            {focusedModuleId ? (
+              <motion.div
+                key="back-button"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
+              >
+                <button
+                  onClick={() => setFocusedModuleId(null)}
+                  className="group flex items-center gap-4 p-4 rounded-2xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                >
+                  <ArrowLeft className="w-6 h-6 transition-transform group-hover:-translate-x-1" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">Volver</span>
+                    <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Menú Principal</span>
+                  </div>
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="logo"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                style={{ scale: logoScale }}
+                className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
+              >
+                <CostProLogo size={50} animated={true} />
+                <div className="mt-4">
+                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
@@ -332,9 +370,25 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           aria-orientation="vertical"
           className="flex-1 overflow-y-auto p-4 no-scrollbar overscroll-contain scroll-smooth"
         >
-          <div className="space-y-4">
-            {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
-          </div>
+          <AnimatePresence mode="wait">
+            {focusedModuleId && focusedModule ? (
+              <SidebarFocusMode
+                key="focus-mode"
+                module={focusedModule}
+                renderModule={renderModule}
+              />
+            ) : (
+              <motion.div
+                key="normal-mode"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
