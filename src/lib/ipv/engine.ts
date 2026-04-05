@@ -5,6 +5,23 @@ import { isProductAMedida } from './utils';
 
 export { generateHash };
 
+export type RulesConfig = MatchingRule[];
+
+/**
+ * Retorna la configuración de reglas por defecto para el motor IPV.
+ */
+export function getDefaultIPVRulesConfig(): RulesConfig {
+  return [
+    { id: "stock-limit", tipo: "STOCK_LIMIT", prioridad: 1, activo: true, meta: { allow_negative: false }, descripcion: "Límites de Stock" },
+    { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
+    { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_limit: 50000 }, descripcion: "Inyección de Efectivo" },
+    { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
+    { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
+    { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
+  ];
+}
+
 export interface MatchingResult {
   transactionId: string;
   status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE';
@@ -17,15 +34,7 @@ export interface MatchingResult {
   logs: string[];
 }
 
-export const DEFAULT_MATCHING_RULES: MatchingRule[] = [
-  { id: "1", tipo: "HARD_REF", prioridad: 1, activo: true },
-  { id: "2", tipo: "EXACT_SUM", prioridad: 2, activo: true },
-  { id: "3", tipo: "PRICE_FLEX", prioridad: 3, activo: true, meta: { range: 0.1 } },
-  { id: "4", tipo: "STOCK_LIMIT", prioridad: 4, activo: true },
-  { id: "5", tipo: "WILDCARDS", prioridad: 5, activo: true },
-  { id: "6", tipo: "TOLERANCE", prioridad: 6, activo: true, meta: { tolerance_cents: 100 } },
-  { id: "7", tipo: "CASH_FILL", prioridad: 7, activo: false, meta: { daily_limit: 500 } }
-];
+export const DEFAULT_MATCHING_RULES: MatchingRule[] = getDefaultIPVRulesConfig();
 
 export class MatchingEngine {
   private products: Product[];
