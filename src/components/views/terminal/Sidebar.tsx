@@ -46,17 +46,17 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab } = useUIStore();
   const { user } = useAuthStore();
 
-  // Persistence logic
+  // Persistence logic with error handling
   const [expandedModules, setExpandedModules] = useState<string[]>(() => {
     if (typeof window === 'undefined') return ['estrategico', 'ipv_module'];
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed.expanded || ['estrategico', 'ipv_module'];
+        return Array.isArray(parsed.expanded) ? parsed.expanded : ['estrategico', 'ipv_module'];
       }
     } catch (e) {
-      console.error('Error loading sidebar state', e);
+      console.warn('Sidebar state load failed, using defaults', e);
     }
     return ['estrategico', 'ipv_module'];
   });
@@ -65,7 +65,18 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ expanded: expandedModules }));
   }, [expandedModules]);
 
-  // Expand parent modules of current view
+  // Accessibility: Handle keyboard ESC to close sidebar if open
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [sidebarOpen, onClose]);
+
+  // Deep search for parents to expand when view changes
   useEffect(() => {
     const findParents = (modules: NavModule[], targetId: string, parents: string[] = []): string[] | null => {
       for (const module of modules) {
@@ -78,9 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       return null;
     };
 
-    // Special handling for IPV sub-items to match them to their virtual IDs in the structure
     const effectiveViewId = currentView === 'ipv' ? ipvActiveTab : currentView;
-    // We also need to account for the mapping done in renderNavItem
     const mappedViewId = ipvActiveTab ?
         (ipvActiveTab === 'reports' ? 'reports_ipv' :
          ipvActiveTab === 'dashboard' ? 'dashboard_ipv' :
@@ -111,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         if (isSubmenu) {
           return [...prev, moduleId];
         } else {
-          // Collapse other top-level modules if not direct
+          // UX: Accordion behavior for Level 1 groups
           const topLevelIds = SIDEBAR_STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
           const filtered = prev.filter(id => !topLevelIds.includes(id));
           return [...filtered, moduleId];
@@ -149,22 +158,25 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     return (
       <button
         key={item.id}
+        role="menuitem"
+        aria-current={isActive ? 'page' : undefined}
+        aria-label={item.label}
         data-testid={`nav-${item.id}`}
         onClick={handleItemClick}
         onMouseEnter={() => onPrefetchView?.((isIpvSubItem ? 'ipv' : item.id) as ViewType)}
         className={cn(
-          "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
+          "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
           isActive
-            ? "bg-primary text-primary-foreground shadow-[0_8px_20px_-4px_rgba(var(--primary),0.3)]"
+            ? "bg-primary text-primary-foreground shadow-lg"
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-primary/5"
         )}
       >
         <item.icon className={cn(
-          "w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110",
+          "w-4 h-4 transition-transform duration-200 group-hover:scale-110",
           isActive ? "text-primary-foreground" : "text-muted-foreground/50 group-hover:text-primary"
         )} />
         <span className={cn(
-          "text-[10px] font-black uppercase tracking-[0.2em] truncate transition-all duration-300",
+          "text-[10px] font-black uppercase tracking-[0.2em] truncate",
           isActive ? "translate-x-1" : "group-hover:translate-x-1"
         )}>
           {item.label}
@@ -172,8 +184,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         {isActive && (
           <motion.div
             layoutId="active-indicator"
-            className="absolute left-0 w-1 h-6 bg-primary-foreground rounded-r-full"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute left-0 w-1 h-5 bg-primary-foreground rounded-r-full"
+            transition={{ type: "spring", stiffness: 400, damping: 40 }}
           />
         )}
       </button>
@@ -181,10 +193,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   }, [currentView, ipvActiveTab, navigationItems, onViewChange, onPrefetchView, setIpvActiveTab]);
 
   const renderModule = useCallback((module: NavModule, depth = 0): React.ReactNode => {
-    // Check feature flag if present (dummy check for now, can be expanded)
+    // Feature Flag validation (future-ready)
     if (module.featureFlag && !(window as any).CONFIG?.features?.[module.featureFlag]) {
-       // Optional: return null if flag is required but not present
-       // For now, visible by default as per instructions
+       // Support for hidden features
     }
 
     const hasAvailableItems = (m: NavModule): boolean => {
@@ -204,10 +215,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
     if (module.type === 'group' && module.isDirect) {
       return (
-        <div key={module.id} className="space-y-1">
+        <div key={module.id} className="space-y-1" role="group" aria-label={module.ariaLabel}>
           {module.label && (
-            <div className="px-4 flex flex-col items-start mb-2 mt-4 first:mt-0">
-              <span className="text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
+            <div className="px-4 flex flex-col items-start mb-2 mt-6 first:mt-0">
+              <span className="text-[10px] font-black text-primary/40 tracking-[0.4em] uppercase">{module.label}</span>
             </div>
           )}
           <div className="space-y-1">
@@ -218,22 +229,27 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     }
 
     return (
-      <div key={module.id} className="space-y-1">
+      <div key={module.id} className="space-y-1" role="none">
         <button
+          role="menuitem"
+          aria-expanded={isExpanded}
+          aria-haspopup="true"
+          aria-label={module.ariaLabel || module.label}
           onClick={() => toggleModule(module.id, module.type === 'submenu')}
           className={cn(
-            "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
-            depth === 0 ? "mt-2" : "mt-1",
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+            depth === 0 ? "mt-3" : "mt-1",
             isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
           )}
         >
-          <div className="flex flex-col items-start">
-            <span className={cn(
+          <div className="flex items-center gap-3">
+             {module.icon && <module.icon className="w-4 h-4 opacity-50" />}
+             <span className={cn(
                 "font-black tracking-[0.2em] uppercase",
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
-            )}>{module.label}</span>
+             )}>{module.label}</span>
           </div>
-          <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isExpanded && "rotate-180")} />
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
         </button>
 
         <AnimatePresence initial={false}>
@@ -242,10 +258,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
               className={cn("overflow-hidden", depth === 0 ? "pl-2" : "pl-4")}
+              role="menu"
             >
-              <div className="pt-1 pb-2 space-y-1">
+              <div className="pt-1 pb-2 space-y-0.5">
                 {module.children?.map(child => renderModule(child, depth + 1))}
               </div>
             </motion.div>
@@ -256,16 +273,20 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem]);
 
   return (
-    <aside className={cn(
-      "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
-      sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
-    )}>
+    <aside
+      role="navigation"
+      aria-label="Barra lateral de navegación"
+      className={cn(
+        "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
+        sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
+      )}
+    >
       <div className="relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95"
-            aria-label="Cerrar menú"
+            className="absolute top-4 right-4 z-50 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            aria-label="Cerrar menú lateral"
           >
             <X className="w-5 h-5" />
           </button>
@@ -292,11 +313,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
         <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
             <input
               type="text"
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
+              aria-label="Buscar en el menú"
               placeholder="BUSCAR..."
               className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
             />
@@ -306,6 +328,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         <nav
           id="sidebar-nav"
           ref={navRef}
+          role="menubar"
+          aria-orientation="vertical"
           className="flex-1 overflow-y-auto p-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <div className="space-y-4">
@@ -321,6 +345,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
                 window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
               }}
+              aria-label="Mejorar a Plan Pro"
               className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2 animate-pulse"
             >
               <Zap className="w-4.5 h-4.5 text-primary" />
@@ -332,8 +357,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           )}
           <button
             onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+            aria-label="Abrir calculadora"
+            aria-pressed={isCalculatorOpen}
             className={cn(
-              "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 font-bold",
+              "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
               isCalculatorOpen
                 ? "bg-primary/10 text-primary border border-primary/20"
                 : "hover:bg-primary/5 text-sidebar-foreground/60"
@@ -345,7 +372,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
+            aria-label="Cerrar sesión"
+            className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
           >
             <LogOut className="w-4.5 h-4.5" />
             <span className="text-xs uppercase tracking-wider">Salir</span>
