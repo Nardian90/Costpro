@@ -5,7 +5,8 @@ import {
   Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
   Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
   Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard, LayoutGrid, Layers, PenTool, Layout, FileSpreadsheet, FolderOpen
+  LayoutDashboard, LayoutGrid, Layers, PenTool, Layout, FileSpreadsheet, FolderOpen,
+  Eye, Sparkles, BookOpen, Download, Upload, Save, Activity
 } from 'lucide-react';
 
 export type NavItemType = 'group' | 'submenu' | 'item';
@@ -31,11 +32,64 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     children: [
       { id: 'cost-sheets', label: 'Lista de Fichas', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' },
       { id: 'templates', label: 'Plantillas', type: 'item', icon: FolderOpen },
-      { id: 'header', label: 'Encabezado', type: 'item', icon: Layout },
-      { id: 'open-sections', label: 'Secciones', type: 'item', icon: ListFilter },
-      { id: 'open-annexes', label: 'Anexos', type: 'item', icon: FileSpreadsheet },
-      { id: 'signature', label: 'Firmas', type: 'item', icon: PenTool },
-      { id: 'expert-content', label: 'Modo Experto', type: 'item', icon: Zap }
+      {
+        id: 'cost_views',
+        label: 'Vistas de Ficha',
+        type: 'submenu',
+        icon: Layout,
+        children: [
+          { id: 'header', label: 'Encabezado', type: 'item', icon: Layout },
+          { id: 'open-sections', label: 'Secciones', type: 'item', icon: ListFilter },
+          { id: 'open-annexes', label: 'Anexos', type: 'item', icon: FileSpreadsheet },
+          { id: 'signature', label: 'Firmas', type: 'item', icon: PenTool },
+          { id: 'expert-content', label: 'Modo Todo (Experto)', type: 'item', icon: Zap }
+        ]
+      },
+      {
+        id: 'cost_modes',
+        label: 'Modos de Visualización',
+        type: 'submenu',
+        icon: Eye,
+        children: [
+          { id: 'view-kpis', label: 'Tablero (KPIs)', type: 'item', icon: BarChart3 },
+          { id: 'view-expert', label: 'Modo Experto', type: 'item', icon: Zap },
+          { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
+          { id: 'view-reading', label: 'Lectura Narrativa', type: 'item', icon: BookOpen }
+        ]
+      },
+      {
+        id: 'cost_gen',
+        label: 'Generación',
+        type: 'submenu',
+        icon: Wand2,
+        children: [
+          { id: 'gen-quick', label: 'Generación Rápida', type: 'item', icon: Zap },
+          { id: 'gen-expert', label: 'Generación Experta', type: 'item', icon: Wand2 }
+        ]
+      },
+      {
+        id: 'cost_tools',
+        label: 'Herramientas',
+        type: 'submenu',
+        icon: Settings,
+        children: [
+          { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload },
+          { id: 'tool-save', label: 'Guardar Ficha', type: 'item', icon: Save },
+          { id: 'tool-export-excel', label: 'Exportar Excel', type: 'item', icon: FileSpreadsheet },
+          { id: 'tool-export-pdf', label: 'Exportar PDF', type: 'item', icon: Download }
+        ]
+      },
+      {
+        id: 'cost_resources',
+        label: 'Recursos',
+        type: 'submenu',
+        icon: HelpCircle,
+        children: [
+          { id: 'res-help', label: 'Ayuda de Vista', type: 'item', icon: HelpCircle },
+          { id: 'res-system-help', label: 'Ayuda del Sistema', type: 'item', icon: Activity },
+          { id: 'res-academy', label: 'Academia Pro', type: 'item', icon: GraduationCap }
+        ]
+      }
     ]
   },
   {
