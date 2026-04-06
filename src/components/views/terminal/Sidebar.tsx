@@ -160,7 +160,23 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                         (item.id === 'reports_ipv' && ipvActiveTab === 'reports') ||
                         (item.id === 'dashboard_ipv' && ipvActiveTab === 'dashboard') ||
                         (item.id === 'catalog_ipv' && ipvActiveTab === 'catalog') ||
-                        (item.id === 'audit_ipv' && ipvActiveTab === 'audit')
+                        (item.id === 'audit_ipv' && ipvActiveTab === 'audit') ||
+                        (item.id === 'receipts' && ipvActiveTab === 'receipts') ||
+                        (item.id === 'intelligent-receipts' && ipvActiveTab === 'intelligent-receipts') ||
+                        (item.id === 'transfers' && ipvActiveTab === 'transfers') ||
+                        (item.id === 'qr' && ipvActiveTab === 'qr') ||
+                        (item.id === 'ingestion' && ipvActiveTab === 'ingestion') ||
+                        (item.id === 'pivot' && ipvActiveTab === 'pivot') ||
+                        (item.id === 'rules' && ipvActiveTab === 'rules') ||
+                        (item.id === 'sim' && ipvActiveTab === 'sim') ||
+                        (item.id === 'breakdown' && ipvActiveTab === 'breakdown') ||
+                        (item.id === 'planning' && ipvActiveTab === 'planning') ||
+                        (item.id === 'errors' && ipvActiveTab === 'errors') ||
+                        (item.id === 'mapping-rules' && ipvActiveTab === 'mapping-rules') ||
+                        (item.id === 'mvt' && ipvActiveTab === 'mvt') ||
+                        (item.id === 'mipyme' && ipvActiveTab === 'mipyme') ||
+                        (item.id === 'customers' && ipvActiveTab === 'customers') ||
+                        (item.id === 'movements' && ipvActiveTab === 'movements')
                      ));
 
     const handleItemClick = () => {
@@ -171,7 +187,23 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         const tabId = item.id === 'reports_ipv' ? 'reports' :
                       item.id === 'dashboard_ipv' ? 'dashboard' :
                       item.id === 'catalog_ipv' ? 'catalog' :
-                      item.id === 'audit_ipv' ? 'audit' : item.id;
+                      item.id === 'audit_ipv' ? 'audit' :
+                      item.id === 'receipts' ? 'receipts' :
+                      item.id === 'intelligent-receipts' ? 'intelligent-receipts' :
+                      item.id === 'transfers' ? 'transfers' :
+                      item.id === 'qr' ? 'qr' :
+                      item.id === 'ingestion' ? 'ingestion' :
+                      item.id === 'pivot' ? 'pivot' :
+                      item.id === 'rules' ? 'rules' :
+                      item.id === 'sim' ? 'sim' :
+                      item.id === 'breakdown' ? 'breakdown' :
+                      item.id === 'planning' ? 'planning' :
+                      item.id === 'errors' ? 'errors' :
+                      item.id === 'mapping-rules' ? 'mapping-rules' :
+                      item.id === 'mvt' ? 'mvt' :
+                      item.id === 'mipyme' ? 'mipyme' :
+                      item.id === 'customers' ? 'customers' :
+                      item.id === 'movements' ? 'movements' : item.id;
         setIpvActiveTab(tabId);
       } else {
         onViewChange(item.id as ViewType);
