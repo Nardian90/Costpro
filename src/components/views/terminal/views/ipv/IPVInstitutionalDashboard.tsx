@@ -57,22 +57,82 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
         if (products.length > 0) checkNegativeStock();
     }, [products]);
 
+    const [timeFilter, setTimeFilter] = useState<'DAY' | 'MONTH' | 'YEAR'>('DAY');
+
     const metrics = useMemo(() => {
         const total = transactions.length;
         const matched = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
         const inProcess = transactions.filter(t => t.estado_conciliacion === 'PARCIAL' || (t.estado_conciliacion === 'PENDIENTE' && (t.applied_rules?.length ?? 0) > 0)).length;
         const pending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE' && (!t.applied_rules || t.applied_rules.length === 0)).length;
 
-        return { total, matched, inProcess, pending };
+        const totalCredits = transactions
+            .filter(t => t.tipo === 'Cr')
+            .reduce((sum, t) => sum + (t.importe_cents || 0), 0);
+
+        const totalDebits = transactions
+            .filter(t => t.tipo === 'Db')
+            .reduce((sum, t) => sum + (t.importe_cents || 0), 0);
+
+        return { total, matched, inProcess, pending, totalCredits, totalDebits };
     }, [transactions]);
 
-    const dailyHistory = useMemo(() => getDailySalesHistory(reconciliationLines, transactions), [reconciliationLines, transactions]);
+    const dailyHistory = useMemo(() => {
+        const history: Record<string, any> = {};
+
+        transactions.forEach(tx => {
+            let dateKey = tx.fecha || 'Sin fecha';
+            if (timeFilter === 'MONTH') {
+                dateKey = dateKey.substring(0, 7); // YYYY-MM
+            } else if (timeFilter === 'YEAR') {
+                dateKey = dateKey.substring(0, 4); // YYYY
+            }
+
+            if (!history[dateKey]) {
+                history[dateKey] = { date: dateKey, credits: 0, debits: 0, taxes: 0, cash: 0, transfer: 0 };
+            }
+
+            const amount = Math.abs(tx.importe_cents || 0);
+            const isTax = tx.tipo === 'Db' && (
+                (tx.observaciones?.toUpperCase().includes('NIT')) ||
+                (tx.nombre_cliente?.toUpperCase().includes('NIT'))
+            );
+
+            if (tx.tipo === 'Cr') {
+                history[dateKey].credits += amount;
+            } else if (isTax) {
+                history[dateKey].taxes += amount;
+            } else {
+                history[dateKey].debits += amount;
+            }
+        });
+
+        return Object.values(history).sort((a, b) => a.date.localeCompare(b.date));
+    }, [transactions, timeFilter]);
     const topProducts = useMemo(() => getTopProducts(reconciliationLines), [reconciliationLines]);
     const topPayers = useMemo(() => getTopPayers(transactions), [transactions]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
             {/* KPI Cards Grid */}
+            {/* Financial KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <KPICard
+                    title="Total Créditos (Ingresos)"
+                    value={formatCurrencyCents(metrics.totalCredits)}
+                    icon={<ArrowUpRight className="w-5 h-5" />}
+                    color="emerald"
+                    onClick={() => onNavigate?.('transactions', 'ALL')}
+                />
+                <KPICard
+                    title="Total Débitos (Egresos)"
+                    value={formatCurrencyCents(metrics.totalDebits)}
+                    icon={<ArrowDownRight className="w-5 h-5" />}
+                    color="rose"
+                    onClick={() => onNavigate?.('transactions', 'ALL')}
+                />
+            </div>
+
+            {/* Operational KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <KPICard
                     title="Total Transacciones"
@@ -118,10 +178,28 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
                 <Card className="lg:col-span-8 p-6 rounded-[32px] border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden relative group">
                     <div className="flex justify-between items-center mb-6">
                         <div className="space-y-1">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4" />
-                                Comportamiento de Ventas
-                            </h3>
+                            <div className="flex items-center gap-2 mb-2 lg:mb-0">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 mr-4">
+                                    <TrendingUp className="w-4 h-4" />
+                                    Comportamiento de Ventas
+                                </h3>
+                                <div className="flex bg-muted/50 p-1 rounded-xl">
+                                    {(['DAY', 'MONTH', 'YEAR'] as const).map((f) => (
+                                        <Button
+                                            key={f}
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setTimeFilter(f)}
+                                            className={cn(
+                                                "h-7 px-3 text-[10px] font-black rounded-lg transition-all",
+                                                timeFilter === f ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {f === 'DAY' ? 'DÍA' : f === 'MONTH' ? 'MES' : 'AÑO'}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
                             <p className="text-xs text-muted-foreground/60 font-bold">HISTÓRICO DIARIO POR CANAL</p>
                         </div>
                     </div>
@@ -224,7 +302,7 @@ function D3AreaChart({ data }: { data: any[] }) {
 
         const width = container.clientWidth;
         const height = container.clientHeight;
-        const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+        const margin = { top: 20, right: 20, bottom: 40, left: 60 };
 
         const svg = d3.select(container)
             .append('svg')
@@ -239,35 +317,45 @@ function D3AreaChart({ data }: { data: any[] }) {
             .range([0, width - margin.left - margin.right]);
 
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => Math.max(d.cash, d.transfer, d.debits)) || 100])
+            .domain([0, d3.max(data, d => Math.max(d.credits, d.debits, d.taxes)) || 100])
             .range([height - margin.top - margin.bottom, 0]);
 
         const defs = svg.append('defs');
 
         const addGradient = (id: string, color: string) => {
             const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
-            grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.4);
+            grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.3);
             grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
         };
 
-        addGradient('grad-cash', '#10b981');
-        addGradient('grad-transfer', '#3b82f6');
+        addGradient('grad-credits', '#10b981'); // Emerald
+        addGradient('grad-debits', '#f43f5e');  // Rose
+        addGradient('grad-taxes', '#f59e0b');   // Amber
 
+        // X Axis
         svg.append('g')
             .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-            .call(d3.axisBottom(x).tickSize(0).tickPadding(10))
+            .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat(d => {
+                if (data.length > 10) {
+                    const idx = data.findIndex(item => item.date === d);
+                    return idx % Math.ceil(data.length / 8) === 0 ? d : "";
+                }
+                return d;
+            }))
             .attr('font-size', '10px')
             .attr('font-weight', '700')
             .attr('color', '#888')
             .select('.domain').remove();
 
+        // Y Axis
         svg.append('g')
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d}`).tickSize(0).tickPadding(10))
+            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
             .attr('font-size', '10px')
             .attr('font-weight', '700')
             .attr('color', '#888')
             .select('.domain').remove();
 
+        // Grid lines
         svg.append('g')
             .attr('class', 'grid')
             .attr('opacity', 0.05)
@@ -284,12 +372,17 @@ function D3AreaChart({ data }: { data: any[] }) {
             .y(d => y(d[key]))
             .curve(d3.curveMonotoneX);
 
-        ['cash', 'transfer'].forEach(key => {
-            const color = key === 'cash' ? '#10b981' : '#3b82f6';
+        const series = [
+            { key: 'credits', color: '#10b981', label: 'Créditos' },
+            { key: 'debits', color: '#f43f5e', label: 'Débitos' },
+            { key: 'taxes', color: '#f59e0b', label: 'Impuestos' }
+        ];
+
+        series.forEach(s => {
             svg.append('path')
                 .datum(data)
-                .attr('fill', `url(#grad-${key})`)
-                .attr('d', areaGenerator(key))
+                .attr('fill', `url(#grad-${s.key})`)
+                .attr('d', areaGenerator(s.key))
                 .attr('opacity', 0)
                 .transition().duration(1000)
                 .attr('opacity', 1);
@@ -297,9 +390,9 @@ function D3AreaChart({ data }: { data: any[] }) {
             const path = svg.append('path')
                 .datum(data)
                 .attr('fill', 'none')
-                .attr('stroke', color)
-                .attr('stroke-width', 3)
-                .attr('d', lineGenerator(key));
+                .attr('stroke', s.color)
+                .attr('stroke-width', 2.5)
+                .attr('d', lineGenerator(s.key));
 
             const totalLength = (path.node() as SVGPathElement).getTotalLength();
             path.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
