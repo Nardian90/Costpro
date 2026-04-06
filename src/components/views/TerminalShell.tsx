@@ -126,7 +126,7 @@ export default function TerminalShell() {
   const isBlockingRequired = user.role !== 'admin' && user.role !== 'costo' && !user.activeStoreId;
 
   const handleViewChange = (view: ViewType) => {
-    const costSheetSubViews = ['templates', 'header', 'open-sections', 'open-annexes', 'signature', 'expert-content'];
+    const costSheetSubViews = ["templates", "header", "open-sections", "open-annexes", "signature", "expert-content", "view-kpis", "view-expert", "view-assisted", "view-reading", "gen-quick", "gen-expert", "tool-import", "tool-save", "tool-export-excel", "tool-export-pdf", "res-help", "res-system-help", "res-academy"];
 
     if (costSheetSubViews.includes(view as string)) {
       startTransition(() => {

@@ -101,6 +101,24 @@ const CostSheetView = () => {
   React.useEffect(() => {
     setLayoutMode(isMobile ? 'grid' : 'table');
   }, [isMobile]);
+  React.useEffect(() => {
+    if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
+    else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
+    else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
+    else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
+    else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
+    else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
+    else if (activeSection === 'tool-import') { handleImportJSON(); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'tool-save') { handleExportJSON(); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'tool-export-excel') { handleExportExcel(); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('cost-sheets'); }
+  }, [activeSection]);
+
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
@@ -577,17 +595,10 @@ const CostSheetView = () => {
                         viewMode={viewMode}
                         setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
-                        onOpenHelp={() => setIsHelpPanelOpen(true)}
-                        onOpenSystemHelp={() => setCurrentView("help")}
-                        onOpenAcademy={() => setCurrentView("academy")}
-                        onOpenAnnexes={onOpenAnnexes}
-                        onOpenSections={onOpenSections}
                         onImport={handleImportJSON}
                         onSave={handleExportJSON}
                         onExportExcel={handleExportExcel}
                         onExportPdf={() => setIsExportModalOpen(true)}
-                        onQuickGenerate={() => setViewMode('quick')}
-                        onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
                     />
                 </div>
 

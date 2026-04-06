@@ -45,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   logoScale,
   navRef
 }) => {
-  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab } = useUIStore();
+  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab, activeCostSection } = useUIStore();
   const { user } = useAuthStore();
 
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(() => {
@@ -153,8 +153,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       c.id === item.id || c.children?.some(gc => gc.id === item.id)
     );
 
+    const isCostSheetSubItem = ['templates', 'header', 'open-sections', 'open-annexes', 'signature', 'expert-content', 'view-kpis', 'view-expert', 'view-assisted', 'view-reading', 'gen-quick', 'gen-expert', 'tool-import', 'tool-save', 'tool-export-excel', 'tool-export-pdf', 'res-help', 'res-system-help', 'res-academy'].includes(item.id);
     const isActive = (currentView === item.id) ||
-                     (item.id === 'cost-sheets' && currentView === 'cost-sheets') ||
+                     (item.id === 'cost-sheets' && currentView === 'cost-sheets' && !isCostSheetSubItem) ||
+                     (isCostSheetSubItem && currentView === 'cost-sheets' && activeCostSection === item.id) ||
                      (isIpvSubItem && currentView === 'ipv' && (
                         ipvActiveTab === item.id ||
                         (item.id === 'reports_ipv' && ipvActiveTab === 'reports') ||
