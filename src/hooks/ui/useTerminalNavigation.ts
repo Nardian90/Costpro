@@ -6,7 +6,7 @@ import {
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse, Wallet,
   Database, Table2, Cpu, Zap, BarChart4, Wand2, FileSearch, Target, AlertCircle, ListFilter, Workflow, PackageSearch,
-  QrCode, ArrowRightLeft
+  QrCode, ArrowRightLeft, Layout, FileSpreadsheet, PenTool, Eye, Sparkles, BookOpen, Download, Upload, Save, Activity, FolderOpen
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -48,6 +48,36 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'inventory_adjustments', icon: RefreshCcw, label: 'Ajustes Doc.', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
 
       { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'templates', icon: FolderOpen, label: 'Plantillas', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
+      // Cost View Sub-items
+      { id: 'header', icon: Layout, label: 'Encabezado', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'open-sections', icon: ListFilter, label: 'Secciones', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'open-annexes', icon: FileSpreadsheet, label: 'Anexos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'signature', icon: PenTool, label: 'Firmas', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'expert-content', icon: Zap, label: 'Modo Todo (Experto)', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
+      // Cost Mode Sub-items
+      { id: 'view-kpis', icon: BarChart3, label: 'Tablero (KPIs)', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'view-expert', icon: Zap, label: 'Modo Experto', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'view-assisted', icon: Sparkles, label: 'Modo Asistido', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'view-reading', icon: BookOpen, label: 'Lectura Narrativa', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
+      // Cost Generation Sub-items
+      { id: 'gen-quick', icon: Zap, label: 'Generación Rápida', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'gen-expert', icon: Wand2, label: 'Generación Experta', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
+      // Cost Tool Sub-items
+      { id: 'tool-import', icon: Upload, label: 'Importar JSON', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'tool-save', icon: Save, label: 'Guardar Ficha', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'tool-export-excel', icon: FileSpreadsheet, label: 'Exportar Excel', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'tool-export-pdf', icon: Download, label: 'Exportar PDF', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
+      // Cost Resource Sub-items
+      { id: 'res-help', icon: HelpCircle, label: 'Ayuda de Vista', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'res-system-help', icon: Activity, label: 'Ayuda del Sistema', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+      { id: 'res-academy', icon: GraduationCap, label: 'Academia Pro', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
+
       { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'GESTIÓN' },
       { id: 'ipv', icon: FileText, label: 'IPV Builder', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },

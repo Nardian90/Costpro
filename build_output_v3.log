@@ -1,8 +1,4 @@
-
-> nextjs_tailwind_shadcn_ts@5.8.8 build
-> next build && sh scripts/bundle_standalone.sh
-
-▲ Next.js 16.2.1 (Turbopack)
+▲ Next.js 16.2.2 (Turbopack)
 
   Creating an optimized production build ...
 Turbopack build encountered 1 warnings:
@@ -23,9 +19,9 @@ Import trace:
     ./src/app/api/academy/generate/route.ts
 
 
-✓ Compiled successfully in 34.7s
+✓ Compiled successfully in 23.2s
   Running TypeScript ...
-  Finished TypeScript in 38.7s ...
+  Finished TypeScript in 36.9s ...
   Collecting page data using 3 workers ...
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
@@ -36,7 +32,7 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
   Generating static pages using 3 workers (14/29)
   Generating static pages using 3 workers (21/29)
-✓ Generating static pages using 3 workers (29/29) in 762ms
+✓ Generating static pages using 3 workers (29/29) in 842ms
   Finalizing page optimization ...
 
 Route (app)
@@ -82,11 +78,3 @@ Route (app)
 
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
-
-Bundling standalone build...
-Copying .next/static...
-Copying public...
-Copying knowledge...
-Copying docs...
-Copying ai_context...
-Bundling complete.
