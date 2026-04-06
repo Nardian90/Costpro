@@ -5,7 +5,7 @@ import {
   Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
   Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
   Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard, LayoutGrid
+  LayoutDashboard, LayoutGrid, Layers
 } from 'lucide-react';
 
 export type NavItemType = 'group' | 'submenu' | 'item';
@@ -26,7 +26,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     id: 'estrategico',
     label: 'COSTOS',
     type: 'group',
-    isDirect: true,
+    icon: FileText,
     ariaLabel: 'Módulo de Costos',
     children: [
       { id: 'cost-sheets', label: 'Fichas de Costo', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' }
@@ -36,6 +36,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     id: 'tienda',
     label: 'MULTI-TIENDA',
     type: 'group',
+    icon: Building,
     ariaLabel: 'Operaciones Multi-Tienda',
     children: [
       { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño' },
@@ -78,9 +79,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'ipv_module',
-    label: 'IPV BUILDER',
+    label: 'IPV',
     type: 'group',
-    ariaLabel: 'Constructor de IPV',
+    icon: Layers,
+    ariaLabel: 'Módulo IPV',
     children: [
       {
         id: 'ipv_reporting',
@@ -161,6 +163,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     id: 'configuracion',
     label: 'CONFIGURACIÓN',
     type: 'group',
+    icon: Settings,
     ariaLabel: 'Ajustes del Sistema',
     children: [
       {
@@ -202,7 +205,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     id: 'recursos',
     label: 'MÁS RECURSOS',
     type: 'group',
-    isDirect: true,
+    icon: HelpCircle,
     ariaLabel: 'Ayuda y Documentación',
     children: [
       {

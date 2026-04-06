@@ -54,17 +54,17 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   });
 
   const [expandedModules, setExpandedModules] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return ['estrategico', 'ipv_module'];
+    if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return Array.isArray(parsed.expanded) ? parsed.expanded : ['estrategico', 'ipv_module'];
+        return Array.isArray(parsed.expanded) ? parsed.expanded : [];
       }
     } catch (e) {
       console.warn('Sidebar state load failed, using defaults', e);
     }
-    return ['estrategico', 'ipv_module'];
+    return [];
   });
 
   useEffect(() => {
@@ -124,7 +124,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
     const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId as string);
     if (parents) {
-      setExpandedModules(prev => Array.from(new Set([...prev, ...parents])));
       // If the view belongs to a module, we could automatically focus it, but
       // per requirements, focus is user-triggered.
     }
