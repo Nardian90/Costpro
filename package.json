@@ -85,6 +85,7 @@
     "fake-indexeddb": "^6.2.5",
     "fflate": "^0.8.2",
     "framer-motion": "^12.38.0",
+    "fuse.js": "^7.3.0",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "immer": "^11.1.4",
