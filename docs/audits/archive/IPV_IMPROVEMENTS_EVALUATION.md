@@ -65,3 +65,9 @@
 - **Filtro NIT:** Se verificó que las transacciones DB con "NIT" se sumen a la serie de Impuestos.
 - **Importes:** Las tarjetas KPI coinciden con la suma de `valor_transaccion` de los registros en IndexedDB.
 - **Rendimiento:** El gráfico utiliza `useMemo` para el procesamiento de datos y D3 para renderizado directo en el DOM, asegurando fluidez incluso con miles de registros.
+
+## Correcciones Post-Entrega
+**Fecha:** 2026-04-06
+- **Animaciones:** Se optimizó `D3AreaChart` para que la animación de "dibujado" de líneas (`stroke-dashoffset`) solo ocurra en el primer renderizado. Las actualizaciones por filtros ahora usan transiciones suaves de D3 (`transition().duration(800)`) sin parpadeo.
+- **Filtros Temporales:** Corregida la lógica de agrupación en `dailyHistory` para `MONTH` (YYYY-MM) y `YEAR` (YYYY), asegurando que los datos se sumen correctamente y el eje X se actualice dinámicamente.
+- **Responsividad:** Se integró `ResizeObserver` para que el gráfico se adapte automáticamente al redimensionar la ventana sin perder el estado de la animación.

@@ -1,0 +1,15 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 dev
+> next dev -p 3000
+
+⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+[?25h

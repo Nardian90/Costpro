@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, BankTransaction, ReconciliationLine } from '@/lib/dexie';
 import { StockService } from '@/lib/ipv/StockService';
@@ -88,14 +89,13 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
             }
 
             if (!history[dateKey]) {
-                history[dateKey] = { date: dateKey, credits: 0, debits: 0, taxes: 0, cash: 0, transfer: 0 };
+                history[dateKey] = { date: dateKey, credits: 0, debits: 0, taxes: 0 };
             }
 
             const amount = Math.abs(tx.importe_cents || 0);
-            const isTax = tx.tipo === 'Db' && (
-                (tx.observaciones?.toUpperCase().includes('NIT')) ||
-                (tx.nombre_cliente?.toUpperCase().includes('NIT'))
-            );
+            const obs = (tx.observaciones || '').toUpperCase();
+            const client = (tx.nombre_cliente || '').toUpperCase();
+            const isTax = tx.tipo === 'Db' && (obs.includes('NIT') || client.includes('NIT'));
 
             if (tx.tipo === 'Cr') {
                 history[dateKey].credits += amount;
@@ -106,7 +106,8 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
             }
         });
 
-        return Object.values(history).sort((a, b) => a.date.localeCompare(b.date));
+        // Convert to array and sort by dateKey
+        return Object.values(history).sort((a: any, b: any) => a.date.localeCompare(b.date));
     }, [transactions, timeFilter]);
     const topProducts = useMemo(() => getTopProducts(reconciliationLines), [reconciliationLines]);
     const topPayers = useMemo(() => getTopPayers(transactions), [transactions]);
@@ -294,113 +295,159 @@ function EmptyState({ message }: { message: string }) {
 
 function D3AreaChart({ data }: { data: any[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const svgRef = useRef<any>(null);
+    const isFirstRender = useRef(true);
 
     useEffect(() => {
         if (!containerRef.current || data.length === 0) return;
         const container = containerRef.current;
-        container.innerHTML = '';
 
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        const margin = { top: 20, right: 20, bottom: 40, left: 60 };
-
-        const svg = d3.select(container)
-            .append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('viewBox', `0 0 ${width} ${height}`)
-            .append('g')
-            .attr('transform', `translate(${margin.left},${margin.top})`);
-
-        const x = d3.scalePoint()
-            .domain(data.map(d => d.date))
-            .range([0, width - margin.left - margin.right]);
-
-        const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => Math.max(d.credits, d.debits, d.taxes)) || 100])
-            .range([height - margin.top - margin.bottom, 0]);
-
-        const defs = svg.append('defs');
-
-        const addGradient = (id: string, color: string) => {
-            const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
-            grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.3);
-            grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
-        };
-
-        addGradient('grad-credits', '#10b981'); // Emerald
-        addGradient('grad-debits', '#f43f5e');  // Rose
-        addGradient('grad-taxes', '#f59e0b');   // Amber
-
-        // X Axis
-        svg.append('g')
-            .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
-            .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat(d => {
-                if (data.length > 10) {
-                    const idx = data.findIndex(item => item.date === d);
-                    return idx % Math.ceil(data.length / 8) === 0 ? d : "";
-                }
-                return d;
-            }))
-            .attr('font-size', '10px')
-            .attr('font-weight', '700')
-            .attr('color', '#888')
-            .select('.domain').remove();
-
-        // Y Axis
-        svg.append('g')
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
-            .attr('font-size', '10px')
-            .attr('font-weight', '700')
-            .attr('color', '#888')
-            .select('.domain').remove();
-
-        // Grid lines
-        svg.append('g')
-            .attr('class', 'grid')
-            .attr('opacity', 0.05)
-            .call(d3.axisLeft(y).tickSize(-(width - margin.left - margin.right)).tickFormat(() => ""));
-
-        const areaGenerator = (key: string) => d3.area<any>()
-            .x(d => x(d.date) || 0)
-            .y0(height - margin.top - margin.bottom)
-            .y1(d => y(d[key]))
-            .curve(d3.curveMonotoneX);
-
-        const lineGenerator = (key: string) => d3.line<any>()
-            .x(d => x(d.date) || 0)
-            .y(d => y(d[key]))
-            .curve(d3.curveMonotoneX);
-
-        const series = [
-            { key: 'credits', color: '#10b981', label: 'Créditos' },
-            { key: 'debits', color: '#f43f5e', label: 'Débitos' },
-            { key: 'taxes', color: '#f59e0b', label: 'Impuestos' }
-        ];
-
-        series.forEach(s => {
-            svg.append('path')
-                .datum(data)
-                .attr('fill', `url(#grad-${s.key})`)
-                .attr('d', areaGenerator(s.key))
-                .attr('opacity', 0)
-                .transition().duration(1000)
-                .attr('opacity', 1);
-
-            const path = svg.append('path')
-                .datum(data)
-                .attr('fill', 'none')
-                .attr('stroke', s.color)
-                .attr('stroke-width', 2.5)
-                .attr('d', lineGenerator(s.key));
-
-            const totalLength = (path.node() as SVGPathElement).getTotalLength();
-            path.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
-                .attr('stroke-dashoffset', totalLength)
-                .transition().duration(1500)
-                .attr('stroke-dashoffset', 0);
+        // Use ResizeObserver for responsive behavior
+        const resizeObserver = new ResizeObserver(entries => {
+            if (!entries[0]) return;
+            const { width, height } = entries[0].contentRect;
+            drawChart(width, height);
         });
 
+        resizeObserver.observe(container);
+
+        function drawChart(width: number, height: number) {
+            if (width === 0 || height === 0) return;
+
+            const margin = { top: 20, right: 20, bottom: 40, left: 70 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            let svg;
+            if (!svgRef.current || container.innerHTML === '') {
+                container.innerHTML = '';
+                svg = d3.select(container)
+                    .append('svg')
+                    .attr('width', width)
+                    .attr('height', height)
+                    .attr('viewBox', `0 0 ${width} ${height}`);
+
+                const g = svg.append('g')
+                    .attr('transform', `translate(${margin.left},${margin.top})`)
+                    .attr('class', 'chart-main-group');
+
+                svgRef.current = svg;
+
+                const defs = svg.append('defs');
+                const addGradient = (id: string, color: string) => {
+                    const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+                    grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.3);
+                    grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
+                };
+                addGradient('grad-credits', '#10b981');
+                addGradient('grad-debits', '#f43f5e');
+                addGradient('grad-taxes', '#f59e0b');
+
+                g.append('g').attr('class', 'x-axis').attr('transform', `translate(0,${innerHeight})`);
+                g.append('g').attr('class', 'y-axis');
+                g.append('g').attr('class', 'grid-lines').attr('opacity', 0.05);
+            } else {
+                svg = svgRef.current;
+                svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
+            }
+
+            const g = svg.select('.chart-main-group');
+            const x = d3.scalePoint()
+                .domain(data.map(d => d.date))
+                .range([0, innerWidth]);
+
+            const yValueMax = d3.max(data, d => Math.max(d.credits || 0, d.debits || 0, d.taxes || 0)) || 100;
+            const y = d3.scaleLinear()
+                .domain([0, yValueMax * 1.1])
+                .range([innerHeight, 0])
+                .nice();
+
+            // X Axis
+            g.select('.x-axis')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .transition().duration(800)
+                .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat(d => {
+                    if (data.length > 12) {
+                        const idx = data.findIndex(item => item.date === d);
+                        return idx % Math.ceil(data.length / 8) === 0 ? String(d) : "";
+                    }
+                    return String(d);
+                }))
+                .attr('font-size', '10px')
+                .attr('font-weight', '700')
+                .attr('color', '#888');
+            g.select('.x-axis').select('.domain').remove();
+
+            // Y Axis
+            g.select('.y-axis')
+                .transition().duration(800)
+                .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
+                .attr('font-size', '10px')
+                .attr('font-weight', '700')
+                .attr('color', '#888');
+            g.select('.y-axis').select('.domain').remove();
+
+            // Grid lines
+            g.select('.grid-lines')
+                .transition().duration(800)
+                .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ""));
+
+            const areaGenerator = (key: string) => d3.area<any>()
+                .x(d => x(d.date) || 0)
+                .y0(innerHeight)
+                .y1(d => y(d[key] || 0))
+                .curve(d3.curveMonotoneX);
+
+            const lineGenerator = (key: string) => d3.line<any>()
+                .x(d => x(d.date) || 0)
+                .y(d => y(d[key] || 0))
+                .curve(d3.curveMonotoneX);
+
+            const series = [
+                { key: 'credits', color: '#10b981' },
+                { key: 'debits', color: '#f43f5e' },
+                { key: 'taxes', color: '#f59e0b' }
+            ];
+
+            series.forEach(s => {
+                let areaPath = g.select(`.area-${s.key}`);
+                if (areaPath.empty()) {
+                    areaPath = g.append('path').attr('class', `area-${s.key}`).attr('fill', `url(#grad-${s.key})`).attr('opacity', 0);
+                }
+
+                areaPath.datum(data)
+                    .transition().duration(800)
+                    .attr('opacity', 1)
+                    .attr('d', areaGenerator(s.key));
+
+                let linePath = g.select(`.line-${s.key}`);
+                if (linePath.empty()) {
+                    linePath = g.append('path')
+                        .attr('class', `line-${s.key}`)
+                        .attr('fill', 'none')
+                        .attr('stroke', s.color)
+                        .attr('stroke-width', 2.5);
+                }
+
+                if (isFirstRender.current) {
+                    linePath.datum(data).attr('d', lineGenerator(s.key));
+                    const node = linePath.node() as SVGPathElement;
+                    const totalLength = node.getTotalLength();
+                    linePath.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
+                        .attr('stroke-dashoffset', totalLength)
+                        .transition().duration(1500)
+                        .attr('stroke-dashoffset', 0);
+                } else {
+                    linePath.datum(data)
+                        .transition().duration(800)
+                        .attr('d', lineGenerator(s.key));
+                }
+            });
+
+            isFirstRender.current = false;
+        }
+
+        return () => resizeObserver.disconnect();
     }, [data]);
 
     return <div ref={containerRef} className="w-full h-full" />;
