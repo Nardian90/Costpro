@@ -41,7 +41,7 @@ const TransactionBreakdown = lazy(() => import('./TransactionBreakdown'));
 const PivotStatementView = lazy(() => import('./PivotStatementView').then(m => ({ default: m.PivotStatementView })));
 const FinancialPlanningView = lazy(() => import('./FinancialPlanningView').then(m => ({ default: m.FinancialPlanningView })));
 const CatalogTable = lazy(() => import('./CatalogTable').then(m => ({ default: m.CatalogTable })));
-const MatchingAuditView = lazy(() => import('./MatchingAuditView').then(m => ({ default: m.MatchingAuditView })));
+const MatchingAuditView = lazy(() => import('./MatchingAuditView'));
 const MovementsViewLazy = lazy(() => import('./MovementsView'));
 const BankIngestion = lazy(() => import('./BankIngestion').then(m => ({ default: m.BankIngestion })));
 const IPVReportView = lazy(() => import('./IPVReportView').then(m => ({ default: m.IPVReportView })));

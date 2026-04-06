@@ -1,0 +1,237 @@
+'use client';
+
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Search,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  ArrowUpRight,
+  History,
+  Sparkles,
+  Command,
+  Plus,
+  BarChart3
+} from 'lucide-react';
+import { useUIStore, ViewType } from '@/store';
+import { useAuthStore } from '@/store';
+import { getActionsForUser, Action } from '@/config/actions';
+import { useDashboardView } from './useDashboardView';
+import { useProducts } from '@/hooks/api/useProducts';
+import { formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+
+export default function OCCView() {
+  const { setCurrentView, setActiveCostSection } = useUIStore();
+  const { user } = useAuthStore();
+  const { kpis, isLoading } = useDashboardView();
+  const { data: products = [] } = useProducts(user?.activeStoreId);
+
+  const userActions = useMemo(() =>
+    getActionsForUser(user?.role || 'user'),
+  [user?.role]);
+
+  const quickActions = useMemo(() => userActions.slice(0, 8), [userActions]);
+
+  // Recent actions simulation (would come from localStorage in a real effect)
+  const [recentActions, setRecentActions] = React.useState<Action[]>([]);
+
+  React.useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+    const actions = saved
+      .map((id: string) => userActions.find(a => a.id === id))
+      .filter(Boolean)
+      .slice(0, 3);
+    setRecentActions(actions);
+  }, [userActions]);
+
+  const criticalAlerts = useMemo(() =>
+    products.filter(p => (p.stock_current ?? 0) <= (p.min_stock ?? 0)).length,
+  [products]);
+
+  const stats = useMemo(() => {
+    const sales = kpis?.gross_sales || 0;
+    const profit = kpis?.profit || 0;
+    const margin = sales > 0 ? (profit / sales) * 100 : 0;
+
+    return [
+      {
+        label: 'Ingresos Totales',
+        value: formatCurrency(sales),
+        trend: '+12.5%',
+        up: true,
+        icon: TrendingUp,
+        color: 'text-primary'
+      },
+      {
+        label: 'Margen Operativo',
+        value: `${margin.toFixed(1)}%`,
+        trend: '-0.4%',
+        up: false,
+        icon: TrendingDown,
+        color: 'text-blue-400'
+      },
+      {
+        label: 'Alertas Críticas',
+        value: criticalAlerts.toString(),
+        trend: criticalAlerts > 5 ? 'Requiere Acción' : 'Estable',
+        up: criticalAlerts <= 5,
+        icon: AlertTriangle,
+        color: criticalAlerts > 0 ? 'text-destructive' : 'text-muted-foreground'
+      }
+    ];
+  }, [kpis, criticalAlerts]);
+
+  const handleAction = (action: Action) => {
+    const costSheetSubViews = ["templates", "header", "open-sections", "open-annexes", "signature", "expert-content", "view-kpis", "view-expert", "view-assisted", "view-reading", "gen-quick", "gen-expert", "tool-import", "tool-save", "tool-export-excel", "tool-export-pdf", "res-help", "res-system-help", "res-academy"];
+
+    if (costSheetSubViews.includes(action.route as string)) {
+      setCurrentView('cost-sheets');
+      setActiveCostSection(action.route as string);
+    } else {
+      setCurrentView(action.route);
+    }
+
+    // Update recents
+    const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+    const updated = [action.id, ...recent.filter((id: string) => id !== action.id)].slice(0, 5);
+    localStorage.setItem('recent_actions', JSON.stringify(updated));
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-12 pb-20">
+      {/* Header Section */}
+      <header className="space-y-2">
+        <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Centro de Comando Operativo</h1>
+        </div>
+        <p className="text-sm font-medium text-muted-foreground max-w-2xl">
+            Bienvenido, <span className="text-foreground font-bold">{user?.fullName}</span>. Tienes <span className="text-destructive font-bold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
+        </p>
+      </header>
+
+      {/* Command Layer - Hero Input */}
+      <section className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-[36px] blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+        <button
+          onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+          className="relative w-full flex items-center px-8 py-6 bg-card/50 backdrop-blur-xl border border-border/50 rounded-[32px] text-left hover:bg-card hover:border-primary/50 transition-all active:scale-[0.99]"
+        >
+          <Search className="w-6 h-6 text-muted-foreground mr-6" />
+          <span className="flex-1 text-xl font-medium text-muted-foreground/50">Buscar o ejecutar acción...</span>
+          <div className="flex items-center gap-2">
+            <kbd className="px-3 py-1.5 bg-muted rounded-xl text-xs font-black border border-border flex items-center gap-2 text-muted-foreground uppercase tracking-widest shadow-sm">
+              <Command className="w-3.5 h-3.5" /> K
+            </kbd>
+          </div>
+        </button>
+      </section>
+
+      {/* Quick Actions Grid */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                Acciones Principales
+            </h2>
+            <div className="h-px flex-1 bg-border/50 mx-6" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {quickActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => handleAction(action)}
+              className="group flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-[28px] hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-2xl hover:shadow-primary/5 transition-all active:scale-95"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-4 transition-colors">
+                <action.icon className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-center">{action.label}</span>
+            </button>
+          ))}
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            className="flex flex-col items-center justify-center p-6 bg-muted/20 border border-dashed border-border rounded-[28px] hover:bg-muted/40 transition-all opacity-60 hover:opacity-100"
+          >
+            <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-border flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Más...</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Two Column Layout: Recents & Snapshot */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Actions */}
+        <section className="lg:col-span-1 space-y-6">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 px-2">
+                <History className="w-3.5 h-3.5" /> Recientes
+            </h2>
+            <div className="bg-card border border-border/50 rounded-[32px] p-4 space-y-2">
+              {recentActions.length > 0 ? recentActions.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => handleAction(action)}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-muted transition-colors text-left group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-background group-hover:text-primary transition-colors">
+                    <action.icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold truncate">{action.label}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Hace un momento</div>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              )) : (
+                <div className="py-12 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Sin actividad reciente</p>
+                </div>
+              )}
+            </div>
+        </section>
+
+        {/* Resumen Ejecutivo */}
+        <section className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between px-2">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                   Resumen Ejecutivo
+                </h2>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1.5"
+                >
+                  Ver Análisis <BarChart3 className="w-3 h-3" />
+                </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {stats.map((stat, idx) => (
+                    <div key={idx} className="bg-card border border-border/50 rounded-[32px] p-8 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className={cn("p-3 rounded-2xl bg-muted", stat.color)}>
+                                <stat.icon className="w-5 h-5" />
+                            </div>
+                            <div className={cn(
+                                "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest",
+                                stat.up ? "text-primary" : "text-destructive"
+                            )}>
+                                {stat.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                {stat.trend}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-1">{stat.label}</div>
+                            <div className="text-3xl font-black tracking-tighter tabular-nums">{isLoading ? '...' : stat.value}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+      </div>
+    </div>
+  );
+}
