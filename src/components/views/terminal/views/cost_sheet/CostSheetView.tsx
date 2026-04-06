@@ -108,15 +108,15 @@ const CostSheetView = () => {
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
     else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
     else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
-    else if (activeSection === 'tool-import') { handleImportJSON(); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'tool-save') { handleExportJSON(); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'tool-export-excel') { handleExportExcel(); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('cost-sheets'); }
-    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'tool-import') { handleImportJSON(); setActiveSection('expert-content'); }
+    else if (activeSection === 'tool-save') { handleExportJSON(); setActiveSection('expert-content'); }
+    else if (activeSection === 'tool-export-excel') { handleExportExcel(); setActiveSection('expert-content'); }
+    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); setActiveSection('expert-content'); }
+    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('expert-content'); }
+    else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('expert-content'); }
+    else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('expert-content'); }
+    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('expert-content'); }
+    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('expert-content'); }
   }, [activeSection]);
 
   // Grouping logic for "Smart Grouping" of small sections
