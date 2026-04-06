@@ -368,8 +368,13 @@ export default function IPVView() {
     { id: 'catalog', label: 'Catálogo', icon: PackageSearch, onClick: () => setActiveTab('catalog'), active: activeTab === 'catalog', group: 'ops' },
     { id: 'ingestion', label: 'Ingesta', icon: Zap, onClick: () => setActiveTab('ingestion'), active: activeTab === 'ingestion', group: 'ops' },
     { id: 'reports', label: 'Reportes IPV', icon: FileText, onClick: () => setActiveTab('reports'), active: activeTab === 'reports', group: 'reports' },
-    { id: 'receipts', label: 'Vales de Venta', icon: Receipt, onClick: () => setActiveTab('receipts'), active: activeTab === 'receipts', group: 'reports' },
-    { id: 'qr-report', label: 'Reporte QR', icon: QrCode, onClick: () => setActiveTab('qr-report'), active: activeTab === 'qr-report', group: 'reports' },
+    { id: 'receipts', label: 'Recibos SC-3-01', icon: Receipt, onClick: () => setActiveTab('receipts'), active: activeTab === 'receipts', group: 'reports' },
+    { id: 'intelligent-receipts', label: 'Recepciones IA', icon: Wand2, onClick: () => setActiveTab('intelligent-receipts'), active: activeTab === 'intelligent-receipts', group: 'reports' },
+    { id: 'transfers', label: 'Transferencias', icon: ArrowRightLeft, onClick: () => setActiveTab('transfers'), active: activeTab === 'transfers', group: 'reports' },
+    { id: 'qr', label: 'Pagos QR', icon: QrCode, onClick: () => setActiveTab('qr'), active: activeTab === 'qr', group: 'reports' },
+    { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot', group: 'reports' },
+    { id: 'breakdown', label: 'Desglose Operativo', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown', group: 'reports' },
+    { id: 'planning', label: 'Planeación Fiscal', icon: Target, onClick: () => setActiveTab('planning'), active: activeTab === 'planning', group: 'reports' },
     { id: 'rules', label: 'Reglas Matching', icon: Cpu, onClick: () => setActiveTab('rules'), active: activeTab === 'rules', group: 'advanced' },
     { id: 'audit', label: 'Auditoría', icon: History, onClick: () => setActiveTab('audit'), active: activeTab === 'audit', group: 'advanced' },
     { id: 'movements', label: 'Movimientos', icon: ArrowRightLeft, onClick: () => setActiveTab('movements'), active: activeTab === 'movements', group: 'advanced' },
@@ -561,13 +566,43 @@ export default function IPVView() {
 
           {activeTab === 'receipts' && (
             <div className="m-0 animate-in fade-in duration-500">
+                <IncomeReceiptSection />
+            </div>
+          )}
+
+          {activeTab === 'intelligent-receipts' && (
+            <div className="m-0 animate-in fade-in duration-500">
                 <IntelligentReceiptsSection />
             </div>
           )}
 
-          {activeTab === 'qr-report' && (
+          {activeTab === 'transfers' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <TransferQRReportView type="TRANSFER" />
+            </div>
+          )}
+
+          {activeTab === 'qr' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <TransferQRReportView type="QR" />
+            </div>
+          )}
+
+          {activeTab === 'pivot' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <PivotStatementView />
+            </div>
+          )}
+
+          {activeTab === 'breakdown' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <TransactionBreakdown />
+            </div>
+          )}
+
+          {activeTab === 'planning' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <FinancialPlanningView />
             </div>
           )}
 
