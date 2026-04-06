@@ -23,11 +23,13 @@ import {
 } from '@/components/ui/tooltip';
 
 interface Props {
+    onRunMatching?: () => void;
+    isMatching?: boolean;
     activeTab: string;
     onSelect: (id: string) => void;
 }
 
-export function IPVRightSidebar({ activeTab, onSelect }: Props) {
+export function IPVRightSidebar({ activeTab, onSelect, onRunMatching, isMatching }: Props) {
     const items = [
         { id: 'dashboard', icon: <Home />, label: 'Inicio' },
         { id: 'transactions', icon: <History />, label: 'Transacciones' },

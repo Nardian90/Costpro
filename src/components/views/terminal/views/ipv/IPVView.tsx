@@ -106,7 +106,8 @@ export default function IPVView() {
     return totals;
   }, [reconciliationLines]);
 
-  const handleRunMatching = async () => {
+  const handleRunMatching = useCallback(async () => {
+    console.log('handleRunMatching triggered. Products length:', products?.length);
     if (!products || products.length === 0) {
         toast.error('No hay catálogo de productos. Cargue primero.');
         return;
@@ -155,7 +156,7 @@ export default function IPVView() {
         );
 
         worker.onmessage = async (event) => {
-            const { type, percentage, results, chunk, offset, total } = event.data;
+            const { type, percentage, results, offset, total } = event.data;
 
             if (type === 'PROGRESS') {
                 setMatchProgress(Math.min(90, 15 + (percentage * 0.75)));
@@ -197,14 +198,14 @@ export default function IPVView() {
                         db.bank_statements,
                         db.matching_logs,
                         async () => {
-                            const updates: Array<{ ref: string; status: any }> = [];
+                            const updates: Array<{ ref: string; status_data: any }> = [];
                             const logsToAdd: MatchingLog[] = [];
 
                             for (const result of results) {
                                 // 1. Preparar actualización de transacción
                                 updates.push({
                                     ref: result.transactionId,
-                                    status: {
+                                    status_data: {
                                         estado_conciliacion: result.status,
                                         applied_rules: result.appliedRules,
                                         matching_confidence: result.matchingConfidence,
@@ -231,8 +232,8 @@ export default function IPVView() {
                             }
 
                             if (updates.length > 0) {
-                                for (const { ref, status } of updates) {
-                                    await db.bank_statements.update(ref, status);
+                                for (const { ref, status_data } of updates) {
+                                    await db.bank_statements.update(ref, status_data);
                                 }
                             }
 
@@ -293,7 +294,7 @@ export default function IPVView() {
         toast.error(`Error durante el matching: ${e.message}`);
         setIsMatching(false);
     }
-  };
+  }, [products, transactions, rules, txTotals]);
 
   const handleForceMatch = useCallback(async (tx: BankTransaction) => {
     try {
@@ -417,7 +418,7 @@ export default function IPVView() {
     { id: 'match', label: 'Ejecutar Matching', icon: Play, onClick: handleRunMatching, variant: 'primary' },
     { id: 'rules_sc', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules') },
     { id: 'sync', label: 'Sincronizar', icon: ZapIcon, onClick: () => toast.info('Sincronizando...') },
-  ], []);
+  ], [handleRunMatching]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -617,6 +618,8 @@ export default function IPVView() {
             <IPVRightSidebar
                 activeTab={activeTab}
                 onSelect={setActiveTab}
+                onRunMatching={handleRunMatching}
+                isMatching={isMatching}
             />
         </div>
       </div>
