@@ -31,7 +31,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
     if (!user) return [];
     const all: NavigationItem[] = [
       { id: 'occ', icon: LayoutGrid, label: 'Inicio', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'OVERVIEW' },
-      { id: 'dashboard', icon: TrendingUp, label: 'Analytics', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
+      { id: 'dashboard', icon: TrendingUp, label: 'Análisis', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
       { id: 'pick3-intelligence', icon: BarChart3, label: 'Pick 3 Intelligence', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },

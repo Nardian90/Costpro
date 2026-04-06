@@ -57,7 +57,7 @@ export default function OCCView() {
 
     return [
       {
-        label: 'Revenue Total',
+        label: 'Ingresos Totales',
         value: formatCurrency(sales),
         trend: '+12.5%',
         up: true,
@@ -107,7 +107,7 @@ export default function OCCView() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-primary animate-pulse" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Operational Command Center</h1>
+            <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Centro de Comando Operativo</h1>
         </div>
         <p className="text-sm font-medium text-muted-foreground max-w-2xl">
             Bienvenido, <span className="text-foreground font-bold">{user?.fullName}</span>. Tienes <span className="text-destructive font-bold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
@@ -195,17 +195,17 @@ export default function OCCView() {
             </div>
         </section>
 
-        {/* Executive Snapshot */}
+        {/* Resumen Ejecutivo */}
         <section className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between px-2">
                 <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
-                   Executive Snapshot
+                   Resumen Ejecutivo
                 </h2>
                 <button
                   onClick={() => setCurrentView('dashboard')}
                   className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1.5"
                 >
-                  Ver Analytics <BarChart3 className="w-3 h-3" />
+                  Ver Análisis <BarChart3 className="w-3 h-3" />
                 </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
