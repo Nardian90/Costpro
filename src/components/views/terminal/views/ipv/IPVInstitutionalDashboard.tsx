@@ -1,12 +1,9 @@
-'use client';
-
-import React, { useMemo, useState } from 'react';
-import {
-    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    BarChart, Bar, Cell, PieChart, Pie, AreaChart, Area
-} from 'recharts';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import * as d3 from 'd3';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, BankTransaction, ReconciliationLine } from '@/lib/dexie';
+import { StockService } from '@/lib/ipv/StockService';
 import { Card } from '@/components/ui/card';
-import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
 import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import {
     calculateIPVMetrics,
@@ -24,279 +21,417 @@ import {
     DollarSign,
     Package,
     Activity,
-    ArrowRight
+    ArrowRight,
+    Clock,
+    RotateCcw,
+    AlertTriangle,
+    Sparkles,
+    Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface Props {
     transactions: BankTransaction[];
     reconciliationLines: ReconciliationLine[];
     onStart?: () => void;
+    onNavigate?: (tab: string, kpi?: string, stock?: string) => void;
 }
 
-export function IPVInstitutionalDashboard({ transactions, reconciliationLines, onStart }: Props) {
-    const [selectedPayer, setSelectedPayer] = useState<string | null>(null);
+export function IPVInstitutionalDashboard({ transactions, reconciliationLines, onStart, onNavigate }: Props) {
+    const products = useLiveQuery(() => db.products.toArray()) || [];
 
-    // Filter transactions if a payer is selected
-    const filteredTransactions = useMemo(() => {
-        if (!selectedPayer) return transactions;
-        return transactions.filter(tx => {
-            const payer = tx.observaciones?.toUpperCase(); // Simplified check for filtering
-            return payer?.includes(selectedPayer.toUpperCase());
-        });
-    }, [transactions, selectedPayer]);
+    // Calculate negative stock products
+    const [negativeProductsCount, setNegativeProductsCount] = useState(0);
 
-    const metrics = useMemo(() =>
-        calculateIPVMetrics(reconciliationLines, filteredTransactions),
-    [reconciliationLines, filteredTransactions]);
+    useEffect(() => {
+        async function checkNegativeStock() {
+            let count = 0;
+            for (const p of products) {
+                const stock = await StockService.calculateCurrentStock(p.cod);
+                if (stock < 0) count++;
+            }
+            setNegativeProductsCount(count);
+        }
+        if (products.length > 0) checkNegativeStock();
+    }, [products]);
 
-    const dailyHistory = useMemo(() =>
-        getDailySalesHistory(reconciliationLines, filteredTransactions),
-    [reconciliationLines, filteredTransactions]);
+    const metrics = useMemo(() => {
+        const total = transactions.length;
+        const matched = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
+        const inProcess = transactions.filter(t => t.estado_conciliacion === 'PARCIAL' || (t.estado_conciliacion === 'PENDIENTE' && (t.applied_rules?.length ?? 0) > 0)).length;
+        const pending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE' && (!t.applied_rules || t.applied_rules.length === 0)).length;
 
-    const topProducts = useMemo(() =>
-        getTopProducts(reconciliationLines),
-    [reconciliationLines]);
+        return { total, matched, inProcess, pending };
+    }, [transactions]);
 
-    const topPayers = useMemo(() =>
-        getTopPayers(transactions),
-    [transactions]);
-
-    const categoryData = [
-        { name: 'Efectivo', value: metrics.cashSales, color: '#10b981' },
-        { name: 'Transferencia', value: metrics.transferSales, color: '#3b82f6' }
-    ];
+    const dailyHistory = useMemo(() => getDailySalesHistory(reconciliationLines, transactions), [reconciliationLines, transactions]);
+    const topProducts = useMemo(() => getTopProducts(reconciliationLines), [reconciliationLines]);
+    const topPayers = useMemo(() => getTopPayers(transactions), [transactions]);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-            {/* Header / Filter State */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
-                    <div>
-                        <h2 className="text-2xl font-black tracking-tight text-foreground uppercase">
-                            Panel de Control Ejecutivo
-                        </h2>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-70">
-                            Blindaje Contable e Inteligencia de Ventas
-                        </p>
-                    </div>
-                    {onStart && (
-                        <Button
-                            onClick={onStart}
-                            className="bg-primary text-primary-foreground font-black uppercase tracking-widest px-8 h-12 rounded-2xl shadow-lg hover:scale-105 transition-all flex gap-2 animate-pulse rounded-full"
-                        >
-                            Comenzar
-                            <ArrowRight className="w-5 h-5" />
-                        </Button>
-                    )}
-                </div>
-                {selectedPayer && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 rounded-full flex gap-2 items-center">
-                        Filtrado por: {selectedPayer}
-                        <button onClick={() => setSelectedPayer(null)} className="hover:text-foreground">
-                            <FilterX className="w-3 h-3" />
-                        </button>
-                    </Badge>
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                <MetricCard
-                    title="Ventas Totales"
-                    value={formatCurrencyCents(metrics.totalSales)}
-                    icon={<DollarSign className="w-4 h-4" />}
-                    subtitle="Desglose Declarado"
+        <div className="space-y-6 animate-in fade-in duration-700">
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <KPICard
+                    title="Total Transacciones"
+                    value={metrics.total}
+                    icon={<Activity className="w-5 h-5" />}
+                    onClick={() => onNavigate?.('transactions', 'ALL')}
                     color="blue"
                 />
-                <MetricCard
-                    title="Ingresos Banco"
-                    value={formatCurrencyCents(metrics.bankCredits)}
-                    icon={<ArrowUpRight className="w-4 h-4" />}
-                    subtitle="Realidad Bancaria"
+                <KPICard
+                    title="Cuadradas (Matching)"
+                    value={metrics.matched}
+                    icon={<Check className="w-5 h-5" />}
+                    onClick={() => onNavigate?.('transactions', 'CUADRADAS')}
                     color="emerald"
                 />
-                <MetricCard
-                    title="Salud Contable"
-                    value={`${metrics.healthPercent.toFixed(1)}%`}
-                    icon={<Activity className="w-4 h-4" />}
-                    subtitle="Conciliación Cr vs Tr"
-                    color={metrics.healthPercent > 95 ? "emerald" : "rose"}
-                />
-                <MetricCard
-                    title="Débitos/Gastos"
-                    value={formatCurrencyCents(metrics.bankDebits)}
-                    icon={<ArrowDownRight className="w-4 h-4" />}
-                    subtitle="Egresos Bancarios"
-                    color="rose"
-                />
-                <MetricCard
-                    title="Impuestos Est."
-                    value={formatCurrencyCents(metrics.totalTaxes)}
-                    icon={<Percent className="w-4 h-4" />}
-                    subtitle="Retenciones/Tasas"
-                    color="purple"
-                />
-                <MetricCard
-                    title="Comisiones"
-                    value={formatCurrencyCents(metrics.totalCommissions)}
-                    icon={<TrendingUp className="w-4 h-4" />}
-                    subtitle="Costos Bancarios"
+                <KPICard
+                    title="En Proceso"
+                    value={metrics.inProcess}
+                    icon={<RotateCcw className="w-5 h-5" />}
+                    onClick={() => onNavigate?.('transactions', 'EN_PROCESO')}
                     color="amber"
                 />
+                <KPICard
+                    title="Pendientes"
+                    value={metrics.pending}
+                    icon={<Clock className="w-5 h-5" />}
+                    onClick={() => onNavigate?.('transactions', 'PENDIENTES')}
+                    color="rose"
+                />
+                <KPICard
+                    title="Productos Negativos"
+                    value={negativeProductsCount}
+                    icon={<AlertTriangle className="w-5 h-5" />}
+                    onClick={() => onNavigate?.('catalog', undefined, 'negative_stock')}
+                    color={negativeProductsCount > 0 ? "rose" : "emerald"}
+                    highlight={negativeProductsCount > 0}
+                />
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* 1. Main Trend Chart */}
-                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl xl:col-span-2 space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4" />
-                            Comportamiento Diario de Ventas
-                        </h3>
+            {/* Main Bento Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 auto-rows-[450px]">
+                {/* Sales Trend - Large */}
+                <Card className="lg:col-span-8 p-6 rounded-[32px] border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden relative group">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4" />
+                                Comportamiento de Ventas
+                            </h3>
+                            <p className="text-xs text-muted-foreground/60 font-bold">HISTÓRICO DIARIO POR CANAL</p>
+                        </div>
                     </div>
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={dailyHistory}>
-                                <defs>
-                                    <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                    </linearGradient>
-                                    <linearGradient id="colorTransfer" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 700, fill: 'currentColor' }}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 700, fill: 'currentColor' }}
-                                    tickFormatter={(val) => `$${val}`}
-                                />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', fontSize: '12px' }}
-                                />
-                                <Legend verticalAlign="top" align="right" wrapperStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', paddingBottom: '20px' }} />
-                                <Area type="monotone" dataKey="cash" stroke="#10b981" fill="url(#colorCash)" name="Efectivo" stackId="1" />
-                                <Area type="monotone" dataKey="transfer" stroke="#3b82f6" fill="url(#colorTransfer)" name="Transferencia" stackId="1" />
-                                <Area type="monotone" dataKey="debits" stroke="#f43f5e" fill="transparent" name="Egresos Banco" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {dailyHistory.length > 0 ? (
+                        <D3AreaChart data={dailyHistory} />
+                    ) : (
+                        <EmptyState message="No hay datos de ventas para mostrar" />
+                    )}
                 </Card>
 
-                {/* 2. Top Payers */}
-                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        Top Pagadores
-                    </h3>
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topPayers} layout="vertical" margin={{ left: -20, right: 20 }}>
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} tick={{ fontSize: 9, fontWeight: 800, fill: '#888' }} />
-                                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                                <Bar dataKey="amount" radius={[0, 10, 10, 0]} name="Importe" fill="#3b82f6">
-                                    {topPayers.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={selectedPayer === entry.name ? '#39FF14' : '#3b82f6'} onClick={() => setSelectedPayer(entry.name)} className="cursor-pointer" />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* 3. Top Products by Channel */}
-                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <Package className="w-4 h-4" />
-                        Top 10 Productos por Canal
-                    </h3>
-                    <div className="h-[350px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topProducts} layout="vertical" margin={{ left: -20, right: 20 }}>
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} tick={{ fontSize: 9, fontWeight: 800, fill: '#888' }} />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="cash" name="Efectivo" stackId="a" fill="#10b981" />
-                                <Bar dataKey="transfer" name="Transferencia" stackId="a" fill="#3b82f6" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-
-                {/* 4. Distribution Mix */}
-                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                {/* Matching Distribution - Small */}
+                <Card className="lg:col-span-4 p-6 rounded-[32px] border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-6">
                         <PieIcon className="w-4 h-4" />
-                        Mix de Canales
+                        Estado del Matching
                     </h3>
-                    <div className="h-[350px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={categoryData}
-                                    innerRadius={80}
-                                    outerRadius={120}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                >
-                                    {categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
+                    <D3DonutChart data={[
+                        { label: 'Cuadradas', value: metrics.matched, color: '#10b981' },
+                        { label: 'En Proceso', value: metrics.inProcess, color: '#f59e0b' },
+                        { label: 'Pendientes', value: metrics.pending, color: '#f43f5e' }
+                    ]} />
+                </Card>
+
+                {/* Top Products - Medium */}
+                <Card className="lg:col-span-6 p-6 rounded-[32px] border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-6">
+                        <Package className="w-4 h-4" />
+                        Top Productos (Valor)
+                    </h3>
+                    {topProducts.length > 0 ? (
+                        <D3BarChart data={topProducts.map(p => ({ label: p.name, value: p.total }))} color="#3b82f6" />
+                    ) : (
+                        <EmptyState message="No hay productos vendidos" />
+                    )}
+                </Card>
+
+                {/* Top Payers - Medium */}
+                <Card className="lg:col-span-6 p-6 rounded-[32px] border-none bg-card/40 backdrop-blur-md shadow-2xl overflow-hidden">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-6">
+                        <Users className="w-4 h-4" />
+                        Top Pagadores (Banco)
+                    </h3>
+                    {topPayers.length > 0 ? (
+                        <D3BarChart data={topPayers.map(p => ({ label: p.name, value: p.amount / 100 }))} color="#10b981" />
+                    ) : (
+                        <EmptyState message="No hay transacciones bancarias" />
+                    )}
                 </Card>
             </div>
         </div>
     );
 }
 
-function MetricCard({ title, value, icon, subtitle, color }: { title: string, value: string, icon: React.ReactNode, subtitle?: string, color: string }) {
-    const colorClasses: Record<string, string> = {
-        emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-        rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-        purple: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-        amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-        blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+function KPICard({ title, value, icon, onClick, color, highlight }: any) {
+    const colorMap: any = {
+        blue: "text-blue-500 bg-blue-500/10",
+        emerald: "text-emerald-500 bg-emerald-500/10",
+        amber: "text-amber-500 bg-amber-500/10",
+        rose: "text-rose-500 bg-rose-500/10",
     };
 
     return (
-        <Card className="p-6 border-none bg-card/50 backdrop-blur-sm shadow-lg rounded-[24px] relative overflow-hidden group hover:scale-[1.02] transition-all">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                {icon}
-            </div>
-            <div className="space-y-2 relative z-10">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{title}</p>
-                <div className="flex items-baseline gap-2">
-                    <h3 className="text-2xl font-black text-foreground">{value}</h3>
+        <Card
+            className={cn(
+                "p-5 border-none bg-card/40 backdrop-blur-sm shadow-lg rounded-[24px] cursor-pointer hover:scale-[1.03] active:scale-95 transition-all group",
+                highlight && "ring-2 ring-rose-500/50 animate-pulse"
+            )}
+            onClick={onClick}
+        >
+            <div className="flex justify-between items-start mb-2">
+                <div className={cn("p-2 rounded-xl", colorMap[color] || colorMap["blue"])}>
+                    {icon}
                 </div>
-                {subtitle && <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 tracking-wider">{subtitle}</p>}
+                <ArrowRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+            </div>
+            <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{title}</p>
+                <h3 className="text-3xl font-black">{value}</h3>
             </div>
         </Card>
     );
 }
 
-const FilterX = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M4 4h16v2.172a2 2 0 0 1-.586 1.414L15 12l-4.414 4.414a2 2 0 0 1-1.414.586H4V4z"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-    </svg>
-);
+function EmptyState({ message }: { message: string }) {
+    return (
+        <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground opacity-40 space-y-4">
+            <Sparkles className="w-12 h-12 stroke-[1]" />
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-center">{message}</p>
+        </div>
+    );
+}
+
+function D3AreaChart({ data }: { data: any[] }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!containerRef.current || data.length === 0) return;
+        const container = containerRef.current;
+        container.innerHTML = '';
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const x = d3.scalePoint()
+            .domain(data.map(d => d.date))
+            .range([0, width - margin.left - margin.right]);
+
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(data, d => Math.max(d.cash, d.transfer, d.debits)) || 100])
+            .range([height - margin.top - margin.bottom, 0]);
+
+        const defs = svg.append('defs');
+
+        const addGradient = (id: string, color: string) => {
+            const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+            grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.4);
+            grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
+        };
+
+        addGradient('grad-cash', '#10b981');
+        addGradient('grad-transfer', '#3b82f6');
+
+        svg.append('g')
+            .attr('transform', `translate(0,${height - margin.top - margin.bottom})`)
+            .call(d3.axisBottom(x).tickSize(0).tickPadding(10))
+            .attr('font-size', '10px')
+            .attr('font-weight', '700')
+            .attr('color', '#888')
+            .select('.domain').remove();
+
+        svg.append('g')
+            .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d}`).tickSize(0).tickPadding(10))
+            .attr('font-size', '10px')
+            .attr('font-weight', '700')
+            .attr('color', '#888')
+            .select('.domain').remove();
+
+        svg.append('g')
+            .attr('class', 'grid')
+            .attr('opacity', 0.05)
+            .call(d3.axisLeft(y).tickSize(-(width - margin.left - margin.right)).tickFormat(() => ""));
+
+        const areaGenerator = (key: string) => d3.area<any>()
+            .x(d => x(d.date) || 0)
+            .y0(height - margin.top - margin.bottom)
+            .y1(d => y(d[key]))
+            .curve(d3.curveMonotoneX);
+
+        const lineGenerator = (key: string) => d3.line<any>()
+            .x(d => x(d.date) || 0)
+            .y(d => y(d[key]))
+            .curve(d3.curveMonotoneX);
+
+        ['cash', 'transfer'].forEach(key => {
+            const color = key === 'cash' ? '#10b981' : '#3b82f6';
+            svg.append('path')
+                .datum(data)
+                .attr('fill', `url(#grad-${key})`)
+                .attr('d', areaGenerator(key))
+                .attr('opacity', 0)
+                .transition().duration(1000)
+                .attr('opacity', 1);
+
+            const path = svg.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', color)
+                .attr('stroke-width', 3)
+                .attr('d', lineGenerator(key));
+
+            const totalLength = (path.node() as SVGPathElement).getTotalLength();
+            path.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
+                .attr('stroke-dashoffset', totalLength)
+                .transition().duration(1500)
+                .attr('stroke-dashoffset', 0);
+        });
+
+    }, [data]);
+
+    return <div ref={containerRef} className="w-full h-full" />;
+}
+
+function D3DonutChart({ data }: { data: any[] }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const container = containerRef.current;
+        container.innerHTML = '';
+
+        const totalValue = d3.sum(data, d => d.value);
+        if (totalValue === 0) {
+            const emptyLabel = d3.select(container).append('div').attr('class', 'h-full w-full flex items-center justify-center opacity-40 text-xs font-black uppercase').text('Sin datos');
+            return;
+        }
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const radius = Math.min(width, height) / 2 - 40;
+
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${width / 2},${height / 2})`);
+
+        const pie = d3.pie<any>().value(d => d.value).sort(null);
+        const arcGenerator = d3.arc<any>().innerRadius(radius * 0.6).outerRadius(radius).cornerRadius(10).padAngle(0.05);
+
+        const paths = svg.selectAll('path')
+            .data(pie(data))
+            .enter()
+            .append('path')
+            .attr('fill', d => d.data.color)
+            .attr('d', arcGenerator as any)
+            .attr('opacity', 0.8)
+            .on('mouseover', function() { d3.select(this).transition().duration(200).attr('opacity', 1); })
+            .on('mouseout', function() { d3.select(this).transition().duration(200).attr('opacity', 0.8); });
+
+        paths.transition()
+            .duration(1000)
+            .attrTween('d', function(d) {
+                const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+                return function(t) { return arcGenerator(i(t)) as string; };
+            });
+
+        const center = svg.append('g').attr('text-anchor', 'middle');
+        center.append('text').attr('dy', '-0.5em').attr('class', 'fill-muted-foreground').attr('style', 'font-size: 10px; font-weight: 900;').text('TOTAL');
+        center.append('text').attr('dy', '0.6em').attr('class', 'fill-foreground').attr('style', 'font-size: 24px; font-weight: 900;').text(totalValue);
+
+    }, [data]);
+
+    return <div ref={containerRef} className="w-full h-full" />;
+}
+
+function D3BarChart({ data, color }: { data: any[], color: string }) {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!containerRef.current || data.length === 0) return;
+        const container = containerRef.current;
+        container.innerHTML = '';
+
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const margin = { top: 10, right: 30, bottom: 40, left: 100 };
+
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const x = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.value) || 0])
+            .range([0, width - margin.left - margin.right]);
+
+        const y = d3.scaleBand()
+            .domain(data.map(d => d.label))
+            .range([0, height - margin.top - margin.bottom])
+            .padding(0.3);
+
+        svg.append('g')
+            .call(d3.axisLeft(y).tickSize(0).tickPadding(10))
+            .attr('font-size', '9px')
+            .attr('font-weight', '800')
+            .attr('color', '#888')
+            .select('.domain').remove();
+
+        svg.selectAll('rect')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('y', d => y(d.label) || 0)
+            .attr('x', 0)
+            .attr('height', y.bandwidth())
+            .attr('fill', color)
+            .attr('rx', 6)
+            .attr('width', 0)
+            .transition().duration(1000).delay((d, i) => i * 50)
+            .attr('width', d => x(d.value));
+
+        svg.selectAll('.label-val')
+            .data(data)
+            .enter()
+            .append('text')
+            .attr('class', 'label-val')
+            .attr('y', d => (y(d.label) || 0) + y.bandwidth() / 2)
+            .attr('x', d => x(d.value) + 5)
+            .attr('dy', '.35em')
+            .attr('font-size', '10px')
+            .attr('font-weight', '900')
+            .attr('fill', '#888')
+            .text(d => d.value.toLocaleString())
+            .attr('opacity', 0)
+            .transition().duration(1000).delay((d, i) => i * 50 + 500)
+            .attr('opacity', 1);
+
+    }, [data, color]);
+
+    return <div ref={containerRef} className="w-full h-full" />;
+}
