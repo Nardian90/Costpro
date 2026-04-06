@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useCostSheetStore, useAuthStore } from '@/store';
+import { useCostSheetStore, useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { storeService } from '@/services/store-service';
@@ -102,11 +102,20 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
 
   const { data: currentSheetData, setSheet } = useCostSheetStore();
+  const { setActiveCostSection } = useUIStore();
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.role === 'admin';
 
   // System Templates
   const systemTemplates: Template[] = [
+    {
+      id: 'sys-reinicio',
+      name: 'Nueva Ficha',
+      description: 'Estructura base vacía con fórmulas de encabezado dinámicas.',
+      category: 'Estándar',
+      type: 'system',
+      data: reinicioTemplate
+    },
     {
       id: "sys-lavar",
       name: "Lavar",
@@ -114,14 +123,6 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       category: "Servicios",
       type: "system",
       data: lavarTemplate
-    },
-    {
-      id: 'sys-reinicio',
-      name: 'Plantilla de Reinicio',
-      description: 'Estructura base vacía con fórmulas de encabezado dinámicas.',
-      category: 'Estándar',
-      type: 'system',
-      data: reinicioTemplate
     },
     {
       id: 'sys-juice',
@@ -317,7 +318,8 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const handleImport = (template: Template) => {
     setSheet(template.data);
-    toast.success(`Plantilla "\"${template.name}\"" cargada correctamente`);
+    setActiveCostSection("expert-content");
+    toast.success(`Plantilla "${template.name}" cargada correctamente`);
   };
 
   const handleOpenPublishDialog = (template: Template | null) => {
@@ -772,7 +774,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-[10px] transition-all"
         >
           <Download className="w-3.5 h-3.5 mr-2" />
-          Importar
+          Cargar
         </Button>
         {onPublish && (
           <Button
