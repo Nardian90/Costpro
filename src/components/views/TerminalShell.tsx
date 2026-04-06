@@ -22,11 +22,13 @@ import { CostProLoader } from '@/components/ui/CostProLoader';
 import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
 import { ChatBot } from '@/components/ui/ChatBot';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 import { toast } from 'sonner';
 
 // Lazy load views
 const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
+const OCCView = lazy(() => import('./terminal/views/dashboard/OCCView'));
 const WalletView = lazy(() => import('./terminal/views/wallet/WalletView'));
 const POSView = lazy(() => import('./terminal/views/pos/POSView'));
 const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
@@ -170,6 +172,7 @@ export default function TerminalShell() {
 
   const renderView = (view: ViewType) => {
     switch (view) {
+        case 'occ': return <OCCView />;
         case 'dashboard': return <DashboardView />;
         case 'pick3-intelligence': return <Pick3IntelligenceView />;
         case 'wallet': return <WalletView />;
@@ -323,6 +326,7 @@ export default function TerminalShell() {
       )}
 
       <CreateProductModal />
+      <CommandPalette />
       {currentView !== 'pos' && !isIntegroView && <ChatBot />}
       {currentView !== "pos" && <FloatingCalculator />}
     </div>

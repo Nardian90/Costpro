@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { SafePieChart } from "@/components/ui/SafePieChart";
 import {
   Table,
   TableBody,
@@ -24,152 +25,109 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
   Cell
 } from 'recharts';
 import {
   CheckCircle2,
-  UserCheck,
-  Clock,
   AlertCircle,
-  TrendingUp,
+  Clock,
+  Search,
   Download,
-  History
+  Filter,
+  ArrowRightLeft,
+  ChevronRight,
+  TrendingUp,
+  Activity,
+  History,
+  Zap,
+  Layout,
+  BarChart4
 } from 'lucide-react';
 
-export function MatchingAuditView() {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+export default function MatchingAuditView() {
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
-  const logs = useLiveQuery(
-    () => MatchingLogService.getLogsByDateAndStatus(selectedDate),
-    [selectedDate]
-  );
+  const logs = useLiveQuery(() =>
+    db.matching_logs
+      .orderBy('fecha_ejecucion')
+      .reverse()
+      .toArray()
+  ) || [];
 
-  const transactions = useLiveQuery(() => db.bank_statements.where('fecha').equals(selectedDate).toArray(), [selectedDate]);
-
-  const txHistory = useLiveQuery(
-    () => selectedTx ? MatchingLogService.getTransactionHistory(selectedTx) : Promise.resolve([]),
-    [selectedTx]
-  );
+  const txHistory = useLiveQuery(async () => {
+    if (!selectedTx) return null;
+    return await db.matching_logs
+      .where('transaction_ref')
+      .equals(selectedTx)
+      .reverse()
+      .toArray();
+  }, [selectedTx]);
 
   const stats = useMemo(() => {
-    if (!logs || !transactions) return null;
+    if (logs.length === 0) return null;
+    const completed = logs.filter(l => l.resultado_estado === 'COMPLETO').length;
+    const partial = logs.filter(l => l.resultado_estado === 'PARCIAL').length;
+    const pending = logs.filter(l => l.resultado_estado === 'PENDIENTE').length;
+    const avgConfidence = logs.reduce((acc, l) => acc + (l.matching_confidence || 0), 0) / logs.length;
+    const avgDuration = logs.reduce((acc, l) => acc + (l.duration_ms || 0), 0) / logs.length;
 
-    // Transacciones cuadradas reales en la DB
-    const realComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
-    const realPartial = transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length;
-    const realPending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length;
-
-    // Diferenciar entre automático (en logs) y manual
-    const autoCompleteRefs = new Set(logs.filter(l => l.resultado_estado === 'COMPLETO').map(l => l.transaction_ref));
-    const manualComplete = transactions.filter(t => t.estado_conciliacion === 'COMPLETO' && !autoCompleteRefs.has(t.referencia_origen)).length;
-
-    return {
-      total: transactions.length,
-      completo: realComplete,
-      manualCompleto: manualComplete,
-      autoCompleto: autoCompleteRefs.size,
-      parcial: realPartial,
-      pendiente: realPending,
-      avgConfidence: logs.length > 0 ? logs.reduce((sum, l) => sum + (l.matching_confidence || 0), 0) / logs.length : 0,
-      successRate: transactions.length > 0 ? (realComplete / transactions.length) * 100 : 0
-    };
-  }, [logs, transactions]);
+    return { completed, partial, pending, avgConfidence, avgDuration };
+  }, [logs]);
 
   const chartData = useMemo(() => {
     if (!stats) return [];
     return [
-      { name: 'AUTO', value: stats.autoCompleto, color: '#22c55e' },
-      { name: 'MANUAL', value: stats.manualCompleto, color: '#3b82f6' },
-      { name: 'PARCIAL', value: stats.parcial, color: '#f97316' },
-      { name: 'PENDIENTE', value: stats.pendiente, color: '#ef4444' }
+      { name: 'Completo', value: stats.completed, color: '#10b981' },
+      { name: 'Parcial', value: stats.partial, color: '#3b82f6' },
+      { name: 'Pendiente', value: stats.pending, color: '#f59e0b' }
     ];
   }, [stats]);
 
-  if (!logs) return <div className="p-8 text-center font-bold animate-pulse">Cargando auditoría...</div>;
-
   return (
-    <div className="space-y-6 p-4">
-      {/* Date Filter */}
-      <div className="flex items-center gap-4">
-        <History className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-black uppercase tracking-tight">Auditoría del Motor</h2>
-        <Input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setSelectedTx(null);
-          }}
-          className="w-40 font-mono text-xs"
-        />
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-3xl font-black tracking-tighter uppercase text-foreground">Auditoría del Motor</h2>
+          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">Control de Integridad & Matching</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="BUSCAR REF..."
+              className="h-9 w-48 pl-9 text-[10px] font-black tracking-widest uppercase bg-card/50"
+            />
+          </div>
+          <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Card className="p-4 bg-green-500/5 border-green-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CUADRADAS (TOTAL)</p>
-                <p className="text-2xl font-black text-green-600">{stats.completo}</p>
-                <div className="flex gap-2 mt-1">
-                    <span className="text-[9px] font-bold text-green-700 bg-green-500/10 px-1 rounded">AUTO: {stats.autoCompleto}</span>
-                    <span className="text-[9px] font-bold text-blue-700 bg-blue-500/10 px-1 rounded">MANUAL: {stats.manualCompleto}</span>
-                </div>
-              </div>
-              <CheckCircle2 className="w-6 h-6 text-green-600 opacity-20" />
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-orange-500/5 border-orange-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PARCIALES</p>
-                <p className="text-2xl font-black text-orange-600">{stats.parcial}</p>
-              </div>
-              <Clock className="w-6 h-6 text-orange-600 opacity-20" />
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-red-500/5 border-red-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">PENDIENTES</p>
-                <p className="text-2xl font-black text-red-600">{stats.pendiente}</p>
-              </div>
-              <AlertCircle className="w-6 h-6 text-red-600 opacity-20" />
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-primary/5 border-primary/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">CONFIANZA AVG</p>
-                <p className="text-2xl font-black">{(stats.avgConfidence * 100).toFixed(0)}%</p>
-              </div>
-              <TrendingUp className="w-6 h-6 text-primary opacity-20" />
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-card border-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">TASA ÉXITO</p>
-                <p className="text-2xl font-black">{stats.successRate.toFixed(1)}%</p>
-              </div>
-              <CheckCircle2 className="w-6 h-6 text-primary opacity-20" />
-            </div>
-          </Card>
+      {/* Overview Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+                { label: 'Tasa Éxito', value: `${((stats.completed / logs.length) * 100).toFixed(1)}%`, icon: TrendingUp, color: 'text-primary' },
+                { label: 'Confianza Promedio', value: `${(stats.avgConfidence * 100).toFixed(0)}%`, icon: Activity, color: 'text-blue-500' },
+                { label: 'Latencia Promedio', value: `${stats.avgDuration.toFixed(0)}ms`, icon: Zap, color: 'text-orange-500' },
+                { label: 'Total Ejecuciones', value: logs.length, icon: History, color: 'text-muted-foreground' }
+            ].map((s, idx) => (
+                <Card key={idx} className="p-4 flex items-center gap-4 border-muted/20">
+                    <div className={`p-3 rounded-2xl bg-muted/50 ${s.color}`}>
+                        <s.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{s.label}</p>
+                        <p className="text-xl font-black tabular-nums">{s.value}</p>
+                    </div>
+                </Card>
+            ))}
         </div>
-      ) : (
-        <Card className="p-8 text-center text-muted-foreground italic border-dashed">
-            No hay actividad registrada para esta fecha.
-        </Card>
       )}
 
       {/* Charts */}
@@ -177,26 +135,8 @@ export function MatchingAuditView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="p-4">
             <h3 className="text-xs font-black uppercase mb-4 tracking-widest text-muted-foreground">Distribución de Resultados</h3>
-            <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                    <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, value }) => `${name}: ${value}`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                    >
-                        {chartData.map((entry, idx) => (
-                        <Cell key={idx} fill={entry.color} />
-                        ))}
-                    </Pie>
-                    <RechartsTooltip />
-                    </PieChart>
-                </ResponsiveContainer>
+            <div className="w-full">
+                <SafePieChart data={chartData} colors={chartData.map(d => d.color)} height={250} />
             </div>
             </Card>
 

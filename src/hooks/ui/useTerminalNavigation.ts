@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useRef } from 'react';
 import { useMotionValue, useTransform } from 'framer-motion';
 import {
-  BarChart3, ShoppingCart, Book, Package, Warehouse, Receipt,
+  LayoutGrid, BarChart3, ShoppingCart, Book, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse, Wallet,
@@ -17,7 +17,7 @@ export interface NavigationItem {
   icon: any;
   label: string;
   roles: UserRole[];
-  category: 'OPERACIONES' | 'INVENTARIO' | 'GESTIÓN' | 'LEGAL' | 'IPV';
+  category: 'OPERACIONES' | 'INVENTARIO' | 'GESTIÓN' | 'LEGAL' | 'IPV' | 'OVERVIEW';
 }
 
 export function useTerminalNavigation(user: UserContract | null, sidebarSearch: string) {
@@ -30,7 +30,8 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
   const navigationItems = useMemo(() => {
     if (!user) return [];
     const all: NavigationItem[] = [
-      { id: 'dashboard', icon: TrendingUp, label: 'KPI', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
+      { id: 'occ', icon: LayoutGrid, label: 'Inicio', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'OVERVIEW' },
+      { id: 'dashboard', icon: TrendingUp, label: 'Análisis', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
       { id: 'pick3-intelligence', icon: BarChart3, label: 'Pick 3 Intelligence', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
