@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { useAuthStore, useUIStore, ViewType, useCostSheetStore } from '@/store';
 import { Sidebar } from './terminal/Sidebar';
 import { Header } from './terminal/Header';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
@@ -59,13 +59,14 @@ const Pick3IntelligenceView = lazy(() => import('./terminal/views/pick3/Pick3Int
 
 export default function TerminalShell() {
   const { user, loading, status, logout, updateUser } = useAuthStore();
+  const setActiveSection = useCostSheetStore(state => state.updateValue);
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
   const {
     currentView, setCurrentView,
-    sidebarOpen, toggleSidebar, setSidebarOpen
+    sidebarOpen, toggleSidebar, setSidebarOpen, setActiveCostSection
   } = useUIStore();
 
   const [sidebarSearch, setSidebarSearch] = useState('');
@@ -125,9 +126,19 @@ export default function TerminalShell() {
   const isBlockingRequired = user.role !== 'admin' && user.role !== 'costo' && !user.activeStoreId;
 
   const handleViewChange = (view: ViewType) => {
-    startTransition(() => {
-      setCurrentView(view);
-    });
+    const costSheetSubViews = ['templates', 'header', 'open-sections', 'open-annexes', 'signature', 'expert-content'];
+
+    if (costSheetSubViews.includes(view as string)) {
+      startTransition(() => {
+        setCurrentView('cost-sheets' as ViewType);
+        setActiveCostSection(view as string);
+      });
+    } else {
+      startTransition(() => {
+        setCurrentView(view);
+      });
+    }
+
     if (isMobile) {
       setSidebarOpen(false);
     }
@@ -240,7 +251,7 @@ export default function TerminalShell() {
         />
       )}
 
-      <main className="flex-1 min-h-screen flex flex-col z-10 min-w-0">
+      <main className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-all duration-300 ease-in-out", sidebarOpen && !isMobile && "pl-64 lg:pl-72")}>
         {!isIntegroView && (
           <Header
             sidebarOpen={sidebarOpen}
@@ -304,7 +315,7 @@ export default function TerminalShell() {
         </div>
       </main>
 
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
           onClick={toggleSidebar}

@@ -5,7 +5,7 @@ import {
   Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
   Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
   Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard, LayoutGrid, Layers
+  LayoutDashboard, LayoutGrid, Layers, PenTool, Layout, FileSpreadsheet, FolderOpen
 } from 'lucide-react';
 
 export type NavItemType = 'group' | 'submenu' | 'item';
@@ -22,14 +22,20 @@ export interface NavModule {
 }
 
 export const SIDEBAR_STRUCTURE: NavModule[] = [
-  {
+    {
     id: 'estrategico',
     label: 'COSTOS',
     type: 'group',
     icon: FileText,
     ariaLabel: 'Módulo de Costos',
     children: [
-      { id: 'cost-sheets', label: 'Fichas de Costo', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' }
+      { id: 'cost-sheets', label: 'Lista de Fichas', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' },
+      { id: 'templates', label: 'Plantillas', type: 'item', icon: FolderOpen },
+      { id: 'header', label: 'Encabezado', type: 'item', icon: Layout },
+      { id: 'open-sections', label: 'Secciones', type: 'item', icon: ListFilter },
+      { id: 'open-annexes', label: 'Anexos', type: 'item', icon: FileSpreadsheet },
+      { id: 'signature', label: 'Firmas', type: 'item', icon: PenTool },
+      { id: 'expert-content', label: 'Modo Experto', type: 'item', icon: Zap }
     ]
   },
   {
