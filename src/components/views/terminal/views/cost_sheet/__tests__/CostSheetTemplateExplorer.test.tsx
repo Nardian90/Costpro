@@ -6,6 +6,7 @@ import React from 'react';
 // Mock dependencies
 vi.mock('@/store', () => ({
   useCostSheetStore: vi.fn(() => vi.fn()),
+  useUIStore: vi.fn(() => ({ setActiveCostSection: vi.fn() })),
   useAuthStore: vi.fn((selector: any) => selector({
     user: {
       id: 'admin-id',
@@ -61,7 +62,7 @@ describe('CostSheetTemplateExplorer', () => {
 
   it('should render system templates', () => {
     render(<CostSheetTemplateExplorer />);
-    expect(screen.getByText('Plantilla de Reinicio')).toBeDefined();
+    expect(screen.getByText('Nueva Ficha')).toBeDefined();
   });
 
   it('should fetch stores for admin', async () => {
