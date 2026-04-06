@@ -483,6 +483,15 @@ export default function IPVView() {
                 <IPVInstitutionalDashboard
                     transactions={transactions || []}
                     reconciliationLines={reconciliationLines || []}
+                    onNavigate={(tab, kpi, stock) => {
+                        setActiveTab(tab as any);
+                        if (kpi) setKpiFilter(kpi as any);
+                        if (stock) {
+                            localStorage.setItem('catalog_stockFilter', stock);
+                            // If we are already in catalog, we might need to trigger a refresh or use a better state management
+                            // But for now, navigation to the tab will trigger a mount or useEffect in CatalogTable
+                        }
+                    }}
                 />
             </div>
           )}
