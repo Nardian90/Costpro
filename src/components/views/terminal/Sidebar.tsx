@@ -325,12 +325,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         >
           <motion.div
             style={{ scale: logoScale }}
-            className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
+            className="px-4 py-8 sm:p-8 h-[100px] flex flex-col justify-center"
           >
-            <CostProLogo size={50} animated={true} />
-            <div className="mt-4">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-            </div>
+            <CostProLogo size={50} animated={true} showTagline={false} />
+
           </motion.div>
         </motion.div>
 
@@ -394,29 +392,30 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               </div>
             </button>
           )}
-          <button
-            onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
-            aria-label="Abrir calculadora"
-            aria-pressed={isCalculatorOpen}
-            className={cn(
-              "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-              isCalculatorOpen
-                ? "bg-primary/10 text-primary border border-primary/20"
-                : "hover:bg-primary/5 text-sidebar-foreground/60"
-            )}
-          >
-            <Calculator className="w-4.5 h-4.5" />
-            <span className="text-xs uppercase tracking-wider">Calculadora</span>
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={onLogout}
+              aria-label="Cerrar sesión"
+              className="flex-1 flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
+            >
+              <LogOut className="w-4.5 h-4.5" />
+              <span className="text-xs uppercase tracking-wider">Salir</span>
+            </button>
 
-          <button
-            onClick={onLogout}
-            aria-label="Cerrar sesión"
-            className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
-          >
-            <LogOut className="w-4.5 h-4.5" />
-            <span className="text-xs uppercase tracking-wider">Salir</span>
-          </button>
+            <button
+              onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+              aria-label="Abrir calculadora"
+              aria-pressed={isCalculatorOpen}
+              className={cn(
+                "p-3.5 rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                isCalculatorOpen
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "hover:bg-primary/5 text-sidebar-foreground/60"
+              )}
+            >
+              <Calculator className="w-4.5 h-4.5" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>
