@@ -420,6 +420,7 @@ export default function IPVView() {
   // Shortcut Bar
   const shortcuts = useMemo(() => [
     { id: 'dash', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics') },
+    { id: "extracto", label: "Extracto", icon: FileText, onClick: () => setActiveTab("ingestion") },
     { id: 'match', label: 'Ejecutar Matching', icon: Play, onClick: handleRunMatching, variant: 'primary' },
     { id: 'rules_sc', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules') },
     { id: 'sync', label: 'Sincronizar', icon: ZapIcon, onClick: () => toast.info('Sincronizando...') },
