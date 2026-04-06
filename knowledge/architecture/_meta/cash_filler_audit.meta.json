@@ -1,0 +1,19 @@
+{
+  "artifactName": "cash_filler_audit",
+  "version": "1.0.0",
+  "hash": "sha256:652e90c216d57bade6f925eb75c8b8a4fc199f2a7fc218b75b0aaaf814318d2b",
+  "confidenceScore": 100.0,
+  "reviewRequired": false,
+  "createdAt": "2026-04-06T18:57:09.537717+00:00Z",
+  "sourcePhase": 15,
+  "createdBy": "architecture-scheduler/9.0",
+  "confidenceModel": "ai-arch-v9.0",
+  "provenance": {
+    "inputs": [],
+    "tools": [
+      "architecture-scheduler/9.0"
+    ]
+  },
+  "explainabilitySummary": "Generado automáticamente en Fase 15",
+  "previousVersions": []
+}

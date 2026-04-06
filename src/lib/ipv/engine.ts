@@ -15,7 +15,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "stock-limit", tipo: "STOCK_LIMIT", prioridad: 1, activo: true, meta: { allow_negative: false }, descripcion: "Límites de Stock" },
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
-    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_limit: 50000 }, descripcion: "Inyección de Efectivo" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_limit: 50000, valor_minimo: 500 }, descripcion: "Inyección de Efectivo" },
     { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
@@ -456,32 +456,60 @@ export class MatchingEngine {
   ): Promise<number> {
     if (remaining_cents <= 0) return remaining_cents;
     const dailyLimit = rule.meta?.daily_limit ?? Infinity;
+    const valorMinimo = rule.meta?.valor_minimo ?? 0;
+
     if (cashFillUsedTodayInMemory + remaining_cents > dailyLimit) {
-        addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
+        addTrace(pass, "CASH_FILL", "FAIL", `Límite diario de ${dailyLimit} cts excedido`);
         return remaining_cents;
     }
 
-    const line: ReconciliationLine = {
-        id: uuidv4(),
-        transaction_ref: transaction.referencia_origen,
-        fecha_operacion: transaction.fecha,
-        ingreso_banco_cents: 0,
-        venta_real_calculada_cents: remaining_cents,
-        comision_banco_cents: 0,
-        product_cod: 'CASH',
-        product_um: 'UD',
-        cantidad: 1,
-        precio_unitario_cents: remaining_cents,
-        importe_linea_cents: remaining_cents,
-        cuadre_cents: 0,
-        clasificacion: 'Efectivo',
-        origen_dato: 'CASH_FILLER',
-        reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
-        created_at: new Date().toISOString()
-    };
-    lines.push(line);
-    addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubiertos ${remaining_cents} cts como efectivo`);
-    logs.push(`PASS ${pass} (CASH_FILL): Cubierto saldo restante como efectivo.`);
+    let currentResidue = remaining_cents;
+
+    // 1. Intentar seleccionar un producto del catálogo que cumpla con el valor mínimo y sea <= residuo
+    const candidates = this.products
+        .filter(p => p.precio_cents >= valorMinimo && p.precio_cents <= currentResidue)
+        .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    const product = candidates[0];
+
+    if (product) {
+        let available = this.getVirtualStock(product.cod);
+        if (!this.useStockLimit || available > 0 || this.allowNegativeStock) {
+            const line = await this.createLine(transaction, product, 1, "CASH_FILLER", "Efectivo");
+            lines.push(line);
+            this.updateVirtualStock(product.cod, 1, transaction.referencia_origen);
+            currentResidue -= line.importe_linea_cents;
+            addTrace(pass, "CASH_FILL", "SUCCESS", `Asignado producto ${product.cod} para cubrir residuo`);
+            logs.push(`PASS ${pass} (CASH_FILL): Asignado producto ${product.cod} (${line.importe_linea_cents} cts)`);
+        }
+    }
+
+    // 2. Si queda residuo, completar con efectivo directo
+    if (currentResidue > 0) {
+        const line: ReconciliationLine = {
+            id: uuidv4(),
+            transaction_ref: `Efectivo ${transaction.referencia_origen}`,
+            fecha_operacion: transaction.fecha,
+            ingreso_banco_cents: 0,
+            venta_real_calculada_cents: currentResidue,
+            comision_banco_cents: 0,
+            product_cod: "CASH",
+            product_um: "UD",
+            cantidad: 1,
+            precio_unitario_cents: currentResidue,
+            importe_linea_cents: currentResidue,
+            cuadre_cents: 0,
+            clasificacion: "Efectivo",
+            origen_dato: "CASH_FILLER",
+            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-FINAL-${currentResidue}`),
+            created_at: new Date().toISOString()
+        };
+        lines.push(line);
+        addTrace(pass, "CASH_FILL", "SUCCESS", `Cubiertos ${currentResidue} cts como efectivo residual`);
+        logs.push(`PASS ${pass} (CASH_FILL): Cubierto saldo restante de ${currentResidue} cts como efectivo.`);
+        currentResidue = 0;
+    }
+
     return 0;
   }
 
