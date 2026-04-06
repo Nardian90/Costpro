@@ -110,7 +110,7 @@ export default function OCCView() {
             <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Operational Command Center</h1>
         </div>
         <p className="text-sm font-medium text-muted-foreground max-w-2xl">
-            Bienvenido, <span className="text-foreground font-bold">{user?.name}</span>. Tienes <span className="text-destructive font-bold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
+            Bienvenido, <span className="text-foreground font-bold">{user?.fullName}</span>. Tienes <span className="text-destructive font-bold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
         </p>
       </header>
 

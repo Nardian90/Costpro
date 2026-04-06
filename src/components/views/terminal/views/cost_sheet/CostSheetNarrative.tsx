@@ -19,9 +19,11 @@ import {
 
 interface CostSheetNarrativeProps {
   data: any;
+  calculatedValues?: any;
+  calculatedHeader?: any;
 }
 
-export default function CostSheetNarrative({ data }: CostSheetNarrativeProps) {
+export default function CostSheetNarrative({ data, calculatedValues, calculatedHeader }: CostSheetNarrativeProps) {
   const header = data?.header;
   const sections = data?.sections || [];
 
