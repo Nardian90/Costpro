@@ -339,7 +339,7 @@ function D3DonutChart({ data }: { data: any[] }) {
             .attr('transform', `translate(${width / 2},${height / 2})`);
 
         const pie = d3.pie<any>().value(d => d.value).sort(null);
-        const arcGenerator = d3.arc<any>().innerRadius(radius * 0.6).outerRadius(radius).cornerRadius(10).padding(0.05);
+        const arcGenerator = d3.arc<any>().innerRadius(radius * 0.6).outerRadius(radius).cornerRadius(10).padAngle(0.05);
 
         const paths = svg.selectAll('path')
             .data(pie(data))
