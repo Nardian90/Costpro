@@ -46,8 +46,9 @@ import { Bot } from "lucide-react";
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
+  const { activeCostSection: activeSection, setActiveCostSection: setActiveSection } = useUIStore();
   const { user } = useAuthStore();
-  const [activeSection, setActiveSection] = useState('ai-chat');
+
   const [confirmation, setConfirmation] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'default' | 'destructive' }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
     setConfirmation({ isOpen: true, title, message, onConfirm, variant });

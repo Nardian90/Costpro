@@ -163,7 +163,8 @@
 | SecurityGRCPanel | src/components/HealthDashboard/SecurityGRCPanel.tsx | component | Óptimo |  | 2026-04-06 |
 | SecurityScrollContainer | src/components/ui/SecurityScrollContainer.tsx | component | Óptimo | utils | 2026-04-06 |
 | ServiceWorkerRegister | src/components/ServiceWorkerRegister.tsx | component | Óptimo |  | 2026-04-06 |
-| Sidebar | src/components/views/terminal/Sidebar.tsx | component | Advertencia | CostProLogo, utils | 2026-04-06 |
+| Sidebar | src/components/views/terminal/Sidebar.tsx | component | Advertencia | CostProLogo, SidebarFocusMode, utils | 2026-04-06 |
+| SidebarFocusMode | src/components/views/terminal/SidebarFocusMode.tsx | component | Óptimo | utils | 2026-04-06 |
 | SimulationPreview | src/components/views/terminal/views/ipv/IntelligentReceipts/SimulationPreview.tsx | component | Óptimo | badge, card, dexie, scroll-area, table | 2026-04-06 |
 | SpeedDial | src/components/ui/SpeedDial.tsx | component | Óptimo | Portal, utils | 2026-04-06 |
 | SpeedScaleDiagram | src/components/auth/diagrams/SpeedScaleDiagram.tsx | component | Óptimo |  | 2026-04-06 |
@@ -355,7 +356,7 @@
 | FinancialPlanningView | src/components/views/terminal/views/ipv/FinancialPlanningView.tsx | view | Óptimo | button, card, dexie, engine, input, utils | 2026-04-06 |
 | HelpView | src/components/views/terminal/views/help/HelpView.tsx | view | Óptimo | HelpContent, HelpLayout, HelpSidebar, ThemeToggle, useHelpContent, utils | 2026-04-06 |
 | IPVReportView | src/components/views/terminal/views/ipv/IPVReportView.tsx | view | Advertencia | BaseModal, IPVPreviewModal, LoadingOverlay, badge, button, dexie, input, table, tooltip, utils | 2026-04-06 |
-| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVRightSidebar, LoadingOverlay, backup, badge, button, card, dexie, tooltip, utils | 2026-04-06 |
+| IPVView | src/components/views/terminal/views/ipv/IPVView.tsx | view | Advertencia | ActionMenu, IPVControlPanel, IPVHelpDialog, IPVInstitutionalDashboard, IPVRightSidebar, LoadingOverlay, backup, badge, button, card, dexie, engine, tooltip, utils | 2026-04-06 |
 | InventoryAdjustmentsView | src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx | view | Óptimo | ActionMenu, QueryInspector, SearchBar, utils | 2026-04-06 |
 | InventoryCardView | src/components/views/terminal/views/inventory/InventoryCardView.tsx | view | Óptimo | CostProLoader, index, utils | 2026-04-06 |
 | InventoryCountCardView | src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx | view | Óptimo | useInventoryCount, utils | 2026-04-06 |
