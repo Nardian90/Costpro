@@ -204,7 +204,7 @@ export const CommandPalette = () => {
                 </div>
               </div>
               <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-30">
-                Operational Command Center
+                Centro de Comando Operativo
               </div>
             </div>
           </motion.div>

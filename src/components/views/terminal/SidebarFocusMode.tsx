@@ -4,6 +4,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Home } from 'lucide-react';
 import { NavModule } from '@/config/navigation/sidebar.structure';
+import { useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 
 interface SidebarFocusModeProps {
@@ -17,6 +18,13 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
   renderModule,
   onBack
 }) => {
+  const { setCurrentView } = useUIStore();
+
+  const handleHomeClick = () => {
+    setCurrentView('occ');
+    onBack();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
@@ -31,7 +39,7 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
       {/* Breadcrumb Visual con botón de INICIO */}
       <div className="px-4 py-2 mb-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] ml-4 border-l-2 border-primary/20">
         <button
-          onClick={onBack}
+          onClick={handleHomeClick}
           className="flex items-center gap-1.5 text-muted-foreground/40 hover:text-primary transition-colors group outline-none"
           aria-label="Volver al inicio"
         >
