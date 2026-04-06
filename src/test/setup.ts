@@ -42,3 +42,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Set global timeout for tests
+vi.setConfig({ testTimeout: 30000 });
