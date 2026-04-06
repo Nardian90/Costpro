@@ -49,7 +49,7 @@ export default function MatchingAuditView() {
   const [filter, setFilter] = useState('');
 
   const logs = useLiveQuery(() =>
-    db.matching_audit_logs
+    db.matching_logs
       .orderBy('fecha_ejecucion')
       .reverse()
       .toArray()
@@ -57,7 +57,7 @@ export default function MatchingAuditView() {
 
   const txHistory = useLiveQuery(async () => {
     if (!selectedTx) return null;
-    return await db.matching_audit_logs
+    return await db.matching_logs
       .where('transaction_ref')
       .equals(selectedTx)
       .reverse()
