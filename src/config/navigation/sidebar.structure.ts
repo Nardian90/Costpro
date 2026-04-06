@@ -30,7 +30,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     icon: FileText,
     ariaLabel: 'Módulo de Costos',
     children: [
-      { id: 'cost-sheets', label: 'Lista de Fichas', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' },
       { id: 'templates', label: 'Plantillas', type: 'item', icon: FolderOpen },
       {
         id: 'cost_views',
