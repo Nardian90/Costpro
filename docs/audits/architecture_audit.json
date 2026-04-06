@@ -525,16 +525,28 @@
         "architecture_manifest"
       ],
       "cycle": 3
+    },
+    {
+      "phase": 2,
+      "phaseName": "Domain Classification",
+      "startTime": "2026-04-06T01:05:18.795392+00:00Z",
+      "endTime": "2026-04-06T01:05:18.901471+00:00Z",
+      "durationMs": 106,
+      "status": "success",
+      "artifactsGenerated": [
+        "components"
+      ],
+      "cycle": 3
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 44673,
+    "averagePhaseDurationMs": 44677,
     "slowestPhase": 7,
     "slowestPhaseDurationMs": 1200000,
     "fastestPhase": 14,
     "fastestPhaseDurationMs": 0,
-    "lastCycleDurationMs": 376192,
-    "lastUpdated": "2026-04-05T01:27:29.971431Z"
+    "lastCycleDurationMs": 370220,
+    "lastUpdated": "2026-04-06T01:05:18.901890Z"
   },
   "systemHealth": {
     "integrityScore": 84.0,
