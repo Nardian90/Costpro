@@ -5,7 +5,7 @@ import {
   Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
   Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
   Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard
+  LayoutDashboard, LayoutGrid, Layers
 } from 'lucide-react';
 
 export type NavItemType = 'group' | 'submenu' | 'item';
@@ -24,23 +24,22 @@ export interface NavModule {
 export const SIDEBAR_STRUCTURE: NavModule[] = [
   {
     id: 'estrategico',
-    label: 'ESTRATÉGICO',
+    label: 'COSTOS',
     type: 'group',
-    isDirect: true,
-    ariaLabel: 'Módulo Estratégico',
+    icon: FileText,
+    ariaLabel: 'Módulo de Costos',
     children: [
-      { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño' },
-      { id: 'pick3-intelligence', label: 'Pick 3 Intelligence', type: 'item', icon: BarChart3, ariaLabel: 'Inteligencia de picking' },
-      { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera' },
       { id: 'cost-sheets', label: 'Fichas de Costo', type: 'item', icon: FileText, ariaLabel: 'Gestión de costos' }
     ]
   },
   {
     id: 'tienda',
-    label: 'OPERACIONES TIENDA',
+    label: 'MULTI-TIENDA',
     type: 'group',
-    ariaLabel: 'Operaciones de la Tienda',
+    icon: Building,
+    ariaLabel: 'Operaciones Multi-Tienda',
     children: [
+      { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño' },
       {
         id: 'punto_venta',
         label: 'Punto de Venta',
@@ -80,9 +79,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'ipv_module',
-    label: 'IPV BUILDER',
+    label: 'IPV',
     type: 'group',
-    ariaLabel: 'Constructor de IPV',
+    icon: Layers,
+    ariaLabel: 'Módulo IPV',
     children: [
       {
         id: 'ipv_reporting',
@@ -149,9 +149,21 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     ]
   },
   {
+    id: 'otros',
+    label: 'OTROS',
+    type: 'group',
+    icon: LayoutGrid,
+    ariaLabel: 'Otros Recursos',
+    children: [
+      { id: 'pick3-intelligence', label: 'Pick 3 Intelligence', type: 'item', icon: BarChart3, ariaLabel: 'Inteligencia de picking' },
+      { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera' }
+    ]
+  },
+  {
     id: 'configuracion',
     label: 'CONFIGURACIÓN',
     type: 'group',
+    icon: Settings,
     ariaLabel: 'Ajustes del Sistema',
     children: [
       {
@@ -193,7 +205,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     id: 'recursos',
     label: 'MÁS RECURSOS',
     type: 'group',
-    isDirect: true,
+    icon: HelpCircle,
     ariaLabel: 'Ayuda y Documentación',
     children: [
       {
