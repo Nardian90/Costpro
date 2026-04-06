@@ -3,113 +3,53 @@ import { cn } from '@/lib/utils';
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles } from 'lucide-react';
-import { CostSheetFCDropdown } from './CostSheetFCDropdown';
-import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdown';
+import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles, Save, Download, Bot } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
-import { CostSheetGenerateDropdown } from './CostSheetGenerateDropdown';
-import { CostSheetHelpDropdown } from './CostSheetHelpDropdown';
 
 interface CostSheetNavProps {
   navItems: any[];
   annexes: any[];
   activeSection: string;
   setActiveSection: (id: string) => void;
-  viewMode: CostSheetViewMode;
-  setViewMode: (mode: CostSheetViewMode) => void;
+  viewMode: any;
+  setViewMode: (mode: any) => void;
   onOpenActions?: () => void;
-  onOpenAnnexes?: () => void;
-  onOpenSections?: () => void;
-  onOpenHelp?: () => void;
-  onOpenSystemHelp?: () => void;
-  onOpenAcademy?: () => void;
   onImport?: () => void;
   onSave?: () => void;
   onExportExcel?: () => void;
   onExportPdf?: () => void;
-  onQuickGenerate?: () => void;
-  onExpertGenerate?: () => void;
   topOffset?: string;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
-  navItems,
-  annexes,
-  activeSection,
-  setActiveSection,
-  viewMode,
-  setViewMode,
-  onOpenActions,
-  onOpenAnnexes,
-  onOpenSections,
-  onOpenHelp,
-  onOpenSystemHelp,
-  onOpenAcademy,
-  onImport,
   onSave,
   onExportExcel,
   onExportPdf,
-  onQuickGenerate,
-  onExpertGenerate,
+  onImport,
+  setActiveSection,
   topOffset,
 }) => {
   const navActions: Action[] = React.useMemo(() => {
-    // Filter out all items from main nav as requested: "visible solo Ficha, Modo, Generar, Opciones Darian y Ayuda"
-    const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis', 'templates', 'ai-chat'].includes(s.id));
-
-        const actions: Action[] = [
+    const actions: Action[] = [
+        // 1. Guardar (Acción crítica inmediata)
         {
-            id: "open-actions",
-            label: "",
-            onClick: () => {},
+            id: 'save-action',
+            label: 'Guardar',
+            onClick: onSave || (() => {}),
             component: (
                 <button
-                    onClick={onOpenActions || (() => {})}
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-foreground hover:bg-primary/10"
-                    title="Panel de Control"
+                    onClick={onSave || (() => {})}
+                    className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 rounded-xl"
+                    title="Guardar Ficha"
                 >
-                    <Menu className="w-5 h-5" />
+                    <Save className="w-4 h-4" />
+                    <span className="hidden sm:inline">Guardar</span>
                 </button>
             ),
-            tooltip: "Panel de Control"
-        },
-        // Fichas Dropdown (Vistas de la ficha)
-        {
-            id: 'fc-dropdown',
-            label: 'Vistas',
-            onClick: () => {},
-            component: (
-                <CostSheetFCDropdown
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    onOpenSections={onOpenSections}
-                    onOpenAnnexes={onOpenAnnexes}
-                />
-            )
+            tooltip: "Guardar Ficha"
         },
 
-        // 1. Modo Dropdown
-        {
-            id: 'mode-dropdown',
-            label: '',
-            onClick: () => {},
-            component: <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
-        },
-
-        // 2. Generar Dropdown
-        {
-            id: 'generate-dropdown',
-            label: '',
-            onClick: () => {},
-            component: (
-                <CostSheetGenerateDropdown
-                    onQuickGenerate={onQuickGenerate || (() => {})}
-                    onExpertGenerate={onExpertGenerate || (() => {})}
-                />
-            )
-        },
-
-        // 3. Opciones Dropdown (Renamed internally to Opciones Darian)
+        // 2. Exportar / Opciones (Dropdown simplificado)
         {
             id: 'options-dropdown',
             label: '',
@@ -125,28 +65,27 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             )
         },
 
-        // 4. Ayuda Dropdown
+        // 3. Darian AI (Acción crítica)
         {
-            id: 'help-dropdown',
-            label: '',
-            onClick: () => {},
+            id: 'darian-ai',
+            label: 'Darian',
+            onClick: () => setActiveSection('ai-chat'),
             component: (
-                <CostSheetHelpDropdown
-                    onOpenViewHelp={onOpenHelp || (() => {})}
-                    onOpenSystemHelp={onOpenSystemHelp || (() => {})}
-                    onOpenAcademy={onOpenAcademy || (() => {})}
-                />
-            )
+                <button
+                    onClick={() => setActiveSection('ai-chat')}
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-primary hover:bg-primary/10 rounded-xl"
+                    title="Darian AI Expert"
+                >
+                    <Bot className="w-5 h-5" />
+                </button>
+            ),
+            tooltip: "Darian AI Expert"
         },
 
     ];
 
     return actions;
-  }, [
-    navItems, activeSection, setActiveSection, viewMode, setViewMode,
-    onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, onOpenSystemHelp, onOpenAcademy,
-    onImport, onSave, onExportExcel, onExportPdf, onQuickGenerate, onExpertGenerate
-  ]);
+  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection]);
 
   return (
     <div className="mb-0">
