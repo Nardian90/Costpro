@@ -115,6 +115,8 @@ const CostSheetView = () => {
     else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('cost-sheets'); }
     else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('cost-sheets'); }
     else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('cost-sheets'); }
+    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('cost-sheets'); }
   }, [activeSection]);
 
   // Grouping logic for "Smart Grouping" of small sections

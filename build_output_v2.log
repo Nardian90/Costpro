@@ -1,0 +1,36 @@
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/app/api/academy/generate/route.ts
+
+
+✓ Compiled successfully in 50s
+  Running TypeScript ...
+Failed to type check.
+
+./src/hooks/ui/useTerminalNavigation.ts:51:32
+Type error: Cannot find name 'FolderOpen'.
+
+  [90m49 |[0m
+  [90m50 |[0m       { id: [32m'cost-sheets'[0m, icon: [33mFileText[0m, label: [32m'Costos'[0m, roles: [[32m'admin'[0m, [32m'manager'[0m, [32m'e...[0m
+[31m[1m>[0m [90m51 |[0m       { id: [32m'templates'[0m, icon: [33mFolderOpen[0m, label: [32m'Plantillas'[0m, roles: [[32m'admin'[0m, [32m'manager'[0m..[32m.[0m
+  [90m   |[0m                                [31m[1m^[0m
+  [90m52 |[0m
+  [90m53 |[0m       [90m// Cost View Sub-items[0m
+  [90m54 |[0m       { id: [32m'header'[0m, icon: [33mLayout[0m, label: [32m'Encabezado'[0m, roles: [[32m'admin'[0m, [32m'manager'[0m, [32m'enca...[0m
+Next.js build worker exited with code: 1 and signal: null
