@@ -1,6 +1,6 @@
-# Reorganización del Menú y Modo Focus (v9.2) - Refinamiento UI
+# Reorganización del Menú y Modo Focus (v9.4) - Navegación Breadcrumb
 
-Este documento detalla los cambios realizados en la estructura de navegación de CostPro para lograr un entorno operativo limpio y minimalista.
+Este documento detalla los cambios realizados en la estructura de navegación de CostPro para lograr un entorno operativo limpio, funcional y con una UX optimizada.
 
 ## 📊 Comparativa: Antes vs Después
 
@@ -22,26 +22,22 @@ Este documento detalla los cambios realizados en la estructura de navegación de
 ### 1. Inicio Limpio (Zero-Noise Start)
 Se ha configurado el sistema para que, al iniciar sesión, **todos los módulos aparezcan cerrados** por defecto. Esto elimina el ruido visual inmediato y permite al usuario decidir qué área desea explorar.
 
-### 2. Eliminación de Expansión Automática
-El menú ya no se expande automáticamente al cambiar de vista. La navegación ahora respeta la elección del usuario:
-- Si el usuario está en modo **Global**, el menú se mantiene colapsado.
-- Si el usuario está en modo **Focus**, se mantiene dentro del contexto del módulo elegido.
+### 2. Navegación mediante Breadcrumb Operativo
+Se ha eliminado el botón "Volver" de la cabecera para mantener la identidad visual con el logo permanente. En su lugar, el breadcrumb visual ahora es interactivo:
+- **Botón INICIO**: Al hacer clic en "INICIO" dentro del breadcrumb, el sistema sale del modo Focus y regresa al menú global.
+- **Identidad Permanente**: El logo de CostPro se mantiene siempre visible en la parte superior.
 
-### 3. Iconografía Consistente
-Todos los grupos de nivel superior cuentan ahora con iconos representativos, permitiendo una identificación rápida incluso si el texto está parcialmente oculto:
-- **COSTOS**: `FileText`
-- **MULTI-TIENDA**: `Building`
-- **IPV**: `Layers`
-- **OTROS**: `LayoutGrid`
-- **CONFIGURACIÓN**: `Settings`
-- **MÁS RECURSOS**: `HelpCircle`
+### 3. Corrección de Navegación IPV
+Se ha implementado un mapeo robusto de IDs para asegurar que todas las opciones del módulo IPV (Reportes, Catálogos, Auditoría, etc.) redirijan correctamente a la vista principal de IPV y seleccionen la pestaña adecuada.
+
+### 4. Iconografía y Atajos
+- **Iconos**: Cada módulo cuenta con un icono distintivo para identificación rápida.
+- **Atajos (Alt + N)**: Permiten saltar directamente al modo Focus de cualquier módulo (1-6).
 
 ---
 
-## 🔒 Garantía de Integridad
-Se garantiza que **ninguna opción de acceso ha sido eliminada**. El cambio es puramente organizativo y de comportamiento visual (colapsado inicial). La funcionalidad de búsqueda sigue siendo global y exhaustiva.
-
 ## 🛠️ Detalles Técnicos
-- **Persistencia**: Se ha reseteado el estado inicial de `expandedModules` a `[]`.
-- **Renombrado**: Ajustada la estructura en `sidebar.structure.ts` para cambiar "IPV BUILDER" por "IPV".
-- **Comportamiento**: Removida la lógica de auto-expansión en `Sidebar.tsx`.
+- **Componentes**:
+  - `SidebarFocusMode.tsx`: Ahora gestiona el botón "INICIO" con un icono `Home`.
+  - `Sidebar.tsx`: Logo restaurado y lógica condicional simplificada.
+- **Build**: Verificado con **Turbopack**.

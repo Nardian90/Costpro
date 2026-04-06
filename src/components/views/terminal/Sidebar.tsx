@@ -142,26 +142,39 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     );
   }, []);
 
-  const renderNavItem = useCallback((itemId: string) => {
+      const renderNavItem = useCallback((itemId: string) => {
     const item = SIDEBAR_STRUCTURE.flatMap(m => [m, ...(m.children || [])])
       .flatMap(m => [m, ...(m.children || [])])
       .find(m => m.id === itemId);
 
     if (!item || !item.icon) return null;
 
-    const isActive = currentView === item.id || (item.id === 'cost-sheets' && currentView === 'cost-sheets');
     const isIpvSubItem = SIDEBAR_STRUCTURE.find(m => m.id === 'ipv_module')?.children?.some(c =>
       c.id === item.id || c.children?.some(gc => gc.id === item.id)
     );
 
+    const isActive = (currentView === item.id) ||
+                     (item.id === 'cost-sheets' && currentView === 'cost-sheets') ||
+                     (isIpvSubItem && currentView === 'ipv' && (
+                        ipvActiveTab === item.id ||
+                        (item.id === 'reports_ipv' && ipvActiveTab === 'reports') ||
+                        (item.id === 'dashboard_ipv' && ipvActiveTab === 'dashboard') ||
+                        (item.id === 'catalog_ipv' && ipvActiveTab === 'catalog') ||
+                        (item.id === 'audit_ipv' && ipvActiveTab === 'audit')
+                     ));
+
     const handleItemClick = () => {
       if (item.id === 'cost-sheets') {
         onViewChange('cost-sheets');
+      } else if (isIpvSubItem) {
+        onViewChange('ipv');
+        const tabId = item.id === 'reports_ipv' ? 'reports' :
+                      item.id === 'dashboard_ipv' ? 'dashboard' :
+                      item.id === 'catalog_ipv' ? 'catalog' :
+                      item.id === 'audit_ipv' ? 'audit' : item.id;
+        setIpvActiveTab(tabId);
       } else {
         onViewChange(item.id as ViewType);
-      }
-      if (isIpvSubItem) {
-        setIpvActiveTab(item.id);
       }
     };
 
@@ -310,42 +323,15 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           }}
           className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar max-w-full overflow-x-hidden"
         >
-          <AnimatePresence mode="wait">
-            {focusedModuleId ? (
-              <motion.div
-                key="back-button"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
-              >
-                <button
-                  onClick={() => setFocusedModuleId(null)}
-                  className="group flex items-center gap-4 p-4 rounded-2xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                >
-                  <ArrowLeft className="w-6 h-6 transition-transform group-hover:-translate-x-1" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-xs font-black uppercase tracking-[0.2em]">Volver</span>
-                    <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Menú Principal</span>
-                  </div>
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="logo"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                style={{ scale: logoScale }}
-                className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
-              >
-                <CostProLogo size={50} animated={true} />
-                <div className="mt-4">
-                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            style={{ scale: logoScale }}
+            className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
+          >
+            <CostProLogo size={50} animated={true} />
+            <div className="mt-4">
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+            </div>
+          </motion.div>
         </motion.div>
 
         <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
@@ -371,7 +357,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         >
           <AnimatePresence mode="wait">
             {focusedModuleId && focusedModule ? (
-              <SidebarFocusMode
+              <SidebarFocusMode onBack={() => setFocusedModuleId(null)}
                 key="focus-mode"
                 module={focusedModule}
                 renderModule={renderModule}
