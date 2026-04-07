@@ -128,7 +128,7 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
         const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { strategy: globalStrategy });
 
         if (extraLines.length > 0) {
-            await db.reconciliation_lines.bulkAdd(extraLines);
+            await db.reconciliation_lines.bulkPut(extraLines);
             toast.success(`${extraLines.length} líneas de ajuste generadas para ${selectedMonth}`);
         } else {
             toast.warning('No se pudo distribuir el objetivo');

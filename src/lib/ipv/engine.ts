@@ -16,7 +16,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
     { id: "wildcards", tipo: "WILDCARDS", prioridad: 4, activo: true, descripcion: "Comodines" },
-    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 50000 }, descripcion: "Inyección de Efectivo" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 1000000 }, descripcion: "Inyección de Efectivo" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
@@ -175,7 +175,7 @@ export class MatchingEngine {
                 break;
         }
 
-        if (Math.abs(remaining - targetCents) > 0 && !appliedRules.includes(rule.tipo)) {
+        if ((Math.abs(remaining - targetCents) > 0 || (rule.tipo === "CASH_FILL" && remaining === 0)) && !appliedRules.includes(rule.tipo)) {
             appliedRules.push(rule.tipo);
         }
     }
@@ -500,15 +500,22 @@ export class MatchingEngine {
     pass: number,
     cashFillUsedTodayInMemory: number
   ): Promise<number> {
+    if (remaining_cents === 0) {
+        addTrace(pass, 'CASH_FILL', 'SKIPPED', 'Ya está cuadrado');
+        return 0;
+    }
+
+    const absRemaining = Math.abs(remaining_cents);
+    const dailyLimit = rule.meta?.daily_limit ?? Infinity;
+
+    if (cashFillUsedTodayInMemory + absRemaining > dailyLimit) {
+        addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
+        return remaining_cents;
+    }
+
     if (remaining_cents < 0) {
-        const cashNeeded = Math.abs(remaining_cents);
-        const dailyLimit = rule.meta?.daily_limit ?? Infinity;
-
-        if (cashFillUsedTodayInMemory + cashNeeded > dailyLimit) {
-            addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido para el excedente`);
-            return remaining_cents;
-        }
-
+        // Excedente de productos (Pago Mixto)
+        const cashNeeded = absRemaining;
         const line: ReconciliationLine = {
             id: uuidv4(),
             transaction_ref: transaction.referencia_origen,
@@ -531,13 +538,35 @@ export class MatchingEngine {
         lines.push(line);
         addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto excedente de ${cashNeeded} cts como efectivo (Pago Mixto)`);
         logs.push(`PASS ${pass} (CASH_FILL): Pago mixto detectado. Registrado ${cashNeeded} en efectivo.`);
-        return 0;
+    } else {
+        // Faltante de productos (Transferencia sin stock o sin match)
+        const fillerNeeded = remaining_cents;
+        const line: ReconciliationLine = {
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_operacion: transaction.fecha,
+            ingreso_banco_cents: fillerNeeded,
+            venta_real_calculada_cents: fillerNeeded,
+            comision_banco_cents: 0,
+            product_cod: 'CASH',
+            product_um: 'UD',
+            cantidad: 1,
+            precio_unitario_cents: fillerNeeded,
+            importe_linea_cents: fillerNeeded,
+            cuadre_cents: 0,
+            clasificacion: 'Transferencia',
+            origen_dato: 'CASH_FILLER',
+            observaciones: `Cuadre automático: Faltante de productos por ${fillerNeeded} cts`,
+            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-FILL-${fillerNeeded}`),
+            created_at: new Date().toISOString()
+        };
+        lines.push(line);
+        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto faltante de ${fillerNeeded} cts para cuadre total`);
+        logs.push(`PASS ${pass} (CASH_FILL): Cuadre forzado con línea de ajuste de ${fillerNeeded} cts.`);
     }
 
-    addTrace(pass, 'CASH_FILL', 'SKIPPED', 'No hay excedente para pago mixto');
-    return remaining_cents;
+    return 0;
   }
-
   private getVirtualStock(productCod: string): number {
     return this.stockMap.get(productCod) || 0;
   }
