@@ -288,7 +288,7 @@ export function PivotStatementView() {
                             </h4>
                             {Math.abs((Math.round((account?.openingBalance || 0) * 100) + reconciliationTotals) - Math.round((account?.bankStatementBalance || 0) * 100)) < 1
                                 ? <CheckCircle2 className="w-5 h-5" />
-                                : <div className="flex items-center gap-1 animate-pulse">
+                                : <div className="flex items-center gap-1 animate-none">
                                     <AlertTriangle className="w-5 h-5" />
                                     <span className="text-[8px] font-black uppercase">Descuadre detectado</span>
                                   </div>}

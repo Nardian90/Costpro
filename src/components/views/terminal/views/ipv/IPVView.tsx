@@ -403,7 +403,7 @@ export default function IPVView() {
                     <AlertCircle className="w-4 h-4" />
                     Errores
                     {(errorCount ?? 0) > 0 && (
-                        <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full animate-pulse">
+                        <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full ring-2 ring-primary/50 bg-primary/10">
                             {errorCount ?? 0}
                         </Badge>
                     )}
@@ -431,7 +431,7 @@ export default function IPVView() {
     <div className="space-y-6">
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
 
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons w-full overflow-hidden">
         <div className="flex items-center gap-4">
             {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
                 <Button
@@ -448,13 +448,13 @@ export default function IPVView() {
                     Control IPV
                 </h1>
                 <p className="text-muted-foreground flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-primary animate-none" />
                     {activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('-', ' ')}
                 </p>
             </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full lg:w-auto">
             {shortcuts.map((s: any) => (
                 <Button
                     key={s.id}
@@ -481,9 +481,9 @@ export default function IPVView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="relative w-full overflow-hidden">
         {/* Main Content Area */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className="w-full space-y-6">
           {(activeTab === 'dashboard' || activeTab === 'analytics') && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <IPVInstitutionalDashboard
@@ -658,15 +658,12 @@ export default function IPVView() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="xl:col-span-1">
-            <IPVRightSidebar
+        <IPVRightSidebar
                 activeTab={activeTab}
                 onSelect={setActiveTab}
                 onRunMatching={handleRunMatching}
                 isMatching={isMatching}
             />
-        </div>
       </div>
 
       <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />

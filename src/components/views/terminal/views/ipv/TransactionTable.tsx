@@ -291,7 +291,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   )}
                                 </div>
                                   {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
-                                      <div className="text-[10px] text-red-500 font-bold uppercase leading-tight animate-pulse whitespace-normal break-words">
+                                      <div className="text-[10px] text-red-500 font-bold uppercase leading-tight ring-1 ring-red-500/30 bg-red-500/5 whitespace-normal break-words">
                                           ⚠️ {tx.fail_reason}
                                       </div>
                                   )}
@@ -378,7 +378,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
     </Button>
   </div>
     {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
-        <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight animate-pulse whitespace-normal break-words">
+        <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight ring-1 ring-red-500/30 bg-red-500/5 whitespace-normal break-words">
             ⚠️ {tx.fail_reason}
         </div>
     )}

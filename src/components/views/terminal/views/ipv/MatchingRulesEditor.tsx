@@ -262,7 +262,7 @@ export function MatchingRulesEditor() {
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-black uppercase tracking-tight">Copiloto Inteligente</h3>
                 {settings?.copiloto_activo && (
-                  <Badge className="bg-primary text-[10px] font-black uppercase animate-pulse">Optimizado</Badge>
+                  <Badge className="bg-primary text-[10px] font-black uppercase animate-none">Optimizado</Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground max-w-md">
