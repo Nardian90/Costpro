@@ -114,7 +114,7 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
     const topPayers = useMemo(() => getTopPayers(transactions), [transactions]);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 motion-reduce:animate-none motion-reduce:transition-none">
+        <div className="space-y-6  ">
             {/* KPI Cards Grid */}
             {/* Financial KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -298,14 +298,9 @@ function EmptyState({ message }: { message: string }) {
 function D3AreaChart({ data }: { data: any[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<any>(null);
-    const isFirstRender = useRef(true);
 
     const drawChart = useMemo(() => debounce((data: any[]) => {
         if (!containerRef.current) return;
-
-        const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
-        const tDuration = prefersReducedMotion ? 0 : 800;
-        const tDurationLong = prefersReducedMotion ? 0 : 1500;
 
         const width = containerRef.current.clientWidth;
         const height = containerRef.current.clientHeight;
@@ -359,7 +354,6 @@ function D3AreaChart({ data }: { data: any[] }) {
         // X Axis
         g.select('.x-axis')
             .attr('transform', `translate(0,${innerHeight})`)
-            .transition().duration(tDuration)
             .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat((d: any) => {
                 if (data.length > 12) {
                     const idx = data.findIndex(item => item.date === d);
@@ -374,7 +368,6 @@ function D3AreaChart({ data }: { data: any[] }) {
 
         // Y Axis
         g.select('.y-axis')
-            .transition().duration(tDuration)
             .call(d3.axisLeft(y).ticks(5).tickFormat((d: any) => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
             .attr('font-size', '10px')
             .attr('font-weight', '700')
@@ -383,7 +376,6 @@ function D3AreaChart({ data }: { data: any[] }) {
 
         // Grid lines
         g.select('.grid-lines')
-            .transition().duration(tDuration)
             .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ""));
 
         const areaGenerator = (key: string) => d3.area<any>()
@@ -406,13 +398,9 @@ function D3AreaChart({ data }: { data: any[] }) {
         series.forEach(s => {
             let areaPath = g.select(`.area-${s.key}`);
             if (areaPath.empty()) {
-                areaPath = g.append('path').attr('class', `area-${s.key}`).attr('fill', `url(#grad-${s.key})`).attr('opacity', 0);
+                areaPath = g.append('path').attr('class', `area-${s.key}`).attr('fill', `url(#grad-${s.key})`);
             }
-
-            areaPath.datum(data)
-                .transition().duration(tDuration)
-                .attr('opacity', 1)
-                .attr('d', areaGenerator(s.key));
+            areaPath.datum(data).attr('opacity', 1).attr('d', areaGenerator(s.key));
 
             let linePath = g.select(`.line-${s.key}`);
             if (linePath.empty()) {
@@ -422,25 +410,8 @@ function D3AreaChart({ data }: { data: any[] }) {
                     .attr('stroke', s.color)
                     .attr('stroke-width', 2.5);
             }
-
-            if (isFirstRender.current) {
-                linePath.datum(data).attr('d', lineGenerator(s.key));
-                const node = linePath.node() as SVGPathElement;
-                if (node) {
-                    const totalLength = node.getTotalLength();
-                    linePath.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
-                        .attr('stroke-dashoffset', totalLength)
-                        .transition().duration(tDurationLong)
-                        .attr('stroke-dashoffset', 0);
-                }
-            } else {
-                linePath.datum(data)
-                    .transition().duration(tDuration)
-                    .attr('d', lineGenerator(s.key));
-            }
+            linePath.datum(data).attr('d', lineGenerator(s.key));
         });
-
-        isFirstRender.current = false;
     }, 150), []);
 
     useEffect(() => {
@@ -463,23 +434,19 @@ function D3AreaChart({ data }: { data: any[] }) {
 }
 
 
+
 function D3DonutChart({ data }: { data: any[] }) {
-
     const containerRef = useRef<HTMLDivElement>(null);
+
     const drawChart = useMemo(() => debounce((data: any[]) => {
-
         if (!containerRef.current) return;
-
-    const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
-    const tDuration = prefersReducedMotion ? 0 : 800;
-    const tDurationLong = prefersReducedMotion ? 0 : 1500;
 
         const container = containerRef.current;
         container.innerHTML = '';
 
         const totalValue = d3.sum(data, d => d.value);
         if (totalValue === 0) {
-            const emptyLabel = d3.select(container).append('div').attr('class', 'h-full w-full flex items-center justify-center opacity-40 text-xs font-black uppercase').text('Sin datos');
+            d3.select(container).append('div').attr('class', 'h-full w-full flex items-center justify-center opacity-40 text-xs font-black uppercase').text('Sin datos');
             return;
         }
 
@@ -497,7 +464,7 @@ function D3DonutChart({ data }: { data: any[] }) {
         const pie = d3.pie<any>().value(d => d.value).sort(null);
         const arcGenerator = d3.arc<any>().innerRadius(radius * 0.6).outerRadius(radius).cornerRadius(10).padAngle(0.05);
 
-        const paths = svg.selectAll('path')
+        svg.selectAll('path')
             .data(pie(data))
             .enter()
             .append('path')
@@ -507,18 +474,9 @@ function D3DonutChart({ data }: { data: any[] }) {
             .on('mouseover', function() { d3.select(this).transition().duration(200).attr('opacity', 1); })
             .on('mouseout', function() { d3.select(this).transition().duration(200).attr('opacity', 0.8); });
 
-        paths.transition()
-            .duration(1000)
-            .attrTween('d', function(d) {
-                const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
-                return function(t) { return arcGenerator(i(t)) as string; };
-            });
-
         const center = svg.append('g').attr('text-anchor', 'middle');
         center.append('text').attr('dy', '-0.5em').attr('class', 'fill-muted-foreground').attr('style', 'font-size: 10px; font-weight: 900;').text('TOTAL');
         center.append('text').attr('dy', '0.6em').attr('class', 'fill-foreground').attr('style', 'font-size: 24px; font-weight: 900;').text(totalValue);
-
-
     }, 150), []);
 
     useEffect(() => {
@@ -529,16 +487,12 @@ function D3DonutChart({ data }: { data: any[] }) {
     return <div ref={containerRef} className="w-full h-full" />;
 }
 
+
 function D3BarChart({ data, color }: { data: any[], color: string }) {
-
     const containerRef = useRef<HTMLDivElement>(null);
+
     const drawChart = useMemo(() => debounce((data: any[], color: string) => {
-
         if (!containerRef.current || data.length === 0) return;
-
-    const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
-    const tDuration = prefersReducedMotion ? 0 : 800;
-    const tDurationLong = prefersReducedMotion ? 0 : 1500;
 
         const container = containerRef.current;
         container.innerHTML = '';
@@ -579,8 +533,6 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('height', y.bandwidth())
             .attr('fill', color)
             .attr('rx', 6)
-            .attr('width', 0)
-            .transition().duration(prefersReducedMotion ? 0 : 1000).delay((d, i) => i * 50)
             .attr('width', d => x(d.value));
 
         svg.selectAll('.label-val')
@@ -595,11 +547,7 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('font-weight', '900')
             .attr('fill', '#888')
             .text(d => d.value.toLocaleString())
-            .attr('opacity', 0)
-            .transition().duration(prefersReducedMotion ? 0 : 1000).delay((d, i) => i * 50 + 500)
             .attr('opacity', 1);
-
-
     }, 150), []);
 
     useEffect(() => {
