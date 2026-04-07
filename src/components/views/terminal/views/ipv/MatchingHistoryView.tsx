@@ -223,9 +223,9 @@ export default function MatchingHistoryView() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Cualquiera</SelectItem>
-                <SelectItem value="HIGH">Alta (>90%)</SelectItem>
+                <SelectItem value="HIGH">Alta ({'>'}90%)</SelectItem>
                 <SelectItem value="MEDIUM">Media (70-90%)</SelectItem>
-                <SelectItem value="LOW">Baja (<70%)</SelectItem>
+                <SelectItem value="LOW">Baja ({'<'}70%)</SelectItem>
               </SelectContent>
             </Select>
           </div>
