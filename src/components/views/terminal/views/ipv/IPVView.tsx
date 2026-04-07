@@ -102,7 +102,8 @@ export default function IPVView() {
   const txTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     reconciliationLines?.forEach(l => {
-        totals[l.transaction_ref] = (totals[l.transaction_ref] || 0) + l.importe_linea_cents;
+        const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+        totals[baseRef] = (totals[baseRef] || 0) + l.importe_linea_cents;
     });
     return totals;
   }, [reconciliationLines]);

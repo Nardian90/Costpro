@@ -513,12 +513,20 @@ export class MatchingEngine {
         return remaining_cents;
     }
 
+    // Identificador determinístico: {numero_transferencia}_EFECTIVO
+    const baseRef = transaction.referencia_origen;
+    const cashRefPattern = `${baseRef}_EFECTIVO`;
+    const existingCashLinesCount = lines.filter(l => l.transaction_ref.startsWith(cashRefPattern)).length;
+    const finalCashRef = existingCashLinesCount > 0
+        ? `${cashRefPattern}_${existingCashLinesCount + 1}`
+        : cashRefPattern;
+
     if (remaining_cents < 0) {
         // Excedente de productos (Pago Mixto)
         const cashNeeded = absRemaining;
         const line: ReconciliationLine = {
             id: uuidv4(),
-            transaction_ref: transaction.referencia_origen,
+            transaction_ref: finalCashRef,
             fecha_operacion: transaction.fecha,
             ingreso_banco_cents: 0,
             venta_real_calculada_cents: 0,
@@ -531,8 +539,8 @@ export class MatchingEngine {
             cuadre_cents: 0,
             clasificacion: 'Efectivo',
             origen_dato: 'CASH_FILLER',
-            observaciones: `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`,
-            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${cashNeeded}`),
+            observaciones: `Pago mixto (Transferencia + Efectivo) - Ref: ${baseRef}`,
+            reconciliation_hash: await generateHash(`${finalCashRef}-${cashNeeded}`),
             created_at: new Date().toISOString()
         };
         lines.push(line);
@@ -543,7 +551,7 @@ export class MatchingEngine {
         const fillerNeeded = remaining_cents;
         const line: ReconciliationLine = {
             id: uuidv4(),
-            transaction_ref: transaction.referencia_origen,
+            transaction_ref: finalCashRef,
             fecha_operacion: transaction.fecha,
             ingreso_banco_cents: fillerNeeded,
             venta_real_calculada_cents: fillerNeeded,
@@ -557,7 +565,7 @@ export class MatchingEngine {
             clasificacion: 'Transferencia',
             origen_dato: 'CASH_FILLER',
             observaciones: `Cuadre automático: Faltante de productos por ${fillerNeeded} cts`,
-            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-FILL-${fillerNeeded}`),
+            reconciliation_hash: await generateHash(`${finalCashRef}-${fillerNeeded}`),
             created_at: new Date().toISOString()
         };
         lines.push(line);

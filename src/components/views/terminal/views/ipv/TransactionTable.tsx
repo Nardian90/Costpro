@@ -402,12 +402,12 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
 TransactionRow.displayName = 'TransactionRow';
 
 function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction: BankTransaction, remaining: number, onSuccess: () => void }) {
-    const lines = useLiveQuery(() => db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray(), [transaction.referencia_origen]);
+    const lines = useLiveQuery(() => db.reconciliation_lines.filter(l => l.transaction_ref === transaction.referencia_origen || l.transaction_ref.startsWith(`${transaction.referencia_origen}_EFECTIVO`)).toArray(), [transaction.referencia_origen]);
     const handleAdjust = async (line: any) => {
         const newTotalLine = line.importe_linea_cents + remaining;
         if (newTotalLine < 0) { toast.error('Precio negativo'); return; }
         await db.reconciliation_lines.update(line.id, { importe_linea_cents: newTotalLine, precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents, cuadre_cents: (line.cuadre_cents || 0) + remaining });
-        const txLines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+        const txLines = await db.reconciliation_lines.filter(l => l.transaction_ref === transaction.referencia_origen || l.transaction_ref.startsWith(`${transaction.referencia_origen}_EFECTIVO`)).toArray();
         const newTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
         const target = transaction.importe_venta_cents || transaction.importe_cents;
         await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : 'PARCIAL' });
