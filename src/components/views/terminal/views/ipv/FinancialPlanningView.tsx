@@ -97,7 +97,7 @@ export const FinancialPlanningView: React.FC = () => {
             const extraLines = await engine.distributeGlobalGoal(amount, currentTotal, dates, { strategy });
 
             if (extraLines.length > 0) {
-                await db.reconciliation_lines.bulkAdd(extraLines);
+                await db.reconciliation_lines.bulkPut(extraLines);
                 toast.success(`${extraLines.length} líneas generadas para cuadrar el mes`, { id: 'month-sim' });
             } else {
                 toast.warning('No se pudo distribuir el objetivo (posiblemente ya alcanzado)', { id: 'month-sim' });
