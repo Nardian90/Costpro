@@ -398,9 +398,9 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                                 </div>
                                 <div className="mt-3">
                                     <RuleMetaEditor
-                                        ruleId={rule.id}
-                                        initialMeta={rule.meta || {}}
-                                        onSave={(meta) => updateRuleMeta(rule.id, meta)}
+                                        rule={rule}
+
+                                        onSave={async (id, meta) => await updateRuleMeta(id, meta)}
                                     />
                                 </div>
                             </div>
