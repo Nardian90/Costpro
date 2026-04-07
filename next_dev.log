@@ -1,0 +1,157 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 552ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+○ Compiling /_not-found/page ...
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET /terminal/ipv 404 in 9.4s (next.js: 8.6s, application-code: 839ms)
+[browser] Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment. (src/lib/supabaseClient.ts:12:11)
+○ Compiling / ...
+⨯ ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  [90m224 |[0m               <[33mSelectContent[0m>
+  [90m225 |[0m                 <[33mSelectItem[0m value=[32m"ALL"[0m>[33mCualquiera[0m</[33mSelectItem[0m>
+[31m[1m>[0m [90m226 |[0m                 <[33mSelectItem[0m value=[32m"HIGH"[0m>[33mAlta[0m (>[35m90[0m%)</[33mSelectItem[0m>
+  [90m    |[0m                                                [31m[1m^[0m
+  [90m227 |[0m                 <[33mSelectItem[0m value=[32m"MEDIUM"[0m>[33mMedia[0m ([35m70[0m-[35m90[0m%)</[33mSelectItem[0m>
+  [90m228 |[0m                 <[33mSelectItem[0m value=[32m"LOW"[0m>[33mBaja[0m (<[35m70[0m%)</[33mSelectItem[0m>
+  [90m229 |[0m               </[33mSelectContent[0m>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 24.1s (next.js: 23.7s, application-code: 409ms)
+[browser] Uncaught Error: ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  224 |               <SelectContent>
+  225 |                 <SelectItem value="ALL">Cualquiera</SelectItem>
+> 226 |                 <SelectItem value="HIGH">Alta (>90%)</SelectItem>
+      |                                                ^
+  227 |                 <SelectItem value="MEDIUM">Media (70-90%)</SelectItem>
+  228 |                 <SelectItem value="LOW">Baja (<70%)</SelectItem>
+  229 |               </SelectContent>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48)
+    at <unknown> (Error: (./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48)
+[browser] ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  224 |               <SelectContent>
+  225 |                 <SelectItem value="ALL">Cualquiera</SelectItem>
+> 226 |                 <SelectItem value="HIGH">Alta (>90%)</SelectItem>
+      |                                                ^
+  227 |                 <SelectItem value="MEDIUM">Media (70-90%)</SelectItem>
+  228 |                 <SelectItem value="LOW">Baja (<70%)</SelectItem>
+  229 |               </SelectContent>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+[browser] ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  224 |               <SelectContent>
+  225 |                 <SelectItem value="ALL">Cualquiera</SelectItem>
+> 226 |                 <SelectItem value="HIGH">Alta (>90%)</SelectItem>
+      |                                                ^
+  227 |                 <SelectItem value="MEDIUM">Media (70-90%)</SelectItem>
+  228 |                 <SelectItem value="LOW">Baja (<70%)</SelectItem>
+  229 |               </SelectContent>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+[browser] ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx:226:48
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+  224 |               <SelectContent>
+  225 |                 <SelectItem value="ALL">Cualquiera</SelectItem>
+> 226 |                 <SelectItem value="HIGH">Alta (>90%)</SelectItem>
+      |                                                ^
+  227 |                 <SelectItem value="MEDIUM">Media (70-90%)</SelectItem>
+  228 |                 <SelectItem value="LOW">Baja (<70%)</SelectItem>
+  229 |               </SelectContent>
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/MatchingHistoryView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+✓ Compiled in 4s

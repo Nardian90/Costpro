@@ -49,6 +49,7 @@ const IntelligentReceiptsSection = lazy(() => import('./IntelligentReceipts/Inte
 const IncomeReceiptSection = lazy(() => import('./IncomeReceiptSection').then(m => ({ default: m.IncomeReceiptSection })));
 const TransferQRReportView = lazy(() => import('./TransferQRReportView').then(m => ({ default: m.TransferQRReportView })));
 const MatchingRulesEditor = lazy(() => import('./MatchingRulesEditor').then(m => ({ default: m.MatchingRulesEditor })));
+const MatchingHistoryView = lazy(() => import("./MatchingHistoryView"));
 const IngestionErrorsTable = lazy(() => import('./IngestionErrorsTable').then(m => ({ default: m.IngestionErrorsTable })));
 const MappingRulesManager = lazy(() => import('@/components/views/shared/MappingRulesManager').then(m => ({ default: m.MappingRulesManager })));
 const MipymeTransactionsView = lazy(() => import('./MipymeTransactionsView').then(m => ({ default: m.MipymeTransactionsView })));
@@ -613,7 +614,14 @@ export default function IPVView() {
             </div>
           )}
 
-          {activeTab === 'audit' && (
+
+          {activeTab === 'matching-history' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <Suspense fallback={<div className="h-[400px] flex items-center justify-center">Cargando historial...</div>}>
+                    <MatchingHistoryView />
+                </Suspense>
+            </div>
+          )}{activeTab === 'audit' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <MatchingAuditView />
             </div>

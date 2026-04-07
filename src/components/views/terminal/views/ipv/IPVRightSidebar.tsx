@@ -40,7 +40,8 @@ export function IPVRightSidebar({ activeTab, onSelect, onRunMatching, isMatching
         { id: 'ingestion', icon: <FileUp />, label: 'Extracto' },
         { id: 'reports', icon: <ClipboardList />, label: 'Reportes' },
         { id: 'errors', icon: <AlertCircle />, label: 'Errores' },
-        { id: 'rules', icon: <Settings />, label: 'Reglas' },
+                { id: "matching-history", icon: <History />, label: "Historial" },
+{ id: 'rules', icon: <Settings />, label: 'Reglas' },
     ];
 
     return (

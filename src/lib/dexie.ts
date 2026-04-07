@@ -9,7 +9,12 @@ export type MatchingTrace = {
   rule: string
   status: "SUCCESS" | "FAIL" | "SKIPPED"
   reason?: string
-  details?: any
+  details?: any;
+  metrics?: {
+    expected_value?: number;
+    actual_value?: number;
+    delta?: number;
+  };
   timestamp: number
 }
 
@@ -430,6 +435,10 @@ export class IPVDatabase extends Dexie {
     this.version(27).stores({
       bank_statements: "&referencia_origen, fecha, importe_cents, ingestion_hash, carnet, nombre_cliente, nit, impuesto"
     });
+    this.version(28).stores({
+      matching_logs: "&id, transaction_ref, fecha_ejecucion, resultado_estado, matching_confidence, *applied_rules"
+    });
+
   }
 }
 
