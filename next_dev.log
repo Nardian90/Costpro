@@ -154,3 +154,4 @@ Import traces:
     ./src/components/views/TerminalShell.tsx [Client Component SSR]
     ./src/components/views/TerminalShell.tsx [Server Component]
     ./src/app/page.tsx [Server Component]
+✓ Compiled in 4s
