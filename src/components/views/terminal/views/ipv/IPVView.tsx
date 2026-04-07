@@ -173,10 +173,10 @@ export default function IPVView() {
                             const movementsToAdd = results.flatMap((r: any) => r.movements || []);
 
                             if (linesToAdd.length > 0) {
-                                await db.reconciliation_lines.bulkAdd(linesToAdd, { allKeys: true });
+                                await db.reconciliation_lines.bulkPut(linesToAdd);
                             }
                             if (movementsToAdd.length > 0) {
-                                await db.product_movements.bulkAdd(movementsToAdd, { allKeys: true });
+                                await db.product_movements.bulkPut(movementsToAdd);
                             }
                         }
                     );
@@ -239,7 +239,7 @@ export default function IPVView() {
                             }
 
                             if (logsToAdd.length > 0) {
-                                await db.matching_logs.bulkAdd(logsToAdd, { allKeys: true });
+                                await db.matching_logs.bulkPut(logsToAdd);
                             }
                         }
                     );
