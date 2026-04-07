@@ -301,7 +301,7 @@ export default function TerminalShell() {
               transition={{ duration: 0.3 }}
               className={cn(
                 "mx-auto w-full",
-                currentView === 'cost-sheets' ? "max-w-none" : "max-w-7xl"
+                (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
               )}
             >
               <Suspense fallback={
