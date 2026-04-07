@@ -481,9 +481,9 @@ export default function IPVView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="relative">
         {/* Main Content Area */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className="w-full space-y-6">
           {(activeTab === 'dashboard' || activeTab === 'analytics') && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <IPVInstitutionalDashboard
@@ -658,15 +658,12 @@ export default function IPVView() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="xl:col-span-1">
-            <IPVRightSidebar
+        <IPVRightSidebar
                 activeTab={activeTab}
                 onSelect={setActiveTab}
                 onRunMatching={handleRunMatching}
                 isMatching={isMatching}
             />
-        </div>
       </div>
 
       <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
