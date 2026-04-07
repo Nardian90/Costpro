@@ -15,8 +15,8 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "stock-limit", tipo: "STOCK_LIMIT", prioridad: 1, activo: true, meta: { allow_negative: false }, descripcion: "Límites de Stock" },
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
-    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_limit: 50000 }, descripcion: "Inyección de Efectivo" },
-    { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
+    { id: "wildcards", tipo: "WILDCARDS", prioridad: 4, activo: true, descripcion: "Comodines" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 50000 }, descripcion: "Inyección de Efectivo" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
@@ -148,7 +148,8 @@ export class MatchingEngine {
         const rule = this.rules[i];
         const pass = i + 1;
 
-        if (remaining <= 0) break;
+        if (remaining === 0) break;
+        if (remaining < 0 && rule.tipo !== 'CASH_FILL') continue;
 
         switch (rule.tipo) {
             case 'HARD_REF':
@@ -174,12 +175,12 @@ export class MatchingEngine {
                 break;
         }
 
-        if (remaining < targetCents && !appliedRules.includes(rule.tipo)) {
+        if (Math.abs(remaining - targetCents) > 0 && !appliedRules.includes(rule.tipo)) {
             appliedRules.push(rule.tipo);
         }
     }
 
-    const status = remaining <= 0 ? 'COMPLETO' : (remaining < targetCents ? 'PARCIAL' : 'PENDIENTE');
+    const status = remaining === 0 ? 'COMPLETO' : (remaining !== targetCents ? 'PARCIAL' : 'PENDIENTE');
     const result: MatchingResult = {
       transactionId: transaction.referencia_origen,
       status,
@@ -407,35 +408,80 @@ export class MatchingEngine {
 
   private async applyWildcards(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const wildcards = this.products.filter(p => p.isWildcardCandidate && p.precio_cents > 0);
-    for (const p of wildcards) {
-        if (remaining >= p.precio_cents) {
-            let qty = Math.floor(remaining / p.precio_cents);
-            let available = this.getVirtualStock(p.cod);
 
-            if (this.useStockLimit && available < qty && !this.allowNegativeStock) {
-                await this.attemptDecomposition(p.cod);
-                available = this.getVirtualStock(p.cod);
-                qty = Math.min(qty, available);
+    if (remaining <= 0) return remaining;
+
+    let bestP: Product | null = null;
+    let bestQty = 0;
+    let bestRemaining = Infinity;
+
+    for (const p of wildcards) {
+        let qty = Math.ceil(remaining / p.precio_cents);
+        let available = this.getVirtualStock(p.cod);
+
+        if (this.useStockLimit && available < qty && !this.allowNegativeStock) {
+            await this.attemptDecomposition(p.cod);
+            available = this.getVirtualStock(p.cod);
+            qty = Math.min(qty, available);
+        }
+
+        if (qty > 0) {
+            const currentRealValue = p.precio_cents * qty;
+            const currentRemaining = remaining - currentRealValue;
+
+            if (currentRemaining === 0) {
+                bestP = p;
+                bestQty = qty;
+                bestRemaining = 0;
+                break;
             }
 
-            if (qty > 0) {
-                const line = await this.createLine(tx, p, qty, 'AUTO_MATCH', 'Transferencia');
-                lines.push(line);
-                this.updateVirtualStock(p.cod, qty, tx.referencia_origen);
-                addTrace(pass, 'WILDCARDS', 'SUCCESS', `Match por wildcard con ${qty}x ${p.cod}`);
-                logs.push(`PASS ${pass} (WILDCARDS): Match wildcard con ${qty}x ${p.cod}`);
-                remaining -= line.importe_linea_cents;
-                if (remaining <= 0) return 0;
+            if (bestP === null) {
+                bestP = p;
+                bestQty = qty;
+                bestRemaining = currentRemaining;
+            } else {
+                if (currentRemaining < 0 && bestRemaining < 0) {
+                    if (currentRemaining > bestRemaining) {
+                        bestP = p;
+                        bestQty = qty;
+                        bestRemaining = currentRemaining;
+                    }
+                } else if (currentRemaining < 0 && bestRemaining > 0) {
+                    bestP = p;
+                    bestQty = qty;
+                    bestRemaining = currentRemaining;
+                } else if (currentRemaining > 0 && bestRemaining > 0) {
+                    if (currentRemaining < bestRemaining) {
+                        bestP = p;
+                        bestQty = qty;
+                        bestRemaining = currentRemaining;
+                    }
+                }
             }
         }
     }
+
+    if (bestP && bestQty > 0) {
+        const realValue = bestP.precio_cents * bestQty;
+        const transferCoverage = Math.min(remaining, realValue);
+
+        const line = await this.createLine(tx, bestP, bestQty, 'AUTO_MATCH', 'Transferencia');
+        line.importe_linea_cents = transferCoverage;
+        lines.push(line);
+        this.updateVirtualStock(bestP.cod, bestQty, tx.referencia_origen);
+        addTrace(pass, 'WILDCARDS', 'SUCCESS', `Match por wildcard con ${bestQty}x ${bestP.cod}`);
+        logs.push(`PASS ${pass} (WILDCARDS): Match wildcard con ${bestQty}x ${bestP.cod}`);
+        return remaining - realValue;
+    }
+
     addTrace(pass, 'WILDCARDS', 'SKIPPED');
     return remaining;
   }
 
   private async applyTolerance(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const tolerance = rule.meta?.tolerance_cents || 100;
-    if (remaining <= tolerance) {
+    if (remaining > 0 && remaining <= tolerance) {
         addTrace(pass, 'TOLERANCE', 'SUCCESS', `Saldo de ${remaining} cts cubierto por tolerancia`);
         logs.push(`PASS ${pass} (TOLERANCE): Saldo restante de ${remaining} cts cubierto.`);
         return 0;
@@ -454,35 +500,42 @@ export class MatchingEngine {
     pass: number,
     cashFillUsedTodayInMemory: number
   ): Promise<number> {
-    if (remaining_cents <= 0) return remaining_cents;
-    const dailyLimit = rule.meta?.daily_limit ?? Infinity;
-    if (cashFillUsedTodayInMemory + remaining_cents > dailyLimit) {
-        addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
-        return remaining_cents;
+    if (remaining_cents < 0) {
+        const cashNeeded = Math.abs(remaining_cents);
+        const dailyLimit = rule.meta?.daily_limit ?? Infinity;
+
+        if (cashFillUsedTodayInMemory + cashNeeded > dailyLimit) {
+            addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido para el excedente`);
+            return remaining_cents;
+        }
+
+        const line: ReconciliationLine = {
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_operacion: transaction.fecha,
+            ingreso_banco_cents: 0,
+            venta_real_calculada_cents: 0,
+            comision_banco_cents: 0,
+            product_cod: 'CASH',
+            product_um: 'UD',
+            cantidad: 1,
+            precio_unitario_cents: cashNeeded,
+            importe_linea_cents: cashNeeded,
+            cuadre_cents: 0,
+            clasificacion: 'Efectivo',
+            origen_dato: 'CASH_FILLER',
+            observaciones: `Pago mixto (Transferencia + Efectivo) - Ref: ${transaction.referencia_origen}`,
+            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${cashNeeded}`),
+            created_at: new Date().toISOString()
+        };
+        lines.push(line);
+        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto excedente de ${cashNeeded} cts como efectivo (Pago Mixto)`);
+        logs.push(`PASS ${pass} (CASH_FILL): Pago mixto detectado. Registrado ${cashNeeded} en efectivo.`);
+        return 0;
     }
 
-    const line: ReconciliationLine = {
-        id: uuidv4(),
-        transaction_ref: transaction.referencia_origen,
-        fecha_operacion: transaction.fecha,
-        ingreso_banco_cents: 0,
-        venta_real_calculada_cents: remaining_cents,
-        comision_banco_cents: 0,
-        product_cod: 'CASH',
-        product_um: 'UD',
-        cantidad: 1,
-        precio_unitario_cents: remaining_cents,
-        importe_linea_cents: remaining_cents,
-        cuadre_cents: 0,
-        clasificacion: 'Efectivo',
-        origen_dato: 'CASH_FILLER',
-        reconciliation_hash: await generateHash(`${transaction.referencia_origen}-CASH-${remaining_cents}`),
-        created_at: new Date().toISOString()
-    };
-    lines.push(line);
-    addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubiertos ${remaining_cents} cts como efectivo`);
-    logs.push(`PASS ${pass} (CASH_FILL): Cubierto saldo restante como efectivo.`);
-    return 0;
+    addTrace(pass, 'CASH_FILL', 'SKIPPED', 'No hay excedente para pago mixto');
+    return remaining_cents;
   }
 
   private getVirtualStock(productCod: string): number {
