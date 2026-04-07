@@ -289,7 +289,7 @@ export default function TerminalShell() {
         )}
 
         <div className={cn(
-          "px-0 pt-0 pb-0 flex-1 overflow-x-visible terminal-content",
+          "px-0 pt-0 pb-0 flex-1 overflow-x-hidden terminal-content",
           isIntegroView ? "p-0" : "px-0 sm:p-8 lg:p-12 pb-32"
         )}>
           <AnimatePresence mode="wait">

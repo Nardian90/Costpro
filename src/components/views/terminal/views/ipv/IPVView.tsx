@@ -431,7 +431,7 @@ export default function IPVView() {
     <div className="space-y-6">
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
 
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1 ipv-action-buttons w-full overflow-hidden">
         <div className="flex items-center gap-4">
             {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
                 <Button
@@ -454,7 +454,7 @@ export default function IPVView() {
             </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end w-full lg:w-auto">
             {shortcuts.map((s: any) => (
                 <Button
                     key={s.id}
@@ -481,7 +481,7 @@ export default function IPVView() {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative w-full overflow-hidden">
         {/* Main Content Area */}
         <div className="w-full space-y-6">
           {(activeTab === 'dashboard' || activeTab === 'analytics') && (
