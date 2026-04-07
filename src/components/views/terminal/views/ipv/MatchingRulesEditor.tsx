@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Sparkles, Bot, ShieldCheck } from 'lucide-react';
+import { GripVertical, Sparkles, Bot, ShieldCheck, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -29,6 +29,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { RuleMetaEditor } from './RuleMetaEditor';
+import { cn } from '@/lib/utils';
 
 interface SortableRuleItemProps {
     rule: MatchingRule;
@@ -36,9 +37,10 @@ interface SortableRuleItemProps {
     updateRuleMeta: (id: string, meta: any) => Promise<void>;
     updatePriority: (id: string, newPriority: number) => Promise<void>;
     totalRules: number;
+    usageCount?: number;
 }
 
-function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules }: SortableRuleItemProps) {
+function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules, usageCount = 0 }: SortableRuleItemProps) {
     const {
         attributes,
         listeners,
@@ -80,9 +82,26 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
         }
     };
 
+    const getExample = (tipo: string) => {
+        switch (tipo) {
+            case 'STOCK_LIMIT': return 'Ej: No vender "Cerveza 355ml" si el stock virtual es 0.';
+            case 'HARD_REF': return 'Ej: Transferencia con nota "PAGO REF: 102" hace match con Producto 102.';
+            case 'EXACT_SUM': return 'Ej: Transferencia de $1500 -> Match con (Pollo $1200 + Refresco $300).';
+            case 'PRICE_FLEX': return 'Ej: Transferencia de $99.50 -> Match con Producto de $100 (ajustando 0.5%).';
+            case 'WILDCARDS': return 'Ej: Si no hay match, usa "Venta Genérica" para cubrir el monto.';
+            case 'TOLERANCE': return 'Ej: Diferencia de $0.05 se ignora y la transacción queda "COMPLETA".';
+            case 'CASH_FILL': return 'Ej: Cubre faltantes con línea "Efectivo" o maneja excedentes (Pago Mixto).';
+            case 'GOAL_WITH_TOLERANCE': return 'Ej: Ajusta cantidades para alcanzar $1,000,000 con ±$5,000 de error.';
+            default: return '';
+        }
+    };
+
     return (
         <div ref={setNodeRef} style={style} className="group">
-            <Card className={`p-4 transition-all border-2 ${rule.activo ? 'border-primary/20 bg-card/50' : 'border-transparent bg-muted/30 opacity-60'}`}>
+            <Card className={cn(
+                "p-4 transition-all border-2",
+                rule.activo ? 'border-primary/20 bg-card/50' : 'border-transparent bg-muted/30 opacity-60'
+            )}>
                 <div className="flex items-start gap-4">
                     <div
                         className="hidden sm:flex text-muted-foreground cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-muted rounded"
@@ -100,46 +119,41 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                                 <select
                                     value={rule.prioridad}
                                     onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                    className="h-6 text-[10px] border rounded bg-background px-1"
+                                    className="h-7 text-xs font-black border rounded bg-background px-2 outline-none"
                                 >
                                     {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
                                         <option key={p} value={p}>{p}</option>
                                     ))}
                                 </select>
                             </div>
-                        </div>
-                        <div className="sm:hidden">
-                            <Switch
-                                checked={rule.activo}
-                                onCheckedChange={(checked) => toggleRule(rule.id, checked)}
-                            />
-                        </div>
-                        <div
-                            className="sm:hidden text-muted-foreground cursor-grab active:cursor-grabbing p-2"
-                            {...attributes}
-                            {...listeners}
-                        >
-                            <GripVertical className="w-5 h-5" />
                         </div>
                     </div>
 
                     <div className="hidden sm:block flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
-                            <div className="flex items-center gap-2 ml-2">
-                                <span className="text-xs font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
-                                <select
-                                    value={rule.prioridad}
-                                    onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                    className="h-7 text-xs font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
-                                >
-                                    {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
-                                        <option key={p} value={p}>{p}</option>
-                                    ))}
-                                </select>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
+                                <div className="flex items-center gap-2 ml-2">
+                                    <span className="text-xs font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
+                                    <select
+                                        value={rule.prioridad}
+                                        onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
+                                        className="h-7 text-xs font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
+                                    >
+                                        {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
+                                            <option key={p} value={p}>{p}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
+                            {rule.activo && (
+                                <Badge variant="secondary" className="text-[10px] font-black uppercase px-2 py-0.5 bg-primary/10 text-primary border-none">
+                                    Esta regla cuadró {usageCount} transacciones
+                                </Badge>
+                            )}
                         </div>
                         <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
+                        <p className="text-[10px] text-primary/70 font-medium italic mt-1">{getExample(rule.tipo)}</p>
                     </div>
 
                     <div className="hidden sm:flex items-center gap-3">
@@ -155,7 +169,7 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                 </div>
 
                 {rule.activo && (
-                    <div className="pt-4 border-t border-border/50">
+                    <div className="pt-4 border-t border-border/50 mt-4">
                         <RuleMetaEditor
                             rule={rule}
                             onSave={updateRuleMeta}
@@ -170,6 +184,29 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
 export function MatchingRulesEditor() {
   const rules = useLiveQuery(() => db.matching_rules.orderBy('prioridad').toArray());
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
+
+  // Conteo de transacciones por estado
+  const stats = useLiveQuery(async () => {
+    const transactions = await db.bank_statements.toArray();
+    return {
+        total: transactions.length,
+        pendientes: transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length,
+        parciales: transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length,
+        completas: transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length
+    };
+  });
+
+  // Conteo de uso de reglas desde logs
+  const ruleUsage = useLiveQuery(async () => {
+    const logs = await db.matching_logs.toArray();
+    const counts: Record<string, number> = {};
+    logs.forEach(log => {
+        log.applied_rules?.forEach(ruleType => {
+            counts[ruleType] = (counts[ruleType] || 0) + 1;
+        });
+    });
+    return counts;
+  });
 
   const toggleCopiloto = async (active: boolean) => {
     const exists = await db.ipv_settings.get("current");
@@ -252,6 +289,38 @@ export function MatchingRulesEditor() {
 
   return (
     <div className="space-y-6">
+      {/* Resumen de Estados */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4 border-2 border-primary/10 bg-primary/5 flex items-center justify-between">
+            <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Transacciones</p>
+                <h3 className="text-2xl font-black">{stats?.total || 0}</h3>
+            </div>
+            <HelpCircle className="w-8 h-8 text-primary/20" />
+        </Card>
+        <Card className="p-4 border-2 border-emerald-500/10 bg-emerald-500/5 flex items-center justify-between">
+            <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cuadradas</p>
+                <h3 className="text-2xl font-black text-emerald-500">{stats?.completas || 0}</h3>
+            </div>
+            <CheckCircle2 className="w-8 h-8 text-emerald-500/20" />
+        </Card>
+        <Card className="p-4 border-2 border-amber-500/10 bg-amber-500/5 flex items-center justify-between">
+            <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">En Proceso (Parcial)</p>
+                <h3 className="text-2xl font-black text-amber-500">{stats?.parciales || 0}</h3>
+            </div>
+            <AlertCircle className="w-8 h-8 text-amber-500/20" />
+        </Card>
+        <Card className="p-4 border-2 border-red-500/10 bg-red-500/5 flex items-center justify-between">
+            <div className="space-y-1">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pendientes</p>
+                <h3 className="text-2xl font-black text-red-500">{stats?.pendientes || 0}</h3>
+            </div>
+            <AlertCircle className="w-8 h-8 text-red-500/20" />
+        </Card>
+      </div>
+
       <Card className={`p-6 border-2 transition-all ${settings?.copiloto_activo ? "border-primary bg-primary/5 shadow-lg" : "border-border bg-card"}`}>
         <div className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -331,6 +400,7 @@ export function MatchingRulesEditor() {
                     key={rule.id}
                     rule={rule}
                     toggleRule={toggleRule}
+                    usageCount={ruleUsage?.[rule.tipo] || 0}
                     updateRuleMeta={updateRuleMeta}
                     updatePriority={updatePriorityManually}
                     totalRules={rules.length}
