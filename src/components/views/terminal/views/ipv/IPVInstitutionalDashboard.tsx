@@ -441,7 +441,7 @@ function D3AreaChart({ data }: { data: any[] }) {
         });
 
         isFirstRender.current = false;
-    }, 250), []);
+    }, 150), []);
 
     useEffect(() => {
         const resizeObserver = new ResizeObserver(() => {
@@ -519,7 +519,7 @@ function D3DonutChart({ data }: { data: any[] }) {
         center.append('text').attr('dy', '0.6em').attr('class', 'fill-foreground').attr('style', 'font-size: 24px; font-weight: 900;').text(totalValue);
 
 
-    }, 250), []);
+    }, 150), []);
 
     useEffect(() => {
         drawChart(data);
@@ -600,7 +600,7 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('opacity', 1);
 
 
-    }, 250), []);
+    }, 150), []);
 
     useEffect(() => {
         drawChart(data, color);

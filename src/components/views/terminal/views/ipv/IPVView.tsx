@@ -448,7 +448,7 @@ export default function IPVView() {
                     Control IPV
                 </h1>
                 <p className="text-muted-foreground flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-primary animate-none" />
                     {activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace('-', ' ')}
                 </p>
             </div>
