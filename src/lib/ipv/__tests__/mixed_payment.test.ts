@@ -14,8 +14,8 @@ vi.mock('../../dexie', () => ({
       equals: vi.fn().mockReturnThis(),
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
     },
+    matching_logs: { add: vi.fn().mockResolvedValue({}) },
     bank_statements: {
         get: vi.fn(),
         update: vi.fn(),
@@ -30,7 +30,8 @@ describe('MatchingEngine Mixed Payment Support', () => {
   ];
 
   const rules: MatchingRule[] = [
-    { id: '1', tipo: 'CASH_FILL', prioridad: 6, activo: true },
+    { id: '1', tipo: 'WILDCARDS', prioridad: 1, activo: true },
+    { id: '2', tipo: 'CASH_FILL', prioridad: 2, activo: true },
   ];
 
   const engine = new MatchingEngine(products, rules);
@@ -51,7 +52,13 @@ describe('MatchingEngine Mixed Payment Support', () => {
 
     expect(result.status).toBe('COMPLETO');
 
-    const totalVenta = result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+    // Venta real: P1 (350) + P2 (600) = 950 -> No llegamos
+    // Wildcard picking strategy:
+    // P1 * 3 = 1050 (Remaining: 1000 - 1050 = -50)
+    // P2 * 2 = 1200 (Remaining: 1000 - 1200 = -200)
+    // Se elige P1 * 3.
+
+    const totalVenta = result.lines.reduce((sum, l) => sum + l.venta_real_calculada_cents, 0);
     expect(totalVenta).toBe(1050);
 
     const transferLines = result.lines.filter(l => l.clasificacion === 'Transferencia');
