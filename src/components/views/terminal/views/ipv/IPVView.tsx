@@ -403,7 +403,7 @@ export default function IPVView() {
                     <AlertCircle className="w-4 h-4" />
                     Errores
                     {(errorCount ?? 0) > 0 && (
-                        <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full animate-pulse">
+                        <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full ring-2 ring-primary/50 bg-primary/10">
                             {errorCount ?? 0}
                         </Badge>
                     )}
