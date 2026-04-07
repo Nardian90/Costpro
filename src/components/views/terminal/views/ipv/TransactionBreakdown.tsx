@@ -91,7 +91,8 @@ export default function TransactionBreakdown() {
     if (!lines) return [];
     return lines.filter(l => {
       const prod = productMap.get(l.product_cod);
-      const tx = txMap.get(l.transaction_ref);
+      const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+                const tx = txMap.get(baseRef);
       const search = searchTerm.toLowerCase();
 
       const matchesSearch =
@@ -229,7 +230,8 @@ export default function TransactionBreakdown() {
               </TableRow>
             ) : (
               filteredLines.map((l) => {
-                const tx = txMap.get(l.transaction_ref);
+                const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+                const tx = txMap.get(baseRef);
                 const prod = productMap.get(l.product_cod);
                 const basePrice = prod?.precio_cents || l.precio_unitario_cents;
 
@@ -247,11 +249,11 @@ export default function TransactionBreakdown() {
                         {l.transaction_ref}
                       </div>
                       <div className="flex items-center gap-1 group">
-                        <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })} >
+                        <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })} >
                           {tx?.observaciones || "Ajuste Manual / Global"}
                         </div>
                         {tx && (
-                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })}>
                             <Info className="w-3 h-3 text-primary" />
                           </Button>
                         )}

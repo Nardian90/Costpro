@@ -33,7 +33,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
 
     const products = useLiveQuery(() => db.products.where('activo').equals(1).toArray());
     const existingLines = useLiveQuery(
-        () => transaction ? db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray() : []
+        () => transaction ? db.reconciliation_lines.filter(l => l.transaction_ref === transaction.referencia_origen || l.transaction_ref.startsWith(`${transaction.referencia_origen}_EFECTIVO`)).toArray() : []
     , [transaction]);
 
     const filteredProducts = products?.filter(p =>
@@ -98,7 +98,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                 }
 
                 // Update transaction status
-                const allLines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+                const allLines = await db.reconciliation_lines.filter(l => l.transaction_ref === transaction.referencia_origen || l.transaction_ref.startsWith(`${transaction.referencia_origen}_EFECTIVO`)).toArray();
                 const total = allLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
                 const status = total >= targetAmount - 0.001 ? 'COMPLETO' : (total > 0 ? 'PARCIAL' : 'PENDIENTE');
 
