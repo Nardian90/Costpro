@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
@@ -113,7 +114,7 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
     const topPayers = useMemo(() => getTopPayers(transactions), [transactions]);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700">
+        <div className="space-y-6 animate-in fade-in duration-700 motion-reduce:animate-none motion-reduce:transition-none">
             {/* KPI Cards Grid */}
             {/* Financial KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -266,7 +267,7 @@ function KPICard({ title, value, icon, onClick, color, highlight }: any) {
         <Card
             className={cn(
                 "p-5 border-none bg-card/40 backdrop-blur-sm shadow-lg rounded-[24px] cursor-pointer hover:scale-[1.03] active:scale-95 transition-all group",
-                highlight && "ring-2 ring-rose-500/50 animate-pulse"
+                highlight && "ring-2 ring-rose-500/50 bg-rose-500/5"
             )}
             onClick={onClick}
         >
@@ -293,171 +294,186 @@ function EmptyState({ message }: { message: string }) {
     );
 }
 
+
 function D3AreaChart({ data }: { data: any[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<any>(null);
     const isFirstRender = useRef(true);
 
-    useEffect(() => {
-        if (!containerRef.current || data.length === 0) return;
-        const container = containerRef.current;
+    const drawChart = useMemo(() => debounce((data: any[]) => {
+        if (!containerRef.current) return;
 
-        // Use ResizeObserver for responsive behavior
-        const resizeObserver = new ResizeObserver(entries => {
-            if (!entries[0]) return;
-            const { width, height } = entries[0].contentRect;
-            drawChart(width, height);
-        });
+        const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+        const tDuration = prefersReducedMotion ? 0 : 800;
+        const tDurationLong = prefersReducedMotion ? 0 : 1500;
 
-        resizeObserver.observe(container);
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
+        const margin = { top: 20, right: 30, bottom: 30, left: 60 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
 
-        function drawChart(width: number, height: number) {
-            if (width === 0 || height === 0) return;
+        let svg: any;
+        if (!svgRef.current) {
+            svg = d3.select(containerRef.current)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', `0 0 ${width} ${height}`);
 
-            const margin = { top: 20, right: 20, bottom: 40, left: 70 };
-            const innerWidth = width - margin.left - margin.right;
-            const innerHeight = height - margin.top - margin.bottom;
+            const g = svg.append('g')
+                .attr('class', 'chart-main-group')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
 
-            let svg;
-            if (!svgRef.current || container.innerHTML === '') {
-                container.innerHTML = '';
-                svg = d3.select(container)
-                    .append('svg')
-                    .attr('width', width)
-                    .attr('height', height)
-                    .attr('viewBox', `0 0 ${width} ${height}`);
+            svgRef.current = svg;
 
-                const g = svg.append('g')
-                    .attr('transform', `translate(${margin.left},${margin.top})`)
-                    .attr('class', 'chart-main-group');
+            const defs = svg.append('defs');
+            const addGradient = (id: string, color: string) => {
+                const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
+                grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.3);
+                grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
+            };
+            addGradient('grad-credits', '#10b981');
+            addGradient('grad-debits', '#f43f5e');
+            addGradient('grad-taxes', '#f59e0b');
 
-                svgRef.current = svg;
+            g.append('g').attr('class', 'x-axis').attr('transform', `translate(0,${innerHeight})`);
+            g.append('g').attr('class', 'y-axis');
+            g.append('g').attr('class', 'grid-lines').attr('opacity', 0.05);
+        } else {
+            svg = svgRef.current;
+            svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
+        }
 
-                const defs = svg.append('defs');
-                const addGradient = (id: string, color: string) => {
-                    const grad = defs.append('linearGradient').attr('id', id).attr('x1', '0').attr('y1', '0').attr('x2', '0').attr('y2', '1');
-                    grad.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.3);
-                    grad.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
-                };
-                addGradient('grad-credits', '#10b981');
-                addGradient('grad-debits', '#f43f5e');
-                addGradient('grad-taxes', '#f59e0b');
+        const g = svg.select('.chart-main-group');
+        const x = d3.scalePoint()
+            .domain(data.map(d => d.date))
+            .range([0, innerWidth]);
 
-                g.append('g').attr('class', 'x-axis').attr('transform', `translate(0,${innerHeight})`);
-                g.append('g').attr('class', 'y-axis');
-                g.append('g').attr('class', 'grid-lines').attr('opacity', 0.05);
-            } else {
-                svg = svgRef.current;
-                svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
+        const yValueMax = d3.max(data, (d: any) => Math.max(d.credits || 0, d.debits || 0, d.taxes || 0)) || 100;
+        const y = d3.scaleLinear()
+            .domain([0, yValueMax * 1.1])
+            .range([innerHeight, 0])
+            .nice();
+
+        // X Axis
+        g.select('.x-axis')
+            .attr('transform', `translate(0,${innerHeight})`)
+            .transition().duration(tDuration)
+            .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat((d: any) => {
+                if (data.length > 12) {
+                    const idx = data.findIndex(item => item.date === d);
+                    return idx % Math.ceil(data.length / 8) === 0 ? String(d) : "";
+                }
+                return String(d);
+            }))
+            .attr('font-size', '10px')
+            .attr('font-weight', '700')
+            .attr('color', '#888');
+        g.select('.x-axis').select('.domain').remove();
+
+        // Y Axis
+        g.select('.y-axis')
+            .transition().duration(tDuration)
+            .call(d3.axisLeft(y).ticks(5).tickFormat((d: any) => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
+            .attr('font-size', '10px')
+            .attr('font-weight', '700')
+            .attr('color', '#888');
+        g.select('.y-axis').select('.domain').remove();
+
+        // Grid lines
+        g.select('.grid-lines')
+            .transition().duration(tDuration)
+            .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ""));
+
+        const areaGenerator = (key: string) => d3.area<any>()
+            .x(d => x(d.date) || 0)
+            .y0(innerHeight)
+            .y1(d => y(d[key] || 0))
+            .curve(d3.curveMonotoneX);
+
+        const lineGenerator = (key: string) => d3.line<any>()
+            .x(d => x(d.date) || 0)
+            .y(d => y(d[key] || 0))
+            .curve(d3.curveMonotoneX);
+
+        const series = [
+            { key: 'credits', color: '#10b981' },
+            { key: 'debits', color: '#f43f5e' },
+            { key: 'taxes', color: '#f59e0b' }
+        ];
+
+        series.forEach(s => {
+            let areaPath = g.select(`.area-${s.key}`);
+            if (areaPath.empty()) {
+                areaPath = g.append('path').attr('class', `area-${s.key}`).attr('fill', `url(#grad-${s.key})`).attr('opacity', 0);
             }
 
-            const g = svg.select('.chart-main-group');
-            const x = d3.scalePoint()
-                .domain(data.map(d => d.date))
-                .range([0, innerWidth]);
+            areaPath.datum(data)
+                .transition().duration(tDuration)
+                .attr('opacity', 1)
+                .attr('d', areaGenerator(s.key));
 
-            const yValueMax = d3.max(data, d => Math.max(d.credits || 0, d.debits || 0, d.taxes || 0)) || 100;
-            const y = d3.scaleLinear()
-                .domain([0, yValueMax * 1.1])
-                .range([innerHeight, 0])
-                .nice();
+            let linePath = g.select(`.line-${s.key}`);
+            if (linePath.empty()) {
+                linePath = g.append('path')
+                    .attr('class', `line-${s.key}`)
+                    .attr('fill', 'none')
+                    .attr('stroke', s.color)
+                    .attr('stroke-width', 2.5);
+            }
 
-            // X Axis
-            g.select('.x-axis')
-                .attr('transform', `translate(0,${innerHeight})`)
-                .transition().duration(800)
-                .call(d3.axisBottom(x).tickSize(0).tickPadding(10).tickFormat(d => {
-                    if (data.length > 12) {
-                        const idx = data.findIndex(item => item.date === d);
-                        return idx % Math.ceil(data.length / 8) === 0 ? String(d) : "";
-                    }
-                    return String(d);
-                }))
-                .attr('font-size', '10px')
-                .attr('font-weight', '700')
-                .attr('color', '#888');
-            g.select('.x-axis').select('.domain').remove();
-
-            // Y Axis
-            g.select('.y-axis')
-                .transition().duration(800)
-                .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${(Number(d)/100).toLocaleString()}`).tickSize(0).tickPadding(10))
-                .attr('font-size', '10px')
-                .attr('font-weight', '700')
-                .attr('color', '#888');
-            g.select('.y-axis').select('.domain').remove();
-
-            // Grid lines
-            g.select('.grid-lines')
-                .transition().duration(800)
-                .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ""));
-
-            const areaGenerator = (key: string) => d3.area<any>()
-                .x(d => x(d.date) || 0)
-                .y0(innerHeight)
-                .y1(d => y(d[key] || 0))
-                .curve(d3.curveMonotoneX);
-
-            const lineGenerator = (key: string) => d3.line<any>()
-                .x(d => x(d.date) || 0)
-                .y(d => y(d[key] || 0))
-                .curve(d3.curveMonotoneX);
-
-            const series = [
-                { key: 'credits', color: '#10b981' },
-                { key: 'debits', color: '#f43f5e' },
-                { key: 'taxes', color: '#f59e0b' }
-            ];
-
-            series.forEach(s => {
-                let areaPath = g.select(`.area-${s.key}`);
-                if (areaPath.empty()) {
-                    areaPath = g.append('path').attr('class', `area-${s.key}`).attr('fill', `url(#grad-${s.key})`).attr('opacity', 0);
-                }
-
-                areaPath.datum(data)
-                    .transition().duration(800)
-                    .attr('opacity', 1)
-                    .attr('d', areaGenerator(s.key));
-
-                let linePath = g.select(`.line-${s.key}`);
-                if (linePath.empty()) {
-                    linePath = g.append('path')
-                        .attr('class', `line-${s.key}`)
-                        .attr('fill', 'none')
-                        .attr('stroke', s.color)
-                        .attr('stroke-width', 2.5);
-                }
-
-                if (isFirstRender.current) {
-                    linePath.datum(data).attr('d', lineGenerator(s.key));
-                    const node = linePath.node() as SVGPathElement;
+            if (isFirstRender.current) {
+                linePath.datum(data).attr('d', lineGenerator(s.key));
+                const node = linePath.node() as SVGPathElement;
+                if (node) {
                     const totalLength = node.getTotalLength();
                     linePath.attr('stroke-dasharray', `${totalLength} ${totalLength}`)
                         .attr('stroke-dashoffset', totalLength)
-                        .transition().duration(1500)
+                        .transition().duration(tDurationLong)
                         .attr('stroke-dashoffset', 0);
-                } else {
-                    linePath.datum(data)
-                        .transition().duration(800)
-                        .attr('d', lineGenerator(s.key));
                 }
-            });
+            } else {
+                linePath.datum(data)
+                    .transition().duration(tDuration)
+                    .attr('d', lineGenerator(s.key));
+            }
+        });
 
-            isFirstRender.current = false;
+        isFirstRender.current = false;
+    }, 150), []);
+
+    useEffect(() => {
+        const resizeObserver = new ResizeObserver(() => {
+            drawChart(data);
+        });
+
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+            drawChart(data);
         }
 
-        return () => resizeObserver.disconnect();
-    }, [data]);
+        return () => {
+            resizeObserver.disconnect();
+            drawChart.cancel();
+        };
+    }, [data, drawChart]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
 
-function D3DonutChart({ data }: { data: any[] }) {
-    const containerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
+function D3DonutChart({ data }: { data: any[] }) {
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const drawChart = useMemo(() => debounce((data: any[]) => {
+
         if (!containerRef.current) return;
+
+    const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+    const tDuration = prefersReducedMotion ? 0 : 800;
+    const tDurationLong = prefersReducedMotion ? 0 : 1500;
+
         const container = containerRef.current;
         container.innerHTML = '';
 
@@ -502,16 +518,28 @@ function D3DonutChart({ data }: { data: any[] }) {
         center.append('text').attr('dy', '-0.5em').attr('class', 'fill-muted-foreground').attr('style', 'font-size: 10px; font-weight: 900;').text('TOTAL');
         center.append('text').attr('dy', '0.6em').attr('class', 'fill-foreground').attr('style', 'font-size: 24px; font-weight: 900;').text(totalValue);
 
-    }, [data]);
+
+    }, 150), []);
+
+    useEffect(() => {
+        drawChart(data);
+        return () => drawChart.cancel();
+    }, [data, drawChart]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
 
 function D3BarChart({ data, color }: { data: any[], color: string }) {
-    const containerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const drawChart = useMemo(() => debounce((data: any[], color: string) => {
+
         if (!containerRef.current || data.length === 0) return;
+
+    const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+    const tDuration = prefersReducedMotion ? 0 : 800;
+    const tDurationLong = prefersReducedMotion ? 0 : 1500;
+
         const container = containerRef.current;
         container.innerHTML = '';
 
@@ -552,7 +580,7 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('fill', color)
             .attr('rx', 6)
             .attr('width', 0)
-            .transition().duration(1000).delay((d, i) => i * 50)
+            .transition().duration(prefersReducedMotion ? 0 : 1000).delay((d, i) => i * 50)
             .attr('width', d => x(d.value));
 
         svg.selectAll('.label-val')
@@ -568,10 +596,16 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('fill', '#888')
             .text(d => d.value.toLocaleString())
             .attr('opacity', 0)
-            .transition().duration(1000).delay((d, i) => i * 50 + 500)
+            .transition().duration(prefersReducedMotion ? 0 : 1000).delay((d, i) => i * 50 + 500)
             .attr('opacity', 1);
 
-    }, [data, color]);
+
+    }, 150), []);
+
+    useEffect(() => {
+        drawChart(data, color);
+        return () => drawChart.cancel();
+    }, [data, color, drawChart]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }

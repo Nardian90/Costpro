@@ -275,7 +275,7 @@ export const FinancialPlanningView: React.FC = () => {
                                                         {formatCurrencyCents(Number(simulations[g.month]) || g.goalAmount)}
                                                     </p>
                                                     {((Number(simulations[g.month]) || g.goalAmount) - monthReal.total) > 0 && (
-                                                        <span className="text-[9px] font-bold text-orange-600 animate-pulse">
+                                                        <span className="text-[9px] font-bold text-orange-600 animate-none">
                                                             Faltan {formatCurrencyCents((Number(simulations[g.month]) || g.goalAmount) - monthReal.total)}
                                                         </span>
                                                     )}

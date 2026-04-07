@@ -298,7 +298,7 @@ export default function TransactionBreakdown() {
                             {l.origen_dato}
                         </Badge>
                         {isReversion && (
-                            <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-pulse">REVERTIDO</Badge>
+                            <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-none">REVERTIDO</Badge>
                         )}
                     </TableCell>
                     <TableCell className="text-right">
