@@ -96,7 +96,7 @@ export function PivotStatementView() {
 
             // Calculate breakdown from reconLines for this transaction
             if (reconLines) {
-                const txLines = reconLines.filter(l => l.transaction_ref === t.referencia_origen);
+                const txLines = reconLines.filter(l => l.transaction_ref === t.referencia_origen || l.transaction_ref.startsWith(`${t.referencia_origen}_EFECTIVO`));
                 txLines.forEach(l => {
                     if (l.clasificacion === 'Efectivo') g.breakdown.cash += l.importe_linea_cents;
                     else if (l.clasificacion === 'Transferencia') g.breakdown.transfer += l.importe_linea_cents;
