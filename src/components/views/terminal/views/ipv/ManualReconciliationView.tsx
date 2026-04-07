@@ -260,7 +260,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                                 <div key={l.id} className="p-3 bg-primary/5 border border-primary/20 rounded-2xl space-y-3 shadow-sm relative group/manual animate-in slide-in-from-right-4 duration-300">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-none" />
                                             <p className="font-black text-xs text-primary uppercase tracking-widest">{l.product_cod}</p>
                                         </div>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-red-100/50 rounded-full" onClick={() => removeManualLine(l.id!)}>
