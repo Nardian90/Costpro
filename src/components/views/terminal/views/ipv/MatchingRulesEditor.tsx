@@ -5,11 +5,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, MatchingRule } from '@/lib/dexie';
 import { DEFAULT_MATCHING_RULES } from '@/lib/ipv/engine';
 import { Card } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Sparkles, Bot, ShieldCheck, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import { GripVertical, Sparkles, Bot, ShieldCheck, CheckCircle2, AlertCircle, HelpCircle, Info, Zap, Settings2, Workflow, Eye, Target, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -31,6 +32,157 @@ import { CSS } from '@dnd-kit/utilities';
 import { RuleMetaEditor } from './RuleMetaEditor';
 import { cn } from '@/lib/utils';
 
+
+const RULE_DESCRIPTIONS: Record<string, any> = {
+    "STOCK_LIMIT": {
+        "trigger": "Se activa globalmente si la regla está habilitada en el motor de matching.",
+        "setup": [
+            "Control de stock habilitado en configuración",
+            "Productos con stock inicial cargado (stock_inicial_manual)",
+            "Configuración 'allow_negative' (Permitir stock negativo)"
+        ],
+        "logic": [
+            "El sistema intercepta cada intento de matching.",
+            "Verifica el 'Stock Virtual' (Stock inicial - movimientos ya aplicados en esta sesión).",
+            "Si el stock es insuficiente, intenta una 'Descomposición' (ej: de un combo a sus partes).",
+            "Si persiste la falta de stock y 'allow_negative' es falso, bloquea la asignación del producto."
+        ],
+        "result": "Evita que el sistema asigne productos que físicamente no deberían estar disponibles, forzando al motor a buscar otras combinaciones o usar comodines.",
+        "scenarios": [
+            "Venta de 'Cerveza 355ml': Si el stock virtual es 0, la regla HARD_REF o EXACT_SUM ignorará este producto aunque el precio coincida."
+        ],
+        "interaction": "Afecta a todas las reglas que asignan productos (HARD_REF, EXACT_SUM, WILDCARDS). Si falla, el monto restante pasa a la siguiente regla.",
+        "errors": [
+            "Error de inventario: Si el stock real no coincide con el sistema, el matching será incorrecto.",
+            "Bloqueo total: Si no hay stock de nada, ninguna regla de producto podrá ejecutarse."
+        ]
+    },
+    "HARD_REF": {
+        "trigger": "Se activa cuando una transacción bancaria contiene texto que coincide con el código de un producto o referencia específica.",
+        "setup": [
+            "Código de producto (SKU) definido en catálogo",
+            "Observaciones en el mensaje bancario (ej: 'PAGO REF 102')",
+            "Integraciones (Comodia) que envíen la referencia en la metadata"
+        ],
+        "logic": [
+            "Escanea el campo de observaciones de la transacción.",
+            "Busca coincidencias exactas con el campo 'cod' de los productos activos.",
+            "Calcula cuántas unidades del producto caben en el importe total de la transacción.",
+            "Crea una línea de conciliación vinculada a ese producto específico."
+        ],
+        "result": "Matching inmediato con confianza del 100%. El estado de la transacción cambia a 'COMPLETO' si el importe se cubre totalmente.",
+        "scenarios": [
+            "Transferencia con nota 'Cerveza-Premium': El sistema detecta el código 'Cerveza-Premium' y asigna la cantidad correspondiente al monto transferido."
+        ],
+        "interaction": "Es una regla de alta prioridad. Si tiene éxito, reduce el 'monto restante' para las reglas posteriores o finaliza el proceso.",
+        "errors": [
+            "Ambigüedad: Si el código de un producto es un número común (ej: '100'), puede haber falsos positivos.",
+            "Referencia incompleta: Si el usuario escribe mal el código en la transferencia."
+        ]
+    },
+    "EXACT_SUM": {
+        "trigger": "Se activa para transacciones que no han sido resueltas por referencias directas (HARD_REF).",
+        "setup": [
+            "Catálogo de productos con precios actualizados",
+            "Parámetros de profundidad (depth) y tiempo límite (timeout) configurados en la meta de la regla"
+        ],
+        "logic": [
+            "Inicia un algoritmo combinatorio (Backtracking/Subset Sum).",
+            "Busca entre los productos activos combinaciones cuyos precios sumen exactamente el importe de la transacción.",
+            "Respeta los límites de stock si la regla STOCK_LIMIT está activa.",
+            "Si encuentra una combinación válida, genera las líneas de productos correspondientes."
+        ],
+        "result": "Desglose automático de ventas complejas (ej: varios productos en una sola transferencia). Las columnas de 'Transferencia' se pueblan con los productos hallados.",
+        "scenarios": [
+            "Transferencia de $1500: El sistema encuentra que Pollo ($1200) + Refresco ($300) = $1500 exactos. Asigna ambos productos."
+        ],
+        "interaction": "Consume el monto total. Si no encuentra una suma exacta, no aplica ningún producto y delega en WILDCARDS o CASH_FILL.",
+        "errors": [
+            "Timeout: En transacciones muy grandes con muchos productos, el sistema puede rendirse para evitar bloqueos.",
+            "Múltiples soluciones: El sistema elige la primera combinación óptima encontrada."
+        ]
+    },
+    "PRICE_FLEX": {
+        "trigger": "Se activa cuando no hay un match exacto por suma, permitiendo un margen de error en el precio unitario.",
+        "setup": [
+            "Rango de variación permitido (ej: 10%)",
+            "Límite máximo de variación en centavos"
+        ],
+        "logic": [
+            "Evalúa productos cuyo precio sea cercano al monto restante.",
+            "Ajusta virtualmente el precio del producto (dentro del rango) para forzar el match.",
+            "Si el ajuste logra cuadrar la transacción, se acepta el producto."
+        ],
+        "result": "Permite cerrar transacciones donde hubo pequeños errores de redondeo o cambios de precio no reportados.",
+        "scenarios": [
+            "Transferencia de $99.50: El producto cuesta $100. Con 0.5% de flexibilidad, el sistema lo acepta como un match válido."
+        ],
+        "interaction": "Ayuda a EXACT_SUM a finalizar cuando hay diferencias mínimas de céntimos.",
+        "errors": [
+            "Distorsión de costos: Si el margen es muy alto, los reportes de rentabilidad pueden verse afectados."
+        ]
+    },
+    "WILDCARDS": {
+        "trigger": "Se activa como último recurso antes de la inyección de efectivo pura.",
+        "setup": [
+            "Productos marcados con el flag 'isWildcardCandidate' (ej: 'Venta Genérica')",
+            "Precio definido para el comodín (puede ser $1 o un valor base)"
+        ],
+        "logic": [
+            "Busca productos 'Comodín' en el catálogo.",
+            "Calcula la cantidad necesaria del comodín para cubrir o acercarse al monto restante.",
+            "Prioriza el comodín que minimice el residuo final."
+        ],
+        "result": "Asegura que el monto transferido esté respaldado por al menos un ítem de catálogo, aunque sea genérico.",
+        "scenarios": [
+            "Monto de $743 sin match: Usa el producto 'Venta Granel' x 743 unidades (si vale $1) para justificar el ingreso."
+        ],
+        "interaction": "Reduce drásticamente la necesidad de usar CASH_FILL, manteniendo la integridad del inventario genérico.",
+        "errors": [
+            "Falta de especificidad: No permite saber qué se vendió realmente, solo que hubo una venta."
+        ]
+    },
+    "TOLERANCE": {
+        "trigger": "Se activa al final del pipeline si queda un residuo muy pequeño.",
+        "setup": [
+            "Monto de tolerancia configurado (ej: 100 centavos / $1)"
+        ],
+        "logic": [
+            "Compara el residuo final contra el límite de tolerancia.",
+            "Si es menor o igual, marca la transacción como 'COMPLETA'.",
+            "No genera líneas adicionales, simplemente ignora la diferencia."
+        ],
+        "result": "Limpia ruidos visuales de céntimos en los reportes de conciliación.",
+        "scenarios": [
+            "Diferencia de $0.05: El sistema la ignora y la transacción pasa a verde (Cuadrada)."
+        ],
+        "interaction": "Es el 'filtro de belleza' final. Evita que transacciones casi perfectas queden en estado 'PARCIAL'.",
+        "errors": [
+            "Acumulación: Si se usa una tolerancia muy alta, se pueden perder montos significativos en el agregado mensual."
+        ]
+    },
+    "CASH_FILL": {
+        "trigger": "Regla de cierre obligatoria para garantizar el cuadre de todas las operaciones.",
+        "setup": [
+            "Límite diario de inyección (para control de riesgos)",
+            "Clasificación configurada como 'Efectivo' o 'Transferencia Filler'"
+        ],
+        "logic": [
+            "Caso A (Excedente): Los productos exceden la transferencia -> Crea línea de 'Efectivo' (Pago Mixto).",
+            "Caso B (Faltante): La transferencia excede los productos -> Crea línea de 'Transferencia' de ajuste.",
+            "Registra la observación: 'Pago mixto' o 'Cuadre automático'."
+        ],
+        "result": "Garantiza que toda transacción tenga una contrapartida, reflejando fielmente la naturaleza mixta de los cobros reales.",
+        "scenarios": [
+            "Venta de $1000 con transferencia de $800: Genera línea de $200 como 'Efectivo' automáticamente."
+        ],
+        "interaction": "Es la red de seguridad final. Sin esta regla, el sistema dejaría muchas transacciones como 'PARCIAL'.",
+        "errors": [
+            "Abuso de la regla: Puede ocultar problemas de carga de catálogo si se inyecta demasiado efectivo sin control."
+        ]
+    }
+};
+
 interface SortableRuleItemProps {
     rule: MatchingRule;
     toggleRule: (id: string, active: boolean) => Promise<void>;
@@ -39,6 +191,8 @@ interface SortableRuleItemProps {
     totalRules: number;
     usageCount?: number;
 }
+
+
 
 function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules, usageCount = 0 }: SortableRuleItemProps) {
     const {
@@ -53,7 +207,6 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
         transform: CSS.Transform.toString(transform),
         transition,
     };
-
     const getLabel = (tipo: string) => {
         switch (tipo) {
             case 'STOCK_LIMIT': return 'Límites de Stock';
@@ -68,118 +221,197 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
         }
     };
 
-    const getDescription = (tipo: string) => {
-        switch (tipo) {
-            case 'STOCK_LIMIT': return 'Prioriza productos con bajo stock o según su jerarquía virtual.';
-            case 'HARD_REF': return 'Busca referencias exactas entre el mensaje bancario y el catálogo.';
-            case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen el importe exacto de la transacción.';
-            case 'PRICE_FLEX': return 'Permite pequeñas variaciones de precio para lograr un cuadre exacto.';
-            case 'WILDCARDS': return 'Aplica productos comodín si no se encuentra un match específico.';
-            case 'TOLERANCE': return 'Acepta diferencias mínimas (centavos) para cerrar el cuadre.';
-            case 'CASH_FILL': return 'Completa el cuadre inyectando líneas de efectivo virtuales.';
-            case 'GOAL_WITH_TOLERANCE': return 'Distribuye metas de venta con márgenes de error permitidos.';
-            default: return '';
-        }
-    };
 
-    const getExample = (tipo: string) => {
-        switch (tipo) {
-            case 'STOCK_LIMIT': return 'Ej: No vender "Cerveza 355ml" si el stock virtual es 0.';
-            case 'HARD_REF': return 'Ej: Transferencia con nota "PAGO REF: 102" hace match con Producto 102.';
-            case 'EXACT_SUM': return 'Ej: Transferencia de $1500 -> Match con (Pollo $1200 + Refresco $300).';
-            case 'PRICE_FLEX': return 'Ej: Transferencia de $99.50 -> Match con Producto de $100 (ajustando 0.5%).';
-            case 'WILDCARDS': return 'Ej: Si no hay match, usa "Venta Genérica" para cubrir el monto.';
-            case 'TOLERANCE': return 'Ej: Diferencia de $0.05 se ignora y la transacción queda "COMPLETA".';
-            case 'CASH_FILL': return 'Ej: Cubre faltantes con línea "Efectivo" o maneja excedentes (Pago Mixto).';
-            case 'GOAL_WITH_TOLERANCE': return 'Ej: Ajusta cantidades para alcanzar $1,000,000 con ±$5,000 de error.';
-            default: return '';
-        }
+
+
+    const info = RULE_DESCRIPTIONS[rule.tipo] || {
+        trigger: "Sin descripción disponible.",
+        setup: [],
+        logic: [],
+        result: "",
+        scenarios: [],
+        interaction: "",
+        errors: []
     };
 
     return (
         <div ref={setNodeRef} style={style} className="group">
             <Card className={cn(
-                "p-4 transition-all border-2",
-                rule.activo ? 'border-primary/20 bg-card/50' : 'border-transparent bg-muted/30 opacity-60'
+                "transition-all border-2 overflow-hidden",
+                rule.activo ? 'border-primary/20 bg-card/50 shadow-sm' : 'border-transparent bg-muted/30 opacity-60'
             )}>
-                <div className="flex items-start gap-4">
-                    <div
-                        className="hidden sm:flex text-muted-foreground cursor-grab active:cursor-grabbing mt-1 p-1 hover:bg-muted rounded"
-                        {...attributes}
-                        {...listeners}
-                    >
-                        <GripVertical className="w-5 h-5" />
-                    </div>
-
-                    <div className="flex-1 sm:hidden">
-                        <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-sm uppercase">{getLabel(rule.tipo)}</h4>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black opacity-50 uppercase">PRIO:</span>
-                                <select
-                                    value={rule.prioridad}
-                                    onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                    className="h-7 text-xs font-black border rounded bg-background px-2 outline-none"
-                                >
-                                    {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
-                                        <option key={p} value={p}>{p}</option>
-                                    ))}
-                                </select>
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="details" className="border-none">
+                        <div className="flex items-center px-4 py-2 bg-muted/20 border-b border-border/50">
+                            <div
+                                className="text-muted-foreground cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded mr-2"
+                                {...attributes}
+                                {...listeners}
+                            >
+                                <GripVertical className="w-4 h-4" />
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="hidden sm:block flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
-                                <div className="flex items-center gap-2 ml-2">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
+                            <div className="flex-1 flex items-center gap-3">
+                                <Badge variant="outline" className="font-black text-[10px] w-6 h-6 flex items-center justify-center rounded-full p-0 bg-background">
+                                    {rule.prioridad}
+                                </Badge>
+                                <h4 className="font-bold text-xs uppercase tracking-wider">{getLabel(rule.tipo)}</h4>
+                                {usageCount > 0 && (
+                                    <Badge variant="secondary" className="text-[9px] font-bold px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-none">
+                                        {usageCount} USOS
+                                    </Badge>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase opacity-50">Prioridad:</span>
                                     <select
                                         value={rule.prioridad}
                                         onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                        className="h-7 text-xs font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
+                                        className="h-6 text-[10px] font-black border rounded bg-background px-1 outline-none cursor-pointer"
                                     >
                                         {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
                                             <option key={p} value={p}>{p}</option>
                                         ))}
                                     </select>
                                 </div>
+                                <Switch
+                                    checked={rule.activo}
+                                    onCheckedChange={(checked) => toggleRule(rule.id, checked)}
+                                    className="scale-75"
+                                />
                             </div>
-                            {rule.activo && (
-                                <Badge variant="secondary" className="text-[10px] font-black uppercase px-2 py-0.5 bg-primary/10 text-primary border-none">
-                                    Esta regla cuadró {usageCount} transacciones
-                                </Badge>
-                            )}
                         </div>
-                        <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
-                        <p className="text-[10px] text-primary/70 font-medium italic mt-1">{getExample(rule.tipo)}</p>
-                    </div>
 
-                    <div className="hidden sm:flex items-center gap-3">
-                        <Label htmlFor={`active-${rule.id}`} className="text-xs font-bold uppercase cursor-pointer">
-                            {rule.activo ? 'Activa' : 'Inactiva'}
-                        </Label>
-                        <Switch
-                            id={`active-${rule.id}`}
-                            checked={rule.activo}
-                            onCheckedChange={(checked) => toggleRule(rule.id, checked)}
-                        />
-                    </div>
-                </div>
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline group-data-[state=open]:bg-primary/5 transition-colors">
+                            <div className="flex items-center gap-2 text-left">
+                                <Info className="w-3.5 h-3.5 text-primary/60" />
+                                <span className="text-xs text-muted-foreground font-medium line-clamp-1">
+                                    {info.trigger}
+                                </span>
+                            </div>
+                        </AccordionTrigger>
 
-                {rule.activo && (
-                    <div className="pt-4 border-t border-border/50 mt-4">
-                        <RuleMetaEditor
-                            rule={rule}
-                            onSave={updateRuleMeta}
-                        />
-                    </div>
-                )}
+                        <AccordionContent className="px-6 pb-6 pt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+                                {/* Columna Izquierda: Definición y Configuración */}
+                                <div className="space-y-6">
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-2 text-primary">
+                                            <Zap className="w-4 h-4" />
+                                            <h5 className="text-[10px] font-black uppercase tracking-widest">Trigger (Origen)</h5>
+                                        </div>
+                                        <p className="text-sm text-foreground/80 leading-relaxed pl-6 border-l-2 border-primary/10 italic">
+                                            "{info.trigger}"
+                                        </p>
+                                    </section>
+
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-3 text-amber-500">
+                                            <Settings2 className="w-4 h-4" />
+                                            <h5 className="text-[10px] font-black uppercase tracking-widest">Configuración en Catálogo</h5>
+                                        </div>
+                                        <ul className="space-y-2 pl-6">
+                                            {info.setup.map((s: string, i: number) => (
+                                                <li key={i} className="text-xs flex items-center gap-2 text-muted-foreground">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40" />
+                                                    {s}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-3 text-emerald-500">
+                                            <Eye className="w-4 h-4" />
+                                            <h5 className="text-[10px] font-black uppercase tracking-widest">Resultado Operativo</h5>
+                                        </div>
+                                        <div className="pl-6 py-2 px-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+                                            <p className="text-xs text-emerald-700 font-medium">
+                                                {info.result}
+                                            </p>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                {/* Columna Derecha: Lógica e Interacción */}
+                                <div className="space-y-6">
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-3 text-blue-500">
+                                            <Workflow className="w-4 h-4" />
+                                            <h5 className="text-[10px] font-black uppercase tracking-widest">Lógica del Sistema</h5>
+                                        </div>
+                                        <div className="space-y-3 pl-2">
+                                            {info.logic.map((l: string, i: number) => (
+                                                <div key={i} className="flex gap-3">
+                                                    <span className="text-[10px] font-black text-blue-500/50 mt-0.5">{i+1}.</span>
+                                                    <p className="text-xs leading-normal text-muted-foreground">{l}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <section>
+                                        <div className="flex items-center gap-2 mb-3 text-purple-500">
+                                            <Target className="w-4 h-4" />
+                                            <h5 className="text-[10px] font-black uppercase tracking-widest">Escenario Real</h5>
+                                        </div>
+                                        <div className="pl-6 border-l-2 border-purple-500/20">
+                                            {info.scenarios.map((s: string, i: number) => (
+                                                <p key={i} className="text-xs text-muted-foreground leading-relaxed">
+                                                    {s}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <section>
+                                            <div className="flex items-center gap-2 mb-2 text-slate-500">
+                                                <RefreshCcw className="w-3.5 h-3.5" />
+                                                <h5 className="text-[9px] font-black uppercase tracking-widest">Interacción</h5>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-tight">
+                                                {info.interaction}
+                                            </p>
+                                        </section>
+                                        <section>
+                                            <div className="flex items-center gap-2 mb-2 text-red-500">
+                                                <AlertTriangle className="w-3.5 h-3.5" />
+                                                <h5 className="text-[9px] font-black uppercase tracking-widest">Errores Comunes</h5>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-tight">
+                                                {info.errors[0] || "N/A"}
+                                            </p>
+                                        </section>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-4 border-t border-border/50">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Settings2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                        <span className="text-[10px] font-black uppercase text-muted-foreground">Configuración Avanzada (JSON)</span>
+                                    </div>
+                                </div>
+                                <div className="mt-3">
+                                    <RuleMetaEditor
+                                        rule={rule}
+
+                                        onSave={async (id, meta) => await updateRuleMeta(id, meta)}
+                                    />
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </Card>
         </div>
     );
 }
+
 
 export function MatchingRulesEditor() {
   const rules = useLiveQuery(() => db.matching_rules.orderBy('prioridad').toArray());
