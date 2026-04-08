@@ -94,6 +94,7 @@ export class Pick3ScraperService {
   private static async scrapeOfficial(): Promise<Pick3Result[]> {
     try {
       const response = await fetch('https://floridalottery.com/content/flalottery-web/us/en/games/draw-games/pick-3.draw-games.json', {
+        cache: 'no-store',
         headers: { 'User-Agent': this.USER_AGENT }
       });
       if (response.ok) {
