@@ -481,7 +481,7 @@ export class MatchingEngine {
 
   private async applyTolerance(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const tolerance = rule.meta?.tolerance_cents || 100;
-    if (remaining > 0 && remaining <= tolerance) {
+    if (remaining !== 0 && Math.abs(remaining) <= tolerance) {
         addTrace(pass, 'TOLERANCE', 'SUCCESS', `Saldo de ${remaining} cts cubierto por tolerancia`);
         logs.push(`PASS ${pass} (TOLERANCE): Saldo restante de ${remaining} cts cubierto.`);
         return 0;

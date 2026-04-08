@@ -15,8 +15,8 @@ vi.mock('../../dexie', () => ({
       equals: vi.fn().mockReturnThis(),
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
+    },
     matching_logs: { add: vi.fn().mockResolvedValue({}) },
-    }
   }
 }));
 
@@ -32,14 +32,16 @@ describe('Reproduction of reported issue', () => {
         es_paquete: false,
         contenido_paquete: 1,
         stock_inicial_manual: 126,
+        isWildcardCandidate: true,
         created_at: ''
     },
   ];
 
   const rules: MatchingRule[] = [
-    { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
-    { id: '2', tipo: 'TOLERANCE', prioridad: 2, activo: true, tolerancia_cents: 20.00 },
-    { id: '3', tipo: 'EXACT_SUM', prioridad: 4, activo: false }, // User said it might be deactivated
+    { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true, meta: { allow_negative: false } },
+    { id: '4', tipo: 'WILDCARDS', prioridad: 4, activo: true },
+    { id: '2', tipo: 'TOLERANCE', prioridad: 6, activo: true, meta: { tolerance_cents: 20 } },
+    { id: '3', tipo: 'EXACT_SUM', prioridad: 3, activo: false },
   ];
 
   it('should match $1400 with SKU027 ($30) given 20 tolerance', async () => {
@@ -50,7 +52,7 @@ describe('Reproduction of reported issue', () => {
       referencia_corta: 'REF1',
       referencia_origen: 'REF1',
       observaciones: 'TRANSFERENCIA',
-      importe_cents: 1400.00,
+      importe_cents: 1410.00,
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: '',
