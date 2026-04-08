@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     try {
         pdfResults = await Pick3PdfService.syncFromPdf();
     } catch (pdfError) {
-        throw new Error(`PDF Sync failed: ${pdfError.message}`);
+        throw new Error(`PDF Sync failed: ${pdfError instanceof Error ? pdfError.message : String(pdfError)}`);
         if (webResults.length === 0) {
             return NextResponse.json({
                 success: false,
