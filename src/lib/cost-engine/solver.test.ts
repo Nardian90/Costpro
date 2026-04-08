@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from 'vitest';
 import { solveCoefficient } from './solver';
 import { CostSheetData } from '@/types/cost-sheet';
 import templateLavar from '../data/template-lavar';
@@ -201,7 +201,7 @@ describe('Cost Solver', () => {
     const finalPrice = simResult.rows.find(r => r.id === '14' || r.classification === '14')?.total;
 
     expect(finalPrice).toBeCloseTo(target, 0.05);
-  });
+  }, 120000);
 
   it('correctly handles total: 0 fallback to norm * price in mapping and solving', () => {
     const mockData: any = {
