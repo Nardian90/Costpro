@@ -56,7 +56,7 @@ describe('MatchingEngine - Cash Filler Audit', () => {
       id: 'tx1',
       fecha: '2025-08-01',
       referencia_corta: 'INVALID',
-      referencia_origen: 'INVALID_REF',
+      referencia_origen: 'INV',
       observaciones: 'Test',
       importe_cents: 1500,
       tipo: 'Cr',
@@ -72,8 +72,8 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-08-01',
-      referencia_corta: 'TRX-123',
-      referencia_origen: 'TRX-123',
+      referencia_corta: 'YR60000400646',
+      referencia_origen: 'YR60000400646',
       observaciones: 'Test',
       importe_cents: 1000,
       tipo: 'Cr',
@@ -86,17 +86,17 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     expect(result.status).toBe('COMPLETO');
     const cashLine = result.lines.find(l => l.origen_dato === 'CASH_FILLER');
     expect(cashLine).toBeDefined();
-    expect(cashLine?.parent_transaction_id).toBe('TRX-123');
+    expect(cashLine?.parent_transaction_id).toBe('YR60000400646');
     expect(cashLine?.source_type).toBe('BANK_TRANSFER');
-    expect(cashLine?.id).toBe('hash-TRX-123_EFECTIVO-1000-Transferencia');
+    expect(cashLine?.id).toBe('hash-YR60000400646_EFECTIVO-1000-Transferencia');
   });
 
   it('should block if daily limit is exceeded', async () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-08-01',
-      referencia_corta: 'TRX-LIMIT',
-      referencia_origen: 'TRX-LIMIT',
+      referencia_corta: 'YR60000405647',
+      referencia_origen: 'YR60000405647',
       observaciones: 'Test',
       importe_cents: 6000,
       tipo: 'Cr',
@@ -112,8 +112,8 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-08-01',
-      referencia_corta: 'TRX-IDEM',
-      referencia_origen: 'TRX-IDEM',
+      referencia_corta: 'YR60000405646',
+      referencia_origen: 'YR60000405646',
       observaciones: 'Test',
       importe_cents: 500,
       tipo: 'Cr',
@@ -126,6 +126,6 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     const res2 = await engine.matchTransaction(tx);
 
     expect(res1.lines[0].id).toBe(res2.lines[0].id);
-    expect(res1.lines[0].id).toBe('hash-TRX-IDEM_EFECTIVO-500-Transferencia');
+    expect(res1.lines[0].id).toBe('hash-YR60000405646_EFECTIVO-500-Transferencia');
   });
 });

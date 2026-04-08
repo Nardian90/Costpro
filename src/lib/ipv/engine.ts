@@ -16,7 +16,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
     { id: "wildcards", tipo: "WILDCARDS", prioridad: 4, activo: true, descripcion: "Comodines" },
-    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 1000000 }, descripcion: "Inyección de Efectivo" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 10000000 }, descripcion: "Inyección de Efectivo" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
@@ -45,7 +45,7 @@ export class MatchingEngine {
   private pendingMovements: ProductMovement[] = [];
   private dailyAdjustedPrices: Map<string, number> = new Map();
   private isMatchingPipelineActive: boolean = false;
-  private readonly ORIGIN_WHITELIST = /^(TRX|BANK)-[A-Z0-9\-_]+$/;
+  private readonly ORIGIN_WHITELIST = /^[A-Z0-9\-_]{5,64}$/;
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
