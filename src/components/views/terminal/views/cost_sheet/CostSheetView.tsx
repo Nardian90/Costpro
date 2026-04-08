@@ -156,12 +156,12 @@ const CostSheetView = () => {
 
             let label = "";
             if (blockSections.length === 1) {
-                label = first.label;
+                label = first.label || "";
             } else {
                 const startNum = getSectionNumber(first.id);
                 const endNum = getSectionNumber(last.id);
-                const firstName = getSectionName(first.label);
-                const lastName = getSectionName(last.label);
+                const firstName = getSectionName(first.label || "");
+                const lastName = getSectionName(last.label || "");
                 label = `SECCIONES ${startNum} - ${endNum}: ${firstName} ... ${lastName}`;
             }
 
@@ -180,7 +180,7 @@ const CostSheetView = () => {
         if (!isInBlock) {
             groups.push({
                 id: s.id,
-                label: s.label,
+                label: s.label || "",
                 sectionIds: [s.id]
             });
         }
@@ -606,14 +606,7 @@ const CostSheetView = () => {
                     <div className="w-full max-w-6xl">
                     {activeSection === 'kpis' && (
                          <div className="animate-in zoom-in-95 duration-500 py-8">
-                            <CostSheetSummary
-                                totalPrice={calculatedValues['14']?.total || 0}
-                                utility={calculatedValues['13']?.total || 0}
-                                totalCost={calculatedValues['12']?.total || 0}
-                                telemetry={calculatedValues}
-                                header={calculatedHeader}
-                                healthPercent={healthPercent}
-                            />
+                            <CostSheetSummary />
                             {/* CostSheetFormulaGuide movido al HelpPanel */}
                         </div>
                     )}

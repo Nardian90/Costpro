@@ -12,6 +12,7 @@ import {
   X,
   Settings2
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -36,7 +37,7 @@ import { Label } from "@/components/ui/label";
 
 export const CostSheetSummary: React.FC = () => {
   const { data, updateUtilityFormula, updateIndirectConfig } = useCostSheetStore();
-  const { results, formatCurrency } = useCostSheetCalculator();
+  const { calculatedValues } = useCostSheetCalculator(data);
 
   // Local state for "Precio de Venta Objetivo" simulation
   const [targetPrice, setTargetPrice] = useState<string>('');
@@ -63,9 +64,9 @@ export const CostSheetSummary: React.FC = () => {
     }
   }, [currentUtilityPercent, isSimulating]);
 
-  const totalCost = results['12'] || 0;
-  const salePrice = results['14'] || 0;
-  const utilityValue = results['13'] || 0;
+  const totalCost = calculatedValues['12']?.total || 0;
+  const salePrice = calculatedValues['14']?.total || 0;
+  const utilityValue = calculatedValues['13']?.total || 0;
 
   const handleTargetPriceChange = (value: string) => {
     setTargetPrice(value);
@@ -94,8 +95,8 @@ export const CostSheetSummary: React.FC = () => {
     const selectedIds = data.indirectConfig?.selectedSections || [];
     const baseSectionId = data.indirectConfig?.baseSection || '2';
 
-    const indirectTotal = selectedIds.reduce((sum, id) => sum + (results[id] || 0), 0);
-    const baseTotal = results[baseSectionId] || 0;
+    const indirectTotal = selectedIds.reduce((sum, id) => sum + (calculatedValues[id]?.total || 0), 0);
+    const baseTotal = calculatedValues[baseSectionId]?.total || 0;
 
     if (baseTotal > 0) {
       const newCoef = indirectTotal / baseTotal;
