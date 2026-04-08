@@ -376,6 +376,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </div>
 
               {/* Indirect Coef */}
+              {/* Indirect Coef */}
               <div className="p-6 rounded-3xl bg-muted/30 border border-white/5 space-y-6">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
