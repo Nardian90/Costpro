@@ -8,8 +8,8 @@ import {
   CostSheetAnnex as CostSheetAnnexContract,
   IndirectConfig
 } from '@/types/cost-sheet';
-import { reinicioTemplate } from '@/lib/data/costpro-reinicio';
-import { exampleTemplate } from '@/lib/data/costpro-ejemplo';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import exampleTemplate from '@/lib/data/costpro-ejemplo';
 import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
 
