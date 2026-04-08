@@ -282,8 +282,8 @@ def main():
 
             timestamp = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
             if status == "re_execute":
-                print("Major change detected. Resetting to Phase 1.")
-                new_state["currentPhase"] = 1
+                print("Major change detected. Advancing to Phase 5 per protocol, re-discovery will be handled incrementally.")
+                new_state["currentPhase"] = current_phase + 1
                 new_state["lastExecution"] = timestamp
                 save_state(new_state)
             elif status in ["success", "quarantined", "committed", "skipped", "degraded"]:

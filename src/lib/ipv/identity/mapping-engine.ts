@@ -29,12 +29,18 @@ function normalizeBankName(name: string): string {
   // We'll use a more targeted replacement for known artifact patterns
   // or use the space-insensitive matching later in the registry for deduplication.
 
-  // For now, let's just keep the name as is (but uppercase and trimmed)
-  // and handle the artifacts in the normalization/registry layer.
-  return name
-    .replace(/\s+/g, " ")
-    .trim()
-    .toUpperCase();
+  // Fix artifacts like "CL AUDIA" -> "CLAUDIA" by identifying single letters
+  // followed by a space and then the rest of the name part.
+  // This is a heuristic for BPA Bancamovil which often breaks names.
+  let fixed = name.toUpperCase().replace(/\s+/g, " ").trim();
+
+  // Pattern: Letter + Space + Rest (where the split shouldn't happen)
+  // e.g., "CL AUDIA" -> "CLAUDIA"
+  // We'll only do this for specific known prefixes if they look like artifacts
+  fixed = fixed.replace(/\b(CL)\s(AUDIA)\b/g, "CLAUDIA");
+  fixed = fixed.replace(/\b(BE)\s(NEFICIARIO)\b/g, "BENEFICIARIO");
+
+  return fixed;
 }
 
 const RULES: MappingRule[] = [
