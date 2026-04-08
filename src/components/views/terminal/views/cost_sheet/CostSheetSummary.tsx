@@ -60,7 +60,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 }) => {
   const updateUtilityFormula = useCostSheetStore(state => state.updateUtilityFormula);
   const updateValues = useCostSheetStore(state => state.updateValues);
-  const updateAnnexAdjustment = useCostSheetStore(state => state.updateAnnexAdjustment);
+  const updateAnnexAdjustment = useCostSheetStore, updateIndirectConfig = useCostSheetStore(state => state.updateAnnexAdjustment);
   const data = useCostSheetStore(state => state.data);
 
   // Current markup (utility over cost)
@@ -112,24 +112,49 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const handleSliderChange = (val: number[]) => {
     const newValue = val[0];
     setSliderValue(newValue);
-    updateUtilityFormula(newValue);
+    setSimulatedMarkup(newValue);
+    setIsSimulationMode(true);
+    const simulatedPrice = totalCost * (1 + (newValue / 100));
+    setLocalPrice(simulatedPrice.toFixed(2));
   };
 
   const handleCoefChange = (val: number) => {
     setLocalCoef(val);
-    const updates = [
-      { path: ['sections', 0, 'rows', 3, 'value'], value: val }, // Row 4
-      { path: ['sections', 0, 'rows', 5, 'value'], value: val }, // Row 6
-      { path: ['sections', 0, 'rows', 6, 'value'], value: val }  // Row 7
-    ];
-    updateValues(updates);
+    updateIndirectConfig({ coefficient: val });
   };
+
+  const handleToggleIndirectSection = (id: string) => {
+    const current = data?.indirectConfig?.selectedSections || [];
+    const next = current.includes(id) ? current.filter(i => i !== id) : [...current, id];
+    updateIndirectConfig({ selectedSections: next });
+  };
+
+  const [simulatedMarkup, setSimulatedMarkup] = useState<number | null>(null);
+  const [isSimulationMode, setIsSimulationMode] = useState(false);
 
   const handlePriceAdjust = (newPrice: number) => {
     if (totalCost <= 0) return;
     const requiredMarkup = ((newPrice / totalCost) - 1) * 100;
-    const clampedMarkup = Math.max(1, Math.min(100, requiredMarkup));
-    updateUtilityFormula(clampedMarkup);
+    const clampedMarkup = Math.max(0, Math.min(500, requiredMarkup));
+    setSimulatedMarkup(clampedMarkup);
+    setIsSimulationMode(true);
+    setSliderValue(clampedMarkup);
+  };
+
+  const handleApplySimulation = () => {
+    if (simulatedMarkup !== null) {
+      updateUtilityFormula(simulatedMarkup);
+      setIsSimulationMode(false);
+      setSimulatedMarkup(null);
+      toast.success("Cambios aplicados permanentemente");
+    }
+  };
+
+  const handleCancelSimulation = () => {
+    setIsSimulationMode(false);
+    setSimulatedMarkup(null);
+    setSliderValue(currentMarkup);
+    setLocalPrice(totalPrice.toFixed(2));
   };
 
   const handleAutoAdjust = () => {
@@ -249,7 +274,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
             <div className="grid grid-cols-1 gap-4">
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">Markup Real</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 mb-2 block">% de Utilidad</span>
                 <span className="text-3xl font-black font-mono">+{totalCost > 0 ? Math.round((utility / totalCost) * 100) : 0}%</span>
               </div>
               <div className="p-6 rounded-[2rem] bg-background/40 border border-white/5 backdrop-blur-md">
@@ -260,20 +285,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </div>
             </div>
 
-            <div className="space-y-6">
-               <div className="flex justify-between items-center px-2">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Ajuste de Margen Deseado</h4>
-                  <span className="text-sm font-black font-mono text-primary">{totalCost > 0 ? Math.round((utility / totalCost) * 100) : 0}%</span>
-               </div>
-               <Slider
-                 value={[ (utility / totalCost) * 100 ]}
-                 min={1}
-                 max={100}
-                 step={0.5}
-                 onValueChange={(val) => updateUtilityFormula(val[0])}
-                 className="py-4"
-               />
-            </div>
+
           </div>
         </div>
       </div>
@@ -322,7 +334,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div className="space-y-1">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Margen de Utilidad</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-foreground">% de Utilidad</h4>
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Impacto directo en rentabilidad</p>
                   </div>
                   <span className="text-2xl font-black italic text-primary drop-shadow-[0_0_15px_rgba(22,163,74,0.3)]">
@@ -334,16 +346,33 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <Slider
                     value={[sliderValue]}
                     min={1}
-                    max={100}
+                    max={300}
                     step={0.1}
                     onValueChange={handleSliderChange}
                     className="py-4"
                   />
                   <div className="flex justify-between mt-2 px-1">
                     <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Conservador (1%)</span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Agresivo (100%)</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Agresivo (300%)</span>
                   </div>
                 </div>
+                {isSimulationMode && (
+                  <div className="flex gap-2 mt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelSimulation}
+                      className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase tracking-widest"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleApplySimulation}
+                      className="flex-1 rounded-xl h-10 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20"
+                    >
+                      Aplicar Cambios
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Indirect Coef */}
@@ -355,7 +384,92 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                     </div>
                     <div>
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground leading-tight">Coef. Gastos Indirectos</h4>
-                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter italic">Relación Gtos/Salario</p>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter italic">Relación Gtos/Sección Base</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleCoefChange(Math.max(0, localCoef - 0.05))}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-xl font-black font-mono w-16 text-center text-primary">{localCoef.toFixed(4)}</span>
+                    <button
+                      onClick={() => handleCoefChange(localCoef + 0.05)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-black tracking-widest">
+                    <span>mín 0.0</span>
+                    <span>máx 4.0</span>
+                  </div>
+                  <Slider
+                    value={[localCoef]}
+                    min={0}
+                    max={4}
+                    step={0.0001}
+                    onValueChange={(val) => handleCoefChange(val[0])}
+                  />
+                </div>
+
+                {/* Section Selector */}
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <h5 className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <ListFilter className="w-3 h-3" /> Secciones Indirectas Afectadas
+                  </h5>
+                  <div className="grid grid-cols-2 gap-2">
+                    {data?.sections?.map((s, idx) => (
+                      <button
+                        key={s.id}
+                        onClick={() => handleToggleIndirectSection((idx + 1).toString())}
+                        className={cn(
+                          "px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-tighter transition-all border",
+                          data?.indirectConfig?.selectedSections?.includes((idx + 1).toString())
+                            ? "bg-primary/20 border-primary/40 text-primary"
+                            : "bg-background/40 border-border/50 text-muted-foreground hover:bg-background/60"
+                        )}
+                      >
+                        Sección {idx + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h5 className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Target className="w-3 h-3" /> Sección Base
+                  </h5>
+                  <Select
+                    value={data?.indirectConfig?.baseSection || '2'}
+                    onValueChange={(val) => updateIndirectConfig({ baseSection: val })}
+                  >
+                    <SelectTrigger className="h-9 bg-background/50 border-border/50 rounded-xl text-[10px] font-bold uppercase">
+                      <SelectValue placeholder="Base" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {data?.sections?.map((s, idx) => (
+                        <SelectItem key={s.id} value={(idx + 1).toString()} className="text-[10px] font-bold uppercase">
+                          Sección {idx + 1}: {s.label?.split(':')?.[1]?.trim() || s.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <Users className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground leading-tight">Coef. Gastos Indirectos</h4>
+                      <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter italic">Relación Gtos/Sección Base</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">

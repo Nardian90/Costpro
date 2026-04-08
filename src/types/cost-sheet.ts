@@ -7,7 +7,7 @@ export interface CostSheetHeader {
   category: string;
   type: string;
   unit: string;
-  [key: string]: any; // Allow for extra metadata
+  [key: string]: any;
 }
 
 export interface CostSheetRow {
@@ -50,12 +50,19 @@ export interface CostSheetAnnex {
   adjustmentColumn?: string;
   isAdjustmentActive?: boolean;
   columns: CostSheetColumn[];
-  data: any[]; // Data rows can have dynamic keys based on columns
+  data: any[];
 }
 
 export interface CostSheetSignature {
   prepared_by: string;
   approved_by: string;
+}
+
+export interface IndirectConfig {
+  selectedSections: string[];
+  baseSection: string;
+  coefficient: number;
+  isSimulation?: boolean;
 }
 
 export interface CostSheetData {
@@ -67,6 +74,7 @@ export interface CostSheetData {
   sections: CostSheetSection[];
   annexes: CostSheetAnnex[];
   signature: CostSheetSignature;
+  indirectConfig?: IndirectConfig;
   footer?: string;
   [key: string]: any;
 }
