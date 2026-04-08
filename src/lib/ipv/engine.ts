@@ -216,7 +216,7 @@ export class MatchingEngine {
       movements: [...this.pendingMovements],
       trace,
       appliedRules,
-      matchingConfidence: status === 'COMPLETO' ? 100 : (status === 'PARCIAL' ? 50 : 0),
+      matchingConfidence: (status === 'COMPLETO' || status === 'OVERPAYMENT') ? 100 : (status === 'PARCIAL' as any ? 50 : 0),
       logs
     };
 
@@ -264,6 +264,56 @@ export class MatchingEngine {
     return lines;
   }
 
+  async distributeGlobalGoal(
+    targetTotalCents: number,
+    currentTotalCents: number,
+    dates: string[],
+    options: { strategy?: 'UNIFORM' | 'PRIORITIZED' | 'MIN_STOCK' | 'MAX_VALUE', dayVolumes?: Record<string, number> } = {}
+  ): Promise<ReconciliationLine[]> {
+    const diff = targetTotalCents - currentTotalCents;
+    if (diff <= 0) return [];
+    let remaining = diff;
+    const allExtraLines: ReconciliationLine[] = [];
+    const sortedDates = [...dates].sort((a, b) => {
+        if (options.dayVolumes) return (options.dayVolumes[a] || 0) - (options.dayVolumes[b] || 0);
+        return 0;
+    });
+    const idealPerDay = Math.max(1, Math.floor(remaining / Math.max(1, sortedDates.length / 1.5)));
+    for (const date of sortedDates) {
+        if (remaining <= 0) break;
+        const toMatch = Math.min(remaining, idealPerDay);
+        const dayLines = await this.matchGoalResiduals(date, toMatch);
+        allExtraLines.push(...dayLines);
+        const dayTotal = dayLines.reduce((s, l) => s + l.importe_linea_cents, 0);
+        remaining -= dayTotal;
+    }
+    if (remaining > 0) {
+        for (const date of sortedDates) {
+            if (remaining <= 0) break;
+            const dayLines = await this.matchGoalResiduals(date, remaining);
+            allExtraLines.push(...dayLines);
+            const dayTotal = dayLines.reduce((s, l) => s + l.importe_linea_cents, 0);
+            remaining -= dayTotal;
+        }
+    }
+    return allExtraLines;
+  }
+
+  async matchSimulation(targetCents: number): Promise<MatchingResult> {
+    const dummyTx: BankTransaction = {
+        id: 'sim-' + Date.now(),
+        referencia_origen: 'SIM-TRX',
+        fecha: new Date().toISOString().split('T')[0],
+        importe_cents: targetCents,
+        tipo: 'Cr',
+        referencia_corta: 'SIM',
+        observaciones: '',
+        estado_conciliacion: 'PENDIENTE',
+        ingestion_hash: 'SIM',
+        created_at: new Date().toISOString()
+    };
+    return this.matchTransaction(dummyTx);
+  }
   private async applyHardRef(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const ref = tx.referencia_origen;
     const matchedProducts = this.products.filter(p => tx.observaciones?.includes(p.cod) || p.cod === ref);
