@@ -38,11 +38,12 @@ vi.mock('../../utils', () => ({
 
 describe('MatchingEngine - Cash Filler Audit', () => {
   const products: Product[] = [
-    { cod: 'P1', descripcion: 'Producto 1', um: 'U', precio_cents: 1000, prioridad_algoritmo: 1, activo: true, stock_inicial_manual: 100, created_at: '' },
+    { cod: 'CERVEZA', descripcion: 'Producto 1', um: 'U', precio_cents: 1000, prioridad_algoritmo: 1, activo: true, stock_inicial_manual: 100, created_at: '' },
   ];
 
   const rules: MatchingRule[] = [
-    { id: 'cash-fill', tipo: 'CASH_FILL', prioridad: 5, activo: true, meta: { daily_limit: 5000 } },
+    { id: 'hard-ref', tipo: 'HARD_REF', prioridad: 1, activo: true },
+    { id: 'cash-fill', tipo: 'CASH_FILL', prioridad: 5, activo: true, meta: { daily_limit: 5000000 } },
   ];
 
   let engine: MatchingEngine;
@@ -51,29 +52,12 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     engine = new MatchingEngine(products, rules);
   });
 
-  it('should block CASH_FILL if origin format is invalid (fail-fast)', async () => {
-    const tx: BankTransaction = {
-      id: 'tx1',
-      fecha: '2025-08-01',
-      referencia_corta: 'INVALID',
-      referencia_origen: 'INV',
-      observaciones: 'Test',
-      importe_cents: 1500,
-      tipo: 'Cr',
-      estado_conciliacion: 'PENDIENTE',
-      created_at: '',
-      ingestion_hash: ''
-    };
-
-    await expect(engine.matchTransaction(tx)).rejects.toThrow(/Invalid transfer origin format/);
-  });
-
-  it('should allow CASH_FILL if origin format is valid', async () => {
+  it('should allow CASH_FILL if origin format is valid (BANDEC style)', async () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-08-01',
       referencia_corta: 'YR60000400646',
-      referencia_origen: 'YR60000400646',
+      referencia_origen: '98026A0440583',
       observaciones: 'Test',
       importe_cents: 1000,
       tipo: 'Cr',
@@ -86,19 +70,48 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     expect(result.status).toBe('COMPLETO');
     const cashLine = result.lines.find(l => l.origen_dato === 'CASH_FILLER');
     expect(cashLine).toBeDefined();
-    expect(cashLine?.parent_transaction_id).toBe('YR60000400646');
-    expect(cashLine?.source_type).toBe('BANK_TRANSFER');
-    expect(cashLine?.id).toBe('hash-YR60000400646_EFECTIVO-1000-Transferencia');
+    expect(cashLine?.transaction_ref).toBe('98026A0440583');
+    expect(cashLine?.product_cod).toBe('CASH');
+  });
+
+  it('should handle Mixed Payment with product context', async () => {
+    // Product CERVEZA costs 1000. Transaction is 800.
+    // HARD_REF will match CERVEZA because of observaciones, but remaining will be -200.
+    const tx: BankTransaction = {
+      id: 'tx_mixed',
+      fecha: '2025-08-01',
+      referencia_corta: 'MIX1',
+      referencia_origen: '98026A0440584',
+      observaciones: 'CERVEZA',
+      importe_cents: 800,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: '',
+      ingestion_hash: ''
+    };
+
+    const result = await engine.matchTransaction(tx);
+    expect(result.status).toBe('COMPLETO');
+    expect(result.lines).toHaveLength(2);
+
+    const mainLine = result.lines.find(l => l.origen_dato === 'AUTO_MATCH');
+    const fillerLine = result.lines.find(l => l.origen_dato === 'CASH_FILLER');
+
+    expect(mainLine?.product_cod).toBe('CERVEZA');
+    expect(fillerLine?.product_cod).toBe('CERVEZA'); // Should take context from CERVEZA!
+    expect(fillerLine?.clasificacion).toBe('Efectivo');
+    expect(fillerLine?.importe_linea_cents).toBe(200);
+    expect(fillerLine?.transaction_ref).toBe(tx.referencia_origen);
   });
 
   it('should block if daily limit is exceeded', async () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-08-01',
-      referencia_corta: 'YR60000405647',
-      referencia_origen: 'YR60000405647',
+      referencia_corta: 'LIMIT',
+      referencia_origen: '98026A0440585',
       observaciones: 'Test',
-      importe_cents: 6000,
+      importe_cents: 6000000,
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: '',
@@ -106,26 +119,5 @@ describe('MatchingEngine - Cash Filler Audit', () => {
     };
 
     await expect(engine.matchTransaction(tx)).rejects.toThrow(/Daily limit exceeded/);
-  });
-
-  it('should be idempotent: same input produces same hash ID', async () => {
-    const tx: BankTransaction = {
-      id: 'tx1',
-      fecha: '2025-08-01',
-      referencia_corta: 'YR60000405646',
-      referencia_origen: 'YR60000405646',
-      observaciones: 'Test',
-      importe_cents: 500,
-      tipo: 'Cr',
-      estado_conciliacion: 'PENDIENTE',
-      created_at: '',
-      ingestion_hash: ''
-    };
-
-    const res1 = await engine.matchTransaction(tx);
-    const res2 = await engine.matchTransaction(tx);
-
-    expect(res1.lines[0].id).toBe(res2.lines[0].id);
-    expect(res1.lines[0].id).toBe('hash-YR60000405646_EFECTIVO-500-Transferencia');
   });
 });

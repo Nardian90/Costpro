@@ -92,7 +92,7 @@ export default function TransactionBreakdown() {
     if (!lines) return [];
     return lines.filter(l => {
       const prod = productMap.get(l.product_cod);
-      const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+      const baseRef = l.parent_transaction_id || l.transaction_ref.split(._EFECTIVO.)[0];
                 const tx = txMap.get(baseRef);
       const search = searchTerm.toLowerCase();
 
@@ -231,7 +231,7 @@ export default function TransactionBreakdown() {
               </TableRow>
             ) : (
               filteredLines.map((l) => {
-                const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+                const baseRef = l.parent_transaction_id || l.transaction_ref.split(._EFECTIVO.)[0];
                 const tx = txMap.get(baseRef);
                 const prod = productMap.get(l.product_cod);
                 const basePrice = prod?.precio_cents || l.precio_unitario_cents;
