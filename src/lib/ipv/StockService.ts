@@ -204,6 +204,8 @@ export class StockService {
                 importe_linea_cents: -line.importe_linea_cents,
                 ingreso_banco_cents: -line.ingreso_banco_cents,
                 venta_real_calculada_cents: -line.venta_real_calculada_cents,
+                transfer_amount_cents: -(line.transfer_amount_cents || 0),
+                cash_amount_cents: -(line.cash_amount_cents || 0),
                 cuadre_cents: -line.cuadre_cents,
                 observaciones: `[REVERSIÓN] Compensa a ${line.id}`,
                 reconciliation_hash: `REV_${line.reconciliation_hash}_${Date.now()}`,

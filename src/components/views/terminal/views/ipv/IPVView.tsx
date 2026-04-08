@@ -313,6 +313,8 @@ export default function IPVView() {
             fecha_operacion: tx.fecha,
             ingreso_banco_cents: tx.importe_cents,
             venta_real_calculada_cents: prod.precio_cents,
+            transfer_amount_cents: tx.importe_cents,
+            cash_amount_cents: Math.max(0, prod.precio_cents - tx.importe_cents),
             comision_banco_cents: 0,
             product_cod: prod.cod,
             product_um: prod.um,

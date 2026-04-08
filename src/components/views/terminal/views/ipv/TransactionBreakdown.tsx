@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow
 } from '../../../../ui/table';
-import { Card } from '../../../../ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../../ui/card';
 import { Badge } from '../../../../ui/badge';
 import { Button } from '../../../../ui/button';
 import { Input } from '../../../../ui/input';
@@ -142,7 +142,21 @@ export default function TransactionBreakdown() {
     } catch (error) {
         toast.error('Error al actualizar');
     }
+  }
+  const handleExportExcel = () => {
+    const data = filteredLines.map(l => ({
+      Fecha: l.fecha_operacion,
+      Referencia: l.transaction_ref,
+      Producto: l.product_cod,
+      Cantidad: l.cantidad,
+      Importe: l.importe_linea_cents / 100
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Desglose");
+    XLSX.writeFile(wb, `desglose_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
+;
 
   const exportToExcel = () => {
     const data = filteredLines.map(l => {
@@ -177,173 +191,123 @@ export default function TransactionBreakdown() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-background/50 p-4 border-b">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                    placeholder="Buscar por ref, producto o concepto..."
-                    className="pl-10 h-10 text-xs font-bold"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <Select value={classificationFilter} onValueChange={setClassificationFilter}>
-                <SelectTrigger className="w-40 h-10 text-xs font-bold">
-                    <SelectValue placeholder="Tipo Pago" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ALL">Todos</SelectItem>
-                    <SelectItem value="Transferencia">Transferencia</SelectItem>
-                    <SelectItem value="Efectivo">Efectivo</SelectItem>
-                    <SelectItem value="QR">QR</SelectItem>
-                </SelectContent>
-            </Select>
+    <div className="space-y-4">
+      <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-3 bg-background/50 border-b items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por producto o referencia..."
+            className="pl-10 h-10 neu-input-primary"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <Button onClick={exportToExcel} variant="outline" className="text-xs font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5">
-            Exportar Excel
-        </Button>
+        <div className="flex gap-2 w-full lg:w-auto">
+          <Button variant="outline" className="h-10 gap-2 flex-1 lg:flex-none uppercase font-black text-[10px]" onClick={handleExportExcel}>
+            <Filter className="w-3.5 h-3.5" /> EXPORTAR EXCEL
+          </Button>
+        </div>
       </div>
 
-      <div className="px-4">
-        <Table className="data-table">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Ref. Transacción / Origen</TableHead>
-              <TableHead>Producto</TableHead>
-              <TableHead className="text-center">Cant.</TableHead>
-              <TableHead className="text-right">Precio Base</TableHead>
-              <TableHead className="text-right text-green-600">Propina</TableHead>
-              <TableHead className="text-right text-red-600">Descuento</TableHead>
-              <TableHead className="text-right">Importe Real</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLines.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
-                  No se encontraron líneas de detalle.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredLines.map((l) => {
-                const baseRef = l.parent_transaction_id || l.transaction_ref.split("_EFECTIVO")[0];
-                const tx = txMap.get(baseRef);
-                const prod = productMap.get(l.product_cod);
-                const basePrice = prod?.precio_cents || l.precio_unitario_cents;
+      <div className="space-y-6">
+          {filteredLines.length === 0 ? (
+            <div className="h-32 flex items-center justify-center text-muted-foreground italic text-xs bg-muted/20 rounded-xl border border-dashed">
+              No se encontraron registros de conciliación.
+            </div>
+          ) : (
+            Object.entries(
+              filteredLines.reduce((acc, l) => {
+                const baseRef = l.parent_transaction_id || l.transaction_ref;
+                if (!acc[baseRef]) acc[baseRef] = [];
+                acc[baseRef].push(l);
+                return acc;
+              }, {} as Record<string, ReconciliationLine[]>)
+            ).map(([baseRef, groupLines]) => {
+              const tx = txMap.get(baseRef);
+              const totalTransfer = groupLines.reduce((s, l) => s + (l.transfer_amount_cents || 0), 0);
+              const totalCash = groupLines.reduce((s, l) => s + (l.cash_amount_cents || 0), 0);
+              const composition = `${totalTransfer / 100}T + ${totalCash / 100}E`;
 
-                const propina = l.cuadre_cents > 0 ? l.cuadre_cents : 0;
-                const descuento = l.cuadre_cents < 0 ? Math.abs(l.cuadre_cents) : 0;
+              return (
+                <Card key={baseRef} className="border-2 border-primary/10 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                  <CardHeader className="bg-muted/30 py-3 px-4 flex-row items-center justify-between space-y-0 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-primary/10 p-1.5 rounded-lg">
+                        <ArrowRightLeft className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                          Transacción: <span className="truncate max-w-[200px]">{baseRef}</span>
+                        </CardTitle>
+                        <p className="text-[10px] text-muted-foreground font-medium uppercase truncate max-w-[300px]">
+                           {tx?.observaciones || "Sin observaciones de origen"}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="neu-badge-primary px-3 py-1 font-black text-xs uppercase flex-shrink-0">
+                      {composition}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-muted/10">
+                        <TableRow className="hover:bg-transparent border-b">
+                          <TableHead className="w-[100px] text-[9px] font-black uppercase py-2">Producto</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-center">Cant.</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right">P. Base</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right text-muted-foreground/30">—</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right text-muted-foreground/30">—</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right">Valor</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right">Composición</TableHead>
+                          <TableHead className="text-[9px] font-black uppercase py-2 text-right"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {groupLines.map((l) => {
+                          const prod = productMap.get(l.product_cod);
+                          const basePrice = prod?.precio_cents || l.precio_unitario_cents;
+                          const isReversion = l.observaciones?.startsWith('[REVERSIÓN]');
 
-                const isReversion = l.observaciones?.startsWith('[REVERSIÓN]');
-                const canEditDelete = (l.clasificacion === 'Efectivo' || l.origen_dato === 'CASH_FILLER') && !isReversion;
+                          const t = (l.transfer_amount_cents || 0) / 100;
+                          const e = (l.cash_amount_cents || 0) / 100;
+                          const lineComposition = t > 0 && e > 0 ? `${t}T + ${e}E` : (t > 0 ? `${t}T` : `${e}E`);
 
-                return (
-                  <TableRow key={l.id} className={isReversion ? "bg-muted/10" : ""}>
-                    <TableCell className={`text-xs font-medium ${isReversion ? "opacity-40" : ""}`}>{formatDate(l.fecha_operacion)}</TableCell>
-                    <TableCell>
-                      <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
-                        {l.transaction_ref}
-                      </div>
-                      {l.status === 'INVALID_ORPHAN' && (
-                        <div className="flex items-center gap-1 mt-1 text-[9px] text-red-600 font-black animate-pulse">
-                           <AlertTriangle className="w-3 h-3" /> SIN ORIGEN VÁLIDO
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1 group">
-                        <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })} >
-                          {tx?.observaciones || "Ajuste Manual / Global"}
-                        </div>
-                        {tx && (
-                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })}>
-                            <Info className="w-3 h-3 text-primary" />
-                          </Button>
-                        )}
-                      </div>
-                      {l.observaciones && (
-                        <div className="text-[10px] text-orange-600 font-bold italic mt-0.5 truncate max-w-[150px] cursor-pointer" title={l.observaciones} onClick={() => setObsModal({ open: true, observations: l.observaciones || "", reference: l.transaction_ref })} >
-                          {l.observaciones}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className={`text-xs font-bold ${isReversion ? "text-muted-foreground line-through" : ""}`}>{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{l.product_cod}</div>
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="text-xs font-bold text-muted-foreground">
-                        {formatCurrencyCents(basePrice)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        {propina > 0 ? (
-                            <div className="text-xs font-black text-green-600">
-                                +{formatCurrencyCents(propina)}
-                            </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        {descuento > 0 ? (
-                            <div className="text-xs font-black text-red-600">
-                                -{formatCurrencyCents(descuento)}
-                            </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <div className="font-black text-xs text-primary">{formatCurrencyCents(l.importe_linea_cents)}</div>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant="outline" className={`text-xs font-black uppercase ${
-                            l.status === 'INVALID_ORPHAN' ? 'border-red-500 text-red-600 bg-red-50' :
-                            l.source_type === 'REAL_CASH_GOAL' ? 'border-purple-200 text-purple-600 bg-purple-50' :
-                            l.origen_dato === 'AUTO_MATCH' ? 'border-green-200 text-green-600' :
-                            l.origen_dato === 'CASH_FILLER' ? 'border-orange-200 text-orange-600' :
-                            'border-blue-200 text-blue-600'
-                        }`}>
-                            {l.status === 'INVALID_ORPHAN' ? 'HUÉRFANO' : (l.source_type === 'REAL_CASH_GOAL' ? 'PLANIFICACIÓN' : l.origen_dato)}
-                        </Badge>
-                        {isReversion && (
-                            <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-none">REVERTIDO</Badge>
-                        )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={!canEditDelete}
-                                onClick={() => {
-                                    setEditingLine(l);
-                                    setEditAmount(l.importe_linea_cents);
-                                    setEditDate(l.fecha_operacion);
-                                }}
-                            >
-                                <Edit2 className="w-3 h-3" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                disabled={!canEditDelete}
-                                onClick={() => handleDeleteLine(l)}
-                            >
-                                <Trash2 className="w-3 h-3" />
-                            </Button>
-                        </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                          return (
+                            <TableRow key={l.id} className={isReversion ? "bg-muted/5" : "hover:bg-primary/[0.02]"}>
+                              <TableCell className="py-2">
+                                <div className={`text-xs font-bold ${isReversion ? "text-muted-foreground line-through" : ""}`}>{prod?.descripcion || l.product_cod}</div>
+                                <div className="text-[10px] text-muted-foreground font-mono">{l.product_cod}</div>
+                              </TableCell>
+                              <TableCell className="text-center font-bold text-xs py-2">{l.cantidad || '—'}</TableCell>
+                              <TableCell className="text-right text-xs text-muted-foreground py-2">{formatCurrencyCents(basePrice)}</TableCell>
+                              <TableCell className="text-right py-2 opacity-20 text-[10px]">—</TableCell>
+                              <TableCell className="text-right py-2 opacity-20 text-[10px]">—</TableCell>
+                              <TableCell className="text-right py-2">
+                                <div className="font-black text-xs text-primary">{formatCurrencyCents(l.importe_linea_cents)}</div>
+                              </TableCell>
+                              <TableCell className="text-right py-2">
+                                <Badge variant="outline" className="text-[9px] font-black uppercase px-2 py-0 h-5 bg-background shadow-sm border-primary/20">
+                                  {lineComposition}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right py-2 px-4">
+                                <div className="flex justify-end gap-0.5">
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteLine(l)}>
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
 
       <ObservationsModal
         open={obsModal.open}

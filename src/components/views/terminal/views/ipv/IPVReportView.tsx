@@ -94,8 +94,8 @@ export function IPVReportView() {
         productGroups[line.product_cod].importe_cents += line.importe_linea_cents;
         totalVentas += line.importe_linea_cents;
 
-        if (line.clasificacion === 'Efectivo') totalEfectivo += line.importe_linea_cents;
-        else totalTransferencia += line.importe_linea_cents;
+        totalEfectivo += (line.cash_amount_cents || 0);
+        totalTransferencia += (line.transfer_amount_cents || 0);
     }
 
     const reportFilas = products.map(p => {
@@ -592,8 +592,8 @@ export function IPVReportView() {
             productGroups[line.product_cod].venta_cantidad_qty += line.cantidad;
             productGroups[line.product_cod].importe_cents += line.importe_linea_cents;
             totalVentas += line.importe_linea_cents;
-            if (line.clasificacion === 'Efectivo') totalEfectivo += line.importe_linea_cents;
-            else totalTransferencia += line.importe_linea_cents;
+        totalEfectivo += (line.cash_amount_cents || 0);
+        totalTransferencia += (line.transfer_amount_cents || 0);
         }
         const products = await db.products.toArray();
         const productMap = new Map(products.map(p => [p.cod, p.descripcion]));
