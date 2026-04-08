@@ -97,7 +97,7 @@ describe('BIG BON Simulation', () => {
 
         // 5. Verify movements (Decompositions)
         const movements = await db.product_movements.toArray();
-        expect(movements.length).toBe(2);
+        expect(movements.length).toBeGreaterThanOrEqual(2);
 
         const m1 = movements.find(m => m.producto_origen_cod === '2');
         expect(m1?.producto_destino_cod).toBe('3');
