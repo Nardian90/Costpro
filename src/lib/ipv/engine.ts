@@ -24,7 +24,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
 
 export interface MatchingResult {
   transactionId: string;
-  status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE';
+  status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE' | 'OVERPAYMENT';
   lines: ReconciliationLine[];
   movements: ProductMovement[];
   failReason?: string;
@@ -147,7 +147,7 @@ export class MatchingEngine {
       return result;
     }
 
-        let remaining = targetCents;
+    let remaining = targetCents;
     let lastProductMatched: string | undefined = undefined;
 
     for (let i = 0; i < this.rules.length; i++) {
@@ -159,7 +159,6 @@ export class MatchingEngine {
 
         switch (rule.tipo) {
             case 'STOCK_LIMIT':
-                // Handled in other rules internally
                 break;
             case 'HARD_REF':
                 remaining = await this.applyHardRef(rule, transaction, remaining, lines, logs, addTrace, pass);
@@ -177,7 +176,9 @@ export class MatchingEngine {
                 remaining = await this.applyTolerance(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'CASH_FILL':
-                remaining = await this.applyCashFill(rule, transaction, remaining, lines, logs, addTrace, pass, cashFillUsedTodayInMemory, lastProductMatched);
+                if (remaining > 0) {
+                    remaining = await this.applyCashFill(rule, transaction, remaining, lines, logs, addTrace, pass, cashFillUsedTodayInMemory, lastProductMatched);
+                }
                 break;
         }
 
@@ -188,9 +189,26 @@ export class MatchingEngine {
         if ((Math.abs(remaining - targetCents) > 0 || (rule.tipo === "CASH_FILL" && remaining === 0)) && !appliedRules.includes(rule.tipo)) {
             appliedRules.push(rule.tipo);
         }
+
+        if (remaining === 0) break;
     }
 
-    const status = remaining === 0 ? 'COMPLETO' : (remaining !== targetCents ? 'PARCIAL' : 'PENDIENTE');
+    // Consistency check: Σ(transfer + cash) === Σ(products)
+    const cashPayments = lines.filter(l => l.origen_dato === 'CASH_FILLER' && l.clasificacion === 'Efectivo').reduce((s, l) => s + l.importe_linea_cents, 0);
+    const totalProductValue = lines.reduce((s, l) => s + l.venta_real_calculada_cents, 0);
+    const usedTransfer = lines.filter(l => l.clasificacion !== 'Efectivo').reduce((s, l) => s + l.importe_linea_cents, 0);
+
+    if (lines.length > 0 && Math.abs((usedTransfer + cashPayments) - totalProductValue) > 1) {
+        throw new Error(`Inconsistencia en pago mixto: T(${usedTransfer}) + E(${cashPayments}) !== P(${totalProductValue})`);
+    }
+
+    let status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE' | 'OVERPAYMENT' = 'PENDIENTE';
+    if (lines.length > 0) {
+        if (remaining === 0) status = 'COMPLETO';
+        else if (remaining > 0) status = 'OVERPAYMENT';
+        else status = 'COMPLETO';
+    }
+
     const result: MatchingResult = {
       transactionId: transaction.referencia_origen,
       status,
@@ -201,85 +219,42 @@ export class MatchingEngine {
       matchingConfidence: status === 'COMPLETO' ? 100 : (status === 'PARCIAL' ? 50 : 0),
       logs
     };
+
+    const durationMs = Date.now() - startTime;
+    await this.persistLog(transaction, result, durationMs);
+
+    this.isMatchingPipelineActive = false;
     this.pendingMovements = [];
-
-    const duration = Date.now() - startTime;
-    await this.persistLog(transaction, result, duration);
-
-        this.isMatchingPipelineActive = false;
     return result;
   }
 
-  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
-    const mockTx: BankTransaction = {
-      id: 'sim',
-      fecha: new Date().toISOString().split('T')[0],
-      referencia_corta: 'SIM',
-      referencia_origen: 'SIM-' + Date.now(),
-      observaciones: 'Simulación de matching',
-      importe_cents: targetAmount,
-      tipo: 'Cr',
-      estado_conciliacion: 'PENDIENTE',
-      created_at: new Date().toISOString(),
-      ingestion_hash: 'sim'
-    };
-    return this.matchTransaction(mockTx);
-  }
-
-  async distributeGlobalGoal(
-    targetTotal: number,
-    currentTotal: number,
-    dates: string[],
-    options?: { dayVolumes?: Record<string, number>; strategy?: "MIN_STOCK" | "MAX_VALUE" }
-  ): Promise<ReconciliationLine[]> {
-    let remainingDiff = targetTotal - currentTotal;
-    if (remainingDiff <= 0 || dates.length === 0) return [];
+  async matchGoalResiduals(date: string, diffCents: number): Promise<ReconciliationLine[]> {
+    if (diffCents <= 0) return [];
 
     const lines: ReconciliationLine[] = [];
-    const sortedDates = [...dates].sort((a, b) => {
-      if (options?.dayVolumes) {
-        const volA = options.dayVolumes[a] || 0;
-        const volB = options.dayVolumes[b] || 0;
-        if (volA !== volB) return volA - volB;
-      }
-      return Math.random() - 0.5;
-    });
+    let remainingDiff = diffCents;
 
-    for (const date of sortedDates) {
+    const prioritizedWildcards = this.products
+        .filter(p => p.isWildcardCandidate && p.activo && p.precio_cents > 0)
+        .sort((a, b) => (b.prioridad_algoritmo || 0) - (a.prioridad_algoritmo || 0));
+
+    for (const p of prioritizedWildcards) {
       if (remainingDiff <= 0) break;
-      const candidates = [...this.products]
-        .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
-        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
-        .sort((a, b) => {
-          const sA = this.stockMap.get(a.cod) || 0;
-          const sB = this.stockMap.get(b.cod) || 0;
-          if (options?.strategy === "MAX_VALUE") {
-              return b.precio_cents - a.precio_cents;
-          }
-          if (sA !== sB) return sA - sB;
-          return b.precio_cents - a.precio_cents;
-        });
 
-      for (const p of candidates) {
-        if (remainingDiff <= 0) break;
-        let availableStock = this.useStockLimit ? this.getVirtualStock(p.cod) : 999999;
-        if (availableStock <= 0) {
-            const success = await this.attemptDecomposition(p.cod);
-            if (success) {
-                availableStock = this.getVirtualStock(p.cod);
-            }
-        }
-        if (availableStock <= 0) continue;
+      let available = this.getVirtualStock(p.cod);
+      if (available <= 0) {
+          await this.attemptDecomposition(p.cod);
+          available = this.getVirtualStock(p.cod);
+      }
 
-        const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
-        if (maxQtyPossible <= 0) continue;
-        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
-        const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
+      if (available > 0) {
+        const qtyToPick = Math.min(available, Math.floor(remainingDiff / p.precio_cents));
         if (qtyToPick > 0) {
           const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}`, importe_cents: p.precio_cents * qtyToPick } as any, p, qtyToPick, 'CASH_FILLER', 'Efectivo');
           line.id = uuidv4();
           line.cuadre_cents = 0;
           line.importe_linea_cents = p.precio_cents * qtyToPick;
+          line.source_type = 'REAL_CASH_GOAL';
           lines.push(line);
           remainingDiff -= line.importe_linea_cents;
           this.updateVirtualStock(p.cod, qtyToPick, `GOAL-${date}`);
@@ -291,36 +266,42 @@ export class MatchingEngine {
 
   private async applyHardRef(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const ref = tx.referencia_origen;
-    const match = this.products.find(p => tx.observaciones?.includes(p.cod) || p.cod === ref);
-    if (match) {
-        let available = this.getVirtualStock(match.cod);
-        let qty = Math.floor(remaining / match.precio_cents);
+    const matchedProducts = this.products.filter(p => tx.observaciones?.includes(p.cod) || p.cod === ref);
 
-        if (this.useStockLimit && available < qty && !this.allowNegativeStock) {
-            await this.attemptDecomposition(match.cod);
-            available = this.getVirtualStock(match.cod);
-            qty = Math.min(qty, Math.max(0, available));
-        }
+    if (matchedProducts.length > 0) {
+        let currentRemaining = remaining;
+        for (const match of matchedProducts) {
+            let available = this.getVirtualStock(match.cod);
+            let finalQty = 1;
 
-        if (qty > 0 || (qty === 0 && !this.useStockLimit)) {
-            // Mixed payment case: If qty is 0 but we have a match, we might need 1 unit anyway
-            const finalQty = Math.max(1, qty);
-            const line = await this.createLine(tx, match, finalQty, 'AUTO_MATCH', 'Transferencia');
-
-            // If real cost > transfer, we cap the transfer line and let CASH_FILL handle the rest
-            if (line.importe_linea_cents > remaining) {
-                line.importe_linea_cents = remaining;
+            if (this.useStockLimit && available < finalQty && !this.allowNegativeStock) {
+                await this.attemptDecomposition(match.cod);
+                available = this.getVirtualStock(match.cod);
+                if (available < finalQty && !this.allowNegativeStock) continue;
             }
 
+            const realValue = match.precio_cents * finalQty;
+            const transferCoverage = Math.min(Math.max(0, currentRemaining), realValue);
+
+            const line = await this.createLine(tx, match, finalQty, 'AUTO_MATCH', 'Transferencia');
+            line.importe_linea_cents = transferCoverage;
             lines.push(line);
+
             this.updateVirtualStock(match.cod, finalQty, tx.referencia_origen);
             addTrace(pass, 'HARD_REF', 'SUCCESS', `Match por referencia directa con ${match.cod}`);
             logs.push(`PASS ${pass} (HARD_REF): Match directo con ${match.cod} (${finalQty} unidades)`);
-            return remaining - (match.precio_cents * finalQty);
-        } else if (this.useStockLimit && !this.allowNegativeStock) {
-            addTrace(pass, 'HARD_REF', 'FAIL', `Sin stock para ${match.cod}`);
-            return remaining;
+
+            const overflow = realValue - transferCoverage;
+            if (overflow > 0) {
+                const cashRule = this.rules.find(r => r.tipo === 'CASH_FILL');
+                if (cashRule && cashRule.activo) {
+                     await this.applyCashFill(cashRule, tx, -overflow, lines, logs, addTrace, pass, 0, match.cod);
+                }
+            }
+
+            currentRemaining -= transferCoverage;
         }
+        return currentRemaining;
     }
     addTrace(pass, 'HARD_REF', 'SKIPPED');
     return remaining;
@@ -427,7 +408,6 @@ export class MatchingEngine {
 
   private async applyWildcards(rule: MatchingRule, tx: BankTransaction, remaining: number, lines: ReconciliationLine[], logs: string[], addTrace: any, pass: number): Promise<number> {
     const wildcards = this.products.filter(p => p.isWildcardCandidate && p.precio_cents > 0);
-
     if (remaining <= 0) return remaining;
 
     let bestP: Product | null = null;
@@ -447,44 +427,19 @@ export class MatchingEngine {
         if (qty > 0) {
             const currentRealValue = p.precio_cents * qty;
             const currentRemaining = remaining - currentRealValue;
-
             if (currentRemaining === 0) {
-                bestP = p;
-                bestQty = qty;
-                bestRemaining = 0;
+                bestP = p; bestQty = qty; bestRemaining = 0;
                 break;
             }
-
-            if (bestP === null) {
-                bestP = p;
-                bestQty = qty;
-                bestRemaining = currentRemaining;
-            } else {
-                if (currentRemaining < 0 && bestRemaining < 0) {
-                    if (currentRemaining > bestRemaining) {
-                        bestP = p;
-                        bestQty = qty;
-                        bestRemaining = currentRemaining;
-                    }
-                } else if (currentRemaining < 0 && bestRemaining > 0) {
-                    bestP = p;
-                    bestQty = qty;
-                    bestRemaining = currentRemaining;
-                } else if (currentRemaining > 0 && bestRemaining > 0) {
-                    if (currentRemaining < bestRemaining) {
-                        bestP = p;
-                        bestQty = qty;
-                        bestRemaining = currentRemaining;
-                    }
-                }
+            if (bestP === null || (currentRemaining < 0 && bestRemaining < 0 && currentRemaining > bestRemaining) || (currentRemaining < 0 && bestRemaining > 0) || (currentRemaining > 0 && bestRemaining > 0 && currentRemaining < bestRemaining)) {
+                bestP = p; bestQty = qty; bestRemaining = currentRemaining;
             }
         }
     }
 
     if (bestP && bestQty > 0) {
         const realValue = bestP.precio_cents * bestQty;
-        // If real value > remaining, we cap the line's transfer component
-        const transferCoverage = Math.min(remaining, realValue);
+        const transferCoverage = Math.min(Math.max(0, remaining), realValue);
 
         const line = await this.createLine(tx, bestP, bestQty, 'AUTO_MATCH', 'Transferencia');
         line.importe_linea_cents = transferCoverage;
@@ -493,10 +448,15 @@ export class MatchingEngine {
         addTrace(pass, 'WILDCARDS', 'SUCCESS', `Match por wildcard con ${bestQty}x ${bestP.cod}`);
         logs.push(`PASS ${pass} (WILDCARDS): Match wildcard con ${bestQty}x ${bestP.cod}`);
 
-        // Return negative to trigger CASH_FILL overflow logic
+        const overflow = realValue - transferCoverage;
+        if (overflow > 0) {
+            const cashRule = this.rules.find(r => r.tipo === 'CASH_FILL');
+            if (cashRule && cashRule.activo) {
+                 await this.applyCashFill(cashRule, tx, -overflow, lines, logs, addTrace, pass, 0, bestP.cod);
+            }
+        }
         return remaining - realValue;
     }
-
     addTrace(pass, 'WILDCARDS', 'SKIPPED');
     return remaining;
   }
@@ -528,19 +488,14 @@ export class MatchingEngine {
     }
 
     const baseRef = transaction.referencia_origen;
-
     if (baseRef.startsWith('GOAL-')) {
         throw new Error('GOAL cannot be processed as residual in CASH_FILL');
     }
-
     if (!this.ORIGIN_WHITELIST.test(baseRef)) {
         throw new Error(`Invalid transfer origin format: ${baseRef}. Must match ${this.ORIGIN_WHITELIST}`);
     }
 
-    if (remaining_cents === 0) {
-        addTrace(pass, 'CASH_FILL', 'SKIPPED', 'Ya está cuadrado');
-        return 0;
-    }
+    if (remaining_cents === 0) return 0;
 
     const absRemaining = Math.abs(Math.round(remaining_cents));
     const dailyLimit = Math.round(rule.meta?.daily_limit ?? Infinity);
@@ -550,52 +505,54 @@ export class MatchingEngine {
         throw new Error(`Daily limit exceeded for Cash Filler: ${cashFillUsedTodayInMemory + absRemaining} > ${dailyLimit}`);
     }
 
-    // Deterministic ID and unified reference for filtering
+    if (remaining_cents > 0) {
+        // This is overpayment, we don't generate CASH lines for this anymore as per new rule
+        addTrace(pass, 'CASH_FILL', 'SKIPPED', 'Excedente de transferencia. No se genera CASH.');
+        return remaining_cents;
+    }
+
+    if (!contextProductCod || contextProductCod === 'CASH') {
+        throw new Error('Cash filler sin producto asociado');
+    }
+
+    const productToUse = contextProductCod;
     const amountToLog = absRemaining;
-    const classif: 'Efectivo' | 'Transferencia' = remaining_cents < 0 ? 'Efectivo' : 'Transferencia';
-
-    // Use context product if it was a mixed payment overflow
-    const productToUse = (remaining_cents < 0 && contextProductCod) ? contextProductCod : 'CASH';
-
-    // Suffix is still needed for uniqueness in DB but we'll use baseRef in transaction_ref for filtering
     const sequence = lines.filter(l => l.parent_transaction_id === baseRef && l.origen_dato === 'CASH_FILLER').length + 1;
-    const deterministicId = await generateHash(`${baseRef}-FILLER-${sequence}-${amountToLog}-${classif}`);
+    const deterministicId = await generateHash(`${baseRef}-FILLER-${sequence}-${amountToLog}-Efectivo`);
+
+    const hasTransferLine = lines.some(l => l.parent_transaction_id === baseRef && l.product_cod === productToUse && l.clasificacion !== 'Efectivo');
 
     const line: ReconciliationLine = {
         id: deterministicId,
-        transaction_ref: baseRef, // Use original ID for filtering!
+        transaction_ref: baseRef,
         parent_transaction_id: baseRef,
         source_type: 'BANK_TRANSFER',
         status: 'VALID',
         fecha_operacion: transaction.fecha,
-        ingreso_banco_cents: remaining_cents < 0 ? 0 : amountToLog,
-        venta_real_calculada_cents: remaining_cents < 0 ? 0 : amountToLog,
+        ingreso_banco_cents: 0,
+        venta_real_calculada_cents: hasTransferLine ? 0 : amountToLog,
         comision_banco_cents: 0,
         product_cod: productToUse,
         product_um: 'UD',
-        cantidad: 1,
+        cantidad: hasTransferLine ? 0 : 1,
         precio_unitario_cents: amountToLog,
         importe_linea_cents: amountToLog,
         cuadre_cents: 0,
-        clasificacion: classif,
+        clasificacion: 'Efectivo',
         origen_dato: 'CASH_FILLER',
-        observaciones: remaining_cents < 0
-            ? `Pago mixto (Transferencia + Efectivo) - Item: ${productToUse} - Ref: ${baseRef}`
-            : `Cuadre automático: Faltante de productos por ${amountToLog} cts`,
+        observaciones: `Pago mixto (Transferencia + Efectivo) - Item: ${productToUse} - Ref: ${baseRef}`,
         reconciliation_hash: deterministicId,
         created_at: new Date().toISOString()
     };
 
     lines.push(line);
-    const traceMsg = remaining_cents < 0
-        ? `Cubierto excedente de ${amountToLog} cts como efectivo (Pago Mixto en ${productToUse})`
-        : `Cubierto faltante de ${amountToLog} cts para cuadre total`;
-
+    const traceMsg = `Cubierto excedente de ${amountToLog} cts como efectivo (Pago Mixto en ${productToUse})`;
     addTrace(pass, 'CASH_FILL', 'SUCCESS', traceMsg);
     logs.push(`PASS ${pass} (CASH_FILL): ${traceMsg}`);
 
     return 0;
   }
+
   private getVirtualStock(productCod: string): number {
     return this.stockMap.get(productCod) || 0;
   }
@@ -621,6 +578,9 @@ export class MatchingEngine {
     return {
         id: uuidv4(),
         transaction_ref: tx.referencia_origen,
+        parent_transaction_id: tx.referencia_origen,
+        source_type: 'BANK_TRANSFER',
+        status: 'VALID',
         fecha_operacion: tx.fecha,
         ingreso_banco_cents: tx.importe_cents,
         venta_real_calculada_cents: p.precio_cents * qty,
