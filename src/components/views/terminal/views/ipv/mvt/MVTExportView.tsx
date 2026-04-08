@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from "react";
 import {
-  FileText, Download, FolderArchive, Layers, Settings2, Calendar, AlertCircle,
-  CheckCircle2, Play, Loader2, History, X, Search,
+  FileText, Download, Settings2, Calendar, AlertCircle,
+  CheckCircle2, Play, Loader2, History, Search,
   ArrowRight, Layout
 } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { format, isWithinInterval, parseISO, isBefore, addDays } from "date-fns";
+import { format, parseISO, isBefore, addDays } from "date-fns";
 import { toast } from "sonner";
 
 import { db, Product, ReconciliationLine, ProductMovement } from "@/lib/dexie";
@@ -30,7 +30,7 @@ import {
   CYP_DEPOSITO_TEMPLATE,
   DEFAULT_MVT_SETTINGS
 } from "@/lib/ipv/mvt/defaults";
-import { MVTTemplate, MVTExportLog, MVTSettings } from "@/lib/ipv/mvt/types";
+import { MVTTemplate, MVTExportLog } from "@/lib/ipv/mvt/types";
 import { MVTPreview } from "./MVTPreview";
 import { TemplateManager } from "./TemplateManager";
 import { TemplateEditor } from "./TemplateEditor";
@@ -54,17 +54,14 @@ export const MVTExportView = () => {
   const [showManager, setShowManager] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<MVTTemplate>(STANDARD_MVT_TEMPLATE);
 
-  // DB Data
   const templates = useLiveQuery(() => db.mvt_templates.toArray()) || [];
   const settings = useLiveQuery(() => db.mvt_settings.get('current'));
   const exportLogs = useLiveQuery(() => db.mvt_exports_log.orderBy('timestamp').reverse().limit(20).toArray()) || [];
   const products = useLiveQuery(() => db.products.toArray()) || [];
 
-  // We need ALL movements and lines to calculate dynamic stock
   const allReconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray()) || [];
   const allProductMovements = useLiveQuery(() => db.product_movements.toArray()) || [];
 
-  // Filtered data for the CURRENT export (movements section)
   const reconciliationLinesInRange = useMemo(() => {
     return [...allReconciliationLines].sort((a, b) => (a.created_at || "").localeCompare(b.created_at || "")).filter(line => {
       const date = line.fecha_operacion;
@@ -104,7 +101,7 @@ export const MVTExportView = () => {
         const existing = movementMap.get(line.product_cod) || { cantidad: 0, total_cents: 0 };
         movementMap.set(line.product_cod, {
           cantidad: existing.cantidad + line.cantidad,
-          total_cents: existing.total_cents + line.importe_linea_cents
+          total_cents: existing.total_cents + (line.total_amount_cents || 0)
         });
       });
 
@@ -126,7 +123,7 @@ export const MVTExportView = () => {
       });
 
       const filteredProductData = contextMovements.map(m => m.product);
-      const totalImporte = lines.reduce((acc, l) => acc + (l.importe_linea_cents / 100), 0);
+      const totalImporte = lines.reduce((acc, l) => acc + ((l.total_amount_cents || 0) / 100), 0);
 
       return {
         global: {
@@ -499,7 +496,6 @@ export const MVTExportView = () => {
         </div>
       </div>
 
-      {/* History Dialog */}
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -546,7 +542,6 @@ export const MVTExportView = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Template Manager Dialog */}
       <Dialog open={showManager} onOpenChange={setShowManager}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>

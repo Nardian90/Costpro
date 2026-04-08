@@ -24,22 +24,14 @@ export interface DetailedStockStats {
 
 /**
  * Servicio centralizado para gestión de Stock e Inventario.
- * Proporciona una única fuente de verdad para el cálculo de existencias.
  */
 export class StockService {
 
-    /**
-     * Calcula la existencia actual de un producto basándose en su stock inicial, movimientos y conciliaciones.
-     * Centraliza la lógica para evitar drift entre vistas.
-     */
     static async calculateCurrentStock(productCod: string): Promise<number> {
         const stats = await this.getProductDetailedStats(productCod);
         return stats.final;
     }
 
-    /**
-     * Obtiene estadísticas detalladas para un producto específico.
-     */
     static async getProductDetailedStats(productCod: string): Promise<DetailedStockStats> {
         return PersistenceService.readSafe(async () => {
             const product = await db.products.where('cod').equals(productCod).first();
@@ -48,7 +40,7 @@ export class StockService {
             const initial = product.stock_inicial_manual || 0;
 
             const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-            const sales = lines.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+            const sales = lines.reduce((sum: number, line: ReconciliationLine) => sum + (line.cantidad || 0), 0);
 
             const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
             const entradas = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
@@ -66,10 +58,6 @@ export class StockService {
         });
     }
 
-    /**
-     * Calcula el mapa de stock completo para todos los productos en un solo pase O(N).
-     * Optimizado para performance.
-     */
     static async getCompleteStockMap(): Promise<Map<string, number>> {
         const statsMap = await this.getDetailedStockStatsMap();
         const map = new Map<string, number>();
@@ -77,9 +65,6 @@ export class StockService {
         return map;
     }
 
-    /**
-     * Calcula el mapa detallado de stock para todos los productos en un solo pase O(N).
-     */
     static async getDetailedStockStatsMap(): Promise<Map<string, DetailedStockStats>> {
         return PersistenceService.readSafe(async () => {
             const products = await db.products.toArray();
@@ -88,7 +73,6 @@ export class StockService {
 
             const map = new Map<string, DetailedStockStats>();
 
-            // 1. Inicializar
             for (const p of products) {
                 map.set(p.cod, {
                     initial: p.stock_inicial_manual || 0,
@@ -99,7 +83,6 @@ export class StockService {
                 });
             }
 
-            // 2. Movimientos
             for (const m of movements) {
                 if (m.producto_destino_cod) {
                     const stats = map.get(m.producto_destino_cod);
@@ -117,7 +100,6 @@ export class StockService {
                 }
             }
 
-            // 3. Ventas (Reconciliation Lines)
             for (const l of lines) {
                 const stats = map.get(l.product_cod);
                 if (stats) {
@@ -130,9 +112,6 @@ export class StockService {
         });
     }
 
-    /**
-     * Valida la integridad y sincronización entre product_movements y reconciliation_lines.
-     */
     static async validateIntegrity(): Promise<IntegrityReport> {
         return PersistenceService.readSafe(async () => {
             const issues: string[] = [];
@@ -148,7 +127,7 @@ export class StockService {
 
             const movementRefs = new Set(movements.map(m => m.referencia_transaccion));
             lines.forEach(l => {
-                if ((l.origen_dato === 'AUTO_MATCH' || l.origen_dato === 'CASH_FILLER') && !movementRefs.has(l.transaction_ref)) {
+                if (l.origen_dato === 'AUTO_MATCH' && !movementRefs.has(l.transaction_ref)) {
                     if (!l.observaciones?.includes('[REVERSIÓN]')) {
                         issues.push(`Conciliación ${l.id} (${l.origen_dato}) no tiene movimientos de inventario asociados.`);
                     }
@@ -162,17 +141,11 @@ export class StockService {
         });
     }
 
-    /**
-     * Toma un snapshot del stock actual para control optimista
-     */
     static async takeSnapshot(productCod: string): Promise<StockSnapshot> {
         const qty = await this.calculateCurrentStock(productCod);
         return { productCod, quantity: qty };
     }
 
-    /**
-     * Valida que el stock no haya cambiado (concurrencia) y que haya suficiente para revertir
-     */
     private static async validateReversal(productCod: string, qtyToRemove: number, snapshot?: StockSnapshot) {
         const currentStock = await this.calculateCurrentStock(productCod);
 
@@ -185,9 +158,6 @@ export class StockService {
         }
     }
 
-    /**
-     * Revierte una línea de conciliación mediante compensación.
-     */
     static async revertReconciliationLine(lineId: string, snapshot?: StockSnapshot): Promise<void> {
         const line = await db.reconciliation_lines.get(lineId);
         if (!line) throw new Error("Línea de conciliación no encontrada");
@@ -201,10 +171,9 @@ export class StockService {
                 ...line,
                 id: uuidv4(),
                 cantidad: -line.cantidad,
-                importe_linea_cents: -line.importe_linea_cents,
-                ingreso_banco_cents: -line.ingreso_banco_cents,
-                venta_real_calculada_cents: -line.venta_real_calculada_cents,
-                cuadre_cents: -line.cuadre_cents,
+                transfer_amount_cents: -line.transfer_amount_cents,
+                cash_amount_cents: -line.cash_amount_cents,
+                total_amount_cents: -line.total_amount_cents,
                 observaciones: `[REVERSIÓN] Compensa a ${line.id}`,
                 reconciliation_hash: `REV_${line.reconciliation_hash}_${Date.now()}`,
                 created_at: new Date().toISOString()
@@ -214,9 +183,6 @@ export class StockService {
         });
     }
 
-    /**
-     * Revierte un movimiento de inventario mediante compensación
-     */
     static async revertMovement(movementId: string, snapshot?: StockSnapshot): Promise<void> {
         const m = await db.product_movements.get(movementId);
         if (!m) throw new Error("Movimiento no encontrado");
