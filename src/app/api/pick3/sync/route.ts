@@ -32,11 +32,13 @@ export async function POST(req: Request) {
     try {
         pdfResults = await Pick3PdfService.syncFromPdf();
     } catch (pdfError) {
-        throw new Error(`PDF Sync failed: ${pdfError instanceof Error ? pdfError.message : String(pdfError)}`);
+        const errorMsg = pdfError instanceof Error ? pdfError.message : String(pdfError);
+        logger.error('PICK3', 'PDF sync failed', { error: errorMsg });
+
         if (webResults.length === 0) {
             return NextResponse.json({
                 success: false,
-                message: 'Error crítico: Fallaron todas las fuentes de sincronización (Web y PDF).'
+                message: `Error crítico: Fallaron todas las fuentes de sincronización. PDF Error: ${errorMsg}`
             }, { status: 500 });
         }
     }

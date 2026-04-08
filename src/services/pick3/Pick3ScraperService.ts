@@ -180,9 +180,9 @@ export class Pick3ScraperService {
 
   private static parseLotteryUSA(html: string, drawTime: 'midday' | 'evening'): Pick3Result[] {
     const results: Pick3Result[] = [];
-    const cardRegex = /<li class="c-draw-card[^"]*">([\s\S]*?)<\/li>/g;
-    const dateRegex = /<time[^>]*datetime="([^"]+)"/;
-    const ballRegex = /<span class="c-ball__text">(\d)<\/span>/g;
+    const cardRegex = /<tr class="[^"]*c-draw-card[^"]*">([\s\S]*?)<\/tr>/g;
+    const dateRegex = /<span class="c-draw-card__draw-date-sub">([^<]+)<\/span>/;
+    const ballRegex = /<li class="c-ball[^>]*>(\d)<\/li>/g;
 
     let match;
     while ((match = cardRegex.exec(html)) !== null) {
