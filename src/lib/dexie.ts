@@ -175,6 +175,9 @@ export interface ReconciliationLine {
   cuadre_cents: number;         // En Pesos
   clasificacion: 'Transferencia' | 'Efectivo' | 'QR';
   origen_dato: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER';
+  parent_transaction_id?: string;
+  source_type?: 'BANK_TRANSFER' | 'REAL_CASH_GOAL';
+  status?: 'VALID' | 'INVALID_ORPHAN';
   observaciones?: string;      // Notas de trazabilidad (ej: Pago Mixto)
   reconciliation_hash: string; // hash(transaction_ref + detalle) -> idempotencia
   created_at: string;
@@ -438,6 +441,10 @@ export class IPVDatabase extends Dexie {
     this.version(28).stores({
       matching_logs: "&id, transaction_ref, fecha_ejecucion, resultado_estado, matching_confidence, *applied_rules"
     });
+    this.version(29).stores({
+      reconciliation_lines: "&id, transaction_ref, reconciliation_hash, fecha_operacion, product_cod, clasificacion, origen_dato, parent_transaction_id, source_type, status"
+    });
+
 
   }
 }
