@@ -395,6 +395,20 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                 </div>
                             ))}
 
+                                                        {/* Auditabilidad de Fórmula (Incluyendo Coeficientes) */}
+                            {safeCalculated.metadata?.appliedFormula && (
+                                <div className="text-xs bg-emerald-500/5 p-2 rounded border border-emerald-500/20 mb-2">
+                                    <span className="font-bold uppercase text-[10px] block text-emerald-600 opacity-70 flex items-center gap-1">
+                                        <FunctionSquare className="w-3 h-3" /> Fórmula Ejecutada
+                                    </span>
+                                    <div className="font-mono font-black mt-1 break-all">
+                                        {safeCalculated.metadata.appliedFormula}
+                                    </div>
+                                    <p className="text-[9px] text-muted-foreground mt-1 uppercase italic">
+                                        Refleja el cálculo base + coeficientes indirectos aplicados.
+                                    </p>
+                                </div>
+                            )}
                             {/* Calculation Context / Auditability */}
                             {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
                                 <div className="text-xs bg-primary/5 p-2 rounded border border-primary/20 mb-2">

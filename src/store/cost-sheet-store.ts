@@ -30,9 +30,24 @@ interface CostSheetState {
   reorderMainRow: (path: (string | number)[], direction: 'up' | 'down') => void;
   setSheet: (data: CostSheetDataContract) => void;
   loadExample: () => void;
-  reset: () => void;
+        updateIndirectConfig: (config) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            if (!draft.data.indirectConfig) {
+              draft.data.indirectConfig = {
+                selectedSections: [],
+                baseSection: '2',
+                coefficient: 1
+              };
+            }
+            draft.data.indirectConfig = { ...draft.data.indirectConfig, ...config };
+          })
+        ),
+      reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
   updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, isAdjustmentActive?: boolean) => void;
+  updateIndirectConfig: (config: Partial<import('@/types/cost-sheet').IndirectConfig>) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -242,6 +257,7 @@ export const useCostSheetStore = create<CostSheetState>()(
         }
       },
       updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, isAdjustmentActive) =>
+  updateIndirectConfig: (config: Partial<import('@/types/cost-sheet').IndirectConfig>) => void;
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -269,6 +285,20 @@ export const useCostSheetStore = create<CostSheetState>()(
                 break;
               }
             }
+          })
+        ),
+            updateIndirectConfig: (config) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            if (!draft.data.indirectConfig) {
+              draft.data.indirectConfig = {
+                selectedSections: [],
+                baseSection: '2',
+                coefficient: 1
+              };
+            }
+            draft.data.indirectConfig = { ...draft.data.indirectConfig, ...config };
           })
         ),
       reset: () => {
