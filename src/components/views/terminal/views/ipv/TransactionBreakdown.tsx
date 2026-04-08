@@ -1,4 +1,5 @@
 import { StockService } from '../../../../../lib/ipv/StockService';
+import { AlertTriangle } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, ReconciliationLine } from '../../../../../lib/dexie';
@@ -91,7 +92,7 @@ export default function TransactionBreakdown() {
     if (!lines) return [];
     return lines.filter(l => {
       const prod = productMap.get(l.product_cod);
-      const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+      const baseRef = l.parent_transaction_id || l.transaction_ref.split("_EFECTIVO")[0];
                 const tx = txMap.get(baseRef);
       const search = searchTerm.toLowerCase();
 
@@ -230,7 +231,7 @@ export default function TransactionBreakdown() {
               </TableRow>
             ) : (
               filteredLines.map((l) => {
-                const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
+                const baseRef = l.parent_transaction_id || l.transaction_ref.split("_EFECTIVO")[0];
                 const tx = txMap.get(baseRef);
                 const prod = productMap.get(l.product_cod);
                 const basePrice = prod?.precio_cents || l.precio_unitario_cents;
@@ -248,6 +249,11 @@ export default function TransactionBreakdown() {
                       <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
                         {l.transaction_ref}
                       </div>
+                      {l.status === 'INVALID_ORPHAN' && (
+                        <div className="flex items-center gap-1 mt-1 text-[9px] text-red-600 font-black animate-pulse">
+                           <AlertTriangle className="w-3 h-3" /> SIN ORIGEN VÁLIDO
+                        </div>
+                      )}
                       <div className="flex items-center gap-1 group">
                         <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })} >
                           {tx?.observaciones || "Ajuste Manual / Global"}
@@ -293,11 +299,13 @@ export default function TransactionBreakdown() {
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={`text-xs font-black uppercase ${
+                            l.status === 'INVALID_ORPHAN' ? 'border-red-500 text-red-600 bg-red-50' :
+                            l.source_type === 'REAL_CASH_GOAL' ? 'border-purple-200 text-purple-600 bg-purple-50' :
                             l.origen_dato === 'AUTO_MATCH' ? 'border-green-200 text-green-600' :
                             l.origen_dato === 'CASH_FILLER' ? 'border-orange-200 text-orange-600' :
                             'border-blue-200 text-blue-600'
                         }`}>
-                            {l.origen_dato}
+                            {l.status === 'INVALID_ORPHAN' ? 'HUÉRFANO' : (l.source_type === 'REAL_CASH_GOAL' ? 'PLANIFICACIÓN' : l.origen_dato)}
                         </Badge>
                         {isReversion && (
                             <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-none">REVERTIDO</Badge>

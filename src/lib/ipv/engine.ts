@@ -16,7 +16,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
     { id: "wildcards", tipo: "WILDCARDS", prioridad: 4, activo: true, descripcion: "Comodines" },
-    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 1000000 }, descripcion: "Inyección de Efectivo" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 5, activo: true, meta: { daily_limit: 10000000 }, descripcion: "Inyección de Efectivo" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
@@ -44,6 +44,8 @@ export class MatchingEngine {
   private allowNegativeStock: boolean = true;
   private pendingMovements: ProductMovement[] = [];
   private dailyAdjustedPrices: Map<string, number> = new Map();
+  private isMatchingPipelineActive: boolean = false;
+  private readonly ORIGIN_WHITELIST = /^[A-Z0-9\-_]{5,64}$/;
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
@@ -103,6 +105,7 @@ export class MatchingEngine {
     currentReconciledCents: number = 0,
     cashFillUsedTodayInMemory: number = 0
   ): Promise<MatchingResult> {
+    this.isMatchingPipelineActive = true;
     const startTime = Date.now();
     const targetCents = transaction.importe_cents - currentReconciledCents;
     const lines: ReconciliationLine[] = [];
@@ -125,6 +128,7 @@ export class MatchingEngine {
             matchingConfidence: 100,
             logs: ["Transacción de débito procesada automáticamente."]
         };
+        this.isMatchingPipelineActive = false;
         return result;
     }
 
@@ -139,27 +143,29 @@ export class MatchingEngine {
         matchingConfidence: 100,
         logs: ["La transacción ya está conciliada."]
       };
+        this.isMatchingPipelineActive = false;
       return result;
     }
 
-    let remaining = targetCents;
+        let remaining = targetCents;
+    let lastProductMatched: string | undefined = undefined;
 
     for (let i = 0; i < this.rules.length; i++) {
         const rule = this.rules[i];
         const pass = i + 1;
+        const linesBefore = lines.length;
 
-        if (remaining === 0) break;
         if (remaining < 0 && rule.tipo !== 'CASH_FILL') continue;
 
         switch (rule.tipo) {
+            case 'STOCK_LIMIT':
+                // Handled in other rules internally
+                break;
             case 'HARD_REF':
                 remaining = await this.applyHardRef(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'EXACT_SUM':
                 remaining = await this.applyExactSum(rule, transaction, remaining, lines, logs, addTrace, pass);
-                break;
-            case 'STOCK_LIMIT':
-                addTrace(pass, 'STOCK_LIMIT', 'SUCCESS', 'Modo de control de stock activado');
                 break;
             case 'PRICE_FLEX':
                 remaining = await this.applyPriceFlex(rule, transaction, remaining, lines, logs, addTrace, pass);
@@ -171,8 +177,12 @@ export class MatchingEngine {
                 remaining = await this.applyTolerance(rule, transaction, remaining, lines, logs, addTrace, pass);
                 break;
             case 'CASH_FILL':
-                remaining = await this.applyCashFill(rule, transaction, remaining, lines, logs, addTrace, pass, cashFillUsedTodayInMemory);
+                remaining = await this.applyCashFill(rule, transaction, remaining, lines, logs, addTrace, pass, cashFillUsedTodayInMemory, lastProductMatched);
                 break;
+        }
+
+        if (lines.length > linesBefore) {
+            lastProductMatched = lines[lines.length - 1].product_cod;
         }
 
         if ((Math.abs(remaining - targetCents) > 0 || (rule.tipo === "CASH_FILL" && remaining === 0)) && !appliedRules.includes(rule.tipo)) {
@@ -196,6 +206,7 @@ export class MatchingEngine {
     const duration = Date.now() - startTime;
     await this.persistLog(transaction, result, duration);
 
+        this.isMatchingPipelineActive = false;
     return result;
   }
 
@@ -291,13 +302,21 @@ export class MatchingEngine {
             qty = Math.min(qty, Math.max(0, available));
         }
 
-        if (qty > 0) {
-            const line = await this.createLine(tx, match, qty, 'AUTO_MATCH', 'Transferencia');
+        if (qty > 0 || (qty === 0 && !this.useStockLimit)) {
+            // Mixed payment case: If qty is 0 but we have a match, we might need 1 unit anyway
+            const finalQty = Math.max(1, qty);
+            const line = await this.createLine(tx, match, finalQty, 'AUTO_MATCH', 'Transferencia');
+
+            // If real cost > transfer, we cap the transfer line and let CASH_FILL handle the rest
+            if (line.importe_linea_cents > remaining) {
+                line.importe_linea_cents = remaining;
+            }
+
             lines.push(line);
-            this.updateVirtualStock(match.cod, qty, tx.referencia_origen);
+            this.updateVirtualStock(match.cod, finalQty, tx.referencia_origen);
             addTrace(pass, 'HARD_REF', 'SUCCESS', `Match por referencia directa con ${match.cod}`);
-            logs.push(`PASS ${pass} (HARD_REF): Match directo con ${match.cod} (${qty} unidades)`);
-            return remaining - line.importe_linea_cents;
+            logs.push(`PASS ${pass} (HARD_REF): Match directo con ${match.cod} (${finalQty} unidades)`);
+            return remaining - (match.precio_cents * finalQty);
         } else if (this.useStockLimit && !this.allowNegativeStock) {
             addTrace(pass, 'HARD_REF', 'FAIL', `Sin stock para ${match.cod}`);
             return remaining;
@@ -464,6 +483,7 @@ export class MatchingEngine {
 
     if (bestP && bestQty > 0) {
         const realValue = bestP.precio_cents * bestQty;
+        // If real value > remaining, we cap the line's transfer component
         const transferCoverage = Math.min(remaining, realValue);
 
         const line = await this.createLine(tx, bestP, bestQty, 'AUTO_MATCH', 'Transferencia');
@@ -472,6 +492,8 @@ export class MatchingEngine {
         this.updateVirtualStock(bestP.cod, bestQty, tx.referencia_origen);
         addTrace(pass, 'WILDCARDS', 'SUCCESS', `Match por wildcard con ${bestQty}x ${bestP.cod}`);
         logs.push(`PASS ${pass} (WILDCARDS): Match wildcard con ${bestQty}x ${bestP.cod}`);
+
+        // Return negative to trigger CASH_FILL overflow logic
         return remaining - realValue;
     }
 
@@ -498,80 +520,79 @@ export class MatchingEngine {
     logs: string[],
     addTrace: any,
     pass: number,
-    cashFillUsedTodayInMemory: number
+    cashFillUsedTodayInMemory: number,
+    contextProductCod?: string
   ): Promise<number> {
+    if (!this.isMatchingPipelineActive) {
+        throw new Error('Invalid CASH_FILLER injection source: outside matching pipeline');
+    }
+
+    const baseRef = transaction.referencia_origen;
+
+    if (baseRef.startsWith('GOAL-')) {
+        throw new Error('GOAL cannot be processed as residual in CASH_FILL');
+    }
+
+    if (!this.ORIGIN_WHITELIST.test(baseRef)) {
+        throw new Error(`Invalid transfer origin format: ${baseRef}. Must match ${this.ORIGIN_WHITELIST}`);
+    }
+
     if (remaining_cents === 0) {
         addTrace(pass, 'CASH_FILL', 'SKIPPED', 'Ya está cuadrado');
         return 0;
     }
 
-    const absRemaining = Math.abs(remaining_cents);
-    const dailyLimit = rule.meta?.daily_limit ?? Infinity;
+    const absRemaining = Math.abs(Math.round(remaining_cents));
+    const dailyLimit = Math.round(rule.meta?.daily_limit ?? Infinity);
 
     if (cashFillUsedTodayInMemory + absRemaining > dailyLimit) {
         addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
-        return remaining_cents;
+        throw new Error(`Daily limit exceeded for Cash Filler: ${cashFillUsedTodayInMemory + absRemaining} > ${dailyLimit}`);
     }
 
-    // Identificador determinístico: {numero_transferencia}_EFECTIVO
-    const baseRef = transaction.referencia_origen;
-    const cashRefPattern = `${baseRef}_EFECTIVO`;
-    const existingCashLinesCount = lines.filter(l => l.transaction_ref.startsWith(cashRefPattern)).length;
-    const finalCashRef = existingCashLinesCount > 0
-        ? `${cashRefPattern}_${existingCashLinesCount + 1}`
-        : cashRefPattern;
+    // Deterministic ID and unified reference for filtering
+    const amountToLog = absRemaining;
+    const classif: 'Efectivo' | 'Transferencia' = remaining_cents < 0 ? 'Efectivo' : 'Transferencia';
 
-    if (remaining_cents < 0) {
-        // Excedente de productos (Pago Mixto)
-        const cashNeeded = absRemaining;
-        const line: ReconciliationLine = {
-            id: uuidv4(),
-            transaction_ref: finalCashRef,
-            fecha_operacion: transaction.fecha,
-            ingreso_banco_cents: 0,
-            venta_real_calculada_cents: 0,
-            comision_banco_cents: 0,
-            product_cod: 'CASH',
-            product_um: 'UD',
-            cantidad: 1,
-            precio_unitario_cents: cashNeeded,
-            importe_linea_cents: cashNeeded,
-            cuadre_cents: 0,
-            clasificacion: 'Efectivo',
-            origen_dato: 'CASH_FILLER',
-            observaciones: `Pago mixto (Transferencia + Efectivo) - Ref: ${baseRef}`,
-            reconciliation_hash: await generateHash(`${finalCashRef}-${cashNeeded}`),
-            created_at: new Date().toISOString()
-        };
-        lines.push(line);
-        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto excedente de ${cashNeeded} cts como efectivo (Pago Mixto)`);
-        logs.push(`PASS ${pass} (CASH_FILL): Pago mixto detectado. Registrado ${cashNeeded} en efectivo.`);
-    } else {
-        // Faltante de productos (Transferencia sin stock o sin match)
-        const fillerNeeded = remaining_cents;
-        const line: ReconciliationLine = {
-            id: uuidv4(),
-            transaction_ref: finalCashRef,
-            fecha_operacion: transaction.fecha,
-            ingreso_banco_cents: fillerNeeded,
-            venta_real_calculada_cents: fillerNeeded,
-            comision_banco_cents: 0,
-            product_cod: 'CASH',
-            product_um: 'UD',
-            cantidad: 1,
-            precio_unitario_cents: fillerNeeded,
-            importe_linea_cents: fillerNeeded,
-            cuadre_cents: 0,
-            clasificacion: 'Transferencia',
-            origen_dato: 'CASH_FILLER',
-            observaciones: `Cuadre automático: Faltante de productos por ${fillerNeeded} cts`,
-            reconciliation_hash: await generateHash(`${finalCashRef}-${fillerNeeded}`),
-            created_at: new Date().toISOString()
-        };
-        lines.push(line);
-        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto faltante de ${fillerNeeded} cts para cuadre total`);
-        logs.push(`PASS ${pass} (CASH_FILL): Cuadre forzado con línea de ajuste de ${fillerNeeded} cts.`);
-    }
+    // Use context product if it was a mixed payment overflow
+    const productToUse = (remaining_cents < 0 && contextProductCod) ? contextProductCod : 'CASH';
+
+    // Suffix is still needed for uniqueness in DB but we'll use baseRef in transaction_ref for filtering
+    const sequence = lines.filter(l => l.parent_transaction_id === baseRef && l.origen_dato === 'CASH_FILLER').length + 1;
+    const deterministicId = await generateHash(`${baseRef}-FILLER-${sequence}-${amountToLog}-${classif}`);
+
+    const line: ReconciliationLine = {
+        id: deterministicId,
+        transaction_ref: baseRef, // Use original ID for filtering!
+        parent_transaction_id: baseRef,
+        source_type: 'BANK_TRANSFER',
+        status: 'VALID',
+        fecha_operacion: transaction.fecha,
+        ingreso_banco_cents: remaining_cents < 0 ? 0 : amountToLog,
+        venta_real_calculada_cents: remaining_cents < 0 ? 0 : amountToLog,
+        comision_banco_cents: 0,
+        product_cod: productToUse,
+        product_um: 'UD',
+        cantidad: 1,
+        precio_unitario_cents: amountToLog,
+        importe_linea_cents: amountToLog,
+        cuadre_cents: 0,
+        clasificacion: classif,
+        origen_dato: 'CASH_FILLER',
+        observaciones: remaining_cents < 0
+            ? `Pago mixto (Transferencia + Efectivo) - Item: ${productToUse} - Ref: ${baseRef}`
+            : `Cuadre automático: Faltante de productos por ${amountToLog} cts`,
+        reconciliation_hash: deterministicId,
+        created_at: new Date().toISOString()
+    };
+
+    lines.push(line);
+    const traceMsg = remaining_cents < 0
+        ? `Cubierto excedente de ${amountToLog} cts como efectivo (Pago Mixto en ${productToUse})`
+        : `Cubierto faltante de ${amountToLog} cts para cuadre total`;
+
+    addTrace(pass, 'CASH_FILL', 'SUCCESS', traceMsg);
+    logs.push(`PASS ${pass} (CASH_FILL): ${traceMsg}`);
 
     return 0;
   }
