@@ -44,6 +44,8 @@ export class MatchingEngine {
   private allowNegativeStock: boolean = true;
   private pendingMovements: ProductMovement[] = [];
   private dailyAdjustedPrices: Map<string, number> = new Map();
+  private isMatchingPipelineActive: boolean = false;
+  private readonly ORIGIN_WHITELIST = /^(TRX|BANK)-[A-Z0-9\-_]+$/;
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
@@ -103,6 +105,7 @@ export class MatchingEngine {
     currentReconciledCents: number = 0,
     cashFillUsedTodayInMemory: number = 0
   ): Promise<MatchingResult> {
+    this.isMatchingPipelineActive = true;
     const startTime = Date.now();
     const targetCents = transaction.importe_cents - currentReconciledCents;
     const lines: ReconciliationLine[] = [];
@@ -125,6 +128,7 @@ export class MatchingEngine {
             matchingConfidence: 100,
             logs: ["Transacción de débito procesada automáticamente."]
         };
+        this.isMatchingPipelineActive = false;
         return result;
     }
 
@@ -139,6 +143,7 @@ export class MatchingEngine {
         matchingConfidence: 100,
         logs: ["La transacción ya está conciliada."]
       };
+        this.isMatchingPipelineActive = false;
       return result;
     }
 
@@ -196,6 +201,7 @@ export class MatchingEngine {
     const duration = Date.now() - startTime;
     await this.persistLog(transaction, result, duration);
 
+        this.isMatchingPipelineActive = false;
     return result;
   }
 
@@ -500,78 +506,75 @@ export class MatchingEngine {
     pass: number,
     cashFillUsedTodayInMemory: number
   ): Promise<number> {
+    if (!this.isMatchingPipelineActive) {
+        throw new Error('Invalid CASH_FILLER injection source: outside matching pipeline');
+    }
+
+    const baseRef = transaction.referencia_origen;
+
+    if (baseRef.startsWith('GOAL-')) {
+        throw new Error('GOAL cannot be processed as residual in CASH_FILL');
+    }
+
+    if (!this.ORIGIN_WHITELIST.test(baseRef)) {
+        throw new Error(`Invalid transfer origin format: ${baseRef}. Must match ${this.ORIGIN_WHITELIST}`);
+    }
+
     if (remaining_cents === 0) {
         addTrace(pass, 'CASH_FILL', 'SKIPPED', 'Ya está cuadrado');
         return 0;
     }
 
-    const absRemaining = Math.abs(remaining_cents);
-    const dailyLimit = rule.meta?.daily_limit ?? Infinity;
+    const absRemaining = Math.abs(Math.round(remaining_cents));
+    const dailyLimit = Math.round(rule.meta?.daily_limit ?? Infinity);
 
     if (cashFillUsedTodayInMemory + absRemaining > dailyLimit) {
         addTrace(pass, 'CASH_FILL', 'FAIL', `Límite diario de ${dailyLimit} cts excedido`);
-        return remaining_cents;
+        throw new Error(`Daily limit exceeded for Cash Filler: ${cashFillUsedTodayInMemory + absRemaining} > ${dailyLimit}`);
     }
 
-    // Identificador determinístico: {numero_transferencia}_EFECTIVO
-    const baseRef = transaction.referencia_origen;
     const cashRefPattern = `${baseRef}_EFECTIVO`;
     const existingCashLinesCount = lines.filter(l => l.transaction_ref.startsWith(cashRefPattern)).length;
     const finalCashRef = existingCashLinesCount > 0
         ? `${cashRefPattern}_${existingCashLinesCount + 1}`
         : cashRefPattern;
 
-    if (remaining_cents < 0) {
-        // Excedente de productos (Pago Mixto)
-        const cashNeeded = absRemaining;
-        const line: ReconciliationLine = {
-            id: uuidv4(),
-            transaction_ref: finalCashRef,
-            fecha_operacion: transaction.fecha,
-            ingreso_banco_cents: 0,
-            venta_real_calculada_cents: 0,
-            comision_banco_cents: 0,
-            product_cod: 'CASH',
-            product_um: 'UD',
-            cantidad: 1,
-            precio_unitario_cents: cashNeeded,
-            importe_linea_cents: cashNeeded,
-            cuadre_cents: 0,
-            clasificacion: 'Efectivo',
-            origen_dato: 'CASH_FILLER',
-            observaciones: `Pago mixto (Transferencia + Efectivo) - Ref: ${baseRef}`,
-            reconciliation_hash: await generateHash(`${finalCashRef}-${cashNeeded}`),
-            created_at: new Date().toISOString()
-        };
-        lines.push(line);
-        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto excedente de ${cashNeeded} cts como efectivo (Pago Mixto)`);
-        logs.push(`PASS ${pass} (CASH_FILL): Pago mixto detectado. Registrado ${cashNeeded} en efectivo.`);
-    } else {
-        // Faltante de productos (Transferencia sin stock o sin match)
-        const fillerNeeded = remaining_cents;
-        const line: ReconciliationLine = {
-            id: uuidv4(),
-            transaction_ref: finalCashRef,
-            fecha_operacion: transaction.fecha,
-            ingreso_banco_cents: fillerNeeded,
-            venta_real_calculada_cents: fillerNeeded,
-            comision_banco_cents: 0,
-            product_cod: 'CASH',
-            product_um: 'UD',
-            cantidad: 1,
-            precio_unitario_cents: fillerNeeded,
-            importe_linea_cents: fillerNeeded,
-            cuadre_cents: 0,
-            clasificacion: 'Transferencia',
-            origen_dato: 'CASH_FILLER',
-            observaciones: `Cuadre automático: Faltante de productos por ${fillerNeeded} cts`,
-            reconciliation_hash: await generateHash(`${finalCashRef}-${fillerNeeded}`),
-            created_at: new Date().toISOString()
-        };
-        lines.push(line);
-        addTrace(pass, 'CASH_FILL', 'SUCCESS', `Cubierto faltante de ${fillerNeeded} cts para cuadre total`);
-        logs.push(`PASS ${pass} (CASH_FILL): Cuadre forzado con línea de ajuste de ${fillerNeeded} cts.`);
-    }
+    const amountToLog = absRemaining;
+    const classif: 'Efectivo' | 'Transferencia' = remaining_cents < 0 ? 'Efectivo' : 'Transferencia';
+    const deterministicId = await generateHash(`${finalCashRef}-${amountToLog}-${classif}`);
+
+    const line: ReconciliationLine = {
+        id: deterministicId,
+        transaction_ref: finalCashRef,
+        parent_transaction_id: baseRef,
+        source_type: 'BANK_TRANSFER',
+        status: 'VALID',
+        fecha_operacion: transaction.fecha,
+        ingreso_banco_cents: remaining_cents < 0 ? 0 : amountToLog,
+        venta_real_calculada_cents: remaining_cents < 0 ? 0 : amountToLog,
+        comision_banco_cents: 0,
+        product_cod: 'CASH',
+        product_um: 'UD',
+        cantidad: 1,
+        precio_unitario_cents: amountToLog,
+        importe_linea_cents: amountToLog,
+        cuadre_cents: 0,
+        clasificacion: classif,
+        origen_dato: 'CASH_FILLER',
+        observaciones: remaining_cents < 0
+            ? `Pago mixto (Transferencia + Efectivo) - Ref: ${baseRef}`
+            : `Cuadre automático: Faltante de productos por ${amountToLog} cts`,
+        reconciliation_hash: deterministicId,
+        created_at: new Date().toISOString()
+    };
+
+    lines.push(line);
+    const traceMsg = remaining_cents < 0
+        ? `Cubierto excedente de ${amountToLog} cts como efectivo (Pago Mixto)`
+        : `Cubierto faltante de ${amountToLog} cts para cuadre total`;
+
+    addTrace(pass, 'CASH_FILL', 'SUCCESS', traceMsg);
+    logs.push(`PASS ${pass} (CASH_FILL): ${traceMsg}`);
 
     return 0;
   }
