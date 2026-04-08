@@ -512,7 +512,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                 ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
                 : (r.coeficiente || 0),
               fuente: r.fuente,
-              metadata: { ...(r.metadata || {}), appliedFormula: finalFormula },
+              metadata: { ...(r.metadata || {}), appliedFormula: r.formula || r.totalFormula },
               audits: r.audit,
               hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
               validationErrors: rowValidationErrors.map(ve => ({
