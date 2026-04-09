@@ -10,7 +10,9 @@ import {
   RotateCcw,
   Check,
   X,
-  Settings2
+  Settings2,
+  Layers,
+  Target
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -100,7 +102,7 @@ export const CostSheetSummary: React.FC = () => {
 
     if (baseTotal > 0) {
       const newCoef = indirectTotal / baseTotal;
-      updateIndirectConfig({ coefficient: Math.min(2.0, Math.max(0.5, newCoef)) });
+      updateIndirectConfig({ coefficient: Number(newCoef.toFixed(4)) });
     }
   };
 
@@ -244,31 +246,74 @@ export const CostSheetSummary: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">Coeficiente de Gastos</label>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="h-6 w-6" title="Auto-calcular basado en selección" onClick={handleAutoCalculateCoefficient}>
-                    <Calculator className="w-3 h-3" />
-                  </Button>
-                  <Badge variant="outline" className="text-blue-600 font-mono">
-                    x {data.indirectConfig?.coefficient?.toFixed(4) || "1.0000"}
-                  </Badge>
-                </div>
-              </div>
-              <Slider
-                value={[data.indirectConfig?.coefficient || 1]}
-                min={0.5}
-                max={2.0}
-                step={0.0001}
-                onValueChange={([val]) => updateIndirectConfig({ coefficient: val })}
-              />
+            <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg mb-4">
+              <Button
+                variant={data.indirectConfig?.mode !== 'fixed' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="flex-1 h-8 text-[10px] uppercase font-bold"
+                onClick={() => updateIndirectConfig({ mode: 'coefficient' })}
+              >
+                <Percent className="w-3 h-3 mr-1" /> Coeficiente
+              </Button>
+              <Button
+                variant={data.indirectConfig?.mode === 'fixed' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="flex-1 h-8 text-[10px] uppercase font-bold"
+                onClick={() => updateIndirectConfig({ mode: 'fixed' })}
+              >
+                <DollarSign className="w-3 h-3 mr-1" /> Monto Fijo
+              </Button>
             </div>
 
-            <div className="pt-4 border-t">
-              <Label className="text-xs uppercase text-muted-foreground mb-3 block">Secciones Afectadas</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {data.sections.filter(s => ['3', '4', '5', '6'].includes(s.id)).map(section => (
+            {data.indirectConfig?.mode === 'fixed' ? (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Monto Indirecto Total</label>
+                  <div className="relative">
+                    <DollarSign className="w-3 h-3 absolute left-2 top-2.5 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      className="w-32 h-9 pl-6 text-right font-mono"
+                      value={data.indirectConfig?.fixedAmount || 0}
+                      onChange={(e) => updateIndirectConfig({ fixedAmount: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium">Coeficiente de Gastos</label>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Auto-calcular basado en selección" onClick={handleAutoCalculateCoefficient}>
+                      <Calculator className="w-3 h-3" />
+                    </Button>
+                    <Badge variant="outline" className="text-blue-600 font-mono">
+                      x {data.indirectConfig?.coefficient?.toFixed(4) || "1.0000"}
+                    </Badge>
+                  </div>
+                </div>
+                <Slider
+                  value={[data.indirectConfig?.coefficient || 1]}
+                  min={0.5}
+                  max={2.0}
+                  step={0.0001}
+                  onValueChange={([val]) => updateIndirectConfig({ coefficient: val })}
+                />
+              </div>
+            )}
+
+            <div className="pt-4 border-t space-y-4">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs uppercase text-muted-foreground flex items-center gap-2">
+                  <Layers className="w-3 h-3" /> Secciones Afectadas
+                </Label>
+                <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter">
+                  {data.indirectConfig?.selectedSections?.length || 0} Seleccionadas
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                {data.sections.filter(s => s.id !== '13' && s.id !== '14').map(section => (
                   <div key={section.id} className="flex items-center space-x-2 border rounded-md p-2 hover:bg-muted/50 transition-colors">
                     <Checkbox
                       id={`section-${section.id}`}
@@ -277,20 +322,41 @@ export const CostSheetSummary: React.FC = () => {
                     />
                     <label
                       htmlFor={`section-${section.id}`}
-                      className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 truncate"
+                      className="text-[10px] font-bold uppercase leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 truncate"
                     >
-                      {section.label}
+                      {section.label || `Sección ${section.id}`}
                     </label>
                   </div>
                 ))}
               </div>
             </div>
 
+            <div className="pt-4 border-t space-y-3">
+               <div className="flex justify-between items-center">
+                  <Label className="text-xs uppercase text-muted-foreground flex items-center gap-2">
+                    <Target className="w-3 h-3" /> Sección Base (Auto-calc)
+                  </Label>
+               </div>
+               <div className="grid grid-cols-1 gap-2">
+                  <select
+                    className="w-full h-9 bg-background border rounded-md px-3 text-xs font-medium"
+                    value={data.indirectConfig?.baseSection || '2'}
+                    onChange={(e) => updateIndirectConfig({ baseSection: e.target.value })}
+                  >
+                    {data.sections.map(s => (
+                      <option key={s.id} value={s.id}>{s.label || `Sección ${s.id}`}</option>
+                    ))}
+                  </select>
+               </div>
+            </div>
+
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex gap-3">
               <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-700 leading-relaxed">
-                El coeficiente se aplica a las secciones seleccionadas.
-                La base de comparación por defecto es la <strong>Sección 2 (Salarios)</strong>.
+              <p className="text-[10px] text-blue-700 leading-relaxed uppercase font-medium">
+                {data.indirectConfig?.mode === 'fixed'
+                  ? 'El monto fijo se prorrateará entre las secciones seleccionadas según su peso relativo.'
+                  : 'El coeficiente se aplica como un multiplicador directo a las secciones seleccionadas.'
+                }
               </p>
             </div>
           </CardContent>

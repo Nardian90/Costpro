@@ -59,9 +59,11 @@ export interface CostSheetSignature {
 }
 
 export interface IndirectConfig {
+  mode?: 'coefficient' | 'fixed';
   selectedSections: string[];
   baseSection: string;
   coefficient: number;
+  fixedAmount?: number;
   isSimulation?: boolean;
 }
 
