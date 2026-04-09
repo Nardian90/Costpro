@@ -143,7 +143,15 @@ export class MatchingEngine {
                     p.precio_cents > 0 &&
                     p.isEligibleForCashFill !== false &&
                     p.precio_cents > remainingForIdentification
-                ).sort((a, b) => (a.precio_cents - remainingForIdentification) - (b.precio_cents - remainingForIdentification));
+                ).sort((a, b) => {
+                    // R1: Priorizar productos con menor stock positivo para llevarlos a cero
+                    const stockA = this.getVirtualStock(a.cod);
+                    const stockB = this.getVirtualStock(b.cod);
+                    if (stockA > 0 && stockB > 0) return stockA - stockB;
+                    if (stockA > 0) return -1;
+                    if (stockB > 0) return 1;
+                    return (a.precio_cents - remainingForIdentification) - (b.precio_cents - remainingForIdentification);
+                });
 
                 const candidate = eligibleProducts[0];
                 if (candidate) {
@@ -174,13 +182,23 @@ export class MatchingEngine {
                 break;
             }
             case 'WILDCARDS': {
-                const wildcards = this.products.filter(p => p.isWildcardCandidate || (p as any).is_wildcard);
+                const wildcards = this.products
+                    .filter(p => p.isWildcardCandidate || (p as any).is_wildcard)
+                    .sort((a, b) => {
+                        const stockA = this.getVirtualStock(a.cod);
+                        const stockB = this.getVirtualStock(b.cod);
+                        if (stockA > 0 && stockB > 0) return stockA - stockB;
+                        if (stockA > 0) return -1;
+                        if (stockB > 0) return 1;
+                        return 0;
+                    });
+
                 for (const wildcard of wildcards) {
                     if (matchedProducts.has(wildcard.cod)) continue;
                     const qty = remainingForIdentification > 0 ? Math.max(1, Math.floor(remainingForIdentification / wildcard.precio_cents)) : 1;
                     matchedProducts.set(wildcard.cod, { product: wildcard, qty });
                     remainingForIdentification -= wildcard.precio_cents * qty;
-                    addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod}`);
+                    addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod} (Stock: ${this.getVirtualStock(wildcard.cod)})`);
                     if (!appliedRules.includes('WILDCARDS')) appliedRules.push('WILDCARDS');
                     if (remainingForIdentification <= 0 && matchedProducts.size >= 2) break;
                 }
@@ -205,6 +223,44 @@ export class MatchingEngine {
         lines.push(await this.createLine(transaction, item.product, item.qty, coveredByTransfer, residual));
         this.updateVirtualStock(item.product.cod, item.qty, transaction.referencia_origen);
         remainingTransfer -= coveredByTransfer;
+    }
+
+    // R4: Manejo de Sobrepagos (Auto-Suplencia)
+    // Si sobra transferencia, buscamos productos para agotar el saldo.
+    if (remainingTransfer > 1) {
+        const candidates = this.products
+            .filter(p => p.activo && p.precio_cents > 0 && !matchedProducts.has(p.cod))
+            .sort((a, b) => {
+                const stockA = this.getVirtualStock(a.cod);
+                const stockB = this.getVirtualStock(b.cod);
+                if (stockA > 0 && stockB > 0) return stockA - stockB;
+                return a.precio_cents - b.precio_cents;
+            });
+
+        for (const candidate of candidates) {
+            if (remainingTransfer <= 1) break;
+
+            const qty = 1;
+            const productTotal = candidate.precio_cents * qty;
+            const coveredByTransfer = Math.min(remainingTransfer, productTotal);
+            const residual = Math.max(0, productTotal - coveredByTransfer);
+
+            let available = this.getVirtualStock(candidate.cod);
+            if (this.useStockLimit && !this.allowNegativeStock && available < qty) {
+                const success = await this.attemptDecomposition(candidate.cod);
+                if (!success && available < qty) continue;
+            }
+
+            lines.push(await this.createLine(transaction, candidate, qty, coveredByTransfer, residual));
+            this.updateVirtualStock(candidate.cod, qty, transaction.referencia_origen);
+            remainingTransfer -= coveredByTransfer;
+
+            addTrace(99, 'AUTO_SUPPLY', 'SUCCESS', `Auto-suplencia con ${candidate.cod} para agotar sobrepago`, {
+                excess_exhausted: coveredByTransfer,
+                residual_cash: residual
+            });
+            if (!appliedRules.includes('AUTO_SUPPLY')) appliedRules.push('AUTO_SUPPLY');
+        }
     }
 
     let status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE' | 'OVERPAYMENT' = 'PENDIENTE';
