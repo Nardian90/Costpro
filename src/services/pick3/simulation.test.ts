@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from 'vitest';
 import { SimulationEngine } from './simulation.engine';
 import { Pick3Result, BettingConfig } from '@/types/pick3';
 
