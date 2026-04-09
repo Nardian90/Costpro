@@ -1,5 +1,5 @@
 import { StockService } from '../../../../../lib/ipv/StockService';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CreditCard, Banknote, HelpCircle } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, ReconciliationLine } from '../../../../../lib/dexie';
@@ -11,17 +11,14 @@ import {
   TableHeader,
   TableRow
 } from '../../../../ui/table';
-import { Card } from '../../../../ui/card';
 import { Badge } from '../../../../ui/badge';
 import { Button } from '../../../../ui/button';
 import { Input } from '../../../../ui/input';
 import {
   Search,
-  Filter,
   Trash2,
   Edit2,
-  Info,
-  ArrowRightLeft
+  Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrencyCents } from '../../../../../lib/utils';
@@ -39,12 +36,6 @@ import {
     SelectTrigger,
     SelectValue
 } from '../../../../ui/select';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from '../../../../ui/tooltip';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
@@ -75,9 +66,10 @@ const ObservationsModal = ({ open, onOpenChange, observations, reference }: { op
 
 export default function TransactionBreakdown() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [classificationFilter, setClassificationFilter] = useState<string>('ALL');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('ALL');
   const [editingLine, setEditingLine] = useState<ReconciliationLine | null>(null);
-  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editTransfer, setEditTransfer] = useState<number>(0);
+  const [editCash, setEditCash] = useState<number>(0);
   const [editDate, setEditDate] = useState<string>('');
   const [obsModal, setObsModal] = useState({ open: false, observations: "", reference: "" });
 
@@ -91,38 +83,26 @@ export default function TransactionBreakdown() {
   const filteredLines = useMemo(() => {
     if (!lines) return [];
     return lines.filter(l => {
-      const prod = productMap.get(l.product_cod);
-      const baseRef = l.parent_transaction_id || l.transaction_ref.split("_EFECTIVO")[0];
-                const tx = txMap.get(baseRef);
       const search = searchTerm.toLowerCase();
+      const tx = txMap.get(l.parent_transaction_id || l.transaction_ref);
 
       const matchesSearch =
         l.transaction_ref.toLowerCase().includes(search) ||
         l.product_cod.toLowerCase().includes(search) ||
-        (prod?.descripcion.toLowerCase().includes(search)) ||
+        l.product_name.toLowerCase().includes(search) ||
         (tx?.observaciones?.toLowerCase().includes(search));
 
-      const matchesClassification = classificationFilter === 'ALL' || l.clasificacion === classificationFilter;
+      const matchesStatus = paymentStatusFilter === 'ALL' || l.payment_status === paymentStatusFilter;
 
-      return matchesSearch && matchesClassification;
+      return matchesSearch && matchesStatus;
     }).sort((a, b) => b.fecha_operacion.localeCompare(a.fecha_operacion));
-  }, [lines, txMap, productMap, searchTerm, classificationFilter]);
+  }, [lines, txMap, searchTerm, paymentStatusFilter]);
 
-  const handleDeleteLine = async (line: any) => {
-    if (!confirm("¿Deseas revertir este registro mediante compensación?")) return;
+  const handleDeleteLine = async (line: ReconciliationLine) => {
+    if (!confirm("¿Deseas revertir este registro?")) return;
     try {
         const snapshot = await StockService.takeSnapshot(line.product_cod);
         await StockService.revertReconciliationLine(line.id, snapshot);
-
-        const tx = await db.bank_statements.get(line.transaction_ref);
-        if (tx) {
-            const remainingLines = await db.reconciliation_lines.where("transaction_ref").equals(line.transaction_ref).toArray();
-            const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-            const target = tx.importe_venta_cents || tx.importe_cents;
-            const newStatus = txTotal >= target - 0.001 ? "COMPLETO" : (txTotal > 0 ? "PARCIAL" : "PENDIENTE");
-            await db.bank_statements.update(line.transaction_ref, { estado_conciliacion: newStatus });
-        }
-
         toast.success("Línea revertida exitosamente");
     } catch (error: any) {
         toast.error(error.message || "Error al revertir la línea");
@@ -132,10 +112,12 @@ export default function TransactionBreakdown() {
   const handleSaveEdit = async () => {
     if (!editingLine) return;
     try {
+        const total = editTransfer + editCash;
         await db.reconciliation_lines.update(editingLine.id, {
-            importe_linea_cents: editAmount,
-            fecha_operacion: editDate,
-            cuadre_cents: editAmount - (editingLine.precio_unitario_cents * editingLine.cantidad)
+            transfer_amount_cents: editTransfer,
+            cash_amount_cents: editCash,
+            total_amount_cents: total,
+            fecha_operacion: editDate
         });
         toast.success('Línea actualizada');
         setEditingLine(null);
@@ -145,22 +127,19 @@ export default function TransactionBreakdown() {
   };
 
   const exportToExcel = () => {
-    const data = filteredLines.map(l => {
-        const prod = productMap.get(l.product_cod);
-        return {
-            "Fecha": l.fecha_operacion,
-            "Referencia": l.transaction_ref,
-            "Producto": prod?.descripcion || l.product_cod,
-            "Cantidad": l.cantidad,
-            "UM": l.product_um,
-            "Precio Unit": l.precio_unitario_cents / 100,
-            "Importe Real": l.importe_linea_cents / 100,
-            "Cuadre": l.cuadre_cents / 100,
-            "Clasificación": l.clasificacion,
-            "Origen": l.origen_dato,
-            "Observaciones": l.observaciones || ""
-        };
-    });
+    const data = filteredLines.map(l => ({
+        "Fecha": l.fecha_operacion,
+        "Referencia": l.transaction_ref,
+        "Producto": l.product_name,
+        "Cantidad": l.cantidad,
+        "UM": l.product_um,
+        "Precio Unit": l.precio_unitario_cents / 100,
+        "Transferencia": l.transfer_amount_cents / 100,
+        "Efectivo": l.cash_amount_cents / 100,
+        "Total": l.total_amount_cents / 100,
+        "Estado": l.payment_status,
+        "Observaciones": l.observaciones || ""
+    }));
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -189,15 +168,15 @@ export default function TransactionBreakdown() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Select value={classificationFilter} onValueChange={setClassificationFilter}>
+            <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
                 <SelectTrigger className="w-40 h-10 text-xs font-bold">
-                    <SelectValue placeholder="Tipo Pago" />
+                    <SelectValue placeholder="Estado Pago" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="ALL">Todos</SelectItem>
-                    <SelectItem value="Transferencia">Transferencia</SelectItem>
-                    <SelectItem value="Efectivo">Efectivo</SelectItem>
-                    <SelectItem value="QR">QR</SelectItem>
+                    <SelectItem value="ALL">Todos los Estados</SelectItem>
+                    <SelectItem value="MATCHED">CONCILIADO</SelectItem>
+                    <SelectItem value="PARTIAL">PARCIAL</SelectItem>
+                    <SelectItem value="OVERPAYMENT">EXCEDENTE</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -206,133 +185,88 @@ export default function TransactionBreakdown() {
         </Button>
       </div>
 
-      <div className="px-4">
+      <div className="px-4 overflow-x-auto">
         <Table className="data-table">
           <TableHeader>
             <TableRow>
               <TableHead>Fecha</TableHead>
-              <TableHead>Ref. Transacción / Origen</TableHead>
+              <TableHead>Transacción</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead className="text-center">Cant.</TableHead>
-              <TableHead className="text-right">Precio Base</TableHead>
-              <TableHead className="text-right text-green-600">Propina</TableHead>
-              <TableHead className="text-right text-red-600">Descuento</TableHead>
-              <TableHead className="text-right">Importe Real</TableHead>
-              <TableHead>Tipo</TableHead>
+              <TableHead className="text-right">Composición de Pago</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredLines.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
-                  No se encontraron líneas de detalle.
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
+                  No se encontraron registros.
                 </TableCell>
               </TableRow>
             ) : (
               filteredLines.map((l) => {
-                const baseRef = l.parent_transaction_id || l.transaction_ref.split("_EFECTIVO")[0];
-                const tx = txMap.get(baseRef);
-                const prod = productMap.get(l.product_cod);
-                const basePrice = prod?.precio_cents || l.precio_unitario_cents;
-
-                const propina = l.cuadre_cents > 0 ? l.cuadre_cents : 0;
-                const descuento = l.cuadre_cents < 0 ? Math.abs(l.cuadre_cents) : 0;
-
+                const tx = txMap.get(l.parent_transaction_id || l.transaction_ref);
                 const isReversion = l.observaciones?.startsWith('[REVERSIÓN]');
-                const canEditDelete = (l.clasificacion === 'Efectivo' || l.origen_dato === 'CASH_FILLER') && !isReversion;
 
                 return (
                   <TableRow key={l.id} className={isReversion ? "bg-muted/10" : ""}>
-                    <TableCell className={`text-xs font-medium ${isReversion ? "opacity-40" : ""}`}>{formatDate(l.fecha_operacion)}</TableCell>
+                    <TableCell className="text-xs font-medium">{formatDate(l.fecha_operacion)}</TableCell>
                     <TableCell>
-                      <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
-                        {l.transaction_ref}
-                      </div>
-                      {l.status === 'INVALID_ORPHAN' && (
-                        <div className="flex items-center gap-1 mt-1 text-[9px] text-red-600 font-black animate-pulse">
-                           <AlertTriangle className="w-3 h-3" /> SIN ORIGEN VÁLIDO
-                        </div>
-                      )}
+                      <div className="text-xs font-black text-primary truncate max-w-[150px]">{l.transaction_ref}</div>
                       <div className="flex items-center gap-1 group">
-                        <div className="text-xs text-muted-foreground truncate max-w-[120px] cursor-pointer flex-1" title={tx?.observaciones} onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })} >
-                          {tx?.observaciones || "Ajuste Manual / Global"}
+                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px] cursor-pointer" onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                          {tx?.observaciones || "Manual / Global"}
                         </div>
-                        {tx && (
-                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: baseRef })}>
-                            <Info className="w-3 h-3 text-primary" />
-                          </Button>
-                        )}
-                      </div>
-                      {l.observaciones && (
-                        <div className="text-[10px] text-orange-600 font-bold italic mt-0.5 truncate max-w-[150px] cursor-pointer" title={l.observaciones} onClick={() => setObsModal({ open: true, observations: l.observaciones || "", reference: l.transaction_ref })} >
-                          {l.observaciones}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className={`text-xs font-bold ${isReversion ? "text-muted-foreground line-through" : ""}`}>{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{l.product_cod}</div>
-                    </TableCell>
-                    <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="text-xs font-bold text-muted-foreground">
-                        {formatCurrencyCents(basePrice)}
+                        {tx && <Info className="w-3 h-3 text-muted-foreground/50" />}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="text-xs font-bold">{l.product_name}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">{l.product_cod}</div>
+                    </TableCell>
+                    <TableCell className="text-center font-bold text-xs">{l.cantidad} {l.product_um}</TableCell>
                     <TableCell className="text-right">
-                        {propina > 0 ? (
-                            <div className="text-xs font-black text-green-600">
-                                +{formatCurrencyCents(propina)}
+                        <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 text-[10px] font-black h-5">
+                                    <CreditCard className="w-3 h-3 mr-1" />
+                                    {formatCurrencyCents(l.transfer_amount_cents)}T
+                                </Badge>
+                                {l.cash_amount_cents > 0 && (
+                                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-black h-5">
+                                        <Banknote className="w-3 h-3 mr-1" />
+                                        {formatCurrencyCents(l.cash_amount_cents)}E
+                                    </Badge>
+                                )}
                             </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
+                        </div>
                     </TableCell>
                     <TableCell className="text-right">
-                        {descuento > 0 ? (
-                            <div className="text-xs font-black text-red-600">
-                                -{formatCurrencyCents(descuento)}
-                            </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <div className="font-black text-xs text-primary">{formatCurrencyCents(l.importe_linea_cents)}</div>
+                        <div className="font-black text-xs text-primary">{formatCurrencyCents(l.total_amount_cents)}</div>
                     </TableCell>
                     <TableCell>
-                        <Badge variant="outline" className={`text-xs font-black uppercase ${
-                            l.status === 'INVALID_ORPHAN' ? 'border-red-500 text-red-600 bg-red-50' :
-                            l.source_type === 'REAL_CASH_GOAL' ? 'border-purple-200 text-purple-600 bg-purple-50' :
-                            l.origen_dato === 'AUTO_MATCH' ? 'border-green-200 text-green-600' :
-                            l.origen_dato === 'CASH_FILLER' ? 'border-orange-200 text-orange-600' :
+                        <Badge variant="outline" className={`text-[10px] font-black uppercase ${
+                            l.payment_status === 'MATCHED' ? 'border-green-200 text-green-600 bg-green-50' :
+                            l.payment_status === 'OVERPAYMENT' ? 'border-orange-200 text-orange-600 bg-orange-50' :
                             'border-blue-200 text-blue-600'
                         }`}>
-                            {l.status === 'INVALID_ORPHAN' ? 'HUÉRFANO' : (l.source_type === 'REAL_CASH_GOAL' ? 'PLANIFICACIÓN' : l.origen_dato)}
+                            {l.payment_status}
                         </Badge>
-                        {isReversion && (
-                            <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px] animate-none">REVERTIDO</Badge>
-                        )}
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={!canEditDelete}
-                                onClick={() => {
-                                    setEditingLine(l);
-                                    setEditAmount(l.importe_linea_cents);
-                                    setEditDate(l.fecha_operacion);
-                                }}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                                setEditingLine(l);
+                                setEditTransfer(l.transfer_amount_cents);
+                                setEditCash(l.cash_amount_cents);
+                                setEditDate(l.fecha_operacion);
+                            }}>
                                 <Edit2 className="w-3 h-3" />
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                disabled={!canEditDelete}
-                                onClick={() => handleDeleteLine(l)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteLine(l)}>
                                 <Trash2 className="w-3 h-3" />
                             </Button>
                         </div>
@@ -351,50 +285,55 @@ export default function TransactionBreakdown() {
         observations={obsModal.observations}
         reference={obsModal.reference}
       />
+
       <Dialog open={!!editingLine} onOpenChange={(open) => !open && setEditingLine(null)}>
         <DialogContent className="max-w-md">
             <DialogHeader>
-                <DialogTitle className="text-xl font-black uppercase text-primary">Editar Importe Real</DialogTitle>
+                <DialogTitle className="text-xl font-black uppercase text-primary">Editar Distribución de Pago</DialogTitle>
             </DialogHeader>
             <div className="py-6 space-y-4">
-                <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-muted-foreground/30">
-                    <p className="text-xs font-black uppercase text-muted-foreground mb-1">Producto / Ref</p>
-                    <p className="font-bold text-sm">{editingLine?.product_cod}</p>
-                    <p className="text-xs text-muted-foreground">{editingLine?.transaction_ref}</p>
+                <div className="p-4 bg-muted/30 rounded-2xl border border-dashed">
+                    <p className="text-xs font-black uppercase text-muted-foreground">{editingLine?.product_name}</p>
+                    <p className="font-mono text-[10px] text-muted-foreground">{editingLine?.transaction_ref}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <label className="text-xs font-black uppercase text-muted-foreground">Importe Total (Pesos)</label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            value={editAmount / 100}
-                            onChange={(e) => setEditAmount(Math.round(parseFloat(e.target.value) * 100))}
-                            className="h-12 text-lg font-black"
-                        />
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground">Transferencia (T)</label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={editTransfer / 100}
+                                onChange={(e) => setEditTransfer(Math.round(parseFloat(e.target.value) * 100))}
+                                className="font-black"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground">Efectivo (E)</label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={editCash / 100}
+                                onChange={(e) => setEditCash(Math.round(parseFloat(e.target.value) * 100))}
+                                className="font-black"
+                            />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-black uppercase text-muted-foreground">Fecha Operación</label>
-                        <Input
-                            type="date"
-                            value={editDate}
-                            onChange={(e) => setEditDate(e.target.value)}
-                            className="h-12 font-bold"
-                        />
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground">Fecha Operación</label>
+                        <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="font-bold" />
                     </div>
                 </div>
 
-                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-xs text-muted-foreground italic">
-                        El precio base es {formatCurrencyCents(productMap.get(editingLine?.product_cod || "")?.precio_cents || editingLine?.precio_unitario_cents || 0)}.
-                        Cualquier diferencia se guardará como Propina o Descuento.
-                    </p>
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase">Total Calculado:</span>
+                    <span className="text-lg font-black text-primary">{formatCurrencyCents(editTransfer + editCash)}</span>
                 </div>
             </div>
-            <DialogFooter className="gap-2">
+            <DialogFooter>
                 <Button variant="ghost" onClick={() => setEditingLine(null)} className="font-bold uppercase text-xs">Cancelar</Button>
-                <Button onClick={handleSaveEdit} className="neu-btn-primary font-black uppercase text-xs">Guardar Cambios</Button>
+                <Button onClick={handleSaveEdit} className="font-black uppercase text-xs">Guardar</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>

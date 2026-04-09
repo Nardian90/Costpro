@@ -164,23 +164,37 @@ export interface ReconciliationLine {
   id: string;
   transaction_ref: string;     // FK -> BankTransaction.referencia_origen
   fecha_operacion: string;
-  ingreso_banco_cents: number;
-  venta_real_calculada_cents: number;
-  comision_banco_cents: number;
+
+  // Financial fields (Composite Model)
+  transfer_amount_cents: number; // monto cubierto por transferencia
+  cash_amount_cents: number;     // monto cubierto por efectivo
+  total_amount_cents: number;    // cantidad * precio_unitario
+
+  // Status
+  status: 'VALID' | 'INVALID_ORPHAN';
+  payment_status: 'MATCHED' | 'PARTIAL' | 'OVERPAYMENT';
+
+  // Operational (SC-3-01)
   product_cod: string;
+  product_name: string;
   product_um: string;
   cantidad: number;
-  precio_unitario_cents: number; // En Pesos
-  importe_linea_cents: number;  // En Pesos
-  cuadre_cents: number;         // En Pesos
-  clasificacion: 'Transferencia' | 'Efectivo' | 'QR';
-  origen_dato: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER';
+  precio_unitario_cents: number;
+
+  // Origin & Traceability
+  origen_dato: 'AUTO_MATCH' | 'MANUAL_USER';
   parent_transaction_id?: string;
   source_type?: 'BANK_TRANSFER' | 'REAL_CASH_GOAL';
-  status?: 'VALID' | 'INVALID_ORPHAN';
-  observaciones?: string;      // Notas de trazabilidad (ej: Pago Mixto)
-  reconciliation_hash: string; // hash(transaction_ref + detalle) -> idempotencia
+  observaciones?: string;
+  reconciliation_hash: string;
   created_at: string;
+
+  // Legacy compatibility fields (deprecated but maintained for reports if needed)
+  ingreso_banco_cents?: number;
+  venta_real_calculada_cents?: number;
+  comision_banco_cents?: number;
+  importe_linea_cents?: number;
+  cuadre_cents?: number;
 }
 
 export interface DailyIPVReport {
@@ -445,7 +459,63 @@ export class IPVDatabase extends Dexie {
       reconciliation_lines: "&id, transaction_ref, reconciliation_hash, fecha_operacion, product_cod, clasificacion, origen_dato, parent_transaction_id, source_type, status"
     });
 
+    this.version(30).stores({
+      reconciliation_lines: "&id, transaction_ref, reconciliation_hash, fecha_operacion, product_cod, origen_dato, parent_transaction_id, source_type, status, payment_status"
+    }).upgrade(async tx => {
+      const allLines = await tx.table('reconciliation_lines').toArray();
+      const legacyCashFillerLines = allLines.filter(l => l.origen_dato === 'CASH_FILLER' || l.product_cod === 'CASH');
+      const standardLines = allLines.filter(l => l.origen_dato !== 'CASH_FILLER' && l.product_cod !== 'CASH');
 
+      const products = await tx.table('products').toArray();
+      const productMap = new Map(products.map(p => [p.cod, p]));
+
+      const groups = new Map<string, any[]>();
+      for (const line of standardLines) {
+        const key = `${line.parent_transaction_id || line.transaction_ref}-${line.product_cod}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(line);
+      }
+
+      const migratedLines: ReconciliationLine[] = [];
+
+      for (const [key, lines] of groups.entries()) {
+        const first = lines[0];
+        const txRef = first.parent_transaction_id || first.transaction_ref;
+
+        // Sum transfer from standard lines (older model might have split them)
+        const transfer = lines.reduce((sum, l) => sum + (l.clasificacion === 'Transferencia' || l.clasificacion === 'QR' ? l.importe_linea_cents : 0), 0);
+
+        // Find associated cash
+        const associatedCash = legacyCashFillerLines
+          .filter(l => (l.parent_transaction_id === txRef || l.transaction_ref === txRef) &&
+                       (l.observaciones?.includes(first.product_cod) || l.product_cod === first.product_cod))
+          .reduce((sum, l) => sum + l.importe_linea_cents, 0);
+
+        const total = transfer + associatedCash;
+
+        const migrated: ReconciliationLine = {
+          ...first,
+          transfer_amount_cents: transfer,
+          cash_amount_cents: associatedCash,
+          total_amount_cents: total,
+          product_name: productMap.get(first.product_cod)?.descripcion || first.product_cod,
+          status: first.status || 'VALID',
+          payment_status: total > 0 ? 'MATCHED' : 'PARTIAL', // Rough heuristic for migration
+          origen_dato: first.origen_dato === 'CASH_FILLER' ? 'AUTO_MATCH' : first.origen_dato
+        };
+
+        // Remove legacy field
+        delete (migrated as any).clasificacion;
+
+        migratedLines.push(migrated);
+      }
+
+      // Handle orphaned cash fillers (those not associated with a product) - should be converted to product if possible or dropped if purely artificial
+      // But the rules say: "CASH no existe como entidad". So we only keep those linked to products.
+
+      await tx.table('reconciliation_lines').clear();
+      await tx.table('reconciliation_lines').bulkAdd(migratedLines);
+    });
   }
 }
 

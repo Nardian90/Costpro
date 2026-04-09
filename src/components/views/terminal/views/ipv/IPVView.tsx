@@ -80,9 +80,9 @@ export default function IPVView() {
     const inProcess = transactions?.filter(t => t.estado_conciliacion === 'PARCIAL').length || 0;
     const pending = transactions?.filter(t => t.estado_conciliacion === 'PENDIENTE').length || 0;
 
-    const totalSales = reconciliationLines?.reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
-    const totalEfectivo = reconciliationLines?.filter(l => l.clasificacion === 'Efectivo').reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
-    const totalTransferencias = reconciliationLines?.filter(l => l.clasificacion === 'Transferencia' || l.clasificacion === 'QR').reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
+    const totalSales = reconciliationLines?.reduce((sum, l) => sum + l.total_amount_cents, 0) || 0;
+    const totalEfectivo = reconciliationLines?.reduce((sum, l) => sum + l.cash_amount_cents, 0) || 0;
+    const totalTransferencias = reconciliationLines?.reduce((sum, l) => sum + l.transfer_amount_cents, 0) || 0;
 
     const negativeStock = products?.filter(p => (p.stock_inicial_manual || 0) < 0).length || 0;
 
@@ -102,14 +102,12 @@ export default function IPVView() {
   const txTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     reconciliationLines?.forEach(l => {
-        const baseRef = l.transaction_ref.split("_EFECTIVO")[0];
-        totals[baseRef] = (totals[baseRef] || 0) + l.importe_linea_cents;
+        totals[l.transaction_ref] = (totals[l.transaction_ref] || 0) + l.transfer_amount_cents;
     });
     return totals;
   }, [reconciliationLines]);
 
   const handleRunMatching = useCallback(async () => {
-    console.log('handleRunMatching triggered. Products length:', products?.length);
     if (!products || products.length === 0) {
         toast.error('No hay catálogo de productos. Cargue primero.');
         return;
@@ -128,13 +126,11 @@ export default function IPVView() {
             ? rules
             : DEFAULT_MATCHING_RULES;
 
-        // Obtener el mapa de stock actual desde el catálogo
         const stockMap = new Map<string, number>();
         products.forEach(p => {
             stockMap.set(p.cod, p.stock_inicial_manual || 0);
         });
 
-        // Crear transacciones con estado de reconciliación actual
         const txsToProcess = (transactions || [])
             .filter(t => t.estado_conciliacion === 'PENDIENTE' || t.estado_conciliacion === 'PARCIAL')
             .map(t => ({
@@ -151,7 +147,6 @@ export default function IPVView() {
         setMatchMessage(`Procesando ${txsToProcess.length} transacciones...`);
         setMatchProgress(15);
 
-        // Usar Web Worker para no bloquear la UI
         const worker = new Worker(
             new URL('@/lib/ipv/matching.worker.ts', import.meta.url),
             { type: 'module' }
@@ -164,7 +159,6 @@ export default function IPVView() {
                 setMatchProgress(Math.min(90, 15 + (percentage * 0.75)));
             }
             else if (type === 'PARTIAL_RESULTS') {
-                // ✅ PROCESAR PARCIALMENTE MIENTRAS EL WORKER CONTINÚA
                 try {
                     await db.transaction('rw',
                         db.reconciliation_lines,
@@ -195,7 +189,6 @@ export default function IPVView() {
                 setMatchProgress(95);
 
                 try {
-                    // ✅ USAR SINGLE DEXIE TRANSACTION PARA ATOMICITY EN LA ACTUALIZACIÓN FINAL
                     await db.transaction('rw',
                         db.bank_statements,
                         db.matching_logs,
@@ -204,11 +197,10 @@ export default function IPVView() {
                             const logsToAdd: MatchingLog[] = [];
 
                             for (const result of results) {
-                                // 1. Preparar actualización de transacción
                                 updates.push({
                                     ref: result.transactionId,
                                     status_data: {
-                                        estado_conciliacion: result.status,
+                                        estado_conciliacion: result.status === 'OVERPAYMENT' ? 'COMPLETO' : result.status,
                                         applied_rules: result.appliedRules,
                                         matching_confidence: result.matchingConfidence,
                                         matching_trace: result.trace,
@@ -216,18 +208,17 @@ export default function IPVView() {
                                     }
                                 });
 
-                                // 2. Recolectar logs de matching
                                 logsToAdd.push({
                                     id: result.transactionId + '-log',
                                     transaction_ref: result.transactionId,
                                     fecha_ejecucion: new Date().toISOString(),
-                                    resultado_estado: result.status,
+                                    resultado_estado: result.status === 'OVERPAYMENT' ? 'COMPLETO' : result.status,
                                     trace: result.trace,
                                     applied_rules: result.appliedRules,
                                     matching_confidence: result.matchingConfidence,
                                     fail_reason: result.failReason,
                                     reconciliation_lines_count: result.lines.length,
-                                    engine_version: "2.1.0",
+                                    engine_version: "3.0.0",
                                     reglas_activas: rulesActive?.map(r => r.tipo) || [],
                                     created_at: new Date().toISOString()
                                 });
@@ -247,8 +238,8 @@ export default function IPVView() {
 
                     setMatchProgress(98);
 
-                    const completedCount = results.filter((r: any) => r.status === 'COMPLETO').length;
-                    const partialCount = results.filter((r: any) => r.status === 'PARCIAL').length;
+                    const completedCount = results.filter((r: any) => r.status === 'COMPLETO' || r.status === 'OVERPAYMENT').length;
+                    const partialCount = results.filter((r: any) => r.status === 'PARTIAL').length;
                     const pendingCount = results.filter((r: any) => r.status === 'PENDIENTE').length;
 
                     toast.success(
@@ -262,7 +253,6 @@ export default function IPVView() {
 
                 worker.terminate();
                 setMatchProgress(100);
-                // Trigger explícito de refresh (por si acaso)
                 setTimeout(() => {
                     setIsMatching(false);
                 }, 500);
@@ -282,7 +272,6 @@ export default function IPVView() {
             setIsMatching(false);
         };
 
-        // Enviar trabajo al worker
         worker.postMessage({
             type: 'RECONCILE_BATCH',
             transactions: txsToProcess,
@@ -300,7 +289,6 @@ export default function IPVView() {
 
   const handleForceMatch = useCallback(async (tx: BankTransaction) => {
     try {
-        // Encontrar un producto razonable para el force match o usar uno por defecto
         const prod = products?.[0];
         if (!prod) {
             toast.error('No hay productos para asociar');
@@ -310,17 +298,18 @@ export default function IPVView() {
         const line: ReconciliationLine = {
             id: crypto.randomUUID(),
             transaction_ref: tx.referencia_origen,
+            parent_transaction_id: tx.referencia_origen,
             fecha_operacion: tx.fecha,
-            ingreso_banco_cents: tx.importe_cents,
-            venta_real_calculada_cents: prod.precio_cents,
-            comision_banco_cents: 0,
+            transfer_amount_cents: tx.importe_cents,
+            cash_amount_cents: 0,
+            total_amount_cents: prod.precio_cents,
+            status: 'VALID',
+            payment_status: 'MATCHED',
             product_cod: prod.cod,
+            product_name: prod.descripcion,
             product_um: prod.um,
             cantidad: 1,
             precio_unitario_cents: prod.precio_cents,
-            importe_linea_cents: prod.precio_cents,
-            cuadre_cents: 0,
-            clasificacion: 'Transferencia',
             origen_dato: 'MANUAL_USER',
             reconciliation_hash: `${tx.referencia_origen}-${prod.cod}`,
             created_at: new Date().toISOString()
@@ -341,7 +330,6 @@ export default function IPVView() {
 
   const handleImportBackup = useCallback(async (file: File) => {
     try {
-        // Simple logic for restore
         toast.success('Backup restaurado con éxito');
     } catch (e) {
         toast.error('Error al restaurar backup');
@@ -392,26 +380,6 @@ export default function IPVView() {
                 {errorCount ?? 0}
             </Badge>
         ) : null,
-        render: (
-            <div className="flex items-center w-full">
-                <Button
-                    variant="ghost"
-                    className={cn(
-                        "w-full justify-start gap-2 h-10 px-3 transition-all",
-                        activeTab === 'errors' ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted"
-                    )}
-                    onClick={() => setActiveTab('errors')}
-                >
-                    <AlertCircle className="w-4 h-4" />
-                    Errores
-                    {(errorCount ?? 0) > 0 && (
-                        <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] flex items-center justify-center rounded-full ring-2 ring-primary/50 bg-primary/10">
-                            {errorCount ?? 0}
-                        </Badge>
-                    )}
-                </Button>
-            </div>
-        )
     },
     { id: 'mapping-rules', label: 'Mapeo', icon: ListFilter, onClick: () => setActiveTab('mapping-rules'), active: activeTab === 'mapping-rules', group: 'advanced' },
     { id: 'mvt', label: 'Exportación', icon: FileText, onClick: () => setActiveTab('mvt'), active: activeTab === 'mvt', group: 'advanced' },
@@ -419,7 +387,6 @@ export default function IPVView() {
     { id: 'customers', label: 'Clientes', icon: Users, onClick: () => setActiveTab('customers'), active: activeTab === 'customers', group: 'advanced' },
   ], [activeTab, errorCount]);
 
-  // Shortcut Bar
   const shortcuts = useMemo(() => [
     { id: 'dash', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics') },
     { id: "extracto", label: "Extracto", icon: FileText, onClick: () => setActiveTab("ingestion") },
@@ -484,7 +451,6 @@ export default function IPVView() {
       </div>
 
       <div className="relative w-full overflow-hidden">
-        {/* Main Content Area */}
         <div className="w-full space-y-6">
           {(activeTab === 'dashboard' || activeTab === 'analytics') && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -496,25 +462,12 @@ export default function IPVView() {
                         if (kpi) setKpiFilter(kpi as any);
                         if (stock) {
                             localStorage.setItem('catalog_stockFilter', stock);
-                            // If we are already in catalog, we might need to trigger a refresh or use a better state management
-                            // But for now, navigation to the tab will trigger a mount or useEffect in CatalogTable
                         }
                     }}
                 />
             </div>
           )}
 
-          {activeTab === 'control' && (
-            <div className="m-0 animate-in fade-in duration-500">
-                <IPVControlPanel
-                onSelect={(id) => setActiveTab(id)}
-                onExportBackup={() => exportFullBackup(db)}
-                onImportBackup={handleImportBackup}
-                hasTransactions={!!transactions && transactions.length > 0}
-                hasProducts={!!products && products.length > 0}
-                />
-            </div>
-          )}
           {activeTab === 'transactions' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <TransactionTable
@@ -615,14 +568,15 @@ export default function IPVView() {
             </div>
           )}
 
-
           {activeTab === 'matching-history' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <Suspense fallback={<div className="h-[400px] flex items-center justify-center">Cargando historial...</div>}>
                     <MatchingHistoryView />
                 </Suspense>
             </div>
-          )}{activeTab === 'audit' && (
+          )}
+
+          {activeTab === 'audit' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <MatchingAuditView />
             </div>

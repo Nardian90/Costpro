@@ -27,12 +27,11 @@ import {
   Workflow,
   AlertTriangle,
   Calendar,
-  Save,
-  ChevronLeft,
-  ChevronRight
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { formatCurrencyCents } from '@/lib/utils';
 
 interface MatchingSimulationProps {
   products: Product[];
@@ -42,7 +41,6 @@ interface MatchingSimulationProps {
 export function MatchingSimulation({ products, rules }: MatchingSimulationProps) {
   const { simulatedAmount: target, setSimulatedAmount: setTarget } = useSimulationConfig();
 
-  // Determinamos el último mes con transacciones para el valor por defecto
   const lastTxDate = useLiveQuery(() =>
     db.bank_statements.orderBy('fecha').last().then(tx => tx?.fecha || new Date().toISOString().slice(0, 10))
   );
@@ -62,7 +60,6 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
   const [isSimulating, setIsSimulating] = useState(false);
   const [result, setResult] = useState<MatchingResult | null>(null);
 
-  // Sincronizamos con el objetivo planeado si el usuario lo desea
   const [globalTarget, setGlobalTarget] = useState<number>(0);
   const [globalStrategy, setGlobalStrategy] = useState<"MIN_STOCK" | "MAX_VALUE">("MIN_STOCK");
 
@@ -84,7 +81,7 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
     setIsSimulating(true);
     try {
         const engine = new MatchingEngine(products, rules);
-        const res = await engine.matchSimulation(target);
+        const res = await engine.matchSimulation(target * 100);
         setResult(res);
         toast.success('Simulación completada');
     } catch (error) {
@@ -105,7 +102,6 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
     try {
         const engine = new MatchingEngine(products, rules);
 
-        // Obtenemos las fechas del mes seleccionado que tienen transacciones
         const transactions = await db.bank_statements
             .where('fecha')
             .startsWith(selectedMonth)
@@ -118,14 +114,13 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
             return;
         }
 
-        // Calcular total actual real para el mes seleccionado
         const monthLines = await db.reconciliation_lines
             .where('fecha_operacion')
             .startsWith(selectedMonth)
             .toArray();
-        const currentKpiTotal = monthLines.reduce((sum, l) => sum + (l.importe_linea_cents || 0), 0);
+        const currentKpiTotal = monthLines.reduce((sum, l) => sum + (l.total_amount_cents || l.importe_linea_cents || 0), 0);
 
-        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { strategy: globalStrategy });
+        const extraLines = await engine.distributeGlobalGoal(globalTarget * 100, currentKpiTotal, dates);
 
         if (extraLines.length > 0) {
             await db.reconciliation_lines.bulkPut(extraLines);
@@ -267,13 +262,13 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                 <Card className="p-5 bg-primary/5 border-none shadow-sm flex flex-col justify-center">
                   <p className="text-[10px] font-black text-primary uppercase mb-1 tracking-widest">Total Alcanzado</p>
                   <p className="text-3xl font-black">
-                    {result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0).toFixed(2)}
+                    {formatCurrencyCents(result.lines.reduce((sum, l) => sum + (l.total_amount_cents || l.importe_linea_cents || 0), 0))}
                   </p>
                 </Card>
                 <Card className="p-5 bg-orange-500/5 border-none shadow-sm flex flex-col justify-center">
                   <p className="text-[10px] font-black text-orange-600 uppercase mb-1 tracking-widest">Diferencia</p>
                   <p className="text-3xl font-black">
-                    {(target - result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0)).toFixed(2)}
+                    {formatCurrencyCents((target * 100) - result.lines.reduce((sum, l) => sum + (l.total_amount_cents || l.importe_linea_cents || 0), 0))}
                   </p>
                 </Card>
               </div>
@@ -328,35 +323,19 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                         </TableRow>
                     ) : result.lines.map((l, i) => {
                       const product = products.find(p => p.cod === l.product_cod);
-                      const adjustment = l.cuadre_cents || (product ? l.precio_unitario_cents - product.precio_cents : 0);
-                      const isAdjusted = Math.abs(adjustment) > 0.001;
-
+                      const totalLine = l.total_amount_cents || l.importe_linea_cents || 0;
                       return (
                         <TableRow key={i} className="hover:bg-muted/30 transition-colors">
                           <TableCell>
-                            <div className="font-bold text-xs uppercase">{product?.descripcion || l.product_cod}</div>
-                            {isAdjusted && (
-                              <Badge
-                                variant="outline"
-                                className={`text-[9px] h-4 px-1 mt-1 font-black gap-1 uppercase ${
-                                    adjustment > 0
-                                        ? 'border-green-200 text-green-600 bg-green-50'
-                                        : 'border-red-200 text-red-600 bg-red-50'
-                                }`}
-                              >
-                                <Sparkles className="w-2 h-2" />
-                                {adjustment > 0 ? `+${adjustment.toFixed(2)} Propina` : `${adjustment.toFixed(2)} Descuento`}
-                              </Badge>
-                            )}
+                            <div className="font-bold text-xs uppercase">{product?.descripcion || l.product_name || l.product_cod}</div>
                           </TableCell>
                           <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
                           <TableCell className="text-right">
-                            <span className={isAdjusted ? (adjustment > 0 ? "text-green-600 font-black" : "text-red-600 font-black") : "font-medium"}>
-                                {l.precio_unitario_cents.toFixed(2)}
+                            <span className="font-medium">
+                                {formatCurrencyCents(l.precio_unitario_cents)}
                             </span>
-                            {isAdjusted && <div className="text-[10px] line-through opacity-50">{product?.precio_cents?.toFixed(2)}</div>}
                           </TableCell>
-                          <TableCell className="text-right font-black text-xs">{l.importe_linea_cents.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-black text-xs">{formatCurrencyCents(totalLine)}</TableCell>
                         </TableRow>
                       );
                     })}

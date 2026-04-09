@@ -1,4 +1,4 @@
-import { BankTransaction, ReconciliationLine, Product } from '@/lib/dexie';
+import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
 import { parseObservations } from './parser';
 
 export interface IPVMetrics {
@@ -43,17 +43,11 @@ export function calculateIPVMetrics(
   let totalTaxes = 0;
   let totalCommissions = 0;
 
-  // Calculate from reconciliation lines (Breakdown)
   reconciliationLines.forEach(line => {
-    const amount = Number(line.importe_linea_cents || 0) / 100;
-    if (line.clasificacion === 'Efectivo') {
-      cashSales += amount;
-    } else {
-      transferSales += amount;
-    }
+    cashSales += (line.cash_amount_cents || 0) / 100;
+    transferSales += (line.transfer_amount_cents || 0) / 100;
   });
 
-  // Calculate from bank (Reality)
   bankTransactions.forEach(tx => {
     const amount = Number(tx.importe_cents || 0);
     if (tx.tipo === 'Cr') {
@@ -67,9 +61,7 @@ export function calculateIPVMetrics(
   });
 
   const totalSales = cashSales + transferSales;
-
-  // Health %: How well bank credits match transfer sales
-  const expectedCredits = transferSales;
+  const expectedCredits = transferSales * 100;
   const healthPercent = expectedCredits === 0
     ? 100
     : Math.min(100, Math.max(0, (bankCredits / expectedCredits) * 100));
@@ -92,7 +84,6 @@ export function getDailySalesHistory(
 ): DailySales[] {
   const history: Record<string, DailySales> = {};
 
-  // Group bank data by date
   bankTransactions.forEach(tx => {
     const date = tx.fecha || 'Sin fecha';
     if (!history[date]) {
@@ -104,18 +95,13 @@ export function getDailySalesHistory(
     }
   });
 
-  // Group reconciliation by date
   reconciliationLines.forEach(line => {
     const date = line.fecha_operacion || 'Sin fecha';
     if (!history[date]) {
       history[date] = { date, cash: 0, transfer: 0, debits: 0 };
     }
-    const amount = Number(line.importe_linea_cents || 0) / 100;
-    if (line.clasificacion === 'Efectivo') {
-      history[date].cash += amount;
-    } else {
-      history[date].transfer += amount;
-    }
+    history[date].cash += (line.cash_amount_cents || 0) / 100;
+    history[date].transfer += (line.transfer_amount_cents || 0) / 100;
   });
 
   return Object.values(history).sort((a, b) => a.date.localeCompare(b.date));
@@ -125,16 +111,12 @@ export function getTopProducts(reconciliationLines: ReconciliationLine[]): Produ
   const productStats: Record<string, { cash: number; transfer: number }> = {};
 
   reconciliationLines.forEach(line => {
-    const name = line.product_cod; // Use code as key
+    const name = line.product_name || line.product_cod;
     if (!productStats[name]) {
       productStats[name] = { cash: 0, transfer: 0 };
     }
-    const amount = Number(line.importe_linea_cents || 0) / 100;
-    if (line.clasificacion === 'Efectivo') {
-      productStats[name].cash += amount;
-    } else {
-      productStats[name].transfer += amount;
-    }
+    productStats[name].cash += (line.cash_amount_cents || 0) / 100;
+    productStats[name].transfer += (line.transfer_amount_cents || 0) / 100;
   });
 
   return Object.entries(productStats)
