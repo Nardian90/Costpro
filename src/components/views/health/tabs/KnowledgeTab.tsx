@@ -13,10 +13,10 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const sections = [
-    { id: 'workflows', name: 'Workflows Detectados', icon: GitPullRequest, data: data.workflows || [] },
-    { id: 'views', name: 'Flujos de Vista (UI)', icon: Layout, data: data.views || [] },
-    { id: 'components', name: 'Reglas de Negocio', icon: Database, data: data.components || [] },
-    { id: 'graph', name: 'Grafo Semántico', icon: Network, data: data.knowledgeGraph || { nodes: [], links: [] } },
+    { id: 'workflows', name: 'Procesos de Negocio', icon: GitPullRequest, data: data.workflows || [] },
+    { id: 'views', name: 'Vistas e Interfaces', icon: Layout, data: data.views || [] },
+    { id: 'components', name: 'Reglas y Servicios', icon: Database, data: data.components || [] },
+    { id: 'graph', name: 'Mapa de Conocimiento', icon: Network, data: data.knowledgeGraph || { nodes: [], links: [] } },
   ];
 
   const currentSection = sections.find(s => s.id === activeTab);
@@ -61,7 +61,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
              <div className="relative mb-6">
                 <input
                   type="text"
-                  placeholder="FILTRAR ARTEFACTOS..."
+                  placeholder="FILTRAR ELEMENTOS..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-background border border-border/50 rounded-2xl px-5 py-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
@@ -70,7 +70,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
              </div>
              <div className="mt-auto p-4 rounded-2xl bg-background/50 border border-border/50">
                 <p className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest italic">
-                  Utiliza palabras clave para filtrar flujos, vistas o reglas de negocio indexadas por el sistema de IA.
+                  Utiliza palabras clave para filtrar procesos, vistas o reglas de negocio indexadas por el sistema.
                 </p>
              </div>
           </div>
@@ -111,11 +111,11 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                                 <h4 className="text-xs font-black uppercase tracking-tight">{item.name || item.title || item.feature || item.id}</h4>
                              </div>
                              <div className="px-3 py-1 rounded-lg bg-muted/30 border border-border/50 text-[8px] font-black uppercase tracking-widest text-muted-foreground italic">
-                                {item.domain || item.layer || 'SYSTEM'}
+                                {item.domain || item.layer || 'SISTEMA'}
                              </div>
                           </div>
                           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed opacity-70 group-hover:opacity-100 transition-opacity">
-                             {item.description || item.descripcion_usuario || item.content || 'Sin descripción detallada disponible en el artefacto de conocimiento.'}
+                             {item.description || item.descripcion_usuario || item.content || 'Sin descripción detallada disponible.'}
                           </p>
                           {item.triggers && (
                              <div className="mt-4 flex flex-wrap gap-2">

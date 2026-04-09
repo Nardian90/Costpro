@@ -16,13 +16,27 @@ const statusMap = {
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, className }) => {
+  const translateLabel = (lbl: string) => {
+    const map: Record<string, string> = {
+      'success': 'Éxito',
+      'warning': 'Advertencia',
+      'destructive': 'Crítico',
+      'quarantine': 'Cuarentena',
+      'processing': 'Procesando',
+      'Completado': 'Completado',
+      'Crítico': 'Crítico',
+      'Advertencia': 'Advertencia'
+    };
+    return map[lbl] || lbl;
+  };
+
   return (
     <span className={cn(
       "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
       statusMap[status],
       className
     )}>
-      {label}
+      {translateLabel(label)}
     </span>
   );
 };

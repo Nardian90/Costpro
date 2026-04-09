@@ -1,6 +1,6 @@
 import React from 'react';
 import { HealthData } from '../hooks/useHealthData';
-import { RefreshCw, Play, Settings, ShieldCheck, Zap, Activity, Cpu, Layers } from 'lucide-react';
+import { Cpu, ShieldCheck, Zap, Layers, Settings, Activity, RefreshCw, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PipelineTabProps {
@@ -10,54 +10,57 @@ interface PipelineTabProps {
 export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
   const state = data.pipelineState || {};
   const currentPhase = state.currentPhase || 1;
-  const progress = (currentPhase / 18) * 100;
+  const totalPhases = 18;
+  const progress = (currentPhase / totalPhases) * 100;
 
   const phases = [
-    "Descubrimiento de Activos",
-    "Mapeo de Dependencias",
-    "Análisis de Acoplamiento",
-    "Inteligencia Git",
-    "Cálculo de Métricas",
-    "Validación de Salud",
-    "Detección de Workflows",
-    "Indexación RAG",
-    "Generación de Documentación",
-    "Auditoría de Integridad",
-    "Traducción de Contexto",
-    "Validación ISO",
-    "Consolidación de Conocimiento",
-    "Optimización de Consultas",
-    "Verificación de Seguridad",
-    "Pruebas E2E de Salud",
-    "Sincronización de Master Manual",
-    "Cierre de Ciclo"
+    'Inicialización de Entorno',
+    'Escaneo de Directorios',
+    'Descubrimiento de Arquitectura',
+    'Grafo de Dependencias',
+    'Métricas de Calidad',
+    'Análisis de Consistencia',
+    'Validación de Reglas',
+    'Auditoría de Integridad',
+    'Generación de Documentación',
+    'Sincronización RAG',
+    'Indexación de Conocimiento',
+    'Refactorización Sugerida',
+    'Pruebas de Regresión',
+    'Optimización de Rendimiento',
+    'Gobernanza de Cambios',
+    'Sellado de Versión',
+    'Notificación de Estado',
+    'Finalización de Ciclo'
   ];
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-           {/* Primary Pipeline Control */}
-           <div className="p-12 rounded-[48px] bg-card border border-border/50 relative overflow-hidden shadow-2xl">
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
+           {/* Main Status Display */}
+           <div className="p-10 rounded-[56px] bg-card border border-border/50 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:scale-110 transition-transform duration-1000">
+                 <Cpu className="w-80 h-80" />
+              </div>
 
               <div className="flex items-center justify-between mb-16 relative z-10">
                  <div className="flex items-center gap-6">
                     <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
-                       <RefreshCw className="w-8 h-8 text-primary animate-spin" style={{ animationDuration: '8s' }} />
+                       <RefreshCw className="w-8 h-8 text-primary animate-spin-slow" />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2 italic">Intelligence Core Pipeline</h3>
+                       <h3 className="text-xl font-black uppercase tracking-tighter italic">Pipeline de Inteligencia</h3>
                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">Engine v9.0 Autonomous Execution</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">Ejecución Autónoma Motor v9.0</span>
                           <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Live Tracking</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Seguimiento en Vivo</span>
                        </div>
                     </div>
                  </div>
                  <div className="px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 shadow-lg shadow-emerald-500/5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Scheduler Active</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Scheduler Activo</span>
                  </div>
               </div>
 
@@ -83,8 +86,8 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {[
-                       { label: 'Modo Orquestador', value: state.schedulerMode || 'NORMAL', icon: Cpu, color: 'text-primary' },
-                       { label: 'Umbral Confianza', value: `${state.confidenceThreshold || 90}%`, icon: ShieldCheck, color: 'text-emerald-500' },
+                       { label: 'Modo Orquestador', value: state.schedulerMode === 'NORMAL' ? 'ESTÁNDAR' : state.schedulerMode || 'NORMAL', icon: Cpu, color: 'text-primary' },
+                       { label: 'Umbral de Confianza', value: `${state.confidenceThreshold || 90}%`, icon: ShieldCheck, color: 'text-emerald-500' },
                        { label: 'Revisión Manual', value: `${state.repairThreshold || 80}%`, icon: AlertTriangle, color: 'text-amber-500' }
                     ].map((item, idx) => (
                        <div key={idx} className="p-8 rounded-[40px] bg-muted/30 border border-border/50 text-center space-y-3 group hover:bg-muted/50 transition-all duration-300">
@@ -104,15 +107,15 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
                        <Settings className="w-5 h-5 text-amber-500" />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Governance Specs</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Gobernanza</h4>
                  </div>
                  <div className="space-y-6">
                     <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-transparent hover:border-border/50 transition-all">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Model Version</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Versión de Modelo</span>
                        <span className="text-sm font-black tracking-tighter">v{state.pipelineVersion || '9.0.0'}</span>
                     </div>
                     <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-transparent hover:border-border/50 transition-all">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Doc Standard</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Estándar Doc.</span>
                        <span className="text-sm font-black italic">{state.documentationModel || 'ISO 26514 + Diataxis'}</span>
                     </div>
                  </div>
@@ -123,15 +126,15 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
                     <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                        <Layers className="w-5 h-5 text-blue-500" />
                     </div>
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">RAG Engine Stats</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Motor de Conocimiento</h4>
                  </div>
                  <div className="space-y-6">
                     <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-transparent hover:border-border/50 transition-all">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Batch Size</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Lote de Procesamiento</span>
                        <span className="text-sm font-black tracking-tighter">{state.rag_engine?.batch_size || 50} Unidades</span>
                     </div>
                     <div className="flex items-center justify-between p-6 rounded-3xl bg-muted/20 border border-transparent hover:border-border/50 transition-all">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Embedding Model</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Modelo de Embeddings</span>
                        <span className="text-[10px] font-black uppercase text-blue-500">{state.rag_engine?.embedding_model || 'text-embedding-3-small'}</span>
                     </div>
                  </div>
@@ -144,9 +147,9 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
            <div className="px-10 py-8 bg-muted/30 border-b border-border/50 flex items-center justify-between">
               <h4 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground italic flex items-center gap-2">
                  <Activity className="w-4 h-4" />
-                 Pipeline Phases
+                 Fases del Pipeline
               </h4>
-              <span className="text-[10px] font-black uppercase text-primary">Live</span>
+              <span className="text-[10px] font-black uppercase text-primary">Vivo</span>
            </div>
            <div className="flex-1 overflow-auto p-8 space-y-4 no-scrollbar bg-background/30">
               {phases.map((phaseName, i) => {
