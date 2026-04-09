@@ -17,7 +17,7 @@ const template: any = {
     "destination": "servicios",
     "production_level": 1,
     "capacity_utilization": 100,
-    "sale_price": "=ref('14')",
+    "sale_price": "=ref('14.1')",
     "client": ""
   } as any,
   "sections": [
@@ -407,7 +407,7 @@ const template: any = {
       "label": "Sección 12: TOTAL COSTOS Y GASTOS",
       "rows": [
         {
-          "id": "12",
+          "id": "12.1",
           "label": "TOTAL COSTOS Y GASTOS (5+11)",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(ref('5'), ref('11'))",
@@ -421,25 +421,25 @@ const template: any = {
       "label": "Sección 13: Utilidad",
       "rows": [
         {
-          "id": "13",
+          "id": "13.1",
           "label": "Utilidad",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12') * 0.3",
+          "totalFormula": "ref('12.1') * 0.3",
           "baseRef": "12",
-          "vhFormula": "vh('12') * 0.3"
-        },
-        {
-          "id": "13.1",
-          "label": "Precio antes de Impuesto",
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12') + ref('13')",
-          "vhFormula": "vh('12') + vh('13')"
+          "vhFormula": "vh('12.1') * 0.3"
         },
         {
           "id": "13.2",
-          "label": "Imp s/Ventas y Serv",
+          "label": "Precio antes de Impuesto",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1')/0.9*0.1",
+          "totalFormula": "ref('12.1') + ref('13.1')",
+          "vhFormula": "vh('12.1') + vh('13.1')"
+        },
+        {
+          "id": "13.3",
+          "label": "Imp s/Ventas y Serv (13.3)",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('13.2')/0.9*0.1",
           "formula": "ref('13.2')/0.9*0.1",
           "vhFormula": "vh('13.2')/0.9*0.1"
         }
@@ -450,12 +450,12 @@ const template: any = {
       "label": "Sección 14: Precio o Tarifa Final",
       "rows": [
         {
-          "id": "14",
+          "id": "14.1",
           "label": "Precio o Tarifa Final",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1') + ref('13.2')",
-          "formula": "ref('13.2') + ref('13.3')",
-          "vhFormula": "vh('13.2') + vh('13.3')"
+          "totalFormula": "ref('13.2') + ref('13.3')",
+          "formula": "ref('13.3') + ref('13.3')",
+          "vhFormula": "vh('13.3') + vh('13.3')"
         }
       ]
     },
@@ -464,11 +464,11 @@ const template: any = {
       "label": "Sección 15: Costo y gasto UNITARIO",
       "rows": [
         {
-          "id": "15",
+          "id": "15.1",
           "label": "Costo y gasto UNITARIO",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12') / quantity",
-          "formula": "ref('12') / cantidad"
+          "totalFormula": "ref('12.1') / quantity",
+          "formula": "ref('12.1') / cantidad"
         }
       ]
     },
@@ -477,11 +477,11 @@ const template: any = {
       "label": "Sección 16: VENTA UNITARIA",
       "rows": [
         {
-          "id": "16",
+          "id": "16.1",
           "label": "VENTA UNITARIA",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('14') / quantity",
-          "formula": "=ref('14') / cantidad"
+          "totalFormula": "ref('14.1') / quantity",
+          "formula": "=ref('14.1') / cantidad"
         }
       ]
     }
