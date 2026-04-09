@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HealthData } from '../hooks/useHealthData';
 import { MarkdownViewer } from '../components/MarkdownViewer';
-import { Book, FileText, Layout, Info, Search, ChevronRight } from 'lucide-react';
+import { Book, FileText, Layout, Info, Search, ChevronRight, Hash, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DocumentationTabProps {
@@ -10,74 +10,105 @@ interface DocumentationTabProps {
 
 export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [docContent, setDocContent] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
   const docs = [
     { id: 'user_help', title: 'Ayuda de Usuario', type: 'USER', icon: Book, content: JSON.stringify(data.userHelp, null, 2) },
-    { id: 'iso_manual', title: 'Manual ISO/IEC 26514', type: 'REF', icon: FileText, content: '# ISO Manual - Work in Progress\nCargando contenido dinámico...' },
-    { id: 'diataxis', title: 'Estructura Diátaxis', type: 'DEV', icon: Layout, content: '# Estructura Diátaxis\nTutoriales, Guías, Referencia y Explicaciones.' },
     { id: 'integrity', title: 'Reporte de Integridad', type: 'SYS', icon: Info, content: data.integrityReport || '# Sin Reporte de Integridad' },
+    ...(data.docsList || []).map(docName => ({
+       id: docName,
+       title: docName.replace('.md', '').replace(/_/g, ' ').toUpperCase(),
+       type: 'KNOWLEDGE',
+       icon: FileText,
+       content: `Cargando ${docName}...`
+    }))
   ];
 
   const currentDoc = docs.find(d => d.id === selectedDoc) || docs[0];
 
+  useEffect(() => {
+    if (selectedDoc && selectedDoc.endsWith('.md')) {
+      setLoading(true);
+      fetch(`/knowledge/docs/${selectedDoc}`)
+        .then(res => res.text())
+        .then(text => {
+          setDocContent(text);
+          setLoading(false);
+        })
+        .catch(() => {
+          setDocContent('# Error al cargar el documento');
+          setLoading(false);
+        });
+    } else {
+      setDocContent(currentDoc.content);
+    }
+  }, [selectedDoc, currentDoc]);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[750px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[800px]">
         {/* Sidebar */}
-        <div className="lg:col-span-3 space-y-4">
-           <div className="p-6 rounded-[32px] bg-primary/5 border border-primary/10">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-6">Índice Global</h4>
-              <div className="space-y-2">
+        <div className="lg:col-span-3 space-y-4 flex flex-col">
+           <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm flex-1 overflow-hidden flex flex-col">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-8 flex items-center gap-2">
+                 <Hash className="w-3 h-3" />
+                 Índice de Inteligencia
+              </h4>
+
+              <div className="flex-1 overflow-auto no-scrollbar space-y-2 pr-2">
                  {docs.map((doc) => (
                     <button
                       key={doc.id}
                       onClick={() => setSelectedDoc(doc.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                        selectedDoc === doc.id
-                          ? "bg-background text-primary shadow-lg border border-primary/20"
-                          : "text-muted-foreground hover:bg-muted/50"
+                        "w-full flex items-center justify-between px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group",
+                        selectedDoc === doc.id || (!selectedDoc && doc.id === 'user_help')
+                          ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]"
+                          : "text-muted-foreground hover:bg-muted/50 border border-transparent hover:border-border/50"
                       )}
                     >
-                      <doc.icon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{doc.title}</span>
+                      <div className="flex items-center gap-3 truncate">
+                         <doc.icon className={cn("w-4 h-4 shrink-0", selectedDoc === doc.id ? "text-white" : "text-primary/40")} />
+                         <span className="truncate">{doc.title}</span>
+                      </div>
+                      <ChevronRight className={cn("w-3 h-3 transition-transform", selectedDoc === doc.id ? "translate-x-1" : "opacity-0 group-hover:opacity-100")} />
                     </button>
                  ))}
               </div>
-           </div>
 
-           <div className="p-6 rounded-[32px] bg-muted/20 border border-border/50">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 opacity-50 italic">Categorías</h4>
-              <div className="flex flex-wrap gap-2">
-                 {['TUTORIALS', 'HOW-TO', 'REFERENCE', 'EXPLANATION'].map(cat => (
-                    <div key={cat} className="px-3 py-1.5 rounded-lg bg-background border border-border/50 text-[8px] font-black tracking-widest text-muted-foreground cursor-pointer hover:border-primary/20 transition-all uppercase">
-                       {cat}
-                    </div>
-                 ))}
+              <div className="mt-8 pt-6 border-t border-border/50">
+                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest text-center">
+                      Documentación Viva v9.0 sincronizada con el Grafo de Conocimiento.
+                    </p>
+                 </div>
               </div>
            </div>
         </div>
 
-        {/* Markdown Area */}
-        <div className="lg:col-span-9 flex flex-col p-1 rounded-[40px] bg-card border border-border/50 overflow-hidden shadow-sm">
-           <div className="px-10 py-8 border-b border-border/50 bg-muted/20">
-              <div className="flex items-center justify-between mb-2">
-                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                       <currentDoc.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h2 className="text-xl font-black uppercase tracking-tighter">{currentDoc.title}</h2>
+        {/* Content Area */}
+        <div className="lg:col-span-9 flex flex-col p-1 rounded-[40px] bg-card border border-border/50 overflow-hidden shadow-2xl bg-background/50 backdrop-blur-sm">
+           <div className="px-10 py-8 border-b border-border/50 bg-muted/20 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner border border-primary/20">
+                    <currentDoc.icon className="w-6 h-6 text-primary" />
                  </div>
-                 <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-black uppercase tracking-widest text-primary">
-                    {currentDoc.type} DOCUMENT
+                 <div>
+                    <h2 className="text-xl font-black uppercase tracking-tighter leading-none mb-1">{currentDoc.title}</h2>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Documento de Clase {currentDoc.type}</p>
                  </div>
               </div>
-              <div className="w-12 h-1 bg-primary/20 rounded-full" />
+              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-background border border-border/50 text-[9px] font-black uppercase tracking-widest hover:border-primary/50 transition-all group">
+                 <ExternalLink className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
+                 Exportar PDF
+              </button>
            </div>
 
-           <div className="flex-1 overflow-auto p-12 no-scrollbar bg-background/50">
-              <MarkdownViewer content={currentDoc.content} />
+           <div className="flex-1 overflow-auto p-12 no-scrollbar bg-background/30 selection:bg-primary/20">
+              <div className={cn("max-w-4xl mx-auto transition-opacity duration-500", loading ? "opacity-30" : "opacity-100")}>
+                 <MarkdownViewer content={docContent} />
+              </div>
            </div>
         </div>
       </div>
