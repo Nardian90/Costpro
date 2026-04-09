@@ -74,19 +74,37 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
           }
         ]
       },
+
       CASH_FILL: {
         fields: [
           {
-            key: 'daily_limit',
+            key: 'daily_cash_limit',
             label: 'Límite Diario ($)',
             type: 'number',
             min: 0,
-            max: 100000,
-            help: 'Máximo de efectivo a inyectar por día',
-            default: 500
+            max: 1000000,
+            help: 'Presupuesto total de efectivo inyectado por día',
+            default: 20000
+          },
+          {
+            key: 'max_per_tx_threshold',
+            label: 'Umbral por Transacción ($)',
+            type: 'number',
+            min: 0,
+            max: 50000,
+            help: 'Máxima inyección de efectivo permitida por transacción',
+            default: 5000
+          },
+          {
+            key: 'mode',
+            label: 'Modo Estricto',
+            type: 'boolean',
+            help: 'Si se activa (STRICT), bloquea la regla al superar el límite diario. Si se desactiva (SOFT), solo genera advertencias.',
+            default: false
           }
         ]
       },
+
       EXACT_SUM: {
         fields: [
           {
