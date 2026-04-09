@@ -91,6 +91,7 @@
     "html5-qrcode": "^2.3.8",
     "immer": "^11.1.4",
     "input-otp": "^1.4.2",
+    "js-yaml": "^4.1.1",
     "jsbarcode": "^3.12.3",
     "jsdom": "^29.0.1",
     "jspdf": "^4.0.0",
