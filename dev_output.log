@@ -1,0 +1,5 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.8 dev
+> next dev -p 3000
+
+sh: 1: next: not found
