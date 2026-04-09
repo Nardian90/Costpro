@@ -352,6 +352,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             />
           ) : (
             <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
+                {safeCalculated.metadata?.isIndirectAffected && (
+                    <div className="flex items-center px-1.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-600 animate-pulse" title="Gastos Indirectos Aplicados">
+                        <Settings2 className="w-2.5 h-2.5" />
+                    </div>
+                )}
                 {/* Validation Status Icons */}
                 <Popover>
                     <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
