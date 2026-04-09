@@ -59,9 +59,9 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     )}
                 >
                     {row.label}
-                    {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
+                    {['13', '13.1'].includes(row.id) && (calculatedValues?.['12.1']?.total ?? calculatedValues?.['12']?.total) > 0 && (
                         <span className="ml-2 text-xs font-black text-primary bg-primary/10 dark:bg-primary/20 px-1.5 py-0.5 rounded border border-primary/30">
-                            {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
+                            {(((calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) / (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total)) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
                     {row.is_percent && (
