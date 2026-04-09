@@ -42,14 +42,14 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
             </div>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                 <h1 className="text-3xl sm:text-6xl font-black uppercase tracking-tighter leading-none italic">Intelligence Hub</h1>
+                 <h1 className="text-3xl sm:text-6xl font-black uppercase tracking-tighter leading-none italic">Salud del Sistema</h1>
                  <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary tracking-widest mt-2 uppercase">v9.0.0</span>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-muted-foreground opacity-60">System Observability & Autonomous Evolution</span>
+                <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-muted-foreground opacity-60">Observabilidad y Evolución Autónoma de Arquitectura</span>
                 <div className="w-fit px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-3">
                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                   Real-time Synchronization
+                   Sincronización en Tiempo Real
                 </div>
               </div>
             </div>
@@ -57,8 +57,8 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
 
           <div className="flex items-center gap-4 sm:gap-6 w-full lg:w-auto justify-center lg:justify-end">
              <div className="hidden sm:flex flex-col items-end mr-4 opacity-40">
-                <span className="text-[9px] font-black uppercase tracking-widest">Confidence Threshold</span>
-                <span className="text-xs font-black text-primary">{(data?.pipelineState?.confidenceThreshold || 90)}% ACCURACY</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Umbral de Confianza</span>
+                <span className="text-xs font-black text-primary">{(data?.pipelineState?.confidenceThreshold || 90)}% PRECISIÓN</span>
              </div>
              <button className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-300">
                 <Search className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -72,7 +72,7 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
                className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl sm:rounded-[32px] bg-primary text-primary-foreground font-black text-[10px] sm:text-[12px] uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 flex items-center gap-3 sm:gap-5 group"
              >
                 <RefreshCw className={cn("w-4 h-4 sm:w-5 sm:h-5", loading && "animate-spin")} />
-                <span className="whitespace-nowrap">{loading ? 'SYNCING...' : 'REFRESCAR NÚCLEO'}</span>
+                <span className="whitespace-nowrap">{loading ? 'SINCRONIZANDO...' : 'REFRESCAR NÚCLEO'}</span>
              </button>
           </div>
         </div>
@@ -131,18 +131,18 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
          <div className="flex items-center gap-5 group cursor-default">
             <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
             <div>
-               <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] block leading-none mb-1 group-hover:text-primary transition-colors">Intelligence Hub v9.0.0</span>
-               <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 italic">Source of Truth: knowledge/architecture/</span>
+               <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] block leading-none mb-1 group-hover:text-primary transition-colors">Salud del Sistema v9.0.0</span>
+               <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 italic">Fuente de Verdad: knowledge/architecture/</span>
             </div>
          </div>
          <div className="flex items-center gap-6 sm:gap-12">
             <div className="flex flex-col items-end">
-               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Architectural Integrity</span>
-               <span className="text-sm font-black text-primary">High Confidence ({(data?.pipelineState?.confidenceThreshold || 90)}%)</span>
+               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Integridad Arquitectónica</span>
+               <span className="text-sm font-black text-primary">Alta Confianza ({(data?.pipelineState?.confidenceThreshold || 90)}%)</span>
             </div>
             <div className="w-[1px] h-10 bg-border/50 hidden sm:block" />
             <div className="flex flex-col items-end">
-               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">AI Orchestrator</span>
+               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Orquestador IA</span>
                <span className="text-sm font-black group hover:text-primary transition-colors cursor-default italic">JULES CostPro v9.0</span>
             </div>
          </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusBadge } from './StatusBadge';
 
 interface FileStatusTableProps {
-  files: Array<{
+  data: Array<{
     name: string;
     path: string;
     status: 'success' | 'warning' | 'destructive' | 'quarantine' | 'processing';
@@ -11,7 +11,18 @@ interface FileStatusTableProps {
   }>;
 }
 
-export const FileStatusTable: React.FC<FileStatusTableProps> = ({ files }) => {
+export const FileStatusTable: React.FC<FileStatusTableProps> = ({ data: files }) => {
+  const translateStatus = (status: string) => {
+    const map: Record<string, string> = {
+      success: 'Completado',
+      warning: 'Advertencia',
+      destructive: 'Crítico',
+      quarantine: 'Cuarentena',
+      processing: 'Procesando'
+    };
+    return map[status] || status;
+  };
+
   return (
     <div className="overflow-hidden rounded-[32px] border border-border/50 bg-card">
       <table className="w-full text-left border-collapse">
@@ -36,7 +47,7 @@ export const FileStatusTable: React.FC<FileStatusTableProps> = ({ files }) => {
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge status={file.status} label={file.status} />
+                <StatusBadge status={file.status} label={translateStatus(file.status)} />
               </td>
               <td className="px-6 py-4 text-center">
                 <div className="text-xs font-black tracking-tighter">{(file.confidence * 100).toFixed(0)}%</div>
