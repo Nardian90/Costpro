@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const readFile = (relPath: string) => {
-      const fullPath = path.join(process.cwd(), relPath);
+      const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
       if (fs.existsSync(fullPath)) {
         return fs.readFileSync(fullPath, 'utf8');
       }
@@ -30,7 +30,7 @@ export async function GET() {
       const content = readFile(relPath);
       if (!content) return null;
       try {
-        return yaml.load(content);
+        return yaml.load(content) as any;
       } catch (e) {
         console.error(`Error parsing YAML from ${relPath}:`, e);
         return null;
@@ -65,22 +65,21 @@ export async function GET() {
       components: readJson(`${KNOWLEDGE_DIR}/components.json`),
 
       // Docs Indexing
-      docsList: fs.existsSync(path.join(process.cwd(), 'knowledge/docs'))
-        ? fs.readdirSync(path.join(process.cwd(), 'knowledge/docs'))
+      docsList: fs.existsSync(path.join(/*turbopackIgnore: true*/process.cwd(), 'knowledge/docs'))
+        ? fs.readdirSync(path.join(/*turbopackIgnore: true*/process.cwd(), 'knowledge/docs'))
             .filter(f => f.endsWith('.md'))
         : [],
 
       // Real-time Health Indicators (Aggregated)
       healthSummary: {
         timestamp: new Date().toISOString(),
-        integrityScore: 0, // Calculated later in UI or here
+        integrityScore: 0,
         status: 'STABLE'
       }
     };
 
     // Basic Integrity Scoring
     if (data.metrics?.summary) {
-       // Example logic: high instability reduces score
        const avgInstability = data.metrics.summary.avg_instability || 0;
        data.healthSummary.integrityScore = Math.round((1 - avgInstability) * 100);
        if (avgInstability > 0.8) data.healthSummary.status = 'CRITICAL';
