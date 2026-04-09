@@ -7,6 +7,7 @@ interface Node extends d3.SimulationNodeDatum {
   label: string;
   type?: string;
   layer?: string;
+  fan_in?: number;
 }
 
 interface Link extends d3.SimulationLinkDatum<Node> {
@@ -49,8 +50,8 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
 
     svg.call(zoom);
 
-    const nodes = data.nodes.map(d => ({ ...d }));
-    const links = data.links.map(d => ({ ...d }));
+    const nodes: Node[] = data.nodes.map(d => ({ ...d }));
+    const links: Link[] = data.links.map(d => ({ ...d }));
 
     const simulation = d3.forceSimulation<Node>(nodes)
       .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(100))
@@ -91,7 +92,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
     // Labels for key nodes
     const labels = g.append('g')
       .selectAll('text')
-      .data(nodes.filter(n => n.fan_in && n.fan_in > 5 || n.label.length < 15))
+      .data(nodes.filter(n => (n.fan_in && n.fan_in > 5) || n.label.length < 15))
       .join('text')
       .text(d => d.label)
       .attr('font-size', '8px')
