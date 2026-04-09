@@ -301,3 +301,7 @@ export const useCostSheetStore = create<CostSheetState>()(
     }
   )
 );
+
+if (typeof window !== 'undefined') {
+  (window as any).useCostSheetStore = useCostSheetStore;
+}
