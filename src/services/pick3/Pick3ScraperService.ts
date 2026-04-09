@@ -94,6 +94,7 @@ export class Pick3ScraperService {
   private static async scrapeOfficial(): Promise<Pick3Result[]> {
     try {
       const response = await fetch('https://floridalottery.com/content/flalottery-web/us/en/games/draw-games/pick-3.draw-games.json', {
+        cache: 'no-store',
         headers: { 'User-Agent': this.USER_AGENT }
       });
       if (response.ok) {
@@ -179,9 +180,9 @@ export class Pick3ScraperService {
 
   private static parseLotteryUSA(html: string, drawTime: 'midday' | 'evening'): Pick3Result[] {
     const results: Pick3Result[] = [];
-    const cardRegex = /<li class="c-draw-card[^"]*">([\s\S]*?)<\/li>/g;
-    const dateRegex = /<time[^>]*datetime="([^"]+)"/;
-    const ballRegex = /<span class="c-ball__text">(\d)<\/span>/g;
+    const cardRegex = /<tr class="[^"]*c-draw-card[^"]*">([\s\S]*?)<\/tr>/g;
+    const dateRegex = /<span class="c-draw-card__draw-date-sub">([^<]+)<\/span>/;
+    const ballRegex = /<li class="c-ball[^>]*>(\d)<\/li>/g;
 
     let match;
     while ((match = cardRegex.exec(html)) !== null) {

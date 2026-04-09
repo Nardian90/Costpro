@@ -28,14 +28,18 @@ export class Pick3PdfService {
       // Execute the Python pipeline
       // We assume the Python environment is set up (pdfplumber, supabase installed)
       logger.info('PICK3', 'Executing Python robust parser...');
-      const { stdout, stderr } = await execAsync(`python3 ${this.PARSER_SCRIPT}`);
+
+      const auditPath = '/tmp/PICK3_PDF_AUDIT.json';
+      logger.info('PICK3', `Executing Python robust parser with URL: ${this.PDF_URL}`);
+      const { stdout, stderr } = await execAsync(`python3 ${this.PARSER_SCRIPT} "${this.PDF_URL}" "${auditPath}"`);
+
 
       if (stderr && !stderr.includes('UserWarning')) {
         logger.warn('PICK3', 'Python parser stderr output', { stderr });
       }
 
       // The Python script already handles the upsert to Supabase and saves a report
-      const reportPath = 'PICK3_PDF_AUDIT.json';
+      const reportPath = fs.existsSync('/tmp/PICK3_PDF_AUDIT.json') ? '/tmp/PICK3_PDF_AUDIT.json' : 'PICK3_PDF_AUDIT.json';
       if (fs.existsSync(reportPath)) {
         const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
         logger.info('PICK3', `Sync completed. Extracted ${report.metrics.total_detected} records.`);
