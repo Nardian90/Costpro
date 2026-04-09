@@ -5,6 +5,8 @@ export interface HealthData {
   metrics: any;
   graph: any;
   system: any;
+  manifest: any;
+  changes: any;
   reviewQueue: any;
   integrityReport: string | null;
   pipelineState: any;
@@ -14,6 +16,11 @@ export interface HealthData {
   workflows: any;
   components: any;
   docsList: string[];
+  healthSummary: {
+    timestamp: string;
+    integrityScore: number;
+    status: string;
+  };
 }
 
 export function useHealthData() {
@@ -23,15 +30,16 @@ export function useHealthData() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/intelligence');
       if (!response.ok) {
-        throw new Error('Failed to fetch system intelligence data');
+        throw new Error('Failed to fetch system intelligence data from v9.0 engine');
       }
       const json = await response.json();
       setData(json);
       setError(null);
     } catch (err: any) {
-      console.error('Error fetching health data:', err);
+      console.error('Intelligence Hub Sync Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

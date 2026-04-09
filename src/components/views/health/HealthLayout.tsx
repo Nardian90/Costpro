@@ -8,7 +8,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Search,
-  Bell
+  Bell,
+  Cpu
 } from 'lucide-react';
 import { OverviewTab } from './tabs/OverviewTab';
 import { ArchitectureTab } from './tabs/ArchitectureTab';
@@ -28,72 +29,81 @@ interface HealthLayoutProps {
 
 export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error, onRefresh }) => {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden">
-      {/* HEADER SECTION */}
-      <header className="px-6 sm:px-10 py-8 sm:py-12 border-b border-border/50 bg-card/30 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-blue-500 to-emerald-500" />
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-primary flex items-center justify-center shadow-[0_0_30px_rgba(var(--primary),0.3)] shrink-0">
-              <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
+    <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
+      {/* HEADER SECTION - Editorial Precision */}
+      <header className="px-6 sm:px-12 py-10 sm:py-16 border-b border-border/30 bg-card/20 relative overflow-hidden backdrop-blur-md">
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary via-blue-500 to-purple-600 animate-pulse" />
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
+
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10">
+          <div className="flex items-center gap-6 sm:gap-10">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[32px] sm:rounded-[40px] bg-primary flex items-center justify-center shadow-[0_0_50px_rgba(var(--primary),0.2)] shrink-0 border-4 border-background group hover:scale-105 transition-transform duration-500">
+              <Cpu className="w-8 h-8 sm:w-12 sm:h-12 text-primary-foreground group-hover:rotate-12 transition-transform" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-tight leading-none mb-1 sm:mb-2 italic">Intelligence Hub</h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.4em] text-muted-foreground">System Observability & Living Documentation</span>
-                <div className="w-fit px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
-                   <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                   Live Sync
+              <div className="flex items-center gap-3 mb-2">
+                 <h1 className="text-3xl sm:text-6xl font-black uppercase tracking-tighter leading-none italic">Intelligence Hub</h1>
+                 <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary tracking-widest mt-2 uppercase">v9.0.0</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-muted-foreground opacity-60">System Observability & Autonomous Evolution</span>
+                <div className="w-fit px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-3">
+                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                   Real-time Synchronization
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-center sm:justify-end">
-             <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-all">
-                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-4 sm:gap-6 w-full lg:w-auto justify-center lg:justify-end">
+             <div className="hidden sm:flex flex-col items-end mr-4 opacity-40">
+                <span className="text-[9px] font-black uppercase tracking-widest">Confidence Threshold</span>
+                <span className="text-xs font-black text-primary">{(data?.pipelineState?.confidenceThreshold || 90)}% ACCURACY</span>
+             </div>
+             <button className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-300">
+                <Search className="w-5 h-5 sm:w-6 sm:h-6" />
              </button>
-             <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-all relative">
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary border-2 border-background" />
+             <button className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-300 relative group">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6 group-hover:animate-bounce" />
+                <div className="absolute top-4 right-4 sm:top-5 sm:right-5 w-2.5 h-2.5 rounded-full bg-primary border-4 border-background" />
              </button>
              <button
                onClick={onRefresh}
-               className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-black text-[9px] sm:text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 sm:gap-3"
+               className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl sm:rounded-[32px] bg-primary text-primary-foreground font-black text-[10px] sm:text-[12px] uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 flex items-center gap-3 sm:gap-5 group"
              >
-                <RefreshCw className={cn("w-3 h-3 sm:w-4 sm:h-4", loading && "animate-spin")} />
-                <span className="whitespace-nowrap">{loading ? 'Sync...' : 'Refrescar'}</span>
+                <RefreshCw className={cn("w-4 h-4 sm:w-5 sm:h-5", loading && "animate-spin")} />
+                <span className="whitespace-nowrap">{loading ? 'SYNCING...' : 'REFRESCAR NÚCLEO'}</span>
              </button>
           </div>
         </div>
       </header>
 
-      {/* MAIN CONTENT WITH TABS */}
-      <main className="flex-1 p-6 sm:p-10 overflow-auto no-scrollbar">
+      {/* MAIN CONTENT WITH TABS - Precision Navigation */}
+      <main className="flex-1 px-6 sm:px-12 py-10 sm:py-12 overflow-auto no-scrollbar bg-background">
         <Tabs defaultValue="overview" className="w-full">
-          <div className="sticky top-0 z-20 mb-8 sm:mb-12 bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl sm:rounded-[32px] p-1.5 sm:p-2 shadow-xl overflow-hidden">
+          <div className="sticky top-0 z-50 mb-12 sm:mb-16 bg-background/60 backdrop-blur-2xl border border-border/30 rounded-[32px] sm:rounded-[48px] p-2 sm:p-3 shadow-2xl overflow-hidden max-w-6xl mx-auto">
             <TabsList className="flex flex-row flex-nowrap h-auto w-full items-center justify-start gap-2 overflow-x-auto bg-transparent p-0 no-scrollbar scroll-smooth">
               {[
-                { id: 'overview', label: 'Overview', icon: Activity },
+                { id: 'overview', label: 'Panorama', icon: Activity },
                 { id: 'architecture', label: 'Arquitectura', icon: Share2 },
                 { id: 'knowledge', label: 'Conocimiento', icon: Database },
                 { id: 'documentation', label: 'Documentación', icon: Book },
-                { id: 'audit', label: 'Auditoría', icon: ShieldCheck },
-                { id: 'pipeline', label: 'Pipeline', icon: RefreshCw },
+                { id: 'audit', label: 'Gobernanza', icon: ShieldCheck },
+                { id: 'pipeline', label: 'Ciclo Evolutivo', icon: RefreshCw },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-6 py-3 text-[9px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg sm:flex-1 sm:rounded-2xl sm:py-4 sm:text-[10px]"
+                  className="inline-flex shrink-0 items-center justify-center gap-3 whitespace-nowrap rounded-2xl px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-2xl sm:flex-1 sm:rounded-[32px] sm:py-5 sm:text-[11px] group"
                 >
-                  <tab.icon className="size-3.5 shrink-0 sm:size-4" />
+                  <tab.icon className="size-4 shrink-0 sm:size-5 group-data-[state=active]:animate-pulse" />
                   <span>{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
-          <div className="min-h-[700px]">
+          <div className="min-h-[800px] max-w-7xl mx-auto">
             <TabsContent value="overview" className="mt-0 focus-visible:outline-none ring-0 border-none outline-none">
               <OverviewTab data={data} />
             </TabsContent>
@@ -116,20 +126,24 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
         </Tabs>
       </main>
 
-      {/* FOOTER INTELLIGENCE BAR */}
-      <footer className="px-6 sm:px-10 py-4 sm:py-6 border-t border-border/50 bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-4 opacity-60">
-         <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]">System Intelligence Hub v1.0.0</span>
-         </div>
-         <div className="flex items-center gap-4 sm:gap-8">
-            <div className="flex items-center gap-2">
-               <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">Confidence:</span>
-               <span className="text-[9px] sm:text-[10px] font-black text-primary">High ({(data?.pipelineState?.confidenceThreshold || 90)}%)</span>
+      {/* FOOTER INTELLIGENCE BAR - Global Status */}
+      <footer className="px-8 sm:px-12 py-6 sm:py-10 border-t border-border/30 bg-card/20 flex flex-col sm:flex-row items-center justify-between gap-6 backdrop-blur-md">
+         <div className="flex items-center gap-5 group cursor-default">
+            <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+            <div>
+               <span className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.3em] block leading-none mb-1 group-hover:text-primary transition-colors">Intelligence Hub v9.0.0</span>
+               <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 italic">Source of Truth: knowledge/architecture/</span>
             </div>
-            <div className="flex items-center gap-2">
-               <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap">Orchestrator:</span>
-               <span className="text-[9px] sm:text-[10px] font-black">JULES v8.0</span>
+         </div>
+         <div className="flex items-center gap-6 sm:gap-12">
+            <div className="flex flex-col items-end">
+               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">Architectural Integrity</span>
+               <span className="text-sm font-black text-primary">High Confidence ({(data?.pipelineState?.confidenceThreshold || 90)}%)</span>
+            </div>
+            <div className="w-[1px] h-10 bg-border/50 hidden sm:block" />
+            <div className="flex flex-col items-end">
+               <span className="text-[9px] font-black uppercase tracking-widest opacity-40 whitespace-nowrap mb-1">AI Orchestrator</span>
+               <span className="text-sm font-black group hover:text-primary transition-colors cursor-default italic">JULES CostPro v9.0</span>
             </div>
          </div>
       </footer>
