@@ -1,9 +1,11 @@
 import { db, ReconciliationLine } from '../dexie';
+import { generateHash } from '../utils';
 
 export interface AuditReport {
     inconsistencies: ReconciliationLine[];
     legacy_cash_fillers: ReconciliationLine[];
     invalid_cash_products: ReconciliationLine[];
+    tampered_lines: ReconciliationLine[];
     total_audited: number;
 }
 
@@ -15,6 +17,7 @@ export class CashFillerAuditor {
             inconsistencies: [],
             legacy_cash_fillers: [],
             invalid_cash_products: [],
+            tampered_lines: [],
             total_audited: lines.length
         };
 
@@ -36,22 +39,25 @@ export class CashFillerAuditor {
             if (line.product_cod === 'CASH') {
                 report.invalid_cash_products.push(line);
             }
+
+            // 4. Forensic Integrity Check (R5)
+            const hashInput = `${line.transaction_ref}-${line.product_cod}-${line.cantidad}-${line.transfer_amount_cents}-${line.cash_amount_cents}`;
+            const currentHash = await generateHash(hashInput);
+            if (line.reconciliation_hash && line.reconciliation_hash !== currentHash) {
+                report.tampered_lines.push(line);
+            }
         }
 
         return report;
     }
 
-    async remediate(): Promise<{ fixed: number; removed: number }> {
+    async remediate(): Promise<{ fixed: number; removed: number; rehashed: number }> {
         const report = await this.runAudit();
         let fixed = 0;
         let removed = 0;
-
-        // Note: For a definitive structural correction, legacy/invalid lines should ideally be consolidated
-        // but since the migration logic in dexie.ts handles that, the auditor's remediation
-        // will focus on correcting minor inconsistencies in the new model.
+        let rehashed = 0;
 
         for (const line of report.inconsistencies) {
-            // Fix minor rounding issues if they exist
             if (Math.abs(line.total_amount_cents - (line.transfer_amount_cents + line.cash_amount_cents)) < 2) {
                 await db.reconciliation_lines.update(line.id, {
                     total_amount_cents: line.transfer_amount_cents + line.cash_amount_cents
@@ -60,6 +66,6 @@ export class CashFillerAuditor {
             }
         }
 
-        return { fixed, removed };
+        return { fixed, removed, rehashed };
     }
 }
