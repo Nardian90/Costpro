@@ -28,16 +28,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
-          title="Integrity Score"
+          title="Nivel de Integridad"
           value={`${integrityScore}%`}
           subtitle="Salud Arquitectónica v9.0"
           icon={ShieldCheck}
           color={getStatusColor(integrityScore)}
         />
         <MetricCard
-          title="Coupling Score"
+          title="Nivel de Acoplamiento"
           value={`${couplingScore}%`}
-          subtitle="Independencia Módulos"
+          subtitle="Independencia de Módulos"
           icon={Share2}
           color={getStatusColor(couplingScore)}
         />
@@ -56,7 +56,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
           color="success"
         />
         <MetricCard
-          title="Doc Coverage"
+          title="Doc. de Usuario"
           value="92%"
           subtitle="Cobertura Semántica"
           icon={FileText}
@@ -103,8 +103,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
                     <div className="grid grid-cols-1 gap-4">
                        {[
                           { label: 'Ciclo Operacional', value: `#${pipelineState.cycle || 1}`, icon: Activity },
-                          { label: 'Modo Scheduler', value: pipelineState.schedulerMode || 'NORMAL', icon: Clock, badge: true },
-                          { label: 'Confianza IA', value: `${pipelineState.confidenceThreshold || 90}%`, icon: ShieldCheck },
+                          { label: 'Modo del Programador', value: pipelineState.schedulerMode === 'NORMAL' ? 'NORMAL' : pipelineState.schedulerMode || 'NORMAL', icon: Clock, badge: true },
+                          { label: 'Umbral de Confianza', value: `${pipelineState.confidenceThreshold || 90}%`, icon: ShieldCheck },
                           { label: 'Última Actividad', value: pipelineState.lastExecution?.split('T')[1].split('.')[0] || '00:00:00', icon: Zap }
                        ].map((item, idx) => (
                           <div key={idx} className="flex items-center justify-between p-5 rounded-3xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all">
@@ -167,12 +167,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
 
               <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-2 gap-8 w-full">
                  <div className="text-center">
-                    <div className="text-xs font-black tracking-tighter text-white">READY</div>
-                    <div className="text-[8px] font-black uppercase tracking-widest opacity-60">Status</div>
+                    <div className="text-xs font-black tracking-tighter text-white">ACTIVO</div>
+                    <div className="text-[8px] font-black uppercase tracking-widest opacity-60">Estado</div>
                  </div>
                  <div className="text-center">
                     <div className="text-xs font-black tracking-tighter text-white">9.0.0</div>
-                    <div className="text-[8px] font-black uppercase tracking-widest opacity-60">Engine</div>
+                    <div className="text-[8px] font-black uppercase tracking-widest opacity-60">Motor</div>
                  </div>
               </div>
            </div>

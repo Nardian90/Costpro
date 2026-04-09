@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HealthData } from '../hooks/useHealthData';
 import { MarkdownViewer } from '../components/MarkdownViewer';
+import { UserHelpGallery } from '../components/UserHelpGallery';
 import { Book, FileText, Layout, Info, Search, ChevronRight, Hash, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,12 +15,12 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
   const [loading, setLoading] = useState(false);
 
   const docs = [
-    { id: 'user_help', title: 'Ayuda de Usuario', type: 'USER', icon: Book, content: JSON.stringify(data.userHelp, null, 2) },
-    { id: 'integrity', title: 'Reporte de Integridad', type: 'SYS', icon: Info, content: data.integrityReport || '# Sin Reporte de Integridad' },
+    { id: 'user_help', title: 'Guía de Usuario', type: 'INTERACTIVO', icon: Book, content: '' },
+    { id: 'integrity', title: 'Reporte de Integridad', type: 'SISTEMA', icon: Info, content: data.integrityReport || '# Sin Reporte de Integridad' },
     ...(data.docsList || []).map(docName => ({
        id: docName,
        title: docName.replace('.md', '').replace(/_/g, ' ').toUpperCase(),
-       type: 'KNOWLEDGE',
+       type: 'CONOCIMIENTO',
        icon: FileText,
        content: `Cargando ${docName}...`
     }))
@@ -45,6 +46,8 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
     }
   }, [selectedDoc, currentDoc]);
 
+  const isGallery = !selectedDoc || selectedDoc === 'user_help';
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[800px]">
@@ -53,7 +56,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
            <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm flex-1 overflow-hidden flex flex-col">
               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-8 flex items-center gap-2">
                  <Hash className="w-3 h-3" />
-                 Índice de Inteligencia
+                 Documentación Viva
               </h4>
 
               <div className="flex-1 overflow-auto no-scrollbar space-y-2 pr-2">
@@ -63,16 +66,16 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                       onClick={() => setSelectedDoc(doc.id)}
                       className={cn(
                         "w-full flex items-center justify-between px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group",
-                        selectedDoc === doc.id || (!selectedDoc && doc.id === 'user_help')
+                        (selectedDoc === doc.id || (!selectedDoc && doc.id === 'user_help'))
                           ? "bg-primary text-primary-foreground shadow-lg scale-[1.02]"
                           : "text-muted-foreground hover:bg-muted/50 border border-transparent hover:border-border/50"
                       )}
                     >
                       <div className="flex items-center gap-3 truncate">
-                         <doc.icon className={cn("w-4 h-4 shrink-0", selectedDoc === doc.id ? "text-white" : "text-primary/40")} />
+                         <doc.icon className={cn("w-4 h-4 shrink-0", (selectedDoc === doc.id || (!selectedDoc && doc.id === 'user_help')) ? "text-white" : "text-primary/40")} />
                          <span className="truncate">{doc.title}</span>
                       </div>
-                      <ChevronRight className={cn("w-3 h-3 transition-transform", selectedDoc === doc.id ? "translate-x-1" : "opacity-0 group-hover:opacity-100")} />
+                      <ChevronRight className={cn("w-3 h-3 transition-transform", (selectedDoc === doc.id || (!selectedDoc && doc.id === 'user_help')) ? "translate-x-1" : "opacity-0 group-hover:opacity-100")} />
                     </button>
                  ))}
               </div>
@@ -80,7 +83,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
               <div className="mt-8 pt-6 border-t border-border/50">
                  <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
                     <p className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed tracking-widest text-center">
-                      Documentación Viva v9.0 sincronizada con el Grafo de Conocimiento.
+                      Base de conocimiento v9.0 actualizada en tiempo real.
                     </p>
                  </div>
               </div>
@@ -101,13 +104,17 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
               </div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-background border border-border/50 text-[9px] font-black uppercase tracking-widest hover:border-primary/50 transition-all group">
                  <ExternalLink className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
-                 Exportar PDF
+                 Imprimir Documento
               </button>
            </div>
 
            <div className="flex-1 overflow-auto p-12 no-scrollbar bg-background/30 selection:bg-primary/20">
               <div className={cn("max-w-4xl mx-auto transition-opacity duration-500", loading ? "opacity-30" : "opacity-100")}>
-                 <MarkdownViewer content={docContent} />
+                 {isGallery ? (
+                    <UserHelpGallery data={data.userHelp || []} />
+                 ) : (
+                    <MarkdownViewer content={docContent} />
+                 )}
               </div>
            </div>
         </div>
