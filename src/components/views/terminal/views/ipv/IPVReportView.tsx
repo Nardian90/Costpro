@@ -155,8 +155,9 @@ export function IPVReportView() {
 
     const products = await db.products.toArray();
     const lastReport = await db.ipv_reports
-      .sortBy('fecha_reporte')
-      .then(list => list.reverse()[0]);
+      .where('fecha_reporte').below(today)
+      .reverse()
+      .first();
 
     await createReportForDate(today, products, lastReport || null);
     toast.success('Reporte generado exitosamente');
@@ -176,8 +177,8 @@ export function IPVReportView() {
 
               const lastReport = await db.ipv_reports
                   .where('fecha_reporte').below(dateStr)
-                  .sortBy('fecha_reporte')
-                  .then(list => list.reverse()[0]);
+                  .reverse()
+                  .first();
 
               await createReportForDate(dateStr, products, lastReport || null);
           }
