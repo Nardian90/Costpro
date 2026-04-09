@@ -280,9 +280,11 @@ export const useCostSheetStore = create<CostSheetState>()(
             if (!draft.data) return;
             if (!draft.data.indirectConfig) {
               draft.data.indirectConfig = {
+                mode: 'coefficient',
                 selectedSections: [],
                 baseSection: '2',
-                coefficient: 1
+                coefficient: 1,
+                fixedAmount: 0
               };
             }
             draft.data.indirectConfig = { ...draft.data.indirectConfig, ...config };

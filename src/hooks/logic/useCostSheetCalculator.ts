@@ -431,16 +431,34 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               formula = 'sum(children)';
           }
 
-          // Apply Indirect Coefficient if enabled
+                    // Apply Indirect Configuration (Coefficient or Fixed)
           let finalFormula = formula;
-          if (template?.indirectConfig?.selectedSections?.includes(sectionIdx + 1 + '') || template?.indirectConfig?.selectedSections?.includes(r.id)) {
-              const coef = template?.indirectConfig?.coefficient || 1;
-              if (coef !== 1) {
-                  if (finalFormula && finalFormula !== 'sum(children)') {
-                      finalFormula = `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula}) * ${coef}`;
-                  } else if (r.calculationMethod === 'ValorFijo' || !finalFormula) {
-                      finalFormula = `${r.value || 0} * ${coef}`;
+          const isAffected = template?.indirectConfig?.selectedSections?.includes(sectionIdx + 1 + '') ||
+                           template?.indirectConfig?.selectedSections?.includes(r.id);
+
+          if (isAffected) {
+              const config = template?.indirectConfig;
+              if (config?.mode === 'fixed') {
+                  const selectedIds = config.selectedSections || [];
+                  // We sum the totals of all selected sections to get the relative weight
+                  const totalSelected = selectedIds.reduce((sum, id) => sum + (vhSums[id] || 0), 0);
+                  const rowWeight = totalSelected > 0 ? (vhSums[r.id] || 0) / totalSelected : 0;
+                  const fixedPart = (config.fixedAmount || 0) * rowWeight;
+
+                  if (fixedPart > 0) {
+                      const baseVal = finalFormula && finalFormula !== 'sum(children)' ? `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula})` : (r.value || 0);
+                      finalFormula = `${baseVal} + ${fixedPart.toFixed(4)}`;
                       formaCalculo = 'FORMULA';
+                  }
+              } else {
+                  const coef = config?.coefficient || 1;
+                  if (coef !== 1) {
+                      if (finalFormula && finalFormula !== 'sum(children)') {
+                          finalFormula = `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula}) * ${coef}`;
+                      } else if (r.calculationMethod === 'ValorFijo' || !finalFormula) {
+                          finalFormula = `${r.value || 0} * ${coef}`;
+                          formaCalculo = 'FORMULA';
+                      }
                   }
               }
           }
@@ -459,7 +477,11 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
             formula: finalFormula,
             fuente: r.note || r.fuente,
-            metadata: { ...(r.metadata || {}), appliedFormula: finalFormula }
+            metadata: {
+              ...(r.metadata || {}),
+              appliedFormula: finalFormula,
+              isIndirectAffected: isAffected
+            }
           });
 
           if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
