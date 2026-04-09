@@ -9,7 +9,7 @@ def load_json(path):
         return json.load(f)
 
 def validate():
-    arch = load_json('public/system_architecture.json')
+    arch = load_json('knowledge/architecture/system_architecture.json')
     components_doc = load_json('knowledge/components.json')
     views = load_json('knowledge/views.json')
     workflows = load_json('knowledge/workflows.json')
