@@ -48,32 +48,23 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
             "Si persiste la falta de stock y 'allow_negative' es falso, bloquea la asignación del producto."
         ],
         "result": "Evita que el sistema asigne productos que físicamente no deberían estar disponibles, forzando al motor a buscar otras combinaciones o usar comodines.",
-        "scenarios": [
-            "Venta de 'Cerveza 355ml': Si el stock virtual es 0, la regla HARD_REF o EXACT_SUM ignorará este producto aunque el precio coincida."
-        ],
-        "interaction": "Afecta a todas las reglas que asignan productos (HARD_REF, EXACT_SUM, WILDCARDS). Si falla, el monto restante pasa a la siguiente regla.",
+        "interaction": "Afecta a todas las reglas de búsqueda de productos (HARD_REF, EXACT_SUM, WILDCARDS).",
         "errors": [
-            "Error de inventario: Si el stock real no coincide con el sistema, el matching será incorrecto.",
-            "Bloqueo total: Si no hay stock de nada, ninguna regla de producto podrá ejecutarse."
+            "Stock desfasado: Si el inventario real no coincide con el digital, se pueden bloquear ventas legítimas."
         ]
     },
     "HARD_REF": {
-        "trigger": "Se activa cuando una transacción bancaria contiene texto que coincide con el código de un producto o referencia específica.",
+        "trigger": "Se activa cuando el código de un producto coincide exactamente con la referencia de la transferencia o aparece en las observaciones del banco.",
         "setup": [
-            "Código de producto (SKU) definido en catálogo",
-            "Observaciones en el mensaje bancario (ej: 'PAGO REF 102')",
-            "Integraciones (Comodia) que envíen la referencia en la metadata"
+            "Códigos de producto únicos y consistentes",
+            "Formatos de referencia bancaria legibles"
         ],
         "logic": [
-            "Escanea el campo de observaciones de la transacción.",
-            "Busca coincidencias exactas con el campo 'cod' de los productos activos.",
-            "Calcula cuántas unidades del producto caben en el importe total de la transacción.",
-            "Crea una línea de conciliación vinculada a ese producto específico."
+            "Busca el código del producto dentro del texto de la transacción.",
+            "Si hay coincidencia, asigna automáticamente la cantidad que cubra el monto (o 1 unidad si es mayor).",
+            "Genera una línea de 'Transferencia' vinculada al producto."
         ],
-        "result": "Matching inmediato con confianza del 100%. El estado de la transacción cambia a 'COMPLETO' si el importe se cubre totalmente.",
-        "scenarios": [
-            "Transferencia con nota 'Cerveza-Premium': El sistema detecta el código 'Cerveza-Premium' y asigna la cantidad correspondiente al monto transferido."
-        ],
+        "result": "Conciliación inmediata y precisa para clientes que especifican qué están pagando en la referencia correspondiente al monto transferido.",
         "interaction": "Es una regla de alta prioridad. Si tiene éxito, reduce el 'monto restante' para las reglas posteriores o finaliza el proceso.",
         "errors": [
             "Ambigüedad: Si el código de un producto es un número común (ej: '100'), puede haber falsos positivos.",
@@ -94,7 +85,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         ],
         "result": "Desglose automático de ventas complejas (ej: varios productos en una sola transferencia). Las columnas de 'Transferencia' se pueblan con los productos hallados.",
         "scenarios": [
-            "Transferencia de $1500: El sistema encuentra que Pollo ($1200) + Refresco ($300) = $1500 exactos. Asigna ambos productos."
+            "Transferencia de 500: El sistema encuentra que Pollo (200) + Refresco (00) = 500 exactos. Asigna ambos productos."
         ],
         "interaction": "Consume el monto total. Si no encuentra una suma exacta, no aplica ningún producto y delega en WILDCARDS o CASH_FILL.",
         "errors": [
@@ -115,7 +106,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         ],
         "result": "Permite cerrar transacciones donde hubo pequeños errores de redondeo o cambios de precio no reportados.",
         "scenarios": [
-            "Transferencia de $99.50: El producto cuesta $100. Con 0.5% de flexibilidad, el sistema lo acepta como un match válido."
+            "Transferencia de 9.50: El producto cuesta 00. Con 0.5% de flexibilidad, el sistema lo acepta como un match válido."
         ],
         "interaction": "Ayuda a EXACT_SUM a finalizar cuando hay diferencias mínimas de céntimos.",
         "errors": [
@@ -126,7 +117,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         "trigger": "Se activa como último recurso antes de la inyección de efectivo pura.",
         "setup": [
             "Productos marcados con el flag 'isWildcardCandidate' (ej: 'Venta Genérica')",
-            "Precio definido para el comodín (puede ser $1 o un valor base)"
+            "Precio definido para el comodín (puede ser  o un valor base)"
         ],
         "logic": [
             "Busca productos 'Comodín' en el catálogo.",
@@ -135,7 +126,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         ],
         "result": "Asegura que el monto transferido esté respaldado por al menos un ítem de catálogo, aunque sea genérico.",
         "scenarios": [
-            "Monto de $743 sin match: Usa el producto 'Venta Granel' x 743 unidades (si vale $1) para justificar el ingreso."
+            "Monto de 43 sin match: Usa el producto 'Venta Granel' x 743 unidades (si vale ) para justificar el ingreso."
         ],
         "interaction": "Reduce drásticamente la necesidad de usar CASH_FILL, manteniendo la integridad del inventario genérico.",
         "errors": [
@@ -145,7 +136,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
     "TOLERANCE": {
         "trigger": "Se activa al final del pipeline si queda un residuo muy pequeño.",
         "setup": [
-            "Monto de tolerancia configurado (ej: 100 centavos / $1)"
+            "Monto de tolerancia configurado (ej: 100 centavos / )"
         ],
         "logic": [
             "Compara el residuo final contra el límite de tolerancia.",
@@ -154,7 +145,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         ],
         "result": "Limpia ruidos visuales de céntimos en los reportes de conciliación.",
         "scenarios": [
-            "Diferencia de $0.05: El sistema la ignora y la transacción pasa a verde (Cuadrada)."
+            "Diferencia de -bash.05: El sistema la ignora y la transacción pasa a verde (Cuadrada)."
         ],
         "interaction": "Es el 'filtro de belleza' final. Evita que transacciones casi perfectas queden en estado 'PARCIAL'.",
         "errors": [
@@ -174,7 +165,7 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         ],
         "result": "Garantiza que toda transacción tenga una contrapartida, reflejando fielmente la naturaleza mixta de los cobros reales.",
         "scenarios": [
-            "Venta de $1000 con transferencia de $800: Genera línea de $200 como 'Efectivo' automáticamente."
+            "Venta de 000 con transferencia de 00: Genera línea de 00 como 'Efectivo' automáticamente."
         ],
         "interaction": "Es la red de seguridad final. Sin esta regla, el sistema dejaría muchas transacciones como 'PARCIAL'.",
         "errors": [
