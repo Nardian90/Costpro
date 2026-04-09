@@ -12,7 +12,8 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "stock-limit", tipo: "STOCK_LIMIT", prioridad: 1, activo: true, meta: { allow_negative: false }, descripcion: "Límites de Stock" },
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
-    { id: "wildcards", tipo: "WILDCARDS", prioridad: 4, activo: true, descripcion: "Comodines" },
+    { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_cash_limit: 20000, max_per_tx_threshold: 5000, mode: "SOFT" }, descripcion: "Inyección de Efectivo (Enterprise)" },
+    { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
@@ -39,6 +40,7 @@ export class MatchingEngine {
   private useStockLimit: boolean = false;
   private allowNegativeStock: boolean = true;
   private pendingMovements: ProductMovement[] = [];
+  private dailyCashUsedByDate: Map<string, number> = new Map();
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
@@ -80,8 +82,8 @@ export class MatchingEngine {
     const appliedRules: string[] = [];
     const logs: string[] = [];
 
-    const addTrace = (pass: number, rule: string, status: 'SUCCESS' | 'FAIL' | 'SKIPPED', reason?: string) => {
-      trace.push({ pass, rule, status, reason, timestamp: Date.now() });
+    const addTrace = (pass: number, rule: string, status: 'SUCCESS' | 'FAIL' | 'SKIPPED', reason?: string, details?: any) => {
+      trace.push({ pass, rule, status, reason, details, timestamp: Date.now() });
     };
 
     if (transaction.tipo === 'Db') {
@@ -96,9 +98,9 @@ export class MatchingEngine {
     let matchedProducts: Map<string, { product: Product; qty: number }> = new Map();
 
     for (const rule of this.rules) {
-        if (rule.tipo === 'CASH_FILL' || rule.tipo === 'STOCK_LIMIT') continue;
+        if (rule.tipo === 'STOCK_LIMIT') continue;
 
-        switch (rule.tipo) {
+                switch (rule.tipo) {
             case 'HARD_REF': {
                 const match = this.products.find(p => transaction.observaciones?.includes(p.cod) || p.cod === transaction.referencia_origen);
                 if (match) {
@@ -119,6 +121,55 @@ export class MatchingEngine {
                     remainingForIdentification = 0;
                     addTrace(rule.prioridad, 'EXACT_SUM', 'SUCCESS', `Match Sum ${match.cod}`);
                     appliedRules.push('EXACT_SUM');
+                }
+                break;
+            }
+            case 'CASH_FILL': {
+                if (remainingForIdentification <= 0) break;
+                const txDate = transaction.fecha;
+                const currentDailyUsed = this.dailyCashUsedByDate.get(txDate) || 0;
+                const dailyLimit = rule.meta?.daily_cash_limit ?? 20000;
+                const txThreshold = rule.meta?.max_per_tx_threshold ?? 5000;
+                let mode = rule.meta?.mode ?? 'SOFT';
+                if (typeof mode === 'boolean') mode = mode ? 'STRICT' : 'SOFT';
+
+                if (mode === 'STRICT' && currentDailyUsed >= dailyLimit) {
+                    addTrace(rule.prioridad, 'CASH_FILL', 'SKIPPED', 'Límite diario alcanzado (STRICT)');
+                    break;
+                }
+
+                const eligibleProducts = this.products.filter(p =>
+                    p.activo &&
+                    p.precio_cents > 0 &&
+                    p.isEligibleForCashFill !== false &&
+                    p.precio_cents > remainingForIdentification
+                ).sort((a, b) => (a.precio_cents - remainingForIdentification) - (b.precio_cents - remainingForIdentification));
+
+                const candidate = eligibleProducts[0];
+                if (candidate) {
+                    const cashNeeded = candidate.precio_cents - remainingForIdentification;
+                    if (cashNeeded <= txThreshold) {
+                        const flags = [];
+                        if (currentDailyUsed + cashNeeded > dailyLimit) {
+                            flags.push('CASH_LIMIT_EXCEEDED');
+                            if (mode === 'STRICT') {
+                                addTrace(rule.prioridad, 'CASH_FILL', 'FAIL', 'Límite diario superado');
+                                break;
+                            }
+                        }
+
+                        matchedProducts.set(candidate.cod, { product: candidate, qty: 1 });
+                        this.dailyCashUsedByDate.set(txDate, currentDailyUsed + cashNeeded);
+                        remainingForIdentification = 0;
+
+                        addTrace(rule.prioridad, 'CASH_FILL', 'SUCCESS', `Inyección: ${cashNeeded} en ${candidate.cod}`, {
+                            metrics: { expected_value: candidate.precio_cents, actual_value: remainingForIdentification, delta: cashNeeded },
+                            flags
+                        });
+                        appliedRules.push('CASH_FILL');
+                    } else {
+                        addTrace(rule.prioridad, 'CASH_FILL', 'SKIPPED', `Excede umbral por transacción (${cashNeeded} > ${txThreshold})`);
+                    }
                 }
                 break;
             }
