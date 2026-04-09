@@ -13,9 +13,9 @@ import sys
 sys.path.append('scripts')
 from commit_artifact import commit_artifact
 
-ARCHITECTURE_PATH = 'public/system_architecture.json'
-GRAPH_PATH = 'public/architecture_graph.json'
-OUTPUT_PATH = 'public/architecture_metrics.json'
+ARCHITECTURE_PATH = 'knowledge/architecture/system_architecture.json'
+GRAPH_PATH = 'knowledge/architecture/architecture_graph.json'
+OUTPUT_PATH = 'knowledge/architecture/architecture_metrics.json'
 
 def calculate_metrics():
     if not os.path.exists(ARCHITECTURE_PATH) or not os.path.exists(GRAPH_PATH):
@@ -93,7 +93,7 @@ def main():
     if not results:
         sys.exit(1)
 
-    temp_path = 'public/architecture_metrics.temp.json'
+    temp_path = 'knowledge/architecture/architecture_metrics.temp.json'
     with open(temp_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
