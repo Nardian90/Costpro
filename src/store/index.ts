@@ -51,7 +51,7 @@ export const useUIStore = create<UIState>()(
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
-      activeCostSection: 'ai-chat',
+      activeCostSection: 'templates',
       setCurrentView: (view) => set((state) => ({
         previousView: state.currentView,
         currentView: view
