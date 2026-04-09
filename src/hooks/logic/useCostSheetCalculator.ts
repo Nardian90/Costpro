@@ -376,9 +376,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               }
           });
       };
-      (template?.sections || []).forEach(s => calculateVH(s?.rows));
+      (template?.sections || []).forEach(s => { calculateVH(s?.rows); vhSums[s.id] = (s.rows || []).reduce((sum, r) => sum + (vhSums[r.id] || 0), 0); });
 
-      const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string, parentId: string | null = null) => {
+      const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string, parentId: string | null = null, isParentAffected = false) => {
         (uiRows || []).forEach((r, rowIdx) => {
           // Calculate visual numbering (e.g. "1.1", "1.1.1")
           const currentNumbering = parentNumbering
@@ -433,32 +433,31 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
                     // Apply Indirect Configuration (Coefficient or Fixed)
           let finalFormula = formula;
-          const isAffected = template?.indirectConfig?.selectedSections?.includes(sectionIdx + 1 + '') ||
-                           template?.indirectConfig?.selectedSections?.includes(r.id);
+          const sectionIdStr = template?.sections[sectionIdx]?.id || (sectionIdx + 1 + '');
+          const isSectionSelected = template?.indirectConfig?.selectedSections?.includes(sectionIdStr);
+          const isBaseSection = sectionIdStr === template?.indirectConfig?.baseSection;
+          const isAffected = (isParentAffected || isSectionSelected || template?.indirectConfig?.selectedSections?.includes(r.id)) && !isBaseSection;
 
-          if (isAffected) {
+
+          if (isAffected && !isParent) {
               const config = template?.indirectConfig;
               if (config?.mode === 'fixed') {
                   const selectedIds = config.selectedSections || [];
-                  // We sum the totals of all selected sections to get the relative weight
                   const totalSelected = selectedIds.reduce((sum, id) => sum + (vhSums[id] || 0), 0);
                   const rowWeight = totalSelected > 0 ? (vhSums[r.id] || 0) / totalSelected : 0;
                   const fixedPart = (config.fixedAmount || 0) * rowWeight;
 
                   if (fixedPart > 0) {
-                      const baseVal = finalFormula && finalFormula !== 'sum(children)' ? `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula})` : (r.value || 0);
+                      const baseVal = finalFormula ? `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula})` : 'VH';
                       finalFormula = `${baseVal} + ${fixedPart.toFixed(4)}`;
                       formaCalculo = 'FORMULA';
                   }
               } else {
                   const coef = config?.coefficient || 1;
                   if (coef !== 1) {
-                      if (finalFormula && finalFormula !== 'sum(children)') {
-                          finalFormula = `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula}) * ${coef}`;
-                      } else if (r.calculationMethod === 'ValorFijo' || !finalFormula) {
-                          finalFormula = `${r.value || 0} * ${coef}`;
-                          formaCalculo = 'FORMULA';
-                      }
+                      const baseVal = finalFormula ? `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula})` : 'VH';
+                      finalFormula = `${baseVal} * ${coef}`;
+                      formaCalculo = 'FORMULA';
                   }
               }
           }
@@ -466,7 +465,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           engineRows.push({
             id: r.id,
             parentId: parentId, // Correctly pass parentId for semantic validation
-            classification: currentNumbering, // Use visual numbering for smart matching
+            classification: r.id || currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             um: r.um || r.unit,
             type,
@@ -484,7 +483,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             }
           });
 
-          if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
+          if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id, isAffected);
         });
       };
       (template?.sections || []).forEach((s, sIdx) => flatten(s?.rows, sIdx, undefined, null));
