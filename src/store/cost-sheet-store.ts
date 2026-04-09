@@ -2,14 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { produce } from 'immer';
 import {
-  CostSheetDataContract,
-  CostSheetAnnexContract,
-  CostSheetRowContract
-} from '../contracts/cost-sheet';
-import { costSheetDataSchema } from '../validation/schemas';
+  CostSheetData as CostSheetDataContract,
+  CostSheetSection as CostSheetSectionContract,
+  CostSheetRow as CostSheetRowContract,
+  CostSheetAnnex as CostSheetAnnexContract,
+  IndirectConfig
+} from '@/types/cost-sheet';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import exampleTemplate from '@/lib/data/costpro-ejemplo';
+import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
-import reinicioTemplate from '../lib/data/costpro-reinicio';
-import exampleTemplate from '../lib/data/costpro-ejemplo';
 
 interface UpdateValuePayload {
   path: (string | number)[];
@@ -33,6 +35,7 @@ interface CostSheetState {
   reset: () => void;
   updateUtilityFormula: (percentage: number) => void;
   updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, isAdjustmentActive?: boolean) => void;
+  updateIndirectConfig: (config: Partial<IndirectConfig>) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -51,6 +54,22 @@ export const useCostSheetStore = create<CostSheetState>()(
             if (current[path[path.length - 1]] !== value) {
               current[path[path.length - 1]] = value;
             }
+          })
+        ),
+      updateValues: (updates) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            updates.forEach(({ path, value }) => {
+                let current: any = draft.data;
+                for (let i = 0; i < path.length - 1; i++) {
+                  if (current[path[i]] === undefined) return;
+                  current = current[path[i]];
+                }
+                if (current[path[path.length - 1]] !== value) {
+                    current[path[path.length - 1]] = value;
+                }
+            });
           })
         ),
       reorderRow: (annexId, rowIndex, direction) =>
@@ -89,22 +108,6 @@ export const useCostSheetStore = create<CostSheetState>()(
                 current[newIndex] = temp;
               }
             }
-          })
-        ),
-      updateValues: (updates) =>
-        set(
-          produce((draft: CostSheetState) => {
-            if (!draft.data) return;
-            updates.forEach(({ path, value }) => {
-                let current: any = draft.data;
-                for (let i = 0; i < path.length - 1; i++) {
-                  if (current[path[i]] === undefined) return;
-                  current = current[path[i]];
-                }
-                if (current[path[path.length - 1]] !== value) {
-                    current[path[path.length - 1]] = value;
-                }
-            });
           })
         ),
       addMainSection: () =>
@@ -269,6 +272,20 @@ export const useCostSheetStore = create<CostSheetState>()(
                 break;
               }
             }
+          })
+        ),
+      updateIndirectConfig: (config) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            if (!draft.data.indirectConfig) {
+              draft.data.indirectConfig = {
+                selectedSections: [],
+                baseSection: '2',
+                coefficient: 1
+              };
+            }
+            draft.data.indirectConfig = { ...draft.data.indirectConfig, ...config };
           })
         ),
       reset: () => {

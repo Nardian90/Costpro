@@ -431,6 +431,20 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               formula = 'sum(children)';
           }
 
+          // Apply Indirect Coefficient if enabled
+          let finalFormula = formula;
+          if (template?.indirectConfig?.selectedSections?.includes(sectionIdx + 1 + '') || template?.indirectConfig?.selectedSections?.includes(r.id)) {
+              const coef = template?.indirectConfig?.coefficient || 1;
+              if (coef !== 1) {
+                  if (finalFormula && finalFormula !== 'sum(children)') {
+                      finalFormula = `(${finalFormula.startsWith('=') ? finalFormula.substring(1) : finalFormula}) * ${coef}`;
+                  } else if (r.calculationMethod === 'ValorFijo' || !finalFormula) {
+                      finalFormula = `${r.value || 0} * ${coef}`;
+                      formaCalculo = 'FORMULA';
+                  }
+              }
+          }
+
           engineRows.push({
             id: r.id,
             parentId: parentId, // Correctly pass parentId for semantic validation
@@ -443,9 +457,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             vhFormula: r.vhFormula,
             baseCalculo,
             coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
-            formula: formula,
+            formula: finalFormula,
             fuente: r.note || r.fuente,
-            metadata: r.metadata
+            metadata: { ...(r.metadata || {}), appliedFormula: finalFormula }
           });
 
           if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
@@ -498,7 +512,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                 ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
                 : (r.coeficiente || 0),
               fuente: r.fuente,
-              metadata: r.metadata,
+              metadata: { ...(r.metadata || {}), appliedFormula: r.formula },
               audits: r.audit,
               hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
               validationErrors: rowValidationErrors.map(ve => ({
