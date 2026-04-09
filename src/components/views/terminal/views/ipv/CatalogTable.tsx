@@ -19,7 +19,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -236,7 +236,7 @@ export function CatalogTable() {
 
   const handleAddNew = () => {
       const newProd: Product = {
-          cod: '', id_grupo: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, costo_unitario_cents: 0, cuenta_contable: '', prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false
+          cod: '', id_grupo: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, costo_unitario_cents: 0, cuenta_contable: '', prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false, isEligibleForCashFill: true
       };
       setEditingId('NEW');
       setEditForm(newProd);
@@ -667,6 +667,7 @@ const handleExportCatalog = () => {
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="sales" label="Ventas" className="justify-end w-full" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right"><SortButton column="final_stock" label="Stock Final" className="justify-end w-full" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-center"><SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" /></TableHead>
+                  <TableHead className="sticky top-0 bg-background z-20 text-center">Cash Fill</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-center">Comodín</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-center">Estado</TableHead>
                   <TableHead className="sticky top-0 bg-background z-20 text-right">Acciones</TableHead>
@@ -759,6 +760,7 @@ const handleExportCatalog = () => {
                           <TableCell className="text-right text-xs font-bold text-orange-500">{stats.sales}</TableCell>
                           <TableCell className={`text-right text-xs font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}><div className="flex items-center justify-end gap-1">{stats.final < 0 && <AlertTriangle className="w-3 h-3" />}{stats.final}</div></TableCell>
                           <TableCell className="text-center">{isEditing ? (<div className="flex flex-col gap-1 items-center"><select value={editForm.priorityMode || 'manual'} onChange={e => setEditForm({...editForm, priorityMode: e.target.value as any})} className="h-7 rounded border bg-background px-1 text-xs uppercase font-bold"><option value="manual">Manual</option><option value="auto">Auto</option><option value="hybrid">Híbrido</option></select><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-7 rounded-md border border-input bg-background px-2 text-xs" disabled={editForm.priorityMode === 'auto'}>{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}</select></div>) : (<div className="flex flex-col items-center gap-1"><span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${p.priorityMode === 'auto' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-primary'} text-xs font-black shadow-sm`}>{p.prioridad_algoritmo}</span>{p.priorityMode && p.priorityMode !== 'manual' && (<span className="text-xs font-bold text-muted-foreground uppercase opacity-50">{p.priorityMode}</span>)}</div>)}</TableCell>
+                          <TableCell className="text-center">{isEditing ? (<Switch checked={editForm.isEligibleForCashFill ?? true} onCheckedChange={checked => setEditForm({...editForm, isEligibleForCashFill: checked})} />) : (p.isEligibleForCashFill !== false ? <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" /> : <span className="opacity-10">-</span>)}</TableCell>
                           <TableCell className="text-center">{isEditing ? (<Switch checked={editForm.isWildcardCandidate} onCheckedChange={checked => setEditForm({...editForm, isWildcardCandidate: checked})} />) : (p.isWildcardCandidate ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mx-auto" /> : <span className="opacity-10">-</span>)}</TableCell>
                           <TableCell className="text-center"><Switch checked={isEditing ? editForm.activo : p.activo} onCheckedChange={checked => isEditing ? setEditForm({...editForm, activo: checked}) : db.products.update(p.cod, { activo: checked })} disabled={!isEditing && editingId !== null} /></TableCell>
                           <TableCell className="text-right"><div className="flex justify-end gap-1">{isEditing ? (<Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}><Check className="w-4 h-4" /></Button>) : (<Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => startEditing(p)}><Edit2 className="w-4 h-4" /></Button>)}<Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(p.cod)}><Trash2 className="w-4 h-4" /></Button></div></TableCell>
