@@ -122,6 +122,29 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
             "Distorsión de costos: Si el margen es muy alto, los reportes de rentabilidad pueden verse afectados."
         ]
     },
+
+    "CASH_FILL": {
+        "trigger": "Se activa para cerrar diferencias residuales en transacciones parcialmente conciliadas mediante inyección de efectivo.",
+        "setup": [
+            "Productos marcados como 'Elegibles para Cash Filler' en el catálogo",
+            "Configuración de límite diario (ej: $20,000) y umbral por transacción"
+        ],
+        "logic": [
+            "Busca productos elegibles cuyo precio sea ligeramente superior al saldo de transferencia restante.",
+            "Aplica el algoritmo de 'Minimización de Excedente'.",
+            "La diferencia entre el costo del producto y la transferencia se cubre con efectivo inyectado.",
+            "Respeta los límites configurados: si se excede el umbral o el límite diario (en modo STRICT), la regla se salta."
+        ],
+        "result": "Garantiza que las transacciones queden 100% conciliadas sin dejar residuos abiertos, manteniendo la integridad contable (Transferencia + Efectivo = Total Producto).",
+        "scenarios": [
+            "Transferencia de $900 para un producto de $1000: El sistema inyecta $100 de efectivo para completar la venta del producto de $1000."
+        ],
+        "interaction": "Se ejecuta después de las sumas exactas y antes de los comodines genéricos.",
+        "errors": [
+            "Límite excedido: Si se agota el presupuesto de efectivo diario configurado.",
+            "Sin productos elegibles: Si no hay productos activos marcados para esta regla."
+        ]
+    },
     "WILDCARDS": {
         "trigger": "Se activa como último recurso antes de la inyección de efectivo pura.",
         "setup": [
@@ -215,7 +238,7 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
             case 'PRICE_FLEX': return 'Flexibilidad de Precio';
             case 'WILDCARDS': return 'Comodines';
             case 'TOLERANCE': return 'Tolerancia de Cuadre';
-            case 'CASH_FILL': return 'Inyección de Efectivo';
+            case 'CASH_FILL': return 'Inyección de Efectivo (Enterprise)';
             case 'GOAL_WITH_TOLERANCE': return 'Meta con Tolerancia';
             default: return tipo;
         }

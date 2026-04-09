@@ -77,6 +77,7 @@ export interface Product {
   unit_level?: 'BOX' | 'PACK' | 'UNIT'; // Nivel de empaque
   cuenta_contable?: string;
   costo_unitario_cents?: number;
+  isEligibleForCashFill?: boolean;
 }
 
 export interface CostTrace {
@@ -515,6 +516,12 @@ export class IPVDatabase extends Dexie {
 
       await tx.table('reconciliation_lines').clear();
       await tx.table('reconciliation_lines').bulkAdd(migratedLines);
+    });
+
+    this.version(31).stores({
+      products: 'cod, id_grupo, activo, isEligibleForCashFill'
+    }).upgrade(async tx => {
+      await tx.table('products').toCollection().modify({ isEligibleForCashFill: true });
     });
   }
 }
