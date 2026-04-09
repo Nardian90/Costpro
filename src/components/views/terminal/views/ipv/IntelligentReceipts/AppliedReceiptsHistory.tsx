@@ -3,14 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { IntelligentReceipt, db } from '@/lib/dexie';
+import { db } from '@/lib/dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { History, FileText } from 'lucide-react';
 
 export function AppliedReceiptsHistory() {
-    const history = useLiveQuery(() =>
-        db.intelligent_receipts.where('applied').equals(1).reverse().sortBy('created_at')
-    );
+    const history = useLiveQuery(async () => {
+        const results = await db.intelligent_receipts.where('applied').equals(1).toArray();
+        return results.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    });
 
     if (!history || history.length === 0) {
         return (
