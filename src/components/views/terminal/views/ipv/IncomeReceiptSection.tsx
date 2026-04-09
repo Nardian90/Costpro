@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Product, type IPVSettings } from '@/lib/dexie';
+import { db, type Product, type IPVSettings, ReconciliationLine } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +59,7 @@ export function IncomeReceiptSection() {
 
     // Group lines by transaction_ref
     const grouped = reconciliationLines.reduce((acc, line) => {
-      if (line.clasificacion !== 'Efectivo') return acc;
+      if ((line.cash_amount_cents || 0) <= 0) return acc;
 
       const dateStr = line.fecha_operacion.split('T')[0];
       if (dateStr < dateFrom || dateStr > dateTo) return acc;
@@ -77,7 +77,7 @@ export function IncomeReceiptSection() {
     }, {} as Record<string, any>);
 
     return Object.values(grouped).map((group: any, idx) => {
-      const total = group.lines.reduce((sum: number, l: any) => sum + (l.importe_linea_cents), 0);
+      const total = group.lines.reduce((sum: number, l: any) => sum + (l.cash_amount_cents || 0), 0);
       return {
         entidad_nombre: settings?.entidad_nombre || 'SUCURSAL COSTPRO',
         entidad_codigo: settings?.entidad_codigo || 'SC-01',
@@ -88,7 +88,7 @@ export function IncomeReceiptSection() {
           const p = products.find(prod => prod.cod === l.product_cod);
           return {
             concepto: p ? p.descripcion : `PRODUCTO ${l.product_cod}`,
-            importe: l.importe_linea_cents
+            importe: l.cash_amount_cents
           };
         }),
         total,
@@ -300,7 +300,7 @@ export function IncomeReceiptSection() {
                         variant="ghost"
                         size="icon"
                         disabled={selectedReceiptIndex >= receipts.length - 1}
-                        onClick={() => setSelectedReceiptIndex(prev => prev - 1)}
+                        onClick={() => setSelectedReceiptIndex(prev => prev + 1)}
                         className="h-8 w-8 rounded-lg"
                     >
                         <ChevronRight className="w-4 h-4" />

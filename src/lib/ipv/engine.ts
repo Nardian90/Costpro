@@ -174,7 +174,28 @@ export class MatchingEngine {
     return result;
   }
 
-  async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
+  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
+    const mockTx: BankTransaction = {
+      id: 'sim',
+      fecha: new Date().toISOString().split('T')[0],
+      referencia_corta: 'SIM',
+      referencia_origen: 'SIM-' + Date.now(),
+      observaciones: 'Simulación de matching',
+      importe_cents: targetAmount,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: new Date().toISOString(),
+      ingestion_hash: 'sim'
+    };
+    return this.matchTransaction(mockTx);
+  }
+
+  async distributeGlobalGoal(
+    targetTotal: number,
+    currentTotal: number,
+    dates: string[],
+    options?: { strategy?: "MIN_STOCK" | "MAX_VALUE" }
+  ): Promise<ReconciliationLine[]> {
     let remainingDiff = targetTotal - currentTotal;
     if (remainingDiff <= 0 || dates.length === 0) return [];
     const lines: ReconciliationLine[] = [];
@@ -182,7 +203,7 @@ export class MatchingEngine {
       if (remainingDiff <= 0) break;
       const p = this.products.find(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff);
       if (p) {
-        const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}-${uuidv4()}`, importe_cents: 0 } as any, p, 1, 0, p.precio_cents);
+        const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-\text{date}-${uuidv4()}`, importe_cents: 0 } as any, p, 1, 0, p.precio_cents);
         line.source_type = 'REAL_CASH_GOAL';
         lines.push(line);
         remainingDiff -= line.total_amount_cents;

@@ -1,84 +1,57 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type YearlyGoals, type MonthlyGoal } from '@/lib/dexie';
+import { useState, useCallback } from 'react';
+import { db, MonthlyGoal, YearlyGoals, DailyIPVReport, ReconciliationLine } from '@/lib/dexie';
+import { toast } from 'sonner';
 
-export interface MonthlyRealData {
-  total: number;
-  efectivo: number;
-  transferencia: number;
-}
+export function useFinancialPlanning(year: number) {
+  const [goals, setGoals] = useState<MonthlyGoal[]>([]);
+  const [realData, setRealData] = useState<Map<string, { total: number; efectivo: number; transferencia: number }>>(new Map());
 
-export const useFinancialPlanning = (year: number) => {
-  const yearlyGoals = useLiveQuery(
-    () => db.yearly_goals.where('year').equals(year).first(),
-    [year]
-  );
-
-  const realData = useLiveQuery(
-    async () => {
-      const yearStr = year.toString();
-      const lines = await db.reconciliation_lines
-        .where('fecha_operacion')
-        .startsWith(yearStr)
-        .toArray();
-
-      const stats = new Map<string, MonthlyRealData>();
-
-      // Initialize all months
-      for (let i = 1; i <= 12; i++) {
-        const monthKey = `${yearStr}-${String(i).padStart(2, '0')}`;
-        stats.set(monthKey, { total: 0, efectivo: 0, transferencia: 0 });
+  const initYear = useCallback(async () => {
+    try {
+      let yearly = await db.yearly_goals.get(year);
+      if (!yearly) {
+        yearly = {
+          year,
+          months: Array.from({ length: 12 }, (_, i) => ({
+            month: `${year}-${(i + 1).toString().padStart(2, '0')}`,
+            goalAmount: 0,
+            strategy: 'MIN_STOCK'
+          }))
+        };
+        await db.yearly_goals.add(yearly);
       }
+      setGoals(yearly.months);
 
-      lines.forEach(line => {
-        const monthKey = line.fecha_operacion.substring(0, 7);
-        if (stats.has(monthKey)) {
-          const current = stats.get(monthKey)!;
-          const amount = (line.importe_linea_cents || 0);
+      // Load real data from IPV reports or reconciliation lines
+      const lines = await db.reconciliation_lines.toArray();
+      const stats = new Map();
 
-          current.total += amount;
-          if (line.clasificacion === 'Efectivo') {
-            current.efectivo += amount;
-          } else {
-            current.transferencia += amount;
-          }
-        }
+      lines.forEach(l => {
+        const month = l.fecha_operacion.substring(0, 7);
+        if (!stats.has(month)) stats.set(month, { total: 0, efectivo: 0, transferencia: 0 });
+        const s = stats.get(month);
+        s.total += l.total_amount_cents;
+        s.efectivo += l.cash_amount_cents;
+        s.transferencia += l.transfer_amount_cents;
       });
 
-      return stats;
-    },
-    [year]
-  );
+      setRealData(stats);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [year]);
 
-  const initYear = async () => {
-    if (yearlyGoals) return;
+  const updateMonthlyGoal = async (month: string, amount: number, strategy: "MIN_STOCK" | "MAX_VALUE") => {
+    const yearly = await db.yearly_goals.get(year);
+    if (!yearly) return;
 
-    const months: MonthlyGoal[] = Array.from({ length: 12 }, (_, i) => {
-      const month = `${year}-${String(i + 1).padStart(2, "0")}`;
-      return {
-        month,
-        goalAmount: 0,
-        strategy: "MIN_STOCK"
-      };
-    });
-
-    // Use put to avoid constraint errors
-    await db.yearly_goals.put({ year, months });
-  };
-
-  const updateMonthlyGoal = async (month: string, amount: number, strategy?: "MIN_STOCK" | "MAX_VALUE") => {
-    if (!yearlyGoals) return;
-
-    const updatedMonths = yearlyGoals.months.map(m =>
-      m.month === month ? { ...m, goalAmount: amount, strategy: strategy || m.strategy } : m
+    const newMonths = yearly.months.map(m =>
+      m.month === month ? { ...m, goalAmount: amount, strategy } : m
     );
 
-    await db.yearly_goals.update(yearlyGoals.year, { months: updatedMonths });
+    await db.yearly_goals.update(year, { months: newMonths });
+    setGoals(newMonths);
   };
 
-  return {
-    goals: yearlyGoals?.months || [],
-    realData: realData || new Map<string, MonthlyRealData>(),
-    initYear,
-    updateMonthlyGoal
-  };
-};
+  return { goals, realData, initYear, updateMonthlyGoal };
+}
