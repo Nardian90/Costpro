@@ -122,7 +122,6 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
             "Distorsión de costos: Si el margen es muy alto, los reportes de rentabilidad pueden verse afectados."
         ]
     },
-
     "CASH_FILL": {
         "trigger": "Se activa para cerrar diferencias residuales en transacciones parcialmente conciliadas mediante inyección de efectivo.",
         "setup": [
@@ -183,118 +182,81 @@ const RULE_DESCRIPTIONS: Record<string, any> = {
         "errors": [
             "Acumulación: Si se usa una tolerancia muy alta, se pueden perder montos significativos en el agregado mensual."
         ]
-    },
-    "CASH_FILL": {
-        "trigger": "Regla de cierre obligatoria para garantizar el cuadre de todas las operaciones.",
-        "setup": [
-            "Límite diario de inyección (para control de riesgos)",
-            "Clasificación configurada como 'Efectivo' o 'Transferencia Filler'"
-        ],
-        "logic": [
-            "Caso A (Excedente): Los productos exceden la transferencia -> Crea línea de 'Efectivo' (Pago Mixto).",
-            "Caso B (Faltante): La transferencia excede los productos -> Crea línea de 'Transferencia' de ajuste.",
-            "Registra la observación: 'Pago mixto' o 'Cuadre automático'."
-        ],
-        "result": "Garantiza que toda transacción tenga una contrapartida, reflejando fielmente la naturaleza mixta de los cobros reales.",
-        "scenarios": [
-            "Venta de $1000 con transferencia de $800: Genera línea de $200 como 'Efectivo' automáticamente."
-        ],
-        "interaction": "Es la red de seguridad final. Sin esta regla, el sistema dejaría muchas transacciones como 'PARCIAL'.",
-        "errors": [
-            "Abuso de la regla: Puede ocultar problemas de carga de catálogo si se inyecta demasiado efectivo sin control."
-        ]
     }
 };
 
 interface SortableRuleItemProps {
     rule: MatchingRule;
     toggleRule: (id: string, active: boolean) => Promise<void>;
+    usageCount: number;
     updateRuleMeta: (id: string, meta: any) => Promise<void>;
     updatePriority: (id: string, newPriority: number) => Promise<void>;
     totalRules: number;
-    usageCount?: number;
 }
 
+function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, updatePriority, totalRules }: SortableRuleItemProps) {
+    const info = RULE_DESCRIPTIONS[rule.tipo] || { trigger: "N/A", setup: [], logic: [], result: "N/A", scenarios: [], interaction: "N/A", errors: [] };
 
-
-function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, totalRules, usageCount = 0 }: SortableRuleItemProps) {
     const {
         attributes,
         listeners,
         setNodeRef,
         transform,
         transition,
+        isDragging
     } = useSortable({ id: rule.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
     };
-    const getLabel = (tipo: string) => {
-        switch (tipo) {
-            case 'STOCK_LIMIT': return 'Límites de Stock';
-            case 'HARD_REF': return 'Referencia Exacta';
-            case 'EXACT_SUM': return 'Suma Exacta (Combinatoria)';
-            case 'PRICE_FLEX': return 'Flexibilidad de Precio';
-            case 'WILDCARDS': return 'Comodines';
-            case 'TOLERANCE': return 'Tolerancia de Cuadre';
-            case 'CASH_FILL': return 'Inyección de Efectivo (Enterprise)';
-            case 'GOAL_WITH_TOLERANCE': return 'Meta con Tolerancia';
-            default: return tipo;
-        }
-    };
-
-
-
-
-    const info = RULE_DESCRIPTIONS[rule.tipo] || {
-        trigger: "Sin descripción disponible.",
-        setup: [],
-        logic: [],
-        result: "",
-        scenarios: [],
-        interaction: "",
-        errors: []
-    };
 
     return (
-        <div ref={setNodeRef} style={style} className="group">
+        <div ref={setNodeRef} style={style} {...attributes} className={cn(
+            "group relative mb-4 last:mb-0",
+            isDragging && "z-50 opacity-50"
+        )}>
             <Card className={cn(
-                "transition-all border-2 overflow-hidden",
-                rule.activo ? 'border-primary/20 bg-card/50 shadow-sm' : 'border-transparent bg-muted/30 opacity-60'
+                "overflow-hidden border-primary/10 shadow-sm hover:shadow-md transition-all duration-300",
+                !rule.activo && "opacity-60 bg-muted/30 grayscale-[0.5]",
+                rule.activo && "hover:border-primary/30"
             )}>
                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="details" className="border-none">
-                        <div className="flex items-center px-4 py-2 bg-muted/20 border-b border-border/50">
-                            <div
-                                className="text-muted-foreground cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded mr-2"
-                                {...attributes}
-                                {...listeners}
-                            >
-                                <GripVertical className="w-4 h-4" />
+                    <AccordionItem value={rule.id} className="border-none">
+                        <div className="flex items-center gap-4 px-4 py-3 bg-muted/20 border-b border-primary/5">
+                            <div {...listeners} className="cursor-grab active:cursor-grabbing p-1.5 hover:bg-primary/10 rounded-md transition-colors">
+                                <GripVertical className="w-4 h-4 text-muted-foreground/60" />
                             </div>
 
-                            <div className="flex-1 flex items-center gap-3">
-                                <Badge variant="outline" className="font-black text-[10px] w-6 h-6 flex items-center justify-center rounded-full p-0 bg-background">
-                                    {rule.prioridad}
-                                </Badge>
-                                <h4 className="font-bold text-xs uppercase tracking-wider">{getLabel(rule.tipo)}</h4>
-                                {usageCount > 0 && (
-                                    <Badge variant="secondary" className="text-[9px] font-bold px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-none">
-                                        {usageCount} USOS
-                                    </Badge>
-                                )}
+                            <div className="flex flex-col flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-black uppercase tracking-wide text-foreground">
+                                        {rule.tipo.replace(/_/g, ' ')}
+                                    </h4>
+                                    {rule.id.includes('copiloto') && (
+                                        <Badge variant="outline" className="bg-primary/5 text-primary text-[9px] h-4 border-primary/20 px-1 font-black">
+                                            COPILOTO
+                                        </Badge>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black text-muted-foreground uppercase opacity-50">Prioridad:</span>
+                                <div className="flex items-center gap-2 bg-background/50 px-2 py-1 rounded-md border border-primary/5">
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase">Uso</span>
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] font-mono h-5">
+                                        {usageCount}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex items-center gap-2 bg-background/50 px-2 py-1 rounded-md border border-primary/5">
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase">Prioridad</span>
                                     <select
                                         value={rule.prioridad}
-                                        onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                        className="h-6 text-[10px] font-black border rounded bg-background px-1 outline-none cursor-pointer"
+                                        onChange={(e) => updatePriority(rule.id, Number(e.target.value))}
+                                        className="text-xs font-mono bg-transparent outline-none border-none cursor-pointer text-primary"
                                     >
-                                        {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
+                                        {Array.from({ length: Math.max(10, totalRules) }, (_, i) => i + 1).map(p => (
                                             <option key={p} value={p}>{p}</option>
                                         ))}
                                     </select>
@@ -307,7 +269,7 @@ function SortableRuleItem({ rule, toggleRule, updateRuleMeta, updatePriority, to
                             </div>
                         </div>
 
-                        <AccordionTrigger className="px-4 py-3 hover:no-underline group-data-[state=open]:bg-primary/5 transition-colors">
+<AccordionTrigger className="px-4 py-3 hover:no-underline group-data-[state=open]:bg-primary/5 transition-colors">
                             <div className="flex items-center gap-2 text-left">
                                 <Info className="w-3.5 h-3.5 text-primary/60" />
                                 <span className="text-xs text-muted-foreground font-medium line-clamp-1">
