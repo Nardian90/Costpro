@@ -97,7 +97,7 @@ describe('IPV Invariants', () => {
     };
 
     const result = await engine.matchTransaction(tx);
-    const totalLinesValue = result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+    const totalLinesValue = result.lines.reduce((sum, l) => sum + l.total_amount_cents, 0);
     expect(totalLinesValue).toBe(500);
   });
 
@@ -150,7 +150,7 @@ describe('IPV Invariants', () => {
 
       const result = await engine2.matchTransaction(tx);
       // Invariant: total value must be 1000
-      const totalValue = result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+      const totalValue = result.lines.reduce((sum, l) => sum + l.total_amount_cents, 0);
       expect(totalValue).toBe(1000);
 
       // And prices must match the NEW catalog
