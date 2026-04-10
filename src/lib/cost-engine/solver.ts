@@ -1,13 +1,10 @@
 import { calculateFicha } from './index';
 import { mapUIToFicha } from './mapper';
-import { CostSheetData } from '@/types/cost-sheet';
+import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
 import { produce } from 'immer';
 
 /**
  * Solves for the coefficient needed in an annex to reach a target price.
- *
- * This version uses an exhaustive incremental search (as requested by the user)
- * to handle the discrete step-function nature of the cost engine caused by rounding.
  */
 export function solveCoefficient(
   uiData: CostSheetData,
@@ -70,8 +67,7 @@ export function solveCoefficient(
     return row ? row.total : res.summary.grandTotal;
   };
 
-  // Step 2: Incremental Search (The User Way)
-  // We sweep a broad range with 0.001 precision.
+  // Step 2: Incremental Search
   let bestCoef = 1;
   let minDiff = Infinity;
 
@@ -82,23 +78,110 @@ export function solveCoefficient(
         minDiff = diff;
         bestCoef = c;
     } else if (Math.abs(diff - minDiff) < 1e-10) {
-        // Prefer "cleaner" numbers (fewer decimals)
         if (String(c).length < String(bestCoef).length) {
             bestCoef = c;
         }
     }
   };
 
-  // Broad sweep: 0.000 to 5.000 with 0.001 steps
   for (let i = 0; i <= 5000; i++) {
       check(i / 1000);
   }
 
-  // Refinement sweep: around the best found so far with 0.0001 steps
   const center = bestCoef;
   for (let i = -10; i <= 10; i++) {
       check(center + i / 10000);
   }
 
   return bestCoef;
+}
+
+/**
+ * Advanced Solver: Finds the value for variableRowId that makes targetRowId equal to targetValue.
+ */
+export function solveForTarget(
+  uiData: CostSheetData,
+  targetRowId: string,
+  targetValue: number,
+  variableRowId: string
+): number {
+  const findAndSetRowValue = (rows: CostSheetRow[], idOrCls: string, newValue: number): boolean => {
+    for (const row of rows) {
+      if (row.id === idOrCls || row.classification === idOrCls) {
+        row.valorHistorico = newValue;
+        row.value = newValue;
+        return true;
+      }
+      if (row.children && findAndSetRowValue(row.children, idOrCls, newValue)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const simulate = (val: number): number => {
+    const simulatedData = produce(uiData, draft => {
+      for (const section of draft.sections) {
+        if (findAndSetRowValue(section.rows, variableRowId, val)) break;
+      }
+    });
+
+    // We map to ficha. mapUIToFicha will use the updated valorHistorico.
+    const engineFicha = mapUIToFicha(simulatedData as any);
+
+    // If the variable row is NOT a leaf, its total might be overwritten by calculateFicha (sum of children).
+    // We force it to be a leaf in the engine for this calculation.
+    const vRowIdx = engineFicha.rows.findIndex(r => r.id === variableRowId || r.classification === variableRowId);
+    if (vRowIdx !== -1) {
+      const vRow = engineFicha.rows[vRowIdx];
+      vRow.valorHistorico = val;
+      vRow.formaCalculo = 'FIJO';
+      vRow.formula = undefined;
+      // Also remove it from parent-child relationship so sum(children) doesn't overwrite it?
+      // Actually, we want it to BE the new value.
+    }
+
+    const result = calculateFicha(engineFicha);
+    const row = result.rows.find((r: any) => r.id === targetRowId || r.classification === targetRowId);
+    return row ? row.total : result.summary.grandTotal;
+  };
+
+  const y0 = simulate(0);
+  const testVal = 1000;
+  const yTest = simulate(testVal);
+
+  let slope = (yTest - y0) / testVal;
+
+  if (Math.abs(slope) < 1e-10) {
+    const yLarge = simulate(10000);
+    slope = (yLarge - y0) / 10000;
+    if (Math.abs(slope) < 1e-10) return 0;
+  }
+
+  let guess = (targetValue - y0) / slope;
+  return refineValue(guess, targetValue, simulate);
+}
+
+function refineValue(guess: number, targetValue: number, simulate: (v: number) => number): number {
+  if (!isFinite(guess)) return 0;
+
+  let bestVal = guess;
+  let minDiff = Math.abs(simulate(guess) - targetValue);
+
+  const refine = (v: number) => {
+    const currentRes = simulate(v);
+    const diff = Math.abs(currentRes - targetValue);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestVal = v;
+    }
+  };
+
+  for (let i = -5; i <= 5; i++) {
+    refine(guess + i * 0.01);
+    refine(guess + i * 0.001);
+    refine(guess + i * 0.0001);
+  }
+
+  return bestVal;
 }
