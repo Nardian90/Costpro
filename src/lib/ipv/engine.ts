@@ -15,6 +15,7 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_cash_limit: 20000, max_per_tx_threshold: 5000, mode: "SOFT" }, descripcion: "Inyección de Efectivo (Enterprise)" },
     { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
     { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
+    { id: "auto-supply", tipo: "AUTO_SUPPLY", prioridad: 7, activo: true, descripcion: "Auto-Suplencia (Sobrepagos)" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
   ];
 }
@@ -195,8 +196,16 @@ export class MatchingEngine {
 
                 for (const wildcard of wildcards) {
                     if (matchedProducts.has(wildcard.cod)) continue;
+                    let available = this.getVirtualStock(wildcard.cod);
+                    if (this.useStockLimit && !this.allowNegativeStock && available <= 0) {
+                        const success = await this.attemptDecomposition(wildcard.cod, addTrace);
+                        if (!success) continue;
+                        available = this.getVirtualStock(wildcard.cod);
+                    }
                     const qty = remainingForIdentification > 0 ? Math.max(1, Math.floor(remainingForIdentification / wildcard.precio_cents)) : 1;
-                    matchedProducts.set(wildcard.cod, { product: wildcard, qty });
+                    const finalQty = (this.useStockLimit && !this.allowNegativeStock) ? Math.min(qty, available) : qty;
+                    if (finalQty <= 0) continue;
+                    matchedProducts.set(wildcard.cod, { product: wildcard, qty: finalQty });
                     remainingForIdentification -= wildcard.precio_cents * qty;
                     addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod} (Stock: ${this.getVirtualStock(wildcard.cod)})`);
                     if (!appliedRules.includes('WILDCARDS')) appliedRules.push('WILDCARDS');
@@ -216,8 +225,14 @@ export class MatchingEngine {
 
         let available = this.getVirtualStock(item.product.cod);
         if (this.useStockLimit && !this.allowNegativeStock && available < item.qty) {
-            const success = await this.attemptDecomposition(item.product.cod);
-            if (!success && available < item.qty) continue;
+            const success = await this.attemptDecomposition(item.product.cod, addTrace);
+            if (!success) {
+                const stillAvailable = this.getVirtualStock(item.product.cod);
+                if (stillAvailable < item.qty) {
+                    addTrace(1, 'STOCK_LIMIT', 'FAIL', `Stock insuficiente para ${item.product.cod} (${stillAvailable} < ${item.qty})`);
+                    continue;
+                }
+            }
         }
 
         lines.push(await this.createLine(transaction, item.product, item.qty, coveredByTransfer, residual));
@@ -227,7 +242,8 @@ export class MatchingEngine {
 
     // R4: Manejo de Sobrepagos (Auto-Suplencia)
     // Si sobra transferencia, buscamos productos para agotar el saldo.
-    if (remainingTransfer > 1) {
+        const autoSupplyActive = this.rules.some(r => r.tipo === 'AUTO_SUPPLY' && r.activo);
+    if (remainingTransfer > 1 && autoSupplyActive) {
         const candidates = this.products
             .filter(p => p.activo && p.precio_cents > 0 && !matchedProducts.has(p.cod))
             .sort((a, b) => {
@@ -247,8 +263,11 @@ export class MatchingEngine {
 
             let available = this.getVirtualStock(candidate.cod);
             if (this.useStockLimit && !this.allowNegativeStock && available < qty) {
-                const success = await this.attemptDecomposition(candidate.cod);
-                if (!success && available < qty) continue;
+                const success = await this.attemptDecomposition(candidate.cod, addTrace);
+                if (!success) {
+                    const stillAvailable = this.getVirtualStock(candidate.cod);
+                    if (stillAvailable < qty) continue;
+                }
             }
 
             lines.push(await this.createLine(transaction, candidate, qty, coveredByTransfer, residual));
@@ -320,25 +339,41 @@ export class MatchingEngine {
     return lines;
   }
 
-  private async attemptDecomposition(productCod: string): Promise<boolean> {
+  private async attemptDecomposition(productCod: string, addTrace?: any): Promise<boolean> {
     const targetProduct = this.products.find(p => p.cod === productCod);
     if (!targetProduct || !targetProduct.id_grupo) return false;
-    if (isProductAMedida(targetProduct.um)) return false;
-    const ancestors = this.products.filter(p => p.cod_hijo === productCod);
+
+    // Evitar descomposiciones infinitas o de productos que no son hijos de nada
+    const ancestors = this.products.filter(p => p.cod_hijo === productCod && p.cod !== productCod);
+    if (ancestors.length === 0) return false;
+
     for (const ancestor of ancestors) {
       let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+
+      // Si el padre no tiene stock, intentamos descomponer al abuelo
       if (availableAncestorStock <= 0) {
-          const success = await this.attemptDecomposition(ancestor.cod);
+          const success = await this.attemptDecomposition(ancestor.cod, addTrace);
           if (success) availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
       }
+
       if (availableAncestorStock > 0) {
         const factor = ancestor.contenido_paquete || 1;
         this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
-        this.stockMap.set(targetProduct.cod, (this.stockMap.get(targetProduct.cod) || 0) + factor);
+        const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
+        this.stockMap.set(targetProduct.cod, currentTargetStock + factor);
+
         this.pendingMovements.push({
-            id: uuidv4(), fecha: new Date().toISOString(), producto_origen_cod: ancestor.cod, producto_destino_cod: targetProduct.cod,
-            cantidad_origen: 1, cantidad_destino: factor, tipo: 'DECOMPOSITION', created_at: new Date().toISOString()
+            id: uuidv4(),
+            fecha: new Date().toISOString(),
+            producto_origen_cod: ancestor.cod,
+            producto_destino_cod: targetProduct.cod,
+            cantidad_origen: 1,
+            cantidad_destino: factor,
+            tipo: 'DECOMPOSITION',
+            created_at: new Date().toISOString()
         });
+
+        if (addTrace) addTrace(1, 'DECOMPOSITION', 'SUCCESS', `Descompuesto ${ancestor.cod} -> ${targetProduct.cod} (Factor: ${factor})`);
         return true;
       }
     }

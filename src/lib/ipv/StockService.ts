@@ -48,12 +48,23 @@ export class StockService {
             const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
             const salidas = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
 
+            // Evitar doble resta: los movimientos vinculados a ventas ya están en 'salidas'
+            // Solo restamos 'sales' que NO tengan un movimiento asociado (casos legacy o manuales sin movimiento)
+            const salesWithMovement = await db.product_movements
+                .where('referencia_transaccion')
+                .anyOf(lines.map(l => l.transaction_ref))
+                .toArray();
+            const salesRefs = new Set(salesWithMovement.map(m => m.referencia_transaccion));
+
+            const orphanSales = lines.filter(l => !salesRefs.has(l.transaction_ref))
+                                    .reduce((sum, l) => sum + (l.cantidad || 0), 0);
+
             return {
                 initial,
                 entradas,
                 salidas,
                 sales,
-                final: initial + entradas - salidas - sales
+                final: initial + entradas - salidas - orphanSales
             };
         });
     }
@@ -100,11 +111,15 @@ export class StockService {
                 }
             }
 
+            const lineRefs = new Set(movements.map(m => m.referencia_transaccion).filter(Boolean));
             for (const l of lines) {
                 const stats = map.get(l.product_cod);
                 if (stats) {
                     stats.sales += (l.cantidad || 0);
-                    stats.final -= (l.cantidad || 0);
+                    // Solo restar de 'final' si no hay un movimiento que ya lo haya hecho
+                    if (!lineRefs.has(l.transaction_ref)) {
+                        stats.final -= (l.cantidad || 0);
+                    }
                 }
             }
 
