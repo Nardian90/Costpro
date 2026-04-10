@@ -1,12 +1,3 @@
-  it('should calculate metrics correctly', () => {
-    const metrics = calculateIPVMetrics(mockLines, mockTransactions);
-
-    expect(metrics.cashSales).toBe(1000);
-    expect(metrics.transferSales).toBe(1000);
-    expect(metrics.bankCredits).toBe(1000);
-    expect(metrics.bankDebits).toBe(200);
-    // 1000 bank credits / (1000 transfer sales * 100 multiplier) = 0.01
-    // La fórmula en el código es: (bankCredits / (transferSales * 100)) * 100
-    // En el mock: (1000 / (1000 * 100)) * 100 = 1
-    expect(metrics.healthPercent).toBe(1);
-  });
+import { formatCurrencyCents, formatDate } from '@/lib/utils';
+import { IPVPreviewModal } from './IPVPreviewModal';
+import { StockService } from '@/lib/ipv/StockService';
