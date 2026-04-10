@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { formatCurrencyCents, formatDate } from '@/lib/utils';
 import { IPVPreviewModal } from './IPVPreviewModal';
+import { StockService } from '@/lib/ipv/StockService';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
