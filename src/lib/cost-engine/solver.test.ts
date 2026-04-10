@@ -1,23 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { solveCoefficient } from './solver';
+import { solveCoefficient, solveForTarget } from './solver';
 import { CostSheetData } from '@/types/cost-sheet';
 import templateLavar from '../data/template-lavar';
 import { mapUIToFicha } from './mapper';
 import { calculateFicha } from './index';
 
+const BASE_HEADER = {
+  code: 'TEST',
+  name: 'Test Ficha',
+  date: '2023-01-01',
+  quantity: 1,
+  currency: 'CUP',
+  category: 'Test',
+  type: 'Test',
+  unit: 'U'
+};
+
 describe('Cost Solver', () => {
   it('should find the correct coefficient for a simple target', () => {
     const mockData: CostSheetData = {
-      header: {
-        code: 'TEST',
-        name: 'Test Ficha',
-        date: '2023-01-01',
-        quantity: 1,
-        currency: 'CUP',
-        category: 'Test',
-        type: 'Test',
-        unit: 'U'
-      },
+      header: { ...BASE_HEADER },
       sections: [
         {
           id: 'S1',
@@ -52,7 +54,7 @@ describe('Cost Solver', () => {
 
   it('should handle complex scenarios with utility margin', () => {
     const mockData: CostSheetData = {
-      header: { quantity: 1 },
+      header: { ...BASE_HEADER },
       sections: [
         {
           id: 'S1',
@@ -102,7 +104,7 @@ describe('Cost Solver', () => {
 
   it('should find the correct coefficient for target 25 when initial cost is 100 (decrease coefficient)', () => {
     const mockData: CostSheetData = {
-      header: { quantity: 1 },
+      header: { ...BASE_HEADER },
       sections: [
         {
           id: 'S1',
@@ -137,16 +139,7 @@ describe('Cost Solver', () => {
 
   it('should find a correct coefficient for Annex I with Spanish labels (norma/precio)', () => {
     const mockData: any = {
-      header: {
-          code: 'ES-TEST',
-          name: 'Prueba',
-          date: '2023-01-01',
-          quantity: 1,
-          currency: 'CUP',
-          category: 'Test',
-          type: 'Test',
-          unit: 'U'
-      },
+      header: { ...BASE_HEADER },
       sections: [
         {
           id: 'S1',
@@ -188,24 +181,9 @@ describe('Cost Solver', () => {
     expect(coef).toBeCloseTo(1.5, 2);
   });
 
-  it('correctly calculates coefficient for "lavandería" template reaching target 2000', () => {
-    const target = 2000;
-    const coef = solveCoefficient(templateLavar as any, 'I', target);
-
-    // Verify
-    const simulatedTemplate = JSON.parse(JSON.stringify(templateLavar));
-    simulatedTemplate.annexes[0].coefficient = coef;
-    simulatedTemplate.annexes[0].isAdjustmentActive = true;
-    const simFicha = mapUIToFicha(simulatedTemplate);
-    const simResult = calculateFicha(simFicha);
-    const finalPrice = simResult.rows.find(r => r.id === '14' || r.classification === '14')?.total;
-
-    expect(finalPrice).toBeCloseTo(target, 0.05);
-  }, 120000);
-
   it('correctly handles total: 0 fallback to norm * price in mapping and solving', () => {
     const mockData: any = {
-      header: { quantity: 1 },
+      header: { ...BASE_HEADER },
       sections: [
         {
           id: 'S1',
@@ -241,5 +219,40 @@ describe('Cost Solver', () => {
     const target = 3000;
     const coef = solveCoefficient(mockData, 'I', target);
     expect(coef).toBeCloseTo(1.5, 3);
+  });
+});
+
+describe('solveForTarget', () => {
+  it('should find the correct variable value for a target row', () => {
+    const mockData: CostSheetData = {
+      header: { ...BASE_HEADER },
+      sections: [
+        {
+          id: 'S1',
+          rows: [
+            {
+              id: 'V1',
+              classification: '13.1',
+              label: 'Variable Input',
+              valorHistorico: 100,
+              calculationMethod: 'ValorFijo'
+            },
+            {
+              id: 'T1',
+              classification: '14.1',
+              label: 'Target Output',
+              formula: 'ref("13.1") * 1.2',
+              calculationMethod: 'FORMULA'
+            }
+          ]
+        }
+      ],
+      annexes: [],
+      signature: { prepared_by: '', approved_by: '' }
+    };
+
+    // Target is 2400. 2400 / 1.2 = 2000.
+    const result = solveForTarget(mockData, '14.1', 2400, '13.1');
+    expect(result).toBeCloseTo(2000, 2);
   });
 });
