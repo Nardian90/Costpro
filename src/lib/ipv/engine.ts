@@ -229,7 +229,7 @@ export class MatchingEngine {
             if (!success) {
                 const stillAvailable = this.getVirtualStock(item.product.cod);
                 if (stillAvailable < item.qty) {
-                    addTrace(1, 'STOCK_LIMIT', 'BLOCKED', `Stock insuficiente para ${item.product.cod} (${stillAvailable} < ${item.qty})`);
+                    addTrace(1, 'STOCK_LIMIT', 'FAIL', `Stock insuficiente para ${item.product.cod} (${stillAvailable} < ${item.qty})`);
                     continue;
                 }
             }
