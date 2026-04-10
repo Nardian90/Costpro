@@ -62,17 +62,18 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
     const [timeFilter, setTimeFilter] = useState<'DAY' | 'MONTH' | 'YEAR'>('DAY');
 
     const metrics = useMemo(() => {
-        const total = transactions.length;
-        const matched = transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length;
-        const inProcess = transactions.filter(t => t.estado_conciliacion === 'PARCIAL' || (t.estado_conciliacion === 'PENDIENTE' && (t.applied_rules?.length ?? 0) > 0)).length;
-        const pending = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE' && (!t.applied_rules || t.applied_rules.length === 0)).length;
+        const filteredTransactions = transactions.filter(t => t.tipo !== "Db");
+        const total = filteredTransactions.length;
+        const matched = filteredTransactions.filter(t => t.estado_conciliacion === "COMPLETO").length;
+        const inProcess = filteredTransactions.filter(t => t.estado_conciliacion === "PARCIAL" || (t.estado_conciliacion === "PENDIENTE" && (t.applied_rules?.length ?? 0) > 0)).length;
+        const pending = filteredTransactions.filter(t => t.estado_conciliacion === "PENDIENTE" && (!t.applied_rules || t.applied_rules.length === 0)).length;
 
         const totalCredits = transactions
-            .filter(t => t.tipo === 'Cr')
+            .filter(t => t.tipo === "Cr")
             .reduce((sum, t) => sum + (t.importe_cents || 0), 0);
 
         const totalDebits = transactions
-            .filter(t => t.tipo === 'Db')
+            .filter(t => t.tipo === "Db")
             .reduce((sum, t) => sum + (t.importe_cents || 0), 0);
 
         return { total, matched, inProcess, pending, totalCredits, totalDebits };

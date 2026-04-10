@@ -75,10 +75,11 @@ export default function IPVView() {
   const errorCount = useLiveQuery(() => db.ingestion_errors.count());
 
   const stats = useMemo(() => {
-    const total = transactions?.length || 0;
-    const squared = transactions?.filter(t => t.estado_conciliacion === 'COMPLETO').length || 0;
-    const inProcess = transactions?.filter(t => t.estado_conciliacion === 'PARCIAL').length || 0;
-    const pending = transactions?.filter(t => t.estado_conciliacion === 'PENDIENTE').length || 0;
+    const filteredTransactions = transactions?.filter(t => t.tipo !== "Db") || [];
+    const total = filteredTransactions.length;
+    const squared = filteredTransactions.filter(t => t.estado_conciliacion === "COMPLETO").length;
+    const inProcess = filteredTransactions.filter(t => t.estado_conciliacion === "PARCIAL" || (t.estado_conciliacion === "PENDIENTE" && (t.applied_rules?.length ?? 0) > 0)).length;
+    const pending = filteredTransactions.filter(t => t.estado_conciliacion === "PENDIENTE" && (!t.applied_rules || t.applied_rules.length === 0)).length;
 
     const totalSales = reconciliationLines?.reduce((sum, l) => sum + l.total_amount_cents, 0) || 0;
     const totalEfectivo = reconciliationLines?.reduce((sum, l) => sum + l.cash_amount_cents, 0) || 0;
