@@ -175,7 +175,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   }, [path, updateValue]);
 
 
-  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
+  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '12.1', '13', '13.1', '13.2', '13.3', '14', '14.1', '15', '15.1', '16', '16.1'].includes(String(row.id));
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
@@ -225,9 +225,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             ) : (
                 <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
                     {row.label}
-                    {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
+                    {['13', '13.1'].includes(row.id) && (calculatedValues?.['12.1']?.total ?? calculatedValues?.['12']?.total) > 0 && (
                         <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-black bg-primary/10 text-primary border border-primary/20">
-                            {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
+                            {(((calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) / (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total)) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
                 </span>
