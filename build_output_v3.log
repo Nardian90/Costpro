@@ -23,9 +23,9 @@ Import trace:
     ./src/app/api/academy/generate/route.ts
 
 
-✓ Compiled successfully in 25.1s
+✓ Compiled successfully in 23.9s
   Running TypeScript ...
-  Finished TypeScript in 36.8s ...
+  Finished TypeScript in 32.3s ...
   Collecting page data using 3 workers ...
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
@@ -36,7 +36,7 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
   Generating static pages using 3 workers (14/29)
   Generating static pages using 3 workers (21/29)
-✓ Generating static pages using 3 workers (29/29) in 984ms
+✓ Generating static pages using 3 workers (29/29) in 966ms
   Finalizing page optimization ...
 
 Route (app)
