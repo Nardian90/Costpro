@@ -387,9 +387,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
           // Infer semantic type
           let type: RowSemanticType = 'COST';
-          if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
-          if (r.id === '13.2') type = 'TAX';
-          if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
+          if (['13', '13.1', '13.2'].includes(r.id)) type = 'MARGIN';
+          if ((r.id === '13.2' || r.id === '13.3')) type = 'TAX';
+          if (['14', '14.1', '12', '12.1', '5'].includes(r.id)) type = 'TOTAL';
 
           // Map calculation method
           let formula = r.formula || r.totalFormula;

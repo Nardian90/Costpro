@@ -48,7 +48,7 @@ export const CostSheetSummary: React.FC = () => {
 
   const utilityRow = useMemo(() => {
     for (const section of data.sections) {
-      const row = section.rows.find(r => r.id === '13');
+      const row = section.rows.find(r => ['13', '13.1'].includes(r.id));
       if (row) return row;
     }
     return null;
@@ -66,9 +66,9 @@ export const CostSheetSummary: React.FC = () => {
     }
   }, [currentUtilityPercent, isSimulating]);
 
-  const totalCost = calculatedValues['12']?.total || 0;
-  const salePrice = calculatedValues['14']?.total || 0;
-  const utilityValue = calculatedValues['13']?.total || 0;
+  const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
+  const salePrice = (calculatedValues['14.1']?.total ?? calculatedValues['14']?.total) || 0;
+  const utilityValue = (calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) || 0;
 
   const handleTargetPriceChange = (value: string) => {
     setTargetPrice(value);
@@ -313,7 +313,7 @@ export const CostSheetSummary: React.FC = () => {
                 </Badge>
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
-                {data.sections.filter(s => s.id !== '13' && s.id !== '14').map(section => (
+                {data.sections.filter(s => !['13', '13.1', '13.2', '13.3', '14', '14.1'].includes(s.id)).map(section => (
                   <div key={section.id} className="flex items-center space-x-2 border rounded-md p-2 hover:bg-muted/50 transition-colors">
                     <Checkbox
                       id={`section-${section.id}`}

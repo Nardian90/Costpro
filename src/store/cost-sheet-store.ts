@@ -265,9 +265,9 @@ export const useCostSheetStore = create<CostSheetState>()(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
             for (const section of draft.data.sections) {
-              const row = section.rows.find(r => r.id === '13');
+              const row = section.rows.find(r => ['13', '13.1'].includes(r.id));
               if (row) {
-                row.formula = `ref('12') * ${(percentage / 100).toFixed(4)}`;
+                const baseRef = row.formula?.includes('ref(\'12.1\')') ? '12.1' : '12'; row.formula = `ref('${baseRef}') * ${(percentage / 100).toFixed(4)}`;
                 row.calculationMethod = 'FORMULA';
                 break;
               }

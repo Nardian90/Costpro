@@ -68,7 +68,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
   const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
 
   const hasChildren = row.children && row.children.length > 0;
-  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
+  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '12.1', '13', '13.1', '13.2', '13.3', '14', '14.1', '15', '15.1', '16', '16.1'].includes(String(row.id));
 
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
@@ -139,9 +139,9 @@ const RowCard: React.FC<RowCardProps> = memo(({
                   >
                     {row.label}
                   </span>
-                  {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
+                  {['13', '13.1'].includes(row.id) && (calculatedValues?.['12.1']?.total ?? calculatedValues?.['12']?.total) > 0 && (
                     <span className="mt-1 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
+                      {(((calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) / (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total)) * 100).toFixed(1)}% s/ costo
                     </span>
                   )}
                 </div>
@@ -342,9 +342,9 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
 
   // KPI Calculation logic matching Summary
   const getTotal = (id: string) => calculatedValues?.[id]?.total || 0;
-  const totalCost = getTotal('12');
-  const utility = getTotal('13');
-  const finalPrice = getTotal('14');
+  const totalCost = (getTotal('12.1') || getTotal('12'));
+  const utility = (getTotal('13.1') || getTotal('13'));
+  const finalPrice = (getTotal('14.1') || getTotal('14'));
 
   // Indirect Expenses Coefficient
   const g4 = getTotal('4');
