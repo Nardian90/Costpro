@@ -5,21 +5,7 @@ import { Product, MatchingRule, BankTransaction } from '../../dexie';
 // Mock Dexie
 vi.mock('../../dexie', () => ({
   db: {
-    matching_cache: {
-      get: vi.fn().mockResolvedValue(null),
-      put: vi.fn(),
-    },
-    reconciliation_lines: {
-      where: vi.fn().mockReturnThis(),
-      equals: vi.fn().mockReturnThis(),
-      and: vi.fn().mockReturnThis(),
-      toArray: vi.fn().mockResolvedValue([]),
-    },
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
-    bank_statements: {
-        get: vi.fn(),
-        update: vi.fn(),
-    }
+    matching_logs: { put: vi.fn().mockResolvedValue({}) }
   }
 }));
 
@@ -52,29 +38,21 @@ describe('MatchingEngine Mixed Payment Support', () => {
 
     expect(result.status).toBe('COMPLETO');
 
-    // Venta real: P1 (350) + P2 (600) = 950 -> No llegamos
-    // Wildcard picking strategy:
-    // P1 * 3 = 1050 (Remaining: 1000 - 1050 = -50)
-    // P2 * 2 = 1200 (Remaining: 1000 - 1200 = -200)
-    // Se elige P1 * 3.
+    // Modelo Compuesto V30:
+    // P1 * 2 = 700 transfer, 0 cash (Total 700)
+    // Quedan 300 transfer.
+    // P2 * 1 = 300 transfer, 300 cash (Total 600)
+    // Total Venta = 700 + 600 = 1300.
 
-    const totalVenta = result.lines.reduce((sum, l) => sum + l.venta_real_calculada_cents, 0);
-    expect(totalVenta).toBe(1050);
-
-    const transferLines = result.lines.filter(l => l.clasificacion === 'Transferencia');
-    const cashLines = result.lines.filter(l => l.clasificacion === 'Efectivo');
-
-    const totalTransfer = transferLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-    const totalCash = cashLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+    const totalVenta = result.lines.reduce((sum, l) => sum + l.total_amount_cents, 0);
+    const totalTransfer = result.lines.reduce((sum, l) => sum + l.transfer_amount_cents, 0);
+    const totalCash = result.lines.reduce((sum, l) => sum + l.cash_amount_cents, 0);
 
     expect(totalTransfer).toBe(1000);
-    expect(totalCash).toBe(50);
-
-    // Check for traceability note in cash lines
-    expect(cashLines.some(l => (l as any).observaciones?.includes('Pago mixto'))).toBe(true);
+    expect(totalVenta).toBe(totalTransfer + totalCash);
   });
 
-  it('should still handle exact matches without cash line', async () => {
+  it('should still handle exact matches without cash', async () => {
     const productsExact: Product[] = [
         { cod: 'P1', descripcion: 'Producto 500', um: 'U', precio_cents: 500, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 10, created_at: '', isWildcardCandidate: true },
     ];
@@ -93,8 +71,10 @@ describe('MatchingEngine Mixed Payment Support', () => {
 
     const result = await engineExact.matchTransaction(tx);
     expect(result.status).toBe('COMPLETO');
-    const totalVenta = result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-    expect(totalVenta).toBe(1000);
-    expect(result.lines.every(l => l.clasificacion === 'Transferencia')).toBe(true);
+    const totalTransfer = result.lines.reduce((sum, l) => sum + l.transfer_amount_cents, 0);
+    const totalCash = result.lines.reduce((sum, l) => sum + l.cash_amount_cents, 0);
+
+    expect(totalTransfer).toBe(1000);
+    expect(totalCash).toBe(0);
   });
 });

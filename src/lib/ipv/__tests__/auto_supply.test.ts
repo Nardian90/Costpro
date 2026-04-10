@@ -17,6 +17,7 @@ describe('MatchingEngine - R4 Auto-Supply', () => {
 
   const rules: MatchingRule[] = [
     { id: '1', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+    { id: 'auto-supply', tipo: 'AUTO_SUPPLY', prioridad: 7, activo: true },
   ];
 
   it('should auto-supply to exhaust excess transfer (R4) prioritizing low stock (R1)', async () => {
@@ -29,21 +30,18 @@ describe('MatchingEngine - R4 Auto-Supply', () => {
       importe_cents: 1200,
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
-      observaciones: 'P1', // HARD_REF no está activa en este test
+      observaciones: 'P1',
       created_at: '',
       ingestion_hash: ''
     };
 
     const res = await engine.matchTransaction(tx);
 
-    // P2 tiene stock 1, P1 tiene stock 10.
-    // Auto-supply prioriza bajo stock (P2).
     expect(res.appliedRules).toContain('AUTO_SUPPLY');
 
     const p2Line = res.lines.find(l => l.product_cod === 'P2');
     expect(p2Line).toBeDefined();
-    // P2 cuesta 500. Transferencia disponible 1200.
-    // P2 toma 500 de transferencia.
+    // P2 cuesta 500. Se agota primero por stock bajo.
     expect(p2Line?.transfer_amount_cents).toBe(500);
     expect(p2Line?.cash_amount_cents).toBe(0);
 
