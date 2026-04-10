@@ -12,7 +12,10 @@ import {
   X,
   Settings2,
   Layers,
-  Target
+  Target,
+  Wand2,
+  Search,
+  ChevronDown
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -36,9 +39,13 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { solveForTarget } from '@/lib/cost-engine/solver';
+import { CostSheetRow } from '@/types/cost-sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 export const CostSheetSummary: React.FC = () => {
-  const { data, updateUtilityFormula, updateIndirectConfig } = useCostSheetStore();
+  const { data, updateUtilityFormula, updateIndirectConfig, updateValue } = useCostSheetStore();
   const { calculatedValues } = useCostSheetCalculator(data);
 
   // Local state for "Precio de Venta Objetivo" simulation
@@ -46,17 +53,26 @@ export const CostSheetSummary: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
   const [tempUtility, setTempUtility] = useState<number>(0);
 
+  // Advanced Solver State
+  const [solverTargetRow, setSolverTargetRow] = useState<string>('14.1');
+  const [solverVariableRow, setSolverVariableRow] = useState<string>('13.1');
+  const [solverTargetValue, setSolverTargetValue] = useState<string>('');
+  const [isSolverRunning, setIsSolverRunning] = useState(false);
+
+  const [targetSearch, setTargetSearch] = useState('');
+  const [variableSearch, setVariableSearch] = useState('');
+
   const utilityRow = useMemo(() => {
     for (const section of data.sections) {
       const row = section.rows.find(r => ['13', '13.1'].includes(r.id));
       if (row) return row;
     }
     return null;
-  }, [data]);
+  }, [data.sections]);
 
   const currentUtilityPercent = useMemo(() => {
-    if (!utilityRow?.formula) return 0;
-    const match = utilityRow.formula.match(/\*\s*([0-9.]+)/);
+    if (!utilityRow || !utilityRow.formula) return 0;
+    const match = utilityRow.formula.match(/\*\s*([\d.]+)/);
     return match ? parseFloat(match[1]) * 100 : 0;
   }, [utilityRow]);
 
@@ -66,9 +82,10 @@ export const CostSheetSummary: React.FC = () => {
     }
   }, [currentUtilityPercent, isSimulating]);
 
-  const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
-  const salePrice = (calculatedValues['14.1']?.total ?? calculatedValues['14']?.total) || 0;
-  const utilityValue = (calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) || 0;
+  const totalCost = useMemo(() => {
+    const costRow = data.sections.flatMap(s => s.rows).find(r => ['12', '12.1'].includes(r.id));
+    return costRow ? (calculatedValues[costRow.id]?.total || 0) : 0;
+  }, [data.sections, calculatedValues]);
 
   const handleTargetPriceChange = (value: string) => {
     setTargetPrice(value);
@@ -84,6 +101,7 @@ export const CostSheetSummary: React.FC = () => {
     updateUtilityFormula(tempUtility);
     setIsSimulating(false);
     setTargetPrice('');
+    toast.success('Simulación aplicada correctamente');
   };
 
   const cancelSimulation = () => {
@@ -92,6 +110,50 @@ export const CostSheetSummary: React.FC = () => {
     setTempUtility(currentUtilityPercent);
   };
 
+  const handleRunAdvancedSolver = () => {
+    const numericTarget = parseFloat(solverTargetValue);
+    if (isNaN(numericTarget)) {
+      toast.error('Por favor, ingrese un valor objetivo válido');
+      return;
+    }
+
+    setIsSolverRunning(true);
+    setTimeout(() => {
+      try {
+        const result = solveForTarget(data, solverTargetRow, numericTarget, solverVariableRow);
+
+        // Find where the variable row is and update it in the store
+        let path: (string | number)[] | null = null;
+        data.sections.forEach((section, sIdx) => {
+          section.rows.forEach((row, rIdx) => {
+            if (row.id === solverVariableRow || row.classification === solverVariableRow) {
+              path = ['sections', sIdx, 'rows', rIdx, row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value'];
+            }
+            // Check children if any
+            if (row.children) {
+              row.children.forEach((child, cIdx) => {
+                if (child.id === solverVariableRow || child.classification === solverVariableRow) {
+                  path = ['sections', sIdx, 'rows', rIdx, 'children', cIdx, child.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value'];
+                }
+              });
+            }
+          });
+        });
+
+        if (path) {
+          updateValue(path, result);
+          setIsSimulating(true);
+          toast.success(`Solver completado. Variable ajustada a ${result.toFixed(4)}`);
+        } else {
+          toast.error('No se pudo encontrar la fila variable');
+        }
+      } catch (e) {
+        toast.error('Error al ejecutar el solver');
+      } finally {
+        setIsSolverRunning(false);
+      }
+    }, 100);
+  };
 
   const handleAutoCalculateCoefficient = () => {
     const selectedIds = data.indirectConfig?.selectedSections || [];
@@ -114,62 +176,58 @@ export const CostSheetSummary: React.FC = () => {
     updateIndirectConfig({ selectedSections: updated });
   };
 
+  const allRows = useMemo(() => {
+    const flattened: { id: string, label: string, cls: string }[] = [];
+    const processRows = (rows: CostSheetRow[]) => {
+      rows.forEach(r => {
+        flattened.push({ id: r.id, label: r.label, cls: r.classification || r.id });
+        if (r.children) processRows(r.children);
+      });
+    };
+    data.sections.forEach(s => processRows(s.rows));
+    return flattened;
+  }, [data.sections]);
+
+  const filteredTargetRows = allRows.filter(r =>
+    r.label.toLowerCase().includes(targetSearch.toLowerCase()) ||
+    r.cls.includes(targetSearch)
+  ).slice(0, 10);
+
+  const filteredVariableRows = allRows.filter(r =>
+    r.label.toLowerCase().includes(variableSearch.toLowerCase()) ||
+    r.cls.includes(variableSearch)
+  ).slice(0, 10);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" />
-              Precio de Venta
-            </CardTitle>
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary/60">Costo Directo</CardDescription>
+            <CardTitle className="text-2xl font-black font-mono">{formatCurrency(totalCost)}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {formatCurrency(salePrice)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Final al consumidor
-            </p>
-          </CardContent>
         </Card>
-
-        <Card>
+        <Card className="bg-green-50/50 border-green-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-blue-500" />
-              Costo Total
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-green-600/60">Utilidad Bruta</CardDescription>
+            <CardTitle className="text-2xl font-black font-mono text-green-700">
+              {formatCurrency(calculatedValues[utilityRow?.id || '13.1']?.total || 0)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(totalCost)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Base acumulada (Sección 12)
-            </p>
-          </CardContent>
         </Card>
-
-        <Card>
+        <Card className="bg-blue-50/50 border-blue-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Percent className="w-4 h-4 text-green-500" />
-              % de Utilidad
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-blue-600/60">Precio Final (100%)</CardDescription>
+            <CardTitle className="text-2xl font-black font-mono text-blue-700">
+              {formatCurrency(calculatedValues['14.1']?.total || calculatedValues['14']?.total || 0)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {isSimulating ? tempUtility.toFixed(2) : currentUtilityPercent.toFixed(2)}%
-            </div>
-            <Progress value={Math.min(100, isSimulating ? tempUtility : currentUtilityPercent)} className="h-1.5 mt-2" />
-          </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
+        <Card className="overflow-hidden border-2 border-primary/5">
+          <CardHeader className="bg-primary/5 border-b border-primary/10">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               Simulador de Margen y Precio
@@ -178,7 +236,7 @@ export const CostSheetSummary: React.FC = () => {
               Ajuste el % de utilidad o defina un precio objetivo
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium">% de Utilidad</label>
@@ -222,21 +280,127 @@ export const CostSheetSummary: React.FC = () => {
               </div>
             </div>
 
+            {/* Advanced Solver Mini-Panel */}
+            <div className="pt-6 border-t space-y-4">
+               <div className="flex items-center gap-2 mb-2">
+                 <Wand2 className="w-4 h-4 text-primary" />
+                 <span className="text-xs font-black uppercase tracking-widest text-primary/70">Solver Avanzado</span>
+               </div>
+
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase text-muted-foreground">Objetivo (Fila)</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full justify-between font-mono text-[10px]">
+                          {solverTargetRow}
+                          <ChevronDown className="w-3 h-3 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-[200px]" align="start">
+                        <div className="flex items-center border-b p-2">
+                          <Search className="w-3 h-3 mr-2 opacity-50" />
+                          <input
+                            className="bg-transparent text-xs outline-none w-full"
+                            placeholder="Buscar fila..."
+                            value={targetSearch}
+                            onChange={e => setTargetSearch(e.target.value)}
+                          />
+                        </div>
+                        <ScrollArea className="h-40">
+                          {filteredTargetRows.map(r => (
+                            <button
+                              key={r.id}
+                              className="w-full text-left p-2 hover:bg-muted text-[10px] flex flex-col"
+                              onClick={() => { setSolverTargetRow(r.id); setTargetSearch(''); }}
+                            >
+                              <span className="font-bold">{r.cls}</span>
+                              <span className="text-muted-foreground truncate">{r.label}</span>
+                            </button>
+                          ))}
+                        </ScrollArea>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase text-muted-foreground">Valor Deseado</Label>
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      className="h-8 text-[10px] font-mono"
+                      value={solverTargetValue}
+                      onChange={e => setSolverTargetValue(e.target.value)}
+                    />
+                  </div>
+               </div>
+
+               <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Variable a Ajustar</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full justify-between font-mono text-[10px]">
+                        {solverVariableRow}
+                        <ChevronDown className="w-3 h-3 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[200px]" align="start">
+                      <div className="flex items-center border-b p-2">
+                        <Search className="w-3 h-3 mr-2 opacity-50" />
+                        <input
+                          className="bg-transparent text-xs outline-none w-full"
+                          placeholder="Buscar variable..."
+                          value={variableSearch}
+                          onChange={e => setVariableSearch(e.target.value)}
+                        />
+                      </div>
+                      <ScrollArea className="h-40">
+                        {filteredVariableRows.map(r => (
+                          <button
+                            key={r.id}
+                            className="w-full text-left p-2 hover:bg-muted text-[10px] flex flex-col"
+                            onClick={() => { setSolverVariableRow(r.id); setVariableSearch(''); }}
+                          >
+                            <span className="font-bold">{r.cls}</span>
+                            <span className="text-muted-foreground truncate">{r.label}</span>
+                          </button>
+                        ))}
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+               </div>
+
+               <Button
+                variant="secondary"
+                size="sm"
+                className="w-full gap-2 text-[10px] font-black uppercase tracking-widest"
+                disabled={isSolverRunning}
+                onClick={handleRunAdvancedSolver}
+               >
+                 {isSolverRunning ? (
+                   <RotateCcw className="w-3 h-3 animate-spin" />
+                 ) : (
+                   <Calculator className="w-3 h-3" />
+                 )}
+                 Ejecutar Solver
+               </Button>
+            </div>
+
             {isSimulating && (
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-2 animate-in fade-in slide-in-from-bottom-2">
                 <Button className="flex-1 gap-2" size="sm" onClick={applySimulation}>
-                  <Check className="w-4 h-4" /> Aplicar
+                  <Check className="w-4 h-4" /> Aplicar Cambios
                 </Button>
                 <Button variant="outline" className="flex-1 gap-2" size="sm" onClick={cancelSimulation}>
-                  <X className="w-4 h-4" /> Cancelar
+                  <X className="w-4 h-4" /> Descartar
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="border-2 border-blue-500/5">
+          <CardHeader className="bg-blue-500/5 border-b border-blue-500/10">
             <CardTitle className="text-base flex items-center gap-2">
               <Settings2 className="w-5 h-5 text-blue-500" />
               Gastos Indirectos
@@ -245,7 +409,7 @@ export const CostSheetSummary: React.FC = () => {
               Configuración de coeficientes y prorrateo
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg mb-4">
               <Button
                 variant={data.indirectConfig?.mode !== 'fixed' ? 'secondary' : 'ghost'}
