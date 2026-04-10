@@ -125,6 +125,15 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
             step: 100,
             help: 'Tiempo máximo para buscar combinación exacta',
             default: 2000
+          },
+          {
+            key: "min_match_percent",
+            label: "Porcentaje Mínimo de Coincidencia (%)",
+            type: "number",
+            min: 10,
+            max: 100,
+            help: "Acepta combinaciones que cubran al menos este porcentaje de la transferencia.",
+            default: 90
           }
         ]
       }

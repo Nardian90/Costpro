@@ -106,23 +106,36 @@ export class MatchingEngine {
             case 'HARD_REF': {
                 const match = this.products.find(p => transaction.observaciones?.includes(p.cod) || p.cod === transaction.referencia_origen);
                 if (match) {
-                    const qty = Math.max(1, Math.floor(remainingForIdentification / match.precio_cents));
-                    matchedProducts.set(match.cod, { product: match, qty });
-                    remainingForIdentification -= match.precio_cents * qty;
-                    addTrace(rule.prioridad, 'HARD_REF', 'SUCCESS', `Match ${match.cod}`);
-                    appliedRules.push('HARD_REF');
+                    const qty = Math.floor(remainingForIdentification / match.precio_cents);
+                    if (qty > 0) {
+                        matchedProducts.set(match.cod, { product: match, qty });
+                        remainingForIdentification -= match.precio_cents * qty;
+                        addTrace(rule.prioridad, "HARD_REF", "SUCCESS", `Match ${match.cod} (qty: ${qty})`);
+                        appliedRules.push("HARD_REF");
+                    }
                 }
                 break;
             }
-            case 'EXACT_SUM': {
+            case "EXACT_SUM": {
                 if (remainingForIdentification <= 0) break;
-                const match = this.products.find(p => p.precio_cents > 0 && remainingForIdentification % p.precio_cents === 0);
-                if (match) {
-                    const qty = remainingForIdentification / match.precio_cents;
-                    matchedProducts.set(match.cod, { product: match, qty });
-                    remainingForIdentification = 0;
-                    addTrace(rule.prioridad, 'EXACT_SUM', 'SUCCESS', `Match Sum ${match.cod}`);
-                    appliedRules.push('EXACT_SUM');
+                const minMatchPercent = rule.meta?.min_match_percent ?? 90;
+                const timeoutMs = rule.meta?.timeout_ms ?? 2000;
+                const maxDepth = rule.meta?.max_depth ?? 12;
+                const solverResult = this.solveCombinatorial(remainingForIdentification, maxDepth, timeoutMs);
+                const matchedAmount = solverResult.total;
+                const matchPercent = (matchedAmount / remainingForIdentification) * 100;
+                if (matchedAmount > 0 && matchPercent >= minMatchPercent) {
+                    for (const item of solverResult.items) {
+                        const existing = matchedProducts.get(item.product.cod);
+                        if (existing) {
+                            existing.qty += item.qty;
+                        } else {
+                            matchedProducts.set(item.product.cod, { product: item.product, qty: item.qty });
+                        }
+                    }
+                    remainingForIdentification -= matchedAmount;
+                    addTrace(rule.prioridad, "EXACT_SUM", "SUCCESS", `Combinación: ${matchedAmount} (${matchPercent.toFixed(1)}%)`);
+                    appliedRules.push("EXACT_SUM");
                 }
                 break;
             }
@@ -334,6 +347,49 @@ export class MatchingEngine {
       }
     }
     return lines;
+  }
+
+
+  private solveCombinatorial(target: number, maxDepth: number, timeoutMs: number): { items: { product: Product, qty: number }[], total: number } {
+    const startTime = Date.now();
+    const eligibleProducts = this.products
+        .filter(p => p.precio_cents > 0 && p.precio_cents <= target)
+        .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    let bestCombination: { product: Product, qty: number }[] = [];
+    let bestTotal = 0;
+
+    const backtrack = (remaining: number, startIndex: number, currentCount: number, currentItems: Map<string, { product: Product, qty: number }>) => {
+        if (Date.now() - startTime > timeoutMs) return;
+        const currentTotal = target - remaining;
+        if (currentTotal > bestTotal) {
+            bestTotal = currentTotal;
+            bestCombination = Array.from(currentItems.values()).map(item => ({...item}));
+        }
+        if (remaining === 0 || currentCount >= maxDepth || startIndex >= eligibleProducts.length) return;
+
+        for (let i = startIndex; i < eligibleProducts.length; i++) {
+            const p = eligibleProducts[i];
+            if (this.useStockLimit && !this.allowNegativeStock) {
+                const usedSoFar = currentItems.get(p.cod)?.qty || 0;
+                const available = this.getVirtualStock(p.cod);
+                if (usedSoFar >= available) continue;
+            }
+            if (p.precio_cents <= remaining) {
+                const existing = currentItems.get(p.cod);
+                if (existing) existing.qty++;
+                else currentItems.set(p.cod, { product: p, qty: 1 });
+                backtrack(remaining - p.precio_cents, i, currentCount + 1, currentItems);
+                if (bestTotal === target) return;
+                const item = currentItems.get(p.cod)!;
+                if (item.qty > 1) item.qty--;
+                else currentItems.delete(p.cod);
+            }
+        }
+    };
+
+    backtrack(target, 0, 0, new Map());
+    return { items: bestCombination, total: bestTotal };
   }
 
   private async attemptDecomposition(productCod: string, addTrace?: any): Promise<boolean> {
