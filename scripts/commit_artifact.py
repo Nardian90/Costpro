@@ -18,9 +18,9 @@ STATE_PATH = "docs/automation/pipeline_state.yaml"
 
 def load_config():
     config = {
-        "artifactStore": "public/",
-        "metadataStore": "public/_meta/",
-        "archiveStore": "public/_archive/",
+        "artifactStore": "knowledge/architecture/",
+        "metadataStore": "knowledge/architecture/_meta/",
+        "archiveStore": "knowledge/architecture/_archive/",
         "quarantinePath": "docs/automation/quarantine/",
         "reviewQueue": "docs/automation/review_queue.json",
         "confidenceThreshold": 90
@@ -44,7 +44,7 @@ def get_destination_base(name, source_phase):
     if name == "architecture_audit":
         return "docs/audits/"
     if name in ["system_architecture", "architecture_manifest", "architecture_graph", "architecture_changes", "architecture_metrics"]:
-        return STATE.get("artifactStore", "public/")
+        return STATE.get("artifactStore", "knowledge/architecture/")
     if name in ["components", "views", "workflows", "master_user_manual", "user_help"]:
         return "knowledge/"
     if name == "knowledge_graph":
@@ -53,9 +53,9 @@ def get_destination_base(name, source_phase):
         return "knowledge/"
     if name.startswith("ai_context") or name == "vector_index":
         return "ai_context/"
-    if source_phase <= 6: return STATE.get("artifactStore", "public/")
+    if source_phase <= 6: return STATE.get("artifactStore", "knowledge/architecture/")
     if source_phase <= 13: return "knowledge/"
-    return STATE.get("artifactStore", "public/")
+    return STATE.get("artifactStore", "knowledge/architecture/")
 
 def canonical_json(obj):
     return json.dumps(obj, separators=(',', ':'), sort_keys=True, ensure_ascii=False)

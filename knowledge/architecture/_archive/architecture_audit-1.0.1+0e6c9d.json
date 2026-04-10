@@ -585,35 +585,23 @@
         "architecture_audit"
       ],
       "cycle": 3
-    },
-    {
-      "phase": 6,
-      "phaseName": "Architecture Health",
-      "startTime": "2026-04-10T01:37:43.759484+00:00Z",
-      "endTime": "2026-04-10T01:37:43.850461+00:00Z",
-      "durationMs": 90,
-      "status": "rolled_back",
-      "artifactsGenerated": [
-        "architecture_audit"
-      ],
-      "cycle": 3
     }
   ],
   "performanceSummary": {
-    "averagePhaseDurationMs": 40131,
+    "averagePhaseDurationMs": 40965,
     "slowestPhase": 7,
     "slowestPhaseDurationMs": 1200000,
     "fastestPhase": 14,
     "fastestPhaseDurationMs": 0,
     "lastCycleDurationMs": 370759,
-    "lastUpdated": "2026-04-10T01:37:43.850941+00:00Z"
+    "lastUpdated": "2026-04-10T01:28:28.234388Z"
   },
   "systemHealth": {
-    "integrityScore": 71.0,
+    "integrityScore": 84.0,
     "documentationCoverage": 0,
     "ragIndexStatus": "offline",
     "quarantineCount": 0,
-    "rollbackCount": 1
+    "rollbackCount": 0
   },
   "healthMetrics": {
     "integrityScore": 71.0,
