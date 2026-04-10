@@ -440,12 +440,12 @@ export function MatchingRulesEditor() {
 
   // Conteo de transacciones por estado
   const stats = useLiveQuery(async () => {
-    const transactions = await db.bank_statements.toArray();
+    const transactions = await db.bank_statements.filter(t => t.tipo !== "Db").toArray();
     return {
         total: transactions.length,
-        pendientes: transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length,
-        parciales: transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length,
-        completas: transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length
+        pendientes: transactions.filter(t => t.estado_conciliacion === "PENDIENTE" && (!t.applied_rules || t.applied_rules.length === 0)).length,
+        parciales: transactions.filter(t => t.estado_conciliacion === "PARCIAL" || (t.estado_conciliacion === "PENDIENTE" && (t.applied_rules?.length ?? 0) > 0)).length,
+        completas: transactions.filter(t => t.estado_conciliacion === "COMPLETO").length
     };
   });
 
