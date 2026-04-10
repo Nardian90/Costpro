@@ -32,31 +32,46 @@ export class StockService {
         return stats.final;
     }
 
-    static async getProductDetailedStats(productCod: string): Promise<DetailedStockStats> {
+    /**
+     * Calcula las estadísticas de stock hasta una fecha específica (inclusive).
+     * Si no se proporciona fecha, calcula hasta el presente.
+     */
+    static async getProductDetailedStats(productCod: string, upToDate?: string): Promise<DetailedStockStats> {
         return PersistenceService.readSafe(async () => {
             const product = await db.products.where('cod').equals(productCod).first();
             if (!product) return { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
 
             const initial = product.stock_inicial_manual || 0;
 
-            const lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+            let lines = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+            if (upToDate) {
+                lines = lines.filter(l => l.fecha_operacion <= upToDate);
+            }
             const sales = lines.reduce((sum: number, line: ReconciliationLine) => sum + (line.cantidad || 0), 0);
 
-            const movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
+            let movementsDest = await db.product_movements.where('producto_destino_cod').equals(productCod).toArray();
+            if (upToDate) {
+                movementsDest = movementsDest.filter(m => m.fecha.split('T')[0] <= upToDate);
+            }
             const entradas = movementsDest.reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
 
-            const movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
+            let movementsOrig = await db.product_movements.where('producto_origen_cod').equals(productCod).toArray();
+            if (upToDate) {
+                movementsOrig = movementsOrig.filter(m => m.fecha.split('T')[0] <= upToDate);
+            }
             const salidas = movementsOrig.reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
 
-            // Evitar doble resta: los movimientos vinculados a ventas ya están en 'salidas'
-            // Solo restamos 'sales' que NO tengan un movimiento asociado (casos legacy o manuales sin movimiento)
-            const salesWithMovement = await db.product_movements
-                .where('referencia_transaccion')
-                .anyOf(lines.map(l => l.transaction_ref))
-                .toArray();
-            const salesRefs = new Set(salesWithMovement.map(m => m.referencia_transaccion));
+            // Evitar doble resta
+            const salesRefsWithMovement = new Set(
+                (await db.product_movements
+                    .where('referencia_transaccion')
+                    .anyOf(lines.map(l => l.transaction_ref))
+                    .toArray())
+                    .filter(m => !upToDate || m.fecha.split('T')[0] <= upToDate)
+                    .map(m => m.referencia_transaccion)
+            );
 
-            const orphanSales = lines.filter(l => !salesRefs.has(l.transaction_ref))
+            const orphanSales = lines.filter(l => !salesRefsWithMovement.has(l.transaction_ref))
                                     .reduce((sum, l) => sum + (l.cantidad || 0), 0);
 
             return {
