@@ -35,7 +35,7 @@ export class MatchingResetService {
                     const relevantLogs = await db.matching_logs
                         .where('transaction_ref')
                         .anyOf(refs)
-                        .filter(log => log.applied_rules.some(r => filters.rules!.includes(r)))
+                        .filter(log => log.applied_rules?.some(r => filters.rules!.includes(r)) ?? false)
                         .toArray();
 
                     const refsToKeep = new Set(relevantLogs.map(l => l.transaction_ref));
