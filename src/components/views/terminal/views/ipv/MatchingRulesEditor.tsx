@@ -262,8 +262,12 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                         'PRICE_FLEX': 'Flexibilidad de Precio',
                                         'AUTO_SUPPLY': 'Auto-Suplencia',
                                         'TOLERANCE': 'Tolerancia de Cuadre'
-                                    }[rule.tipo.replace(' ', '_')] || rule.tipo }
-                                    </h4>
+                                    }[rule.tipo.replace(/\s+/g, "_").toUpperCase()] || rule.tipo }
+                                    </h4>                                    {info.logic.length > 0 && (
+                                        <Badge variant="outline" className="ml-2 border-emerald-500/30 text-emerald-600 bg-emerald-500/5 text-[8px] font-black uppercase py-0 px-1">
+                                            Documentado
+                                        </Badge>
+                                    )}
                                     {rule.id.includes('copiloto') && (
                                         <Badge variant="outline" className="bg-primary/5 text-primary text-[9px] h-4 border-primary/20 px-1 font-black">
                                             COPILOTO
@@ -569,6 +573,39 @@ export function MatchingRulesEditor() {
             <AlertCircle className="w-8 h-8 text-red-500/20" />
         </Card>
       </div>
+      {/* Herramientas de Gestión */}
+      <Card className="p-4 bg-muted/30 border-dashed border-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+            <div className="p-2 bg-background rounded-lg border shadow-sm">
+                <Workflow className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+                <h4 className="text-xs font-black uppercase tracking-tight">Herramientas de Gestión</h4>
+                <p className="text-[10px] text-muted-foreground">Mantenimiento y limpieza del motor de conciliación.</p>
+            </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsResetModalOpen(true)}
+                className="neu-btn text-[10px] font-black uppercase flex items-center gap-2 shadow-sm"
+            >
+                <RefreshCcw className="w-3 h-3" />
+                Resetear Matching
+            </Button>
+            <div className="w-px h-6 bg-border mx-2" />
+             <Button
+                variant="outline"
+                size="sm"
+                onClick={initializeDefaultRules}
+                className="neu-btn text-[10px] font-black uppercase"
+            >
+                Reinstalar Reglas de Fábrica
+            </Button>
+        </div>
+      </Card>
+
 
       <Card className={`p-6 border-2 transition-all ${settings?.copiloto_activo ? "border-primary bg-primary/5 shadow-lg" : "border-border bg-card"}`}>
         <div className="flex items-center justify-between gap-6">
@@ -622,25 +659,10 @@ export function MatchingRulesEditor() {
             <p className="text-sm text-muted-foreground">Define el orden y comportamiento del algoritmo de matching.</p>
           </div>
           <div className="flex items-center gap-2">
-            {!rules || rules.length === 0 ? (
+            {!rules || rules.length === 0 && (
               <Button onClick={initializeDefaultRules} className="neu-btn-primary">
-                Inicializar Reglas
+                Inicializar Motor
               </Button>
-            ) : (
-              <>
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setIsResetModalOpen(true)}
-                    className="neu-btn text-[10px] font-black uppercase flex items-center gap-2"
-                >
-                    <RefreshCcw className="w-3 h-3" />
-                    Resetear Matching
-                </Button>
-                <Button variant="outline" size="sm" onClick={initializeDefaultRules} className="neu-btn text-[10px] font-black uppercase">
-                    Resetear a Valores x Defecto
-                </Button>
-              </>
             )}
           </div>
         </div>
