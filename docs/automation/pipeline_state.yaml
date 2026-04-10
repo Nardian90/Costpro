@@ -3,11 +3,11 @@ ai_vector_index_path: ai_context/ai_vector_index/
 archiveStore: knowledge/architecture/_archive/
 artifactStore: knowledge/architecture/
 confidenceThreshold: 90
-currentPhase: 6
+currentPhase: 7
 cycle: 3
 documentationModel: ISO_26514 + Diataxis
 humanFeedbackStore: docs/automation/human_feedback.json
-lastExecution: '2026-04-09T01:29:26.884580Z'
+lastExecution: 2026-04-10T01:37:43.852181+00:00Z
 metadataStore: knowledge/architecture/_meta/
 pipelineVersion: 9.0.0
 quarantinePath: docs/automation/quarantine/
@@ -22,4 +22,4 @@ rag_engine:
     max_attempts: 3
 repairThreshold: 80
 reviewQueue: docs/audits/review_queue.json
-schedulerMode: normal
+schedulerMode: repair
