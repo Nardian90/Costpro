@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles, Save, Download, Bot } from 'lucide-react';
+import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles, Save, Download, Bot, AlertTriangle } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 
 interface CostSheetNavProps {
@@ -22,6 +22,8 @@ interface CostSheetNavProps {
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
+  navItems,
+  activeSection,
   onSave,
   onExportExcel,
   onExportPdf,
@@ -31,6 +33,26 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 }) => {
   const navActions: Action[] = React.useMemo(() => {
     const actions: Action[] = [
+        // Nav Items from Props
+        ...navItems.map(item => ({
+            id: item.id,
+            label: item.label,
+            onClick: () => setActiveSection(item.id),
+            component: (
+                <button
+                    onClick={() => setActiveSection(item.id)}
+                    className={cn(
+                        "neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all font-black uppercase tracking-widest text-[10px] rounded-xl",
+                        item.id === activeSection ? "bg-primary text-white" : "text-muted-foreground hover:bg-primary/10"
+                    )}
+                    title={item.label}
+                >
+                    {item.icon && <item.icon className="w-4 h-4" />}
+                    <span className="hidden md:inline">{item.label}</span>
+                </button>
+            ),
+            tooltip: item.label
+        })),
         // 1. Guardar (Acción crítica inmediata)
         {
             id: 'save-action',
@@ -85,7 +107,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     ];
 
     return actions;
-  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection]);
+  }, [navItems, activeSection, onSave, onExportExcel, onExportPdf, onImport, setActiveSection]);
 
   return (
     <div className="mb-0">

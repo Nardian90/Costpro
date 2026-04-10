@@ -443,6 +443,7 @@ const CostSheetView = () => {
 
   const navItems = React.useMemo(() => [
     { id: "kpis", label: "Tablero", icon: BarChart3 },
+    { id: "audit", label: "Auditoría", icon: AlertTriangle },
     { id: "templates", label: "Plantillas", icon: FolderOpen },
     { id: "ai-chat", label: "Darian", icon: Sparkles },
 

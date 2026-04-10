@@ -446,7 +446,13 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 </Popover>
 
                 <div className="flex items-center gap-1">
-                    {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                    {/* Visual reflection of indirect coefficient */}
+                    {safeCalculated.metadata?.isIndirectAffected && (
+                        <span className="text-[10px] font-bold text-blue-500 mr-1 italic">
+                            ({row.formula || 'VH'}) * {useCostSheetStore.getState().data.indirectConfig?.coefficient}
+                        </span>
+                    )}
+                    {(row.formula || row.totalFormula) && !safeCalculated.metadata?.isIndirectAffected && <FunctionSquare className="w-3 h-3 text-primary/40" />}
                     <span className={cn((row.formula || row.totalFormula) && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
                         {formatAccounting(safeCalculated.total)}
                     </span>

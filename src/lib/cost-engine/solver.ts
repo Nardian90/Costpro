@@ -5,9 +5,6 @@ import { produce } from 'immer';
 
 /**
  * Solves for the coefficient needed in an annex to reach a target price.
- *
- * This version uses an exhaustive incremental search (as requested by the user)
- * to handle the discrete step-function nature of the cost engine caused by rounding.
  */
 export function solveCoefficient(
   uiData: CostSheetData,
@@ -30,7 +27,6 @@ export function solveCoefficient(
     return calculateFicha(mapUIToFicha(simulatedData as any));
   };
 
-  // Step 1: Identify the Target Row
   const rRef1 = simulateBase(1);
   const rRef2 = simulateBase(1.1);
 
@@ -70,8 +66,6 @@ export function solveCoefficient(
     return row ? row.total : res.summary.grandTotal;
   };
 
-  // Step 2: Incremental Search (The User Way)
-  // We sweep a broad range with 0.001 precision.
   let bestCoef = 1;
   let minDiff = Infinity;
 
@@ -81,24 +75,88 @@ export function solveCoefficient(
     if (diff < minDiff) {
         minDiff = diff;
         bestCoef = c;
-    } else if (Math.abs(diff - minDiff) < 1e-10) {
-        // Prefer "cleaner" numbers (fewer decimals)
-        if (String(c).length < String(bestCoef).length) {
-            bestCoef = c;
-        }
     }
   };
 
-  // Broad sweep: 0.000 to 5.000 with 0.001 steps
   for (let i = 0; i <= 5000; i++) {
       check(i / 1000);
   }
 
-  // Refinement sweep: around the best found so far with 0.0001 steps
   const center = bestCoef;
   for (let i = -10; i <= 10; i++) {
       check(center + i / 10000);
   }
 
   return bestCoef;
+}
+
+/**
+ * Solves for the utility percentage needed to reach a target price.
+ * Uses a robust Goal Seek approach to account for taxes and intermediate calculations.
+ */
+export function solveUtility(
+  uiData: CostSheetData,
+  targetPrice: number,
+  options: {
+    targetRowId?: string;
+  } = {}
+): number {
+  const { targetRowId = '14.1' } = options;
+
+  const simulateBase = (utilityPercent: number): any => {
+    const simulatedData = produce(uiData, draft => {
+      for (const section of draft.sections) {
+        const row = section.rows.find(r => ['13', '13.1'].includes(r.id));
+        if (row) {
+          const baseRef = row.formula?.includes('ref(\'12.1\')') ? '12.1' : '12';
+          row.formula = `ref('${baseRef}') * ${(utilityPercent / 100).toFixed(6)}`;
+          row.calculationMethod = 'FORMULA';
+          break;
+        }
+      }
+    });
+    return calculateFicha(mapUIToFicha(simulatedData as any));
+  };
+
+  const simulate = (utilityPercent: number): number => {
+    const res = simulateBase(utilityPercent);
+    const row = res.rows.find((r: any) => r.id === targetRowId) ||
+                res.rows.find((r: any) => r.id === '14');
+    return row ? row.total : res.summary.grandTotal;
+  };
+
+  let bestPercent = 0;
+  let minDiff = Infinity;
+
+  // 1. Broad sweep (0% to 500%)
+  for (let p = 0; p <= 500; p += 1) {
+    const val = simulate(p);
+    const diff = Math.abs(val - targetPrice);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestPercent = p;
+    }
+    if (val > targetPrice && p > 0) break;
+  }
+
+  // 2. Refinement iterations
+  let current = bestPercent;
+  let step = 0.1;
+  for (let iteration = 0; iteration < 4; iteration++) {
+    const start = current - (step * 10);
+    for (let i = 0; i <= 20; i++) {
+      const p = start + (i * step);
+      if (p < 0) continue;
+      const val = simulate(p);
+      const diff = Math.abs(val - targetPrice);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestPercent = p;
+      }
+    }
+    current = bestPercent;
+    step /= 10;
+  }
+
+  return bestPercent;
 }

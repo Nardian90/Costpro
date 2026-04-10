@@ -17,6 +17,7 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
+import { solveUtility } from '@/lib/cost-engine/solver';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +67,46 @@ export const CostSheetSummary: React.FC = () => {
     }
   }, [currentUtilityPercent, isSimulating]);
 
-  const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
+
+  const indirectRatio = useMemo(() => {
+    const sumSelected = ['4', '6', '7'].reduce((sum, id) => sum + (calculatedValues[id]?.total || 0), 0);
+    const baseVal = calculatedValues['2']?.total || 0;
+    if (baseVal === 0) return '0.00';
+
+  const handlePermanentSave = () => {
+    const coef = data.indirectConfig?.coefficient || 1;
+    if (coef === 1) return;
+
+    const updates: { path: (string | number)[], value: any }[] = [];
+
+    data.sections.forEach((section, sIdx) => {
+      if (['4', '6', '7'].includes(section.id)) {
+        section.rows.forEach((row, rIdx) => {
+          if (row.children && row.children.length > 0) return; // Skip parents
+          const currentFormula = row.formula || row.totalFormula || 'VH';
+          const cleanFormula = currentFormula.startsWith('=') ? currentFormula.substring(1) : currentFormula;
+          const newFormula = `(${cleanFormula}) * ${coef}`;
+          updates.push({
+            path: ['sections', sIdx, 'rows', rIdx, 'formula'],
+            value: newFormula
+          });
+          updates.push({
+            path: ['sections', sIdx, 'rows', rIdx, 'calculationMethod'],
+            value: 'FORMULA'
+          });
+        });
+      }
+    });
+
+    if (updates.length > 0) {
+      useCostSheetStore.getState().updateValues(updates);
+      updateIndirectConfig({ coefficient: 1 }); // Reset coefficient after applying
+      toast.success('Gastos indirectos aplicados permanentemente a las fórmulas');
+    }
+  };
+return (sumSelected / baseVal).toFixed(2);
+  }, [calculatedValues]);
+const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
   const salePrice = (calculatedValues['14.1']?.total ?? calculatedValues['14']?.total) || 0;
   const utilityValue = (calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) || 0;
 
@@ -74,8 +114,9 @@ export const CostSheetSummary: React.FC = () => {
     setTargetPrice(value);
     const numericPrice = parseFloat(value);
     if (!isNaN(numericPrice) && totalCost > 0) {
-      const neededUtility = ((numericPrice / totalCost) - 1) * 100;
-      setTempUtility(Math.max(0, neededUtility));
+      // Use robust solver to find exact utility percentage
+      const neededUtility = solveUtility(data, numericPrice);
+      setTempUtility(neededUtility);
       setIsSimulating(true);
     }
   };
@@ -107,6 +148,7 @@ export const CostSheetSummary: React.FC = () => {
   };
 
   const handleIndirectSectionToggle = (sectionId: string) => {
+    if (!['4', '6', '7'].includes(sectionId)) return;
     const current = data.indirectConfig?.selectedSections || [];
     const updated = current.includes(sectionId)
       ? current.filter(id => id !== sectionId)
@@ -189,7 +231,6 @@ export const CostSheetSummary: React.FC = () => {
                     value={tempUtility.toFixed(2)}
                     onChange={(e) => {
                       setTempUtility(parseFloat(e.target.value) || 0);
-                      setIsSimulating(true);
                     }}
                   />
                   <span className="text-sm text-muted-foreground">%</span>
@@ -201,7 +242,6 @@ export const CostSheetSummary: React.FC = () => {
                 step={0.5}
                 onValueChange={([val]) => {
                   setTempUtility(val);
-                  setIsSimulating(true);
                 }}
               />
             </div>
@@ -237,12 +277,17 @@ export const CostSheetSummary: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings2 className="w-5 h-5 text-blue-500" />
-              Gastos Indirectos
+            <CardTitle className="text-base flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-blue-500" />
+                Gastos Indirectos
+              </div>
+              <Badge variant="outline" className="font-mono text-blue-600">
+                {indirectRatio} veces
+              </Badge>
             </CardTitle>
-            <CardDescription>
-              Configuración de coeficientes y prorrateo
+            <CardDescription className="text-[11px] leading-tight text-muted-foreground italic">
+              Esta herramienta permite distribuir gastos indirectos (como administración o mantenimiento) sobre el costo base. Seleccione las secciones (4, 6, 7) para aplicar el prorrateo.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -313,7 +358,7 @@ export const CostSheetSummary: React.FC = () => {
                 </Badge>
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
-                {data.sections.filter(s => !['13', '13.1', '13.2', '13.3', '14', '14.1'].includes(s.id)).map(section => (
+                {data.sections.filter(s => ['4', '6', '7'].includes(s.id)).map(section => (
                   <div key={section.id} className="flex items-center space-x-2 border rounded-md p-2 hover:bg-muted/50 transition-colors">
                     <Checkbox
                       id={`section-${section.id}`}
@@ -372,6 +417,9 @@ export const CostSheetSummary: React.FC = () => {
           </code>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handlePermanentSave}>
+            <Settings2 className="w-4 h-4" /> Aplicar a DB
+          </Button>
           <Button variant="outline" size="sm" className="gap-2">
             <RotateCcw className="w-4 h-4" /> Resetear
           </Button>
