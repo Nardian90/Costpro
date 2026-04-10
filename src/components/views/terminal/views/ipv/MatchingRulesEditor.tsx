@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, MatchingRule } from '@/lib/dexie';
 import { DEFAULT_MATCHING_RULES } from '@/lib/ipv/engine';
@@ -30,6 +30,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { RuleMetaEditor } from './RuleMetaEditor';
+import { ResetMatchingModal } from "./ResetMatchingModal";
 import { cn } from '@/lib/utils';
 
 
@@ -429,6 +430,7 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
 
 
 export function MatchingRulesEditor() {
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const rules = useLiveQuery(() => db.matching_rules.orderBy('prioridad').toArray());
   const settings = useLiveQuery(() => db.ipv_settings.get("current"));
 
@@ -625,18 +627,20 @@ export function MatchingRulesEditor() {
                 Inicializar Reglas
               </Button>
             ) : (
-            <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setIsResetModalOpen(true)}
-                className="neu-btn text-[10px] font-black uppercase flex items-center gap-2"
-            >
-                <RefreshCcw className="w-3 h-3" />
-                Resetear Matching
-            </Button>
+              <>
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsResetModalOpen(true)}
+                    className="neu-btn text-[10px] font-black uppercase flex items-center gap-2"
+                >
+                    <RefreshCcw className="w-3 h-3" />
+                    Resetear Matching
+                </Button>
                 <Button variant="outline" size="sm" onClick={initializeDefaultRules} className="neu-btn text-[10px] font-black uppercase">
                     Resetear a Valores x Defecto
                 </Button>
+              </>
             )}
           </div>
         </div>
