@@ -196,7 +196,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             </div>
                           </TableCell>
                           <TableCell className="text-center">
-                              <Badge variant="outline" className={}>
+                              <Badge variant="outline" className={`text-[10px] font-black uppercase px-2 py-0 border-2 ${tx.tipo === "Cr" ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : "text-red-500 border-red-500/20 bg-red-500/5"}`}>
                                   {tx.tipo}
                               </Badge>
                           </TableCell>
