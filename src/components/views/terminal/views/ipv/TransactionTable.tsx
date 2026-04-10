@@ -163,7 +163,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   <TableHead className="w-[40px] text-center"><Checkbox className="translate-y-1"/></TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Referencia</TableHead>
-                  <TableHead className="max-w-md">Concepto</TableHead>
+                  <TableHead className="max-w-[150px]">Concepto</TableHead>
+                  <TableHead className="text-center w-[60px]">Naturaleza</TableHead>
                   <TableHead className="text-right">Neto</TableHead>
                   <TableHead className="text-right">Comis.</TableHead>
                   <TableHead className="text-right">Venta</TableHead>
@@ -174,7 +175,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={10} className="h-32 text-center text-muted-foreground font-black uppercase tracking-widest opacity-40">Sin resultados</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-black uppercase tracking-widest opacity-40">Sin resultados</TableCell></TableRow>
                 ) : (
                   filtered.map((tx) => {
                       const matched = txReconciliationTotals[tx.referencia_origen] || 0;
@@ -185,12 +186,19 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <TableCell className="font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
                           <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
                           <TableCell className="text-xs">
-                            <div className="flex items-center gap-2 group">
-                                <div className="truncate font-medium cursor-pointer flex-1" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                            <div className="flex items-center gap-2 group max-w-[150px]">
+                                <div className="truncate font-medium cursor-pointer flex-1" title={tx.observaciones || "Sin concepto"} onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
                                     {tx.observaciones || "Sin concepto"}
                                 </div>
-                                <Info className="w-3 h-3 text-primary/50" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                                    <Info className="w-3 h-3 text-primary/50" />
+                                </Button>
                             </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                              <Badge variant="outline" className={}>
+                                  {tx.tipo}
+                              </Badge>
                           </TableCell>
                           <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrencyCents(tx.importe_cents)}</TableCell>
                           <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
