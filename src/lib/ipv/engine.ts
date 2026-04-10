@@ -100,8 +100,9 @@ export class MatchingEngine {
 
     for (const rule of this.rules) {
         if (rule.tipo === 'STOCK_LIMIT') continue;
+        if (remainingForIdentification <= 0 && rule.tipo !== 'AUTO_SUPPLY') break;
 
-                switch (rule.tipo) {
+        switch (rule.tipo) {
             case 'HARD_REF': {
                 const match = this.products.find(p => transaction.observaciones?.includes(p.cod) || p.cod === transaction.referencia_origen);
                 if (match) {
@@ -145,13 +146,12 @@ export class MatchingEngine {
                     p.isEligibleForCashFill !== false &&
                     p.precio_cents > remainingForIdentification
                 ).sort((a, b) => {
-                    // R1: Priorizar productos con menor stock positivo para llevarlos a cero
+                    const diffA = a.precio_cents - remainingForIdentification;
+                    const diffB = b.precio_cents - remainingForIdentification;
+                    if (diffA !== diffB) return diffA - diffB;
                     const stockA = this.getVirtualStock(a.cod);
                     const stockB = this.getVirtualStock(b.cod);
-                    if (stockA > 0 && stockB > 0) return stockA - stockB;
-                    if (stockA > 0) return -1;
-                    if (stockB > 0) return 1;
-                    return (a.precio_cents - remainingForIdentification) - (b.precio_cents - remainingForIdentification);
+                    return stockA - stockB;
                 });
 
                 const candidate = eligibleProducts[0];
@@ -171,13 +171,13 @@ export class MatchingEngine {
                         this.dailyCashUsedByDate.set(txDate, currentDailyUsed + cashNeeded);
                         remainingForIdentification = 0;
 
-                        addTrace(rule.prioridad, 'CASH_FILL', 'SUCCESS', `Inyección: ${cashNeeded} en ${candidate.cod}`, {
+                        addTrace(rule.prioridad, 'CASH_FILL', 'SUCCESS', `Ajuste óptimo: Inyección de ${cashNeeded} en ${candidate.cod}`, {
                             metrics: { expected_value: candidate.precio_cents, actual_value: remainingForIdentification, delta: cashNeeded },
                             flags
                         });
                         appliedRules.push('CASH_FILL');
                     } else {
-                        addTrace(rule.prioridad, 'CASH_FILL', 'SKIPPED', `Excede umbral por transacción (${cashNeeded} > ${txThreshold})`);
+                        addTrace(rule.prioridad, 'CASH_FILL', 'SKIPPED', `Excede umbral (${cashNeeded} > ${txThreshold})`);
                     }
                 }
                 break;
@@ -207,14 +207,13 @@ export class MatchingEngine {
                     if (finalQty <= 0) continue;
                     matchedProducts.set(wildcard.cod, { product: wildcard, qty: finalQty });
                     remainingForIdentification -= wildcard.precio_cents * qty;
-                    addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod} (Stock: ${this.getVirtualStock(wildcard.cod)})`);
+                    addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod}`);
                     if (!appliedRules.includes('WILDCARDS')) appliedRules.push('WILDCARDS');
                     if (remainingForIdentification <= 0 && matchedProducts.size >= 2) break;
                 }
                 break;
             }
         }
-        if (remainingForIdentification <= 0 && rule.tipo !== 'WILDCARDS') break;
     }
 
     let remainingTransfer = targetCents;
@@ -240,9 +239,7 @@ export class MatchingEngine {
         remainingTransfer -= coveredByTransfer;
     }
 
-    // R4: Manejo de Sobrepagos (Auto-Suplencia)
-    // Si sobra transferencia, buscamos productos para agotar el saldo.
-        const autoSupplyActive = this.rules.some(r => r.tipo === 'AUTO_SUPPLY' && r.activo);
+    const autoSupplyActive = this.rules.some(r => r.tipo === 'AUTO_SUPPLY' && r.activo);
     if (remainingTransfer > 1 && autoSupplyActive) {
         const candidates = this.products
             .filter(p => p.activo && p.precio_cents > 0 && !matchedProducts.has(p.cod))
@@ -329,7 +326,7 @@ export class MatchingEngine {
       if (remainingDiff <= 0) break;
       const p = this.products.find(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff);
       if (p) {
-        const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-\text{date}-${uuidv4()}`, importe_cents: 0 } as any, p, 1, 0, p.precio_cents);
+        const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}-${uuidv4()}`, importe_cents: 0 } as any, p, 1, 0, p.precio_cents);
         line.source_type = 'REAL_CASH_GOAL';
         lines.push(line);
         remainingDiff -= line.total_amount_cents;
@@ -343,14 +340,12 @@ export class MatchingEngine {
     const targetProduct = this.products.find(p => p.cod === productCod);
     if (!targetProduct || !targetProduct.id_grupo) return false;
 
-    // Evitar descomposiciones infinitas o de productos que no son hijos de nada
     const ancestors = this.products.filter(p => p.cod_hijo === productCod && p.cod !== productCod);
     if (ancestors.length === 0) return false;
 
     for (const ancestor of ancestors) {
       let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
 
-      // Si el padre no tiene stock, intentamos descomponer al abuelo
       if (availableAncestorStock <= 0) {
           const success = await this.attemptDecomposition(ancestor.cod, addTrace);
           if (success) availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
