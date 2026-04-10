@@ -1,0 +1,9 @@
+  it('should calculate metrics correctly', () => {
+    const metrics = calculateIPVMetrics(mockLines, mockTransactions);
+
+    expect(metrics.cashSales).toBe(1000);
+    expect(metrics.transferSales).toBe(1000);
+    expect(metrics.bankCredits).toBe(1000);
+    expect(metrics.bankDebits).toBe(200);
+    expect(metrics.healthPercent).toBe(100);
+  });

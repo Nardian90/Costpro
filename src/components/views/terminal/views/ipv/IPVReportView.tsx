@@ -73,7 +73,6 @@ export function IPVReportView() {
 
   const createReportForDate = async (dateStr: string, products: any[], lastReport: DailyIPVReport | null) => {
     const lines = await db.reconciliation_lines.where('fecha_operacion').equals(dateStr).toArray();
-    const movements = await db.product_movements.where('fecha').equals(dateStr).toArray();
     const productGroups: Record<string, any> = {};
     let totalVentas = 0;
     let totalEfectivo = 0;
@@ -96,22 +95,23 @@ export function IPVReportView() {
         totalTransferencia += line.transfer_amount_cents;
     }
 
-    const reportFilas = products.map(p => {
+    // Calcular ayer para el saldo inicial dinámico
+    const yesterday = new Date(new Date(dateStr).getTime() - 86400000).toISOString().split('T')[0];
+
+    const reportFilas = await Promise.all(products.map(async p => {
         const ventaInfo = productGroups[p.cod] || { venta_cantidad_qty: 0, precio_unitario_cents: p.precio_cents, importe_cents: 0 };
-        const prevRow = lastReport?.filas.find((pr: any) => pr.cod === p.cod);
-        const initial = prevRow ? prevRow.existencia_final_qty : (p.stock_inicial_manual || 0);
 
-        const entries = movements
-            .filter(m => m.producto_destino_cod === p.cod && (m.tipo === 'INTELLIGENT_RECEIPT' || m.tipo === 'DECOMPOSITION'))
-            .reduce((sum, m) => sum + (m.cantidad_destino || 0), 0);
+        // Unificación: Usar StockService para garantizar una única fuente de verdad
+        const statsAyer = await StockService.getProductDetailedStats(p.cod, yesterday);
+        const statsHoy = await StockService.getProductDetailedStats(p.cod, dateStr);
 
-        const exits = movements
-            .filter(m => m.producto_origen_cod === p.cod && m.tipo === 'DECOMPOSITION')
-            .reduce((sum, m) => sum + (m.cantidad_origen || 0), 0);
-
+        const initial = statsAyer.final;
+        const entries = statsHoy.entradas - statsAyer.entradas;
+        const exits = statsHoy.salidas - statsAyer.salidas;
         const venta = ventaInfo.venta_cantidad_qty;
+
         const totalDisponible = initial + entries;
-        const final = totalDisponible - exits - venta;
+        const final = statsHoy.final;
 
         return {
             cod: p.cod,
@@ -127,7 +127,7 @@ export function IPVReportView() {
             importe_cents: ventaInfo.importe_cents,
             existencia_final_qty: final
         };
-    });
+    }));
 
     const report: DailyIPVReport = {
         id: uuidv4(),
