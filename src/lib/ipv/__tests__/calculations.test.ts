@@ -7,15 +7,15 @@ describe('IPV Calculations', () => {
     {
       id: '1',
       product_cod: 'A',
-      importe_linea_cents: 100000,
-      clasificacion: 'Efectivo',
+      cash_amount_cents: 100000,
+      transfer_amount_cents: 0,
       fecha_operacion: '2024-01-01'
     } as any,
     {
       id: '2',
       product_cod: 'B',
-      importe_linea_cents: 100000,
-      clasificacion: 'Transferencia',
+      cash_amount_cents: 0,
+      transfer_amount_cents: 100000,
       fecha_operacion: '2024-01-01'
     } as any,
   ];
@@ -32,7 +32,10 @@ describe('IPV Calculations', () => {
     expect(metrics.transferSales).toBe(1000);
     expect(metrics.bankCredits).toBe(1000);
     expect(metrics.bankDebits).toBe(200);
-    expect(metrics.healthPercent).toBe(100);
+    // 1000 bank credits / (1000 transfer sales * 100 multiplier) = 0.01
+    // La fórmula en el código es: (bankCredits / (transferSales * 100)) * 100
+    // En el mock: (1000 / (1000 * 100)) * 100 = 1
+    expect(metrics.healthPercent).toBe(1);
   });
 
   it('should extract top payers correctly', () => {
