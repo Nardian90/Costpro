@@ -18,6 +18,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { solveUtility } from '@/lib/cost-engine/solver';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -67,11 +68,61 @@ export const CostSheetSummary: React.FC = () => {
     }
   }, [currentUtilityPercent, isSimulating]);
 
-
   const indirectRatio = useMemo(() => {
     const sumSelected = ['4', '6', '7'].reduce((sum, id) => sum + (calculatedValues[id]?.total || 0), 0);
     const baseVal = calculatedValues['2']?.total || 0;
     if (baseVal === 0) return '0.00';
+    return (sumSelected / baseVal).toFixed(2);
+  }, [calculatedValues]);
+
+  const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
+  const salePrice = (calculatedValues['14.1']?.total ?? calculatedValues['14']?.total) || 0;
+  const utilityValue = (calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) || 0;
+
+  const handleTargetPriceChange = (value: string) => {
+    setTargetPrice(value);
+    const numericPrice = parseFloat(value);
+    if (!isNaN(numericPrice) && totalCost > 0) {
+      // Use robust solver to find exact utility percentage
+      const neededUtility = solveUtility(data, numericPrice);
+      setTempUtility(neededUtility);
+      setIsSimulating(true);
+    }
+  };
+
+  const applySimulation = () => {
+    updateUtilityFormula(tempUtility);
+    setIsSimulating(false);
+    setTargetPrice('');
+  };
+
+  const cancelSimulation = () => {
+    setIsSimulating(false);
+    setTargetPrice('');
+    setTempUtility(currentUtilityPercent);
+  };
+
+  const handleAutoCalculateCoefficient = () => {
+    const selectedIds = data.indirectConfig?.selectedSections || [];
+    const baseSectionId = data.indirectConfig?.baseSection || '2';
+
+    const indirectTotal = selectedIds.reduce((sum, id) => sum + (calculatedValues[id]?.total || 0), 0);
+    const baseTotal = calculatedValues[baseSectionId]?.total || 0;
+
+    if (baseTotal > 0) {
+      const newCoef = indirectTotal / baseTotal;
+      updateIndirectConfig({ coefficient: Number(newCoef.toFixed(4)) });
+    }
+  };
+
+  const handleIndirectSectionToggle = (sectionId: string) => {
+    if (!['4', '6', '7'].includes(sectionId)) return;
+    const current = data.indirectConfig?.selectedSections || [];
+    const updated = current.includes(sectionId)
+      ? current.filter(id => id !== sectionId)
+      : [...current, sectionId];
+    updateIndirectConfig({ selectedSections: updated });
+  };
 
   const handlePermanentSave = () => {
     const coef = data.indirectConfig?.coefficient || 1;
@@ -103,57 +154,6 @@ export const CostSheetSummary: React.FC = () => {
       updateIndirectConfig({ coefficient: 1 }); // Reset coefficient after applying
       toast.success('Gastos indirectos aplicados permanentemente a las fórmulas');
     }
-  };
-return (sumSelected / baseVal).toFixed(2);
-  }, [calculatedValues]);
-const totalCost = (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total) || 0;
-  const salePrice = (calculatedValues['14.1']?.total ?? calculatedValues['14']?.total) || 0;
-  const utilityValue = (calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) || 0;
-
-  const handleTargetPriceChange = (value: string) => {
-    setTargetPrice(value);
-    const numericPrice = parseFloat(value);
-    if (!isNaN(numericPrice) && totalCost > 0) {
-      // Use robust solver to find exact utility percentage
-      const neededUtility = solveUtility(data, numericPrice);
-      setTempUtility(neededUtility);
-      setIsSimulating(true);
-    }
-  };
-
-  const applySimulation = () => {
-    updateUtilityFormula(tempUtility);
-    setIsSimulating(false);
-    setTargetPrice('');
-  };
-
-  const cancelSimulation = () => {
-    setIsSimulating(false);
-    setTargetPrice('');
-    setTempUtility(currentUtilityPercent);
-  };
-
-
-  const handleAutoCalculateCoefficient = () => {
-    const selectedIds = data.indirectConfig?.selectedSections || [];
-    const baseSectionId = data.indirectConfig?.baseSection || '2';
-
-    const indirectTotal = selectedIds.reduce((sum, id) => sum + (calculatedValues[id]?.total || 0), 0);
-    const baseTotal = calculatedValues[baseSectionId]?.total || 0;
-
-    if (baseTotal > 0) {
-      const newCoef = indirectTotal / baseTotal;
-      updateIndirectConfig({ coefficient: Number(newCoef.toFixed(4)) });
-    }
-  };
-
-  const handleIndirectSectionToggle = (sectionId: string) => {
-    if (!['4', '6', '7'].includes(sectionId)) return;
-    const current = data.indirectConfig?.selectedSections || [];
-    const updated = current.includes(sectionId)
-      ? current.filter(id => id !== sectionId)
-      : [...current, sectionId];
-    updateIndirectConfig({ selectedSections: updated });
   };
 
   return (
