@@ -60,8 +60,8 @@ export class MatchingEngine {
     const appliedRules: string[] = [];
     const logs: string[] = [];
 
-    const addTrace = (pass: number, rule: string, status: 'SUCCESS' | 'FAIL' | 'SKIPPED', detail: string, meta?: any) => {
-      trace.push({ timestamp: Date.now(), rule_id: rule, rule_type: rule, status, detail, meta });
+    const addTrace = (pass: number, rule: string, status: "SUCCESS" | "FAIL" | "SKIPPED", reason?: string, details?: any) => {
+      trace.push({ pass, rule, status, reason, details, timestamp: Date.now() });
     };
 
     if (transaction.tipo === 'Db') {
