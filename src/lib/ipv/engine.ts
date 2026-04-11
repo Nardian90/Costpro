@@ -221,7 +221,8 @@ export class MatchingEngine {
                                  new_price_cents: newPrice,
                                  fecha: transaction.fecha,
                                  transaction_ref: transaction.referencia_origen,
-                                 created_at: new Date().toISOString()
+                                 created_at: new Date().toISOString(),
+            duration_ms: duration
                              });
 
                              remainingForIdentification = 0;
@@ -302,7 +303,9 @@ export class MatchingEngine {
             matching_confidence: result.matchingConfidence,
             applied_rules: result.appliedRules,
             trace: result.trace,
-            logs: result.logs
+            logs: result.logs,
+            created_at: new Date().toISOString(),
+            duration_ms: duration
         });
     } catch (e) {
         console.error('Error persisting matching log', e);
@@ -320,6 +323,7 @@ export class MatchingEngine {
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: new Date().toISOString(),
+            duration_ms: duration,
       ingestion_hash: 'sim'
     };
     return this.matchTransaction(mockTx);
@@ -420,7 +424,8 @@ export class MatchingEngine {
             cantidad_origen: 1,
             cantidad_destino: factor,
             tipo: 'DECOMPOSITION',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            duration_ms: duration
         });
 
         if (addTrace) addTrace(1, 'DECOMPOSITION', 'SUCCESS', `Descompuesto ${ancestor.cod} -> ${targetProduct.cod} (Factor: ${factor})`);
@@ -439,7 +444,8 @@ export class MatchingEngine {
     this.stockMap.set(productCod, current - qty);
     this.pendingMovements.push({
         id: uuidv4(), fecha: new Date().toISOString(), producto_origen_cod: productCod, producto_destino_cod: '',
-        cantidad_origen: qty, cantidad_destino: 0, tipo: 'MANUAL', referencia_transaccion: txRef, created_at: new Date().toISOString()
+        cantidad_origen: qty, cantidad_destino: 0, tipo: 'MANUAL', referencia_transaccion: txRef, created_at: new Date().toISOString(),
+            duration_ms: duration
     });
   }
 
@@ -452,7 +458,8 @@ export class MatchingEngine {
         transfer_amount_cents: transfer, cash_amount_cents: cash, total_amount_cents: total,
         status: 'VALID', payment_status: 'MATCHED', product_cod: p.cod, product_name: p.descripcion, product_um: p.um || 'UD',
         cantidad: qty, precio_unitario_cents: p.precio_cents, origen_dato: 'AUTO_MATCH', source_type: 'BANK_TRANSFER',
-        reconciliation_hash: id, created_at: new Date().toISOString()
+        reconciliation_hash: id, created_at: new Date().toISOString(),
+            duration_ms: duration
     };
   }
 
