@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -11,6 +11,12 @@ import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: 'swap',
+});
+
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: 'swap',
 });
@@ -77,7 +83,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground`}
         translate="no"
       >
         <ThemeProvider
