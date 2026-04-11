@@ -16,6 +16,44 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-headline: var(--font-inter), var(--font-geist-sans);
+  --font-body: var(--font-inter), var(--font-geist-sans);
+  --font-label: var(--font-space-grotesk);
+
+  /* CostPro Design Reference Palette */
+  --color-primary: #62df7d;
+  --color-on-primary: #003914;
+  --color-primary-container: #1ca64d;
+  --color-on-primary-container: #003111;
+  --color-secondary: #4cd7f6;
+  --color-on-secondary: #003640;
+  --color-secondary-container: #03b5d3;
+  --color-on-secondary-container: #00424e;
+  --color-tertiary: #d0bcff;
+  --color-on-tertiary: #3c0091;
+  --color-tertiary-container: #a078ff;
+  --color-on-tertiary-container: #340080;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+  --color-surface: #0b1326;
+  --color-on-surface: #dae2fd;
+  --color-surface-variant: #2d3449;
+  --color-on-surface-variant: #bdcaba;
+  --color-outline: #879485;
+  --color-outline-variant: #3e4a3d;
+  --color-inverse-surface: #dae2fd;
+  --color-inverse-on-surface: #283044;
+  --color-inverse-primary: #006e2d;
+  --color-surface-bright: #31394d;
+  --color-surface-dim: #0b1326;
+  --color-surface-container-lowest: #060e20;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container: #171f33;
+  --color-surface-container-high: #222a3d;
+  --color-surface-container-highest: #2d3449;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -38,9 +76,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -146,7 +182,7 @@
   --radius: 1rem;
 
   /* Colores Base Dark Mode */
-  --background: #1a1d23;
+  --background: #0b1326;
   --background-solid: #1a1d23;
   --foreground: #e2e8f0;
   --card: #1a1d23;
@@ -1030,6 +1066,21 @@
 }
 
 @layer utilities {
+  .glass-panel {
+    background: rgba(11, 19, 38, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .monospaced-data {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .grid-bg {
+    background-image: radial-gradient(circle, #3e4a3d 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .terminal-glow {
+    box-shadow: 0 0 20px rgba(98, 223, 125, 0.15);
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
