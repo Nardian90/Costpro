@@ -40,11 +40,11 @@ vi.mock('../views/health/hooks/useHealthData', () => ({
 }));
 
 describe('HealthView Integration', () => {
-  it('renders the intelligence hub correctly', async () => {
+  it('renders the system health correctly', async () => {
     const { getByText } = render(<HealthView />);
 
-    expect(getByText('Intelligence Hub')).toBeDefined();
+    expect(getByText('Salud del Sistema')).toBeDefined();
     expect(getByText('90%')).toBeDefined();
-    expect(getByText(/OVERVIEW/i)).toBeDefined();
+    expect(getByText(/PANORAMA/i)).toBeDefined();
   });
 });

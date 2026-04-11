@@ -27,7 +27,7 @@ export default function HealthView() {
         <div className="w-24 h-24 rounded-[40px] bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-8">
           <AlertCircle className="w-12 h-12 text-destructive" />
         </div>
-        <h2 className="text-3xl font-black uppercase tracking-tight mb-4 leading-none">Intelligence Hub Offline</h2>
+        <h2 className="text-3xl font-black uppercase tracking-tight mb-4 leading-none">Centro de Inteligencia Desconectado</h2>
         <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest max-w-md mb-8">
           No se pudieron cargar los artefactos de arquitectura. Verifique que el pipeline v8.0 haya generado los archivos requeridos en public/ y docs/automation/.
         </p>
