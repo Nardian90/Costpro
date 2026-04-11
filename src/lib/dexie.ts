@@ -10,13 +10,13 @@ export interface BankTransaction {
   comision_cents?: number;
   importe_venta_cents?: number;
   tipo: 'Cr' | 'Db';
-  estado_conciliacion: 'PENDIENTE' | 'CONCILIADO' | 'PARCIAL';
-  created_at: string;
-  ingestion_hash: string;
-  excluido?: boolean;
+  estado_conciliacion: 'PENDIENTE' | 'CONCILIADO' | 'PARCIAL' | 'COMPLETO' | 'NO_PROCESAR';
   fail_reason?: string;
   ipv_id?: string;
+  excluido?: boolean;
+  created_at: string;
   updated_at?: string;
+  ingestion_hash: string;
   carnet?: string;
   nombre_cliente?: string;
   nit?: string;
@@ -70,9 +70,6 @@ export interface ReconciliationLine {
   purchase_order_id?: number;
   adjustment_type?: "REBAJA" | "PROPINA";
   is_price_change?: boolean;
-  purchase_order_id?: number;
-  adjustment_type?: "REBAJA" | "PROPINA";
-  is_price_change?: boolean;
   created_at: string;
 }
 
@@ -120,16 +117,6 @@ export interface DailyIPVReport {
     fecha_generacion: string;
   };
   estado: 'BORRADOR' | 'CERRADO' | 'ANULADO';
-  created_at: string;
-}
-
-export interface ProductPriceChange {
-  id: string;
-  product_cod: string;
-  old_price_cents: number;
-  new_price_cents: number;
-  fecha: string;
-  transaction_ref?: string;
   created_at: string;
 }
 
