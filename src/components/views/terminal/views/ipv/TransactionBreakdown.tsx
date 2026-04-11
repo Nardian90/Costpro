@@ -190,6 +190,7 @@ export default function TransactionBreakdown() {
           <TableHeader>
             <TableRow>
               <TableHead>Fecha</TableHead>
+              <TableHead>Orden</TableHead>
               <TableHead>Transacción</TableHead>
               <TableHead>Producto</TableHead>
               <TableHead className="text-center">Cant.</TableHead>
@@ -214,6 +215,7 @@ export default function TransactionBreakdown() {
                 return (
                   <TableRow key={l.id} className={isReversion ? "bg-muted/10" : ""}>
                     <TableCell className="text-xs font-medium">{formatDate(l.fecha_operacion)}</TableCell>
+                    <TableCell className="text-[10px] font-mono text-muted-foreground">#{l.purchase_order_id || "-"}</TableCell>
                     <TableCell>
                       <div className="text-xs font-black text-primary truncate max-w-[150px]">{l.transaction_ref}</div>
                       <div className="flex items-center gap-1 group">
@@ -224,7 +226,7 @@ export default function TransactionBreakdown() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs font-bold">{l.product_name}</div>
+                      <div className="flex items-center gap-2"><div className="text-xs font-bold">{l.product_name}</div>{l.is_price_change && <Badge className="text-[8px] h-3 px-1 bg-purple-100 text-purple-700 border-purple-200 animate-none">Δ P</Badge>}</div>
                       <div className="text-[10px] text-muted-foreground font-mono">{l.product_cod}</div>
                     </TableCell>
                     <TableCell className="text-center font-bold text-xs">{l.cantidad} {l.product_um}</TableCell>
@@ -233,7 +235,7 @@ export default function TransactionBreakdown() {
                             <div className="flex items-center gap-2">
                                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 text-[10px] font-black h-5">
                                     <CreditCard className="w-3 h-3 mr-1" />
-                                    {formatCurrencyCents(l.transfer_amount_cents)}T
+                                    {formatCurrencyCents(l.transfer_amount_cents)}T{l.adjustment_type === "REBAJA" ? "R" : l.adjustment_type === "PROPINA" ? "P" : ""}
                                 </Badge>
                                 {l.cash_amount_cents > 0 && (
                                     <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-black h-5">

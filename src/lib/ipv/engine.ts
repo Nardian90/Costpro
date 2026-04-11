@@ -13,10 +13,8 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
     { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_cash_limit: 20000, max_per_tx_threshold: 5000, mode: "SOFT" }, descripcion: "Inyección de Efectivo (Enterprise)" },
-    { id: "wildcards", tipo: "WILDCARDS", prioridad: 5, activo: true, descripcion: "Comodines" },
-    { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100 }, descripcion: "Tolerancia de Cuadre" },
-    { id: "auto-supply", tipo: "AUTO_SUPPLY", prioridad: 7, activo: true, descripcion: "Auto-Suplencia (Sobrepagos)" },
-    { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 7, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio" },
+    { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 5, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio (Auditada 5 días)" },
+    { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100, mode: 'FIXED' }, descripcion: "Tolerancia de Cuadre (Rebaja/Propina)" },
   ];
 }
 
@@ -48,31 +46,10 @@ export class MatchingEngine {
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
     const stockLimitRule = this.rules.find(r => r.tipo === 'STOCK_LIMIT');
-    this.allowNegativeStock = this.useStockLimit ? (stockLimitRule?.meta?.allow_negative === true) : true;
-
-    for (const p of this.products) {
-        this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
+    if (stockLimitRule) {
+        this.allowNegativeStock = stockLimitRule.meta?.allow_negative ?? true;
     }
-  }
-
-  private async persistLog(transaction: BankTransaction, result: MatchingResult, durationMs: number) {
-    try {
-      await db.matching_logs.put({
-        id: transaction.referencia_origen + '-log',
-        transaction_ref: transaction.referencia_origen,
-        fecha_ejecucion: new Date().toISOString(),
-        resultado_estado: result.status === 'OVERPAYMENT' ? 'COMPLETO' : result.status as any,
-        trace: result.trace,
-        applied_rules: result.appliedRules,
-        matching_confidence: result.matchingConfidence,
-        fail_reason: result.failReason,
-        reconciliation_lines_count: result.lines.length,
-        duration_ms: durationMs,
-        engine_version: "3.0.0",
-        reglas_activas: this.rules.map(r => r.tipo),
-        created_at: new Date().toISOString()
-      });
-    } catch (e) {}
+    products.forEach(p => this.stockMap.set(p.cod, p.stock_inicial_manual || 0));
   }
 
   async matchTransaction(transaction: BankTransaction, currentReconciledCents: number = 0): Promise<MatchingResult> {
@@ -96,11 +73,11 @@ export class MatchingEngine {
     }
 
     let remainingForIdentification = targetCents;
-    let matchedProducts: Map<string, { product: Product; qty: number }> = new Map();
+    let matchedProducts: Map<string, { product: Product; qty: number; adjustment_type?: "REBAJA" | "PROPINA"; is_price_change?: boolean }> = new Map();
 
     for (const rule of this.rules) {
         if (rule.tipo === 'STOCK_LIMIT') continue;
-        if (remainingForIdentification <= 0 && rule.tipo !== 'AUTO_SUPPLY') break;
+        if (remainingForIdentification <= 0) break;
 
         switch (rule.tipo) {
             case 'HARD_REF': {
@@ -185,7 +162,7 @@ export class MatchingEngine {
                         remainingForIdentification = 0;
 
                         addTrace(rule.prioridad, 'CASH_FILL', 'SUCCESS', `Ajuste óptimo: Inyección de ${cashNeeded} en ${candidate.cod}`, {
-                            metrics: { expected_value: candidate.precio_cents, actual_value: remainingForIdentification, delta: cashNeeded },
+                            metrics: { expected_value: candidate.precio_cents, actual_value: targetCents, delta: cashNeeded },
                             flags
                         });
                         appliedRules.push('CASH_FILL');
@@ -195,34 +172,63 @@ export class MatchingEngine {
                 }
                 break;
             }
-            case 'WILDCARDS': {
-                const wildcards = this.products
-                    .filter(p => p.isWildcardCandidate || (p as any).is_wildcard)
-                    .sort((a, b) => {
-                        const stockA = this.getVirtualStock(a.cod);
-                        const stockB = this.getVirtualStock(b.cod);
-                        if (stockA > 0 && stockB > 0) return stockA - stockB;
-                        if (stockA > 0) return -1;
-                        if (stockB > 0) return 1;
-                        return 0;
-                    });
+            case 'PRICE_FLEX': {
+                if (remainingForIdentification <= 0) break;
+                const mentioned = this.products.find(p => transaction.observaciones?.includes(p.cod));
+                if (mentioned) {
+                    if (remainingForIdentification > 0 && remainingForIdentification % 1000 === 0) {
+                        const fiveDaysAgo = new Date();
+                        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+                        const recentChanges = await db.product_price_changes
+                            .where('product_cod').equals(mentioned.cod)
+                            .and(pc => new Date(pc.fecha) > fiveDaysAgo)
+                            .count();
 
-                for (const wildcard of wildcards) {
-                    if (matchedProducts.has(wildcard.cod)) continue;
-                    let available = this.getVirtualStock(wildcard.cod);
-                    if (this.useStockLimit && !this.allowNegativeStock && available <= 0) {
-                        const success = await this.attemptDecomposition(wildcard.cod, addTrace);
-                        if (!success) continue;
-                        available = this.getVirtualStock(wildcard.cod);
+                        if (recentChanges === 0) {
+                             matchedProducts.set(mentioned.cod, { product: mentioned, qty: 1, is_price_change: true });
+                             const oldPrice = mentioned.precio_cents;
+                             const newPrice = remainingForIdentification;
+
+                             await db.product_price_changes.add({
+                                 id: uuidv4(),
+                                 product_cod: mentioned.cod,
+                                 old_price_cents: oldPrice,
+                                 new_price_cents: newPrice,
+                                 fecha: transaction.fecha,
+                                 transaction_ref: transaction.referencia_origen,
+                                 created_at: new Date().toISOString()
+                             });
+
+                             remainingForIdentification = 0;
+                             addTrace(rule.prioridad, "PRICE_FLEX", "SUCCESS", `Flexibilidad de precio aplicada para ${mentioned.cod}`, { oldPrice, newPrice });
+                             appliedRules.push("PRICE_FLEX");
+                        } else {
+                            addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", `Cambio de precio bloqueado: ya cambió en los últimos 5 días`);
+                        }
+                    } else {
+                        addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", "Precio no comercial (debe ser múltiplo de 10)");
                     }
-                    const qty = remainingForIdentification > 0 ? Math.max(1, Math.floor(remainingForIdentification / wildcard.precio_cents)) : 1;
-                    const finalQty = (this.useStockLimit && !this.allowNegativeStock) ? Math.min(qty, available) : qty;
-                    if (finalQty <= 0) continue;
-                    matchedProducts.set(wildcard.cod, { product: wildcard, qty: finalQty });
-                    remainingForIdentification -= wildcard.precio_cents * qty;
-                    addTrace(rule.prioridad, 'WILDCARDS', 'SUCCESS', `Match Wildcard ${wildcard.cod}`);
-                    if (!appliedRules.includes('WILDCARDS')) appliedRules.push('WILDCARDS');
-                    if (remainingForIdentification <= 0 && matchedProducts.size >= 2) break;
+                }
+                break;
+            }
+            case 'TOLERANCE': {
+                if (remainingForIdentification <= 0) break;
+                const toleranceCents = rule.meta?.tolerance_cents ?? 10000;
+
+                const candidates = this.products
+                    .filter(p => p.activo && p.precio_cents > 0)
+                    .sort((a, b) => Math.abs(a.precio_cents - remainingForIdentification) - Math.abs(b.precio_cents - remainingForIdentification));
+
+                const candidate = candidates[0];
+                if (candidate) {
+                    const diff = candidate.precio_cents - remainingForIdentification;
+                    if (Math.abs(diff) <= toleranceCents) {
+                        const adjType = diff > 0 ? "REBAJA" : "PROPINA";
+                        matchedProducts.set(candidate.cod, { product: candidate, qty: 1, adjustment_type: adjType });
+                        remainingForIdentification = 0;
+                        addTrace(rule.prioridad, "TOLERANCE", "SUCCESS", `Tolerancia aplicada con ${candidate.cod} (${adjType})`, { delta: diff });
+                        appliedRules.push("TOLERANCE");
+                    }
                 }
                 break;
             }
@@ -230,14 +236,17 @@ export class MatchingEngine {
     }
 
     let remainingTransfer = targetCents;
+    let purchaseOrderId = Math.floor(Math.random() * 1000000);
+
     for (const item of matchedProducts.values()) {
-        const productTotal = item.product.precio_cents * item.qty;
+        const price = item.is_price_change ? (targetCents / item.qty) : item.product.precio_cents;
+        const productTotal = price * item.qty;
         const coveredByTransfer = Math.max(0, Math.min(remainingTransfer, productTotal));
         const residual = productTotal - coveredByTransfer;
 
         let available = this.getVirtualStock(item.product.cod);
         if (this.useStockLimit && !this.allowNegativeStock && available < item.qty) {
-            const success = await this.attemptDecomposition(item.product.cod, addTrace);
+            const success = await this.attemptDecomposition(item.product.cod, addTrace as any);
             if (!success) {
                 const stillAvailable = this.getVirtualStock(item.product.cod);
                 if (stillAvailable < item.qty) {
@@ -247,49 +256,18 @@ export class MatchingEngine {
             }
         }
 
-        lines.push(await this.createLine(transaction, item.product, item.qty, coveredByTransfer, residual));
+        const line = await this.createLine(transaction, item.product, item.qty, coveredByTransfer, residual);
+        line.purchase_order_id = purchaseOrderId;
+        line.adjustment_type = item.adjustment_type;
+        line.is_price_change = item.is_price_change;
+        if (item.is_price_change) {
+            line.precio_unitario_cents = price;
+            line.total_amount_cents = productTotal;
+        }
+
+        lines.push(line);
         this.updateVirtualStock(item.product.cod, item.qty, transaction.referencia_origen);
         remainingTransfer -= coveredByTransfer;
-    }
-
-    const autoSupplyActive = this.rules.some(r => r.tipo === 'AUTO_SUPPLY' && r.activo);
-    if (remainingTransfer > 1 && autoSupplyActive) {
-        const candidates = this.products
-            .filter(p => p.activo && p.precio_cents > 0 && !matchedProducts.has(p.cod))
-            .sort((a, b) => {
-                const stockA = this.getVirtualStock(a.cod);
-                const stockB = this.getVirtualStock(b.cod);
-                if (stockA > 0 && stockB > 0) return stockA - stockB;
-                return a.precio_cents - b.precio_cents;
-            });
-
-        for (const candidate of candidates) {
-            if (remainingTransfer <= 1) break;
-
-            const qty = 1;
-            const productTotal = candidate.precio_cents * qty;
-            const coveredByTransfer = Math.min(remainingTransfer, productTotal);
-            const residual = Math.max(0, productTotal - coveredByTransfer);
-
-            let available = this.getVirtualStock(candidate.cod);
-            if (this.useStockLimit && !this.allowNegativeStock && available < qty) {
-                const success = await this.attemptDecomposition(candidate.cod, addTrace);
-                if (!success) {
-                    const stillAvailable = this.getVirtualStock(candidate.cod);
-                    if (stillAvailable < qty) continue;
-                }
-            }
-
-            lines.push(await this.createLine(transaction, candidate, qty, coveredByTransfer, residual));
-            this.updateVirtualStock(candidate.cod, qty, transaction.referencia_origen);
-            remainingTransfer -= coveredByTransfer;
-
-            addTrace(99, 'AUTO_SUPPLY', 'SUCCESS', `Auto-suplencia con ${candidate.cod} para agotar sobrepago`, {
-                excess_exhausted: coveredByTransfer,
-                residual_cash: residual
-            });
-            if (!appliedRules.includes('AUTO_SUPPLY')) appliedRules.push('AUTO_SUPPLY');
-        }
     }
 
     let status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE' | 'OVERPAYMENT' = 'PENDIENTE';
@@ -308,6 +286,25 @@ export class MatchingEngine {
     this.pendingMovements = [];
     await this.persistLog(transaction, result, Date.now() - startTime);
     return result;
+  }
+
+  private async persistLog(tx: BankTransaction, result: MatchingResult, duration: number) {
+    try {
+        await db.matching_logs.add({
+            id: uuidv4(),
+            transaction_ref: tx.referencia_origen,
+            fecha_ejecucion: new Date().toISOString(),
+            resultado_estado: result.status,
+            matching_confidence: result.matchingConfidence,
+            applied_rules: result.appliedRules,
+            trace: result.trace,
+            logs: result.logs,
+            created_at: new Date().toISOString(),
+            duration_ms: duration
+        });
+    } catch (e) {
+        console.error('Error persisting matching log', e);
+    }
   }
 
   async matchSimulation(targetAmount: number): Promise<MatchingResult> {

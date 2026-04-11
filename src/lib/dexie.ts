@@ -140,7 +140,7 @@ export interface MatchingLog {
   payload?: any;
   transaction_ref?: string; // Optional for non-matching events
   fecha_ejecucion?: string; // Optional for non-matching events
-  resultado_estado?: "COMPLETO" | "PARCIAL" | "PENDIENTE";
+  resultado_estado?: "COMPLETO" | "PARCIAL" | "PENDIENTE" | "OVERPAYMENT";
 
   // Traceabilidad
   trace?: MatchingTrace[];
@@ -149,6 +149,7 @@ export interface MatchingLog {
 
   // Detalles del fallo (si aplica)
   fail_reason?: string;
+  logs?: string[];
 
   // Líneas generadas
   reconciliation_lines_count?: number;
@@ -188,6 +189,9 @@ export interface ReconciliationLine {
   source_type?: 'BANK_TRANSFER' | 'REAL_CASH_GOAL';
   observaciones?: string;
   reconciliation_hash: string;
+  purchase_order_id?: number;
+  adjustment_type?: "REBAJA" | "PROPINA";
+  is_price_change?: boolean;
   created_at: string;
 
   // Legacy compatibility fields (deprecated but maintained for reports if needed)
@@ -405,6 +409,7 @@ export class IPVDatabase extends Dexie {
   mvt_templates!: Table<MVTTemplate>;
   mvt_settings!: Table<MVTSettings>;
   mvt_exports_log!: Table<MVTExportLog>;
+  product_price_changes!: Table<ProductPriceChange>;
 
   constructor() {
     super('IPVDB');
@@ -523,7 +528,20 @@ export class IPVDatabase extends Dexie {
     }).upgrade(async tx => {
       await tx.table('products').toCollection().modify({ isEligibleForCashFill: true });
     });
+    this.version(32).stores({
+      product_price_changes: "&id, product_cod, fecha"
+    });
   }
 }
 
 export const db = new IPVDatabase();
+
+export interface ProductPriceChange {
+  id: string;
+  product_cod: string;
+  old_price_cents: number;
+  new_price_cents: number;
+  fecha: string;
+  transaction_ref?: string;
+  created_at: string;
+}
