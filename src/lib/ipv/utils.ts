@@ -68,28 +68,47 @@ export async function recalculateIPVReportsChain(db: any) {
     const productMap = new Map<string, Product>(allProducts.map((p) => [p.cod, p]));
     const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
 
-    // Pre-fetch all movements for the period
+    // Pre-fetch and group all movements by date and product code for O(1) lookup
     const allMovements = await db.product_movements.toArray();
+
+    // entriesMap[date][productCod] = sum(cantidad_destino)
+    const entriesMap = new Map<string, Map<string, number>>();
+    // exitsMap[date][productCod] = sum(cantidad_origen)
+    const exitsMap = new Map<string, Map<string, number>>();
+
+    const entryTypes = ['INTELLIGENT_RECEIPT', 'DECOMPOSITION', 'MANUAL', 'IMPORT'];
+    const exitTypes = ['DECOMPOSITION', 'MANUAL'];
+
+    for (const m of allMovements) {
+        const date = m.fecha.split('T')[0];
+
+        if (m.producto_destino_cod && entryTypes.includes(m.tipo)) {
+            if (!entriesMap.has(date)) entriesMap.set(date, new Map());
+            const dateMap = entriesMap.get(date)!;
+            dateMap.set(m.producto_destino_cod, (dateMap.get(m.producto_destino_cod) || 0) + (m.cantidad_destino || 0));
+        }
+
+        if (m.producto_origen_cod && exitTypes.includes(m.tipo)) {
+            if (!exitsMap.has(date)) exitsMap.set(date, new Map());
+            const dateMap = exitsMap.get(date)!;
+            dateMap.set(m.producto_origen_cod, (dateMap.get(m.producto_origen_cod) || 0) + (m.cantidad_origen || 0));
+        }
+    }
 
     for (let i = 0; i < allReports.length; i++) {
         const report = allReports[i];
         const reportDate = report.fecha_reporte;
         const prevReport = i > 0 ? allReports[i - 1] : null;
 
+        const dateEntries = entriesMap.get(reportDate);
+        const dateExits = exitsMap.get(reportDate);
+
         const updatedFilas = report.filas.map((f: any) => {
             const product = productMap.get(f.cod);
 
-            // Sumar todas las entradas registradas en product_movements para esta fecha
-            const totalEntries = allMovements
-                .filter((m: any) => m.producto_destino_cod === f.cod && m.fecha === reportDate &&
-                    ['INTELLIGENT_RECEIPT', 'DECOMPOSITION', 'MANUAL', 'IMPORT'].includes(m.tipo))
-                .reduce((sum: number, m: any) => sum + (m.cantidad_destino || 0), 0);
-
-            // Sumar todas las salidas registradas en product_movements para esta fecha
-            const totalExits = allMovements
-                .filter((m: any) => m.producto_origen_cod === f.cod && m.fecha === reportDate &&
-                    ['DECOMPOSITION', 'MANUAL'].includes(m.tipo))
-                .reduce((sum: number, m: any) => sum + (m.cantidad_origen || 0), 0);
+            // O(1) lookup instead of O(M) filter + reduce
+            const totalEntries = dateEntries?.get(f.cod) || 0;
+            const totalExits = dateExits?.get(f.cod) || 0;
 
             const initial = prevReport
                 ? (prevReport.filas.find((pf: any) => pf.cod === f.cod)?.existencia_final_qty || 0)
