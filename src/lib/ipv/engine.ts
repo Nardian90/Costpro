@@ -222,7 +222,6 @@ export class MatchingEngine {
                                  fecha: transaction.fecha,
                                  transaction_ref: transaction.referencia_origen,
                                  created_at: new Date().toISOString(),
-            duration_ms: duration
                              });
 
                              remainingForIdentification = 0;
