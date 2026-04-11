@@ -28,9 +28,6 @@ export class MatchingRuleValidator {
         }
         break;
 
-      case 'CASH_FILL':
-        warnings.push('La regla CASH_FILL ahora es implícita en el modelo compuesto. Esta configuración individual puede ser ignorada.');
-        break;
 
       case 'STOCK_LIMIT':
         if (rule.meta?.allow_negative === true) {
