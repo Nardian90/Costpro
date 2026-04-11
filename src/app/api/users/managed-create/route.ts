@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "@/lib/auth";
+import crypto from 'crypto';
 
 // Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
 function getSupabaseAdmin() {
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     // 4. Create Auth User
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: p_email,
-      password: p_password || Math.random().toString(36).slice(-12),
+      password: p_password || crypto.randomBytes(12).toString('hex'),
       email_confirm: true,
       user_metadata: {
         full_name: p_full_name,
