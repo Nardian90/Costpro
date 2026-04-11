@@ -149,6 +149,7 @@ export interface MatchingLog {
 
   // Detalles del fallo (si aplica)
   fail_reason?: string;
+  logs?: string[];
 
   // Líneas generadas
   reconciliation_lines_count?: number;
