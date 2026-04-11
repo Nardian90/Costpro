@@ -16,6 +16,7 @@ interface UIState {
   sidebarOpen: boolean;
   isCalculatorOpen: boolean;
   themePreference: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light';
+  accessibilityMode: 'normal' | 'high-contrast';
   viewQueries: Record<string, string>;
   showQueries: boolean;
   isCreateProductModalOpen: boolean;
@@ -28,6 +29,7 @@ interface UIState {
   toggleSidebar: () => void;
   setIsCalculatorOpen: (open: boolean) => void;
   setThemePreference: (pref: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light') => void;
+  setAccessibilityMode: (mode: 'normal' | 'high-contrast') => void;
   setLastQuery: (sql: string, view?: string) => void;
   setShowQueries: (show: boolean) => void;
   setIsCreateProductModalOpen: (open: boolean) => void;
@@ -45,6 +47,7 @@ export const useUIStore = create<UIState>()(
       sidebarOpen: true,
       isCalculatorOpen: false,
       themePreference: 'fast-light',
+      accessibilityMode: 'normal',
       viewQueries: {},
       showQueries: false,
       isCreateProductModalOpen: false,

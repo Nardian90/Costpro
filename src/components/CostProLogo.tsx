@@ -115,4 +115,5 @@ const CostProLogo: React.FC<CostProLogoProps> = ({
   );
 };
 
+export { CostProLogo };
 export default CostProLogo;
