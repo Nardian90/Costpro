@@ -74,7 +74,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const theme = localStorage.getItem('theme') || 'fast-light';
+                const theme = localStorage.getItem('theme') || 'fast-dark';
                 document.documentElement.classList.add(theme);
                 document.documentElement.setAttribute('data-theme', theme);
               } catch (_) {}
@@ -88,7 +88,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class" enableSystem
-          defaultTheme="fast-light"
+          defaultTheme="fast-dark"
           disableTransitionOnChange
           themes={['light', 'dark', 'fast-light', 'fast-dark', 'auto']}
         >

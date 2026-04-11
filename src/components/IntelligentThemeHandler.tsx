@@ -30,7 +30,7 @@ export default function IntelligentThemeHandler() {
       if (hour >= 19 || hour < 7) {
         return 'fast-dark';
       }
-      return 'fast-light';
+      return 'fast-dark';
     };
 
     const updateTheme = () => {
