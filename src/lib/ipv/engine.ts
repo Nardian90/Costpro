@@ -13,8 +13,8 @@ export function getDefaultIPVRulesConfig(): RulesConfig {
     { id: "hard-ref", tipo: "HARD_REF", prioridad: 2, activo: true, descripcion: "Referencia Exacta" },
     { id: "exact-sum", tipo: "EXACT_SUM", prioridad: 3, activo: true, meta: { depth: 1200, timeout: 200000, max_depth: 1200, timeout_ms: 200000 }, descripcion: "Suma Exacta (Combinatoria)" },
     { id: "cash-fill", tipo: "CASH_FILL", prioridad: 4, activo: true, meta: { daily_cash_limit: 20000, max_per_tx_threshold: 5000, mode: "SOFT" }, descripcion: "Inyección de Efectivo (Enterprise)" },
-    { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100, mode: 'FIXED' }, descripcion: "Tolerancia de Cuadre (Rebaja/Propina)" },
     { id: "price-flex", tipo: "PRICE_FLEX", prioridad: 5, activo: false, meta: { range: 0.1, max_variation_percent: 10, max_variation_cents: 100 }, descripcion: "Flexibilidad de Precio (Auditada 5 días)" },
+    { id: "tolerance", tipo: "TOLERANCE", prioridad: 6, activo: false, meta: { tolerance_cents: 100, mode: 'FIXED' }, descripcion: "Tolerancia de Cuadre (Rebaja/Propina)" },
   ];
 }
 
@@ -60,7 +60,7 @@ export class MatchingEngine {
     const appliedRules: string[] = [];
     const logs: string[] = [];
 
-    const addTrace = (pass: number, rule: string, status: "SUCCESS" | "FAIL" | "SKIPPED", reason?: string, details?: any) => {
+    const addTrace = (pass: number, rule: string, status: 'SUCCESS' | 'FAIL' | 'SKIPPED', reason?: string, details?: any) => {
       trace.push({ pass, rule, status, reason, details, timestamp: Date.now() });
     };
 
@@ -172,9 +172,48 @@ export class MatchingEngine {
                 }
                 break;
             }
+            case 'PRICE_FLEX': {
+                if (remainingForIdentification <= 0) break;
+                const mentioned = this.products.find(p => transaction.observaciones?.includes(p.cod));
+                if (mentioned) {
+                    if (remainingForIdentification > 0 && remainingForIdentification % 1000 === 0) {
+                        const fiveDaysAgo = new Date();
+                        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+                        const recentChanges = await db.product_price_changes
+                            .where('product_cod').equals(mentioned.cod)
+                            .and(pc => new Date(pc.fecha) > fiveDaysAgo)
+                            .count();
+
+                        if (recentChanges === 0) {
+                             matchedProducts.set(mentioned.cod, { product: mentioned, qty: 1, is_price_change: true });
+                             const oldPrice = mentioned.precio_cents;
+                             const newPrice = remainingForIdentification;
+
+                             await db.product_price_changes.add({
+                                 id: uuidv4(),
+                                 product_cod: mentioned.cod,
+                                 old_price_cents: oldPrice,
+                                 new_price_cents: newPrice,
+                                 fecha: transaction.fecha,
+                                 transaction_ref: transaction.referencia_origen,
+                                 created_at: new Date().toISOString()
+                             });
+
+                             remainingForIdentification = 0;
+                             addTrace(rule.prioridad, "PRICE_FLEX", "SUCCESS", `Flexibilidad de precio aplicada para ${mentioned.cod}`, { oldPrice, newPrice });
+                             appliedRules.push("PRICE_FLEX");
+                        } else {
+                            addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", `Cambio de precio bloqueado: ya cambió en los últimos 5 días`);
+                        }
+                    } else {
+                        addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", "Precio no comercial (debe ser múltiplo de 10)");
+                    }
+                }
+                break;
+            }
             case 'TOLERANCE': {
                 if (remainingForIdentification <= 0) break;
-                const toleranceCents = rule.meta?.tolerance_cents ?? 10000; // Default 100.00 pesos? Adjust as needed
+                const toleranceCents = rule.meta?.tolerance_cents ?? 10000;
 
                 const candidates = this.products
                     .filter(p => p.activo && p.precio_cents > 0)
@@ -193,54 +232,11 @@ export class MatchingEngine {
                 }
                 break;
             }
-            case 'PRICE_FLEX': {
-                if (remainingForIdentification <= 0) break;
-                // Logic: find a product mentioned in observations and allow price change if commercial (mult of 10) and not changed in 5 days
-                const mentioned = this.products.find(p => transaction.observaciones?.includes(p.cod));
-                if (mentioned) {
-                    // Check if price is commercial (multiple of 10 pesos)
-                    if (remainingForIdentification > 0 && remainingForIdentification % 1000 === 0) {
-                        // Check 5 day constraint
-                        const fiveDaysAgo = new Date();
-                        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-                        const recentChanges = await db.product_price_changes
-                            .where('product_cod').equals(mentioned.cod)
-                            .and(pc => new Date(pc.fecha) > fiveDaysAgo)
-                            .count();
-
-                        if (recentChanges === 0) {
-                             matchedProducts.set(mentioned.cod, { product: mentioned, qty: 1, is_price_change: true });
-                             const oldPrice = mentioned.precio_cents;
-                             const newPrice = remainingForIdentification;
-
-                             // Audit log for price change
-                             await db.product_price_changes.add({
-                                 id: uuidv4(),
-                                 product_cod: mentioned.cod,
-                                 old_price_cents: oldPrice,
-                                 new_price_cents: newPrice,
-                                 fecha: transaction.fecha,
-                                 transaction_ref: transaction.referencia_origen,
-                                 created_at: new Date().toISOString(),
-                             });
-
-                             remainingForIdentification = 0;
-                             addTrace(rule.prioridad, "PRICE_FLEX", "SUCCESS", `Flexibilidad de precio aplicada para ${mentioned.cod}`, { oldPrice, newPrice });
-                             appliedRules.push("PRICE_FLEX");
-                        } else {
-                            addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", `Cambio de precio bloqueado: ya cambió en los últimos 5 días`);
-                        }
-                    } else {
-                        addTrace(rule.prioridad, "PRICE_FLEX", "FAIL", "Precio no comercial (debe ser múltiplo de 10)");
-                    }
-                }
-                break;
-            }
         }
     }
 
     let remainingTransfer = targetCents;
-    let purchaseOrderId = Math.floor(Math.random() * 1000000); // Simple consecutive logic would be better but this works for grouping
+    let purchaseOrderId = Math.floor(Math.random() * 1000000);
 
     for (const item of matchedProducts.values()) {
         const price = item.is_price_change ? (targetCents / item.qty) : item.product.precio_cents;
@@ -322,7 +318,6 @@ export class MatchingEngine {
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: new Date().toISOString(),
-            duration_ms: duration,
       ingestion_hash: 'sim'
     };
     return this.matchTransaction(mockTx);
@@ -423,8 +418,7 @@ export class MatchingEngine {
             cantidad_origen: 1,
             cantidad_destino: factor,
             tipo: 'DECOMPOSITION',
-            created_at: new Date().toISOString(),
-            duration_ms: duration
+            created_at: new Date().toISOString()
         });
 
         if (addTrace) addTrace(1, 'DECOMPOSITION', 'SUCCESS', `Descompuesto ${ancestor.cod} -> ${targetProduct.cod} (Factor: ${factor})`);
@@ -443,8 +437,7 @@ export class MatchingEngine {
     this.stockMap.set(productCod, current - qty);
     this.pendingMovements.push({
         id: uuidv4(), fecha: new Date().toISOString(), producto_origen_cod: productCod, producto_destino_cod: '',
-        cantidad_origen: qty, cantidad_destino: 0, tipo: 'MANUAL', referencia_transaccion: txRef, created_at: new Date().toISOString(),
-            duration_ms: duration
+        cantidad_origen: qty, cantidad_destino: 0, tipo: 'MANUAL', referencia_transaccion: txRef, created_at: new Date().toISOString()
     });
   }
 
@@ -457,8 +450,7 @@ export class MatchingEngine {
         transfer_amount_cents: transfer, cash_amount_cents: cash, total_amount_cents: total,
         status: 'VALID', payment_status: 'MATCHED', product_cod: p.cod, product_name: p.descripcion, product_um: p.um || 'UD',
         cantidad: qty, precio_unitario_cents: p.precio_cents, origen_dato: 'AUTO_MATCH', source_type: 'BANK_TRANSFER',
-        reconciliation_hash: id, created_at: new Date().toISOString(),
-            duration_ms: duration
+        reconciliation_hash: id, created_at: new Date().toISOString()
     };
   }
 
