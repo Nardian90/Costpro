@@ -7,10 +7,16 @@ export interface BankTransaction {
   referencia_origen: string; // ID único real
   observaciones: string;
   importe_cents: number;
+  comision_cents?: number;
+  importe_venta_cents?: number;
   tipo: 'Cr' | 'Db';
   estado_conciliacion: 'PENDIENTE' | 'CONCILIADO' | 'PARCIAL';
   created_at: string;
   ingestion_hash: string;
+  excluido?: boolean;
+  fail_reason?: string;
+  ipv_id?: string;
+  updated_at?: string;
   carnet?: string;
   nombre_cliente?: string;
   nit?: string;
