@@ -140,7 +140,7 @@ export interface MatchingLog {
   payload?: any;
   transaction_ref?: string; // Optional for non-matching events
   fecha_ejecucion?: string; // Optional for non-matching events
-  resultado_estado?: "COMPLETO" | "PARCIAL" | "PENDIENTE";
+  resultado_estado?: "COMPLETO" | "PARCIAL" | "PENDIENTE" | "OVERPAYMENT";
 
   // Traceabilidad
   trace?: MatchingTrace[];
