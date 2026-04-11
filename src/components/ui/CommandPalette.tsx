@@ -14,6 +14,17 @@ export const CommandPalette = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [recentActions, setRecentActions] = useState<string[]>([]);
+  const [isMac, setIsMac] = useState(true);
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    setIsMac(ua.includes('macintosh') || ua.includes('mac os x'));
+  }, []);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
   const { setCurrentView, setActiveCostSection } = useUIStore();
   const { user } = useAuthStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,9 +41,17 @@ export const CommandPalette = () => {
   }), [userActions]);
 
   const results = useMemo(() => {
-    if (!query) return userActions.slice(0, 8);
+    if (!query) {
+      // Prioritize recent actions
+      const recentActionObjects = recentActions
+        .map(id => userActions.find(a => a.id === id))
+        .filter(Boolean) as Action[];
+
+      const others = userActions.filter(a => !recentActions.includes(a.id));
+      return [...recentActionObjects, ...others].slice(0, 8);
+    }
     return fuse.search(query).map(r => r.item).slice(0, 8);
-  }, [query, fuse, userActions]);
+  }, [query, fuse, userActions, recentActions]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -53,6 +72,8 @@ export const CommandPalette = () => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
+      const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+      setRecentActions(recent);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
@@ -124,15 +145,23 @@ export const CommandPalette = () => {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
                 placeholder="Buscar o ejecutar acción..."
+                aria-label="Buscar acciones o navegar"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={isOpen}
+                aria-haspopup="listbox"
+                aria-controls="command-palette-results"
+                aria-activedescendant={results[selectedIndex] ? `action-${results[selectedIndex].id}` : undefined}
                 className="flex-1 bg-transparent border-none outline-none text-lg font-medium text-foreground placeholder:text-muted-foreground/50"
               />
               <div className="flex items-center gap-2 ml-4">
                 <kbd className="px-2 py-1 bg-muted rounded-lg text-[10px] font-black border border-border flex items-center gap-1 text-muted-foreground uppercase tracking-widest">
-                  <Command className="w-3 h-3" /> K
+                  {isMac ? <Command className="w-3 h-3" /> : 'CTRL'} K
                 </kbd>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
+                  aria-label="Cerrar centro de comando"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -141,14 +170,18 @@ export const CommandPalette = () => {
 
             <div ref={listRef} className="max-h-[60vh] overflow-y-auto p-3 scrollbar-hide">
               {results.length > 0 ? (
-                <div className="space-y-1">
+                <div id="command-palette-results" role="listbox" className="space-y-1">
                   <div className="px-4 py-2 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-50 flex items-center justify-between">
-                    <span>{query ? 'Resultados' : 'Sugerencias rápidas'}</span>
+                    <span>{query ? 'Resultados' : (recentActions.length > 0 ? 'Acciones Recientes' : 'Sugerencias rápidas')}</span>
                     {!query && <Sparkles className="w-3 h-3" />}
                   </div>
                   {results.map((action, index) => (
                     <button
                       key={action.id}
+                      id={`action-${action.id}`}
+                      role="option"
+                      aria-selected={selectedIndex === index}
+                      tabIndex={-1}
                       onClick={() => handleSelect(action)}
                       onMouseEnter={() => setSelectedIndex(index)}
                       className={cn(
