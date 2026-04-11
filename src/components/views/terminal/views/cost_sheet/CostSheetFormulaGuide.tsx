@@ -26,7 +26,7 @@ export const CostSheetFormulaGuide = () => {
 
       <Accordion type="single" collapsible className="w-full space-y-4">
         {/* 1. Gasto Material */}
-        <AccordionItem value="item-1" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-1" className="border rounded-2xl px-6 bg-background /50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
@@ -48,7 +48,7 @@ export const CostSheetFormulaGuide = () => {
               <div className="flex gap-3">
                 <div className="mt-1"><Info className="w-4 h-4 text-slate-400" /></div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explicación en lenguaje natural:</p>
+                  <p className="text-sm font-bold text-slate-700  mb-1">Explicación en lenguaje natural:</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Es la suma de todo lo que "tocas" o consumes para fabricar el producto. Por cada material en tu lista, multiplicamos la cantidad que vas a usar (Norma de Consumo) por lo que te costó comprarlo. Al final, sumamos todos esos totales.
                   </p>
@@ -73,7 +73,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 2. Salario Directo */}
-        <AccordionItem value="item-2" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-2" className="border rounded-2xl px-6 bg-background /50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
@@ -95,7 +95,7 @@ export const CostSheetFormulaGuide = () => {
               <div className="flex gap-3">
                 <div className="mt-1"><Info className="w-4 h-4 text-slate-400" /></div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explicación en lenguaje natural:</p>
+                  <p className="text-sm font-bold text-slate-700  mb-1">Explicación en lenguaje natural:</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Calculamos cuánto le pagamos a las personas que fabrican el producto. Multiplicamos el tiempo que tardan por su salario por hora y por la cantidad de personas. Además, sumamos un 9.09% adicional que es lo que se guarda legalmente para sus vacaciones.
                   </p>
@@ -124,7 +124,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 3. Costo Total */}
-        <AccordionItem value="item-3" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-3" className="border rounded-2xl px-6 bg-background /50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
@@ -146,7 +146,7 @@ export const CostSheetFormulaGuide = () => {
               <div className="flex gap-3">
                 <div className="mt-1"><Info className="w-4 h-4 text-slate-400" /></div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explicación en lenguaje natural:</p>
+                  <p className="text-sm font-bold text-slate-700  mb-1">Explicación en lenguaje natural:</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Es la "mochila" completa de gastos. Sumamos los materiales, los salarios, la depreciación de los equipos, los gastos de administración y los impuestos sobre la fuerza de trabajo. Es lo que realmente te cuesta tener el producto listo antes de pensar en ganar dinero.
                   </p>
@@ -171,7 +171,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 4. Utilidad */}
-        <AccordionItem value="item-4" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-4" className="border rounded-2xl px-6 bg-background /50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg">
@@ -193,7 +193,7 @@ export const CostSheetFormulaGuide = () => {
               <div className="flex gap-3">
                 <div className="mt-1"><Info className="w-4 h-4 text-slate-400" /></div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explicación en lenguaje natural:</p>
+                  <p className="text-sm font-bold text-slate-700  mb-1">Explicación en lenguaje natural:</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Es el beneficio neto que quieres obtener por el esfuerzo de producir. Se calcula aplicando un porcentaje (ej. 30%) sobre el Costo Total que calculamos anteriormente.
                   </p>
@@ -218,7 +218,7 @@ export const CostSheetFormulaGuide = () => {
         </AccordionItem>
 
         {/* 5. Precio Final */}
-        <AccordionItem value="item-5" className="border rounded-2xl px-6 bg-background dark:bg-slate-900/50 shadow-sm overflow-hidden">
+        <AccordionItem value="item-5" className="border rounded-2xl px-6 bg-background /50 shadow-sm overflow-hidden">
           <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex items-center gap-4 text-left">
               <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
@@ -240,7 +240,7 @@ export const CostSheetFormulaGuide = () => {
               <div className="flex gap-3">
                 <div className="mt-1"><Info className="w-4 h-4 text-slate-400" /></div>
                 <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explicación en lenguaje natural:</p>
+                  <p className="text-sm font-bold text-slate-700  mb-1">Explicación en lenguaje natural:</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     Es el precio que paga el cliente. Sumamos el costo y tu utilidad, y luego dividimos por 0.90. ¿Por qué? Esto asegura que cuando pagues el 10% de impuesto sobre la venta final, tu ganancia se mantenga intacta.
                   </p>

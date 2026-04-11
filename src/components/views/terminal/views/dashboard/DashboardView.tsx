@@ -127,17 +127,17 @@ export default function DashboardView() {
                 <div className="grid grid-cols-3 gap-8 w-full max-w-sm mt-4">
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-primary mb-2 shadow-[0_0_8px_rgba(var(--primary),0.6)]"></div>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Ventas</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Ventas</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(sales)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-background mb-2 shadow-[0_0_8px_rgba(100,116,139,0.6)]"></div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Costos</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Costos</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(costs)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-[#00E0FF] mb-2 shadow-[0_0_8px_rgba(0,224,255,0.6)]"></div>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Utilidad</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Utilidad</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(profit)}</span>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default function DashboardView() {
               {/* Summary Cards with Sparklines */}
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
-                  <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-300">Resumen de Ventas</h2>
+                  <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground dark:text-foreground/80">Resumen de Ventas</h2>
                   <span className="text-xs font-mono text-primary animate-pulse uppercase font-black">Live Updates</span>
                 </div>
                 <ExecutiveKpiCards
@@ -160,14 +160,14 @@ export default function DashboardView() {
               <div className="grid grid-cols-2 gap-4">
                 <button className="bg-card/50 border border-border py-5 rounded-[24px] flex flex-col items-center justify-center group active:scale-95 transition-all hover:bg-card">
                   <FileDown className="w-6 h-6 text-slate-500 group-hover:text-primary transition-colors" />
-                  <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Reporte</span>
+                  <span className="text-xs font-black mt-2 text-muted-foreground uppercase tracking-widest">Reporte</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('settings')}
                   className="bg-card/50 border border-border py-5 rounded-[24px] flex flex-col items-center justify-center group active:scale-95 transition-all hover:bg-card"
                 >
                   <Settings2 className="w-6 h-6 text-slate-500 group-hover:text-[#00E0FF] transition-colors" />
-                  <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Ajustes</span>
+                  <span className="text-xs font-black mt-2 text-muted-foreground uppercase tracking-widest">Ajustes</span>
                 </button>
               </div>
 

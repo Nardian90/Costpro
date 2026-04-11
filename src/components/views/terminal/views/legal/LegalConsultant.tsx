@@ -111,7 +111,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
               exit={{ opacity: 0, x: -20 }}
               className="space-y-8"
             >
-              <div className="bg-background dark:bg-zinc-900 border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
+              <div className="bg-background  border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
                 <div className="p-8 border-b border-primary/5 bg-primary/5">
                   <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-2">
                     <BookOpen className="w-4 h-4" />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import {
   ArrowRight, Globe, Moon, Sun, Store, CreditCard, Landmark,
   BarChart3, Network, Cpu, Wallet, LineChart, Download,
@@ -56,6 +57,15 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
   };
 
   const whatsappLink = "https://wa.me/5353183215";
+  const { setTheme, theme } = useTheme();
+
+  useEffect(() => {
+    // Only allow dark themes on the landing page
+    if (theme !== 'fast-dark' && theme !== 'dark') {
+      setTheme('fast-dark');
+    }
+  }, [theme, setTheme]);
+
 
   if (!isHydrated) return null;
 
@@ -75,7 +85,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <button onClick={goToHelpSlideshow} className="text-muted-foreground hover:text-foreground transition-colors">Casos de Riesgo</button>
           </div>
           <div className="flex items-center gap-4">
-            <ThemeToggle />
+            <ThemeToggle variant="dark-only" />
             <button
               onClick={handleInstallClick}
               className={cn(
@@ -166,7 +176,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                     </div>
                   </div>
                   <div className="p-3 bg-red-500/5 border border-red-500/20 rounded">
-                    <p className="text-[11px] text-slate-300">Causa: Comisión bancaria no registrada en conciliación interna.</p>
+                    <p className="text-[11px] text-muted-foreground">Causa: Comisión bancaria no registrada en conciliación interna.</p>
                     <p className="text-[10px] text-slate-500 mt-2">Acción recomendada: Ajuste de ledger inmediato.</p>
                   </div>
                   <div className="pt-2 border-t border-outline-variant/10">
@@ -372,7 +382,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
         <section className="py-24 px-6 bg-destructive/10 border-y border-red-900/30">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-5xl font-black tracking-tight text-foreground mb-6 font-headline leading-tight">Si tus datos financieros están retrasados, tus decisiones son incorrectas.</h2>
-            <p className="text-xl text-slate-300 font-sans mb-10 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground font-sans mb-10 max-w-2xl mx-auto">
               Para el CFO que no acepta "aproximaciones". Recupera el control total de cada centavo que entra y sale de tu operation.
             </p>
             <button

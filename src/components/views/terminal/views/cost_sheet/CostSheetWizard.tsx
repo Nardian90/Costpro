@@ -63,7 +63,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Progress Header */}
-      <div className="neu-card p-6 bg-slate-50 dark:bg-slate-900/50">
+      <div className="neu-card p-6 bg-slate-50 /50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-1">
@@ -118,7 +118,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
       </div>
 
       {/* Footer Navigation */}
-      <div className="flex justify-between items-center py-6 border-t border-slate-200 dark:border-slate-800">
+      <div className="flex justify-between items-center py-6 border-t border-slate-200 ">
          <Button variant="ghost" onClick={handlePrev} disabled={currentStep === 0} className="text-slate-500">
             Regresar a {currentStep > 0 ? steps[currentStep-1].label : '...'}
          </Button>

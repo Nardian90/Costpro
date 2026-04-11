@@ -68,7 +68,7 @@ export default function CostSheetNarrative({ data, calculatedValues, calculatedH
             </div>
 
             {/* Break-even Chart */}
-            <div className="bg-background dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-background  rounded-[2rem] p-8 border border-slate-200  shadow-sm">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-8 flex items-center gap-2">
                     <Target className="w-4 h-4 text-orange-500" /> Comparativa de Recuperación
                 </h3>
@@ -94,7 +94,7 @@ export default function CostSheetNarrative({ data, calculatedValues, calculatedH
         </div>
 
         <div className="space-y-6">
-            <div className="bg-background dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <div className="bg-background  rounded-[2rem] p-8 border border-slate-200  shadow-sm flex flex-col items-center">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-8 text-center">Estructura de Costos</h3>
                 <div className="w-full">
                     <SafePieChart

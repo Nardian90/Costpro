@@ -55,8 +55,8 @@ export const ExecutiveKpiCards = ({
       title: 'Costo de Ventas',
       value: costs,
       icon: <DollarSign className="w-6 h-6" />,
-      iconColor: 'text-slate-400 dark:text-slate-300',
-      iconBg: 'bg-slate-400/10 dark:bg-white/5 border-slate-400/20 dark:border-white/10',
+      iconColor: 'text-muted-foreground dark:text-foreground/80',
+      iconBg: 'bg-muted/50 dark:bg-white/5 border-border/50 dark:border-white/10',
       linePath: 'M0 5 Q 15 15, 30 8 T 60 12',
       lineColor: isDark ? '#ffffff' : '#64748b' // White in dark, Slate-500 in light
     },
@@ -83,7 +83,7 @@ export const ExecutiveKpiCards = ({
               {card.icon}
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">
+              <p className="text-xs font-bold text-slate-600 dark:text-foreground/80 uppercase tracking-tight">
                 {card.title}
               </p>
               <h3 className="text-xl font-bold font-display text-foreground">

@@ -115,7 +115,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
         </Button>
       </div>
 
-      <div className="bg-card dark:bg-slate-900 rounded-[2.5rem] border border-border shadow-xl overflow-hidden">
+      <div className="bg-card  rounded-[2.5rem] border border-border shadow-xl overflow-hidden">
         <div className="overflow-x-auto table-to-cards rounded-2xl">
           <table className="w-full text-left border-collapse">
             <thead>

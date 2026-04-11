@@ -23,7 +23,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
         </p>
       </div>
 
-      <div className="bg-white/50 dark:bg-slate-900/50 p-6 rounded-[2rem] border border-slate-200 dark:border-primary/20 shadow-xl backdrop-blur-sm">
+      <div className="bg-white/50 /50 p-6 rounded-[2rem] border border-slate-200 dark:border-primary/20 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col gap-6">
           <div className="border-b border-slate-200 dark:border-primary/10 pb-4">
             <span className="text-[clamp(0.6rem,2vw,0.75rem)] font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
@@ -54,7 +54,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
                 </span>
                 <div className={cn(
                   "font-bold text-sm",
-                  item.highlight ? "text-primary font-black" : "text-slate-700 dark:text-slate-300"
+                  item.highlight ? "text-primary font-black" : "text-slate-700 "
                 )}>
                   {item.value || 'N/A'}
                 </div>

@@ -13,7 +13,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  variant?: "all" | "dark-only";
+}
+
+export function ThemeToggle({ variant = "all" }: ThemeToggleProps) {
   const { themePreference, setThemePreference } = useUIStore();
   const { theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
@@ -28,13 +32,17 @@ export function ThemeToggle() {
     );
   }
 
-  const themes = [
+  const allThemes = [
     { id: 'light', label: 'Claro', icon: Sun, color: 'text-amber-500' },
     { id: 'dark', label: 'Oscuro', icon: Moon, color: 'text-primary' },
     { id: 'fast-light', label: 'Fast Light', icon: Zap, color: 'text-blue-500' },
     { id: 'fast-dark', label: 'Fast Dark', icon: Zap, color: 'text-emerald-500' },
     { id: 'auto', label: 'Inteligente', icon: Laptop, color: 'text-purple-500' },
   ] as const;
+
+  const themes = variant === "dark-only"
+    ? allThemes.filter(t => t.id === "dark" || t.id === "fast-dark")
+    : allThemes;
 
   const currentTheme = themes.find(t => t.id === themePreference) || themes[0];
   const Icon = currentTheme.icon;

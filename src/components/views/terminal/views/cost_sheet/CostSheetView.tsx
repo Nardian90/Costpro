@@ -558,7 +558,7 @@ const CostSheetView = () => {
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-background  border border-slate-200  p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
                   <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-primary/10 rounded-xl">
                           {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}

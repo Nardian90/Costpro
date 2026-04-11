@@ -24,7 +24,7 @@ export const RecentCostSheets = () => {
     return (
         <section className="space-y-4">
             <div className="flex justify-between items-end px-1">
-                <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-300">Fichas de Costo Recientes</h2>
+                <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground dark:text-foreground/80">Fichas de Costo Recientes</h2>
                 <button
                     onClick={() => setCurrentView('cost-sheets')}
                     className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
