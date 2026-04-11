@@ -60,6 +60,7 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
       setThemePreference: (themePreference) => set({ themePreference }),
+      setAccessibilityMode: (accessibilityMode) => set({ accessibilityMode }),
       setLastQuery: (sql, view) => set((state) => ({
         viewQueries: { ...state.viewQueries, [view || state.currentView]: sql }
       })),

@@ -5,13 +5,24 @@ import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
 
 export default function IntelligentThemeHandler() {
-  const { themePreference } = useUIStore();
+  const { themePreference, accessibilityMode } = useUIStore();
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle Accessibility Mode (High Contrast)
+  useEffect(() => {
+    if (!mounted) return;
+
+    if (accessibilityMode === 'high-contrast') {
+      document.documentElement.setAttribute('data-accessibility', 'high-contrast');
+    } else {
+      document.documentElement.removeAttribute('data-accessibility');
+    }
+  }, [accessibilityMode, mounted]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -48,8 +59,7 @@ export default function IntelligentThemeHandler() {
 
     updateTheme();
 
-    // Listeners for environmental changes
-    const interval = setInterval(updateTheme, 60000); // Check every minute for time changes
+    const interval = setInterval(updateTheme, 60000);
 
     const conn = typeof navigator !== 'undefined' && (navigator as any).connection;
     if (conn) {

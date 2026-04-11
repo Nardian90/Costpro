@@ -1,21 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun, Zap, Laptop, WifiOff, Cloud } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { Moon, Sun, Zap, Laptop, Eye } from 'lucide-react';
 import { useUIStore } from '@/store';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 export function ThemeToggle() {
-  const { themePreference, setThemePreference } = useUIStore();
-  const { theme } = useTheme();
+  const { themePreference, setThemePreference, accessibilityMode, setAccessibilityMode } = useUIStore();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -44,7 +43,7 @@ export function ThemeToggle() {
       <DropdownMenuTrigger asChild>
         <button
           className="group relative flex items-center gap-3 px-3 h-11 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none"
-          aria-label="Toggle theme"
+          aria-label="Configuración de Tema"
         >
           <div className="relative w-5 h-5 flex items-center justify-center overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
@@ -61,30 +60,43 @@ export function ThemeToggle() {
           </div>
 
           <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-            {currentTheme.label}
+            {accessibilityMode === 'high-contrast' ? 'Alto Contraste' : currentTheme.label}
           </span>
-
-          {/* Micro-interaction highlight */}
-          <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl bg-card border-border shadow-2xl">
+      <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl">
         <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
-          Seleccionar Tema
+          Tema Visual
         </div>
         {themes.map((t) => (
           <DropdownMenuItem
             key={t.id}
             onClick={() => setThemePreference(t.id)}
             className={cn(
-              "flex items-center gap-3 px-3 py-4 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
-              themePreference === t.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
+              "flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
+              themePreference === t.id && accessibilityMode === 'normal' ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
             )}
           >
             <t.icon className={cn("w-4 h-4", t.color)} />
             <span className="text-xs font-black uppercase tracking-widest">{t.label}</span>
           </DropdownMenuItem>
         ))}
+
+        <DropdownMenuSeparator className="my-2 bg-border" />
+
+        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+          Accesibilidad
+        </div>
+        <DropdownMenuItem
+          onClick={() => setAccessibilityMode(accessibilityMode === 'high-contrast' ? 'normal' : 'high-contrast')}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
+            accessibilityMode === 'high-contrast' ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
+          )}
+        >
+          <Eye className="w-4 h-4" />
+          <span className="text-xs font-black uppercase tracking-widest">Alto Contraste</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

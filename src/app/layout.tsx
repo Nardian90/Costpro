@@ -8,6 +8,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { SyncProvider } from "@/components/providers/SyncProvider";
 import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
+import { ProductHeader } from "@/components/layout/ProductHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,11 @@ export default function RootLayout({
                 const theme = localStorage.getItem('theme') || 'fast-light';
                 document.documentElement.classList.add(theme);
                 document.documentElement.setAttribute('data-theme', theme);
+
+                const ui = JSON.parse(localStorage.getItem('costpro-ui-storage') || '{}');
+                if (ui.state && ui.state.accessibilityMode === 'high-contrast') {
+                  document.documentElement.setAttribute('data-accessibility', 'high-contrast');
+                }
               } catch (_) {}
             `,
           }}
@@ -96,7 +102,12 @@ export default function RootLayout({
           <QueryProvider>
             <SyncProvider>
               <GlobalSessionManager />
-              {children}
+              <div className="flex flex-col min-h-screen">
+                <ProductHeader />
+                <main className="flex-1">
+                  {children}
+                </main>
+              </div>
               <Toaster position="top-right" richColors />
               <ServiceWorkerRegister />
             </SyncProvider>
