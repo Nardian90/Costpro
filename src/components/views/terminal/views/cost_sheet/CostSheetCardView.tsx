@@ -24,6 +24,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { cn, formatAccounting, formatCurrency } from '@/lib/utils';
+import { isResultRow } from '@/lib/cost-engine/constants';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { CostSheetRow, CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
 import { Button } from '@/components/ui/button';
@@ -68,13 +69,14 @@ const RowCard: React.FC<RowCardProps> = memo(({
   const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
 
   const hasChildren = row.children && row.children.length > 0;
-  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '12.1', '13', '13.1', '13.2', '13.3', '14', '14.1', '15', '15.1', '16', '16.1'].includes(String(row.id));
+  const isRowPercent = row.isPercent ?? row.is_percent;
+  const isResult = isResultRow(String(row.id)) || isRowPercent;
 
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -104,7 +106,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
   return (
     <div className={cn(
       "mb-3 rounded-2xl border transition-all",
-      isResultRow ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card border-border/50",
+      isResult ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card border-border/50",
       level > 0 && "ml-4 border-l-2 border-l-primary/30"
     )}>
       <div className="p-4">
@@ -211,8 +213,8 @@ const RowCard: React.FC<RowCardProps> = memo(({
                       ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                       : (row.vhFormula
                           ? formatAccounting(safeCalculated.calculatedVH ?? 0)
-                          : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
-                    {row.is_percent && "%"}
+                          : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
+                    {isRowPercent && "%"}
                   </span>
                   {row.vhFormula && <FunctionSquare className="w-2.5 h-2.5 text-primary/40 absolute left-2 top-2.5" />}
                 </div>

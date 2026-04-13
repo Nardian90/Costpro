@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const RowSemanticTypeSchema = z.enum(['COST', 'MARGIN', 'TAX', 'TOTAL', 'INFO']);
 
-export const FormaCalculoSchema = z.enum(['FIJO', 'IMPORTAR_ANEXO', 'PRORRATEO', 'COEFICIENTE', 'FORMULA']);
+export const FormaCalculoSchema = z.enum(['FIJO', 'IMPORTAR_ANEXO', 'ANEXO', 'PRORRATEO', 'COEFICIENTE', 'FORMULA']);
 
 export const BaseRefSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ANEXO'), anexoId: z.string() }),
@@ -60,6 +60,7 @@ export const FichaJSONSchema = z.object({
       damping: z.number().optional(),
       allowFormulas: z.boolean().optional(),
       autoSave: z.boolean().optional(),
+      maxAuditEntries: z.number().optional(),
     }).optional(),
   }),
   rows: z.array(CostRowSchema),

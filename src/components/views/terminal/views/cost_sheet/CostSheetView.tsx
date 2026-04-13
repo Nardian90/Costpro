@@ -2,7 +2,7 @@
 import { DarianEditor } from './DarianEditor';
 import { LazyRender } from '@/components/ui/LazyRender';
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav';
@@ -16,6 +16,10 @@ import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
+import { CostSheetSidebarNav } from './CostSheetSidebarNav';
+import { CostSheetExportModal } from './CostSheetExportModal';
+import { CostSheetQuickMode } from './CostSheetQuickMode';
+import { UpgradeModal } from '@/components/modals/UpgradeModal';
 
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -23,56 +27,25 @@ import { SteelStructureCalculator } from './SteelStructureCalculator';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
 import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
-import { FolderOpen } from "lucide-react";
-import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { useUIStore } from '@/store';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
-import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
-import { CostSheetQuickMode } from './CostSheetQuickMode';
-import { CostSheetViewMode } from './CostSheetModeDropdown';
-import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
-import ActionMenu from '@/components/ui/ActionMenu';
-import { cn, formatDate, formatCurrency } from '@/lib/utils';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator, Tag } from 'lucide-react';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { usageService } from '@/services/usage-service';
-import { UpgradeModal } from '@/components/modals/UpgradeModal';
-import { useAuthStore } from '@/store';
-import { exportToPDF, exportToCSV } from '@/services/export-service';
-import { useIsMobile } from '@/hooks/ui/useMobile';
-import { Bot } from "lucide-react";
+import {
+  Eye, Edit, AlertTriangle, ArrowLeft, Table2,
+  Wand2, BookOpen, Zap as ZapIcon
+} from 'lucide-react';
+
+import { useCostSheetViewState } from '@/hooks/logic/useCostSheetViewState';
+import { useCostSheetActions } from '@/hooks/logic/useCostSheetActions';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
-  const { activeCostSection: activeSection, setActiveCostSection: setActiveSection } = useUIStore();
-  const { user } = useAuthStore();
+  const { activeCostSection: activeSection } = useUIStore();
 
-  const [confirmation, setConfirmation] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'default' | 'destructive' }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
-    setConfirmation({ isOpen: true, title, message, onConfirm, variant });
-  };
-  const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
-  const [quickModeMapping, setQuickModeMapping] = useState({
-    targetColumn: 'sale_price' as 'sale_price' | 'total_cost',
-    modificationRow: '13.1'
-  });
-  const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
-  const [isQuickModeGenerating, setIsQuickModeGenerating] = React.useState(false);
-
-  const handleSetActiveSection = (id: string) => {
-    setActiveSection(id);
-    if (id === 'main' && !activeSubSectionId) {
-        // Find the group 1-3 if it exists
-        const group13 = groupedSections.find(g => g.id === 'group-1-3');
-        if (group13) {
-            setActiveSubSectionId('group-1-3');
-        }
-    }
-  };
-
-  const { data, loadExample, reset, setSheet } = useCostSheetStore();
+  // ── Data & Calculations ─────────────────────────────────────────────
+  const { data } = useCostSheetStore();
   const {
     calculatedValues,
     calculatedHeader,
@@ -85,390 +58,72 @@ const CostSheetView = () => {
     deepValidationErrors
   } = useCostSheetCalculator(data);
 
-  const [isEditing, setIsEditing] = useState(true);
-  const [viewMode, setViewMode] = useState<CostSheetViewMode>('expert');
-  const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+  // ── Extracted Hooks ─────────────────────────────────────────────────
+  const viewState = useCostSheetViewState(data, activeSection);
 
-  const handleSetViewMode = (mode: CostSheetViewMode) => {
-    if (mode === 'preview') {
-      setIsEditing(false);
-    } else {
-      setIsEditing(true);
-    }
-    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else if (mode === 'expert') { setActiveSection('expert-content'); setViewMode('expert'); } else { setViewMode(mode); }
-  };
+  const {
+    confirmation,
+    setConfirmation,
+    askConfirmation,
+    handleSetActiveSection,
+    handleSetViewMode,
+    handleExportPDF,
+    handleExportExcel,
+    handleImportJSON,
+    handleExportJSON,
+    handleQuickGenerate,
+    quickModeMapping,
+    setQuickModeMapping,
+    quickModeProducts,
+    isQuickModeGenerating,
+    setIsQuickModeGenerating,
+    isActionsPanelOpen,
+    setIsActionsPanelOpen,
+    isHelpPanelOpen,
+    setIsHelpPanelOpen,
+    isSectionsSidebarOpen,
+    setIsSectionsSidebarOpen,
+    isAnnexesSidebarOpen,
+    setIsAnnexesSidebarOpen,
+    isExportModalOpen,
+    setIsExportModalOpen,
+    isUpgradeModalOpen,
+    setIsUpgradeModalOpen,
+    onOpenAnnexes,
+    onOpenSections,
+    allActions,
+    mainActions,
+    secondaryActions,
+    setCurrentView
+  } = useCostSheetActions({
+    data,
+    calculatedValues,
+    calculatedHeader,
+    calculatedAnnexes,
+    calculationResult,
+    isBlocked,
+    deepValidationErrors,
+    viewState
+  });
 
-  React.useEffect(() => {
-    setLayoutMode(isMobile ? 'grid' : 'table');
-  }, [isMobile]);
-  React.useEffect(() => {
-    if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
-    else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
-    else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
-    else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
-    else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
-    else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
-    else if (activeSection === 'tool-import') { handleImportJSON(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-save') { handleExportJSON(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-export-excel') { handleExportExcel(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('expert-content'); }
-    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('expert-content'); }
-  }, [activeSection]);
+  // Destructure view state for JSX
+  const {
+    activeSubSectionId,
+    setActiveSubSectionId,
+    isEditing,
+    setIsEditing,
+    viewMode,
+    setViewMode,
+    layoutMode,
+    setLayoutMode,
+    effectiveLayoutMode,
+    groupedSections,
+    isAnnexActive,
+    navItems,
+    subSectionActions
+  } = viewState;
 
-  // Grouping logic for "Smart Grouping" of small sections
-  const groupedSections = React.useMemo(() => {
-    if (!data?.sections) return [];
-
-    // Specific logical blocks requested by the user: [1-3], [4-5], [6-7], [8-10], [11-16]
-    const predefinedBlocks = [
-        { start: 1, end: 3 },
-        { start: 4, end: 5 },
-        { start: 6, end: 7 },
-        { start: 8, end: 10 },
-        { start: 11, end: 16 }
-    ];
-
-    const getSectionNumber = (id: string) => {
-        const num = id.replace('s', '');
-        return parseInt(num, 10);
-    };
-
-    const getSectionName = (label: string) => {
-        const match = label.match(/Sección\s+\d+:\s*(.*)/i);
-        return match ? match[1].trim() : label.trim();
-    };
-
-    const groups: { id: string, label: string, sectionIds: string[] }[] = [];
-
-    predefinedBlocks.forEach((block) => {
-        const blockSections = data.sections.filter(s => {
-            const n = getSectionNumber(s.id);
-            return n >= block.start && n <= block.end;
-        });
-
-        if (blockSections.length > 0) {
-            const first = blockSections[0];
-            const last = blockSections[blockSections.length - 1];
-
-            let label = "";
-            if (blockSections.length === 1) {
-                label = first.label || "";
-            } else {
-                const startNum = getSectionNumber(first.id);
-                const endNum = getSectionNumber(last.id);
-                const firstName = getSectionName(first.label || "");
-                const lastName = getSectionName(last.label || "");
-                label = `SECCIONES ${startNum} - ${endNum}: ${firstName} ... ${lastName}`;
-            }
-
-            groups.push({
-                id: `group-${block.start}-${block.end}`,
-                label,
-                sectionIds: blockSections.map(s => s.id)
-            });
-        }
-    });
-
-    // Handle any sections not in predefined blocks
-    data.sections.forEach(s => {
-        const n = getSectionNumber(s.id);
-        const isInBlock = predefinedBlocks.some(b => n >= b.start && n <= b.end);
-        if (!isInBlock) {
-            groups.push({
-                id: s.id,
-                label: s.label || "",
-                sectionIds: [s.id]
-            });
-        }
-    });
-
-    return groups;
-  }, [data?.sections]);
-
-  const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
-  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
-  const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
-  const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
-  const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-
-  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content', [data?.annexes, activeSection]);
-
-  const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
-    // Usage Quota Check
-    if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan, user.role);
-        if (!allowed) {
-            setIsUpgradeModalOpen(true);
-            return;
-        }
-    }
-
-    setIsExportModalOpen(false);
-    if (isBlocked) {
-        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
-    }
-    const toastId = toast.loading("Generando PDF profesional... por favor espere.");
-
-    const downloadPDF = async (opts: ExportOptions, filename: string) => {
-        if (!calculationResult) return false;
-        const response = await fetch('/api/cost-sheets/export-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...calculationResult,
-                sections: data.sections, signature: data.signature, notes: data.footer || data.metadata?.notes, exportOptions: opts
-            })
-        });
-
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-            return true;
-        }
-        return false;
-    };
-
-    try {
-      // Prioritize the declarative engine export
-      if (calculationResult) {
-        const h = calculationResult.metadata?.header || data?.header || {};
-        const evalCode = h.code || 'export';
-        const evalName = h.name || 'ficha';
-        const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/\?%*:|"<>]/g, '-');
-
-        if (options.consolidated) {
-            const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
-            if (success) {
-                toast.success("PDF consolidado generado con éxito", { id: toastId });
-                if (user) await usageService.trackUsage(user.id, "fc_export", user.plan, user.role);
-                return;
-            }
-        } else {
-            // Separate export
-            let count = 0;
-            if (options.includeFC) {
-                await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            for (const annexId of options.includeAnnexes) {
-                await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            if (options.includeAudit) {
-                await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
-                count++;
-            }
-
-            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
-            return;
-        }
-      }
-
-      // Fallback to legacy report service if engine fails or not available
-      const { reportService } = await import('@/services/report-service');
-      const response = await reportService.generateReport({
-        type: 'cost_sheet',
-        data: data,
-        calculatedValues: calculatedValues,
-        calculatedAnnexes: calculatedAnnexes,
-        store_id: useAuthStore.getState().user?.activeStoreId,
-        name: data?.header?.name || 'Ficha de Costo',
-        exportOptions: options
-      }, useAuthStore.getState().token || '');
-
-      if (response.url) {
-        window.open(response.url, '_blank');
-        toast.success("PDF generado con éxito", { id: toastId });
-      } else {
-        throw new Error("No se recibió la URL del PDF");
-      }
-    } catch (error: any) {
-      console.error("PDF Export error:", error);
-      toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
-    }
-  }, [calculationResult, data, calculatedValues, calculatedAnnexes, isBlocked]);
-
-  const handleExportExcel = React.useCallback(() => {
-    if (isBlocked) {
-        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
-    }
-    const fileName = data?.header?.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
-    exportToCSV(data, calculatedValues, fileName);
-  }, [data, calculatedValues, isBlocked]);
-
-  const handleImportJSON = React.useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e: any) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        try {
-          const text = await file.text();
-          const json = JSON.parse(text);
-          setSheet(json);
-          toast.success("Ficha cargada correctamente");
-        } catch (err) {
-          toast.error("Error al cargar el archivo JSON");
-        }
-      }
-    };
-    input.click();
-  }, [setSheet]);
-
-  const handleExportJSON = React.useCallback(() => {
-    if (isBlocked) {
-        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
-    }
-
-    // Export data maintaining formula integrity in the header
-    // We include a calculation snapshot for offline reference without destroying the dynamic nature of the sheet
-    const exportData = {
-        ...data,
-        metadata: {
-            ...data?.metadata,
-            exportedAt: new Date().toISOString(),
-            integrity: "full",
-            calculationSnapshot: {
-                header: calculatedHeader,
-                values: calculatedValues
-            }
-        }
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
-
-    // Use calculated code for filename if available
-    const filename = `ficha-${calculatedHeader?.code || data?.header?.code || 'export'}.json`;
-    downloadAnchorNode.setAttribute("download", filename);
-
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast.success("JSON exportado correctamente");
-  }, [data, calculatedHeader, isBlocked]);
-
-    const handleQuickGenerate = React.useCallback(async (rows: any[]) => {
-    if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan, user.role);
-        if (!allowed) {
-            setIsUpgradeModalOpen(true);
-            return;
-        }
-    }
-
-        if (user) await usageService.trackUsage(user.id, "fc_create", user.plan, user.role);
-        setQuickModeProducts(rows.map(r => ({
-            name: r.product,
-            sku: `QM-${r.id}`,
-            unit_of_measure: r.um,
-            price: r.cost,
-            quantity: r.quantity,
-            sale_price: r.sale_price
-        })));
-        setIsQuickModeGenerating(true);
-        toast.info(`Iniciando generación para ${rows.length} productos`);
-    }, []);
-
-  const { setCurrentView, setIsChatBotOpen, setIsCalculatorOpen } = useUIStore();
-
-  const allActions = React.useMemo(() => [
-    {
-        id: "go-back",
-        label: "Volver al Inicio",
-        icon: ArrowLeft,
-        onClick: () => setCurrentView("dashboard"),
-        variant: "outline" as const,
-    },
-    {
-        id: 'toggle-mode',
-        label: isEditing ? 'Previsualizar' : 'Seguir Editando',
-        icon: isEditing ? Eye : Edit,
-        onClick: () => {
-            if (isEditing && isBlocked) {
-                toast.warning("La ficha tiene errores críticos, la visualización puede ser inconsistente.");
-            }
-            setIsEditing(!isEditing);
-        },
-        variant: 'primary' as const,
-    },
-     { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
-    { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
-
-    { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
-    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
-    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setIsQuickModeGenerating(true); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
-    {
-        id: 'calculator',
-        label: 'Calculadora',
-        icon: Calculator,
-        onClick: () => setIsCalculatorOpen(true),
-        variant: 'outline' as const
-    }
-
-  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked, setIsCalculatorOpen, data]);
-
-  const mainActions = React.useMemo(() => [
-
-    ...allActions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id)),
-    {
-        id: 'more-actions',
-        label: 'Más Acciones',
-        icon: MoreVertical,
-        onClick: () => setIsActionsPanelOpen(true),
-        variant: 'outline' as const
-    }
-  ], [allActions]);
-
-  const secondaryActions = React.useMemo(() => allActions, [allActions]);
-
-  const navItems = React.useMemo(() => [
-    { id: "kpis", label: "Tablero", icon: BarChart3 },
-    { id: "templates", label: "Plantillas", icon: FolderOpen },
-    { id: "ai-chat", label: "Darian", icon: Sparkles },
-
-    { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
-  ], []);
-
-  const subSectionActions = React.useMemo(() => {
-    return groupedSections.map(group => ({
-        id: group.id,
-        label: group.label.split(':')[0], // Short label like "SECCIONES 1-3"
-        tooltip: group.label,
-        icon: Layout,
-        onClick: () => {
-            setActiveSubSectionId(group.id);
-            handleSetActiveSection('main');
-        },
-        active: activeSubSectionId === group.id,
-        variant: 'outline' as const
-    }));
-  }, [groupedSections, activeSubSectionId]);
-
-  const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
-  const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
-
-
-
+  // ── Loading Skeleton ────────────────────────────────────────────────
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
@@ -641,7 +296,7 @@ const CostSheetView = () => {
                             )}
 
                             <LazyRender>
-                                {(layoutMode === "grid") ? (
+                                {(effectiveLayoutMode === "grid") ? (
                                     <CostSheetCardView
                                         sections={data?.sections || []}
                                         groupedSections={groupedSections}

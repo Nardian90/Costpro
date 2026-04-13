@@ -93,14 +93,14 @@ export default function TerminalShell() {
       console.warn('[TerminalShell] Logout error (silent):', error);
     } finally {
       logout();
-      router.replace('/login');
+      window.location.reload();
     }
   };
 
   // Initial check on mount & prefetching
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      window.location.reload();
       return;
     }
 
@@ -233,7 +233,7 @@ export default function TerminalShell() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
+    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-hidden">
       <Sidebar
         sidebarOpen={sidebarOpen}
         sidebarSearch={sidebarSearch}
@@ -250,7 +250,7 @@ export default function TerminalShell() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <main id="main-content" className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-all duration-300 ease-in-out", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
+      <main id="main-content" className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
         <Header
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
@@ -283,24 +283,31 @@ export default function TerminalShell() {
         />
 
         <div className={cn(
-          "px-0 pt-0 pb-0 flex-1 overflow-x-hidden terminal-content",
-          currentView === 'help' ? "p-0" : "px-0 sm:p-8 lg:p-12 pb-32"
+          "flex-1 overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
+          currentView === 'help' ? "p-0" : "px-0 sm:px-6 lg:px-10 pt-0 pb-32 lg:pb-40"
         )}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 8, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.99 }}
+              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
               className={cn(
                 "mx-auto w-full",
                 (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
               )}
             >
               <Suspense fallback={
-                <div className="flex flex-col items-center justify-center py-20">
-                  <CostProLoader size={180} text="CARGANDO" subtext="Preparando entorno..." />
+                <div className="flex flex-col gap-6 p-6 animate-pulse">
+                  <div className="h-8 w-48 bg-muted rounded-lg" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="h-24 bg-muted rounded-xl" />
+                    <div className="h-24 bg-muted rounded-xl" />
+                    <div className="h-24 bg-muted rounded-xl" />
+                  </div>
+                  <div className="h-64 bg-muted rounded-xl" />
+                  <div className="h-48 bg-muted rounded-xl" />
                 </div>
               }>
                 <MobileSafeContainer>
@@ -312,12 +319,18 @@ export default function TerminalShell() {
         </div>
       </main>
 
-      {sidebarOpen && isMobile && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
-          onClick={toggleSidebar}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && isMobile && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-30"
+            onClick={toggleSidebar}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
 
       <CreateProductModal />
       <CommandPalette />

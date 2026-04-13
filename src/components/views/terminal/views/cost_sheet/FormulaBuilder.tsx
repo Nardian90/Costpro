@@ -124,15 +124,20 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     }
   }, [initialValue]);
 
-  // Update parent whenever tokens change
+  // Update parent whenever tokens change (debounced 300ms to avoid excessive updates)
   useEffect(() => {
+    if (!tokens || tokens.length === 0) return;
     const formula = tokens.map(t => t.value).join(' ');
     const normalizedFormula = formula ? (formula.startsWith('=') ? formula : `=${formula}`) : '';
 
-    if (normalizedFormula !== initialValue) {
+    if (normalizedFormula === initialValue) return;
+
+    const timer = setTimeout(() => {
         isInternalUpdate.current = true;
         onSave(normalizedFormula);
-    }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [tokens, onSave, initialValue]);
 
   const addToken = (type: Token['type'], value: string, label: string) => {

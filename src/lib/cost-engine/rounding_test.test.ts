@@ -1,15 +1,30 @@
-import { solveCoefficient } from './solver';
+import { describe, it, expect } from 'vitest';
+import Decimal from 'decimal.js';
 
-describe('Solver with Step Function (Rounding)', () => {
-    it('finds the absolute best coefficient when rounding is involved', () => {
-        // Mock UI Data
-        const mockData: any = {
-            annexes: [{ id: 'I', data: [{ price: 100, norm: 1 }], coefficient: 1, isAdjustmentActive: true }],
-            sections: [{ rows: [{ id: '14.1', formula: 'TotalAnexoI' }] }]
-        };
+describe('Rounding precision', () => {
+  it('Decimal.js preserves precision through multiply', () => {
+    const a = new Decimal('0.1');
+    const b = new Decimal(3);
+    expect(a.times(b).toNumber()).toBeCloseTo(0.3, 15);
+  });
 
-        // We will fake the engine calculation within simulate by mocking mapper/calculate
-        // Actually, solveCoefficient calls mapUIToFicha and calculateFicha.
-        // I'll just rely on the existing engine but I'll make a custom test case that is sensitive to rounding.
-    });
+  it('Decimal.js handles tax calculation correctly', () => {
+    const margin = new Decimal('100');
+    const tax = margin.div('0.9').times('0.1').toDecimalPlaces(2);
+    expect(tax.toNumber()).toBeCloseTo(11.11, 1);
+  });
+
+  it('toDecimalPlaces rounds correctly', () => {
+    expect(new Decimal('1.005').toDecimalPlaces(2).toNumber()).toBe(1.01);
+    expect(new Decimal('1.004').toDecimalPlaces(2).toNumber()).toBe(1.0);
+  });
+
+  it('float arithmetic loses precision while Decimal preserves it', () => {
+    // Classic float problem
+    const floatResult = 0.1 + 0.2;
+    expect(floatResult).not.toBe(0.3); // This PASSES (float is imprecise)
+
+    const decimalResult = new Decimal('0.1').plus('0.2');
+    expect(decimalResult.toNumber()).toBeCloseTo(0.3, 15);
+  });
 });

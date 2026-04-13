@@ -231,14 +231,14 @@ describe('solveForTarget', () => {
           id: 'S1',
           rows: [
             {
-              id: 'V1',
+              id: '13.1',
               classification: '13.1',
               label: 'Variable Input',
               valorHistorico: 100,
               calculationMethod: 'ValorFijo'
             },
             {
-              id: 'T1',
+              id: '14.1',
               classification: '14.1',
               label: 'Target Output',
               formula: 'ref("13.1") * 1.2',

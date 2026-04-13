@@ -115,8 +115,10 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
   const [isModified, setIsModified] = useState(false);
 
   useEffect(() => {
-    setEditedTemplate(ensureIds(template));
-    setIsModified(false);
+    requestAnimationFrame(() => {
+      setEditedTemplate(ensureIds(template));
+      setIsModified(false);
+    });
   }, [template.id]);
 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);

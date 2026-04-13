@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,17 +41,14 @@ export const FinancialPlanningView: React.FC = () => {
         }
     });
 
-    const debouncedSaveSimulations = useCallback(
-        debounce((newSims: Record<string, string>) => {
-            localStorage.setItem('IPV_PLANEACION_SIMULATIONS_V' + VERSION, JSON.stringify(newSims));
-        }, 300),
-        []
-    );
+    const debouncedFnRef = useRef(debounce((newSims: Record<string, string>) => {
+        localStorage.setItem('IPV_PLANEACION_SIMULATIONS_V' + VERSION, JSON.stringify(newSims));
+    }, 300));
 
     const handleSimulationChange = (month: string, value: string) => {
         const newSims = { ...simulations, [month]: value };
         setSimulations(newSims);
-        debouncedSaveSimulations(newSims);
+        debouncedFnRef.current(newSims);
     };
 
     useEffect(() => {

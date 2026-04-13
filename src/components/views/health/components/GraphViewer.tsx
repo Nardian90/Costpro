@@ -27,12 +27,10 @@ interface GraphViewerProps {
 export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [stats, setStats] = useState({ nodes: 0, links: 0 });
+  const stats = { nodes: data?.nodes?.length || 0, links: data?.links?.length || 0 };
 
   useEffect(() => {
     if (!svgRef.current || !data || !data.nodes || data.nodes.length === 0) return;
-
-    setStats({ nodes: data.nodes.length, links: data.links.length });
 
     const width = svgRef.current.parentElement?.clientWidth || 800;
     const height = svgRef.current.parentElement?.clientHeight || 600;

@@ -1,11 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LogOut, Zap, ChevronDown, Calculator, X, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import CostProLogo from '@/components/CostProLogo';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
@@ -47,6 +46,20 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 }) => {
   const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab, activeCostSection } = useUIStore();
   const { user } = useAuthStore();
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: Cmd/Ctrl+K to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -105,10 +118,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   // Deep search for parents to expand when view changes
   useEffect(() => {
     const findParents = (modules: NavModule[], targetId: string, parents: string[] = []): string[] | null => {
-      for (const module of modules) {
-        if (module.id === targetId) return parents;
-        if (module.children) {
-          const result = findParents(module.children, targetId, [...parents, module.id]);
+      for (const modItem of modules) {
+        if (modItem.id === targetId) return parents;
+        if (modItem.children) {
+          const result = findParents(modItem.children, targetId, [...parents, modItem.id]);
           if (result) return result;
         }
       }
@@ -224,7 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         className={cn(
           "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
           isActive
-            ? "bg-primary text-primary-foreground shadow-lg"
+            ? "bg-primary text-primary-foreground shadow-lg shadow-[0_0_12px_rgba(34,197,94,0.15)]"
             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-primary/5"
         )}
       >
@@ -249,7 +262,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     );
   }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab]);
 
-  const renderModule = useCallback((module: NavModule, depth = 0): React.ReactNode => {
+  const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
     const hasAvailableItems = (m: NavModule): boolean => {
       if (m.type === 'item') {
         return navigationItems.some(ni => ni.id === m.id);
@@ -257,51 +270,58 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       return m.children?.some(child => hasAvailableItems(child)) || false;
     };
 
-    if (!hasAvailableItems(module)) return null;
+    if (!hasAvailableItems(mod)) return null;
 
-    if (module.type === 'item') {
-      return renderNavItem(module.id);
+    if (mod.type === 'item') {
+      return renderNavItem(mod.id);
     }
 
-    const isExpanded = expandedModules.includes(module.id) || !!sidebarSearch;
+    const isExpanded = expandedModules.includes(mod.id) || !!sidebarSearch;
 
-    if (module.type === 'group' && module.isDirect && !focusedModuleId) {
+    if (mod.type === 'group' && mod.isDirect && !focusedModuleId) {
       return (
-        <div key={module.id} className="space-y-1" role="group" aria-label={module.ariaLabel}>
-          {module.label && (
-            <div className="px-4 flex flex-col items-start mb-2 mt-6 first:mt-0">
-              <span className="text-[10px] font-black text-primary/40 tracking-[0.4em] uppercase">{module.label}</span>
+        <div key={mod.id} className="space-y-1" role="group" aria-label={mod.ariaLabel}>
+          {mod.label && (
+            <div className="px-4 flex flex-col items-start mb-1 mt-3 sm:mb-2 sm:mt-6 first:mt-0">
+              <span className="text-[10px] font-black text-primary/40 tracking-[0.4em] uppercase">{mod.label}</span>
             </div>
           )}
-          <div className="space-y-1">
-            {module.children?.map(child => renderModule(child, depth + 1))}
+          <div className="space-y-0.5 sm:space-y-1">
+            {mod.children?.map(child => renderModuleInner(child, depth + 1))}
           </div>
         </div>
       );
     }
 
     return (
-      <div key={module.id} className="space-y-1" role="none">
+      <div key={mod.id} className="space-y-1" role="none">
         <button
           role="menuitem"
           aria-expanded={isExpanded}
           aria-haspopup="true"
-          aria-label={module.ariaLabel || module.label}
-          onClick={() => toggleModule(module.id, module.type === 'submenu')}
+          aria-label={mod.ariaLabel || mod.label}
+          onClick={() => toggleModule(mod.id, mod.type === 'submenu')}
           className={cn(
             "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            depth === 0 ? "mt-3" : "mt-1",
+            depth === 0 ? "sm:mt-3" : "sm:mt-0.5",
             isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
           )}
         >
           <div className="flex items-center gap-3">
-             {module.icon && <module.icon className="w-4 h-4 opacity-50" />}
+             {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
              <span className={cn(
                 "font-black tracking-[0.2em] uppercase",
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
-             )}>{module.label}</span>
+             )}>{mod.label}</span>
           </div>
-          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
+          <div className="flex items-center gap-2">
+            {mod.children && mod.children.length > 0 && (
+              <span className="bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                {mod.children.length}
+              </span>
+            )}
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
+          </div>
         </button>
 
         <AnimatePresence initial={false}>
@@ -315,7 +335,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               role="menu"
             >
               <div className="pt-1 pb-2 space-y-0.5">
-                {module.children?.map(child => renderModule(child, depth + 1))}
+                {mod.children?.map(child => renderModuleInner(child, depth + 1))}
               </div>
             </motion.div>
           )}
@@ -338,15 +358,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       )}
     >
       <div className="relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
-        {onClose && !focusedModuleId && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            aria-label="Cerrar menú lateral"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        {/* Gradient accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] z-50 overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-gradient-shift" style={{ backgroundSize: '200% 100%' }} />
+        </div>
 
         <motion.div
           id="sidebar-logo-container"
@@ -355,37 +370,52 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             opacity: logoOpacity,
             overflowX: 'auto'
           }}
-          className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar max-w-full overflow-x-hidden"
+          className="shrink-0 no-scrollbar max-w-full overflow-x-hidden"
         >
           <motion.div
             style={{ scale: logoScale }}
-            className="px-4 py-8 sm:p-8 h-[100px] flex flex-col justify-center"
+            className="px-4 pt-4 pb-2 flex items-center justify-between"
           >
-            <CostProLogo size={50} animated={true} showTagline={false} />
-
+            <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
+              COST<span className="text-green-500 dark:text-green-400">PRO</span>
+            </h2>
+            {onClose && !focusedModuleId && (
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                aria-label="Cerrar menú lateral"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
-        </motion.div>
 
-        <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
-            <input
-              type="text"
-              value={sidebarSearch}
-              onChange={(e) => setSidebarSearch(e.target.value)}
-              aria-label="Buscar en el menú"
-              placeholder="BUSCAR..."
-              className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
-            />
+          <div className="px-1 pb-0 sm:pb-3">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                aria-label="Buscar en el menú"
+                placeholder="BUSCAR..."
+                className="w-full h-10 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 sm:pr-16 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+              />
+              {/* ⌘K keyboard shortcut badge - desktop only */}
+              <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
+                ⌘K
+              </kbd>
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         <nav
           id="sidebar-nav"
           ref={navRef}
           role="menubar"
           aria-orientation="vertical"
-          className="flex-1 overflow-y-auto p-4 no-scrollbar overscroll-contain scroll-smooth"
+          className="flex-1 overflow-y-auto pt-1 px-3 pb-4 sm:p-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
             {focusedModuleId && focusedModule ? (
@@ -400,7 +430,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-4"
+                className="space-y-1 sm:space-y-4"
               >
                 {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
               </motion.div>
@@ -408,7 +438,38 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           </AnimatePresence>
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
+        <div className="shrink-0">
+          {/* Gradient footer separator */}
+          <div className="h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
+
+          {/* User profile section */}
+          {user && (
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="relative shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground text-xs font-black uppercase">
+                    {(() => {
+                      const name = user?.fullName || user?.email || 'CP';
+                      return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                    })()}
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-sidebar">
+                    <div className="w-full h-full rounded-full bg-green-500 animate-ping opacity-75" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-bold truncate text-sidebar-foreground leading-tight">
+                    {user?.fullName || user?.email || 'Usuario'}
+                  </p>
+                  <span className="inline-block mt-1 bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    {user?.role || 'costo'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="p-4 space-y-1">
           {user?.plan === 'free' && user?.role !== 'admin' && (
             <button
               onClick={() => {
@@ -451,6 +512,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             </button>
           </div>
         </div>
+      </div>
       </div>
     </aside>
   );

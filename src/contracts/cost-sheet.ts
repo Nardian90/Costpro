@@ -12,12 +12,13 @@
  * @since 2024-01-22
  */
 
+import { IndirectConfig } from '@/types/cost-sheet';
+
 // ============================================
 // Tipos Base y Contratos
 // ============================================
 
 export interface CostSheetHeaderContract {
-  [key: string]: any;
   code: string;
   name: string;
   date: string;
@@ -35,6 +36,11 @@ export interface CostSheetHeaderContract {
   capacity_utilization: number | string;
   sale_price: number | string;
   client: string;
+  notes?: string;
+  description?: string;
+  status?: string;
+  location?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface CostSheetRowContract {
@@ -44,14 +50,32 @@ export interface CostSheetRowContract {
   value?: number;
   baseDeCalculoRef?: string;
   baseRef?: string;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  base_ref?: string | null;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO' | 'ANEXO_REF' | 'FIJO' | 'MANUAL';
   totalFormula?: string;
   formula?: string;
+  vhFormula?: string | null;
   isPercent?: boolean;
+  /** @deprecated Use isPercent instead. */
+  is_percent?: boolean;
   children?: CostSheetRowContract[];
   helpText?: string;
+  description?: string;
+  note?: string;
+  fuente?: string;
+  classification?: string;
+  unit?: string;
+  um?: string;
+  coeficiente?: number;
+  coefficient?: number;
+  amount?: number;
+  norm?: number;
+  editable?: boolean;
+  visible?: boolean;
+  type?: string;
+  metadata?: Record<string, unknown>;
   // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
-  [key: string]: any;
+  [key: string]: string | number | boolean | CostSheetRowContract[] | undefined;
 }
 
 export interface CostSheetSectionContract {
@@ -66,7 +90,13 @@ export interface CostSheetColumnContract {
   title?: string;
   formula?: string;
   type?: 'number' | 'string' | 'formula' | 'text';
-  [key: string]: any;
+  width?: number;
+  visible?: boolean;
+  editable?: boolean;
+  sortable?: boolean;
+  align?: 'left' | 'center' | 'right';
+  description?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface CostSheetAnnexContract {
@@ -88,13 +118,18 @@ export interface CostSheetDataContract {
   id?: string;
   name?: string;
   version?: string;
-  metadata?: any;
+  metadata?: Record<string, string | number | boolean>;
   header: CostSheetHeaderContract;
   sections: CostSheetSectionContract[];
   annexes: CostSheetAnnexContract[];
   signature: CostSheetSignatureContract;
+  indirectConfig?: IndirectConfig;
   footer?: string;
-  [key: string]: any;
+  description?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: string | number | boolean | object | undefined;
 }
 
 // ============================================
@@ -105,7 +140,7 @@ export const CostSheetRowFactory = {
   create: (
     initialValues?: Partial<CostSheetRowContract>
   ): CostSheetRowContract => ({
-    id: `row-${Math.random().toString(36).substr(2, 9)}`,
+    id: `row-${Math.random().toString(36).substring(2, 11)}`,
     label: '',
     valorHistorico: 0,
     value: 0,
@@ -125,7 +160,7 @@ export const CostSheetSectionFactory = {
   create: (
     initialValues?: Partial<CostSheetSectionContract>
   ): CostSheetSectionContract => ({
-    id: `section-${Math.random().toString(36).substr(2, 9)}`,
+    id: `section-${Math.random().toString(36).substring(2, 11)}`,
     label: '',
     rows: [],
     ...initialValues,
@@ -171,7 +206,7 @@ export const CostSheetAnnexFactory = {
   create: (
     initialValues?: Partial<CostSheetAnnexContract>
   ): CostSheetAnnexContract => ({
-    id: `annex-${Math.random().toString(36).substr(2, 9)}`,
+    id: `annex-${Math.random().toString(36).substring(2, 11)}`,
     title: '',
     columns: [],
     data: [],

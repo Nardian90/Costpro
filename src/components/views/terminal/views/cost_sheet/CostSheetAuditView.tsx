@@ -1,15 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, CheckCircle2, Info, Zap, Calculator, Activity, Target, ShieldAlert, ArrowRight, RefreshCw, Unplug, GitBranch, AlertOctagon, FileWarning } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Zap, Calculator, Activity, Target, ShieldAlert, ArrowRight, RefreshCw, Unplug, GitBranch, AlertOctagon, FileWarning, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
+import { ErrorDetailModal } from './ErrorDetailModal';
 
 import { ValidationResult } from '@/lib/cost-engine/validations';
 import { ValidationError } from '@/lib/cost-engine/types';
+import { CostSheetRow } from '@/types/cost-sheet';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
 interface CostSheetAuditViewProps {
     data: any;
@@ -31,6 +34,48 @@ const ERROR_CODE_CONFIG: Record<string, { icon: React.ElementType; label: string
     EXTERNAL_LINK:           { icon: ArrowRight, label: 'Enlace Externo', color: 'text-slate-400 bg-slate-400/10' },
 };
 
+/* ── Row search helpers ── */
+
+interface RowSearchResult {
+    row: any;
+    sectionLabel: string;
+    path: (string | number)[];
+}
+
+function findRowById(rowId: string, row: any, path: (string | number)[]): { row: any; path: (string | number)[] } | null {
+    if (row.id === rowId) return { row, path };
+    if (row.children) {
+        for (let i = 0; i < row.children.length; i++) {
+            const found = findRowById(rowId, row.children[i], [...path, 'children', i]);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
+function findRowInSections(rowId: string, sections: any[]): RowSearchResult | null {
+    for (const section of sections) {
+        for (let i = 0; i < section.rows.length; i++) {
+            const found = findRowById(rowId, section.rows[i], ['sections', sections.indexOf(section), 'rows', i]);
+            if (found) return { ...found, sectionLabel: section.label || section.id };
+        }
+    }
+    return null;
+}
+
+function findSuggestedRow(rowId: string): CostSheetRow | null {
+    if (!reinicioTemplate?.sections) return null;
+    for (const section of reinicioTemplate.sections) {
+        for (const row of section.rows) {
+            const found = findRowById(rowId, row, []);
+            if (found) return found.row as CostSheetRow;
+        }
+    }
+    return null;
+}
+
+export { ERROR_CODE_CONFIG };
+
 export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
     data,
     calculatedValues,
@@ -39,6 +84,22 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
     validations = [],
     deepValidationErrors = []
 }) => {
+    const [selectedError, setSelectedError] = useState<ValidationError | null>(null);
+
+    // Derive current row and suggested row from selected error
+    const currentRowResult = selectedError && data?.sections
+        ? findRowInSections(selectedError.rowId, data.sections)
+        : null;
+
+    const currentRow = currentRowResult?.row ?? null;
+    const currentSectionLabel = currentRowResult?.sectionLabel ?? '';
+    const rowPath = currentRowResult?.path ?? [];
+
+    const suggestedRow = selectedError ? findSuggestedRow(selectedError.rowId) : null;
+
+    const handleCloseModal = useCallback(() => {
+        setSelectedError(null);
+    }, []);
 
     // Merge deep validation errors into the summary counts
     const engineCriticals = deepValidationErrors.filter(e => e.type === 'CRITICAL');
@@ -143,13 +204,23 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                 const IconComp = config.icon;
                                 const isCritical = err.type === 'CRITICAL';
                                 const isWarning = err.type === 'WARNING';
+                                const isSelected = selectedError?.rowId === err.rowId && selectedError?.code === err.code;
 
                                 return (
-                                    <div key={i} className={cn(
-                                        "p-5 transition-all group hover:bg-destructive/5",
-                                        isCritical && "border-l-2 border-l-destructive",
-                                        isWarning && "border-l-2 border-l-amber-500"
-                                    )}>
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSelectedError(err)}
+                                        className={cn(
+                                            "w-full text-left p-5 transition-all group",
+                                            "hover:bg-destructive/10 cursor-pointer",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-inset",
+                                            isCritical && "border-l-2 border-l-destructive",
+                                            isWarning && "border-l-2 border-l-amber-500",
+                                            isSelected && "bg-destructive/15",
+                                        )}
+                                        aria-label={`Ver detalle del error: ${err.message}`}
+                                    >
                                         <div className="flex gap-4 items-start">
                                             <div className={cn(
                                                 "mt-0.5 p-2 rounded-xl shrink-0",
@@ -188,8 +259,9 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                     {err.message}
                                                 </p>
                                             </div>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform" />
                                         </div>
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>
@@ -263,6 +335,18 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
 
             {/* Original Declarative Engine Audit */}
             <CostSheetAuditLog audits={audits} />
+
+            {/* Error Detail Modal — key forces remount so form state resets on error change */}
+            <ErrorDetailModal
+                key={selectedError ? `${selectedError.rowId}-${selectedError.code}` : 'none'}
+                error={selectedError}
+                currentRow={currentRow}
+                suggestedRow={suggestedRow}
+                currentSectionLabel={currentSectionLabel}
+                rowPath={rowPath}
+                isOpen={selectedError !== null}
+                onClose={handleCloseModal}
+            />
         </div>
     );
 };

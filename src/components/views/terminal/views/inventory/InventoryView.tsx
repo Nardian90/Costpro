@@ -59,7 +59,9 @@ export default function InventoryView() {
     const { mutateAsync: adjustStock } = useAdjustStock();
 
     useEffect(() => {
-        setLayoutMode(isMobile ? 'card' : 'table');
+        requestAnimationFrame(() => {
+            setLayoutMode(isMobile ? 'card' : 'table');
+        });
     }, [isMobile]);
 
     const {

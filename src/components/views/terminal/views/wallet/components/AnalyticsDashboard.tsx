@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     TrendingUp, User, Zap, ZapOff, ArrowUpRight, ArrowDownRight,
@@ -18,21 +18,19 @@ interface Props {
   analytics: WalletAnalytics;
 }
 
+const emptySubscribe = () => () => {};
+
 export function AnalyticsDashboard({ analytics }: Props) {
   const { summary, banks, monthly, categories, transactions } = analytics;
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const balanceData = useMemo(() => {
-    let current = 0;
-    return transactions.map(tx => {
-      if (tx.nature === 'CR') current += tx.amount;
-      else current -= tx.amount;
-      return { date: tx.date, balance: current };
-    });
+    return transactions.reduce<{ date: string; balance: number }[]>((acc, tx) => {
+      const prevBalance = acc.length > 0 ? acc[acc.length - 1].balance : 0;
+      const balance = tx.nature === 'CR' ? prevBalance + tx.amount : prevBalance - tx.amount;
+      acc.push({ date: tx.date, balance });
+      return acc;
+    }, []);
   }, [transactions]);
 
   const transferStats = useMemo(() => {

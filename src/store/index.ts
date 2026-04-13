@@ -15,7 +15,8 @@ interface UIState {
   previousView: ViewType | null;
   sidebarOpen: boolean;
   isCalculatorOpen: boolean;
-  themePreference: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light';
+  themePreference: 'light' | 'dark' | 'auto';
+  connectivity: '3g' | '4g';
   viewQueries: Record<string, string>;
   showQueries: boolean;
   isCreateProductModalOpen: boolean;
@@ -27,7 +28,8 @@ interface UIState {
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setIsCalculatorOpen: (open: boolean) => void;
-  setThemePreference: (pref: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light') => void;
+  setThemePreference: (pref: 'light' | 'dark' | 'auto') => void;
+  setConnectivity: (mode: '3g' | '4g') => void;
   setLastQuery: (sql: string, view?: string) => void;
   setShowQueries: (show: boolean) => void;
   setIsCreateProductModalOpen: (open: boolean) => void;
@@ -44,7 +46,8 @@ export const useUIStore = create<UIState>()(
       previousView: null,
       sidebarOpen: true,
       isCalculatorOpen: false,
-      themePreference: 'fast-light',
+      themePreference: 'light',
+      connectivity: '4g',
       viewQueries: {},
       showQueries: false,
       isCreateProductModalOpen: false,
@@ -60,6 +63,7 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
       setThemePreference: (themePreference) => set({ themePreference }),
+      setConnectivity: (connectivity) => set({ connectivity }),
       setLastQuery: (sql, view) => set((state) => ({
         viewQueries: { ...state.viewQueries, [view || state.currentView]: sql }
       })),

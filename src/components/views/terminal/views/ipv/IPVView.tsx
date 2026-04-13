@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import {
   FileText, TrendingUp, Database, Table2, Cpu, Zap, BarChart4, Wand2,
   FileSearch, Target, AlertCircle, ListFilter, Users, History,
@@ -58,7 +58,8 @@ const MVTExportView = lazy(() => import('./mvt/MVTExportView').then(m => ({ defa
 
 export default function IPVView() {
   const { ipvActiveTab, setIpvActiveTab } = useUIStore();
-  const [activeTab, setActiveTab] = useState(ipvActiveTab || 'dashboard');
+  const activeTab = ipvActiveTab || 'dashboard';
+  const setActiveTab = useCallback((tab: string) => setIpvActiveTab(tab as any), [setIpvActiveTab]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
@@ -337,16 +338,6 @@ export default function IPVView() {
     }
   }, []);
 
-  useEffect(() => {
-    if (ipvActiveTab) {
-        setActiveTab(ipvActiveTab);
-    }
-  }, [ipvActiveTab]);
-
-  useEffect(() => {
-    setIpvActiveTab(activeTab as any);
-  }, [activeTab, setIpvActiveTab]);
-
   const navItems = useMemo(() => [
     {
         id: 'dashboard',
@@ -394,7 +385,7 @@ export default function IPVView() {
     { id: 'match', label: 'Ejecutar Matching', icon: Play, onClick: handleRunMatching, variant: 'primary' },
     { id: 'rules_sc', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules') },
     { id: 'sync', label: 'Sincronizar', icon: ZapIcon, onClick: () => toast.info('Sincronizando...') },
-  ], [handleRunMatching]);
+  ], [handleRunMatching, setActiveTab]);
 
   return (
     <TooltipProvider delayDuration={200}>

@@ -16,6 +16,8 @@ type Row = {
   id: string;
   label: string;
   children?: Row[];
+  isPercent?: boolean;
+  /** @deprecated Use isPercent instead */
   is_percent?: boolean;
 };
 
@@ -64,7 +66,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                             {(((calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) / (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total)) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
-                    {row.is_percent && (
+                    {((row.isPercent ?? row.is_percent)) && (
                         <span className="ml-2 text-xs font-bold text-muted-foreground bg-muted dark:bg-primary px-1.5 py-0.5 rounded">
                             {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
                         </span>

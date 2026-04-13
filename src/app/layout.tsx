@@ -39,6 +39,8 @@ export const metadata: Metadata = {
   description: "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
   other: {
     google: "notranslate",
+    category: 'business',
+    classification: 'business management',
   },
   keywords: ["POS", "Inventario", "Ventas", "Gestión", "Supabase", "Costpro"],
   authors: [{ name: "Costpro Team" }],
@@ -51,6 +53,16 @@ export const metadata: Metadata = {
     title: "Costpro Enterprise",
     description: "Sistema de Gestión Integral",
     type: "website",
+    images: ["/icon-512.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Costpro Enterprise',
+    description: 'Sistema de Gestión Integral — Inventario, Ventas y Costos',
     images: ["/icon-512.png"],
   },
 };
@@ -71,12 +83,27 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://wthkddeleylijmonclxg.supabase.co" />
         <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "CostPro",
+              "description": "Sistema de Gestión Integral para empresas",
+              "url": "https://costpro.onrender.com",
+            }),
+          }}
+        />
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const theme = localStorage.getItem('theme') || 'fast-light';
+                const theme = localStorage.getItem('theme') || 'light';
                 document.documentElement.classList.add(theme);
                 document.documentElement.setAttribute('data-theme', theme);
+                const uiStorage = JSON.parse(localStorage.getItem('costpro-ui-storage') || '{}');
+                const connectivity = uiStorage?.state?.connectivity || '4g';
+                document.documentElement.setAttribute('data-connectivity', connectivity);
               } catch (_) {}
             `,
           }}
@@ -91,9 +118,9 @@ export default function RootLayout({
         </a>
         <ThemeProvider
           attribute="class" enableSystem
-          defaultTheme="fast-light"
+          defaultTheme="light"
           disableTransitionOnChange
-          themes={['light', 'dark', 'fast-light', 'fast-dark', 'auto']}
+          themes={['light', 'dark', 'auto']}
         >
           <IntelligentThemeHandler />
           <QueryProvider>

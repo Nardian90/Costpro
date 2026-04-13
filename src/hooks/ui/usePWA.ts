@@ -23,11 +23,6 @@ export function usePWA() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Check if already in standalone mode
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstallable(false);
-    }
-
     // Appinstalled event
     const handleAppInstalled = () => {
       setDeferredPrompt(null);

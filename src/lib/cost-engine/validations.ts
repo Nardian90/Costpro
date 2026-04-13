@@ -1,5 +1,32 @@
 import { CostSheetData, CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
 
+// ═══════════════════════════════════════════════════════════════
+// ISO-configurable materiality thresholds (ISA 540)
+// ═══════════════════════════════════════════════════════════════
+
+/** Materiality threshold for structural integrity checks (parent vs children sum) */
+const MATERIALITY_THRESHOLD = 0.001;
+
+/** Materiality threshold for certification rule checks */
+const CERT_MATERIALITY_THRESHOLD = 0.05;
+
+/** Cuban tax coefficients for standard format certification */
+const CERT_COEFFICIENTS = {
+  /** Row 2.1.1 — 9.09% of row 2.1 (social security contribution) */
+  SECURITY_CONTRIBUTION: 1 / 11,   // ≈ 0.090909...
+  /** Row 10.1 — 14% of base salary */
+  SOCIAL_SECURITY_RATE: 0.14,
+  /** Row 10.2 — 5% of base salary */
+  SOCIAL_ASSISTANCE_RATE: 0.05,
+  /** Row 13.3 — Tax: 13.1 / 0.9 * 0.1 */
+  TAX_CALCULATION: { divisor: 0.9, rate: 0.1 },
+  /** Profit ratio prudential limit */
+  MAX_PROFIT_RATIO: 0.3,
+  /** Indirect expense coefficient limits */
+  INDIRECT_COEF_SERVICES: 1.0,
+  INDIRECT_COEF_PRODUCTION: 1.5,
+} as const;
+
 export interface ValidationResult {
     type: 'SUCCESS' | 'WARNING' | 'CRITICAL';
     category: string;
@@ -36,7 +63,7 @@ export const calculateCostSheetHealth = (
                 }, 0);
 
                 const diff = childrenSum - parentVal;
-                if (Math.abs(diff) > 0.01) {
+                if (Math.abs(diff) > MATERIALITY_THRESHOLD) {
                     results.push({
                         type: 'CRITICAL',
                         category: 'Integridad Estructural',
@@ -77,7 +104,7 @@ export const calculateCostSheetHealth = (
 
         if (costVal > 0) {
             const ratio = utilVal / costVal;
-            if (ratio > 0.3) {
+            if (ratio > CERT_COEFFICIENTS.MAX_PROFIT_RATIO) {
                 results.push({
                     type: 'WARNING',
                     category: 'Rentabilidad',
@@ -108,7 +135,7 @@ export const calculateCostSheetHealth = (
         const indirectTotal = g4 + g6 + g7;
         const coef = indirectTotal / s2;
         const destination = String(calculatedHeader?.destination || calculatedHeader?.destino || '').toLowerCase();
-        const limit = (destination === 'servicios' || destination === 'servicio') ? 1.0 : 1.5;
+        const limit = (destination === 'servicios' || destination === 'servicio') ? CERT_COEFFICIENTS.INDIRECT_COEF_SERVICES : CERT_COEFFICIENTS.INDIRECT_COEF_PRODUCTION;
 
         if (coef > limit) {
             results.push({
@@ -234,8 +261,8 @@ export const calculateCostSheetHealth = (
             }
             const v21 = calculatedValues['2.1']?.total || 0;
             const v211 = calculatedValues['2.1.1']?.total || 0;
-            const expected211 = Math.round(v21 * 0.0909 * 100) / 100;
-            if (Math.abs(v211 - expected211) > 0.05) {
+            const expected211 = Math.round(v21 * CERT_COEFFICIENTS.SECURITY_CONTRIBUTION * 100) / 100;
+            if (Math.abs(v211 - expected211) > CERT_MATERIALITY_THRESHOLD) {
                 standardResults.push({
                     type: 'WARNING',
                     category,
@@ -297,8 +324,8 @@ export const calculateCostSheetHealth = (
         const baseSalario = v21 + v411 + v611 + v711;
 
         const v101 = calculatedValues['10.1']?.total || 0;
-        const expected101 = Math.round(baseSalario * 0.14 * 100) / 100;
-        if (Math.abs(v101 - expected101) > 0.05) {
+        const expected101 = Math.round(baseSalario * CERT_COEFFICIENTS.SOCIAL_SECURITY_RATE * 100) / 100;
+        if (Math.abs(v101 - expected101) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -309,8 +336,8 @@ export const calculateCostSheetHealth = (
         }
 
         const v102 = calculatedValues['10.2']?.total || 0;
-        const expected102 = Math.round(baseSalario * 0.05 * 100) / 100;
-        if (Math.abs(v102 - expected102) > 0.05) {
+        const expected102 = Math.round(baseSalario * CERT_COEFFICIENTS.SOCIAL_ASSISTANCE_RATE * 100) / 100;
+        if (Math.abs(v102 - expected102) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -327,7 +354,7 @@ export const calculateCostSheetHealth = (
         const v4 = calculatedValues['4']?.total || 0;
         const v51 = calculatedValues['5.1']?.total || 0;
         const expected51 = v1 + v2 + v3 + v4;
-        if (Math.abs(v51 - expected51) > 0.05) {
+        if (Math.abs(v51 - expected51) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -345,7 +372,7 @@ export const calculateCostSheetHealth = (
         const v10 = calculatedValues['10']?.total || 0;
         const v111 = calculatedValues['11.1']?.total || 0;
         const expected111 = v6 + v7 + v8 + v9 + v10;
-        if (Math.abs(v111 - expected111) > 0.05) {
+        if (Math.abs(v111 - expected111) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -358,7 +385,7 @@ export const calculateCostSheetHealth = (
         // Rule 8: 12.1 = 5.1 + 11.1
         const v121 = calculatedValues['12.1']?.total || 0;
         const expected121 = v51 + v111;
-        if (Math.abs(v121 - expected121) > 0.05) {
+        if (Math.abs(v121 - expected121) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -372,7 +399,7 @@ export const calculateCostSheetHealth = (
         const v131 = calculatedValues['13.1']?.total || 0;
         const v132 = calculatedValues['13.2']?.total || 0;
         const expected132 = v121 + v131;
-        if (Math.abs(v132 - expected132) > 0.05) {
+        if (Math.abs(v132 - expected132) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -384,8 +411,8 @@ export const calculateCostSheetHealth = (
 
         // Rule 10: 13.3 = 13.1 / 0.9 * 0.1
         const v133 = calculatedValues['13.3']?.total || 0;
-        const expected133 = Math.round((v131 / 0.9 * 0.1) * 100) / 100;
-        if (Math.abs(v133 - expected133) > 0.05) {
+        const expected133 = Math.round((v131 / CERT_COEFFICIENTS.TAX_CALCULATION.divisor * CERT_COEFFICIENTS.TAX_CALCULATION.rate) * 100) / 100;
+        if (Math.abs(v133 - expected133) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -398,7 +425,7 @@ export const calculateCostSheetHealth = (
         // Rule 11: 14.1 = 13.2 + 13.3
         const v141 = calculatedValues['14.1']?.total || 0;
         const expected141 = v132 + v133;
-        if (Math.abs(v141 - expected141) > 0.05) {
+        if (Math.abs(v141 - expected141) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -412,7 +439,7 @@ export const calculateCostSheetHealth = (
         const qty = parseFloat(String(data.header?.quantity || 1));
         const v151 = calculatedValues['15.1']?.total || 0;
         const expected151 = qty !== 0 ? Math.round((v121 / qty) * 100) / 100 : 0;
-        if (Math.abs(v151 - expected151) > 0.05) {
+        if (Math.abs(v151 - expected151) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -425,7 +452,7 @@ export const calculateCostSheetHealth = (
         // Rule 13: 16.1 = 14.1 / cantidad
         const v161 = calculatedValues['16.1']?.total || 0;
         const expected161 = qty !== 0 ? Math.round((v141 / qty) * 100) / 100 : 0;
-        if (Math.abs(v161 - expected161) > 0.05) {
+        if (Math.abs(v161 - expected161) > CERT_MATERIALITY_THRESHOLD) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -460,3 +487,5 @@ export const calculateCostSheetHealth = (
         totalCount
     };
 };
+
+export { MATERIALITY_THRESHOLD, CERT_MATERIALITY_THRESHOLD, CERT_COEFFICIENTS };

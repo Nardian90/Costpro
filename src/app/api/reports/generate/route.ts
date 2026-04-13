@@ -139,7 +139,8 @@ export async function POST(req: NextRequest) {
         const gIncome = (incData || []).reduce((acc: any, curr: any) => {
             const date = curr.created_at.split('T')[0];
             if (!acc[date]) acc[date] = 0;
-            acc[date] += Number(curr.total_amount);
+            const amt = parseFloat(String(curr.total_amount || '0'));
+            if (!isNaN(amt)) acc[date] = (acc[date] || 0) + amt;
             return acc;
         }, {});
         data = Object.keys(gIncome).map(date => ({
@@ -158,7 +159,8 @@ export async function POST(req: NextRequest) {
         const gExp = (eData || []).reduce((acc: any, curr: any) => {
             const date = curr.created_at.split('T')[0];
             if (!acc[date]) acc[date] = 0;
-            acc[date] += Number(curr.total_cost);
+            const cost = parseFloat(String(curr.total_cost || '0'));
+            if (!isNaN(cost)) acc[date] = (acc[date] || 0) + cost;
             return acc;
         }, {});
         data = Object.keys(gExp).map(date => ({
@@ -239,7 +241,7 @@ export async function POST(req: NextRequest) {
 
           let baseDisplay = '-';
           if (row.base_display_override) baseDisplay = row.base_display_override;
-          else if (row.is_percent) baseDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
+          else if (row.isPercent ?? row.is_percent) baseDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
           else if (calc.baseTotal > 0) baseDisplay = calc.baseTotal.toLocaleString('es-ES');
 
           mainRows.push([

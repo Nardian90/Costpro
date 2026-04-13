@@ -278,7 +278,7 @@ export default function ExecutiveDemoView() {
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Repetir Demo
                   </Button>
-                  <Link href="/login">
+                  <Link href="/">
                     <Button className="rounded-2xl h-14 px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
                       Cargar Mis Datos Reales
                       <ArrowRight className="w-4 h-4 ml-2" />
@@ -362,7 +362,7 @@ export default function ExecutiveDemoView() {
                     <div className="relative z-10 space-y-6">
                        <h3 className="text-2xl font-black uppercase tracking-tighter leading-tight">¿Listo para modernizar su MiPyME?</h3>
                        <p className="text-sm font-medium opacity-70 leading-relaxed">Pase de la teoría a la práctica hoy mismo con sus datos reales.</p>
-                       <Link href="/login">
+                       <Link href="/">
                         <Button className="w-full h-14 rounded-2xl bg-primary text-foreground font-black uppercase tracking-widest hover:scale-105 transition-transform">
                           Comenzar Gratis
                           <ChevronRight className="w-5 h-5 ml-2" />

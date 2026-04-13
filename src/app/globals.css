@@ -449,6 +449,30 @@
   animation: spin-slow 3s linear infinite;
 }
 
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes subtle-glow {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.15);
+  }
+  50% {
+    text-shadow: 0 0 16px rgba(34, 197, 94, 0.35), 0 0 32px rgba(34, 197, 94, 0.1);
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.animate-subtle-glow {
+  animation: subtle-glow 3s ease-in-out infinite;
+}
+
 @keyframes scan {
   0% { top: 0; }
   100% { top: 100%; }
@@ -456,6 +480,29 @@
 
 .animate-scan {
   animation: scan 2s linear infinite;
+}
+
+/* CyberShell animated gradient border */
+@property --cyber-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes cyber-border-spin {
+  0%   { --cyber-angle: 0deg; }
+  100% { --cyber-angle: 360deg; }
+}
+
+.animate-border-glow {
+  animation: cyber-border-spin 6s linear infinite;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-border-glow {
+    animation: none;
+  }
 }
 
 .skeleton {
@@ -1404,6 +1451,27 @@
   backdrop-filter: none !important;
 }
 
+/* ============================================
+   3G CONNECTIVITY MODE - REDUCED ANIMATIONS
+   ============================================ */
+[data-connectivity="3g"] {
+  --radius: 0.5rem;
+  --shadow-light: transparent;
+  --shadow-dark: transparent;
+  --neumorphic-shadow-out: none;
+  --neumorphic-shadow-in: none;
+  --neumorphic-shadow-out-sm: none;
+  --neumorphic-shadow-in-sm: none;
+  --neumorphic-shadow-hover: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+[data-connectivity="3g"] *:not(.allow-animations *) {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
+}
+
 /* Health View Dashboard v8.0 Mobile Hardening */
 @media (max-width: 420px) {
   .health-view-container {
@@ -1502,4 +1570,1228 @@
 .table-container::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.1);
   border-radius: 10px;
+}
+
+/* ============================================
+   VISUAL POLISH — KEYFRAME ANIMATIONS
+   ============================================ */
+
+@keyframes pulse-glow {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(8px, -14px);
+  }
+  50% {
+    transform: translate(-6px, -22px);
+  }
+  75% {
+    transform: translate(12px, -12px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ============================================
+   VISUAL POLISH — ANIMATION UTILITIES
+   ============================================ */
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+/* ============================================
+   VISUAL POLISH — GLASS CARD
+   ============================================ */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+/* ============================================
+   VISUAL POLISH — GRADIENT TEXT
+   ============================================ */
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, #10b981 50%, #059669 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================
+   VISUAL POLISH — GREEN GLOW EFFECTS
+   ============================================ */
+
+.glow-sm {
+  box-shadow: 0 0 6px rgba(21, 128, 61, 0.25);
+}
+
+.glow-md {
+  box-shadow: 0 0 14px rgba(21, 128, 61, 0.35);
+}
+
+.glow-lg {
+  box-shadow: 0 0 24px rgba(21, 128, 61, 0.45);
+}
+
+/* ============================================
+   VISUAL POLISH — HOVER LIFT
+   ============================================ */
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   VISUAL POLISH — SPLASH PROGRESS BAR
+   ============================================ */
+
+.splash-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), #10b981, var(--primary));
+  background-size: 200% 100%;
+  animation: progress-fill 2s ease-in-out forwards, gradient-shift 2s linear infinite;
+  z-index: 9999;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ============================================
+   VISUAL POLISH — IMPROVED SCROLLBAR
+   ============================================ */
+
+/* Override base scrollbar to be slightly wider with rounded hover ends */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+  border-radius: 10px;
+}
+
+/* ============================================
+   VISUAL POLISH — SELECTION TEXT SHADOW
+   ============================================ */
+
+::selection {
+  background: var(--selection, rgba(22, 163, 74, 0.15));
+  color: inherit;
+  text-shadow: 0 0 2px rgba(22, 163, 74, 0.15);
+}
+
+/* ============================================
+   ADVANCED VISUAL EFFECTS (Landing Page)
+   ============================================ */
+
+/* CyberShell scanning sweep */
+@keyframes cyber-sweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+  90% { opacity: 0.6; }
+  95% { transform: translateX(400%); opacity: 0; }
+  100% { transform: translateX(400%); opacity: 0; }
+}
+
+/* Corner glow pulse */
+@keyframes corner-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+.animate-corner-pulse {
+  animation: corner-pulse 3s ease-in-out infinite;
+}
+
+.animate-corner-pulse-delayed {
+  animation: corner-pulse 3s ease-in-out 1.5s infinite;
+}
+
+/* Number count-up glow */
+@keyframes count-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(34, 197, 94, 0.2); }
+  50% { text-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.15); }
+}
+
+.animate-count-glow {
+  animation: count-glow 2s ease-in-out infinite;
+}
+
+/* Floating animation variants */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 4.5s ease-in-out infinite;
+}
+
+/* Gradient text utility */
+.text-gradient-green {
+  background: linear-gradient(135deg, #15803d 0%, #22c55e 50%, #4ade80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass card interactive */
+.glass-card-interactive {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+.glass-card-interactive:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(34, 197, 94, 0.2);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.08);
+}
+
+/* Pricing card popular */
+.pricing-card-popular {
+  position: relative;
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+.pricing-card-popular::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), transparent 50%, rgba(34, 197, 94, 0.1));
+  z-index: -1;
+}
+
+/* FAQ item hover */
+.faq-item {
+  transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+  background: rgba(34, 197, 94, 0.03);
+}
+
+/* Cookie consent animation */
+@keyframes slide-up-bar {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up-bar {
+  animation: slide-up-bar 0.5s ease-out forwards;
+}
+
+/* Social proof logos scroll */
+@keyframes scroll-logos {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-logos {
+  animation: scroll-logos 25s linear infinite;
+}
+
+/* Star rating */
+.star-filled { color: #fbbf24; }
+.star-empty { color: rgba(255, 255, 255, 0.2); }
+
+/* Responsive improvements for small screens */
+@media (max-width: 380px) {
+  .responsive-text-lg { font-size: 1rem !important; }
+  .responsive-text-xl { font-size: 1.125rem !important; }
+  .responsive-padding { padding: 0.75rem !important; }
+}
+
+/* Pulse ring animation for CTA buttons */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* Smooth accordion transitions */
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* ============================================
+   PREMIUM UTILITY CLASSES
+   ============================================ */
+
+/* Shimmer loading effect for skeleton placeholders */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: var(--muted);
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: skeleton-slide 1.5s infinite;
+}
+@keyframes skeleton-slide {
+  to { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after {
+    animation: none;
+  }
+}
+
+/* Glassmorphism card utility */
+.glass-card-premium {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+}
+
+/* Gradient text utility */
+.text-gradient-green {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Floating animation */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float-gentle {
+  animation: float-gentle 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-gentle {
+    animation: none;
+  }
+}
+
+/* Pulse ring animation (for chat widget and notification badges) */
+@keyframes pulse-ring-expand {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: pulse-ring-expand 1.5s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring::before {
+    animation: none;
+  }
+}
+
+/* Smooth underline hover effect */
+.hover-underline-slide {
+  position: relative;
+}
+.hover-underline-slide::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+.hover-underline-slide:hover::after {
+  width: 100%;
+}
+
+/* Staggered fade-in utility class */
+.stagger-fade-in > * {
+  opacity: 0;
+  animation: stagger-fade 0.4s ease forwards;
+}
+.stagger-fade-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-fade-in > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-fade-in > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-fade-in > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-fade-in > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-fade-in > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-fade-in > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-fade-in > *:nth-child(8) { animation-delay: 420ms; }
+@keyframes stagger-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-fade-in > * {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Responsive container utility */
+.container-prose {
+  max-width: 65ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================
+   LANDING PAGE - ROUND 4 ENHANCEMENTS
+   ============================================ */
+
+/* Promo banner slide */
+@keyframes promo-slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes promo-slide-up {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.animate-cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Play button pulse ring */
+@keyframes play-pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.animate-play-pulse-ring {
+  animation: play-pulse-ring 2s ease-out infinite;
+}
+
+/* Floating shapes for right panel */
+@keyframes float-shape-1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(10px, -15px) rotate(120deg); }
+  66% { transform: translate(-8px, 8px) rotate(240deg); }
+}
+@keyframes float-shape-2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(-12px, 10px) rotate(-120deg); }
+  66% { transform: translate(8px, -12px) rotate(-240deg); }
+}
+.animate-float-shape-1 {
+  animation: float-shape-1 12s ease-in-out infinite;
+}
+.animate-float-shape-2 {
+  animation: float-shape-2 15s ease-in-out infinite;
+}
+
+/* Gradient mesh blob animation */
+@keyframes mesh-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.1); }
+  50% { transform: translate(-10px, 20px) scale(0.95); }
+  75% { transform: translate(-30px, -10px) scale(1.05); }
+}
+.animate-mesh-drift {
+  animation: mesh-drift 20s ease-in-out infinite;
+}
+.animate-mesh-drift-2 {
+  animation: mesh-drift 25s ease-in-out infinite reverse;
+}
+
+/* Right panel form glow */
+.form-card-glow {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.08), 0 0 60px rgba(34, 197, 94, 0.04);
+}
+.form-card-glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.dark .form-card-glass {
+  background: rgba(17, 24, 39, 0.8);
+}
+
+/* ============================================
+   LANDING PAGE - ROUND 5 ENHANCEMENTS
+   ============================================ */
+
+/* Hero shimmer text effect */
+@keyframes text-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.text-shimmer-green {
+  background: linear-gradient(
+    90deg,
+    #22c55e 0%,
+    #4ade80 25%,
+    #ffffff 50%,
+    #4ade80 75%,
+    #22c55e 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 4s linear infinite;
+}
+
+/* Integration partners scroll (slower than client logos) */
+@keyframes scroll-integrations {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-scroll-integrations {
+  animation: scroll-integrations 35s linear infinite;
+}
+
+/* Live activity notification slide-in */
+@keyframes slide-in-left {
+  0% { transform: translateX(-120%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* ============================================
+   LANDING PAGE - ROUND 6 ENHANCEMENTS
+   ============================================ */
+
+/* 3D Tilt Effect on Feature Cards */
+.tilt-card {
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+.tilt-card:hover {
+  transform: rotateX(2deg) rotateY(3deg) scale(1.01);
+}
+
+/* Enhanced Stats Glassmorphism Container */
+.stats-glass-container {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Pricing Popular Animated Gradient Border */
+@property --pricing-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes pricing-border-spin {
+  0% { --pricing-angle: 0deg; }
+  100% { --pricing-angle: 360deg; }
+}
+.pricing-popular-border {
+  position: relative;
+  border: 2px solid transparent;
+  background-image: conic-gradient(from var(--pricing-angle), #22c55e 0%, transparent 40%, transparent 60%, #22c55e 100%);
+  background-origin: border-box;
+  background-clip: padding-box;
+}
+.pricing-popular-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--pricing-angle), rgba(34,197,94,0.4) 0%, transparent 40%, transparent 60%, rgba(34,197,94,0.4) 100%);
+  z-index: -1;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 2px;
+  border-radius: inherit;
+  animation: pricing-border-spin 4s linear infinite;
+}
+
+/* Animated Gradient Underline on Hero Badge */
+.animated-underline-gradient {
+  position: relative;
+  display: inline-block;
+}
+.animated-underline-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #14b8a6, #22c55e);
+  background-size: 200% 100%;
+  animation: underline-sweep 3s ease-in-out infinite;
+  border-radius: 1px;
+}
+@keyframes underline-sweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Counter Complete Glow */
+.count-complete {
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+/* Mobile Nav Overlay */
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================
+   LANDING PAGE - ROUND 6 ENHANCEMENTS (Part 2)
+   ============================================ */
+
+/* Subtle glow pulse for icon backgrounds */
+@keyframes glow-pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.15);
+    opacity: 0.6;
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.3);
+    opacity: 1;
+  }
+}
+.animate-glow-pulse-subtle {
+  animation: glow-pulse-subtle 2.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse-subtle { animation: none; }
+}
+
+/* Verified badge */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-size: 9px;
+  font-weight: 600;
+  color: #22c55e;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Gold star with glow effect for filled stars */
+.gold-star {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+}
+
+/* Slide-in underline on hover */
+.slide-in-underline {
+  position: relative;
+  display: inline-block;
+}
+.slide-in-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #22c55e;
+  border-radius: 1px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-in-underline:hover::after {
+  width: 100%;
+}
+
+/* Rotating border animation */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes border-rotate-spin {
+  0% { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+.animate-border-rotate {
+  animation: border-rotate-spin 4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-border-rotate { animation: none; }
+}
+
+/* FAQ open state left border glow */
+.faq-open-glow {
+  box-shadow: -3px 0 8px -1px rgba(34, 197, 94, 0.15), inset 3px 0 0 rgba(34, 197, 94, 0.2);
+}
+
+/* Scroll spy expanding ring */
+@keyframes spy-ring-expand {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.spy-ring-anim::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #22c55e;
+  animation: spy-ring-expand 1.5s ease-out infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spy-ring-anim::after { animation: none; display: none; }
+}
+
+/* Pricing popular inner glow on hover */
+.pricing-popular-hover:hover {
+  box-shadow: inset 0 0 30px rgba(34, 197, 94, 0.06);
+}
+
+/* Star rating glow for testimonials */
+.star-gold {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.5));
+}
+
+/* Scroll progress percentage label */
+.scroll-pct-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #22c55e;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* Mobile nav drawer slide-in */
+.mobile-nav-drawer {
+  transform: translateX(-100%);
+}
+
+/* Language selector dropdown */
+.lang-dropdown-item {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.lang-dropdown-item:hover {
+  background-color: rgba(34, 197, 94, 0.08);
+}
+
+/* ============================================
+   ROUND 6 — ADDITIONAL ANIMATIONS & CLASSES
+   ============================================ */
+
+/* Pricing Card Animated Gradient Border */
+@property --pricing-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes pricing-border-spin {
+  0% { --pricing-angle: 0deg; }
+  100% { --pricing-angle: 360deg; }
+}
+
+.pricing-popular-border {
+  position: relative;
+}
+.pricing-popular-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--pricing-angle), #22c55e, #14b8a6, #10b981, #22c55e);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: pricing-border-spin 4s linear infinite;
+  pointer-events: none;
+}
+
+/* 3D Tilt Card Effect */
+.tilt-card {
+  transform-style: preserve-3d;
+  perspective: 800px;
+  transition: transform 0.3s ease;
+}
+.tilt-card:hover {
+  transform: perspective(800px) rotateX(2deg) rotateY(-2deg) translateY(-2px);
+}
+
+/* Animated Gradient Underline */
+.animated-underline-gradient {
+  position: relative;
+  display: inline-block;
+}
+.animated-underline-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #14b8a6, #22c55e);
+  background-size: 200% 100%;
+  animation: underline-sweep 3s ease-in-out infinite;
+  border-radius: 1px;
+}
+
+/* Section Header Decorative Line */
+.section-header-deco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.section-header-deco .deco-line {
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #14b8a6);
+  border-radius: 1px;
+}
+.section-header-deco .deco-dot {
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+/* FAQ Active Left Border Glow */
+.faq-active-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #22c55e, #14b8a6);
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+/* Stats Glass Card */
+.stats-glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur-lg;
+  -webkit-backdrop-filter: blur-lg;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Notification Badge Pulse */
+.notification-badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Form Card Glass Enhancement */
+.form-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur-xl;
+  -webkit-backdrop-filter: blur-xl;
+}
+.dark .form-card-glass {
+  background: rgba(15, 23, 42, 0.7);
+}
+.form-card-glow {
+  box-shadow: 0 0 40px rgba(34, 197, 94, 0.06), 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Hamburger Menu Icon */
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+.hamburger-icon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: white;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+.hamburger-icon.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.hamburger-icon.open span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger-icon.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Share Button Tooltip */
+.share-dropdown {
+  animation: share-fade-in 0.2s ease-out;
+}
+@keyframes share-fade-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Star Rating Styles */
+.star-filled {
+  color: #22c55e;
+  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.3));
+}
+.star-empty {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Round 6: New Utilities ── */
+
+/* Verified Badge */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  font-size: 9px;
+  font-weight: 600;
+  color: #22c55e;
+  line-height: 1.4;
+}
+
+/* Glow Pulse for Icons */
+@keyframes glow-pulse-subtle {
+  0%, 100% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.08); }
+  50% { box-shadow: 0 0 16px rgba(34, 197, 94, 0.2), 0 0 24px rgba(34, 197, 94, 0.06); }
+}
+.icon-glow-pulse {
+  animation: glow-pulse-subtle 3s ease-in-out infinite;
+}
+
+/* Slide-in Underline for feature cards */
+.feature-card-underline {
+  position: relative;
+}
+.feature-card-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #10b981);
+  border-radius: 1px;
+  transition: width 0.3s ease-out;
+}
+.feature-card-underline:hover::after {
+  width: 60%;
+}
+
+/* FAQ open glow effect */
+.faq-open-glow {
+  box-shadow: inset 3px 0 0 #22c55e, -4px 0 12px rgba(34, 197, 94, 0.06);
+}
+
+/* Mobile Drawer Overlay */
+.drawer-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Scroll progress label */
+.scroll-progress-label {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section dot connecting line */
+.section-dot-line {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(-50%);
+}
+
+/* Dot ring expansion animation */
+@keyframes dot-ring-expand {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.dot-ring-animate::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid #22c55e;
+  animation: dot-ring-expand 1s ease-out;
+  pointer-events: none;
+}
+
+/* Form card top accent */
+.form-top-accent {
+  position: relative;
+  overflow: hidden;
+}
+.form-top-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #10b981, #22c55e);
+  background-size: 200% 100%;
+  animation: gradient-shift 4s ease infinite;
+  border-radius: 9999px 9999px 0 0;
+}
+
+/* Language dropdown */
+.language-selector {
+  position: relative;
+}
+.language-option:hover {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22c55e;
+}
+
+/* ============================================
+   ROUND 7 - STYLING & FEATURE ENHANCEMENTS
+   ============================================ */
+
+/* 1. Stats glassmorphism card */
+.stats-glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.stats-gradient-separator {
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.2), transparent);
+}
+
+/* Stat number inner glow */
+.stat-number-glow {
+  text-shadow: 0 0 12px rgba(34, 197, 94, 0.3), 0 0 24px rgba(34, 197, 94, 0.1);
+}
+
+/* 2. Hero title pulsing gradient line */
+.hero-title-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #22c55e, rgba(34, 197, 94, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: hero-line-pulse 3s ease-in-out infinite;
+}
+@keyframes hero-line-pulse {
+  0%, 100% { opacity: 0.3; background-position: 0% 50%; }
+  50% { opacity: 1; background-position: 100% 50%; }
+}
+
+/* Enhanced text-shimmer-green (more prominent) */
+.text-shimmer-green {
+  background: linear-gradient(90deg, #22c55e 0%, #ffffff 40%, #22c55e 60%, #ffffff 80%, #22c55e 100%);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 3s linear infinite;
+}
+
+/* 3. Testimonial card hover green glow */
+.testimonial-card-hover {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.testimonial-card-hover:hover {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Verified badge pulse animation */
+.verified-badge-pulse {
+  animation: verified-pulse 2s ease-in-out infinite;
+}
+@keyframes verified-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 4. Popular badge inner glow */
+.popular-badge-glow {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* 5. Newsletter card glow */
+.newsletter-card-glow {
+  position: relative;
+}
+.newsletter-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 0.75rem;
+  background: conic-gradient(from 0deg, #22c55e, transparent 25%, transparent 75%, #22c55e);
+  animation: newsletter-border-spin 6s linear infinite;
+  z-index: -1;
+  opacity: 0.15;
+}
+@keyframes newsletter-border-spin {
+  to { transform: rotate(360deg); }
+}
+.newsletter-btn-glow:hover {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+/* 9. FAQ number circle */
+.faq-number-circle {
+  transition: all 0.3s ease;
+}
+.faq-number-pulse {
+  animation: faq-num-pulse 0.4s ease-out;
+}
+@keyframes faq-num-pulse {
+  0% { transform: scale(1); }
+ 50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }

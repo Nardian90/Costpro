@@ -1,12 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Parser } from 'expr-eval';
+import { createSafeParser } from '@/lib/cost-engine/parser-factory';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
+/** Parse a value that might be a number, string, or internationalized format. Returns NaN-safe number. */
+function safeParseNum(val: unknown): number {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  if (val === null || val === undefined) return 0;
+  const str = String(val).trim();
+  // Try direct parse first
+  const direct = parseFloat(str);
+  if (!isNaN(direct)) return direct;
+  // Try replacing comma-decimal with dot-decimal (e.g., "1.234,56" → "1234.56")
+  const normalized = str.replace(/\./g, '').replace(/,/g, '.');
+  const parsed = parseFloat(normalized);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    const { allowed, remaining, resetAt } = rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
+
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetAt.toISOString(),
+          'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000)),
+        },
+      });
+    }
+
     const body = await req.json();
     const result = body.result || body;
     const exportOptions = body.exportOptions || {};
@@ -26,8 +57,9 @@ export async function POST(req: NextRequest) {
 
     const isPro = exportOptions.pdfFormat === 'pro';
     const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0]; // Pro Blue or Black
+    const logo = exportOptions.logo || null;
 
-    const parser = new Parser();
+    const parser = createSafeParser();
 
     const safeLocale = (val: any) => {
         const n = parseFloat(String(val));
@@ -57,7 +89,7 @@ export async function POST(req: NextRequest) {
             'price': 'Precio',
             'amount': 'Importe',
             'value': 'Valor',
-            'classification': 'Fila',
+            'classification': 'Cod.',
             'label': 'Concepto',
             'total': 'Total',
             'v_historico': 'V. Histórico',
@@ -84,72 +116,106 @@ export async function POST(req: NextRequest) {
         h.enterprise = evaluateFormula(h.enterprise, formulaContext);
         h.destination = evaluateFormula(h.destination, formulaContext);
 
-        // Branding
-        pdf.setFillColor(isPro ? 240 : 255, isPro ? 240 : 255, isPro ? 240 : 255);
-        if (isPro) {
-            pdf.rect(14, 10, 12, 12, 'F');
+        // Branding / Logo
+        let headerLogoPlaced = false;
+        if (isPro && logo) {
+            try {
+                const formatMatch = logo.match(/^data:image\/(\w+);/);
+                const format = formatMatch ? formatMatch[1].toUpperCase() : 'PNG';
+                pdf.addImage(logo, format, 14, 7, 16, 12);
+                headerLogoPlaced = true;
+            } catch (e) {
+                console.error('Failed to add logo to PDF:', e);
+            }
         }
-        pdf.setDrawColor(200);
-        pdf.rect(14, 10, 12, 12);
 
-        pdf.setFontSize(10);
+        // FC branding box (skip if logo was placed in Pro mode)
+        if (!headerLogoPlaced) {
+            pdf.setFillColor(isPro ? [240, 243, 245] : [255, 255, 255]);
+            if (isPro) {
+                pdf.rect(14, 8, 11, 10, 'F');
+            }
+            pdf.setDrawColor(200);
+            pdf.rect(14, 8, 11, 10);
+
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "bold");
+            pdf.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
+            pdf.text("FC", 16.5, 15);
+        }
+
+        // Title — aligned after logo or FC box
+        const titleX = headerLogoPlaced ? 34 : 29;
+        pdf.setFontSize(isPro ? 11 : 10);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
-        pdf.text("FC", 16, 18);
-
-        pdf.setFontSize(12);
-        pdf.text(title.toUpperCase(), 30, 15);
-
-        pdf.setFontSize(7);
-        pdf.setFont("helvetica", "normal");
-        pdf.setTextColor(100, 100, 100);
-        pdf.text("Res. 148/2023 - CONTROL INTERNO", 30, 19);
+        pdf.text(title.toUpperCase(), titleX, 13);
 
         pdf.setFontSize(6);
-        pdf.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 12, { align: "right" });
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(120, 120, 120);
+        pdf.text("Res. 148/2023 - CONTROL INTERNO", titleX, 16);
+
+        pdf.setFontSize(5.5);
+        pdf.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 11, { align: "right" });
         if (showDateTime) {
-            pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
+            pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 14, { align: "right" });
         }
 
         if (isPro) {
             pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            pdf.rect(pageWidth - 40, 18, 26, 6);
+            pdf.setLineWidth(0.4);
+            pdf.rect(pageWidth - 38, 16, 24, 5);
             pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(7);
+            pdf.setFontSize(6);
             pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            pdf.text("VIGENTE", pageWidth - 27, 22.5, { align: "center" });
+            pdf.text("VIGENTE", pageWidth - 26, 19.5, { align: "center" });
+            pdf.setLineWidth(0.2);
         }
 
-        pdf.setDrawColor(230);
-        pdf.line(14, 26, pageWidth - 14, 26);
+        // Separator line under header
+        pdf.setDrawColor(220);
+        pdf.line(14, 21, pageWidth - 14, 21);
 
-        // Metadata Grid
-        pdf.setFontSize(7);
-        pdf.setTextColor(120);
+        // Pro mode: colored accent line under title
+        if (isPro) {
+            pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            pdf.setLineWidth(0.4);
+            pdf.line(14, 21.5, pageWidth - 14, 21.5);
+            pdf.setLineWidth(0.2);
+        }
+
+        // Metadata Grid — more compact
+        const metaY1 = 25;
+        const metaY2 = 29;
+        const metaY3 = 33;
+
+        pdf.setFontSize(6);
+        pdf.setTextColor(130);
         pdf.setFont("helvetica", "bold");
-        pdf.text("PRODUCTO / SERVICIO", 14, 31);
-        pdf.text("CÓDIGO", 55, 31);
-        pdf.text("UNIDAD DE MEDIDA", 95, 31);
-        pdf.text("CANTIDAD", 135, 31);
+        pdf.text("PRODUCTO / SERVICIO", 14, metaY1);
+        pdf.text("Cod.", 55, metaY1);
+        pdf.text("UNIDAD DE MEDIDA", 90, metaY1);
+        pdf.text("CANTIDAD", 125, metaY1);
 
-        pdf.setTextColor(0);
+        pdf.setTextColor(40);
         pdf.setFont("helvetica", "normal");
-        pdf.text(String(h.name ?? result.fichaName ?? result.name ?? "-").substring(0, 45), 14, 35);
-        pdf.text(String(h.code ?? result.fichaId ?? result.id ?? "-"), 55, 35);
-        pdf.text(String(h.unit || "-"), 95, 35);
-        pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
+        pdf.text(String(h.name ?? result.fichaName ?? result.name ?? "-").substring(0, 45), 14, metaY2);
+        pdf.text(String(h.code ?? result.fichaId ?? result.id ?? "-"), 55, metaY2);
+        pdf.text(String(h.unit || "-"), 90, metaY2);
+        pdf.text(String(h.quantity || result.meta?.quantity || 1), 125, metaY2);
 
-        pdf.setTextColor(120);
+        pdf.setTextColor(130);
         pdf.setFont("helvetica", "bold");
-        pdf.text("EMPRESA", 14, 40);
-        pdf.text("DESTINO", 55, 40);
-        pdf.text("MONEDA", 95, 40);
+        pdf.text("EMPRESA", 14, metaY3);
+        pdf.text("DESTINO", 55, metaY3);
+        pdf.text("MONEDA", 90, metaY3);
 
-        pdf.setTextColor(0);
+        pdf.setTextColor(40);
         pdf.setFont("helvetica", "normal");
-        pdf.text(String(h.enterprise || "-").substring(0, 40), 14, 44);
-        pdf.text(String(h.destination || "-"), 55, 44);
-        pdf.text(String(h.currency || "CUP"), 95, 44);
+        pdf.text(String(h.enterprise || "-").substring(0, 40), 14, metaY3 + 3);
+        pdf.text(String(h.destination || "-"), 55, metaY3 + 3);
+        pdf.text(String(h.currency || "CUP"), 90, metaY3 + 3);
 
         let r14 = (result.rows || []).find((r: any) => r.classification === "14" || r.id === "14");
         let r16_1 = (result.rows || []).find((r: any) => r.classification === "16.1" || r.id === "16.1");
@@ -162,24 +228,53 @@ export async function POST(req: NextRequest) {
         const finalPrice = r16_1?.total || r14?.total || 0;
 
         if (finalPrice > 0) {
-            pdf.setFillColor(isPro ? 245 : 255, 240, 240);
-            pdf.rect(pageWidth - 44, 38, 30, 8, "F");
-            pdf.setFont("helvetica", "bold");
-            pdf.setTextColor(180, 0, 0);
-            pdf.setFontSize(6);
-            pdf.text("PRECIO VENTA", pageWidth - 29, 41, { align: "center" });
-            pdf.setFontSize(9);
-            pdf.text(safeLocale(finalPrice), pageWidth - 29, 45, { align: "center" });
+            if (isPro) {
+                const badgeX = pageWidth - 42;
+                const badgeW = 28;
+                pdf.setFillColor(180, 20, 20);
+                try {
+                    pdf.roundedRect(badgeX, metaY1 - 1, badgeW, 9, 1.5, 1.5, 'F');
+                } catch (_e) {
+                    pdf.rect(badgeX, metaY1 - 1, badgeW, 9, 'F');
+                }
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(4.5);
+                pdf.setTextColor(255, 255, 255);
+                pdf.text("PRECIO DE VENTA", badgeX + badgeW / 2, metaY1 + 1.5, { align: "center" });
+                pdf.setFontSize(8.5);
+                pdf.text(safeLocale(finalPrice), badgeX + badgeW / 2, metaY1 + 5.5, { align: "center" });
+            } else {
+                pdf.setFillColor(255, 245, 245);
+                pdf.rect(pageWidth - 38, metaY1, 24, 7, "F");
+                pdf.setFont("helvetica", "bold");
+                pdf.setTextColor(180, 0, 0);
+                pdf.setFontSize(5);
+                pdf.text("PRECIO VENTA", pageWidth - 26, metaY1 + 2.5, { align: "center" });
+                pdf.setFontSize(8);
+                pdf.text(safeLocale(finalPrice), pageWidth - 26, metaY1 + 5.5, { align: "center" });
+            }
+        }
+
+        // Separator between header metadata and main table
+        const tableStartY = metaY3 + 6;
+        if (isPro) {
+            pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            pdf.setLineWidth(0.3);
+            pdf.line(14, tableStartY, pageWidth - 14, tableStartY);
+            pdf.setLineWidth(0.2);
+        } else {
+            pdf.setDrawColor(220);
+            pdf.line(14, tableStartY, pageWidth - 14, tableStartY);
         }
 
         pdf.setTextColor(0);
-        return 48; // Return new Y position
+        return tableStartY + 2; // Return new Y position
     };
 
     let currentY = addHeader(doc, "FICHA DE COSTO");
 
     if (includeFC) {
-        const headers = ['CÓDIGO', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
+        const headers = ['Cod.', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
         let tableBody: any[] = [];
 
         // Use result.rows which are already calculated by the engine
@@ -206,25 +301,33 @@ export async function POST(req: NextRequest) {
             startY: currentY,
             head: [headers],
             body: tableBody,
-            theme: isPro ? 'plain' : 'grid',
+            theme: 'grid',
+            margin: { left: 14, right: 14 },
             headStyles: {
-                fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
-                textColor: isPro ? [0, 0, 0] : primaryColor,
-                fontSize: 8,
-                lineWidth: { bottom: isPro ? 1 : 0.5 },
-                lineColor: isPro ? [60, 60, 60] : primaryColor
+                fillColor: isPro ? [240, 243, 245] : [255, 255, 255],
+                textColor: isPro ? primaryColor : [60, 60, 60],
+                fontSize: isPro ? 7 : 7.5,
+                fontStyle: 'bold',
+                cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+                lineWidth: { bottom: 0.6 },
+                lineColor: isPro ? primaryColor : [180, 180, 180]
+            },
+            alternateRowStyles: {
+                fillColor: isPro ? [248, 250, 252] : [255, 255, 255]
             },
             styles: {
-                fontSize: 7.5,
-                cellPadding: isPro ? 3 : 2,
-                lineColor: [230, 230, 230],
-                lineWidth: isPro ? 0 : 0.1
+                fontSize: isPro ? 6.5 : 7,
+                cellPadding: isPro ? { top: 1.8, bottom: 1.8, left: 2, right: 2 } : { top: 2, bottom: 2, left: 2, right: 2 },
+                lineColor: isPro ? [215, 218, 222] : [210, 210, 210],
+                lineWidth: 0.15,
+                valign: 'middle',
+                overflow: 'linebreak'
             },
             columnStyles: {
-                0: { cellWidth: 15, halign: 'center' },
-                2: { cellWidth: 15, halign: 'center' },
+                0: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
+                2: { cellWidth: 14, halign: 'center' },
                 3: { cellWidth: 25, halign: 'right' },
-                4: { cellWidth: 25, halign: 'right' }
+                4: { cellWidth: 25, halign: 'right', fontStyle: 'bold' }
             },
             didParseCell: (data) => {
                 if (data.section === 'body') {
@@ -235,40 +338,42 @@ export async function POST(req: NextRequest) {
                         const isSpecial = classStr.includes('.') === false;
                         const isRed = ['14', '15', '16', '16.1', '17', '20'].includes(classStr);
                         const labelLower = (r.label || '').toLowerCase();
-
                         const level = classStr.split('.').length - 1;
 
                         // Hierarchical indentation
                         if (data.column.index === 1) {
                             const label = r.label || '';
-                            data.cell.styles.cellPadding = { left: 2 + (level * 4) };
+                            data.cell.styles.cellPadding = isPro
+                                ? { top: 1.8, bottom: 1.8, left: 1.5 + (level * 3), right: 2 }
+                                : { top: 2, bottom: 2, left: 2 + (level * 3), right: 2 };
 
                             if (level === 1) {
-                                data.cell.styles.fontStyle = isPro ? 'bold' : 'normal';
-                                data.cell.styles.fontSize = isPro ? 8.5 : 8.5;
+                                data.cell.styles.fontStyle = isPro ? 'normal' : 'normal';
+                                data.cell.styles.fontSize = isPro ? 6.5 : 7;
                                 data.cell.text = [label];
                             } else {
-                                data.cell.styles.fontStyle = 'italic';
-                                data.cell.styles.fontSize = 8;
-                                data.cell.styles.textColor = isPro ? [60, 60, 60] : [80, 80, 80];
+                                data.cell.styles.fontStyle = 'normal';
+                                data.cell.styles.fontSize = isPro ? 6 : 6.5;
+                                data.cell.styles.textColor = isPro ? [80, 80, 80] : [90, 90, 90];
                                 data.cell.text = [label];
                             }
 
                             // Focus on elements with value
                             if (isPro && (r.total ?? 0) > 0 && level > 0) {
-                                data.cell.styles.textColor = [0, 0, 0];
-                                if (level >= 2) data.cell.styles.fontStyle = 'normal';
+                                data.cell.styles.textColor = [30, 30, 30];
                             }
                         }
 
+                        // Section headers (no dot = top-level)
                         if (isSpecial || level === 0) {
                             data.cell.styles.fontStyle = 'bold';
                             if (isRed) {
                                 data.cell.styles.textColor = isPro ? [150, 0, 0] : [180, 0, 0];
-                                data.cell.styles.fillColor = isPro ? [255, 245, 245] : [255, 248, 248];
+                                data.cell.styles.fillColor = isPro ? [252, 245, 245] : [255, 248, 248];
                             }
+                            // Consistent borders for special rows (no lineWidth override)
                             if (['14', '20'].includes(classStr) || labelLower.includes('total')) {
-                                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.3 };
+                                data.cell.styles.lineWidth = { top: 0.15, bottom: 0.4, left: 0.15, right: 0.15 };
                             }
                         }
                     }
@@ -279,12 +384,13 @@ export async function POST(req: NextRequest) {
                     const pdf = data.doc;
                     const cell = data.cell;
                     const textWidth = pdf.getTextWidth(cell.text[0]);
-                    const startX = cell.x + textWidth + 3;
-                    const endX = cell.x + cell.width - 2;
-                    if (endX > startX && !isPro) { // Dots only in Standard
-                        pdf.setDrawColor(220);
+                    const startX = cell.x + textWidth + 2;
+                    const endX = cell.x + cell.width - 1.5;
+                    if (endX > startX && !isPro) {
+                        pdf.setDrawColor(215);
                         pdf.setLineDashPattern([0.2, 1.2], 0);
-                        pdf.line(startX, cell.y + cell.height - 2.8, endX, cell.y + cell.height - 2.8);
+                        const midY = cell.y + cell.height / 2;
+                        pdf.line(startX, midY, endX, midY);
                         pdf.setLineDashPattern([], 0);
                     }
                 }
@@ -344,7 +450,7 @@ export async function POST(req: NextRequest) {
             const totalKey = Object.keys(firstRow).find(k => ["importe", "total", "amount", "value"].includes(k.toLowerCase())) || "total";
             const totalSum = annexRows.reduce((acc: number, r: any) => {
                 const val = r[totalKey] || 0;
-                const num = typeof val === "number" ? val : parseFloat(String(val).replace(/[^0-9.-]+/g,""));
+                const num = safeParseNum(val);
                 return acc + (isNaN(num) ? 0 : num);
             }, 0);
             return totalSum > 0;
@@ -386,7 +492,7 @@ export async function POST(req: NextRequest) {
             const totalKey = allKeys.find(k => ["importe", "total", "amount", "value"].includes(k.toLowerCase())) || headers[headers.length - 1];
             const totalSum = annexRows.reduce((acc: number, r: any) => {
                 const val = r[totalKey] || 0;
-                const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]+/g,""));
+                const num = safeParseNum(val);
                 return acc + (isNaN(num) ? 0 : num);
             }, 0);
 
@@ -397,21 +503,28 @@ export async function POST(req: NextRequest) {
                 foot: [[{
                     content: "TOTAL ANEXO " + annex.id + ": " + safeLocale(totalSum),
                     colSpan: headers.length,
-                    styles: { halign: 'right', fontStyle: 'bold', fontSize: 8, textColor: primaryColor, fillColor: isPro ? [240, 240, 240] : [245, 245, 245] }
+                    styles: { halign: 'right', fontStyle: 'bold', fontSize: 7, textColor: primaryColor, fillColor: isPro ? [238, 240, 243] : [245, 245, 245], cellPadding: { top: 2, bottom: 2, left: 2, right: 2 } }
                 }]],
-                theme: isPro ? 'plain' : 'grid',
+                theme: 'grid',
                 headStyles: {
-                    fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
-                    textColor: isPro ? [0, 0, 0] : primaryColor,
-                    fontSize: 7,
-                    lineWidth: { bottom: isPro ? 0.8 : 0.5 },
-                    lineColor: isPro ? [60, 60, 60] : primaryColor
+                    fillColor: isPro ? [240, 243, 245] : [255, 255, 255],
+                    textColor: isPro ? primaryColor : [60, 60, 60],
+                    fontSize: isPro ? 6 : 6.5,
+                    fontStyle: 'bold',
+                    cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
+                    lineWidth: { bottom: 0.5 },
+                    lineColor: isPro ? primaryColor : [180, 180, 180]
+                },
+                alternateRowStyles: {
+                    fillColor: isPro ? [248, 250, 252] : [255, 255, 255]
                 },
                 styles: {
-                    fontSize: 7,
-                    cellPadding: isPro ? 2 : 1.5,
-                    lineColor: [230, 230, 230],
-                    lineWidth: isPro ? 0 : 0.1
+                    fontSize: isPro ? 6 : 6.5,
+                    cellPadding: isPro ? { top: 1.5, bottom: 1.5, left: 2, right: 2 } : { top: 1.8, bottom: 1.8, left: 2, right: 2 },
+                    lineColor: isPro ? [215, 218, 222] : [210, 210, 210],
+                    lineWidth: 0.15,
+                    valign: 'middle',
+                    overflow: 'linebreak'
                 },
                 margin: { left: 14, right: 14 }
             });
@@ -467,8 +580,8 @@ export async function POST(req: NextRequest) {
             head: [auditHeaders],
             body: auditBody,
             theme: 'grid',
-            headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 7 },
-            styles: { fontSize: 7, cellPadding: 2 },
+            headStyles: { fillColor: isPro ? primaryColor : [40, 40, 40], textColor: 255, fontSize: 6.5, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 } },
+            styles: { fontSize: 6.5, cellPadding: { top: 1.5, bottom: 1.5, left: 2, right: 2 }, lineWidth: 0.15, lineColor: [210, 210, 210], valign: 'middle' },
             didParseCell: (data) => {
                 if (data.section === 'body' && data.column.index === 0) {
                     const val = String(data.cell.raw);

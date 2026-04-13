@@ -1,18 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, Delete, Divide, Plus, Minus, Equal, X } from 'lucide-react';
-import { cn, isDarkTheme } from "@/lib/utils";
-import { useTheme } from 'next-themes';
+import { Delete, Divide, Plus, Minus, Equal, X } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 
 export const CostSheetCalculator: React.FC = () => {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
   const [lastResult, setLastResult] = useState<number | null>(null);
-  const { resolvedTheme } = useTheme();
-  const isDark = isDarkTheme(resolvedTheme);
-
   // Calculator Logic
   const handleNumber = (num: string) => {
     if (display === '0' || lastResult !== null) {
@@ -37,16 +34,20 @@ export const CostSheetCalculator: React.FC = () => {
     setLastResult(null);
   };
 
+  // Sandboxed parser instance — safe alternative to eval/new Function
+  const safeParser = useMemo(() => createSafeParser(), []);
+
   const handleCalculate = () => {
     try {
       if (!equation) return;
       const fullEquation = equation + display;
-      const sanitized = fullEquation.replace(/[^-0-9+*/.]/g, '');
-      const result = new Function(`return ${sanitized}`)();
-      const resultStr = String(Number(result.toFixed(8)));
-      setDisplay(resultStr.length > 15 ? result.toExponential(4) : resultStr);
+      const sanitized = fullEquation.replace(/[^-0-9+*/.()]/g, '');
+      const result = safeParser.evaluate(sanitized);
+      const num = typeof result === 'number' ? result : Number(result);
+      const resultStr = String(Number(num.toFixed(8)));
+      setDisplay(resultStr.length > 15 ? num.toExponential(4) : resultStr);
       setEquation('');
-      setLastResult(result);
+      setLastResult(num);
     } catch (e) {
       setDisplay('Error');
     }
@@ -78,22 +79,22 @@ export const CostSheetCalculator: React.FC = () => {
   return (
     <div className={cn(
         "flex flex-col h-full overflow-hidden transition-colors duration-500",
-        isDark ? "bg-[var(--background)]" : "bg-transparent"
+        "bg-transparent dark:bg-[var(--background)]"
     )}>
       {/* Display */}
       <div className={cn(
         "px-8 py-8 flex flex-col items-end justify-center gap-1 min-h-[120px] shrink-0 relative overflow-hidden",
-        isDark ? "bg-black/60" : "bg-slate-50/50"
+        "bg-slate-50/50 dark:bg-black/60"
       )}>
         {/* Neon Grid Effect */}
         <div className={cn(
             "absolute inset-0 opacity-[0.05] pointer-events-none",
-            isDark ? "bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] bg-[size:20px_20px]" : "bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:20px_20px]"
+            "bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:20px_20px] dark:bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)]"
         )} />
 
         <motion.div className={cn(
             "text-[10px] font-mono h-4 uppercase tracking-[0.2em] font-black",
-            isDark ? "text-[hsl(var(--primary))]/40" : "text-muted-foreground/40"
+            "text-muted-foreground/40 dark:text-[hsl(var(--primary))]/40"
         )}>
           {equation || '\u00A0'}
         </motion.div>
@@ -103,9 +104,7 @@ export const CostSheetCalculator: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           className={cn(
             "text-[clamp(2.25rem,12vw,3rem)] font-mono tracking-tighter w-full text-right font-black",
-            isDark
-              ? "text-[hsl(var(--primary))] drop-shadow-[0_0_15px_rgba(22,163,74,0.5)]"
-              : "text-primary"
+            "text-primary dark:text-[hsl(var(--primary))] dark:drop-shadow-[0_0_15px_rgba(22,163,74,0.5)]"
           )}
         >
           {display}
@@ -115,7 +114,7 @@ export const CostSheetCalculator: React.FC = () => {
       {/* Keypad */}
       <div className={cn(
           "flex-1 p-6 grid grid-cols-4 gap-3 overflow-hidden",
-          isDark ? "bg-gradient-to-b from-black/0 to-[hsl(var(--primary))]/5" : "bg-gradient-to-b from-transparent to-black/5"
+          "bg-gradient-to-b from-transparent to-black/5 dark:from-black/0 dark:to-[hsl(var(--primary))]/5"
       )}>
         <CalcButton label="C" onClick={handleClear} variant="danger" />
         <CalcButton icon={<Delete className="w-5 h-5" />} onClick={handleBackspace} variant="secondary" />
@@ -158,25 +157,12 @@ interface CalcButtonProps {
 }
 
 const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className }) => {
-  const { resolvedTheme } = useTheme();
-  const isDark = isDarkTheme(resolvedTheme);
-
   const variantStyles = {
-    number: isDark
-      ? "bg-white/5 hover:bg-white/10 text-foreground border-white/5 shadow-inner"
-      : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm",
-    operator: isDark
-      ? "bg-[hsl(var(--primary))]/5 hover:bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20"
-      : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
-    primary: isDark
-      ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-foreground border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30"
-      : "bg-primary hover:bg-primary/90 text-foreground border-primary shadow-lg shadow-primary/20",
-    danger: isDark
-      ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
-      : "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
-    secondary: isDark
-      ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/10"
-      : "bg-muted hover:bg-muted/80 text-muted-foreground border-border",
+    number: "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/5 dark:shadow-inner",
+    operator: "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
+    primary: "bg-primary hover:bg-primary/90 text-foreground border-primary shadow-lg shadow-primary/20 dark:shadow-[hsl(var(--primary))]/30",
+    danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
+    secondary: "bg-muted hover:bg-muted/80 text-muted-foreground border-border dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/70 dark:border-white/10",
   };
 
   return (

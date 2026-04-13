@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { Parser } from 'expr-eval';
+import { createSafeParser } from './parser-factory';
 import {
   FichaJSON,
   CalculationResult,
@@ -9,7 +9,8 @@ import {
   BaseRef,
   ValidationError,
 } from './types';
-import { translateFormulaFromSpanish, smartTranslate } from './formula-utils';
+import { translateFormulaFromSpanish, smartTranslate, getFormulaReferenceIssue } from './formula-utils';
+import { ROMAN_MAP } from './constants';
 
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
@@ -76,13 +77,24 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
         errors.push(`Duplicate classification detected: ${row.classification}. ref() will sum all matching rows.`);
     }
     classifications.add(row.classification);
+
+    // C15: Warn if row id or classification conflicts with a reserved formula name
+    const idIssue = getFormulaReferenceIssue(row.id);
+    if (idIssue) {
+      validationErrors.push({ rowId: row.id, message: `ID reservado: ${idIssue}`, type: 'WARNING', code: 'RESERVED_NAME' });
+    }
+    const classIssue = getFormulaReferenceIssue(row.classification);
+    if (classIssue && row.classification !== row.id) {
+      validationErrors.push({ rowId: row.id, message: `Clasificación reservada: ${classIssue}`, type: 'WARNING', code: 'RESERVED_NAME' });
+    }
   });
 
   // 1. Dependency Graph & Cycle Detection
   const adj = new Map<string, string[]>();
-  const parser = new Parser();
+  const parser = createSafeParser();
 
-  parser.functions.REDONDEO = (val: number, decimals: number = 2) => val; // Dummy for validation
+  // Override REDONDEO with a no-op for dry-run validation (no actual rounding needed)
+  parser.functions.REDONDEO = (val: number, _decimals: number = 2) => val;
   parser.functions.valor = (x: any) => x;
   parser.functions.SUM_ANEXO = (a: any, c: any) => 0;
   parser.functions.GET_ANEXO_FILA_DATO = (a: any, r: any, f: any) => 0;
@@ -300,7 +312,7 @@ export function calculateFicha(
   const knownClasses = new Set(ficha.rows.map(r => r.classification));
 
   // 0. Pre-validate
-  const { validationErrors, errors: legacyErrors } = validateFicha(ficha);
+  const { validationErrors } = validateFicha(ficha);
 
   // 1. Prepare maps for O(1) lookup
   const annexSumMap = new Map<string, Map<string, Decimal>>();
@@ -376,11 +388,9 @@ export function calculateFicha(
     });
   });
 
-  const parser = new Parser();
+  const parser = createSafeParser();
   parser.functions.valor = (x: any) => x;
-  parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
-    return new Decimal(val).toDecimalPlaces(decimals).toNumber();
-  };
+  // REDONDEO is already registered by createSafeParser with the same Decimal logic
 
   // Use Decimal for high precision in parser functions
   parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
@@ -455,7 +465,9 @@ export function calculateFicha(
       }
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.calculatedVH || t.valorHistorico || 0));
+          const cvh = calculated?.calculatedVH;
+          const numVal = typeof cvh === 'string' ? parseFloat(cvh) || 0 : (cvh || t.valorHistorico || 0);
+          return acc.plus(new Decimal(numVal));
       }, new Decimal(0));
       return val.toNumber();
   };
@@ -474,7 +486,10 @@ export function calculateFicha(
           if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
           else flatArgs.push(arg);
       });
-      return flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
+      return flatArgs.reduce((a, b) => {
+        const numB = typeof b === 'string' ? parseFloat(b) : (b || 0);
+        return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
+      }, new Decimal(0)).toNumber();
   };
 
   parser.functions.average = (...args: any[]) => {
@@ -484,7 +499,10 @@ export function calculateFicha(
           else flatArgs.push(arg);
       });
       if (flatArgs.length === 0) return 0;
-      const sum = flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
+      const sum = flatArgs.reduce((a, b) => {
+        const numB = typeof b === 'string' ? parseFloat(b) : (b || 0);
+        return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
+      }, new Decimal(0));
       return sum.div(flatArgs.length).toNumber();
   };
 
@@ -500,7 +518,9 @@ export function calculateFicha(
     let fuenteParts: string[] = [row.formaCalculo];
 
     const currentCalculated = currentRows.get(row.id);
-    const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
+    const rawVH = currentCalculated?.calculatedVH;
+    const vhNum = typeof rawVH === 'string' ? parseFloat(rawVH) || 0 : (rawVH || row.valorHistorico || 0);
+    const vh = new Decimal(vhNum);
 
     // Helper for prefix matching in annexes
     const getAnnexSumForPrefix = (anexoId: string, prefix: string): Decimal => {
@@ -614,7 +634,8 @@ const ruleOverride = activeRules[0];
         fuenteParts.push(baseRefName);
 
         if (formaCalculoToUse === 'PRORRATEO') {
-            if (baseHistValue.isZero()) {
+            const epsilon = new Decimal(10).pow(-decimals - 4);
+            if (baseHistValue.abs().lte(epsilon)) {
                 total = new Decimal(0);
                 type = 'WARNING';
                 note += `BaseHist is zero for ${baseRefName}. `;
@@ -675,7 +696,7 @@ const ruleOverride = activeRules[0];
                     .map(r => calculatedRows.get(r.id)?.total || 0)
             };
 
-            const romanMap = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+            const romanMap = Object.values(ROMAN_MAP);
             ficha.anexos.forEach((anexo, idx) => {
                 const totalVal = annexTotals.get(anexo.id) || 0;
                 const prefixSum = getAnnexSumForPrefix(anexo.id, row.classification);
@@ -763,10 +784,10 @@ const ruleOverride = activeRules[0];
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
+                    .map(r => { const cvh = calculatedRows.get(r.id)?.calculatedVH; return typeof cvh === 'string' ? parseFloat(cvh) || 0 : (cvh || r.valorHistorico || 0); }),
                 hijos: ficha.rows
                     .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0)
+                    .map(r => { const cvh = calculatedRows.get(r.id)?.calculatedVH; return typeof cvh === 'string' ? parseFloat(cvh) || 0 : (cvh || r.valorHistorico || 0); })
             };
 
             annexTotals.forEach((total, id) => {
@@ -777,7 +798,9 @@ const ruleOverride = activeRules[0];
                 vhContext[`Anexo${id}`] = classSum !== undefined ? classSum.toNumber() : 0;
             });
 
-            const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
+            const vhRaw = vhExpr.evaluate(vhContext);
+            const vhSafeNum = typeof vhRaw === 'string' ? parseFloat(vhRaw) || 0 : (vhRaw || 0);
+            const vhResult = new Decimal(vhSafeNum).toDecimalPlaces(decimals).toNumber();
             if (vhResult !== current.calculatedVH) {
                 current.calculatedVH = vhResult;
                 converged = false;
@@ -821,22 +844,34 @@ const ruleOverride = activeRules[0];
     });
   }
 
-  // 4. Final Totals
-  const summary = {
-    totalCost: 0,
-    totalMargin: 0,
-    totalTax: 0,
-    grandTotal: 0,
-  };
+  // Truncate audit arrays to prevent unbounded growth (configurable retention)
+  const MAX_AUDIT_ENTRIES = ficha.meta.settings?.maxAuditEntries ?? 100;
+  if (MAX_AUDIT_ENTRIES !== Infinity && MAX_AUDIT_ENTRIES > 0) {
+    calculatedRows.forEach(row => {
+      if (row.audit.length > MAX_AUDIT_ENTRIES) {
+        row.audit = row.audit.slice(-MAX_AUDIT_ENTRIES);
+      }
+    });
+  }
+
+  // 4. Final Totals — use Decimal accumulators to avoid floating-point drift
+  let totalCostD = new Decimal(0);
+  let totalMarginD = new Decimal(0);
+  let totalTaxD = new Decimal(0);
 
   calculatedRows.forEach(row => {
-    const val = row.total;
-    if (row.type === 'COST') summary.totalCost += val;
-    else if (row.type === 'MARGIN') summary.totalMargin += val;
-    else if (row.type === 'TAX') summary.totalTax += val;
+    const val = new Decimal(row.total);
+    if (row.type === 'COST') totalCostD = totalCostD.plus(val);
+    else if (row.type === 'MARGIN') totalMarginD = totalMarginD.plus(val);
+    else if (row.type === 'TAX') totalTaxD = totalTaxD.plus(val);
   });
 
-  summary.grandTotal = new Decimal(summary.totalCost).plus(summary.totalMargin).plus(summary.totalTax).toDecimalPlaces(decimals).toNumber();
+  const summary = {
+    totalCost: totalCostD.toDecimalPlaces(decimals).toNumber(),
+    totalMargin: totalMarginD.toDecimalPlaces(decimals).toNumber(),
+    totalTax: totalTaxD.toDecimalPlaces(decimals).toNumber(),
+    grandTotal: totalCostD.plus(totalMarginD).plus(totalTaxD).toDecimalPlaces(decimals).toNumber(),
+  };
 
   // 5. Semantic Validation (Totals vs Children)
   ficha.rows.forEach(row => {
@@ -846,8 +881,9 @@ const ruleOverride = activeRules[0];
           const calcRow = calculatedRows.get(row.id)!;
           const childrenSum = children.reduce((acc, child) => acc.plus(new Decimal(calculatedRows.get(child.id)?.total || 0)), new Decimal(0));
 
+          const materialityThreshold = new Decimal(10).pow(-decimals - 1).toNumber();
           const diff = Math.abs(calcRow.total - childrenSum.toNumber());
-          if (diff > 0.01) {
+          if (diff > materialityThreshold) {
               validationErrors.push({
                   rowId: row.id,
                   message: `Error Contable: El total de '${row.label}' (${calcRow.total}) no cuadra con la suma de sus componentes (${childrenSum.toNumber()}). Diferencia: ${diff.toFixed(2)}`,
@@ -866,7 +902,7 @@ const ruleOverride = activeRules[0];
     anexos: ficha.anexos,
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
     summary,
-    validationErrors: validationErrors.map(e => e.message),
+    validationErrors: validationErrors.map(e => `${e.type}: ${e.message}`),
     deepValidationErrors: validationErrors,
     elapsedMs: Date.now() - startTime,
   };

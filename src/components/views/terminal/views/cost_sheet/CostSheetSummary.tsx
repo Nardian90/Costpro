@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Calculator,
   RotateCcw,
@@ -62,6 +62,10 @@ export const CostSheetSummary: React.FC = () => {
 
   const [solverResult, setSolverResult] = useState<SolverResultData | null>(null);
   const [showSolverDialog, setShowSolverDialog] = useState(false);
+
+  // Ref guard to prevent double solver invocations (e.g. rapid clicks, Strict Mode edge cases)
+  const isSolvingRef = useRef(false);
+  const isConfirmingRef = useRef(false);
 
   // Memos for KPI cards
   const utilityRow = useMemo(() => {
@@ -136,7 +140,8 @@ export const CostSheetSummary: React.FC = () => {
           row.formula = undefined;
           (row as any).totalFormula = undefined;
           row.calculationMethod = 'ValorFijo';
-          row.is_percent = false;
+          row.isPercent = false;
+          (row as any).is_percent = false;
           return true;
         }
         if (row.children && findAndModifyRow(row.children, id, val)) return true;
@@ -168,6 +173,12 @@ export const CostSheetSummary: React.FC = () => {
       return;
     }
 
+    // Guard: prevent double invocation if already solving
+    if (isSolvingRef.current) {
+      console.warn('[CostSheetSummary] Solver already running, skipping duplicate call.');
+      return;
+    }
+    isSolvingRef.current = true;
     setIsSolverRunning(true);
 
     // Use setTimeout to let UI update before heavy computation
@@ -199,6 +210,7 @@ export const CostSheetSummary: React.FC = () => {
         if (!variableRowPath) {
           toast.error(`No se pudo encontrar la fila variable "${solverVariableRow}"`);
           setIsSolverRunning(false);
+          isSolvingRef.current = false;
           return;
         }
 
@@ -245,8 +257,12 @@ export const CostSheetSummary: React.FC = () => {
       } catch (e: any) {
         console.error('Solver error:', e);
         toast.error(`Error al ejecutar el solver: ${e.message || 'Error desconocido'}`);
+        // Reset solver state to prevent stale UI on error
+        setSolverResult(null);
+        setShowSolverDialog(false);
       } finally {
         setIsSolverRunning(false);
+        isSolvingRef.current = false;
       }
     }, 50);
   };
@@ -254,6 +270,13 @@ export const CostSheetSummary: React.FC = () => {
   // Save: permanently replace formula with fixed value
   const handleSolverConfirm = () => {
     if (!solverResult?.variableRowPath) return;
+
+    // Guard: prevent double-confirm (e.g. rapid clicks on the confirm button)
+    if (isConfirmingRef.current) {
+      console.warn('[CostSheetSummary] Solver confirm already in progress, skipping duplicate.');
+      return;
+    }
+    isConfirmingRef.current = true;
 
     const path = solverResult.variableRowPath;
     const val = solverResult.value;
@@ -264,11 +287,13 @@ export const CostSheetSummary: React.FC = () => {
       { path: [...path, 'formula'], value: null },
       { path: [...path, 'totalFormula'], value: null },
       { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+      { path: [...path, 'isPercent'], value: false },
       { path: [...path, 'is_percent'], value: false },
     ]);
 
     setShowSolverDialog(false);
     setSolverResult(null);
+    isConfirmingRef.current = false;
     toast.success(
       `Cambio guardado permanentemente: ${solverResult.variableRowLabel} = ${formatCurrency(val)} (fórmula removida)`
     );

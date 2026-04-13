@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
@@ -21,13 +21,13 @@ export const FloatingCalculator: React.FC = () => {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
   const [lastResult, setLastResult] = useState<number | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const { resolvedTheme } = useTheme();
   const constraintsRef = useRef(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Calculator Logic
   const handleNumber = (num: string) => {

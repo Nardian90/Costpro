@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { cn, formatCurrency , isDarkTheme} from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { Slider } from '@/components/ui/slider';
 
 interface TelemetryItem {
@@ -32,9 +31,6 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   onPriceChange,
   onPriceAdjust
 }) => {
-  const { resolvedTheme } = useTheme();
-  const isDark = isDarkTheme(resolvedTheme);
-
   const utilityPercent = totalPrice > 0 ? (utility / totalPrice) * 100 : 0;
   const costPercent = totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0;
   const markupPercent = totalCost > 0 ? (utility / totalCost) * 100 : 0;
@@ -64,7 +60,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             viewBox={`0 0 ${size} ${size}`}
             className={cn(
                 "w-full h-full max-w-[320px] -rotate-90 transition-all duration-500",
-                isDark ? "drop-shadow-[0_0_15px_hsl(var(--primary)/0.2)]" : "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)]"
+                "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)] dark:drop-shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
             )}
         >
           {/* Base Track */}
@@ -102,17 +98,12 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className={brandGreen}
+            className={cn(brandGreen, "[filter:drop-shadow(0_0_8px_var(--primary))] dark:[filter:drop-shadow(0_0_12px_var(--primary))]")}
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference - (Math.min(utilityPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, delay: 0.3, ease: "circOut" }}
             strokeLinecap="round"
-            style={{
-                filter: isDark
-                    ? 'drop-shadow(0 0 12px var(--primary))'
-                    : 'drop-shadow(0 0 8px var(--primary))',
-            }}
           />
         </svg>
 
@@ -193,8 +184,6 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
 };
 
 export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], className?: string }> = ({ telemetry, className }) => {
-    const { resolvedTheme } = useTheme();
-    const isDark = resolvedTheme === 'dark';
     const brandGreen = "text-primary";
     const brandGreenBg = "bg-primary";
 
@@ -235,14 +224,12 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
                                         key={bar}
                                         className={cn(
                                             "w-1.5 rounded-full transition-all duration-700 delay-100",
-                                            active ? brandGreenBg : "bg-muted dark:bg-muted"
+                                            active ? brandGreenBg : "bg-muted dark:bg-muted",
+                                            active && "[box-shadow:0_0_8px_rgba(22,163,74,0.2)] dark:[box-shadow:0_0_8px_hsl(var(--primary)/0.4)]"
                                         )}
                                         style={{
                                             height: `${bar * 20 + 20}%`,
                                             opacity: active ? 1 : 0.3,
-                                            boxShadow: active
-                                                ? (isDark ? '0 0 8px hsl(var(--primary)/0.4)' : '0 0 8px rgba(22, 163, 74, 0.2)')
-                                                : 'none'
                                         }}
                                     />
                                 );

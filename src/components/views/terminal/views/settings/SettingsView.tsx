@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Zap, Laptop, Bell, Percent, ShieldCheck, Code, Key, Plus, Trash2, Edit2, Loader2, Bot, Save, X } from 'lucide-react';
+import { Sun, Moon, Zap, Laptop, Bell, Percent, ShieldCheck, Code, Key, Plus, Trash2, Edit2, Loader2, Bot, Save, X, Wifi, WifiOff } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { useTaxes } from '@/hooks/api/useTaxes';
@@ -24,7 +24,7 @@ export default function SettingsView() {
   const queryClient = useQueryClient();
   const { data: taxes = [], isLoading: isLoadingTaxes } = useTaxes(user?.activeStoreId);
   const { theme } = useTheme();
-  const { themePreference, setThemePreference } = useUIStore();
+  const { themePreference, setThemePreference, connectivity, setConnectivity } = useUIStore();
   const [notifications, setNotifications] = useState({
     lowStock: true,
     salesAlerts: false,
@@ -137,26 +137,58 @@ export default function SettingsView() {
 
           <div className="space-y-4">
             <div className="font-black text-sm uppercase tracking-tight">Tema del Sistema</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {[
-                { id: 'light', label: 'Claro', icon: Sun, color: 'text-amber-500' },
-                { id: 'dark', label: 'Oscuro', icon: Moon, color: 'text-primary' },
-                { id: 'fast-light', label: 'Fast Light', icon: Zap, color: 'text-blue-500' },
-                { id: 'fast-dark', label: 'Fast Dark', icon: Zap, color: 'text-emerald-500' },
-                { id: 'auto', label: 'Auto', icon: Laptop, color: 'text-purple-500' },
-              ].map((t) => (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Light Theme */}
+              <button
+                onClick={() => { setThemePreference('light'); }}
+                className={cn(
+                  "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
+                  themePreference === 'light' || theme === 'light' ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
+                )}
+              >
+                <Sun className={cn("w-5 h-5", themePreference === 'light' || theme === 'light' ? "text-amber-500" : "text-muted-foreground")} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-center">Claro</span>
+              </button>
+              {/* Dark Theme */}
+              <button
+                onClick={() => { setThemePreference('dark'); }}
+                className={cn(
+                  "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
+                  themePreference === 'dark' || theme === 'dark' ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
+                )}
+              >
+                <Moon className={cn("w-5 h-5", themePreference === 'dark' || theme === 'dark' ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-center">Oscuro</span>
+              </button>
+            </div>
+
+            {/* Connectivity Mode */}
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="font-black text-sm uppercase tracking-tight mb-3">Modo de Conectividad</div>
+              <div className="grid grid-cols-2 gap-4">
                 <button
-                  key={t.id}
-                  onClick={() => setThemePreference(t.id as any)}
+                  onClick={() => setConnectivity('4g')}
                   className={cn(
                     "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
-                    themePreference === t.id ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
+                    connectivity === '4g' ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
                   )}
                 >
-                  <t.icon className={cn("w-5 h-5", themePreference === t.id ? t.color : "text-muted-foreground")} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">{t.label}</span>
+                  <Wifi className={cn("w-5 h-5", connectivity === '4g' ? "text-primary" : "text-muted-foreground")} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">4G Rápido</span>
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Animaciones completas</span>
                 </button>
-              ))}
+                <button
+                  onClick={() => setConnectivity('3g')}
+                  className={cn(
+                    "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
+                    connectivity === '3g' ? "border-amber-500 bg-amber-500/5 shadow-lg shadow-amber-500/10" : "border-border hover:bg-muted"
+                  )}
+                >
+                  <WifiOff className={cn("w-5 h-5", connectivity === '3g' ? "text-amber-500" : "text-muted-foreground")} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">3G Ahorro</span>
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Animaciones reducidas</span>
+                </button>
+              </div>
             </div>
           </div>
 

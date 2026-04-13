@@ -12,10 +12,21 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { cn, formatAccounting } from '@/lib/utils';
+import { isResultRow } from '@/lib/cost-engine/constants';
 import { FormulaEditor } from './FormulaEditor';
 import { toast } from "sonner";
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import {
   CostSheetRow as RowData,
@@ -60,6 +71,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const [isEditingVH, setIsEditingVH] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [isEditingUM, setIsEditingUM] = useState(false);
+  const [pendingVHValue, setPendingVHValue] = useState<string | null>(null);
+  const [pendingTotalValue, setPendingTotalValue] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<(string | number)[] | null>(null);
   const updateValue = useCostSheetStore(state => state.updateValue);
   const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
@@ -89,25 +103,34 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     const suggestedRow = findInSections((reinicioTemplate as any).sections);
     if (suggestedRow) {
       const updates: any[] = [];
+
+      // Copy totalFormula (primary formula for the Total column)
       if (suggestedRow.totalFormula) {
         updates.push({ path: [...path, 'totalFormula'], value: suggestedRow.totalFormula });
         updates.push({ path: [...path, 'calculationMethod'], value: 'FORMULA' });
+        // Also set 'formula' field to match for backward compatibility
+        if (suggestedRow.totalFormula.startsWith('=') || suggestedRow.totalFormula.includes('(') || suggestedRow.totalFormula.includes('ref(') || suggestedRow.totalFormula.includes('vh(')) {
+          updates.push({ path: [...path, 'formula'], value: suggestedRow.totalFormula });
+        }
       }
+      // Copy formula (secondary formula field)
+      if (suggestedRow.formula && suggestedRow.formula !== suggestedRow.totalFormula) {
+        updates.push({ path: [...path, 'formula'], value: suggestedRow.formula });
+        updates.push({ path: [...path, 'calculationMethod'], value: 'FORMULA' });
+      }
+      // Copy vhFormula (Valor Histórico column formula)
       if (suggestedRow.vhFormula) {
         updates.push({ path: [...path, 'vhFormula'], value: suggestedRow.vhFormula });
-      }
-      if (suggestedRow.formula) {
-        updates.push({ path: [...path, 'formula'], value: suggestedRow.formula });
       }
 
       if (updates.length > 0) {
         updateValues(updates);
-        toast.success(`Fórmula sugerida aplicada a: ${row.label}`);
+        toast.success(`Fórmula de "NUEVA FICHA" aplicada a: ${row.label}`);
       } else {
-        toast.info("No hay una fórmula específica sugerida para esta fila.");
+        toast.info('Esta fila en la plantilla "NUEVA FICHA" no tiene fórmulas definidas.');
       }
     } else {
-      toast.error("No se encontró una fila equivalente en la plantilla de referencia.");
+      toast.error(`No se encontró la fila (${row.id}) en la plantilla "NUEVA FICHA".`);
     }
   };
 
@@ -125,39 +148,61 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   }, [path, updateValue]);
 
   const handleTotalSave = React.useCallback((val: string) => {
+    setPendingTotalValue(null);
     setIsEditingTotal(false);
 
     const trimmedVal = val.trim();
+    const isRowPercent = row.isPercent ?? row.is_percent;
     if (trimmedVal === '') {
         // Reset to 0 if empty
         const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
         updateValue([...path, field], 0);
         updateValue([...path, 'calculationMethod'], 'ValorFijo');
         updateValue([...path, 'formula'], '');
-        if (row.is_percent) {
-          updateValue([...path, 'is_percent'], false);
+        updateValue([...path, 'totalFormula'], '');
+        if (isRowPercent) {
+          updateValue([...path, 'isPercent'], false);
         }
         return;
     }
 
-    // Cost Sheet Logic: Any non-empty input is treated as a formula unless it's a simple number.
-    // However, per user request and memory, we should persist formulas even without '='.
-    // If it's a number, we also save it as formula to keep it in the Total column.
+    // Determine if the input is a plain number
+    const isPlainNumber = !isNaN(Number(trimmedVal));
 
-    const updates: { path: (string | number)[], value: string | number | boolean }[] = [
-        { path: [...path, 'formula'], value: trimmedVal },
-        { path: [...path, 'calculationMethod'], value: 'FORMULA' }
-    ];
-
-    // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
-    if (row.is_percent && !isNaN(Number(trimmedVal))) {
-        updates.push({ path: [...path, 'is_percent'], value: false });
+    if (isPlainNumber) {
+      // Save as fixed value (ValorFijo)
+      const numVal = parseFloat(trimmedVal);
+      const updates: { path: (string | number)[], value: string | number | boolean }[] = [
+          { path: [...path, 'formula'], value: '' },
+          { path: [...path, 'totalFormula'], value: '' },
+          { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+      ];
+      // Also update the numeric value field
+      if (row.hasOwnProperty('valorHistorico')) {
+        updates.push({ path: [...path, 'valorHistorico'], value: numVal });
+      } else {
+        updates.push({ path: [...path, 'value'], value: numVal });
+      }
+      if (isRowPercent) {
+          updates.push({ path: [...path, 'isPercent'], value: false });
+      }
+      updateValues(updates);
+    } else {
+      // Save as formula
+      const updates: { path: (string | number)[], value: string | number | boolean }[] = [
+          { path: [...path, 'formula'], value: trimmedVal },
+          { path: [...path, 'totalFormula'], value: trimmedVal },
+          { path: [...path, 'calculationMethod'], value: 'FORMULA' }
+      ];
+      if (isRowPercent) {
+          updates.push({ path: [...path, 'isPercent'], value: false });
+      }
+      updateValues(updates);
     }
-
-    updateValues(updates);
-  }, [path, updateValues, row.is_percent]);
+  }, [path, updateValue, updateValues, row]);
 
   const handleVHSave = React.useCallback((val: string) => {
+    setPendingVHValue(null);
     setIsEditingVH(false);
     const trimmedVal = val.trim();
     if (trimmedVal === '') {
@@ -175,13 +220,14 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   }, [path, updateValue]);
 
 
-  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '12.1', '13', '13.1', '13.2', '13.3', '14', '14.1', '15', '15.1', '16', '16.1'].includes(String(row.id));
+  const isRowPercent = row.isPercent ?? row.is_percent;
+  const isResult = isResultRow(String(row.id)) || isRowPercent;
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
   const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
   const isZero = Number(safeCalculated.total) === 0;
 
   return (
@@ -189,7 +235,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
       <TableRow className={cn(
         "h-auto sm:h-8 text-xs",
         "border-t border-border/30 hover:bg-primary/5 transition-colors group",
-        isResultRow && "bg-primary/5 font-bold"
+        isResult && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
         <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
@@ -234,7 +280,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             )}
 
             {/* Row Actions */}
-            <div className="hidden group-hover/row:flex items-center gap-0.5 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
+            <div className="flex sm:hidden group-hover/row:flex sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity items-center gap-0.5 ml-auto shrink-0">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -266,7 +312,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
-                    onClick={() => removeMainRow(path)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(path);
+                    }}
                     title="Eliminar fila"
                 >
                     <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
@@ -309,7 +358,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     <FormulaEditor
                         initialValue={row.vhFormula || String(row.valorHistorico || 0)}
                         onSave={handleVHSave}
-                        onCancel={() => setIsEditingVH(false)}
+                        onCancel={() => { setPendingVHValue(null); setIsEditingVH(false); }}
+                        onPendingChange={setPendingVHValue}
                         suggestions={suggestions}
                     />
                 ) : (
@@ -318,7 +368,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         type="text"
                         className={cn(
                         "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1",
-                        row.is_percent && "pr-6",
+                        isRowPercent && "pr-6",
                         (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
                         )}
                         value={hasChildren
@@ -327,11 +377,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                             : (row.hasOwnProperty('valorHistorico')
                                 ? formatAccounting(safeCalculated.calculatedVH ?? row.valorHistorico ?? 0)
-                                : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(safeCalculated.calculatedVH ?? row.value ?? 0))))}
+                                : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(safeCalculated.calculatedVH ?? row.value ?? 0))))}
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>}
+                        {isRowPercent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>}
                         {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                     </div>
                 )}
@@ -347,7 +397,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             <FormulaEditor
               initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
               onSave={handleTotalSave}
-              onCancel={() => setIsEditingTotal(false)}
+              onCancel={() => { setPendingTotalValue(null); setIsEditingTotal(false); }}
+              onPendingChange={setPendingTotalValue}
               suggestions={suggestions}
             />
           ) : (
@@ -367,7 +418,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                 <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
                             ) : (infoErrors.length > 0 && !isZero) ? (
                                 <HelpCircle className="w-4 h-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
-                            ) : (isResultRow && !isZero) ? (
+                            ) : (isResult && !isZero) ? (
                                 <CheckCircle2 className="w-4 h-4 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
                             ) : null}
                         </div>
@@ -432,7 +483,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             ))}
 
                             {/* Legacy Warning */}
-                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
+                            {!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
                                 <p className="text-xs text-muted-foreground italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
@@ -495,6 +546,31 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           suggestions={suggestions}
         />
       ))}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar fila?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La fila será eliminada permanentemente del anexo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) {
+                  removeMainRow(deleteTarget);
+                  setDeleteTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 });

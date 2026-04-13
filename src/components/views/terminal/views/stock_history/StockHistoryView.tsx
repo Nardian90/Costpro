@@ -12,9 +12,7 @@ import { toast } from 'sonner';
 import { useStockMovements } from '@/hooks/api/useStockMovements';
 import { useAuthStore } from '@/store';
 
-interface StockHistoryViewProps {}
-
-export default function StockHistoryView({}: StockHistoryViewProps) {
+export default function StockHistoryView() {
   const { user } = useAuthStore();
   const { data: movementsData, refetch } = useStockMovements(user?.storeId, user?.role === 'admin');
   const [searchTerm, setSearchTerm] = useState('');

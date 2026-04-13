@@ -29,6 +29,8 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
   }, [logs]);
 
+  const visibleLogIds = useMemo(() => new Set(logs.slice(0, visibleCount).map(l => l.id)), [logs, visibleCount]);
+
   if (logs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
@@ -42,8 +44,6 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
       </div>
     );
   }
-
-  const visibleLogIds = useMemo(() => new Set(logs.slice(0, visibleCount).map(l => l.id)), [logs, visibleCount]);
 
   return (
     <div className="relative">

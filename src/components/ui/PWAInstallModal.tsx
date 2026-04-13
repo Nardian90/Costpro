@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,18 +17,16 @@ interface PWAInstallModalProps {
 }
 
 export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
-  const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>('other');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+  const platform = useSyncExternalStore<'ios' | 'android' | 'other'>(
+    () => () => {},
+    () => {
       const userAgent = window.navigator.userAgent.toLowerCase();
-      if (/iphone|ipad|ipod/.test(userAgent)) {
-        setPlatform('ios');
-      } else if (/android/.test(userAgent)) {
-        setPlatform('android');
-      }
-    }
-  }, []);
+      if (/iphone|ipad|ipod/.test(userAgent)) return 'ios';
+      if (/android/.test(userAgent)) return 'android';
+      return 'other';
+    },
+    () => 'other'
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

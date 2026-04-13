@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,19 @@ export default function WalletView() {
     const [isImporting, setIsImporting] = useState(false);
     const [importText, setImportText] = useState('');
     const [viewMode, setViewMode] = useState<'bd' | 'list' | 'analytics' | 'extracto'>('list');
-    const [isMounted, setIsMounted] = useState(false);
+    const isMounted = useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
 
     useEffect(() => {
-        setIsMounted(true);
         try {
             const saved = localStorage.getItem('wallet_raw_sms');
-            if (saved) setRawSms(JSON.parse(saved));
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                requestAnimationFrame(() => setRawSms(parsed));
+            }
         } catch (e) { console.error('Storage error', e); }
     }, []);
 
