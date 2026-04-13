@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { SimulationResult, StrategyConfig, BettingConfig, BacktestResult, Pick3Result } from '@/types/pick3';
 import { PredictionEngine } from './prediction.engine';
 import { AnalysisEngine } from './analysis.engine';

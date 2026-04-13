@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { db, type Product } from '../dexie';
 import { CatalogAuditService } from './catalog-audit';
 import { ValidationResult } from './import-validator';

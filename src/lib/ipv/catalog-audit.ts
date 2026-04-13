@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { db, type CatalogAudit } from '../dexie';
 
 export class CatalogAuditService {

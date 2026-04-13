@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';

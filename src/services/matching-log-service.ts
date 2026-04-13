@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { db, MatchingLog, MatchingTrace } from '@/lib/dexie';
 import { PersistenceService } from '@/lib/persistenceService';
 
