@@ -38,7 +38,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
   ]);
 
   const addRow = () => {
-    const newId = Math.random().toString(36).substring(2, 9);
+    const newId = crypto.randomUUID().split("-")[0];
     setRows([...rows, { id: newId, product: '', um: '', quantity: 0, cost: 0, sale_price: 0 }]);
   };
 

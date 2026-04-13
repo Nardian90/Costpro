@@ -422,7 +422,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Report generation error:', error);
     return NextResponse.json({
-      error: error.message || 'Error interno al generar reporte'
+      error: "Internal Server Error" || 'Error interno al generar reporte'
     }, { status: 500 });
   }
 }

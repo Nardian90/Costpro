@@ -152,5 +152,12 @@
     "lockfile": {
       "print": "text"
     }
-  }
+  },
+  "trustedDependencies": [
+    "@parcel/watcher",
+    "@swc/core",
+    "core-js",
+    "es5-ext",
+    "unrs-resolver"
+  ]
 }

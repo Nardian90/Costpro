@@ -81,7 +81,7 @@ export class SimulationEngine {
     const probOfRuin = (ruinCounts.length / SCENARIOS) * 100;
 
     return {
-      id: `MC-${Math.random().toString(36).substring(7)}`,
+      id: `MC-${crypto.randomUUID().split("-")[0]}`,
       timestamp: Date.now(),
       config,
       equityCurve: finalCapitals.slice(0, 100),
