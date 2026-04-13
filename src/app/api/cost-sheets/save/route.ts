@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase as anonSupabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
 import { calculateFicha } from '@/lib/cost-engine';
+import { buildEngineFicha } from '@/lib/cost-engine/build-ficha';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
@@ -9,6 +11,22 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    const { allowed, remaining, resetAt } = rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
+
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetAt.toISOString(),
+          'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000)),
+        },
+      });
+    }
+
     const session = await getServerSession(req);
     if (!session) {
       console.error('[SaveCostSheet] No session found');
@@ -114,103 +132,8 @@ export async function POST(req: NextRequest) {
       baseData.header = { ...baseData.header, ...updateData.header };
     }
 
-    // 2. Prepare for calculation (Mapping UI -> Engine)
-    const engineRows: any[] = [];
-    const vhSums: Record<string, number> = {};
-
-    const calculateVH = (rows: any[]) => {
-      (rows || []).forEach(r => {
-        if (r.children && r.children.length > 0) {
-          calculateVH(r.children);
-          vhSums[r.id] = r.children.reduce((sum: number, child: any) => {
-            return sum + (vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0);
-          }, 0);
-        } else {
-          vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
-        }
-      });
-    };
-    (baseData.sections || []).forEach(s => calculateVH(s.rows));
-
-    const flatten = (uiRows: any[], sectionIdx: number, parentNumbering?: string, parentId: string | null = null) => {
-      (uiRows || []).forEach((r, rowIdx) => {
-        const currentNumbering = parentNumbering ? `${parentNumbering}.${rowIdx + 1}` : `${sectionIdx + 1}.${rowIdx + 1}`;
-
-        let type: any = 'COST';
-        if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
-        if (r.id === '13.2') type = 'TAX';
-        if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
-
-        let formula = r.formula || r.totalFormula;
-        if (!formula && r.children && r.children.length > 0 && r.calculationMethod !== 'ValorFijo') {
-          formula = 'sum(children)';
-        }
-        if (formula?.trim() === '=sum(children)' || formula?.trim() === 'sum(children)') {
-            formula = 'sum(children)';
-        }
-
-        let formaCalculo: any = 'FIJO';
-        const method = r.calculationMethod || '';
-        if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
-        if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
-        if (r.is_percent) formaCalculo = 'COEFICIENTE';
-        if (formula) formaCalculo = 'FORMULA';
-
-        let baseCalculo: any = null;
-        const baseRefId = r.baseDeCalculoRef || r.base_ref;
-        if (baseRefId) {
-          const isAnnex = (baseData.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
-          if (isAnnex) {
-            baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
-            if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-                formaCalculo = 'IMPORTAR_ANEXO';
-            }
-          } else {
-            baseCalculo = { type: 'FILA', classification: baseRefId };
-          }
-        }
-
-        engineRows.push({
-          id: r.id,
-          parentId,
-          classification: currentNumbering,
-          label: r.label,
-          type,
-          formaCalculo,
-          valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
-          vhFormula: r.vhFormula,
-          baseCalculo,
-          coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
-          formula,
-          fuente: r.note || r.fuente
-        });
-
-        if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
-      });
-    };
-    (baseData.sections || []).forEach((s, sIdx) => flatten(s.rows, sIdx));
-
-    const ficha: any = {
-      meta: {
-        ...baseData.header,
-        id: baseData.header.code || 'generated',
-        name: baseData.header.name || 'Ficha Generada',
-        currency: baseData.header.currency || 'CUP',
-        decimals: 2,
-        quantity: parseFloat(String(baseData.header.quantity || 1)),
-        settings: { allowFormulas: true }
-      },
-      anexos: (baseData.annexes || []).map(a => ({
-        id: a.id,
-        name: a.title,
-        rows: (a.data || []).map(d => ({
-          ...d,
-          classification: String(d.classification || d.label || d.description || '').split(' - ')[0].trim(),
-          importe: parseFloat(String(d.total || d.amount || d.depreciation_cost || d.price_total || 0))
-        }))
-      })),
-      rows: engineRows
-    };
+    // 2. Build engine-ready Ficha using the shared pipeline (DRY: avoids duplicating buildEngineFicha logic)
+    const ficha: any = buildEngineFicha(baseData as any);
 
     // 3. Run Calculation
     let result;

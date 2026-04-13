@@ -535,6 +535,7 @@ export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
         .optional(),
       totalFormula: z.string().nullable().optional(),
       formula: z.string().optional(),
+      isPercent: z.boolean().optional(),
       is_percent: z.boolean().optional(),
       children: z.array(costSheetRowSchema).optional(),
     })

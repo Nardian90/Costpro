@@ -47,7 +47,9 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
   }, [filteredAsientos, displayCount]);
 
   useEffect(() => {
-    setDisplayCount(ITEMS_PER_PAGE);
+    requestAnimationFrame(() => {
+      setDisplayCount(ITEMS_PER_PAGE);
+    });
   }, [searchTerm]);
 
   const selectedAsiento = useMemo(() => {

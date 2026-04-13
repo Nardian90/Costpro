@@ -1,12 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting (stricter for AI chat)
+    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    const { allowed, remaining, resetAt } = rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
+
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetAt.toISOString(),
+          'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000)),
+        },
+      });
+    }
+
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
@@ -21,6 +38,17 @@ export async function POST(req: NextRequest) {
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Mensajes inválidos' }, { status: 400 });
+    }
+
+    // Security: Validate AI provider against whitelist
+    const VALID_PROVIDERS = ['openai', 'anthropic', 'google', 'claude', 'gpt', 'gemini'];
+    if (aiProvider && !VALID_PROVIDERS.some(p => aiProvider.toLowerCase().includes(p))) {
+      return NextResponse.json({ error: 'Proveedor de IA no soportado' }, { status: 400 });
+    }
+
+    // Security: Validate API key format (alphanumeric + special chars, min 20 chars)
+    if (aiApiKey && !/^[a-zA-Z0-9_\-]{20,}$/.test(aiApiKey)) {
+      return NextResponse.json({ error: 'Clave de API inválida' }, { status: 400 });
     }
 
     // Sanitize sheetData to avoid sending too much data to the LLM
@@ -70,16 +98,14 @@ export async function POST(req: NextRequest) {
     } catch (aiError: any) {
       console.error('[AIChat] LLM Error:', aiError);
       return NextResponse.json({
-        error: `Error de comunicación con la IA: ${aiError.message}`,
-        details: aiError.stack
+        error: 'Error de comunicación con la IA'
       }, { status: 502 });
     }
 
   } catch (error: any) {
     console.error('[AIChat] Global Error:', error);
     return NextResponse.json({
-      error: 'Error interno en Darian AI',
-      message: error.message
+      error: 'Error interno en Darian AI'
     }, { status: 500 });
   }
 }

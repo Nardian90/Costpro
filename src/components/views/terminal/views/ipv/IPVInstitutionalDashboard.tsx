@@ -300,18 +300,16 @@ function D3AreaChart({ data }: { data: any[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<any>(null);
 
-    const drawChart = useMemo(() => debounce((data: any[]) => {
-        if (!containerRef.current) return;
-
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
+    const drawChartRef = useRef(debounce((container: HTMLDivElement, svgStore: { current: any }, data: any[]) => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
         const margin = { top: 20, right: 30, bottom: 30, left: 60 };
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
 
         let svg: any;
-        if (!svgRef.current) {
-            svg = d3.select(containerRef.current)
+        if (!svgStore.current) {
+            svg = d3.select(container)
                 .append('svg')
                 .attr('width', width)
                 .attr('height', height)
@@ -321,7 +319,7 @@ function D3AreaChart({ data }: { data: any[] }) {
                 .attr('class', 'chart-main-group')
                 .attr('transform', `translate(${margin.left},${margin.top})`);
 
-            svgRef.current = svg;
+            svgStore.current = svg;
 
             const defs = svg.append('defs');
             const addGradient = (id: string, color: string) => {
@@ -337,7 +335,7 @@ function D3AreaChart({ data }: { data: any[] }) {
             g.append('g').attr('class', 'y-axis');
             g.append('g').attr('class', 'grid-lines').attr('opacity', 0.05);
         } else {
-            svg = svgRef.current;
+            svg = svgStore.current;
             svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
         }
 
@@ -413,23 +411,23 @@ function D3AreaChart({ data }: { data: any[] }) {
             }
             linePath.datum(data).attr('d', lineGenerator(s.key));
         });
-    }, 150), []);
+    }, 150));
 
     useEffect(() => {
         const resizeObserver = new ResizeObserver(() => {
-            drawChart(data);
+            if (containerRef.current) drawChartRef.current(containerRef.current, svgRef, data);
         });
 
         if (containerRef.current) {
             resizeObserver.observe(containerRef.current);
-            drawChart(data);
+            drawChartRef.current(containerRef.current, svgRef, data);
         }
 
         return () => {
             resizeObserver.disconnect();
-            drawChart.cancel();
+            drawChartRef.current.cancel();
         };
-    }, [data, drawChart]);
+    }, [data]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
@@ -439,10 +437,7 @@ function D3AreaChart({ data }: { data: any[] }) {
 function D3DonutChart({ data }: { data: any[] }) {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const drawChart = useMemo(() => debounce((data: any[]) => {
-        if (!containerRef.current) return;
-
-        const container = containerRef.current;
+    const drawChartRef = useRef(debounce((container: HTMLDivElement, data: any[]) => {
         container.innerHTML = '';
 
         const totalValue = d3.sum(data, d => d.value);
@@ -478,12 +473,12 @@ function D3DonutChart({ data }: { data: any[] }) {
         const center = svg.append('g').attr('text-anchor', 'middle');
         center.append('text').attr('dy', '-0.5em').attr('class', 'fill-muted-foreground').attr('style', 'font-size: 10px; font-weight: 900;').text('TOTAL');
         center.append('text').attr('dy', '0.6em').attr('class', 'fill-foreground').attr('style', 'font-size: 24px; font-weight: 900;').text(totalValue);
-    }, 150), []);
+    }, 150));
 
     useEffect(() => {
-        drawChart(data);
-        return () => drawChart.cancel();
-    }, [data, drawChart]);
+        if (containerRef.current) drawChartRef.current(containerRef.current, data);
+        return () => drawChartRef.current.cancel();
+    }, [data]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }
@@ -492,10 +487,8 @@ function D3DonutChart({ data }: { data: any[] }) {
 function D3BarChart({ data, color }: { data: any[], color: string }) {
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const drawChart = useMemo(() => debounce((data: any[], color: string) => {
-        if (!containerRef.current || data.length === 0) return;
-
-        const container = containerRef.current;
+    const drawChartRef = useRef(debounce((container: HTMLDivElement, data: any[], color: string) => {
+        if (data.length === 0) return;
         container.innerHTML = '';
 
         const width = container.clientWidth;
@@ -549,12 +542,12 @@ function D3BarChart({ data, color }: { data: any[], color: string }) {
             .attr('fill', '#888')
             .text(d => d.value.toLocaleString())
             .attr('opacity', 1);
-    }, 150), []);
+    }, 150));
 
     useEffect(() => {
-        drawChart(data, color);
-        return () => drawChart.cancel();
-    }, [data, color, drawChart]);
+        if (containerRef.current) drawChartRef.current(containerRef.current, data, color);
+        return () => drawChartRef.current.cancel();
+    }, [data, color]);
 
     return <div ref={containerRef} className="w-full h-full" />;
 }

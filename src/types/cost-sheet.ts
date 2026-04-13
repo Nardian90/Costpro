@@ -7,7 +7,12 @@ export interface CostSheetHeader {
   category: string;
   type: string;
   unit: string;
-  [key: string]: any;
+  client?: string;
+  elaboratedBy?: string;
+  revisedBy?: string;
+  approvedBy?: string;
+  signature?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface CostSheetRow {
@@ -23,10 +28,19 @@ export interface CostSheetRow {
   totalFormula?: string | null;
   formula?: string;
   isPercent?: boolean;
+  /** @deprecated Use isPercent instead. Kept for backward compatibility with existing data. */
   is_percent?: boolean;
   children?: CostSheetRow[];
   helpText?: string;
-  [key: string]: any;
+  note?: string;
+  fuente?: string;
+  unit?: string;
+  metadata?: Record<string, unknown>;
+  classification?: string;
+  type?: string;
+  coeficiente?: number;
+  um?: string;
+  [key: string]: string | number | boolean | undefined | null | CostSheetRow[] | Record<string, unknown>;
 }
 
 export interface CostSheetSection {
@@ -71,14 +85,14 @@ export interface CostSheetData {
   id?: string;
   name?: string;
   version?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   header: CostSheetHeader;
   sections: CostSheetSection[];
   annexes: CostSheetAnnex[];
   signature: CostSheetSignature;
   indirectConfig?: IndirectConfig;
   footer?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined | null | CostSheetHeader | CostSheetSection[] | CostSheetAnnex[] | CostSheetSignature | IndirectConfig | Record<string, unknown>;
 }
 
 export interface CalculatedRowValue {

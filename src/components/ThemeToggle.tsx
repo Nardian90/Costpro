@@ -1,21 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun, Zap, Laptop, WifiOff, Cloud } from 'lucide-react';
+import { Moon, Sun, Wifi, WifiOff } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function ThemeToggle() {
-  const { themePreference, setThemePreference } = useUIStore();
-  const { theme } = useTheme();
+  const { themePreference, setThemePreference, connectivity, setConnectivity } = useUIStore();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -24,68 +18,90 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50" />
+      <div className="flex items-center gap-1.5">
+        <div className="w-9 h-9 rounded-xl bg-muted/50 border border-border/50" />
+        <div className="w-9 h-9 rounded-xl bg-muted/50 border border-border/50 hidden sm:flex" />
+      </div>
     );
   }
 
-  const themes = [
-    { id: 'light', label: 'Claro', icon: Sun, color: 'text-amber-500' },
-    { id: 'dark', label: 'Oscuro', icon: Moon, color: 'text-primary' },
-    { id: 'fast-light', label: 'Fast Light', icon: Zap, color: 'text-blue-500' },
-    { id: 'fast-dark', label: 'Fast Dark', icon: Zap, color: 'text-emerald-500' },
-    { id: 'auto', label: 'Inteligente', icon: Laptop, color: 'text-purple-500' },
-  ] as const;
+  const isDark = theme === 'dark';
+  const is3g = connectivity === '3g';
 
-  const currentTheme = themes.find(t => t.id === themePreference) || themes[0];
-  const Icon = currentTheme.icon;
+  const handleToggleTheme = () => {
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+    setThemePreference(newTheme);
+  };
+
+  const handleToggleConnectivity = () => {
+    const newMode = is3g ? '4g' : '3g';
+    setConnectivity(newMode);
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="group relative flex items-center gap-3 px-3 h-11 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none"
-          aria-label="Toggle theme"
-        >
-          <div className="relative w-5 h-5 flex items-center justify-center overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={themePreference}
-                initial={{ y: 20, opacity: 0, rotate: 45 }}
-                animate={{ y: 0, opacity: 1, rotate: 0 }}
-                exit={{ y: -20, opacity: 0, rotate: -45 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <Icon className={cn("w-4 h-4", currentTheme.color)} />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-            {currentTheme.label}
-          </span>
-
-          {/* Micro-interaction highlight */}
-          <div className="absolute inset-0 rounded-xl bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl bg-card border-border shadow-2xl">
-        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
-          Seleccionar Tema
+    <div className="flex items-center gap-1.5">
+      {/* Light/Dark Toggle */}
+      <button
+        onClick={handleToggleTheme}
+        className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      >
+        <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={isDark ? 'dark' : 'light'}
+              initial={{ y: 12, opacity: 0, rotate: -90 }}
+              animate={{ y: 0, opacity: 1, rotate: 0 }}
+              exit={{ y: -12, opacity: 0, rotate: 90 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+              ) : (
+                <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
-        {themes.map((t) => (
-          <DropdownMenuItem
-            key={t.id}
-            onClick={() => setThemePreference(t.id)}
-            className={cn(
-              "flex items-center gap-3 px-3 py-4 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
-              themePreference === t.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <t.icon className={cn("w-4 h-4", t.color)} />
-            <span className="text-xs font-black uppercase tracking-widest">{t.label}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </button>
+
+      {/* 3G/4G Connectivity Toggle (hidden on very small screens) */}
+      <button
+        onClick={handleToggleConnectivity}
+        className={cn(
+          "hidden sm:flex relative w-9 h-9 sm:w-11 sm:h-11 items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          is3g
+            ? "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10"
+            : "border-border/50 bg-muted/50 hover:bg-muted"
+        )}
+        aria-label={is3g ? 'Cambiar a 4G (animaciones completas)' : 'Cambiar a 3G (animaciones reducidas)'}
+      >
+        <div className="relative w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={is3g ? '3g' : '4g'}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+            >
+              {is3g ? (
+                <WifiOff className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+              ) : (
+                <Wifi className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        {/* Connectivity label */}
+        <span className={cn(
+          "absolute -bottom-0.5 text-[7px] font-black uppercase tracking-widest",
+          is3g ? "text-amber-500" : "text-muted-foreground/60"
+        )}>
+          {is3g ? '3G' : '4G'}
+        </span>
+      </button>
+    </div>
   );
 }

@@ -51,9 +51,7 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[path[i]] === undefined) return;
               current = current[path[i]];
             }
-            if (current[path[path.length - 1]] !== value) {
-              current[path[path.length - 1]] = value;
-            }
+            current[path[path.length - 1]] = value;
           })
         ),
       updateValues: (updates) =>
@@ -66,9 +64,7 @@ export const useCostSheetStore = create<CostSheetState>()(
                   if (current[path[i]] === undefined) return;
                   current = current[path[i]];
                 }
-                if (current[path[path.length - 1]] !== value) {
-                    current[path[path.length - 1]] = value;
-                }
+                current[path[path.length - 1]] = value;
             });
           })
         ),
@@ -141,7 +137,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
             if (Array.isArray(current)) {
                 const nextId = (current.length + 1).toString();
-                const uniqueId = `new-${Date.now()}-${nextId}`;
+                const uniqueId = crypto.randomUUID();
                 current.push({
                     id: uniqueId,
                     label: "Nuevo Concepto",
@@ -241,7 +237,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             '[Zod Validation Error] example data:',
             result.error.format()
           );
-          set({ data: example as CostSheetDataContract });
+          toast.error('Error: la plantilla de ejemplo tiene datos inválidos');
         }
       },
       updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, isAdjustmentActive) =>
@@ -292,7 +288,13 @@ export const useCostSheetStore = create<CostSheetState>()(
         ),
       reset: () => {
         const resetData = JSON.parse(JSON.stringify(reinicioTemplate));
-        set({ data: resetData as CostSheetDataContract });
+        const result = costSheetDataSchema.safeParse(resetData);
+        if (result.success) {
+          set({ data: result.data as CostSheetDataContract });
+        } else {
+          console.error('[Zod Validation Error] reset template:', result.error.format());
+          toast.error('Error: la plantilla base tiene datos inválidos');
+        }
       },
     }),
     {
@@ -302,6 +304,6 @@ export const useCostSheetStore = create<CostSheetState>()(
   )
 );
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   (window as any).useCostSheetStore = useCostSheetStore;
 }

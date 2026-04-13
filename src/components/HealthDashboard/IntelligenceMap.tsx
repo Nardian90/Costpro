@@ -32,7 +32,7 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
             <Brain className="w-6 h-6 text-primary" />
             Mapa de Inteligencia del Sistema
           </h2>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Sincronizado con 11 artefactos de conocimiento</p>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">11 artefactos de conocimiento registrados</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

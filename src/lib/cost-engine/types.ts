@@ -52,26 +52,59 @@ export interface CalculatedRow extends CostRow {
   audit: AuditEntry[];
 }
 
-export interface AnexoRow { classification: string; importe: number; [key: string]: any; }
+export interface AnexoRow {
+  classification: string;
+  importe: number;
+  description?: string;
+  um?: string;
+  label?: string;
+  no?: number;
+  norm?: number;
+  consumption_norm?: number;
+  price?: number;
+  price_unit?: number;
+  total?: number;
+  amount?: number;
+  time_norm?: number;
+  hourly_rate?: number;
+  worker_count?: number;
+  quantity?: number;
+  qty?: number;
+  cantidad?: number;
+  rate?: number;
+  value?: number;
+  cost?: number;
+  costo_unitario?: number;
+  precio?: number;
+  depreciation_cost?: number;
+  [key: string]: string | number | boolean | undefined; // Allow dynamic annex columns
+}
 export interface Anexo { id: string; name?: string; rows: AnexoRow[]; }
 
-export interface FichaJSON {
-  meta: {
-    id: string;
-    name: string;
-    currency: string;
-    decimals: number;
-    quantity?: number | string;
-    createdAt?: string;
-    version?: string;
-    settings?: {
-      maxIter?: number;
-      damping?: number;
-      allowFormulas?: boolean; // FORMULA restricted by default
-      autoSave?: boolean;
-    };
-    [key: string]: any;
+export interface FichaMeta {
+  id: string;
+  name: string;
+  currency: string;
+  decimals: number;
+  quantity?: number | string;
+  createdAt?: string;
+  version?: string;
+  category?: string;
+  type?: string;
+  unit?: string;
+  date?: string;
+  code?: string;
+  settings?: {
+    maxIter?: number;
+    damping?: number;
+    allowFormulas?: boolean; // FORMULA restricted by default
+    autoSave?: boolean;
+    maxAuditEntries?: number; // ISO 19011 §6.3 — audit trail retention (default: 100, Infinity for unlimited)
   };
+}
+
+export interface FichaJSON {
+  meta: FichaMeta;
   rows: CostRow[];
   anexos: Anexo[];
   rules?: CalculationRule[];
@@ -81,7 +114,7 @@ export interface ValidationError {
   rowId: string;
   message: string;
   type: 'CRITICAL' | 'WARNING' | 'INFO';
-  code: 'CYCLE' | 'MISSING_REF' | 'SEMANTIC_DISCREPANCY' | 'INVALID_FORMULA' | 'HARD_RULE_VIOLATION' | 'TRIVIAL_FORMULA' | 'HIERARCHY' | 'EXTERNAL_LINK';
+  code: 'CYCLE' | 'MISSING_REF' | 'SEMANTIC_DISCREPANCY' | 'INVALID_FORMULA' | 'HARD_RULE_VIOLATION' | 'TRIVIAL_FORMULA' | 'HIERARCHY' | 'EXTERNAL_LINK' | 'RESERVED_NAME';
 }
 
 export interface CalculationResult {

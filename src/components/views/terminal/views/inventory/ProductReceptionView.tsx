@@ -34,6 +34,28 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     const { user } = useAuthStore();
     const { setIsCreateProductModalOpen } = useUIStore();
 
+    // All hooks must be called unconditionally before any early returns
+    const [receptionItems, setReceptionItems] = useState<Map<string, ReceptionItem>>(new Map());
+    const [receptionDetails, setReceptionDetails] = useState({
+        supplier: '',
+        invoiceNumber: '',
+        receptionDate: new Date().toISOString().split('T')[0],
+    });
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+    const { data: searchData, isFetching: isSearching } = useInventory(user?.storeId || '', debouncedSearchTerm, '', 5);
+    const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
+
+    const registerReceptionMutation = useRegisterReception();
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const totalCost = useMemo(() => {
+        return Array.from(receptionItems.values()).reduce((acc, item) => acc + (item.quantity * item.cost), 0);
+    }, [receptionItems]);
+
     if (!user?.storeId) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center bg-amber-500/5 rounded-3xl border-2 border-dashed border-amber-500/20 gap-6">
@@ -56,23 +78,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             </div>
         );
     }
-
-    const [receptionItems, setReceptionItems] = useState<Map<string, ReceptionItem>>(new Map());
-    const [receptionDetails, setReceptionDetails] = useState({
-        supplier: '',
-        invoiceNumber: '',
-        receptionDate: new Date().toISOString().split('T')[0],
-    });
-
-    const [searchTerm, setSearchTerm] = useState('');
-    const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const { data: searchData, isFetching: isSearching } = useInventory(user?.storeId, debouncedSearchTerm, '', 5);
-    const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
-
-    const registerReceptionMutation = useRegisterReception();
-    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const addToReception = (product: Product) => {
         if (receptionItems.has(product.id)) {
@@ -104,10 +109,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         newItems.delete(productId);
         setReceptionItems(newItems);
     };
-
-    const totalCost = useMemo(() => {
-        return Array.from(receptionItems.values()).reduce((acc, item) => acc + (item.quantity * item.cost), 0);
-    }, [receptionItems]);
 
     const handleImportClick = () => {
         setImportErrors([]); // Clear old errors before a new import attempt

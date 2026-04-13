@@ -143,7 +143,7 @@ export function useSessionManager() {
             if (event === 'SIGNED_OUT') {
                 logout();
                 setLoading(false);
-                safeNavigate.push(router, '/login');
+                window.location.reload();
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if(session?.access_token && user) {
                     // Update the token in the store without a full profile refetch

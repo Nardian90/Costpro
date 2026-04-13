@@ -49,15 +49,17 @@ export default function CashClosureView() {
   };
 
   useEffect(() => {
-    if (pendingClosure) {
-      setDeclaredCash(Number(pendingClosure.declared_cash) || 0);
-      setDeclaredVouchers(Number(pendingClosure.declared_vouchers) || 0);
-      setNotes(pendingClosure.notes || '');
-    } else {
-      setDeclaredCash(0);
-      setDeclaredVouchers(0);
-      setNotes('');
-    }
+    requestAnimationFrame(() => {
+      if (pendingClosure) {
+        setDeclaredCash(Number(pendingClosure.declared_cash) || 0);
+        setDeclaredVouchers(Number(pendingClosure.declared_vouchers) || 0);
+        setNotes(pendingClosure.notes || '');
+      } else {
+        setDeclaredCash(0);
+        setDeclaredVouchers(0);
+        setNotes('');
+      }
+    });
   }, [pendingClosure]);
 
   const totalDeclared = declaredCash + declaredVouchers;

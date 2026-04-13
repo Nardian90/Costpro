@@ -43,11 +43,9 @@ export default function InventoryCountView() {
   } = useInventoryCount();
 
   useEffect(() => {
-    if (isMobile) {
-      setLayoutMode('card');
-    } else {
-      setLayoutMode('table');
-    }
+    requestAnimationFrame(() => {
+      setLayoutMode(isMobile ? 'card' : 'table');
+    });
   }, [isMobile]);
 
   return (

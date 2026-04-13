@@ -11,7 +11,6 @@ interface DocumentationTabProps {
 
 export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
-  const [docContent, setDocContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const docs = [
@@ -28,23 +27,36 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
 
   const currentDoc = docs.find(d => d.id === selectedDoc) || docs[0];
 
+  const [fetchedContent, setFetchedContent] = useState<string | null>(null);
+
   useEffect(() => {
     if (selectedDoc && selectedDoc.endsWith('.md')) {
-      setLoading(true);
+      let cancelled = false;
+      requestAnimationFrame(() => {
+        if (!cancelled) setLoading(true);
+      });
+      requestAnimationFrame(() => {
+        if (!cancelled) setFetchedContent(null);
+      });
       fetch(`/knowledge/docs/${selectedDoc}`)
         .then(res => res.text())
         .then(text => {
-          setDocContent(text);
-          setLoading(false);
+          if (!cancelled) {
+            setFetchedContent(text);
+            setLoading(false);
+          }
         })
         .catch(() => {
-          setDocContent('# Error al cargar el documento');
-          setLoading(false);
+          if (!cancelled) {
+            setFetchedContent('# Error al cargar el documento');
+            setLoading(false);
+          }
         });
-    } else {
-      setDocContent(currentDoc.content);
+      return () => { cancelled = true; };
     }
-  }, [selectedDoc, currentDoc]);
+  }, [selectedDoc]);
+
+  const docContent = fetchedContent ?? currentDoc.content;
 
   const isGallery = !selectedDoc || selectedDoc === 'user_help';
 

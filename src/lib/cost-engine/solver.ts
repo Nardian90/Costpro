@@ -1,6 +1,5 @@
 import { calculateFicha } from './index';
 import { buildEngineFicha } from './build-ficha';
-import { mapUIToFicha } from './mapper';
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
 import { produce } from 'immer';
 
@@ -20,7 +19,8 @@ function applySolverModToUIData(
       row.formula = undefined;
       (row as any).totalFormula = undefined;
       row.calculationMethod = 'ValorFijo';
-      row.is_percent = false;
+      row.isPercent = false;
+      (row as any).is_percent = false; // backward compat
       return true;
     }
     if (row.children && applySolverModToUIData(row.children, variableRowId, value)) {
@@ -136,6 +136,9 @@ export function solveForTarget(
   targetValue: number,
   variableRowId: string
 ): number {
+  const MAX_SIMULATE_CALLS = 500; // Prevent runaway simulation
+  let callCount = 0;
+
   // Helper: simulate a value through the FULL engine pipeline (same as normal UI)
   const simulate = (val: number): number => {
     // Deep clone and apply ALL modifications that handleSolverConfirm would do
@@ -147,6 +150,12 @@ export function solveForTarget(
 
     // Build engine Ficha using the SAME pipeline as useCostSheetCalculator
     const engineFicha = buildEngineFicha(simulatedData as any);
+
+    callCount++;
+    if (callCount > MAX_SIMULATE_CALLS) {
+      console.warn('[Solver] Max simulation calls reached. Returning 0.');
+      return 0;
+    }
 
     const result = calculateFicha(engineFicha);
     const row = result.rows.find(
@@ -301,7 +310,7 @@ export function solveForTarget(
   }
 
   const achieved = simulate(bestVal);
-  console.log('[Solver] ✅ Result:', {
+  console.debug('[Solver] ✅ Result:', {
     variable: variableRowId,
     value: bestVal.toFixed(4),
     target: targetValue,

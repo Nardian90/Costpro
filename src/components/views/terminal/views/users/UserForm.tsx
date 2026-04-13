@@ -105,6 +105,7 @@ export default function UserForm({
     name: "memberships"
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRole = watch('role');
   const maxStoresLimit = watch('maxStoresLimit');
   const canAddMoreStores = selectedRole === 'encargado'

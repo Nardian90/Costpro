@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target } from 'lucide-react';
 import { solveCoefficient } from '@/lib/cost-engine/solver';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
@@ -79,6 +82,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     setLocalCoef(String(annex?.coefficient !== undefined ? annex.coefficient : 1));
   }, [annex?.coefficient]);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
+  const [importTarget, setImportTarget] = React.useState<{file: File, annexIndex: number} | null>(null);
 
   if (!annex) return null;
 
@@ -137,10 +141,24 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const updatedAnnex = await importAnnexFromExcel(file, annex);
+      setImportTarget({ file, annexIndex });
+    }
+    // Reset input so the same file can be re-imported
+    e.target.value = '';
+  };
+
+  const confirmImport = async () => {
+    if (!importTarget) return;
+    const { file, annexIndex: idx } = importTarget;
+    try {
+      const updatedAnnex = await importAnnexFromExcel(file, data.annexes[idx]);
       const newData = { ...data } as any;
-      newData.annexes[annexIndex] = updatedAnnex;
+      newData.annexes[idx] = updatedAnnex;
       setSheet(newData);
+    } catch (err) {
+      console.error("Import error:", err);
+    } finally {
+      setImportTarget(null);
     }
   };
 
@@ -511,6 +529,24 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
               <option key={s.id} value={`${s.id} - ${s.label}`} />
           ))}
        </datalist>
+
+       {/* Import Confirmation Dialog */}
+       <AlertDialog open={!!importTarget} onOpenChange={(open) => !open && setImportTarget(null)}>
+         <AlertDialogContent>
+           <AlertDialogHeader>
+             <AlertDialogTitle>¿Importar anexo desde Excel?</AlertDialogTitle>
+             <AlertDialogDescription>
+               Esta acción reemplazará todos los datos del anexo "{annex?.title}" con los datos del archivo seleccionado. Los datos actuales se perderán. ¿Desea continuar?
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel>Cancelar</AlertDialogCancel>
+             <AlertDialogAction onClick={confirmImport} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+               Sí, importar
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
 
        {/* Annex Total for Grid Mode (Mobile Cards) */}
        {layoutMode === 'grid' && (

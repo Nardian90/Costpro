@@ -85,7 +85,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         }
         return matchesSearch && matchesType && matchesKpi;
     });
-  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
+  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals, showExcluded]);
 
   const handleDelete = async (referencia: string) => {
     askConfirmation('Confirmar Acción', '¿Eliminar esta transacción?', async () => {

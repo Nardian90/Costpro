@@ -35,15 +35,18 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
       let formula = r.totalFormula || r.formula;
       const isParent = r.children && r.children.length > 0;
-      if (isParent) formula = 'sum(children)';
+      const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
+      if (isParent && !isFixedValue) formula = 'sum(children)';
 
       let formaCalculo: FormaCalculo = 'FIJO';
       const method = r.calculationMethod || '';
+      // Support both isPercent (canonical) and is_percent (deprecated)
+      const isPct = r.isPercent === true || (r as any).is_percent === true;
       if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-      if (r.is_percent && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
-      if (formula) formaCalculo = 'FORMULA';
+      if (isPct && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
+      if (formula && !isFixedValue) formaCalculo = 'FORMULA';
 
       let baseCalculo: BaseRef | null = null;
       const baseRefId = r.baseDeCalculoRef || r.base_ref;
@@ -74,7 +77,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
         vhFormula: r.vhFormula,
         baseCalculo,
-        coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
+        coeficiente: isPct ? (r.value ?? r.valorHistorico) : r.coeficiente,
         formula: formula,
         fuente: r.note || r.fuente,
         metadata: r.metadata
@@ -92,7 +95,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       name: header?.name || 'Ficha',
       currency: header?.currency || 'CUP',
       decimals: 2,
-      quantity: header?.quantity || 1,
+      quantity: header?.quantity || 0,
       settings: { allowFormulas: true }
     },
     anexos: (data.annexes || []).map(a => {

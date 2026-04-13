@@ -26,7 +26,9 @@ export const CreateProductModal = () => {
 
   useEffect(() => {
     if (isCreateProductModalOpen && initialProductName) {
-      setForm(prev => ({ ...prev, name: initialProductName }));
+      requestAnimationFrame(() => {
+        setForm(prev => ({ ...prev, name: initialProductName }));
+      });
     }
   }, [isCreateProductModalOpen, initialProductName]);
 

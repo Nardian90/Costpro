@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Download, FileText, CheckCircle2, X, Layout } from 'lucide-react';
+import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 export interface ExportOptions {
   includeFC: boolean;
@@ -27,6 +28,7 @@ export interface ExportOptions {
   showDateTime: boolean;
   alwaysZip?: boolean;
   pdfFormat: "standard" | "pro";
+  logo?: string; // base64 string for Pro mode company logo
 }
 
 interface CostSheetExportModalProps {
@@ -70,6 +72,33 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     }));
   };
 
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('El logo no puede superar los 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setLogoPreview(base64);
+        setOptions(prev => ({ ...prev, logo: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null);
+    setOptions(prev => ({ ...prev, logo: undefined }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md p-0 gap-0 bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[85vh] w-[95vw] sm:w-full">
@@ -99,7 +128,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "standard" }))}
-                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${
+                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1.5 ${
                                 options.pdfFormat === "standard"
                                 ? "bg-primary/10 border-primary shadow-sm"
                                 : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
@@ -107,19 +136,81 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                         >
                             <FileText className={`w-5 h-5 ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`} />
                             <span className={`text-xs font-bold ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`}>Estándar</span>
+                            <span className={`text-[10px] leading-tight text-center ${options.pdfFormat === "standard" ? "text-primary/60" : "text-muted-foreground/60"}`}>
+                                Formato limpio y profesional sin logo
+                            </span>
                         </button>
                         <button
                             onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "pro" }))}
-                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${
+                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1.5 relative ${
                                 options.pdfFormat === "pro"
-                                ? "bg-primary/10 border-primary shadow-sm"
+                                ? "bg-amber-500/10 border-amber-500/60 shadow-sm shadow-amber-500/10"
                                 : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
                             }`}
                         >
-                            <Layout className={`w-5 h-5 ${options.pdfFormat === "pro" ? "text-primary" : "text-muted-foreground"}`} />
-                            <span className={`text-xs font-bold ${options.pdfFormat === "pro" ? "text-primary" : "text-muted-foreground"}`}>Pro (Ink-Save)</span>
+                            <Layout className={`w-5 h-5 ${options.pdfFormat === "pro" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+                            <span className={`text-xs font-bold ${options.pdfFormat === "pro" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>Pro (Ink-Save)</span>
+                            <span className={`text-[10px] leading-tight text-center ${options.pdfFormat === "pro" ? "text-amber-600/60 dark:text-amber-400/60" : "text-muted-foreground/60"}`}>
+                                Diseño premium con logo y énfasis visual
+                            </span>
                         </button>
                     </div>
+
+                    {/* Logo Upload for Pro Mode */}
+                    {options.pdfFormat === "pro" && (
+                        <div className="space-y-3 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                            <div className="flex items-center gap-2 px-1">
+                                <ImagePlus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                <span className="text-xs font-black uppercase tracking-[0.15em] text-amber-600 dark:text-amber-400">
+                                    Logo de la Empresa
+                                </span>
+                            </div>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleLogoUpload}
+                            />
+
+                            {logoPreview ? (
+                                <div className="flex items-center gap-3">
+                                    <div className="relative w-16 h-16 rounded-xl border border-amber-500/30 bg-sidebar/80 overflow-hidden shrink-0">
+                                        <img
+                                            src={logoPreview}
+                                            alt="Logo preview"
+                                            className="w-full h-full object-contain p-1"
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-muted-foreground truncate">Logo cargado</p>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 mt-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10 px-2"
+                                            onClick={handleRemoveLogo}
+                                        >
+                                            <X className="w-3 h-3 mr-1" />
+                                            Eliminar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full h-9 text-xs font-bold border-dashed border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <Upload className="w-3.5 h-3.5 mr-2" />
+                                    Subir Logo
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Main Documents */}

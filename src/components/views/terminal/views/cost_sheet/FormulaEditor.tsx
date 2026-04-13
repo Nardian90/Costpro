@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Calculator,
   HelpCircle,
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { FormulaBuilder } from './FormulaBuilder';
+import { RESERVED_FORMULA_NAMES } from '@/lib/cost-engine/formula-utils';
 
 interface FormulaEditorProps {
   initialValue: string;
@@ -37,6 +38,7 @@ interface FormulaEditorProps {
   onCancel: () => void;
   className?: string;
   suggestions?: { label: string; value: string; description?: string }[];
+  onPendingChange?: (value: string | null) => void;
 }
 
 export const FormulaEditor: React.FC<FormulaEditorProps> = ({
@@ -44,32 +46,101 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   onSave,
   onCancel,
   className,
-  suggestions = []
+  suggestions = [],
+  onPendingChange
 }) => {
   const [value, setValue] = useState(initialValue);
-  const [isFocused, setIsFocused] = useState(false);
+  const [isFocused, setIsFocused] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mode, setMode] = useState<'assisted' | 'expert'>('assisted');
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
 
+  // Auto-focus input on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSave = (val: string) => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    onPendingChange?.(null);
     onSave(val);
     setIsFocused(false);
+    setTimeout(() => { isSavingRef.current = false; }, 300);
+  };
+
+  const handleCancel = () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    onPendingChange?.(null);
+    onCancel();
+    setTimeout(() => { isSavingRef.current = false; }, 300);
+  };
+
+  const handleBlur = () => {
+    // Delay to allow mouse clicks on buttons to register and to avoid
+    // racing with the save lock timeout (300ms). Must be > 300ms so that
+    // a save-triggered blur always sees isSavingRef as true and bails out.
+    setTimeout(() => {
+      if (isSavingRef.current) return;
+      // Auto-save if value changed from initial
+      if (value.trim() !== initialValue.trim()) {
+        handleSave(value);
+      } else {
+        // Value unchanged — just close without saving
+        setIsFocused(false);
+        onPendingChange?.(null);
+        onCancel();
+      }
+    }, 400);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSave(value);
     } else if (e.key === 'Escape') {
-      onCancel();
+      e.preventDefault();
+      handleCancel();
     }
   };
 
+  const handleValueChange = (newValue: string) => {
+    setValue(newValue);
+    onPendingChange?.(newValue);
+  };
+
   const isFormula = value.startsWith('=');
+
+  // C15: Detect bare reserved identifiers in the formula that could conflict
+  const reservedWarning = useMemo(() => {
+    if (!isFormula || !value) return null;
+    // Strip leading '=' and extract word-boundary tokens
+    const stripped = value.replace(/^=\s*/, '');
+    // Match bare word tokens that are not inside ref('...') or vh('...')
+    const tokens = stripped.match(/\b([a-zA-Z_]\w*)\b/g) || [];
+    // Filter to only those NOT inside quotes (approximate: skip tokens preceded by '(' and followed by ')')
+    for (const token of tokens) {
+      if (RESERVED_FORMULA_NAMES.has(token)) {
+        return `"${token}" es una función o constante reservada del motor.`;
+      }
+    }
+    // Check for single-char identifiers (not inside function calls)
+    const bareSingles = stripped.match(/(?<![a-zA-Z_'"])\b([a-zA-Z])\b(?![a-zA-Z_'")\w])/g) || [];
+    if (bareSingles.length > 0) {
+      return `Identificador de 1 carácter detectado: "${bareSingles[0]}". Use ref('id') explícito para evitar conflictos.`;
+    }
+    return null;
+  }, [value, isFormula]);
 
   return (
     <div className="relative group/formula">
@@ -94,13 +165,20 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             type="text"
             className="flex-1 bg-transparent border-none outline-none text-xs font-mono py-1 min-w-0"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => handleValueChange(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+            onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             placeholder="f(x) = ..."
           />
         </div>
+
+        {/* C15: Inline warning for reserved name conflicts */}
+        {reservedWarning && (
+          <div className="absolute -bottom-6 left-2 right-2 z-10 text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate animate-in fade-in slide-in-from-top-1 duration-200" title={reservedWarning}>
+            ⚠ {reservedWarning}
+          </div>
+        )}
 
         {isFocused && (
           <div className="flex items-center justify-end gap-1 pr-1 pb-1 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200">
@@ -120,9 +198,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos Comunes</p>
                       <div className="space-y-1 text-xs font-mono bg-muted p-2 rounded">
-                        <p className="text-primary">= SUMA(hijos) <span className="text-xs text-muted-foreground opacity-70 ml-1">// Suma todos los sub-elementos</span></p>
+                        <p className="text-primary">= SUMA(hijos) <span className="text-xs text-muted-foreground opacity-70 ml-1">{'//'} Suma todos los sub-elementos</span></p>
                         <p className="text-primary">= ref('1.1') + ref('2.1')</p>
-                        <p className="text-primary">= PCT(ref('12'), 10) <span className="text-xs text-muted-foreground opacity-70 ml-1">// 10% del total de sección 12</span></p>
+                        <p className="text-primary">= PCT(ref('12'), 10) <span className="text-xs text-muted-foreground opacity-70 ml-1">{'//'} 10% del total de sección 12</span></p>
                         <p className="text-primary">= ref('12') / cantidad</p>
                       </div>
                     </div>
@@ -158,7 +236,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <Check className="w-3.5 h-3.5" />
              </button>
              <button
-               onMouseDown={(e) => { e.preventDefault(); onCancel(); }}
+               onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
                className="p-1 hover:bg-red-500/20 text-red-600 rounded"
                title="Cancelar (Esc)"
              >
@@ -242,13 +320,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
-                        <Code className="w-3 h-3" />
-                        Código de Fórmula
+                      <Code className="w-3 h-3" />
+                      Código de Fórmula
                     </label>
                     <Badge variant="outline" className="text-xs font-mono border-border dark:border-border text-muted-foreground dark:text-muted-foreground">expr-eval enabled</Badge>
                   </div>
                   <textarea
-                    className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-muted/50 border border-border dark:border-border rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-primary/10 focus:border-primary/50 dark:focus:border-primary/50 outline-none resize-none transition-all text-foreground dark:text-foreground"
+                    className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-muted/50 border border-border dark:border-border rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-primary/10 focus:border-primary/50 dark:focus-ring-primary/50 outline-none resize-none transition-all text-foreground dark:text-foreground"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
@@ -257,20 +335,20 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </div>
 
                 <div className="bg-primary/5 p-3 sm:p-4 rounded-xl border border-primary/10">
-                    <div className="flex items-center gap-2 mb-2 text-primary font-black text-xs uppercase tracking-wider">
-                        <Info className="w-3.5 h-3.5" />
-                        Guía de Referencia Rápida
+                  <div className="flex items-center gap-2 mb-2 text-primary font-black text-xs uppercase tracking-wider">
+                    <Info className="w-3.5 h-3.5" />
+                    Guía de Referencia Rápida
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs sm:text-xs">
+                    <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
+                      <span className="font-medium text-muted-foreground dark:text-muted-foreground">Suma de Hijos</span>
+                      <code className="bg-muted dark:bg-muted text-foreground dark:text-foreground px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs sm:text-xs">
-                        <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
-                            <span className="font-medium text-muted-foreground dark:text-muted-foreground">Suma de Hijos</span>
-                            <code className="bg-muted dark:bg-muted text-foreground dark:text-foreground px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
-                        </div>
-                        <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
-                            <span className="font-medium text-muted-foreground dark:text-muted-foreground">Uso de Anexos</span>
-                            <code className="bg-muted dark:bg-muted text-foreground dark:text-foreground px-1.5 py-0.5 rounded font-mono text-xs">AnexoI + AnexoII</code>
-                        </div>
+                    <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
+                      <span className="font-medium text-muted-foreground dark:text-muted-foreground">Uso de Anexos</span>
+                      <code className="bg-muted dark:bg-muted text-foreground dark:text-foreground px-1.5 py-0.5 rounded font-mono text-xs">AnexoI + AnexoII</code>
                     </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -285,7 +363,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               Cancelar
             </button>
             <button
-              onClick={() => { onSave(value); setIsModalOpen(false); }}
+              onClick={() => { handleSave(value); setIsModalOpen(false); }}
               className="px-6 sm:px-10 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary text-primary-foreground dark:text-foreground shadow-lg dark:shadow-lg  transition-all "
             >
               Guardar Cambios

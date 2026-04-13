@@ -1,19 +1,19 @@
 'use client';
 
 import React from 'react';
-import { Menu, X, HelpCircle, Bell, Building as BuildingIcon, AlertTriangle, ChevronDown, Check } from 'lucide-react';
+import { Menu, X, HelpCircle, Building as BuildingIcon, ChevronDown, Check, User, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuthStore, ViewType } from '@/store';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
-import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge';
 import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -38,8 +38,6 @@ export const Header = ({
   handleSetActiveStore,
   allStores = []
 }: HeaderProps) => {
-  const isMocked = useAuthStore(state => state.isMocked);
-
   // Determine which list of stores to show
   const storesToShow = user?.role === 'admin' && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
@@ -137,12 +135,63 @@ export const Header = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <ThemeToggle />
-          <div className="hidden sm:block">
-            <SyncStatusBadge />
-          </div>
           <SyncConflictModal />
+
+          {/* User Avatar Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
+                aria-label="Menú de usuario"
+              >
+                {user?.fullName ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('') : '?'}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 sm:w-72 p-2 rounded-2xl bg-card border-border shadow-2xl z-50">
+              <DropdownMenuLabel className="p-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold uppercase shrink-0">
+                    {user?.fullName ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('') : '?'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold truncate">{user?.fullName || 'Usuario'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email || 'sin correo'}</p>
+                  </div>
+                </div>
+                {user?.role && (
+                  <span className="mt-2 inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                    {user.role}
+                  </span>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-primary/10 focus:text-primary min-h-[44px]"
+                onClick={() => onViewChange('settings')}
+              >
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-semibold">Mi Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-primary/10 focus:text-primary min-h-[44px]"
+                onClick={() => onViewChange('settings')}
+              >
+                <Settings className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-semibold">Configuración</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-danger/10 focus:text-danger min-h-[44px] text-danger"
+                onClick={() => onViewChange('dashboard')}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs font-semibold">Cerrar Sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <button
             onClick={() => onViewChange('help')}
             className={cn(
@@ -153,64 +202,15 @@ export const Header = ({
           >
             <HelpCircle className="w-5 h-5" />
           </button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "w-11 h-11 flex items-center justify-center relative rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all",
-                  isMocked && "text-danger border-danger/30"
-                )}
-                aria-label="Alertas"
-              >
-                <Bell className="w-5 h-5" />
-                <span className={cn(
-                  "absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-ping",
-                  isMocked ? "bg-danger/60" : "bg-primary/60"
-                )} />
-                <span className={cn(
-                  "absolute top-2 right-2 w-2.5 h-2.5 rounded-full",
-                  isMocked ? "bg-danger" : "bg-primary"
-                )} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0 overflow-hidden border-primary/20 bg-background/95 backdrop-blur-xl">
-               <div className="p-4 border-b border-white/5 bg-primary/5">
-                 <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                   <Bell className="w-3 h-3" />
-                   Centro de Notificaciones
-                 </h4>
-               </div>
-               <div className="p-4 space-y-4">
-                 {isMocked ? (
-                   <div className="flex gap-3 p-3 rounded-xl bg-danger/5 border border-danger/20">
-                     <AlertTriangle className="w-5 h-5 text-danger shrink-0" />
-                     <div className="space-y-1">
-                       <p className="text-xs font-black uppercase tracking-tight text-danger">Modo Offline Detectado</p>
-                       <p className="text-xs text-muted-foreground leading-relaxed text-xs">
-                         Estás utilizando una cuenta de bypass local. Los cambios no se sincronizarán con la base de datos central.
-                       </p>
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="py-8 text-center">
-                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-50 italic">
-                       No tienes notificaciones pendientes
-                     </p>
-                   </div>
-                 )}
-               </div>
-               <div className="p-3 bg-muted/30 border-t border-white/5">
-                  <p className="text-xs text-center font-bold text-muted-foreground uppercase tracking-tighter">
-                    Actualizado hace un momento
-                  </p>
-               </div>
-            </PopoverContent>
-          </Popover>
+
         </div>
       </div>
 
-      {/* Subtle green gradient accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#22c55e]/40 to-transparent" />
+      {/* Subtle green gradient accent line with glow shadow above */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <div className="h-4 bg-gradient-to-b from-transparent to-[#22c55e]/[0.03]" />
+        <div className="h-px bg-gradient-to-r from-transparent via-[#22c55e]/40 to-transparent" />
+      </div>
     </header>
   );
 };

@@ -203,7 +203,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         let formula = r.formula || r.totalFormula;
         const hasChildren = r.children && r.children.length > 0;
-        const isPercent = r.is_percent || r.isPercent;
+        const isPercent = r.isPercent ?? r.is_percent;
 
         if (!formula && hasChildren && r.calculationMethod !== 'ValorFijo') {
             formula = '=sum(children)';

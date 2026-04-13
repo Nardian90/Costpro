@@ -14,18 +14,20 @@ export function SyncConflictModal() {
   const [editingPayload, setEditingPayload] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
+  const loadConflicts = async () => {
+    const queue = await offlineStorage.getQueue();
+    const conflictOps = queue.filter(op => op.status === 'failed' && op.lastError?.includes('Conflict'));
+    requestAnimationFrame(() => {
+      setConflicts(conflictOps);
+      if (conflictOps.length > 0) setIsOpen(true);
+    });
+  };
+
   useEffect(() => {
     if (status === 'conflict') {
       loadConflicts();
     }
   }, [status]);
-
-  const loadConflicts = async () => {
-    const queue = await offlineStorage.getQueue();
-    const conflictOps = queue.filter(op => op.status === 'failed' && op.lastError?.includes('Conflict'));
-    setConflicts(conflictOps);
-    if (conflictOps.length > 0) setIsOpen(true);
-  };
 
   const resolveConflict = async (idempotencyKey: string, strategy: 'client' | 'server') => {
     if (strategy === 'client') {

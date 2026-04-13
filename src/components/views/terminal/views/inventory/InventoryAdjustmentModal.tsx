@@ -61,6 +61,8 @@ export default function InventoryAdjustmentModal({
     });
   }, [stockActual, costoTotalActual, ajusteUnidades, ajusteValorUnitario]);
 
+  const isMobile = useIsMobile();
+
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
@@ -91,7 +93,6 @@ export default function InventoryAdjustmentModal({
 
   const isReduction = ajusteUnidades < 0;
   const isIncrease = ajusteUnidades > 0;
-  const isMobile = useIsMobile();
 
   const ModalContent = (
     <div className={cn(

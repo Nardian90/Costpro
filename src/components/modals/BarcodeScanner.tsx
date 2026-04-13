@@ -21,10 +21,23 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  const stopScanner = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current = null;
+      } catch (err) {
+        console.error("Error stopping scanner", err);
+      }
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setIsInitializing(true);
-      setError(null);
+      requestAnimationFrame(() => {
+        setIsInitializing(true);
+        setError(null);
+      });
 
       const startScanner = async () => {
         try {
@@ -61,17 +74,6 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       };
     }
   }, [isOpen]);
-
-  const stopScanner = async () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current = null;
-      } catch (err) {
-        console.error("Error stopping scanner", err);
-      }
-    }
-  };
 
   return (
     <BaseModal

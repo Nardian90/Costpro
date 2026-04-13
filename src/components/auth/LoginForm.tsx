@@ -16,6 +16,50 @@ import { mapProfileToContract } from '@/contracts/user';
 import { safeNavigate } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
+
+const shakeVariants = {
+  hidden: { opacity: 0, y: -8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 15,
+    },
+  },
+  shake: {
+    x: [0, -6, 6, -4, 4, -2, 2, 0],
+    transition: {
+      duration: 0.5,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 interface LoginFormProps {
   onBack?: () => void;
 }
@@ -57,7 +101,7 @@ export default function LoginForm({ onBack }: LoginFormProps) {
     try {
       setLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?type=recovery`,
+        redirectTo: `${window.location.origin}/?type=recovery`,
       });
       if (error) throw error;
       toast.success('Se ha enviado un enlace de recuperación a tu correo');
@@ -131,15 +175,15 @@ export default function LoginForm({ onBack }: LoginFormProps) {
     <AnimatePresence mode="wait">
       <motion.div
         key="login"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={containerVariants}
         className="w-full max-w-md"
       >
         <div className="space-y-6">
           {/* Header */}
-          <div className="space-y-1">
+          <motion.div className="space-y-1" variants={itemVariants}>
             {onBack && (
               <button
                 type="button"
@@ -150,16 +194,16 @@ export default function LoginForm({ onBack }: LoginFormProps) {
                 Volver
               </button>
             )}
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-[#15803d] to-[#22c55e] bg-clip-text text-transparent">
               Iniciar sesión
             </h2>
             <p className="text-sm text-muted-foreground">
               Ingresa tus credenciales para acceder a tu cuenta
             </p>
-          </div>
+          </motion.div>
 
           {/* Form */}
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          <motion.form ref={formRef} onSubmit={handleSubmit} className="space-y-4" variants={itemVariants}>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
                 Correo electrónico
@@ -171,7 +215,7 @@ export default function LoginForm({ onBack }: LoginFormProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 transition-all duration-200 focus:ring-2 focus:ring-[#22c55e]/20 focus:ring-offset-1 focus:scale-[1.01]"
                   placeholder="tu@email.com"
                   autoComplete="email"
                   required
@@ -198,7 +242,7 @@ export default function LoginForm({ onBack }: LoginFormProps) {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-[#22c55e]/20 focus:ring-offset-1 focus:scale-[1.01]"
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
@@ -216,8 +260,10 @@ export default function LoginForm({ onBack }: LoginFormProps) {
 
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial="hidden"
+                animate={["visible", "shake"]}
+                variants={shakeVariants}
+                key={`error-${error}`}
                 className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
               >
                 <Info className="w-4 h-4 shrink-0" />
@@ -228,7 +274,7 @@ export default function LoginForm({ onBack }: LoginFormProps) {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-[#22c55e] hover:bg-[#16a34a] text-white font-semibold tracking-wide"
+              className="w-full h-11 bg-gradient-to-r from-[#15803d] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold tracking-wide shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/30 transition-all duration-300"
               size="default"
             >
               {loading ? (
@@ -240,43 +286,45 @@ export default function LoginForm({ onBack }: LoginFormProps) {
                 </>
               )}
             </Button>
-          </form>
+          </motion.form>
 
           {/* Divider */}
-          <div className="relative">
+          <motion.div className="relative" variants={itemVariants}>
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+              <span className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white dark:bg-card px-3 text-muted-foreground font-medium tracking-wider">
                 O continuar con
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Social Login */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full h-11 font-medium text-sm"
-          >
-            <Chrome className="w-4 h-4 text-[#4285F4]" />
-            Continuar con Google
-          </Button>
+          <motion.div variants={itemVariants}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full h-11 font-medium text-sm hover:shadow-md hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300"
+            >
+              <Chrome className="w-4 h-4 text-[#4285F4]" />
+              Continuar con Google
+            </Button>
+          </motion.div>
 
           {/* Register Link */}
-          <p className="text-center text-sm text-muted-foreground">
+          <motion.p className="text-center text-sm text-muted-foreground" variants={itemVariants}>
             ¿No tienes una cuenta?{' '}
             <button
               type="button"
               onClick={() => setIsRegistering(true)}
-              className="text-[#22c55e] hover:text-[#16a34a] font-semibold transition-colors"
+              className="text-[#22c55e] hover:text-[#16a34a] font-semibold transition-colors hover:underline underline-offset-4 decoration-green-500"
             >
               Regístrate aquí
             </button>
-          </p>
+          </motion.p>
         </div>
       </motion.div>
     </AnimatePresence>

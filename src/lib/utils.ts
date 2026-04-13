@@ -171,15 +171,15 @@ export function safeFormatDate(
 /**
  * Checks if the current theme is one of the performance-optimized themes.
  */
-export const isPerformanceTheme = (theme: string | undefined): boolean => {
-  return ['neumo', 'fast-light', 'fast-dark'].includes(theme || '');
+export const isPerformanceTheme = (_theme: string | undefined): boolean => {
+  return false; // Performance mode now controlled by connectivity state, not theme
 };
 
 /**
  * Checks if the current theme is a dark variant.
  */
 export const isDarkTheme = (theme: string | undefined): boolean => {
-  return ['dark', 'fast-dark'].includes(theme || '');
+  return theme === 'dark';
 };
 
 /**

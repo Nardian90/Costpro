@@ -1,41 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
 
 export default function IntelligentThemeHandler() {
-  const { themePreference } = useUIStore();
+  const { themePreference, setThemePreference, connectivity } = useUIStore();
   const { setTheme, theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
+  // On first mount, sync the store preference with the current actual theme
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    const calculateIntelligentTheme = () => {
-      // 1. Connection check (Priority: Performance)
-      if (typeof navigator !== 'undefined' && (navigator as any).connection) {
-        const conn = (navigator as any).connection;
-        if (conn.saveData || ['slow-2g', '2g', '3g'].includes(conn.effectiveType)) {
-          return 'fast-dark';
-        }
+    if (!mounted || !theme) return;
+    // Only sync if the stored preference doesn't match the actual theme
+    if (themePreference !== 'auto' && theme !== themePreference) {
+      // The actual theme was set externally (e.g., landing page toggle)
+      // Sync the store to match
+      if (theme === 'light' || theme === 'dark') {
+        setThemePreference(theme);
       }
+    }
+  }, [mounted, theme, themePreference, setThemePreference]);
 
-      // 2. Time check
+  useEffect(() => {
+    if (!mounted || !theme) return;
+
+    const calculateAutoTheme = () => {
       const hour = new Date().getHours();
-      if (hour >= 19 || hour < 7) {
-        return 'fast-dark';
-      }
-      return 'fast-light';
+      return (hour >= 19 || hour < 7) ? 'dark' : 'light';
     };
 
     const updateTheme = () => {
       if (themePreference === 'auto') {
-        const target = calculateIntelligentTheme();
+        const target = calculateAutoTheme();
         if (theme !== target) {
           setTheme(target);
         }
@@ -48,21 +49,16 @@ export default function IntelligentThemeHandler() {
 
     updateTheme();
 
-    // Listeners for environmental changes
-    const interval = setInterval(updateTheme, 60000); // Check every minute for time changes
-
-    const conn = typeof navigator !== 'undefined' && (navigator as any).connection;
-    if (conn) {
-      conn.addEventListener('change', updateTheme);
-    }
-
-    return () => {
-      clearInterval(interval);
-      if (conn) {
-        conn.removeEventListener('change', updateTheme);
-      }
-    };
+    // Recheck every minute for auto mode time changes
+    const interval = setInterval(updateTheme, 60000);
+    return () => clearInterval(interval);
   }, [themePreference, theme, setTheme, mounted]);
+
+  // Apply connectivity data attribute to html element
+  useEffect(() => {
+    if (!mounted) return;
+    document.documentElement.setAttribute('data-connectivity', connectivity);
+  }, [connectivity, mounted]);
 
   return null;
 }

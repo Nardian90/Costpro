@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Command, X, ArrowRight, Sparkles } from 'lucide-react';
@@ -15,15 +15,19 @@ export const CommandPalette = () => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [recentActions, setRecentActions] = useState<string[]>([]);
-  const [isMac, setIsMac] = useState(true);
+  const isMac = useSyncExternalStore(
+    () => () => {},
+    () => {
+      const ua = navigator.userAgent.toLowerCase();
+      return ua.includes('macintosh') || ua.includes('mac os x');
+    },
+    () => true
+  );
 
   useEffect(() => {
-    const ua = navigator.userAgent.toLowerCase();
-    setIsMac(ua.includes('macintosh') || ua.includes('mac os x'));
-  }, []);
-
-  useEffect(() => {
-    setSelectedIndex(0);
+    requestAnimationFrame(() => {
+      setSelectedIndex(0);
+    });
   }, [query]);
   const { setCurrentView, setActiveCostSection } = useUIStore();
   const { user } = useAuthStore();
@@ -70,11 +74,13 @@ export const CommandPalette = () => {
 
   useEffect(() => {
     if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
-      setRecentActions(recent);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      requestAnimationFrame(() => {
+        setQuery('');
+        setSelectedIndex(0);
+        const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+        setRecentActions(recent);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      });
     }
   }, [isOpen]);
 
