@@ -108,6 +108,7 @@ export default function HelpView() {
         glossary={glossary}
         onSelectResult={loadDocument}
         onClearSearch={() => setSearchQuery('')}
+        onSearch={setSearchQuery}
       />
     </HelpLayout>
   );
