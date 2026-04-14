@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION_arquitecto",
-  "content": "### Arquitecto\n\n**Leer:**\n- `DIAGNOSTICO_CRITICO_RLS.md` (análisis root cause)\n- `POLICIES_BEFORE_AFTER_ANALYSIS.md` (validación seguridad)\n- `supabase/migrations/.../fix_critical_rls_issues.sql` (revisión código)\n\n**Validar:**\n- No hay relajamiento de seguridad\n- Multi-tenant aislamiento intacto\n- Todas las políticas siguen el principio de least privilege\n\n**Aprobar:** Deployment a producción\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "Arquitecto"
-  }
-}

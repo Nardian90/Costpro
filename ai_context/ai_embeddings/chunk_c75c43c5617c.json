@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___global_goal_priority_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para global_goal_priority.test.\", \"dependencies\": [\"vitest\", \"../engine\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/global_goal_priority.test.ts\", \"name\": \"global_goal_priority.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico global_goal_priority.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar global_goal_priority.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 433,
-    "domain": "components"
-  }
-}

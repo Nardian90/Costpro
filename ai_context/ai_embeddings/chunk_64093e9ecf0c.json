@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_2__concurrency_risks",
-  "content": "### 2. Concurrency Risks\nThe absence of a concurrency control mechanism is a critical vulnerability. In a high-traffic environment, this could lead to serious data integrity issues. An optimistic locking strategy, combined with atomic operations, would provide a robust solution.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "2. Concurrency Risks"
-  }
-}

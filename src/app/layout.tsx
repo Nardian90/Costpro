@@ -86,6 +86,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground`}
         translate="no"
       >
+        <a href="#main-content" className="skip-to-content">
+          Saltar al contenido principal
+        </a>
         <ThemeProvider
           attribute="class" enableSystem
           defaultTheme="fast-light"

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_aspect_ratio_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para aspect-ratio.\", \"dependencies\": [\"@radix-ui/react-aspect-ratio\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/aspect-ratio.tsx\", \"name\": \"aspect-ratio.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico aspect-ratio.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con aspect-ratio.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 261,
-    "domain": "components"
-  }
-}

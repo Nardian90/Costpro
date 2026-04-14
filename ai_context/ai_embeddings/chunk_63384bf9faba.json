@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_modals_BarcodeScanner_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para BarcodeScanner.\", \"dependencies\": [\"react\", \"html5-qrcode\", \"@/components/ui/BaseModal\", \"@/components/ui/atomic\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"BarcodeScanner\"], \"id\": \"src/components/modals/BarcodeScanner.tsx\", \"name\": \"BarcodeScanner.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico BarcodeScanner.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con BarcodeScanner.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 9,
-    "domain": "components"
-  }
-}

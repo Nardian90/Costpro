@@ -1,8 +1,0 @@
-{
-  "id": "INVERSION_FIX_REPORT_causas_raíz_identificadas",
-  "content": "## Causas Raíz Identificadas\n1. **Trigger de Auditoría Roto (`log_transaction_changes`):**\n   - El trigger intentaba insertar en `audit_logs` usando columnas inexistentes (`old_values`, `new_values`), lo que provocaba que cualquier `UPDATE` en la tabla de transacciones fallara con un error 42703.\n   - **Estado:** CORREGIDO.\n\n2. **Falta de Políticas RLS para UPDATE:**\n   - La tabla `transactions` y `receipts` no tenían políticas de RLS para permitir la operación `UPDATE` desde el cliente. Aunque el usuario fuera administrador, Supabase bloqueaba la actualización del estado.\n   - **Estado:** PENDIENTE DE APLICAR.\n\n3. **Falta de Políticas RLS para SELECT en Stock Movements:**\n   - La tabla `stock_movements` no tenía política de `SELECT`. El RPC de ajuste de inventario creaba el registro (vía SECURITY DEFINER), pero el frontend no podía leerlo para mostrarlo en la vista de \"Ajustes Doc.\".\n   - **Estado:** PENDIENTE DE APLICAR.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVERSION_FIX_REPORT.md",
-    "header": "Causas Raíz Identificadas"
-  }
-}

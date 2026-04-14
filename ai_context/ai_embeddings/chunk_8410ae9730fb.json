@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_pos_POSTableView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para POSTableView.\", \"dependencies\": [\"react\", \"@/types\", \"@/lib/utils\", \"lucide-react\", \"@/components/ui/ProductImage\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/pos/POSTableView.tsx\", \"name\": \"POSTableView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico POSTableView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con POSTableView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 127,
-    "domain": "components"
-  }
-}

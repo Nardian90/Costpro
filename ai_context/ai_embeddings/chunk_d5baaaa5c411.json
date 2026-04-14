@@ -1,8 +1,0 @@
-{
-  "id": "DOCUMENTATION_QUALITY_AUDIT_3__registro_de_metodología__estándares_",
-  "content": "## 3. Registro de Metodología (Estándares)\n- **ISO/IEC 26514:** Asegura que la documentación sea útil para la operación y el mantenimiento futuro.\n- **Diátaxis Framework:** Estructura la información en: Descripción, Propósito, Flujo Funcional e Impacto en el Negocio.\n- **Estructura 7-puntos:** Descripción, Propósito, Flujo, Dependencias, Impacto, Riesgos, Mejoras.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOCUMENTATION_QUALITY_AUDIT.md",
-    "header": "3. Registro de Metodología (Estándares)"
-  }
-}

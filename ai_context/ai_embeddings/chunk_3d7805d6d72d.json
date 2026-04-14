@@ -1,8 +1,0 @@
-{
-  "id": "reference_matchingauditview_tsx",
-  "content": "## MatchingAuditView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/MatchingAuditView.tsx`\n\n**Salidas esperadas:** Card List, Chart, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "MatchingAuditView.tsx"
-  }
-}

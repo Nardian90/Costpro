@@ -1,8 +1,0 @@
-{
-  "id": "reference_executivekpicards_tsx",
-  "content": "## ExecutiveKpiCards.tsx\n**Ruta:** `src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx`\n\n**Salidas esperadas:** Card List\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "ExecutiveKpiCards.tsx"
-  }
-}

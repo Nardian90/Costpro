@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetHelpPanel_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetHelpPanel.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\", \"@/lib/utils\", \"./CostSheetFormulaGuide\"], \"domain\": \"UI\", \"exports\": [\"CostSheetHelpPanel\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx\", \"name\": \"CostSheetHelpPanel.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetHelpPanel.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 186,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDITORIA_COSTOS_2__api_y_endpoints",
-  "content": "## 2. API y Endpoints\n**Calificación: 9.5/10** (Incrementada)\n\n*   **Exportación PDF:** Se ha unificado el exportador profesional bajo `/api/cost-sheets/export-pdf`, integrando la bitácora de auditoría directamente en el documento generado para cumplimiento contable.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDITORIA_COSTOS.md",
-    "header": "2. API y Endpoints"
-  }
-}

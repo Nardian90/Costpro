@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_cost_sheet_CostSheetCardView_tsx",
-  "content": "{\"actions\": [\"handleImportSectionExcel\", \"handleToggle\", \"handleTotalSave\", \"handleVHSave\", \"handleValueChange\"], \"components\": [\"ui/LazyRender\", \"ui/button\", \"ui/input\", \"ui/popover\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx\", \"inputs\": [\"Input\"], \"name\": \"CostSheetCardView.tsx\", \"outputs\": [\"Card List\", \"Summary Panel\"], \"route\": \"src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx\", \"servicesUsed\": [\"excel-service\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 40,
-    "domain": "views"
-  }
-}

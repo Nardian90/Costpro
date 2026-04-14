@@ -1,8 +1,0 @@
-{
-  "id": "PRODUCT_VARIANT_LOGIC_ejemplo_de_importación",
-  "content": "## Ejemplo de Importación\n| cod | id_grupo | descripcion | precio_cents | contenido_paquete | stock_inicial_manual |\n|-----|----------|-------------|--------------|-------------------|----------------------|\n| 2   | BIG_BON  | BIG BON CAJA| 13825        | 8                 | 15                   |\n| 3   | BIG_BON  | BIG BON PQT | 1730         | 40                | 1                    |\n| 4   | BIG_BON  | BOMBON      | 45           | 1                 | 2                    |\n\n**Interpretación**:\n- 1 Caja (cod 2) contiene 8 Paquetes (cod 3).\n- 1 Paquete (cod 3) contiene 40 Bombones (cod 4).\n\nSi entra una transferencia por 45 cts y el stock de BOMBON es 0, el sistema:\n1. Busca stock en BIG BON PQT.\n2. Si hay 1 PQT, resta 1 de PQT y suma 40 a BOMBON.\n3. Realiza el matching del BOMBON.\n4. Registra el movimiento: \"Descomposición: 1 BIG BON PQT -> 40 BOMBON\".\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
-    "header": "Ejemplo de Importación"
-  }
-}

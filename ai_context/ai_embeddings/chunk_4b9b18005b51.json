@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_legal_LegalModelForm_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para LegalModelForm.\", \"dependencies\": [\"react\", \"react\", \"react-hook-form\", \"@/store\", \"@/lib/supabaseClient\", \"sonner\", \"@/lib/utils\", \"framer-motion\", \"./LegalPdfExporter\", \"@/lib/utils/number-to-words-es\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/legal/LegalModelForm.tsx\", \"name\": \"LegalModelForm.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico LegalModelForm.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con LegalModelForm.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 198,
-    "domain": "components"
-  }
-}

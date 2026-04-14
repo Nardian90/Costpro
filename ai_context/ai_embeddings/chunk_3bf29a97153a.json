@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___reconciliation_lines_",
-  "content": "### Tabla: `reconciliation_lines`\n**Índices:** `&id, transaction_ref, reconciliation_hash, fecha_operacion, clasificacion, origen_dato`\n\n```typescript\n// Interface: ReconciliationLine\ninterface ReconciliationLine {\n  id: string;\n  transaction_ref: string;     // FK -> BankTransaction.referencia_origen\n  fecha_operacion: string;\n  ingreso_banco_cents: number;\n  venta_real_calculada_cents: number;\n  comision_banco_cents: number;\n  product_cod: string;\n  product_um: string;\n  cantidad: number;\n  precio_unitario_cents: number; // En Pesos\n  importe_linea_cents: number;  // En Pesos\n  cuadre_cents: number;         // En Pesos\n  clasificacion: 'Transferencia' | 'Efectivo' | 'QR';\n  origen_dato: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER';\n  reconciliation_hash: string; // hash(transaction_ref + detalle) -> idempotencia\n  created_at: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `reconciliation_lines`"
-  }
-}

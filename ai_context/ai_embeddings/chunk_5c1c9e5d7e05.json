@@ -1,8 +1,0 @@
-{
-  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_3_5_gobernanza_y_metadata",
-  "content": "### 3.5 Gobernanza y Metadata\n- `public/_meta/*.meta.json` (Sidecars de versionado y confianza)\n- `public/_archive/` (Histórico versionado para rollback)\n- `docs/automation/quarantine/` (Artefactos en revisión)\n- `docs/automation/review_queue.json` (Cola de revisión humana)\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
-    "header": "3.5 Gobernanza y Metadata"
-  }
-}

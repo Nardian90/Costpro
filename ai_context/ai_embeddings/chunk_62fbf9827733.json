@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_3____imágenes__sin_validación_de_tamaño_en_frontend____",
-  "content": "### 3. **Imágenes: Sin Validación de Tamaño en Frontend** 🟡\n**Severidad:** BAJA (mitigado en old project)\n**Ubicación:** `src/components/WarehouseView.tsx`\n\n**Problema:**\n- No existe validación de tamaño de archivo (2MB máximo recomendado)\n- Old project SÍ tiene esta validación:\n```javascript\nif (file.size > 2 * 1024 * 1024) {\n    Swal.fire('Error', 'La imagen no debe superar 2MB', 'error');\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "3. **Imágenes: Sin Validación de Tamaño en Frontend** 🟡"
-  }
-}

@@ -211,7 +211,7 @@ export default function IPVControlPanel({ onSelect, onExportBackup, onImportBack
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-8 bg-primary rounded-full hidden sm:block" />
-                        <h2 className="text-3xl font-black uppercase tracking-tighter text-foreground flex items-center gap-3">
+                        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-foreground flex items-center gap-3">
                             IPV Builder
                             <HelpCircle className="w-5 h-5 text-muted-foreground opacity-50 cursor-help" />
                         </h2>

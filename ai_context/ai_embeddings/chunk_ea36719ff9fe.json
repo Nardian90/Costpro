@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_IPV_BUILDER_2_1_persistencia_de_datos__capa_de_almacenamiento_",
-  "content": "### 2.1 Persistencia de Datos (Capa de Almacenamiento)\n*   **Tecnología**: IndexedDB gestionado a través de **Dexie.js**.\n*   **Precisión Financiera**: Se utiliza un modelo de **enteros en centavos** (`cents`). No se permiten cálculos en punto flotante para evitar errores de redondeo acumulativos.\n*   **Idempotencia**: Implementada mediante hashes SHA-256 (`ingestion_hash`, `reconciliation_hash`) que garantizan que la re-ejecución de procesos no duplique registros ni contamine el histórico.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
-    "header": "2.1 Persistencia de Datos (Capa de Almacenamiento)"
-  }
-}

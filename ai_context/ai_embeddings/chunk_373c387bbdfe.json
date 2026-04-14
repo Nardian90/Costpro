@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_búsqueda_en_tiempo_real",
-  "content": "### Búsqueda en Tiempo Real\n- Filtra por: nombre, SKU, categoría\n- Actualización instantánea (useEffect)\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "Búsqueda en Tiempo Real"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_cost_sheet_CostSheetView_tsx",
-  "content": "{\"actions\": [\"handleBottomAction\", \"handleExportExcel\", \"handleExportJSON\", \"handleExportPDF\", \"handleImportJSON\", \"handleQuickGenerate\", \"handleSetActiveSection\", \"handleSetViewMode\", \"onOpenAnnexes\", \"onOpenSections\"], \"components\": [\"modals/UpgradeModal\", \"ui/ActionMenu\", \"ui/BaseModal\", \"ui/LazyRender\", \"ui/SpeedDial\", \"ui/ViewSwitcher\", \"ui/button\", \"ui/skeleton\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetView.tsx\", \"inputs\": [], \"name\": \"CostSheetView.tsx\", \"outputs\": [\"Card List\", \"Chart\", \"Summary Panel\", \"Table\"], \"route\": \"src/components/views/terminal/views/cost_sheet/CostSheetView.tsx\", \"servicesUsed\": [\"export-service\", \"logic/useCostSheetCalculator\", \"ui/useMobile\", \"usage-service\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 39,
-    "domain": "views"
-  }
-}

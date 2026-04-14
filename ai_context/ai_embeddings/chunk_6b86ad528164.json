@@ -1,8 +1,0 @@
-{
-  "id": "QUICK_REFERENCE_RLS_FIX_admin_no_ve_tiendas__vacío_sin_error_",
-  "content": "### Admin no ve tiendas (vacío sin error)\n\n```\n→ Verificar que user loggeado ES admin:\n   SELECT role FROM profiles WHERE id = current_user_id;\n   -- Debe ser 'admin' o 'superadmin'\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
-    "header": "Admin no ve tiendas (vacío sin error)"
-  }
-}

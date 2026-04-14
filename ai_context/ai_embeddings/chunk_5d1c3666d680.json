@@ -1,8 +1,0 @@
-{
-  "id": "FLOW_IPV_MISMATCH_5__resolución_manual",
-  "content": "## 5. Resolución Manual\nEl usuario tiene tres vías para resolver un mismatch:\n- **Conciliación Manual:** Abre `ManualReconciliationView.tsx` donde puede añadir/quitar productos y ajustar precios o cantidades manualmente hasta llegar a la diferencia 0.\n- **Forzar Matching:** Selecciona un producto de la lista para asignar rápidamente la cantidad necesaria que cubra el monto (ignora reglas de stock si el usuario lo decide).\n- **Ajuste Rápido:** Permite aplicar la diferencia pendiente como \"Propina/Descuento\" sobre una línea ya existente.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
-    "header": "5. Resolución Manual"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_a__limpieza_de_archivos_en_el_raíz__mapping_",
-  "content": "### A. Limpieza de Archivos en el Raíz (Mapping)\n\n| Archivo actual | Acción Propuesta | Destino Sugerido |\n| :--- | :--- | :--- |\n| `AUDITORIA_IPV_MATCHING_PRO.md` | Mover | `docs/audits/` |\n| `final_review.txt` | Archivar | `docs/audits/archive/` |\n| `engine_init.diff` | Mover | `docs/technical/patches/` |\n| `dev_server_no_turbo.log` | Mover/Borrar | `logs/` |\n| `*.py` (scripts de remediación) | Mover | `scripts/remediation/` |\n| `*.bak` / `*.old` | Borrar | N/A |\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
-    "header": "A. Limpieza de Archivos en el Raíz (Mapping)"
-  }
-}

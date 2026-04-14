@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_THEME_AUDIT_3__plan_de_acción_de_implementación",
-  "content": "## 3. Plan de Acción de Implementación\n\n1. **Refactorización de `globals.css`**: Actualizar las variables `:root` y `.dark` con la nueva paleta.\n2. **Actualización de Botones Neumórficos**: El `neu-btn-primary` ahora usará el gradiente exacto del logo para un acabado premium.\n3. **Limpieza de Hardcoded Blues**:\n   - Reemplazar `blue-500` por `emerald-600` o `green-600` en diagramas.\n   - Reemplazar `blue-600` por `green-700` en textos informativos de ventas.\n4. **Optimización de Sombras Neumórficas**: Ajustar los tintes de las sombras para que tengan una ligera temperatura basada en el nuevo color de fondo (más neutro/limpio).\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FRONTEND_THEME_AUDIT.md",
-    "header": "3. Plan de Acción de Implementación"
-  }
-}

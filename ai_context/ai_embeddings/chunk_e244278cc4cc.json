@@ -1,8 +1,0 @@
-{
-  "id": "DOWNLOAD_INSTRUCTIONS_1__copia_el_archivo_a_tu_máquina_",
-  "content": "# 1. Copia el archivo a tu máquina:\nscp z@<tu-servidor>:/home/z/pos-enterprise-neumorphic.tar.gz .\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
-    "header": "1. Copia el archivo a tu máquina:"
-  }
-}

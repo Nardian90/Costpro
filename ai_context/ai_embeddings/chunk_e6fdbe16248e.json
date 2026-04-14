@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_role_based_access",
-  "content": "#### Role-Based Access\n\n**ANTES:**\n- Admin bloqueado (is_admin() falso)\n\n**DESPUÉS:**\n- Admin habilitado (is_admin() true)\n- Otros roles sin cambios\n\n✅ RBAC **FUNCIONA AHORA**\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Role-Based Access"
-  }
-}

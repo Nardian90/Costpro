@@ -1,8 +1,0 @@
-{
-  "id": "security-controls_authentication___authorization",
-  "content": "## Authentication & Authorization\n- **RBAC**: Every AI tool has an `allowedRoles` list. `executeTool` rejects any action not permitted for the user's role.\n- **Store Isolation**: All database queries are strictly scoped to the user's `store_id`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/security-controls.md",
-    "header": "Authentication & Authorization"
-  }
-}

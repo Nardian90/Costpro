@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_inventario",
-  "content": "### Inventario\n- Listado de productos con tabla responsive\n- Búsqueda y filtros avanzados\n- Ajustes de stock (entrada/salida)\n- Alertas de stock bajo\n- Exportación/Importación de datos\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Inventario"
-  }
-}

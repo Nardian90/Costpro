@@ -1,8 +1,0 @@
-{
-  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_3_5_auditoría_inmutable__chain_verification_",
-  "content": "### 3.5 Auditoría Inmutable (Chain Verification)\n**Query de Integridad:**\n```sql\nSELECT id, action, status FROM (\n    SELECT curr.id, curr.action,\n    CASE WHEN curr.previous_event_hash = prev.event_hash THEN 'VALID' ELSE 'BROKEN' END as status\n    FROM public.audit_events curr\n    LEFT JOIN public.audit_events prev ON curr.previous_event_hash = prev.event_hash\n    WHERE curr.previous_event_hash IS NOT NULL\n) WHERE status = 'BROKEN';\n```\n**Resultado:** `0 rows`. La cadena de confianza SHA-256 está intacta.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
-    "header": "3.5 Auditoría Inmutable (Chain Verification)"
-  }
-}

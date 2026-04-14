@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTIVE_SUMMARY_RLS_FIX_3__nueva_policy_en__profiles_",
-  "content": "### 3. Nueva policy en `profiles`\n\n```sql\nCREATE POLICY \"profiles_admin_full_access\"\n  ON public.profiles\n  FOR ALL\n  USING (is_admin());\n```\n\n**Resultado:** Admin puede editar/desactivar usuarios\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
-    "header": "3. Nueva policy en `profiles`"
-  }
-}

@@ -93,7 +93,7 @@ export function IngestionErrorsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-red-500/5 border-l-4 border-red-500 flex items-start gap-3 mx-4 rounded-r-xl">
+      <div role="alert" className="p-4 bg-red-500/5 border-l-4 border-red-500 flex items-start gap-3 mx-4 rounded-r-xl">
         <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
         <div>
             <h4 className="text-xs font-black text-red-500 uppercase">Transacciones con Conflicto</h4>
@@ -160,22 +160,22 @@ export function IngestionErrorsTable() {
                             <div className="flex justify-end gap-1">
                                 {isEditing ? (
                                     <>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing} aria-label="Guardar cambios">
                                             <Check className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing} aria-label="Cancelar edición">
                                             <X className="w-4 h-4" />
                                         </Button>
                                     </>
                                 ) : (
                                     <>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => startEditing(err)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => startEditing(err)} aria-label="Editar error">
                                             <Edit2 className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-500/10" onClick={() => handleRetry(err)} title="Reintentar Ingesta">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-500/10" onClick={() => handleRetry(err)} title="Reintentar Ingesta" aria-label="Reintentar ingesta">
                                             <RefreshCw className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(err.id)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(err.id)} aria-label="Eliminar error">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </>

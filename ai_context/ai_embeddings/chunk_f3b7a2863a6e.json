@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_THEME_AUDIT_colores_identificados__actual__",
-  "content": "### Colores Identificados (Actual):\n- **Primary:** `#6366f1` (Indigo 500)\n- **Primary Dark:** `#818cf8` (Indigo 400)\n- **Informational/Sales:** Hardcoded `blue-500`, `blue-600`\n- **Success:** `#10b981` (Emerald 500) - *Irónicamente el color de éxito ya coincide con la marca, pero no se usa como primario.*\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FRONTEND_THEME_AUDIT.md",
-    "header": "Colores Identificados (Actual):"
-  }
-}

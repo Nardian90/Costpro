@@ -1,8 +1,0 @@
-{
-  "id": "SPECIFICATION_LANDING_6__consideraciones_de_diseño_y_mantenibilidad_end",
-  "content": "## 6. Consideraciones de Diseño y Mantenibilidad\n\n- **Stack:** React, Tailwind CSS, Framer Motion, Lucide Icons.\n- **Componentización:**\n  - Crear `WelcomeLandingView` como componente principal.\n  - El formulario de login actual se extrae a un componente `LoginForm` reutilizable.\n- **Diseño Visual:**\n  - Mantener el estilo \"Neumórfico/Cyber\" consistente con el resto del sistema.\n  - Uso intensivo de `backdrop-blur` para capas de información.\n  - Tipografía clara y jerarquizada (Inter/Black para títulos).\n- **Mantenibilidad:** El contenido de los módulos y el caso de uso debe estar definido en un objeto de configuración para facilitar actualizaciones de marketing sin tocar la lógica de renderizado.\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/SPECIFICATION_LANDING.md",
-    "header": "6. Consideraciones de Diseño y Mantenibilidad"
-  }
-}

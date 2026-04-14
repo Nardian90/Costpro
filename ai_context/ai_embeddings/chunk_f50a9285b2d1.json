@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_1____row_level_security__rls__bypassable____",
-  "content": "### 1. **Row Level Security (RLS) Bypassable** 🟠\n**Severidad:** ALTA\n**Ubicación:** Intento de upsert en tabla `inventory` con RLS\n\n**Problema:**\n- El cliente escribe directamente = bypass de RLS\n- Aunque hayamos autenticado el usuario, no garantiza que `store_id` sea el correcto\n- Usuario podría manipular `store_id` en request\n\n**Solución:**\n- RPC con `SECURITY DEFINER` que:\n  - Valida sesión del usuario (`auth.uid()`)\n  - Valida que `store_id` pertenezca al usuario\n  - Ejecuta como propietario de tabla, no como usuario\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "1. **Row Level Security (RLS) Bypassable** 🟠"
-  }
-}

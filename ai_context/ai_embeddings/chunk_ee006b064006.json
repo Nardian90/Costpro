@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_coincidencias",
-  "content": "### Coincidencias\n\nLos siguientes campos y secciones de la aplicación coinciden con el archivo de FC adjunto:\n\n*   **Anexo I - Materias Primas y Materiales:** Todos los datos y cálculos son correctos.\n*   **Anexo II - Mano de Obra Directa:** Todos los datos y cálculos son correctos.\n*   **Anexo IV - Otros Gastos Directos:** Todos los datos y cálculos son correctos.\n*   **Anexo V - Dietas de Trabajadores:** Todos los datos y cálculos son correctos.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT.md",
-    "header": "Coincidencias"
-  }
-}

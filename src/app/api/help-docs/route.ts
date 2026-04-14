@@ -13,6 +13,11 @@ interface SearchResult {
   type: string;
 }
 
+interface FileEntry {
+  filename: string;
+  title: string;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filePath = searchParams.get('path');
@@ -64,14 +69,35 @@ export async function GET(request: Request) {
     }
 
     if (!filePath) {
-      // List all relevant files for the help system
+      // Helper: read first heading from a markdown file to use as title
+      const extractTitle = (dir: string, filename: string): string => {
+        try {
+          const content = fs.readFileSync(path.join(dir, filename), 'utf8');
+          const firstLine = content.split('\n')[0];
+          const match = firstLine.match(/^#+\s+(.+)/);
+          return match ? match[1].trim() : filename.replace('.md', '').replace(/[-_]/g, ' ');
+        } catch {
+          return filename.replace('.md', '').replace(/[-_]/g, ' ');
+        }
+      };
+
+      // List all relevant files for the help system with proper titles
+      const isoDir = path.join(KNOWLEDGE_BASE, 'iso_manual');
+      const tutorialsDir = path.join(KNOWLEDGE_BASE, 'docs/tutorials');
+      const howToDir = path.join(KNOWLEDGE_BASE, 'docs/how-to');
+      const refDir = path.join(KNOWLEDGE_BASE, 'docs/reference');
+      const explDir = path.join(KNOWLEDGE_BASE, 'docs/explanation');
+
+      const toFileEntries = (dir: string, files: string[]): FileEntry[] =>
+        files.map(f => ({ filename: f, title: extractTitle(dir, f) }));
+
       const structure = {
-        iso_manual: fs.existsSync(path.join(KNOWLEDGE_BASE, 'iso_manual')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'iso_manual')).filter(f => f.endsWith('.md')) : [],
+        iso_manual: fs.existsSync(isoDir) ? toFileEntries(isoDir, fs.readdirSync(isoDir).filter(f => f.endsWith('.md')).sort()) : [],
         docs: {
-          tutorials: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/tutorials')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/tutorials')).filter(f => f.endsWith('.md')) : [],
-          howTo: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/how-to')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/how-to')).filter(f => f.endsWith('.md')) : [],
-          reference: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/reference')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/reference')).filter(f => f.endsWith('.md')) : [],
-          explanation: fs.existsSync(path.join(KNOWLEDGE_BASE, 'docs/explanation')) ? fs.readdirSync(path.join(KNOWLEDGE_BASE, 'docs/explanation')).filter(f => f.endsWith('.md')) : [],
+          tutorials: fs.existsSync(tutorialsDir) ? toFileEntries(tutorialsDir, fs.readdirSync(tutorialsDir).filter(f => f.endsWith('.md')).sort()) : [],
+          howTo: fs.existsSync(howToDir) ? toFileEntries(howToDir, fs.readdirSync(howToDir).filter(f => f.endsWith('.md')).sort()) : [],
+          reference: fs.existsSync(refDir) ? toFileEntries(refDir, fs.readdirSync(refDir).filter(f => f.endsWith('.md')).sort()) : [],
+          explanation: fs.existsSync(explDir) ? toFileEntries(explDir, fs.readdirSync(explDir).filter(f => f.endsWith('.md')).sort()) : [],
         },
         user_help: fs.existsSync(path.join(KNOWLEDGE_BASE, 'user_help.json'))
       };

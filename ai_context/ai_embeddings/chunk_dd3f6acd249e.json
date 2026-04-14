@@ -1,8 +1,0 @@
-{
-  "id": "ADR-002-Seguridad_de_API_Keys_de_AI_adr_002__seguridad_de_api_keys_de_ai",
-  "content": "# ADR-002: Seguridad de API Keys de AI\n\n**Estado:** Accepted\n**Fecha:** 2026-03-12\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/ADR-002-Seguridad_de_API_Keys_de_AI.md",
-    "header": "ADR-002: Seguridad de API Keys de AI"
-  }
-}

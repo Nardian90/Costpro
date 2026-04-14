@@ -275,7 +275,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
 
          {/* Info/Detail Overlay */}
          {selectedNode ? (
-            <div className="absolute bottom-10 left-10 p-8 rounded-[40px] bg-primary text-primary-foreground shadow-2xl w-[300px] animate-in slide-in-from-left-4 duration-500">
+            <div className="absolute bottom-4 left-4 p-4 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-primary text-primary-foreground shadow-2xl w-[200px] sm:w-[300px] graph-info-card animate-in slide-in-from-left-4 duration-500">
                <div className="flex items-start justify-between mb-6">
                   <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                      <Info className="w-6 h-6 text-white" />

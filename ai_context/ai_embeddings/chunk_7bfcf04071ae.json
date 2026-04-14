@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_utils_number_to_words_es_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para number-to-words-es.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"numeroALetras\"], \"id\": \"src/lib/utils/number-to-words-es.ts\", \"name\": \"number-to-words-es.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico number-to-words-es.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar number-to-words-es.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 399,
-    "domain": "components"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_transfers_TransferDetailsModal_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para TransferDetailsModal.\", \"dependencies\": [\"@/store\", \"@/components/ui/BaseModal\", \"@/hooks/api/useTransfers\", \"@/components/ui/StateRenderer\", \"lucide-react\", \"@/lib/utils\", \"date-fns\", \"date-fns/locale\", \"sonner\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/transfers/TransferDetailsModal.tsx\", \"name\": \"TransferDetailsModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico TransferDetailsModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con TransferDetailsModal.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 52,
-    "domain": "components"
-  }
-}

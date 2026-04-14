@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V2_END_TO_END___crítico__omisión_de_roles_en_capa_transaccional__rbac_failure_",
-  "content": "### 🔴 CRÍTICO: Omisión de Roles en Capa Transaccional (RBAC Failure)\n- **Descripción:** Los procedimientos almacenados críticos (`register_reception`, `perform_inventory_adjustment`, `confirm_transfer`) carecen de validación de roles.\n- **Impacto:** Un usuario con rol \"Cajero\" (Clerk) puede ejecutar una recepción de mercancía o un ajuste manual de stock invocando directamente el RPC, saltándose las restricciones del frontend.\n- **Evidencia:** Función `public.register_reception` solo verifica `auth.uid() IS NOT NULL`. No utiliza `has_role()` ni `is_admin()`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
-    "header": "🔴 CRÍTICO: Omisión de Roles en Capa Transaccional (RBAC Failure)"
-  }
-}

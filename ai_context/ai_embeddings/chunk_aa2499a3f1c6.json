@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS___notas_de_seguridad",
-  "content": "## 📌 NOTAS DE SEGURIDAD\n\n✅ **Esta solución:**\n- Restaura permisos admin sin relajar seguridad\n- Mantiene aislamiento multi-tenant\n- No rompe PostgREST\n- Usa SECURITY DEFINER para proteger lógica sensible\n\n❌ **NO hace:**\n- Eliminar RLS\n- Abrir acceso a datos de otros tenants\n- Exponer funciones sin seguridad\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "📌 NOTAS DE SEGURIDAD"
-  }
-}

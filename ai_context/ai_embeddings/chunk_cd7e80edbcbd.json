@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_IPVView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para IPVView.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/components/ui/card\", \"@/components/ui/tabs\", \"@/components/ui/button\", \"@/components/ui/badge\", \"./MatchingAuditView\", \"./BankIngestion\", \"./TransactionTable\", \"./CatalogTable\", \"./MovementsView\", \"./MatchingSimulation\", \"./TransactionBreakdown\", \"./IPVReportView\", \"./MatchingRulesEditor\", \"./PivotStatementView\", \"./IngestionErrorsTable\", \"./ManualReconciliationView\", \"./IPVControlPanel\", \"./IPVInstitutionalDashboard\", \"./IPVRightSidebar\", \"./IncomeReceiptSection\", \"./TransferQRReportView\", \"./IPVReportsDropdown\", \"@/lib/ipv/engine\", \"@/lib/ipv/backup\", \"@/lib/ipv/utils\", \"@/lib/utils\", \"sonner\", \"@/components/ui/LoadingOverlay\", \"@/components/ui/HorizontalScroll\", \"@/components/ui/ActionMenu\", \"@/components/ui/tooltip\", \"./IPVHelpDialog\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/ipv/IPVView.tsx\", \"name\": \"IPVView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico IPVView.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 89,
-    "domain": "components"
-  }
-}

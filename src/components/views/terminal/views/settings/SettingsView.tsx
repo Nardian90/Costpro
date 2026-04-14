@@ -129,7 +129,7 @@ export default function SettingsView() {
 
       <div className="space-y-8">
         {/* Appearance Section */}
-        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
+        <div className="p-4 sm:p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Sun className="w-5 h-5" />
             Interfaz y Apariencia
@@ -161,7 +161,7 @@ export default function SettingsView() {
           </div>
 
           <div className="mt-8 pt-8 border-t border-border">
-            <div className="flex items-center justify-between p-6 rounded-2xl border border-border bg-background/50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl border border-border bg-background/50">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Code className="w-5 h-5 text-primary" />
@@ -176,7 +176,7 @@ export default function SettingsView() {
               <button
                 onClick={() => setShowQueries(!showQueries)}
                 className={cn(
-                  "px-4 py-2 rounded-lg font-black uppercase text-xs tracking-widest transition-all",
+                  "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
                   showQueries ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground border border-border"
                 )}
               >
@@ -187,8 +187,8 @@ export default function SettingsView() {
         </div>
 
         {/* AI Configuration Section */}
-        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+        <div className="p-4 sm:p-8 rounded-3xl border border-border bg-card shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3">
               <Bot className="w-5 h-5" />
               Configuración de Darian AI
@@ -262,14 +262,14 @@ export default function SettingsView() {
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Agrega tu propia API Key para evitar límites de cuota</p>
               </div>
             ) : (
-              <div className="overflow-hidden border border-border rounded-2xl bg-background/50">
+              <div className="overflow-x-auto border border-border rounded-2xl bg-background/50">
                 <table className="w-full text-left">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Proveedor</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Etiqueta</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Estado</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Acciones</th>
+                      <th className="px-4 sm:px-6 py-4 text-[10px] font-black uppercase tracking-widest">Proveedor</th>
+                      <th className="px-4 sm:px-6 py-4 text-[10px] font-black uppercase tracking-widest">Etiqueta</th>
+                      <th className="px-4 sm:px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Estado</th>
+                      <th className="px-4 sm:px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -288,7 +288,7 @@ export default function SettingsView() {
                               onBlur={(e) => handleUpdateKey(key.id, { label: e.target.value })}
                               onKeyDown={(e) => e.key === 'Enter' && handleUpdateKey(key.id, { label: (e.target as HTMLInputElement).value })}
                               autoFocus
-                              className="w-full h-8 bg-background border-border rounded-lg px-2 text-xs font-bold outline-none ring-1 ring-primary"
+                              className="w-full h-8 bg-background border-border rounded-xl px-2 text-xs font-bold outline-none ring-1 ring-primary"
                             />
                           ) : (
                             <span className="text-xs font-bold uppercase tracking-tight">{key.label}</span>
@@ -299,7 +299,7 @@ export default function SettingsView() {
                             <button
                               onClick={() => handleToggleKeyStatus(key)}
                               className={cn(
-                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                "px-3 py-2 min-h-[44px] rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
                                 key.is_active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
                               )}
                             >
@@ -311,13 +311,13 @@ export default function SettingsView() {
                           <div className="flex justify-end items-center gap-3">
                             <button
                               onClick={() => setEditingKeyId(key.id)}
-                              className="p-2 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-colors"
+                              className="p-3 min-w-[44px] min-h-[44px] hover:bg-primary/10 rounded-xl text-muted-foreground hover:text-primary transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteKey(key.id)}
-                              className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                              className="p-3 min-w-[44px] min-h-[44px] hover:bg-destructive/10 rounded-xl text-muted-foreground hover:text-destructive transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -333,7 +333,7 @@ export default function SettingsView() {
         </div>
 
         {/* Taxes Section */}
-        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
+        <div className="p-4 sm:p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Percent className="w-5 h-5" />
             Gestión de Impuestos
@@ -347,7 +347,7 @@ export default function SettingsView() {
               </div>
             ) : (
               taxes.map((tax) => (
-                <div key={tax.id} className="flex items-center justify-between p-6 rounded-2xl border border-border bg-background/50">
+                <div key={tax.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl border border-border bg-background/50">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                       <ShieldCheck className="w-5 h-5 text-primary" />
@@ -375,7 +375,7 @@ export default function SettingsView() {
                       }
                     }}
                     className={cn(
-                      "px-4 py-2 rounded-lg font-black uppercase text-xs tracking-widest transition-all",
+                      "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
                       tax.is_active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
                     )}
                   >
@@ -388,7 +388,7 @@ export default function SettingsView() {
         </div>
 
         {/* Notifications Section */}
-        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
+        <div className="p-4 sm:p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Bell className="w-5 h-5" />
             Notificaciones
@@ -399,7 +399,7 @@ export default function SettingsView() {
               { id: 'lowStock', label: 'Alertas de Stock Bajo', desc: 'Notificaciones críticas de inventario', active: notifications.lowStock },
               { id: 'salesAlerts', label: 'Confirmación de Ventas', desc: 'Aviso por cada transacción exitosa', active: notifications.salesAlerts },
             ].map((notif) => (
-              <div key={notif.id} className="flex items-center justify-between p-6 rounded-2xl border border-border bg-background/50">
+              <div key={notif.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl border border-border bg-background/50">
                 <div>
                   <div className="font-black text-sm uppercase tracking-tight">{notif.label}</div>
                   <div className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest">{notif.desc}</div>
@@ -407,7 +407,7 @@ export default function SettingsView() {
                 <button
                   onClick={() => setNotifications({ ...notifications, [notif.id]: !notifications[notif.id as keyof typeof notifications] })}
                   className={cn(
-                    "px-4 py-2 rounded-lg font-black uppercase text-xs tracking-widest transition-all",
+                    "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
                     notif.active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
                   )}
                 >

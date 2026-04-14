@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT___evaluación_global__4_3_10_____",
-  "content": "### **EVALUACIÓN GLOBAL: 4.3/10** ⚠️\n\n**Diagnóstico:** Componente FUNCIONAL pero CRÍTICO para producción\n\n**Riesgos de Negocio:**\n- 🔴 Imposible auditar origen de compras\n- 🔴 Violaciones potenciales de consistencia BD\n- 🔴 Errores 403 aleatorios si RLS está habilitado\n- 🟠 Cumplimiento fiscal comprometido\n- 🟠 UX confuso para usuarios\n\n**Recomendación:**\n- ✅ DEBE implementarse RPC con SECURITY DEFINER\n- ✅ DEBE capturarse campos obligatorios (fecha, proveedor, factura)\n- ✅ DEBE validarse permisos por rol\n- ⚠️ Refactoring completo recomendado para producción\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "**EVALUACIÓN GLOBAL: 4.3/10** ⚠️"
-  }
-}

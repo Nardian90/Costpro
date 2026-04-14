@@ -1,9 +1,0 @@
-{
-  "id": "components_src_store___tests___auth_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para auth.test.\", \"dependencies\": [\"vitest\", \"../index\", \"@/contracts\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/store/__tests__/auth.test.ts\", \"name\": \"auth.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico auth.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar auth.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 366,
-    "domain": "components"
-  }
-}

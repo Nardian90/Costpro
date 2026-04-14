@@ -1,9 +1,0 @@
-{
-  "id": "user_help_7",
-  "content": "{\"acciones\": [], \"descripcion_usuario\": \"Interfaz para gestionar SystemHealthView.\", \"feature\": \"SystemHealthView\", \"resultados\": [\"Card List\"]}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 7,
-    "domain": "user_help"
-  }
-}

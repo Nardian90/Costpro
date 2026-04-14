@@ -1,8 +1,0 @@
-{
-  "id": "theme-audit_design_tokens__variables_css_",
-  "content": "### Design Tokens (Variables CSS)\n\\`\\`\\`css\n:root {\n  --background: #f8fafc;\n  --foreground: #0f172a;\n  --card: #ffffff;\n  --card-foreground: #0f172a;\n  --primary: #15803d;\n  --primary-foreground: #ffffff;\n  --secondary: #a0aec0;\n  --muted: #f1f5f9;\n  --muted-foreground: #64748b;\n  --accent: #f0fdf4;\n  --border: #e2e8f0;\n  --input: #f8fafc;\n  --ring: rgba(22, 163, 74, 0.5);\n}\n\\`\\`\\`\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/theme-audit.md",
-    "header": "Design Tokens (Variables CSS)"
-  }
-}

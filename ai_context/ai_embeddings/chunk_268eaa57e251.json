@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_count_InventoryCountView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/ActionMenu\", \"ui/QueryInspector\", \"ui/SearchBar\", \"ui/SecurityScrollContainer\"], \"id\": \"src/components/views/terminal/views/inventory_count/InventoryCountView.tsx\", \"inputs\": [], \"name\": \"InventoryCountView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/inventory_count/InventoryCountView.tsx\", \"servicesUsed\": [\"ui/useMobile\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 32,
-    "domain": "views"
-  }
-}

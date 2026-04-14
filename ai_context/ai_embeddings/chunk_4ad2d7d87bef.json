@@ -1,8 +1,0 @@
-{
-  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_c__estructura_de_directorios_recomendada",
-  "content": "### C. Estructura de Directorios Recomendada\n```text\n/\n├── docs/\n│   ├── architecture/    # ADRs, Diagramas, Flujos\n│   ├── audits/          # Reportes de salud (incluyendo archivo)\n│   ├── business/        # Lógica de negocio y reglas (Resolución 148)\n│   ├── guides/          # Guías de usuario y desarrollador\n│   └── technical/       # Especificaciones de API y componentes\n├── scripts/\n│   ├── automation/      # Pipeline de mantenimiento\n│   ├── remediation/     # Scripts de corrección puntual\n│   └── tools/           # Utilidades generales\n└── logs/                # Solo archivos de salida de procesos\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
-    "header": "C. Estructura de Directorios Recomendada"
-  }
-}

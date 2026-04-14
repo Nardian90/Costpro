@@ -1,8 +1,0 @@
-{
-  "id": "ADR-003-Estandarización_de_Generación_de_IDs_contexto",
-  "content": "## Contexto\nEl uso del paquete 'uuid' ha causado conflictos de resolución en entornos Next.js/Turbopack.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/ADR-003-Estandarización_de_Generación_de_IDs.md",
-    "header": "Contexto"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_useRoles_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useRoles.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/lib/logger\", \"./base\", \"@/types\", \"sonner\"], \"domain\": \"Domain\", \"exports\": [\"useRoles\", \"useCreateRole\", \"useUpdateRole\", \"useDeleteRole\"], \"id\": \"src/hooks/api/useRoles.ts\", \"name\": \"useRoles.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useRoles.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useRoles.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 344,
-    "domain": "components"
-  }
-}

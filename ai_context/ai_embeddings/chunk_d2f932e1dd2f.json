@@ -1,8 +1,0 @@
-{
-  "id": "STORE_RESET_AUDIT_resumen_del_trabajo_realizado",
-  "content": "## Resumen del Trabajo Realizado\nSe ha implementado una funcionalidad técnica de alto impacto que permite la purga atómica de datos transaccionales para sucursales específicas, diseñada principalmente para entornos de demostración o limpieza operativa.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/STORE_RESET_AUDIT.md",
-    "header": "Resumen del Trabajo Realizado"
-  }
-}

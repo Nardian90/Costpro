@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_help_help_SalesFlowDiagram_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para SalesFlowDiagram.\", \"dependencies\": [\"framer-motion\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx\", \"name\": \"SalesFlowDiagram.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico SalesFlowDiagram.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con SalesFlowDiagram.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 73,
-    "domain": "components"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_wallet_components_AnalyticsDashboard_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para AnalyticsDashboard.\", \"dependencies\": [\"react\", \"@/components/ui/card\", \"@/lib/wallet/types\"], \"domain\": \"UI\", \"exports\": [\"AnalyticsDashboard\"], \"id\": \"src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx\", \"name\": \"AnalyticsDashboard.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico AnalyticsDashboard.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con AnalyticsDashboard.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 31,
-    "domain": "components"
-  }
-}

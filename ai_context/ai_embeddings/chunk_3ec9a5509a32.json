@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_solución_3__agregar_policy_para_admin_update_en__profiles___crítica_",
-  "content": "### SOLUCIÓN 3: Agregar policy para Admin UPDATE en `profiles` (CRÍTICA)\n\n```sql\n-- NUEVA policy para permitir que Admins editen perfiles de otros usuarios\nCREATE POLICY \"Admin can manage any profile\"\n  ON public.profiles\n  FOR ALL\n  USING (is_admin())\n  WITH CHECK (is_admin());\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "SOLUCIÓN 3: Agregar policy para Admin UPDATE en `profiles` (CRÍTICA)"
-  }
-}

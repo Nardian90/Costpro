@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION__qué_cambió_en_el_frontend_",
-  "content": "### ¿Qué cambió en el frontend?\n\n**Respuesta:** Nada nuevo. El campo `is_active` ya estaba en el payload.\n**Archivo:** `src/components/views/terminal/views/users/useUsersView.ts` (línea ~78)\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "¿Qué cambió en el frontend?"
-  }
-}

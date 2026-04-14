@@ -1,8 +1,0 @@
-{
-  "id": "STORE_RESET_AUDIT_1__nivel_base__base_de_datos__supabase_",
-  "content": "### 1. Nivel Base: Base de Datos (Supabase)\n- **Componente:** Función RPC `reset_store_data`.\n- **Lógica:** Borrado en cascada manual de:\n    - Ventas y sus ítems (`transactions`, `transaction_items`, `sales`, `sale_items`).\n    - Recepciones y sus ítems (`receipts`, `receipt_items`).\n    - Inventario y Movimientos (`stock_movements`, `inventory`, `inventory_batches`, `inventory_snapshots`).\n    - Ajustes y Transferencias.\n    - Catálogo de productos local de la tienda (`products`, `product_variants`).\n    - Logs operativos (`audit_logs`, `report_runs`, `sync_log`).\n- **Seguridad:** Configurada como `SECURITY DEFINER` con `search_path = public` para garantizar la ejecución de borrados masivos sin bloqueos por RLS, asegurando la integridad referencial.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/STORE_RESET_AUDIT.md",
-    "header": "1. Nivel Base: Base de Datos (Supabase)"
-  }
-}

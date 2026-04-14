@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_2____error_403_rls_en_tabla__inventory_____",
-  "content": "### 2. **Error 403 RLS en Tabla `inventory`** 🔴\n**Severidad:** CRÍTICA\n**Ubicación:** Backend (Supabase RLS policies)\n\n**Problema:**\n- Tabla `inventory` tiene RLS habilitado ✓ (correcto)\n- **PERO** el componente intenta actualizar directamente con `upsert`:\n```tsx\nconst { error } = await supabase\n    .from('inventory')\n    .upsert({ store_id: user.store_id, product_id: product.id, quantity: newTotalStock, ... })\n```\n- RLS bloquea porque:\n  - No existe RPC con `SECURITY DEFINER`\n  - El cliente intenta escribir directamente (prohibited)\n  - **Solución:** RPC con `SECURITY DEFINER` (`register_reception`)\n\n**Código Actual (VULNERABLE):**\n```typescript\n// ❌ DIRECTO A TABLA RLS - GENERARÁ 403\nawait supabase.from('inventory').upsert({ ... })\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "2. **Error 403 RLS en Tabla `inventory`** 🔴"
-  }
-}

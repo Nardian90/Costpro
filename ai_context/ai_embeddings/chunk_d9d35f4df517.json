@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_HealthBattery_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para HealthBattery.\", \"dependencies\": [\"react\", \"@/lib/utils\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/HealthBattery.tsx\", \"name\": \"HealthBattery.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico HealthBattery.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con HealthBattery.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 168,
-    "domain": "components"
-  }
-}

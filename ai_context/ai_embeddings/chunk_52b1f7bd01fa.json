@@ -1,8 +1,0 @@
-{
-  "id": "RECOMMENDATIONS_MATCHING_ENGINE_4__mejora_en_la_retroalimentación_de_errores__fail_reason_detail_",
-  "content": "## 4. Mejora en la Retroalimentación de Errores (Fail Reason Detail)\n\n**Problema:** \"FALTA STOCK VIRTUAL\" es demasiado genérico.\n\n**Solución Propuesta:**\n- El motor debe identificar qué producto específico detuvo la combinación.\n- Ejemplo: \"FALTA STOCK VIRTUAL: No hay existencias de 'Refresco 330ml' ni de sus paquetes ancestros.\"\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/RECOMMENDATIONS_MATCHING_ENGINE.md",
-    "header": "4. Mejora en la Retroalimentación de Errores (Fail Reason Detail)"
-  }
-}

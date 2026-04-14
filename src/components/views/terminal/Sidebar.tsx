@@ -233,7 +233,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           isActive ? "text-primary-foreground" : "text-muted-foreground/50 group-hover:text-primary"
         )} />
         <span className={cn(
-          "text-[10px] font-black uppercase tracking-[0.2em] truncate",
+          "text-[10px] sm:text-[11px] lg:text-xs font-black uppercase tracking-[0.2em] truncate",
           isActive ? "translate-x-1" : "group-hover:translate-x-1"
         )}>
           {item.label}
@@ -341,7 +341,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         {onClose && !focusedModuleId && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="absolute top-4 right-4 z-50 p-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             aria-label="Cerrar menú lateral"
           >
             <X className="w-5 h-5" />

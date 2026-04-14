@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_1__iniciar_sesión",
-  "content": "### 1. Iniciar Sesión\n1. Ingresa a `/login`\n2. Selecciona una cuenta de demo o ingresa credenciales\n3. Haz clic en \"Iniciar Sesión\"\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "1. Iniciar Sesión"
-  }
-}

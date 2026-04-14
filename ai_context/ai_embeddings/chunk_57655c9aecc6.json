@@ -1,8 +1,0 @@
-{
-  "id": "ARCHITECTURE_MAINTENANCE_PIPELINE_3_3_capa_documental__iso___diátaxis_",
-  "content": "### 3.3 Capa Documental (ISO + Diátaxis)\n- `knowledge/docs/tutorials/` (Aprendizaje guiado)\n- `knowledge/docs/how-to/` (Guías de tareas)\n- `knowledge/docs/reference/` (Especificación técnica)\n- `knowledge/docs/explanation/` (Conceptos y decisiones)\n- `knowledge/iso_manual/` (Manual conforme a ISO/IEC 26514)\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ARCHITECTURE_MAINTENANCE_PIPELINE.md",
-    "header": "3.3 Capa Documental (ISO + Diátaxis)"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "SUPABASE_CONTEXT_supabase_context_for_costpro_audit_system",
-  "content": "# Supabase Context for CostPro Audit System\n\nThis document provides a comprehensive overview of the Supabase backend configuration, with a specific focus on the systems and data structures that support the application's audit trail functionality.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SUPABASE_CONTEXT.md",
-    "header": "Supabase Context for CostPro Audit System"
-  }
-}

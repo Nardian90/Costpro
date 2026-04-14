@@ -546,7 +546,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 {/* Right side: Summary */}
                 <div className="lg:col-span-1 w-full lg:sticky top-24">
                     <div className="table-scroll-wrapper !p-0">
-                        <div className="neu-card border-primary/20 bg-primary/5 space-y-4 min-w-[300px]">
+                        <div className="neu-card border-primary/20 bg-primary/5 space-y-4 min-w-0 w-full sm:min-w-[300px]">
                             <h3 className="font-bold text-lg text-primary uppercase tracking-tighter">Resumen de Recepción</h3>
                             <div className="flex flex-wrap justify-between items-center gap-2">
                                 <span className="text-muted-foreground font-bold text-xs uppercase tracking-widest">Total Items</span>

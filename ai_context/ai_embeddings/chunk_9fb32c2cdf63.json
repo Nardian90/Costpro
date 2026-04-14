@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_usage_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para usage-service.\", \"dependencies\": [\"@/lib/supabaseClient\"], \"domain\": \"Domain\", \"exports\": [\"UsageAction\", \"usageService\"], \"id\": \"src/services/usage-service.ts\", \"name\": \"usage-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico usage-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar usage-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 314,
-    "domain": "components"
-  }
-}

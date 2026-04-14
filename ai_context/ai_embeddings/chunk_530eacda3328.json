@@ -1,8 +1,0 @@
-{
-  "id": "README_POS___contribución",
-  "content": "## 🤝 Contribución\n\nEste es un sistema de demostración. Para producción:\n1. Implementar backend con Supabase\n2. Agregar autenticación real\n3. Implementar CRUD de datos\n4. Agregar tests automatizados\n5. Optimizar para producción\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "🤝 Contribución"
-  }
-}

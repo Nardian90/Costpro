@@ -1,8 +1,0 @@
-{
-  "id": "STORE_RESET_AUDIT_evaluación_del_trabajo",
-  "content": "## Evaluación del Trabajo\n**Calificación:** 10/10\n\n**Justificación:**\n- **Precisión:** Se cumplió estrictamente con la restricción de \"no tocar usuarios, roles ni permisos\".\n- **UX/UI:** El botón se integra perfectamente con el diseño existente y el modal previene ejecuciones accidentales mediante una advertencia clara.\n- **Arquitectura:** El uso de una RPC atómica evita inconsistencias de datos (orphan records) que podrían ocurrir con borrados individuales desde el cliente.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/STORE_RESET_AUDIT.md",
-    "header": "Evaluación del Trabajo"
-  }
-}

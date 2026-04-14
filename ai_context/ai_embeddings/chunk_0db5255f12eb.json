@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_3__coherence_and_auditing",
-  "content": "### 3. Coherence and Auditing\nThe `audit_logs` and `inventory_snapshots` tables provide a good foundation for auditing, but they could be better integrated with the `stock_movements` table. A more coherent and standardized approach to logging would improve the reliability of the audit trail.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "3. Coherence and Auditing"
-  }
-}

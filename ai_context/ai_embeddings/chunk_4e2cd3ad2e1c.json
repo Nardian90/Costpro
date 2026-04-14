@@ -1,8 +1,0 @@
-{
-  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_2__matriz_de_riesgo_actualizada",
-  "content": "## 2. Matriz de Riesgo Actualizada\n\n| Riesgo | Nivel Inicial | Nivel Post-Audit | Estado |\n| :--- | :--- | :--- | :--- |\n| Acceso Cruzado (IDOR) | Crítico | Despreciable | ✅ Mitigado (RLS + RPC Check) |\n| Inconsistencia WAC/CPP | Alto | Inexistente | ✅ Verificado (Match 100%) |\n| Duplicidad de Movimientos | Medio | Inexistente | ✅ Idempotencia Hardened |\n| Destrucción de Datos RBAC | Crítico | Bajo | ✅ Remediado (Strict RBAC) |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
-    "header": "2. Matriz de Riesgo Actualizada"
-  }
-}

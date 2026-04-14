@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv_intelligence_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para intelligence.\", \"dependencies\": [\"../dexie\"], \"domain\": \"Domain\", \"exports\": [\"calculatePriceEffectiveness\", \"suggestAlternativePrice\", \"checkWildcardCandidate\", \"calculateDynamicPriority\"], \"id\": \"src/lib/ipv/intelligence.ts\", \"name\": \"intelligence.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico intelligence.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar intelligence.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 424,
-    "domain": "components"
-  }
-}

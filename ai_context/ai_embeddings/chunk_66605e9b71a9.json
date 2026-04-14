@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_data_template_repair_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-repair.\", \"dependencies\": [\"@/contracts/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-repair.ts\", \"name\": \"template-repair.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-repair.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-repair.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 410,
-    "domain": "components"
-  }
-}

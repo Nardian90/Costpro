@@ -255,4 +255,87 @@ describe('solveForTarget', () => {
     const result = solveForTarget(mockData, '14.1', 2400, '13.1');
     expect(result).toBeCloseTo(2000, 2);
   });
+
+  it('should handle vhFormula on variable row (real template scenario)', () => {
+    // This mimics the real cost sheet structure:
+    // 12.1 = cost (fixed 817.69)
+    // 13.1 = utility = ref('12.1') * 0.3 (has vhFormula too)
+    // 13.2 = price before tax = ref('12.1') + ref('13.1')
+    // 13.3 = tax = ref('13.2') / 0.9 * 0.1
+    // 14.1 = final price = ref('13.2') + ref('13.3')
+    const mockData: CostSheetData = {
+      header: { ...BASE_HEADER, quantity: 1 },
+      sections: [
+        {
+          id: 'S1',
+          rows: [
+            {
+              id: '12.1',
+              classification: '12.1',
+              label: 'Total Cost',
+              valorHistorico: 817.69,
+              calculationMethod: 'ValorFijo'
+            },
+            {
+              id: '13.1',
+              classification: '13.1',
+              label: 'Utilidad',
+              formula: 'ref("12.1") * 0.3',
+              vhFormula: 'vh("12.1") * 0.3',
+              calculationMethod: 'FORMULA'
+            },
+            {
+              id: '13.2',
+              classification: '13.2',
+              label: 'Precio antes de Impuesto',
+              formula: 'ref("12.1") + ref("13.1")',
+              vhFormula: 'vh("12.1") + vh("13.1")',
+              calculationMethod: 'FORMULA'
+            },
+            {
+              id: '13.3',
+              classification: '13.3',
+              label: 'Impuesto',
+              formula: 'ref("13.2") / 0.9 * 0.1',
+              vhFormula: 'vh("13.2") / 0.9 * 0.1',
+              calculationMethod: 'FORMULA'
+            },
+            {
+              id: '14.1',
+              classification: '14.1',
+              label: 'Precio Final',
+              formula: 'ref("13.2") + ref("13.3")',
+              vhFormula: 'vh("13.2") + vh("13.3")',
+              calculationMethod: 'FORMULA'
+            }
+          ]
+        }
+      ],
+      annexes: [],
+      signature: { prepared_by: '', approved_by: '' }
+    };
+
+    // When utilidad=0:
+    // 13.2 = 817.69 + 0 = 817.69
+    // 13.3 = 817.69 / 9 = 90.85
+    // 14.1 = 817.69 + 90.85 = 908.54
+    // Target 1999: need 14.1 = 1999
+    // 14.1 = (12.1 + 13.1) * 10/9
+    // 1999 = (817.69 + U) * 10/9
+    // 1999 * 9/10 = 817.69 + U
+    // 1799.1 = 817.69 + U
+    // U = 981.41
+    const targetPrice = 1999;
+    const result = solveForTarget(mockData, '14.1', targetPrice, '13.1');
+
+    // Verify: the utilidad should be approximately 981.41
+    expect(result).toBeCloseTo(981.41, 0);
+
+    // Verify by manual calculation:
+    // 14.1 = (817.69 + result) + (817.69 + result) / 9
+    // = (817.69 + result) * (1 + 1/9)
+    // = (817.69 + result) * 10/9
+    const achieved = (817.69 + result) * (10 / 9);
+    expect(achieved).toBeCloseTo(targetPrice, 0);
+  });
 });

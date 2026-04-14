@@ -1,8 +1,0 @@
-{
-  "id": "SOLUCION_APLICADA_STATUS_fase_2__validar_multi_tenant__5_min_",
-  "content": "### Fase 2: Validar Multi-tenant (5 min)\n\n```typescript\n// Test como User (no admin) en Store A\nconst { data: storesViewedByUser } = useStores(userId, false, false);\nconsole.log(storesViewedByUser.length); // Esperado: 1 (solo Store A)\n\n// Intentar acceder a Store B (no miembro)\n// Debería no aparecer en listado\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
-    "header": "Fase 2: Validar Multi-tenant (5 min)"
-  }
-}

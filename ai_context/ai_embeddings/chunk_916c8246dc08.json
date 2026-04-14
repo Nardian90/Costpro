@@ -1,8 +1,0 @@
-{
-  "id": "reference_costsheetview_tsx",
-  "content": "## CostSheetView.tsx\n**Ruta:** `src/components/views/terminal/views/cost_sheet/CostSheetView.tsx`\n\n**Acciones disponibles:** handleBottomAction, handleExportExcel, handleExportJSON, handleExportPDF, handleImportJSON, handleQuickGenerate, handleSetActiveSection, handleSetViewMode, onOpenAnnexes, onOpenSections\n\n**Salidas esperadas:** Card List, Chart, Summary Panel, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "CostSheetView.tsx"
-  }
-}

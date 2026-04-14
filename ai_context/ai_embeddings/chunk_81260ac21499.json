@@ -1,8 +1,0 @@
-{
-  "id": "CHANGELOG_fixed",
-  "content": "### Fixed\n- Corregida la firma de la función `has_role` en las políticas RLS de Transferencias.\n- Añadida sobrecarga de la función `has_role(uuid, user_role)` para soportar llamadas explícitas con ID de usuario, mejorando la compatibilidad con políticas de seguridad legacy.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/CHANGELOG.md",
-    "header": "Fixed"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___calculations_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para calculations.test.\", \"dependencies\": [\"vitest\", \"../calculations\", \"@/lib/dexie\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/calculations.test.ts\", \"name\": \"calculations.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico calculations.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar calculations.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 434,
-    "domain": "components"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_tools_registry_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para registry.test.\", \"dependencies\": [\"vitest\", \"./registry\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ai/tools/registry.test.ts\", \"name\": \"registry.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico registry.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar registry.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 452,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V5_7_25_b__seguridad_y_gestión_de_identidad",
-  "content": "### B. Seguridad y Gestión de Identidad\n*   **Hardening de Perfiles:** Refactorización de políticas RLS para usar funciones `SECURITY DEFINER`, eliminando riesgos de recursión infinita en la tabla `profiles`.\n*   **Onboarding Automatizado:** Los nuevos usuarios reciben el rol `costo` por defecto, permitiendo un acceso inmediato pero restringido a las herramientas de costeo sin intervención administrativa.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V5_7_25.md",
-    "header": "B. Seguridad y Gestión de Identidad"
-  }
-}

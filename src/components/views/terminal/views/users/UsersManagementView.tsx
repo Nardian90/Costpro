@@ -148,7 +148,7 @@ export default function UsersManagementView() {
                         defaultValue={u.plan || 'free'}
                         onValueChange={(val) => handleUpdatePlan(u.id, val)}
                       >
-                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase">
+                        <SelectTrigger className="w-[100px] h-10 text-[10px] font-black uppercase">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

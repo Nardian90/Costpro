@@ -232,65 +232,59 @@ export default function TerminalShell() {
     return renderView(currentView);
   };
 
-  const isIntegroView = currentView === 'help';
-
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
-      {!isIntegroView && (
-        <Sidebar
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        sidebarSearch={sidebarSearch}
+        setSidebarSearch={setSidebarSearch}
+        navigationItems={nav.navigationItems}
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        onPrefetchView={handlePrefetchView}
+        onLogout={handleLogout}
+        logoHeight={nav.logoHeight}
+        logoOpacity={nav.logoOpacity}
+        logoScale={nav.logoScale}
+        navRef={nav.navRef}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <main id="main-content" className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-all duration-300 ease-in-out", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
+        <Header
           sidebarOpen={sidebarOpen}
-          sidebarSearch={sidebarSearch}
-          setSidebarSearch={setSidebarSearch}
-          navigationItems={nav.navigationItems}
+          toggleSidebar={toggleSidebar}
           currentView={currentView}
+          navigationItems={nav.navigationItems}
           onViewChange={handleViewChange}
-          onPrefetchView={handlePrefetchView}
-          onLogout={handleLogout}
-          logoHeight={nav.logoHeight}
-          logoOpacity={nav.logoOpacity}
-          logoScale={nav.logoScale}
-          navRef={nav.navRef}
-          onClose={() => setSidebarOpen(false)}
+          user={user}
+          allStores={allStores}
+          handleSetActiveStore={async (id) => {
+            try {
+              // Update local state first for immediate UI response
+              updateUser({ activeStoreId: id });
+              // Persist to DB
+              await userService.setActiveStore(user.id, id);
+              toast.success('Sucursal actualizada correctamente');
+
+              // Invalidate all store-dependent queries
+              queryClient.invalidateQueries({ queryKey: ['products'] });
+              queryClient.invalidateQueries({ queryKey: ['transactions'] });
+              queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+              queryClient.invalidateQueries({ queryKey: ['inventory'] });
+              queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+              queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
+
+            } catch (error) {
+              console.error('Error al cambiar de sucursal:', error);
+              toast.error('No se pudo persistir el cambio de sucursal');
+            }
+          }}
         />
-      )}
-
-      <main className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-all duration-300 ease-in-out", sidebarOpen && !isMobile && "pl-64 lg:pl-72")}>
-        {!isIntegroView && (
-          <Header
-            sidebarOpen={sidebarOpen}
-            toggleSidebar={toggleSidebar}
-            currentView={currentView}
-            navigationItems={nav.navigationItems}
-            onViewChange={handleViewChange}
-            user={user}
-            allStores={allStores}
-            handleSetActiveStore={async (id) => {
-              try {
-                // Update local state first for immediate UI response
-                updateUser({ activeStoreId: id });
-                // Persist to DB
-                await userService.setActiveStore(user.id, id);
-                toast.success('Sucursal actualizada correctamente');
-
-                // Invalidate all store-dependent queries
-                queryClient.invalidateQueries({ queryKey: ['products'] });
-                queryClient.invalidateQueries({ queryKey: ['transactions'] });
-                queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-                queryClient.invalidateQueries({ queryKey: ['inventory'] });
-                queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
-                queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-
-              } catch (error) {
-                console.error('Error al cambiar de sucursal:', error);
-                toast.error('No se pudo persistir el cambio de sucursal');
-              }
-            }}
-          />
-        )}
 
         <div className={cn(
           "px-0 pt-0 pb-0 flex-1 overflow-x-hidden terminal-content",
-          isIntegroView ? "p-0" : "px-0 sm:p-8 lg:p-12 pb-32"
+          currentView === 'help' ? "p-0" : "px-0 sm:p-8 lg:p-12 pb-32"
         )}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -327,7 +321,7 @@ export default function TerminalShell() {
 
       <CreateProductModal />
       <CommandPalette />
-      {currentView !== 'pos' && !isIntegroView && <ChatBot />}
+      {currentView !== 'pos' && currentView !== 'help' && <ChatBot />}
       {currentView !== "pos" && <FloatingCalculator />}
     </div>
   );

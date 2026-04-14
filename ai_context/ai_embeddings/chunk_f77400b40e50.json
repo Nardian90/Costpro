@@ -1,8 +1,0 @@
-{
-  "id": "ESTRATEGIA_BOT_ENCARGADO_a__infraestructura",
-  "content": "### A. Infraestructura\n*   **Base de Datos (Corazón):** Supabase (PostgreSQL). Utilización de las tablas existentes (`products`, `stock_movements`, `transactions`, `inventory_batches`) mediante vistas optimizadas.\n*   **Cerebro de IA:** Supabase Edge Functions (Deno) conectadas con modelos de lenguaje avanzado (OpenAI GPT-4o o Claude 3.5 Sonnet).\n*   **Capa de Orquestación:** Node.js (Next.js API Routes) para gestionar la lógica de negocio pesada y la integración con servicios de mensajería.\n*   **Canales de Interacción:**\n    *   **UI Nativa:** Widget de chat flotante en la PWA de CostPro.\n    *   **Push:** Integración con Telegram/Slack para notificaciones de \"empuje\" (proactivas).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
-    "header": "A. Infraestructura"
-  }
-}

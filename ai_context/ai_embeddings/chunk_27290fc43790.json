@@ -1,8 +1,0 @@
-{
-  "id": "INTEGRITY_REPORT_technical_audit_findings",
-  "content": "## Technical Audit Findings\n- **Automated Audit**: `python3 scripts/audit-agent.py` executed successfully. Updated `docs/mapa_vistas.md`.\n- **Test Suite**: 147/148 tests passed.\n- **Issue Detected**: `src/lib/ipv/__tests__/bigbon_simulation.test.ts` is failing.\n  - *Description*: The decomposition logic in `MatchingEngine.createLine` (engine.ts) appears to have a logical error where it only triggers decomposition if the *virtual* stock is less than the requested quantity, instead of when the *physical* stock is less than the requested quantity.\n  - *Constraint*: As a maintenance agent, I am restricted from modifying production code in `src/lib/`, so this remains as a documented architectural observation for the development team.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INTEGRITY_REPORT.md",
-    "header": "Technical Audit Findings"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_query_inspector_utils_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para query-inspector-utils.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"formatPostgrestUrlToSql\", \"formatRpcToSql\"], \"id\": \"src/lib/query-inspector-utils.ts\", \"name\": \"query-inspector-utils.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico query-inspector-utils.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar query-inspector-utils.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 375,
-    "domain": "components"
-  }
-}

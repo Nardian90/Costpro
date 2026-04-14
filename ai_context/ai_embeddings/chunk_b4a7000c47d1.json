@@ -1,8 +1,0 @@
-{
-  "id": "ESTRATEGIA_BOT_ENCARGADO_8__probabilidad_de_éxito_end",
-  "content": "## 8. Probabilidad de Éxito\n**Puntaje: 10/10**\n\n**Justificación:**\nCostPro cuenta con una base sólida de datos (Kardex, histórico de transacciones, RLS robusto). Como agente Eli, tengo acceso completo para implementar las funciones de base de datos (RPC), configurar las Edge Functions de Supabase y desarrollar la interfaz en React. La integración no requiere cambios estructurales masivos, sino \"reforzar los pilares\" existentes con una capa de inteligencia conversacional.\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
-    "header": "8. Probabilidad de Éxito"
-  }
-}

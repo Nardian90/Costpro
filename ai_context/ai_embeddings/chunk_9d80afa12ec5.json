@@ -1,8 +1,0 @@
-{
-  "id": "SKU_ENFORCEMENT_AUDIT_conclusión__end",
-  "content": "### Conclusión:\nEl sistema ahora garantiza que no existan productos sin SKU en ninguna de las etapas críticas de su ciclo de vida (creación, importación o recepción).\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SKU_ENFORCEMENT_AUDIT.md",
-    "header": "Conclusión:"
-  }
-}

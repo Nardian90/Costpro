@@ -1,8 +1,0 @@
-{
-  "id": "reference_walletview_tsx",
-  "content": "## WalletView.tsx\n**Ruta:** `src/components/views/terminal/views/wallet/WalletView.tsx`\n\n**Acciones disponibles:** handleImport\n\n**Salidas esperadas:** Card List, Chart, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "WalletView.tsx"
-  }
-}

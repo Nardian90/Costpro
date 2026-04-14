@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTIVE_SUMMARY_RLS_FIX___seguridad",
-  "content": "## 🔐 SEGURIDAD\n\n✅ **No hay relajamiento de seguridad:**\n- RLS sigue activo\n- Multi-tenant aislamiento intacto\n- `is_admin()` solo para admins reales\n- Audit trail completo\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
-    "header": "🔐 SEGURIDAD"
-  }
-}

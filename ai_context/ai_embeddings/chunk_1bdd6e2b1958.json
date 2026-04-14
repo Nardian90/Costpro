@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_gestión_de_productos_y_precios",
-  "content": "## Gestión de Productos y Precios\n**Propósito:** Mantener un catálogo actualizado para la automatización del matching.\n\n**Acciones clave:**\n- Crear o importar productos\n- Definir variaciones permitidas\n- Organizar por grupos y subgrupos\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "Gestión de Productos y Precios"
-  }
-}

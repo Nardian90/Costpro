@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_wiki_data_loader_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para data-loader.\", \"dependencies\": [\"./types\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/wiki/data-loader.ts\", \"name\": \"data-loader.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico data-loader.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar data-loader.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 118,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_rolesmanagementview",
-  "content": "## RolesManagementView\n**Propósito:** Interfaz para gestionar RolesManagementView.\n\n**Acciones clave:**\n- handleCreate\n- handleDelete\n- handleEdit\n- handleSubmit\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "RolesManagementView"
-  }
-}

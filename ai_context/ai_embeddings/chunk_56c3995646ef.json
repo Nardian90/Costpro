@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_AUDIT_recomendaciones_",
-  "content": "### Recomendaciones:\n*   **Introducir Testing:** Configurar Vitest para unit tests de stores/hooks y Playwright para el flujo crítico de venta (POS).\n*   **Zod Integration:** Validar las entradas de formularios y las respuestas de Supabase RPCs.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FRONTEND_AUDIT.md",
-    "header": "Recomendaciones:"
-  }
-}

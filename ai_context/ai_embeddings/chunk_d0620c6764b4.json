@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTIVE_SUMMARY_RLS_FIX_documentación_generada_",
-  "content": "### Documentación Generada:\n\n- **`DIAGNOSTICO_CRITICO_RLS.md`** - Análisis técnico completo\n- **`TESTING_MANUAL_RLS_FIXES.md`** - Guía de validación paso-a-paso\n- **`supabase/migrations/20260209_fix_critical_rls_issues.sql`** - Script aplicado\n- **`supabase/VERIFICATION_TESTS.sql`** - Queries de validación\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
-    "header": "Documentación Generada:"
-  }
-}

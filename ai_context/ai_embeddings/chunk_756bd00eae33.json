@@ -1,8 +1,0 @@
-{
-  "id": "STORE_RESET_AUDIT_2__capa_de_servicio_y_lógica__frontend_",
-  "content": "### 2. Capa de Servicio y Lógica (Frontend)\n- **Servicio:** Extensión de `storeService` con el método `resetStore`.\n- **Hook:** Actualización de `useStoresView` para gestionar el nuevo estado `reset`.\n- **UI:**\n    - Inserción del botón \"Reiniciar\" en la tarjeta de sucursal (exclusivo para Admins).\n    - Modal de confirmación robusto con advertencias visuales (Lucide `AlertTriangle`) y estilo semántico (naranja/peligro).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/STORE_RESET_AUDIT.md",
-    "header": "2. Capa de Servicio y Lógica (Frontend)"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "RECOMMENDATIONS_MATCHING_ENGINE_3__editor_de_parámetros_de_reglas__meta_config_",
-  "content": "## 3. Editor de Parámetros de Reglas (Meta-Config)\n\n**Problema:** Las reglas `PRICE_FLEX` y `CASH_FILL` tienen parámetros internos (límites de variación, límites diarios) que no son editables por el usuario.\n\n**Solución Propuesta:**\n- Ampliar el `MatchingRulesEditor.tsx` para que, al expandir una regla, permita editar su objeto `meta`.\n- Ejemplo para `PRICE_FLEX`: Input para \"Variación Máxima (%)\" y \"Variación Máxima ($)\".\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/RECOMMENDATIONS_MATCHING_ENGINE.md",
-    "header": "3. Editor de Parámetros de Reglas (Meta-Config)"
-  }
-}

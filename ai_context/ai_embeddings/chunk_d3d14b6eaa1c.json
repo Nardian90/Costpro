@@ -1,8 +1,0 @@
-{
-  "id": "PERFORMANCE_GUIDELINES_smart_prefetching_end",
-  "content": "### Smart Prefetching\n- Prefetch critical data on user intent (e.g., `onMouseEnter` on sidebar items).\n- Prefetch essential context data (Products, Dashboard) upon terminal initialization.\n\n---\n\n*Note: This document is part of the system's maturity model. Regressions against these rules must be documented and justified.*\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
-    "header": "Smart Prefetching"
-  }
-}

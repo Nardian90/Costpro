@@ -1,8 +1,0 @@
-{
-  "id": "ALMACEN_AUDIT_BEFORE_evaluación_por_componente",
-  "content": "## Evaluación por Componente\n\n| Componente | Estado | Fortalezas | Debilidades |\n| --- | --- | --- | --- |\n| **CatalogView** | 10.0 | Excelente uso de responsive typography y colores corporativos. | Ninguna identificada. |\n| **InventoryView** | 10.0 | Implementación completa de estándares. | Ninguna identificada. |\n| **ProductReceptionView** | 8.5 | Buena estructura y touch targets. | Falta `clamp()` en headers. |\n| **StoreModals** | 5.0 | Estructura funcional correcta. | Falta de colores corporativos, touch targets pequeños y tipografía rígida. |\n| **InventoryCardView** | 6.5 | Layout responsivo. | Ausencia de colores corporativos (`text-primary`). |\n| **Hooks (useStores, useReceptions)** | 3.0 | Funcionalidad correcta. | Baja puntuación por ser lógica pura, pero el módulo se beneficia de estandarización. |\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ALMACEN_AUDIT_BEFORE.md",
-    "header": "Evaluación por Componente"
-  }
-}

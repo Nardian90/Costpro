@@ -454,8 +454,8 @@ const template: any = {
           "label": "Precio o Tarifa Final",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('13.2') + ref('13.3')",
-          "formula": "ref('13.3') + ref('13.3')",
-          "vhFormula": "vh('13.3') + vh('13.3')"
+          "formula": "ref('13.2') + ref('13.3')",
+          "vhFormula": "vh('13.2') + vh('13.3')"
         }
       ]
     },

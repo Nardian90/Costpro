@@ -1,8 +1,0 @@
-{
-  "id": "INVERSION_FIX_REPORT_estado_de_la_situación",
-  "content": "## Estado de la Situación\n- **Problema Reportado:** Al intentar \"Invertir\" una venta, el estado del documento no cambia a \"Anulado\" y no se visualiza el movimiento de ajuste en el módulo de inventario.\n- **Evaluación Inicial (Antes):** 2/10 (El proceso fallaba silenciosamente en la base de datos).\n- **Porcentaje de Error:** 100% (Ninguna inversión se completaba correctamente en el estado del documento).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVERSION_FIX_REPORT.md",
-    "header": "Estado de la Situación"
-  }
-}

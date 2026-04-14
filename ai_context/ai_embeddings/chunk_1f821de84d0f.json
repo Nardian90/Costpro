@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_2____formulario_de_recepción__sin_validaciones____",
-  "content": "### 2. **Formulario de Recepción: Sin Validaciones** 🟠\n**Severidad:** MEDIA\n\n**Problemas:**\n- ❌ No valida que recepción no esté vacía\n- ❌ No valida cantidad > 0\n- ❌ No valida campos obligatorios\n- ❌ Sin confirmación de peligro antes de guardar\n\n**Comparativo (Old Project):**\n```javascript\n// OLD PROJECT - Validación completa ✓\nif (!supplier || !ref)\n    return Swal.fire('Error', 'Faltan detalles de recepción', 'error');\n\nif (this.receiptItems.length === 0)\n    return Swal.fire('Error', 'Lista vacía', 'error');\n\n// NUEVO PROYECTO - Sin validaciones ❌\nconst processReception = async () => {\n    if (receptionItems.size === 0) return;  // Silencioso\n    // Sin validar campos\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "2. **Formulario de Recepción: Sin Validaciones** 🟠"
-  }
-}

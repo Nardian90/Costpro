@@ -1,8 +1,0 @@
-{
-  "id": "reference_helpview_tsx",
-  "content": "## HelpView.tsx\n**Ruta:** `src/components/views/terminal/views/help/HelpView.tsx`\n\n**Salidas esperadas:** Card List\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "HelpView.tsx"
-  }
-}

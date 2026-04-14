@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_sales_TransactionDetailsModal_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para TransactionDetailsModal.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"@/components/ui/table\", \"@/components/ui/badge\", \"@/lib/utils\", \"date-fns\", \"date-fns/locale\", \"@/types\", \"@/hooks/api/useTaxes\", \"@/store\", \"@/lib/supabaseClient\", \"sonner\", \"@tanstack/react-query\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"TransactionDetailsModal\"], \"id\": \"src/components/views/terminal/views/sales/TransactionDetailsModal.tsx\", \"name\": \"TransactionDetailsModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico TransactionDetailsModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con TransactionDetailsModal.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 83,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___matching_rules_",
-  "content": "### Tabla: `matching_rules`\n**Índices:** `&id, tipo, prioridad`\n\n```typescript\n// Interface: MatchingRule\ninterface MatchingRule {\n  id: string;\n  tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL' | 'PRICE_FLEX' | 'WILDCARDS' | 'GOAL_WITH_TOLERANCE' | 'STOCK_LIMIT';\n  tolerancia_cents?: number;   // en pesos, aplicable a TOLERANCE\n  prioridad: number;\n  activo: boolean;\n  meta?: Record<string, any>;\n  descripcion?: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `matching_rules`"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_adapters_qwen_adapter_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para qwen-adapter.\", \"dependencies\": [\"../types\"], \"domain\": \"Integration\", \"exports\": [\"QwenAdapter\"], \"id\": \"src/lib/ai/adapters/qwen-adapter.ts\", \"name\": \"qwen-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico qwen-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar qwen-adapter.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 442,
-    "domain": "components"
-  }
-}

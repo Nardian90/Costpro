@@ -1,8 +1,0 @@
-{
-  "id": "THEME_AUDIT_MARCH_2024_mejoras_implementadas",
-  "content": "### Mejoras Implementadas\n1.  **Uniformidad Cromática**: Se eliminó la dependencia de `currentColor` en componentes críticos (Master Ring, Health Battery, Telemetría), asegurando que el verde corporativo (`text-primary`) se mantenga vibrante tanto en temas claros como oscuros.\n2.  **Legibilidad en Navegación**: Todos los labels de la barra horizontal (`CostSheetNav`), el dropdown de FC y los paneles laterales (`ActionsPanel`, `SidebarNav`) ahora utilizan el color primario, eliminando el contraste blanco/negro que rompía el diseño.\n3.  **Refuerzo de Marca**: El precio central del anillo maestro ahora es `text-primary`, actuando como el foco visual principal de la ficha con la identidad correcta.\n4.  **Compatibilidad Multi-Tema**: Se verificó mediante revisión de código que las clases utilizadas (`text-primary`, `bg-primary/10`) heredan correctamente las variables de CSS definidas para cada tema, garantizando que en 'Light' el verde sea el color predominante y no el negro.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/THEME_AUDIT_MARCH_2024.md",
-    "header": "Mejoras Implementadas"
-  }
-}

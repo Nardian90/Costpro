@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES___test_6__admin_puede_desactivar_usuario__update_is_active_",
-  "content": "## ✅ TEST 6: Admin PUEDE DESACTIVAR USUARIO (UPDATE is_active)\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "✅ TEST 6: Admin PUEDE DESACTIVAR USUARIO (UPDATE is_active)"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_observability_health_engine_ts",
-  "content": "{\"business_logic\": \"Implementa la l\\u00f3gica central de reconciliaci\\u00f3n de transacciones bancarias con productos del cat\\u00e1logo, manejando descomposiciones y ajustes de precio.\", \"dependencies\": [], \"domain\": \"Engine\", \"exports\": [\"SystemHealthMetrics\", \"SHIResult\", \"HEALTH_THRESHOLDS\", \"calculateSHI\", \"MOCK_SYSTEM_HEALTH_V2\"], \"id\": \"src/lib/observability/health-engine.ts\", \"name\": \"health-engine.ts\", \"technical_description\": \"Motor de conciliaci\\u00f3n IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar health-engine.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 400,
-    "domain": "components"
-  }
-}

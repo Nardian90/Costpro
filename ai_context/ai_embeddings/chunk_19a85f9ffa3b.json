@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_CostProLoader_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostProLoader.\", \"dependencies\": [\"react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"CostProLoader\"], \"id\": \"src/components/ui/CostProLoader.tsx\", \"name\": \"CostProLoader.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostProLoader.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 241,
-    "domain": "components"
-  }
-}

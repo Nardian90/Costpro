@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MATCHING_ENGINE_1__verificación_de_generación_automática_de_reglas",
-  "content": "## 1. Verificación de Generación Automática de Reglas\n\n**Hallazgo:** El motor **genera internamente** ajustes dinámicos que funcionan como reglas heurísticas, pero existe un desacoplamiento visual significativo.\n\n- **Ajustes detectados en el código (`engine.ts`):**\n  - **`PRICE_FLEX` (PASS 3):** Ajusta automáticamente el precio de un producto si no hay match exacto. Bloquea este precio en `dailyAdjustedPrices` para mantener coherencia en el mismo día.\n  - **`TOLERANCE` (PASS 5):** Permite un descuadre controlado (`cuadre_cents`) que se registra en la línea pero no se destaca en la UI de transacciones.\n  - **`CASH_FILL` (PASS 6):** Crea líneas de \"Efectivo\" para cuadrar el saldo restante, usando productos comodín como \"disfraz\".\n  - **Descomposición Recursiva:** El motor descompone automáticamente paquetes (Caja -> Paquete -> Unidad) para satisfacer la demanda de stock sin intervención del usuario.\n\n**Evaluación de sincronización Motor vs UI: 4/10**\n- *Crítica:* El motor es inteligente y resolutivo, pero la UI es \"muda\". El usuario no sabe si una transacción se cuadró por `EXACT_SUM` o porque el motor aplicó un `CASH_FILL` automático. Esto reduce la auditabilidad por parte del humano.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
-    "header": "1. Verificación de Generación Automática de Reglas"
-  }
-}

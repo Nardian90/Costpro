@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_count_InventoryCountTableView_tsx",
-  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx\", \"inputs\": [], \"name\": \"InventoryCountTableView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 30,
-    "domain": "views"
-  }
-}

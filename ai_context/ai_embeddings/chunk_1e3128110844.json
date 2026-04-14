@@ -1,8 +1,0 @@
-{
-  "id": "reference_inventoryadjustmentsview_tsx",
-  "content": "## InventoryAdjustmentsView.tsx\n**Ruta:** `src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx`\n\n**Acciones disponibles:** onRefresh\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "InventoryAdjustmentsView.tsx"
-  }
-}

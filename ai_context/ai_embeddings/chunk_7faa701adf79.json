@@ -1,8 +1,0 @@
-{
-  "id": "reference_posview_tsx",
-  "content": "## POSView.tsx\n**Ruta:** `src/components/views/terminal/views/pos/POSView.tsx`\n\n**Acciones disponibles:** handleClearCart, handleScan, onAddToCart\n\n**Salidas esperadas:** Card List, Summary Panel, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "POSView.tsx"
-  }
-}

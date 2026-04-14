@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_context_menu_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para context-menu.\", \"dependencies\": [\"react\", \"@radix-ui/react-context-menu\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/context-menu.tsx\", \"name\": \"context-menu.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico context-menu.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con context-menu.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 239,
-    "domain": "components"
-  }
-}

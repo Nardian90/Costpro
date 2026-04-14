@@ -1,8 +1,0 @@
-{
-  "id": "LEARNINGS_IPV_MATCHING_initialization_strategy_end",
-  "content": "## Initialization Strategy\n- Using `useEffect` with `useLiveQuery` to check for empty tables ensures data consistency when the app is first loaded.\n- `db.matching_rules.bulkPut(DEFAULT_MATCHING_RULES)` is the standard way to reset/initialize the engine rules.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/LEARNINGS_IPV_MATCHING.md",
-    "header": "Initialization Strategy"
-  }
-}

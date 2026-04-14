@@ -1,8 +1,0 @@
-{
-  "id": "bugs_documentation_9__lógica_de_stock_incompleta_en_ipv__utils_ts_",
-  "content": "## 9. Lógica de Stock Incompleta en IPV (utils.ts)\n- **Descripción**: La función `calculateCurrentStock` solo resta ventas, ignorando entradas o ajustes (`// TODO: En el futuro sumar entradas`).\n- **Impacto**: Cálculo de existencia inexacto en el módulo IPV.\n- **Solución**: Ampliar la lógica para contemplar otros movimientos si están disponibles.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/bugs_documentation.md",
-    "header": "9. Lógica de Stock Incompleta en IPV (utils.ts)"
-  }
-}

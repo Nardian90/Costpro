@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_inventory_InventoryView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para InventoryView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useInventory\", \"lucide-react\", \"sonner\", \"./InventoryCardView\", \"./InventoryTableView\", \"./ProductReceptionView\", \"./InventoryAdjustmentModal\", \"@/types\", \"@/validation/schemas\", \"@/components/ui/ActionMenu\", \"@/components/ui/SearchBar\", \"@/components/ui/atomic\", \"@/components/ui/StateRenderer\", \"@/components/ui/skeleton\", \"@/hooks/ui/useMobile\", \"@/lib/utils\", \"@/components/ui/QueryInspector\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/inventory/InventoryView.tsx\", \"name\": \"InventoryView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico InventoryView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con InventoryView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 79,
-    "domain": "components"
-  }
-}

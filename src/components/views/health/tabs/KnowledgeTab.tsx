@@ -30,7 +30,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[750px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[750px]">
         {/* Sidebar Nav */}
         <div className="lg:col-span-3 space-y-4 flex flex-col">
           <div className="p-2 rounded-[32px] bg-muted/20 border border-border/50">

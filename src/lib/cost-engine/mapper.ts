@@ -32,7 +32,8 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (r.id === '13.2') type = 'TAX';
       if (['14', '12', '5', '14.1'].includes(r.id)) type = 'TOTAL';
 
-      let formula = r.formula || r.totalFormula;
+      // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
+      let formula = r.totalFormula || r.formula;
       const isParent = r.children && r.children.length > 0;
       if (isParent) formula = 'sum(children)';
 
@@ -41,7 +42,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-      if (r.is_percent) formaCalculo = 'COEFICIENTE';
+      if (r.is_percent && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
       if (formula) formaCalculo = 'FORMULA';
 
       let baseCalculo: BaseRef | null = null;
@@ -65,7 +66,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       engineRows.push({
         id: r.id,
         parentId: parentId,
-        classification: r.classification || currentNumbering,
+        classification: r.id || currentNumbering,
         label: r.label,
         um: r.um || r.unit,
         type,

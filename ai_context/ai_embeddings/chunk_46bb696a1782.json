@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST_a__inventario___imágenes__",
-  "content": "### A. INVENTARIO – IMÁGENES ✅\n- [x] Función `getProductImageUrl()` implementada\n- [x] Detección automática URL completa vs Storage path\n- [x] Renderizado de imágenes en tabla (48x48px)\n- [x] Fallback a icono Package si falla\n- [x] Configuración Next.js para dominio Supabase\n- [x] Sin URLs hardcodeadas\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "A. INVENTARIO – IMÁGENES ✅"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION___para_arquitectos___security",
-  "content": "### 🔬 PARA ARQUITECTOS / SECURITY\n\n**3. [`DIAGNOSTICO_CRITICO_RLS.md`](DIAGNOSTICO_CRITICO_RLS.md)** ⭐ **ANÁLISIS PROFUNDO**\n\n- 🔴 Problema 1: `is_admin()` retorna FALSE\n- 🔴 Problema 2: Policies conflictivas en `stores`\n- 🔴 Problema 3: Falta policy en `profiles`\n- 🔴 Problema 4: `is_active` no en payload (resuelto)\n- 💊 Soluciones detalladas (5 opciones)\n- 🧪 Verificación queries\n- 📋 Checklist final\n- ⏱ Duración: 15 min lectura\n\n---\n\n**4. [`POLICIES_BEFORE_AFTER_ANALYSIS.md`](POLICIES_BEFORE_AFTER_ANALYSIS.md)** ⭐ **DEEP DIVE TÉCNICO**\n\n- 📊 Tabla comparativa policies antes/después\n- 🔧 Análisis de funciones (`is_admin()`, `get_my_role()`)\n- 🔐 Validación de seguridad\n- 📈 Impacto por operación (CRUD)\n- 🚨 Edge cases considerados\n- ✅ Validación final\n- ⏱ Duración: 10 min lectura\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "🔬 PARA ARQUITECTOS / SECURITY"
-  }
-}

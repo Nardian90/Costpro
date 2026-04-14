@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_ipv_PivotStatementView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/button\", \"ui/card\"], \"id\": \"src/components/views/terminal/views/ipv/PivotStatementView.tsx\", \"inputs\": [\"Calendar\"], \"name\": \"PivotStatementView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/PivotStatementView.tsx\", \"servicesUsed\": [\"dexie\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 29,
-    "domain": "views"
-  }
-}

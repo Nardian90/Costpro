@@ -1,8 +1,0 @@
-{
-  "id": "reference_rssmanagementview_tsx",
-  "content": "## RSSManagementView.tsx\n**Ruta:** `src/components/views/terminal/views/rss/RSSManagementView.tsx`\n\n**Acciones disponibles:** handleAddFeed, handleAddKeyword, handleDeleteFeed, handleRemoveKeyword, handleToggleFeed\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "RSSManagementView.tsx"
-  }
-}

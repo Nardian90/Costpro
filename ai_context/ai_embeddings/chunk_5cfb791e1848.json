@@ -1,8 +1,0 @@
-{
-  "id": "PROMPTS_2__principios_rectores_de_implementación__front_end__end",
-  "content": "## 2. Principios Rectores de Implementación (Front-end)\n\n1. **Jerarquía Limpia:** Asegurar que las referencias entre filas sean unívocas.\n2. **Normalización:** Estandarizar nombres de funciones (sum, average, pct, round2).\n3. **Memoización:** Congelar valores calculados en memoria para uso como literales en cálculos subsiguientes.\n4. **Casting:** Forzar parseo a Float antes de cualquier operación aritmética.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PROMPTS.md",
-    "header": "2. Principios Rectores de Implementación (Front-end)"
-  }
-}

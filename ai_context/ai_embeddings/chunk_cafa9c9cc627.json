@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_1__stock_consistency",
-  "content": "### 1. Stock Consistency\nThe current schema presents a significant risk of data inconsistency. The `products.stock_current` field is not guaranteed to be in sync with the `inventory` table, which can lead to a variety of operational problems. A database trigger is the most effective way to address this issue.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "1. Stock Consistency"
-  }
-}

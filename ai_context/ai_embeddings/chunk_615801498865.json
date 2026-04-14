@@ -1,8 +1,0 @@
-{
-  "id": "manual_operativo_procedimiento_de_cierre_de_caja_end",
-  "content": "## Procedimiento de Cierre de Caja\n1. El operador debe contar el efectivo físico.\n2. Ingresar el monto en el módulo de Cierre de Caja.\n3. El sistema calculará automáticamente la diferencia contra el total registrado en ventas.\n4. Eli puede asistir explicando discrepancias basadas en las transacciones del día.\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/manual_operativo.md",
-    "header": "Procedimiento de Cierre de Caja"
-  }
-}

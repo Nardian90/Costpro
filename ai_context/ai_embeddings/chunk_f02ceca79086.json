@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_SYSTEM_HARDENING_a__rendimiento__over_fetching_",
-  "content": "### A. Rendimiento (Over-fetching)\n*   **Hallazgo:** Uso de `.select('*')` en `catalog-service.ts` para variantes de productos.\n*   **Mitigación:** Se implementó selección explícita de columnas en todas las consultas del DAL, reduciendo la latencia de red y carga en DB.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_SYSTEM_HARDENING.md",
-    "header": "A. Rendimiento (Over-fetching)"
-  }
-}

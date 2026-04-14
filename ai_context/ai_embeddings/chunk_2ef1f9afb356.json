@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_ScrollToTop_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ScrollToTop.\", \"dependencies\": [\"react\", \"lucide-react\", \"framer-motion\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/ScrollToTop.tsx\", \"name\": \"ScrollToTop.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ScrollToTop.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ScrollToTop.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 249,
-    "domain": "components"
-  }
-}

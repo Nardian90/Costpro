@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_matching_log_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para matching-log-service.\", \"dependencies\": [\"@/lib/dexie\"], \"domain\": \"Domain\", \"exports\": [\"MatchingLogService\"], \"id\": \"src/services/matching-log-service.ts\", \"name\": \"matching-log-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico matching-log-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar matching-log-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 321,
-    "domain": "components"
-  }
-}

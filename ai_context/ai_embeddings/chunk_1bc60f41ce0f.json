@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_AUDIT_REPORT_4__estrategia_de_pruebas__testing___4_10_",
-  "content": "### 4. Estrategia de Pruebas (Testing) (4/10)\n- **Fortalezas:** Existe una suite de tests end-to-end (E2E) con Playwright que cubre flujos de usuario críticos. Esto proporciona una red de seguridad básica para las funcionalidades más importantes.\n- **Debilidades Críticas:**\n    - **Ausencia Total de Tests Unitarios y de Integración:** No hay tests para componentes individuales, hooks personalizados o funciones de utilidad. Lógicas críticas como las del `useCostSheetCalculator` o el `useCartStore` no están probadas de forma aislada, lo que es una omisión grave. La confianza recae exclusivamente en los tests E2E, que son lentos, frágiles y no cubren casos de borde.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/FRONTEND_AUDIT_REPORT.md",
-    "header": "4. Estrategia de Pruebas (Testing) (4/10)"
-  }
-}

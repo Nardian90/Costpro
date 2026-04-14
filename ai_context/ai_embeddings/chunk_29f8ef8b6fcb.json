@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_ipv_IPVReportView_tsx",
-  "content": "{\"actions\": [\"handleAnularReport\", \"handleCloseReport\", \"handleDeleteReport\", \"handleRefreshReport\"], \"components\": [\"ui/BaseModal\", \"ui/LoadingOverlay\", \"ui/badge\", \"ui/button\", \"ui/input\"], \"id\": \"src/components/views/terminal/views/ipv/IPVReportView.tsx\", \"inputs\": [\"Calendar\", \"Input\"], \"name\": \"IPVReportView.tsx\", \"outputs\": [\"Summary Panel\", \"Table\"], \"route\": \"src/components/views/terminal/views/ipv/IPVReportView.tsx\", \"servicesUsed\": [\"dexie\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 25,
-    "domain": "views"
-  }
-}

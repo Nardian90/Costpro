@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_dashboard_RecentCostSheets_tsx",
-  "content": "{\"actions\": [\"handleSelect\"], \"components\": [], \"id\": \"src/components/views/terminal/views/dashboard/RecentCostSheets.tsx\", \"inputs\": [], \"name\": \"RecentCostSheets.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/dashboard/RecentCostSheets.tsx\", \"servicesUsed\": [\"api/useCostSheets\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 8,
-    "domain": "views"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "ALMACEN_AUDIT_BEFORE_hallazgos_principales",
-  "content": "## Hallazgos Principales\n\n1.  **Consistencia de Color:** Varios modales y tarjetas de vista (especialmente en Tiendas e Inventario) no utilizan el color primario corporativo para etiquetas de importancia o estados, lo que resta coherencia visual al sistema.\n2.  **Typography Responsivo:** El uso de `clamp()` es inconsistente. Mientras que las vistas principales lo implementan, los modales y componentes secundarios mantienen tamaños de fuente fijos, lo que afecta la legibilidad en dispositivos muy pequeños o muy grandes.\n3.  **Touch Targets:** Algunos botones y elementos interactivos en los modales no alcanzan el estándar de 44px (w-11 h-11), dificultando la navegación táctil.\n4.  **Directivas de Compilación:** La mayoría de los componentes tienen `'use client'`, pero algunos carecen de la directiva o la tienen sin punto y coma, lo cual es tolerable pero subóptimo.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ALMACEN_AUDIT_BEFORE.md",
-    "header": "Hallazgos Principales"
-  }
-}

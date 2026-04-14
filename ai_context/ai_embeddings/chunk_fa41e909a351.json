@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_POST_REFACTOR_4__performance___costos",
-  "content": "## 4. Performance & Costos\n\n- **Estrategia:** Smart Prefetching en Sidebar y Terminal initialization.\n- **Caching:** Uso de `staleTime` diferenciado por tipo de dato (Static: 5min, Operational: 30s).\n- **Escalabilidad:** Carga infinita implementada en Inventario para manejar grandes catálogos.\n- **Hallazgos:**\n    - ✔️ Reducción de latencia percibida mediante prefetching preventivo.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
-    "header": "4. Performance & Costos"
-  }
-}

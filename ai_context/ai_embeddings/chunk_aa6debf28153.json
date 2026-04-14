@@ -1,8 +1,0 @@
-{
-  "id": "bugs_documentation_6__tipografía_responsiva__falta_de_clamp___en_valores_de_dashboard__statscards_",
-  "content": "## 6. Tipografía Responsiva: Falta de clamp() en Valores de Dashboard (StatsCards)\n- **Descripción**: Los valores numéricos de los KPIs en `IPVView.tsx` no usan tipografía fluida.\n- **Impacto**: Escalamiento visual pobre en móviles.\n- **Solución**: Aplicar `text-[clamp(2.5rem,10vw,3.5rem)]` a los valores principales.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/bugs_documentation.md",
-    "header": "6. Tipografía Responsiva: Falta de clamp() en Valores de Dashboard (StatsCards)"
-  }
-}

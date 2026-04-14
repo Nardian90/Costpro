@@ -1,9 +1,0 @@
-{
-  "id": "workflows_gestion_billetera_digital",
-  "content": "{\"businessRules\": [], \"business_goal\": \"Centralizar y analizar el flujo de caja proveniente de notificaciones bancarias digitales.\", \"components\": [\"src/components/views/terminal/views/wallet/WalletView.tsx\", \"src/components/views/terminal/views/wallet/components/AnalyticsDashboard.tsx\", \"src/lib/wallet/parser.ts\", \"src/lib/wallet/types.ts\", \"src/lib/wallet/__tests__/parser.test.ts\"], \"id\": \"gestion_billetera_digital\", \"name\": \"Gesti\\u00f3n de Billetera y Notificaciones (Wallet)\", \"services\": [\"@/lib/utils\", \"@/lib/wallet/parser\", \"@/lib/wallet/types\", \"next/dynamic\", \"react\", \"sonner\", \"utils\", \"vitest\", \"wallet/parser\", \"wallet/types\"], \"steps\": [\"Importar mensajes de texto o archivos de banco\", \"Visualizar registros crudos en la pesta\\u00f1a BD\", \"Analizar m\\u00e9tricas financieras en Analytics Dashboard\"], \"views\": [\"src/components/views/terminal/views/wallet/WalletView.tsx\"]}",
-  "metadata": {
-    "source": "knowledge/workflows.json",
-    "index": 6,
-    "domain": "workflows"
-  }
-}

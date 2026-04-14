@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES___deployment_end",
-  "content": "## 🚀 DEPLOYMENT\n\nSi todo pasa en testing:\n\n1. **Commit cambios:**\n   ```bash\n   git add supabase/migrations/20260209_fix_critical_rls_issues.sql\n   git commit -m \"Fix: Restore admin RLS permissions for store/user management\"\n   git push\n   ```\n\n2. **Supabase Auto-Apply:** La migración se ejecuta automáticamente\n\n3. **Frontend:**\n   - El código en `useUsersView.ts` ya tiene `is_active` incluido\n   - Deploy de frontend (si fue necesario)\n\n4. **Monitoreo Post-Deployment:**\n   - Revisar `audit_logs` por errores 403\n   - Monitorear que admins pueden crear/editar\n\n---\n\n**Generado:** 9 de febrero de 2026 | Arquitecto: Claude Haiku\n**Estado:** Listo para testing manual en UI\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "🚀 DEPLOYMENT"
-  }
-}

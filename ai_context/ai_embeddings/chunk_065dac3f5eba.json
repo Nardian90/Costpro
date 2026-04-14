@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___ingestion_errors_",
-  "content": "### Tabla: `ingestion_errors`\n**Índices:** `id, fecha, referencia_origen`\n\n```typescript\n// Interface: IngestionError\ninterface IngestionError {\n  id: string;\n  fecha: string;\n  referencia_corta: string;\n  referencia_origen: string;\n  observaciones: string;\n  importe_cents: number; // En Pesos\n  tipo: 'Cr' | 'Db';\n  error_note: string;\n  raw_data: any;\n  created_at: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `ingestion_errors`"
-  }
-}

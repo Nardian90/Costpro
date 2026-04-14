@@ -1,8 +1,0 @@
-{
-  "id": "HEALTH_RESOLUTION_PLAN_4__prompt_para_jules__resolución_eficiente__end",
-  "content": "## 4. Prompt para JULES (Resolución Eficiente)\n\nCopia y pega este prompt para que JULES resuelva los problemas técnicos:\n\n> **JULES, actúa como Senior Architect:**\n>\n> Tenemos un problema de integridad (Score 73/100) en el módulo de Inventario y varios componentes huérfanos.\n>\n> 1. **Rompe los ciclos** en `src/components/views/terminal/views/inventory_count/`. Extrae la lógica de manejo de estado a un hook dedicado `useInventoryCount.ts`. Asegúrate de que `InventoryCountView.tsx`, `InventoryCountTableView.tsx` y `InventoryCountCardView.tsx` usen este hook y eliminen las importaciones circulares entre ellos.\n> 2. **Audita los huérfanos:** Revisa si las rutas de API en `src/app/api/` tienen referencias en el proyecto. Si no se usan, bórralas.\n> 3. **Verifica Shadcn:** Los componentes en `src/components/ui/` que están huérfanos son aceptables si son parte de la librería base, pero valídalos.\n>\n> Al finalizar, ejecuta `python3 scripts/scheduler.py` para validar que el `integrityScore` haya subido por encima de 90.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/HEALTH_RESOLUTION_PLAN.md",
-    "header": "4. Prompt para JULES (Resolución Eficiente)"
-  }
-}

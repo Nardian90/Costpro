@@ -20,51 +20,43 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
   const profitPercent = sales > 0 ? (profit / sales) * 100 : 0;
   const costsPercent = sales > 0 ? (costs / sales) * 100 : 0;
 
-  // Circumferences
-  const c90 = 2 * Math.PI * 90; // ~565.48
-  const c70 = 2 * Math.PI * 70; // ~439.82
-  const c50 = 2 * Math.PI * 50; // ~314.16
+  const c90 = 2 * Math.PI * 90;
+  const c70 = 2 * Math.PI * 70;
+  const c50 = 2 * Math.PI * 50;
 
-  // We'll show:
-  // Outer (Green): Sales (always 100% or relative to a target, here we'll just show it full or 100%)
-  // Middle (White/Slate): Costs as % of sales
-  // Inner (Blue): Profit as % of sales
-
-  const salesOffset = 0; // 100% full
+  const salesOffset = 0;
   const costsOffset = c70 - (Math.min(costsPercent, 100) / 100) * c70;
   const profitOffset = c50 - (Math.min(profitPercent, 100) / 100) * c50;
 
   return (
-    <div className={cn("relative flex items-center justify-center py-10 overflow-hidden", className)}>
-      <div className="absolute w-64 h-64 bg-primary/10 rounded-full blur-[100px] -z-10"></div>
+    <div className={cn("relative flex items-center justify-center py-6 sm:py-10", className)}>
+      <div className="absolute w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 rounded-full blur-[80px] -z-10" />
 
-      <svg className="w-72 h-72 -rotate-90" viewBox="0 0 200 200">
+      <svg className="w-56 h-56 sm:w-72 sm:h-72 -rotate-90" viewBox="0 0 200 200">
         {/* Outer Ring - Sales (Green) */}
         <circle
-          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="90"
           stroke="currentColor" strokeWidth="8"
+          className="text-muted/30"
         />
         <motion.circle
-          className="glow-green stroke-primary"
           cx="100" cy="100" fill="none" r="90"
-           strokeWidth="8"
+          strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c90}
           initial={{ strokeDashoffset: c90 }}
           animate={{ strokeDashoffset: salesOffset }}
           transition={{ duration: 1.5, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px var(--primary))' }}
+          className="stroke-primary"
         />
 
-        {/* Middle Ring - Costs (White in Dark, Slate in Light) */}
+        {/* Middle Ring - Costs (Muted) */}
         <circle
-          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="70"
           stroke="currentColor" strokeWidth="8"
+          className="text-muted/30"
         />
         <motion.circle
-          className="text-muted-foreground dark:text-foreground"
           cx="100" cy="100" fill="none" r="70"
           stroke="currentColor" strokeWidth="8"
           strokeLinecap="round"
@@ -72,35 +64,31 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           initial={{ strokeDashoffset: c70 }}
           animate={{ strokeDashoffset: costsOffset }}
           transition={{ duration: 1.5, delay: 0.2, ease: "circOut" }}
+          className="text-muted-foreground/70"
         />
 
-        {/* Inner Ring - Profit (Blue) */}
+        {/* Inner Ring - Profit (Emerald) */}
         <circle
-          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="50"
           stroke="currentColor" strokeWidth="8"
+          className="text-muted/30"
         />
         <motion.circle
-          className="glow-blue stroke-blue-400"
           cx="100" cy="100" fill="none" r="50"
-           strokeWidth="8"
+          strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c50}
           initial={{ strokeDashoffset: c50 }}
           animate={{ strokeDashoffset: profitOffset }}
           transition={{ duration: 1.5, delay: 0.4, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px #00E0FF)' }}
+          className="stroke-emerald-400"
         />
       </svg>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center rotate-0">
-        <span className="text-xs font-bold tracking-widest text-muted-foreground dark:text-muted-foreground uppercase">Margen</span>
-        <span className="text-4xl font-black tracking-tighter text-foreground">
-          {profitPercent.toFixed(0)}<span className="text-blue-400">%</span>
-        </span>
-        <span className="text-xs font-mono text-primary opacity-0">
-          {/* We don't have historical delta here yet */}
-          +0.0%
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground">Margen</span>
+        <span className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display">
+          {profitPercent.toFixed(0)}<span className="text-emerald-500">%</span>
         </span>
       </div>
     </div>

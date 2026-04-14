@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_case_1__user_sin_profile_en__profiles__table",
-  "content": "### Case 1: User sin profile en `profiles` table\n\n**Antes:**\n```sql\nSELECT role::text INTO v_role FROM profiles WHERE id = auth.uid();\n-- v_role = NULL (no existe)\n-- is_admin() retorna false\n-- User bloqueado de todo\n```\n\n**Después:**\n```sql\n-- get_my_role() retorna 'usuario' (default)\n-- is_admin() retorna false (correcto)\n-- User tiene acceso mínimo (esperado)\n```\n\n✅ Mejor handling\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Case 1: User sin profile en `profiles` table"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "BUSINESS_LOGIC_REFERENCE_núcleo_de_costos",
-  "content": "## Núcleo de Costos\n- **CostSheetWizard**: Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.\n- **FormulaEditor**: Permite la personalización de algoritmos de formación de precios. Es la herramienta para directivos para ajustar márgenes de contribución y coeficientes de gastos indirectos sin intervención técnica.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/BUSINESS_LOGIC_REFERENCE.md",
-    "header": "Núcleo de Costos"
-  }
-}

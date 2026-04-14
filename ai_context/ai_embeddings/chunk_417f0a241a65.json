@@ -1,8 +1,0 @@
-{
-  "id": "reference_settingsview_tsx",
-  "content": "## SettingsView.tsx\n**Ruta:** `src/components/views/terminal/views/settings/SettingsView.tsx`\n\n**Acciones disponibles:** handleAddKey, handleDeleteKey, handleToggleKeyStatus, handleUpdateKey\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "SettingsView.tsx"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MATCHING_ENGINE_2_1__no_stock_negativo",
-  "content": "### 2.1. No stock negativo\n- **Cumplimiento:** **SÍ**.\n- **Detalle:** El motor implementa `useStockLimit`. Antes de asignar un producto, verifica el stock real y el virtual (calculado recursivamente desde ancestros). Si el stock es 0 y no hay nada que descomponer, el motor descarta el producto.\n- **Puntuación:** 9/10\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
-    "header": "2.1. No stock negativo"
-  }
-}

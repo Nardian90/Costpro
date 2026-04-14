@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_rpc_validator_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para rpc-validator.\", \"dependencies\": [\"zod\", \"sonner\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/rpc-validator.ts\", \"name\": \"rpc-validator.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico rpc-validator.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar rpc-validator.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 373,
-    "domain": "components"
-  }
-}

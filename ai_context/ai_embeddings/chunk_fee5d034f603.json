@@ -1,8 +1,0 @@
-{
-  "id": "QUICK_REFERENCE_RLS_FIX_archivo___src_components_views_terminal_views_users_useusersview_ts_",
-  "content": "### Archivo: `src/components/views/terminal/views/users/useUsersView.ts`\n\n**Status:** ✅ YA INCLUIDO (línea ~78)\n\n```typescript\n// Ya tiene is_active en el payload:\nawait updateUserMutation.mutateAsync({\n  id: selectedUserContractId,\n  full_name: data.fullName,\n  role: data.role,\n  is_active: data.isActive,  // ✅ YA ESTÁ\n  max_stores_limit: ...,\n  max_users_limit: ...\n});\n```\n\n**No hay cambios necesarios.**\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
-    "header": "Archivo: `src/components/views/terminal/views/users/useUsersView.ts`"
-  }
-}

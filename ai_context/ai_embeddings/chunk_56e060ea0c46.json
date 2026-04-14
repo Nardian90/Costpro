@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_1____recepción_sin_captura_de_campos_obligatorios____",
-  "content": "### 1. **Recepción SIN Captura de Campos Obligatorios** 🔴\n**Severidad:** CRÍTICA\n**Ubicación:** `src/components/WarehouseView.tsx` líneas 181-228\n\n**Problema:**\n- El formulario de recepción **NO captura**:\n  - ❌ **Fecha de Recepción** (campo vacío)\n  - ❌ **Proveedor** (campo vacío)\n  - ❌ **Número de Factura** (campo vacío)\n- El viejo código (old project) SÍ captura estos campos en RPC\n- La tabla `receptions` espera estos datos obligatorios\n- **Impacto de Negocio:** Imposible auditar origen de compras, violar requisitos fiscales\n\n**Código Actual (Déficit):**\n```tsx\nconst processReception = async () => {\n    // NO CAPTURA FECHAS, PROVEEDOR, FACTURA\n    const updates = Array.from(receptionItems.values()).map(async ({ product, quantityToAdd, newCost }) => {\n        // Solo actualiza inventory y products\n        // Falta registro completo en receptions y reception_items\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "1. **Recepción SIN Captura de Campos Obligatorios** 🔴"
-  }
-}

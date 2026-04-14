@@ -1,8 +1,0 @@
-{
-  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_diátaxis_framework",
-  "content": "### Diátaxis Framework\n- **Tutoriales:** Insuficientes para flujos complejos (IPV Matching).\n- **Guías de \"Cómo hacer\":** Bien representadas en `docs/guides`.\n- **Explicaciones:** Mezcladas con especificaciones técnicas.\n- **Referencia:** Excelente cobertura técnica automatizada.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
-    "header": "Diátaxis Framework"
-  }
-}

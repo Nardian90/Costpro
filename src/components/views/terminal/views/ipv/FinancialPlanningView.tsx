@@ -193,7 +193,7 @@ export const FinancialPlanningView: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                <div className="flex justify-between items-baseline cursor-pointer" onClick={() => setEditingGoal({month: g.month, amount: (simulations[g.month] || g.goalAmount).toString(), strategy: g.strategy || "MIN_STOCK"})}>
+                                                <div className="flex justify-between items-baseline cursor-pointer hover:bg-muted/40 active:scale-[0.98] rounded-lg -mx-1 px-1 transition-all" onClick={() => setEditingGoal({month: g.month, amount: (simulations[g.month] || g.goalAmount).toString(), strategy: g.strategy || "MIN_STOCK"})}>
                                                     <p className="text-xs font-black">{formatCurrencyCents(Number(simulations[g.month]) || g.goalAmount)}</p>
                                                 </div>
                                                 <Button variant="outline" className="w-full h-8 text-[10px] font-black uppercase border-primary/30" onClick={() => handleSimulateMonthGoal(g.month, Number(simulations[g.month]) || g.goalAmount)}>

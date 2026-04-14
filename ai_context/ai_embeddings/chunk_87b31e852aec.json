@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_API_CONTRACT_7__buenas_prácticas_para_móvil_end",
-  "content": "## 7. Buenas Prácticas para Móvil\n\n- **Minimizar Datos:** Los endpoints deben devolver solo los datos necesarios.\n- **Manejo de Latencia:**\n  - El frontend debe mostrar indicadores de carga.\n  - Implementar timeouts cortos.\n- **Retries:**\n  - Usar un mecanismo de \"exponential backoff\" para reintentos automáticos en errores 5xx.\n  - No reintentar automáticamente en errores 4xx (excepto 409, que requiere intervención del usuario).\n- **UX Offline:**\n  - Guardar operaciones en una cola local si no hay conexión.\n  - Sincronizar al recuperar la conexión, manejando posibles conflictos de `version` que puedan surgir.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_API_CONTRACT.md",
-    "header": "7. Buenas Prácticas para Móvil"
-  }
-}

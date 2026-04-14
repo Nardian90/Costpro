@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_settings_SettingsView_tsx",
-  "content": "{\"actions\": [\"handleAddKey\", \"handleDeleteKey\", \"handleToggleKeyStatus\", \"handleUpdateKey\"], \"components\": [], \"id\": \"src/components/views/terminal/views/settings/SettingsView.tsx\", \"inputs\": [], \"name\": \"SettingsView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/settings/SettingsView.tsx\", \"servicesUsed\": [\"api/useTaxes\", \"supabaseClient\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 3,
-    "domain": "views"
-  }
-}

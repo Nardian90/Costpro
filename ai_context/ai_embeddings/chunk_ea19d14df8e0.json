@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_auth_WelcomeLandingView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para WelcomeLandingView.\", \"dependencies\": [\"react\", \"framer-motion\", \"next/link\", \"@/components/CostProLogo\", \"@/components/ThemeToggle\", \"./diagrams/AutomationWorkflowDiagram\", \"./diagrams/SpeedScaleDiagram\", \"@/hooks/ui/usePWA\", \"@/lib/utils\", \"@/components/ui/PWAInstallModal\", \"@/store\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/auth/WelcomeLandingView.tsx\", \"name\": \"WelcomeLandingView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico WelcomeLandingView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con WelcomeLandingView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 274,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "ARCHITECTURE_AI_PIPELINE_v8_4_4_rollback_automático",
-  "content": "### 4.4 Rollback Automático\nSi un nuevo artefacto reduce el `integrityScore` del sistema en > 5 puntos o rompe integridad referencial:\n1.  Detener commit.\n2.  Restaurar última versión válida desde `public/_archive/`.\n3.  Registrar evento en `public/architecture_audit.json`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
-    "header": "4.4 Rollback Automático"
-  }
-}

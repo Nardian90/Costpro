@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_3____a_largo_plazo__arquitectura___",
-  "content": "### 3. **A LARGO PLAZO (Arquitectura)**\n\n1. **Migrar de Prisma SQLite a Supabase PostgreSQL**\n   - `prisma/schema.prisma` define SQLite (¡INCORRECTO!)\n   - Debería ser PostgreSQL puro + Supabase management\n\n2. **Implementar Event Sourcing para Auditoría**\n   - Tabla `events` inmutable\n   - Todas las mutaciones generan eventos\n\n3. **Multi-Store Architecture**\n   - Actual: todos los productos en tabla única\n   - Mejor: isolation by `store_id` + índices\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "3. **A LARGO PLAZO (Arquitectura)**"
-  }
-}

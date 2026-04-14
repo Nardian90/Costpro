@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_test_3___puede_admin_editar_usuarios_",
-  "content": "### Test 3: ¿Puede Admin editar usuarios?\n\n```sql\n-- UPDATE is_active = false\nUPDATE public.profiles SET is_active = false WHERE id = 'target-user-id';\n-- Esperado: UPDATE 1 (sin errores 403)\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "Test 3: ¿Puede Admin editar usuarios?"
-  }
-}

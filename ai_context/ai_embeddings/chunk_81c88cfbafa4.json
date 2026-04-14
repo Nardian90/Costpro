@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_useProducts_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useProducts.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/validation/schemas\", \"@/lib/rpc-validator\", \"@/lib/utils\", \"./base\", \"zod\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"useSuspenseProducts\", \"useProducts\", \"useCreateProduct\", \"useUpdateProduct\", \"useDeleteProduct\", \"useToggleProductActive\", \"useBulkUpdateProducts\", \"useAddVariant\", \"useDeleteVariant\"], \"id\": \"src/hooks/api/useProducts.ts\", \"name\": \"useProducts.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useProducts.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useProducts.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 336,
-    "domain": "components"
-  }
-}

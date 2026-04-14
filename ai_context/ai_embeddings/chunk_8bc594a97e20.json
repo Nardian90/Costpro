@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_ejecutar_desarrollo",
-  "content": "# Ejecutar desarrollo\nbun run dev\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Ejecutar desarrollo"
-  }
-}

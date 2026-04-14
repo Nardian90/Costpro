@@ -1,8 +1,0 @@
-{
-  "id": "DOWNLOAD_INSTRUCTIONS_instala_dependencias",
-  "content": "# Instala dependencias\nbun install\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
-    "header": "Instala dependencias"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_bot_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para bot-service.\", \"dependencies\": [\"@supabase/supabase-js\", \"fs\", \"path\", \"@/lib/ai/orchestrator\", \"@/lib/ai/types\", \"@/lib/ai/tools/definitions\", \"@/lib/ai/tools/registry\", \"@/config/viewRegistry\", \"@/validation/forms/ai-form-schemas\"], \"domain\": \"Domain\", \"exports\": [\"botService\"], \"id\": \"src/services/bot-service.ts\", \"name\": \"bot-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico bot-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar bot-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 318,
-    "domain": "components"
-  }
-}

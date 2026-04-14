@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_AUDIT_REPORT_3__calidad_del_código_y_buenas_prácticas__6_10_",
-  "content": "### 3. Calidad del Código y Buenas Prácticas (6/10)\n- **Fortalezas:**\n    - **Gestión de Estado:** El uso de Zustand es limpio, eficiente y está bien implementado. El `useCartStore` es un buen ejemplo de lógica de negocio encapsulada y cohesiva.\n    - **Capa de Datos:** El hook `useQueries.ts` es excelente. Abstrae la lógica de fetching, utiliza wrappers para logging y validación con Zod, y gestiona el estado del servidor de manera eficaz con TanStack Query.\n- **Debilidades:**\n    - **Prop Drilling Excesivo:** Parte de la navegación y del estado compartido sigue requiriendo pasar props entre capas, lo que dificulta el seguimiento del flujo de datos.\n    - **Lógica Compleja en el Cliente:** El hook `useCostSheetCalculator.ts` contiene una lógica de negocio extremadamente compleja que se ejecuta enteramente en el cliente. Esto no solo es un riesgo de rendimiento, sino que también es difícil de probar y depurar.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/FRONTEND_AUDIT_REPORT.md",
-    "header": "3. Calidad del Código y Buenas Prácticas (6/10)"
-  }
-}

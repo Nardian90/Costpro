@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_help_HelpView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ThemeToggle\", \"ui/badge\", \"ui/button\"], \"id\": \"src/components/views/terminal/views/help/HelpView.tsx\", \"inputs\": [\"Calendar\"], \"name\": \"HelpView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/help/HelpView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 13,
-    "domain": "views"
-  }
-}

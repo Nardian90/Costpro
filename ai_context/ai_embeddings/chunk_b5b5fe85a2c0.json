@@ -1,9 +1,0 @@
-{
-  "id": "user_help_8",
-  "content": "{\"acciones\": [\"handleAddKey\", \"handleDeleteKey\", \"handleToggleKeyStatus\", \"handleUpdateKey\"], \"descripcion_usuario\": \"Interfaz para gestionar SettingsView.\", \"feature\": \"SettingsView\", \"resultados\": []}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 8,
-    "domain": "user_help"
-  }
-}

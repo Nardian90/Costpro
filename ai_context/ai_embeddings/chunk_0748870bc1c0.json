@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_dashboard_useDashboardView_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useDashboardView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useDashboard\", \"date-fns\"], \"domain\": \"UI\", \"exports\": [\"DashboardTimeRange\", \"useDashboardView\"], \"id\": \"src/components/views/terminal/views/dashboard/useDashboardView.ts\", \"name\": \"useDashboardView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useDashboardView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useDashboardView.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 36,
-    "domain": "components"
-  }
-}

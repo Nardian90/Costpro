@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetInteractiveTable_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetInteractiveTable.\", \"dependencies\": [\"@/components/ui/LazyRender\", \"framer-motion\", \"react\", \"@/store/cost-sheet-store\", \"lucide-react\", \"@/components/ui/popover\", \"@/components/ui/select\", \"@/components/ui/input\", \"@/components/ui/table\", \"@/components/ui/button\", \"@/lib/utils\", \"./FormulaEditor\", \"sonner\", \"@/services/excel-service\", \"./CostSheetSectionActionsPanel\", \"@/lib/data/costpro-reinicio\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx\", \"name\": \"CostSheetInteractiveTable.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetInteractiveTable.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 180,
-    "domain": "components"
-  }
-}

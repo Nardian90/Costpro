@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_componentes_neumórficos",
-  "content": "### Componentes Neumórficos\n- **Raised Elements**: `.neu-raised` - Elementos sobresalientes\n- **Inset Elements**: `.neu-inset` - Elementos hundidos/concavos\n- **Inputs**: `.neu-input` - Campos de entrada estilo neumórfico\n- **Buttons**: `.neu-btn` - Botones con estados hover/active\n- **Cards**: `.neu-card` - Tarjetas con elevación\n- **Badges**: `.neu-badge` - Etiquetas estilo pill\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Componentes Neumórficos"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_AUDIT_prioridad_alta__inmediato_",
-  "content": "### Prioridad ALTA (Inmediato)\n1.  **Habilitar TypeScript en Build:** Cambiar `ignoreBuildErrors: false` y corregir los errores de tipos resultantes.\n2.  **Activar React Strict Mode:** Identificar y corregir advertencias de renderizado.\n3.  **Reducir uso de `any`:** Tipar los RPCs de Supabase y las respuestas de la API usando las interfaces de `src/types/index.ts`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FRONTEND_AUDIT.md",
-    "header": "Prioridad ALTA (Inmediato)"
-  }
-}

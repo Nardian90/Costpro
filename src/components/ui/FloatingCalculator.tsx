@@ -135,7 +135,7 @@ export const FloatingCalculator: React.FC = () => {
             animate="open"
             exit="closed"
             className={cn(
-              "absolute top-24 right-12 w-[320px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
+              "absolute top-24 right-4 sm:right-12 w-[280px] sm:w-[320px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
               isDark
                 ? "bg-[#010203]/95 border-[#39FF14]/30 text-foreground"
                 : "bg-white/95 border-primary/30 text-foreground"

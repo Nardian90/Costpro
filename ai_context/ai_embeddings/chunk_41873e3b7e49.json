@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MISMATCH_3__manejo_de_errores_y_mismatch__8_10_",
-  "content": "### 3. Manejo de Errores y Mismatch (8/10)\n- **Fail Reasons:** El motor comunica claramente por qué falló el matching automático (ej: \"FALTA STOCK VIRTUAL\"), lo cual guía al usuario en la resolución manual.\n- **Pipeline Trace:** El sistema captura el trazo de ejecución. Aunque ha mejorado su persistencia en la tabla `matching_logs`, la visibilidad de estos trazos en la tabla principal de transacciones podría ser más directa.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MISMATCH.md",
-    "header": "3. Manejo de Errores y Mismatch (8/10)"
-  }
-}

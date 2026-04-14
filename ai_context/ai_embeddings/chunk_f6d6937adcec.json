@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_1____activar_modo_recepción__",
-  "content": "#### 1. **Activar Modo Recepción**\n   - Botón: \"Nueva Recepción\" (línea 274)\n   - Al activar:\n     - Cambia título a \"Recepción de Mercancía\"\n     - Muestra badge amarillo \"Modo Recepción Activo\"\n     - Oculta columna \"Precio Venta\", muestra \"Costo Actual\"\n     - Cambia botones de acciones a \"Recibir\"\n     - Aparece panel lateral de resumen\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "1. **Activar Modo Recepción**"
-  }
-}

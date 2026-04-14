@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_InventoryAdjustmentsView_tsx",
-  "content": "{\"actions\": [\"onRefresh\"], \"components\": [\"ui/ActionMenu\", \"ui/QueryInspector\", \"ui/SearchBar\"], \"id\": \"src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx\", \"inputs\": [], \"name\": \"InventoryAdjustmentsView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx\", \"servicesUsed\": [\"api/useStockMovements\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 15,
-    "domain": "views"
-  }
-}

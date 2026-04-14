@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_rss_RSSManagementView_tsx",
-  "content": "{\"actions\": [\"handleAddFeed\", \"handleAddKeyword\", \"handleDeleteFeed\", \"handleRemoveKeyword\", \"handleToggleFeed\"], \"components\": [\"ui/StateRenderer\"], \"id\": \"src/components/views/terminal/views/rss/RSSManagementView.tsx\", \"inputs\": [], \"name\": \"RSSManagementView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/rss/RSSManagementView.tsx\", \"servicesUsed\": [\"api/useRSS\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 43,
-    "domain": "views"
-  }
-}

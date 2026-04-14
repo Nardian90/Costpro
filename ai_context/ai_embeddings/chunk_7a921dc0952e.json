@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___repro_issue_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para repro_issue.test.\", \"dependencies\": [\"vitest\", \"../engine\", \"../../dexie\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/repro_issue.test.ts\", \"name\": \"repro_issue.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico repro_issue.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar repro_issue.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 436,
-    "domain": "components"
-  }
-}

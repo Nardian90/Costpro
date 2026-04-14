@@ -1,8 +1,0 @@
-{
-  "id": "BUSINESS_LOGIC_REFERENCE_control_de_inventario",
-  "content": "## Control de Inventario\n- **InventoryAdjustmentModal**: Controla las desviaciones de inventario. Cada ajuste requiere una justificación que se audita automáticamente para prevenir mermas no autorizadas o fraudes.\n- **CatalogTable**: El cerebro de los productos. Centraliza el costo unitario y el precio de venta sugerido, asegurando que todos los puntos de venta operen con márgenes unificados.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/BUSINESS_LOGIC_REFERENCE.md",
-    "header": "Control de Inventario"
-  }
-}

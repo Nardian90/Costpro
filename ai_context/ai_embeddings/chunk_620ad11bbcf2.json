@@ -1,8 +1,0 @@
-{
-  "id": "LEARNINGS_IPV_MATCHING_copiloto_inteligente_logic",
-  "content": "## Copiloto Inteligente Logic\n- The 'Copiloto Inteligente' setting overrides user-defined rules with `DEFAULT_MATCHING_RULES` in the matching engine.\n- This logic must be applied at the entry point of matching (both batch and single-transaction).\n- `IPVView.tsx` handles the high-level coordination and worker messaging.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/LEARNINGS_IPV_MATCHING.md",
-    "header": "Copiloto Inteligente Logic"
-  }
-}

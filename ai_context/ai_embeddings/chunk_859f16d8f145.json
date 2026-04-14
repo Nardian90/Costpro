@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet___tests___CostSheetTemplateExplorer_test_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetTemplateExplorer.test.\", \"dependencies\": [\"vitest\", \"@testing-library/react\", \"../CostSheetTemplateExplorer\", \"react\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/__tests__/CostSheetTemplateExplorer.test.tsx\", \"name\": \"CostSheetTemplateExplorer.test.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetTemplateExplorer.test.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 187,
-    "domain": "components"
-  }
-}

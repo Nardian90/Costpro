@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_sheet_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para sheet.\", \"dependencies\": [\"react\", \"@radix-ui/react-dialog\", \"lucide-react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/sheet.tsx\", \"name\": \"sheet.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico sheet.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con sheet.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 264,
-    "domain": "components"
-  }
-}

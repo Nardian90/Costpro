@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks___tests___useCostSheetCalculator_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useCostSheetCalculator.test.\", \"dependencies\": [\"vitest\", \"@testing-library/react\", \"../logic/useCostSheetCalculator\", \"@/contracts\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/hooks/__tests__/useCostSheetCalculator.test.ts\", \"name\": \"useCostSheetCalculator.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useCostSheetCalculator.test.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 357,
-    "domain": "components"
-  }
-}

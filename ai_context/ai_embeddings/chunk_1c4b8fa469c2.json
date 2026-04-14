@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_SALES_AUDIT_MARCH_2024_1__proceso_de_venta__front_to_back_",
-  "content": "### 1. Proceso de Venta (Front-to-Back)\n1.  **Selección:** Búsqueda en caché local (Zero Latency).\n2.  **Validación:** Verificación de stock y precios contra costos en el cliente.\n3.  **Persistencia:** Envío de payload JSONB al RPC `create_sale`.\n4.  **Backend:**\n    -   Validación de RLS (Seguridad por filas).\n    -   Bloqueo de inventario.\n    -   Inserción de `transactions` y `transaction_items`.\n    -   Llamada a `register_stock_movement`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_SALES_AUDIT_MARCH_2024.md",
-    "header": "1. Proceso de Venta (Front-to-Back)"
-  }
-}

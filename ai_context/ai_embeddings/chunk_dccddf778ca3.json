@@ -1,8 +1,0 @@
-{
-  "id": "QUICK_REFERENCE_RLS_FIX_antes_de_validar_en_ui__ejecuta_esto_",
-  "content": "### Antes de validar en UI, ejecuta esto:\n\n```sql\n-- En Supabase SQL Editor:\n\n-- 1. ¿Consolidadas las policies?\nSELECT COUNT(*) as policy_count FROM pg_policies\nWHERE tablename='stores' AND schemaname='public';\n-- Esperado: 4\n\n-- 2. ¿Existen policies nuevas?\nSELECT policyname FROM pg_policies\nWHERE tablename='profiles' AND policyname='profiles_admin_full_access';\n-- Esperado: 1 row\n\n-- 3. ¿Tiendas aún existen?\nSELECT COUNT(*) FROM stores WHERE is_active=true;\n-- Esperado: 2+\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
-    "header": "Antes de validar en UI, ejecuta esto:"
-  }
-}

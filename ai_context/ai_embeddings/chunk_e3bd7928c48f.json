@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_validations_ts",
-  "content": "{\"businessRules\": [\"Financial certification rules: 9.09% for 1.1.1 and 2.1.1.\", \"Social security ratios: 14% (10.1) and 5% (10.2) based on total salaries.\", \"Strict calculation chain for cost sheets (Rules 6-13) covering Total Cost (12.1), Price (13.2), Taxes (13.3), and Unit Prices (15.1, 16.1).\", \"Standard format compliance verification.\"], \"business_logic\": \"L\\u00f3gica de negocio para validations.\", \"dependencies\": [\"@/types/cost-sheet\"], \"domain\": \"Engine\", \"exports\": [\"ValidationResult\", \"HealthSummary\", \"calculateCostSheetHealth\"], \"id\": \"src/lib/cost-engine/validations.ts\", \"name\": \"validations.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico validations.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar validations.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 393,
-    "domain": "components"
-  }
-}

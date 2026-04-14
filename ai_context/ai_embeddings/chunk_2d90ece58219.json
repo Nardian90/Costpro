@@ -1,8 +1,0 @@
-{
-  "id": "DOC_MULTI_STORE_límites_para_encargados",
-  "content": "## Límites para Encargados\nLos usuarios con rol `encargado` tienen límites definidos por el `admin`:\n- **Máximo de Tiendas**: Límite de tiendas que el encargado puede crear.\n- **Máximo de Usuarios**: Límite de usuarios que el encargado puede crear.\n- Estos límites se validan a nivel de base de datos mediante triggers. Si un recurso (tienda o usuario) es eliminado, el conteo se actualiza automáticamente, permitiendo crear nuevos recursos dentro del límite.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
-    "header": "Límites para Encargados"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_fase_3__validación___10_minutos",
-  "content": "### Fase 3: Validación - 10 minutos\n\n1. Ejecutar queries de verificación\n2. Pruebas manuales (Admin crea store, edita usuario, desactiva)\n3. Verificar que multi-tenant sigue aislado\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "Fase 3: Validación - 10 minutos"
-  }
-}

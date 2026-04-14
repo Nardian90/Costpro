@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_wiki_WikiView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/button\", \"ui/input\", \"ui/scroll-area\"], \"id\": \"src/components/views/terminal/views/wiki/WikiView.tsx\", \"inputs\": [], \"name\": \"WikiView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/wiki/WikiView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 33,
-    "domain": "views"
-  }
-}

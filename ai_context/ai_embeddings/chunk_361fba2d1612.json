@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_heuristic_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para heuristic.test.\", \"dependencies\": [\"vitest\", \"./index\", \"./types\"], \"domain\": \"Engine\", \"exports\": [], \"id\": \"src/lib/cost-engine/heuristic.test.ts\", \"name\": \"heuristic.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico heuristic.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar heuristic.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 387,
-    "domain": "components"
-  }
-}

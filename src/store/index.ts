@@ -107,5 +107,5 @@ export const useAuthStore = create<AuthState>()((set) => ({
     user: state.user ? { ...state.user, ...data } : null
   })),
   login: (user, token, status = 'authenticated_valid', isMocked = false) => set({ user, token, status, loading: false, isMocked }),
-  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false }),
+  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false, loading: false }),
 }));

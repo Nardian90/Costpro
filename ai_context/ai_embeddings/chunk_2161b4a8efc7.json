@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetAnnexEditor_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetAnnexEditor.\", \"dependencies\": [\"react\", \"@/store/cost-sheet-store\", \"@/hooks/logic/useCostSheetCalculator\", \"@/components/ui/input\", \"@/components/ui/table\", \"@/components/ui/button\", \"lucide-react\", \"@/types/cost-sheet\", \"./ProductInventoryPicker\", \"@/store\", \"@/services/excel-service\", \"@/lib/utils\", \"@/components/ui/ViewSwitcher\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx\", \"name\": \"CostSheetAnnexEditor.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetAnnexEditor.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 181,
-    "domain": "components"
-  }
-}

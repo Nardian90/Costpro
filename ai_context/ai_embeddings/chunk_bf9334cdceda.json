@@ -1,8 +1,0 @@
-{
-  "id": "PRODUCT_VARIANT_LOGIC_campos_clave_en_el_catálogo__excel_",
-  "content": "### Campos Clave en el Catálogo (Excel)\n- **cod**: Identificador único del producto.\n- **id_grupo**: (NUEVO) Identificador común para todas las variantes del mismo producto (ej: \"BIG_BON\").\n- **contenido_paquete**: Define cuántas unidades del \"siguiente\" producto menor contiene esta variante.\n- **precio_cents**: El precio unitario de esta variante.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
-    "header": "Campos Clave en el Catálogo (Excel)"
-  }
-}

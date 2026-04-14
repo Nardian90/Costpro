@@ -1,8 +1,0 @@
-{
-  "id": "PERFORMANCE_GUIDELINES_isolated_hooks",
-  "content": "### Isolated Hooks\n- **Rule:** Every major domain/view should have its own data fetching hook file (e.g., `useTransactions.ts`).\n- **Reason:** Prevents circular dependencies, improves maintainability, and allows for view-specific optimizations.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
-    "header": "Isolated Hooks"
-  }
-}

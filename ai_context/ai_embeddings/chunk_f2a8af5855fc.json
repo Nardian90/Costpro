@@ -1,8 +1,0 @@
-{
-  "id": "ajustes_documentos_identificación_de_documentos_anulados_end",
-  "content": "## Identificación de Documentos Anulados\n\nEn las vistas de **Ventas** e **Historial de Recepciones**, los documentos que han pasado por este proceso aparecerán marcados claramente con el estado **ANULADO** en color rojo, permitiendo una fácil auditoría de las operaciones invalidadas.\n\n---\n*Nota: El sistema utiliza el costo unitario original de la recepción para asegurar que la valoración del inventario (CPP) se mantenga precisa durante la inversión.*\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ajustes_documentos.md",
-    "header": "Identificación de Documentos Anulados"
-  }
-}

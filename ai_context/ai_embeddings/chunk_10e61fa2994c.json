@@ -1,8 +1,0 @@
-{
-  "id": "reference_pivotstatementview_tsx",
-  "content": "## PivotStatementView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/PivotStatementView.tsx`\n\n**Salidas esperadas:** Card List, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "PivotStatementView.tsx"
-  }
-}

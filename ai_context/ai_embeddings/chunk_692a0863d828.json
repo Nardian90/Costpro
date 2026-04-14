@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_gestión_de_tiendas",
-  "content": "### Gestión de Tiendas\n- Listado de tiendas\n- Información de dirección\n- Control de estado\n- Asignación de usuarios\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Gestión de Tiendas"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "DOWNLOAD_INSTRUCTIONS_1__copia_el_archivo_a_donde_quieras_",
-  "content": "# 1. Copia el archivo a donde quieras:\ncp /home/z/pos-enterprise-neumorphic.tar.gz ~/Desktop/\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
-    "header": "1. Copia el archivo a donde quieras:"
-  }
-}

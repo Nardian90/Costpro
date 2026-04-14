@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___product_movements_",
-  "content": "### Tabla: `product_movements`\n**Índices:** `&id, fecha, producto_origen_cod, producto_destino_cod, tipo, referencia_transaccion`\n\n```typescript\n// Interface: ProductMovement\ninterface ProductMovement {\n  id: string;\n  fecha: string;               // ISO Date\n  producto_origen_cod: string;\n  producto_destino_cod: string;\n  cantidad_origen: number;\n  cantidad_destino: number;\n  tipo: 'DECOMPOSITION' | 'MANUAL' | 'IMPORT' | 'PRICE_ADJUSTMENT';\n  referencia_transaccion?: string; // Si viene de un matching automático\n  valor_anterior?: string;\n  valor_nuevo?: string;\n  motivo?: string;\n  usuario?: string;\n  created_at: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `product_movements`"
-  }
-}

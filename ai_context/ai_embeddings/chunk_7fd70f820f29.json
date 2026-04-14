@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv_parser_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para parser.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"ParsedObservation\", \"parseObservations\", \"parseTransactions\"], \"id\": \"src/lib/ipv/parser.ts\", \"name\": \"parser.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico parser.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar parser.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 431,
-    "domain": "components"
-  }
-}

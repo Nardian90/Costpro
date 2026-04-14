@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___products_",
-  "content": "### Tabla: `products`\n**Índices:** `&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo`\n\n```typescript\n// Interface: Product\ninterface Product {\n  cod: string;\n  descripcion: string;\n  um: string;\n  es_paquete: boolean;\n  contenido_paquete: number;\n  precio_cents: number;        // En Pesos (decimal) - PRECIO ACTUAL/AJUSTADO\n  precio_base_cents?: number;  // Precio original de catálogo\n  variacion_permisible_percent?: number; // ±% permitido para ajuste automático\n  prioridad_algoritmo: number; // 1..5\n  activo: boolean;\n  stock_inicial_manual: number;\n  created_at: string;\n  updated_at?: string;\n  // Inteligencia de precios\n  categoria?: string;\n  isWildcardCandidate?: boolean;\n  priceEffectivenessScore?: number;\n  suggestedPrice?: number;\n  suggestionReason?: string;\n  priorityMode?: 'manual' | 'auto' | 'hybrid';\n  ventas_qty_historico?: number;\n  ventas_valor_historico?: number;\n  id_grupo?: string;           // Agrupador de variantes (ej: \"BIG_BON\")\n  cod_hijo?: string;           // Código del producto inferior en la jerarquía\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `products`"
-  }
-}

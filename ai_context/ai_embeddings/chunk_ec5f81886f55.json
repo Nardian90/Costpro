@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___ipv_reports_",
-  "content": "### Tabla: `ipv_reports`\n**Índices:** `&id, fecha_reporte, estado`\n\n```typescript\n// Interface: DailyIPVReport\ninterface DailyIPVReport {\n  id: string;\n  fecha_reporte: string;\n  total_ventas_cents: number;         // En Pesos\n  resumen_efectivo_cents: number;      // En Pesos\n  resumen_transferencia_cents: number; // En Pesos\n  filas: {\n    cod: string;\n    descripcion: string;\n    um: string;\n    saldo_inicial_qty: number;\n    entrada_qty: number;\n    salida_qty: number;\n    entrada_salida_qty: number;\n    total_disponible_qty: number;\n    venta_cantidad_qty: number;\n    precio_unitario_cents: number;    // En Pesos\n    importe_cents: number;            // En Pesos\n    existencia_final_qty: number;\n  }[];\n  firmas: {\n    realizado_por: string;\n    fecha_generacion: string;\n  };\n  estado: 'BORRADOR' | 'CERRADO' | 'ANULADO';\n  created_at: string;\n  updated_at?: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `ipv_reports`"
-  }
-}

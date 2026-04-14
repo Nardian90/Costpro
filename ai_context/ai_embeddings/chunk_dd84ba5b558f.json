@@ -1,8 +1,0 @@
-{
-  "id": "PRODUCT_VARIANT_LOGIC_jerarquía_explícita__cod_hijo_",
-  "content": "## Jerarquía Explícita (cod_hijo)\nAdemás de la jerarquía automática basada en precios, el sistema permite definir explícitamente cuál es el producto \"hijo\" de cada variante mediante el campo `cod_hijo`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
-    "header": "Jerarquía Explícita (cod_hijo)"
-  }
-}

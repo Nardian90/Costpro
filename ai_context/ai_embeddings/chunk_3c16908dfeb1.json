@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_catalog_CatalogModals_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CatalogModals.\", \"dependencies\": [\"react\", \"@/components/ui/BaseModal\", \"lucide-react\", \"@/components/ui/ProductImage\", \"@/components/ui/atomic\", \"@/lib/utils\", \"@/types\"], \"domain\": \"UI\", \"exports\": [\"CatalogModals\"], \"id\": \"src/components/views/terminal/views/catalog/CatalogModals.tsx\", \"name\": \"CatalogModals.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CatalogModals.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con CatalogModals.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 32,
-    "domain": "components"
-  }
-}

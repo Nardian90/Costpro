@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_pos_POSView_tsx",
-  "content": "{\"actions\": [\"handleClearCart\", \"handleScan\", \"onAddToCart\"], \"components\": [\"modals/BarcodeScanner\", \"modals/PriceSelectorModal\", \"ui/ActionMenu\", \"ui/BaseModal\", \"ui/Portal\", \"ui/QueryInspector\", \"ui/SearchBar\", \"ui/SpeedDial\", \"ui/StateRenderer\", \"ui/ViewSwitcher\", \"ui/atomic\", \"ui/skeleton\"], \"id\": \"src/components/views/terminal/views/pos/POSView.tsx\", \"inputs\": [], \"name\": \"POSView.tsx\", \"outputs\": [\"Card List\", \"Summary Panel\", \"Table\"], \"route\": \"src/components/views/terminal/views/pos/POSView.tsx\", \"servicesUsed\": [\"logic/usePOSProducts\", \"ui/useMobile\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 35,
-    "domain": "views"
-  }
-}

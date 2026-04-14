@@ -1,8 +1,0 @@
-{
-  "id": "reference_costsheetcardview_tsx",
-  "content": "## CostSheetCardView.tsx\n**Ruta:** `src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx`\n\n**Acciones disponibles:** handleImportSectionExcel, handleToggle, handleTotalSave, handleVHSave, handleValueChange\n\n**Salidas esperadas:** Card List, Summary Panel\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "CostSheetCardView.tsx"
-  }
-}

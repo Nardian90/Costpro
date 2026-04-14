@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_export_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para export-service.\", \"dependencies\": [\"jspdf\", \"html2canvas\", \"sonner\", \"xlsx\"], \"domain\": \"Integration\", \"exports\": [\"exportToPDF\", \"exportToCSV\", \"exportToExcel\"], \"id\": \"src/services/export-service.ts\", \"name\": \"export-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico export-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar export-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 313,
-    "domain": "components"
-  }
-}

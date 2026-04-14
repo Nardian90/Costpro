@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_reportsview",
-  "content": "## ReportsView\n**Propósito:** Interfaz para gestionar ReportsView.\n\n**Acciones clave:**\n- handleExportExcel\n- handleGenerate\n- handleSave\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "ReportsView"
-  }
-}

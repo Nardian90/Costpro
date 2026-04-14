@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_2____no_existe_validación_de_permisos_por_rol____",
-  "content": "### 2. **No Existe Validación de Permisos por Rol** 🟠\n**Severidad:** MEDIA\n**Ubicación:** `src/components/WarehouseView.tsx` línea 21\n\n**Problema:**\n```tsx\nexport default function WarehouseView() {\n    const user = useAuthStore((state) => state.user);\n    // ❌ No valida si user.role === 'warehouse' o 'manager' o 'admin'\n    // ❌ Cualquier usuario autenticado puede acceder\n```\n\n**Tipo de Interfaz:**\n```typescript\nexport type UserRole = 'admin' | 'manager' | 'clerk' | 'warehouse';\n```\n\n**Existe Sistema de Permisos:**\n```typescript\nexport const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {\n  warehouse: { canReceiveProducts: true, ... },\n  clerk: { canReceiveProducts: false, ... },\n  // ... otros roles\n```\n\n**Recomendación:**\n```tsx\n// ❌ ACTUAL: Nada\nconst user = useAuthStore((state) => state.user);\n\n// ✅ CORRECTO:\nconst { canReceiveProducts } = ROLE_PERMISSIONS[user?.role || 'clerk'];\nif (!canReceiveProducts) {\n    return <div>Acceso denegado</div>;\n}\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "2. **No Existe Validación de Permisos por Rol** 🟠"
-  }
-}

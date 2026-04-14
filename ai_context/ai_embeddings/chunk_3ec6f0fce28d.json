@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_auth_diagrams_SpeedScaleDiagram_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para SpeedScaleDiagram.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/components/auth/diagrams/SpeedScaleDiagram.tsx\", \"name\": \"SpeedScaleDiagram.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico SpeedScaleDiagram.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con SpeedScaleDiagram.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 275,
-    "domain": "components"
-  }
-}

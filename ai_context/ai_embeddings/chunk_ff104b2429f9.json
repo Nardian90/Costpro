@@ -1,8 +1,0 @@
-{
-  "id": "SPECIFICATION_LANDING_5__flujo_ux_de_acceso_al_login",
-  "content": "## 5. Flujo UX de Acceso al Login\n\n1. **Estado Inicial:** El usuario aterriza en `/login` pero ve la Landing Informativa.\n2. **Disparador:** El usuario presiona cualquier botón de \"Acceso al Sistema\".\n3. **Transición:**\n   - **Opción A (Modal):** Se despliega un modal centrado con el formulario de login existente (Neu-card). El fondo de la landing se desenfoca (backdrop-blur).\n   - **Opción B (Switch de Vista):** La landing se desvanece suavemente y el formulario de login aparece mediante una animación de `framer-motion` (opacity & scale).\n4. **Persistencia:** Si el usuario ya está autenticado, el sistema lo redirige automáticamente a la Terminal (lógica actual).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/SPECIFICATION_LANDING.md",
-    "header": "5. Flujo UX de Acceso al Login"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_roles_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para roles.\", \"dependencies\": [\"@/types\"], \"domain\": \"Domain\", \"exports\": [\"getAllowedRoles\", \"hasRole\", \"canManageStore\"], \"id\": \"src/lib/roles.ts\", \"name\": \"roles.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico roles.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar roles.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 382,
-    "domain": "components"
-  }
-}

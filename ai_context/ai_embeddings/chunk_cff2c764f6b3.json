@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_store_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para store-service.\", \"dependencies\": [\"@/lib/supabaseClient\", \"@/lib/logger\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"storeService\"], \"id\": \"src/services/store-service.ts\", \"name\": \"store-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico store-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar store-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 312,
-    "domain": "components"
-  }
-}

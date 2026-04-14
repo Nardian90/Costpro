@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_audit_audit_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para audit.test.\", \"dependencies\": [\"vitest\", \"./AuditEventIcon\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/audit/audit.test.ts\", \"name\": \"audit.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico audit.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar audit.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 133,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_POST_REFACTOR_5__dx___mantenibilidad",
-  "content": "## 5. DX / Mantenibilidad\n\n- **Código:** Naming descriptivo, tipado fuerte y estructura de carpetas lógica.\n- **Documentación:** Presencia de directrices de performance que guían el desarrollo.\n- **Hallazgos:**\n    - ✔️ El sistema permite el onboarding rápido de nuevos devs seniors.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
-    "header": "5. DX / Mantenibilidad"
-  }
-}

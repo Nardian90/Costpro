@@ -1,8 +1,0 @@
-{
-  "id": "QUICK_REFERENCE_RLS_FIX____qué_se_arregló_",
-  "content": "## ⚡ ¿Qué se arregló?\n\n```\n✅ is_admin() retorna TRUE (era FALSE)\n✅ Policies consolidadas en stores (era 3 conflictivas)\n✅ Nueva policy permite admin editar users\n✅ Admin puede desactivar usuarios\n✅ Multi-tenant aislamiento intacto\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
-    "header": "⚡ ¿Qué se arregló?"
-  }
-}

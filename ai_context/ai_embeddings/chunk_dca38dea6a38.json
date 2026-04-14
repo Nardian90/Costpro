@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_audit_AuditLogsView_tsx",
-  "content": "{\"actions\": [\"handleExportPdf\"], \"components\": [\"ui/StateRenderer\", \"ui/button\", \"ui/skeleton\", \"ui/tabs\"], \"id\": \"src/components/views/terminal/views/audit/AuditLogsView.tsx\", \"inputs\": [], \"name\": \"AuditLogsView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/audit/AuditLogsView.tsx\", \"servicesUsed\": [\"api/useStores\", \"utils/pdf-export\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 37,
-    "domain": "views"
-  }
-}

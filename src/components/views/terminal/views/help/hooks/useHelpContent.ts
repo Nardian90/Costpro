@@ -16,13 +16,18 @@ export interface TocItem {
   text: string;
 }
 
+interface FileEntry {
+  filename: string;
+  title: string;
+}
+
 export interface HelpStructure {
-  iso_manual: string[];
+  iso_manual: FileEntry[];
   docs: {
-    tutorials: string[];
-    howTo: string[];
-    reference: string[];
-    explanation: string[];
+    tutorials: FileEntry[];
+    howTo: FileEntry[];
+    reference: FileEntry[];
+    explanation: FileEntry[];
   };
   user_help: boolean;
 }
@@ -58,7 +63,7 @@ export const useHelpContent = () => {
 
   const fetchGlossary = useCallback(async () => {
     try {
-      const res = await fetch('/api/help-docs?path=iso_manual/glossary.md');
+      const res = await fetch('/api/help-docs?path=iso_manual/glosario.md');
       if (!res.ok) return; // Silent fail if glossary not found
       const data = await res.json();
       const content = data.content || '';

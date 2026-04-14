@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_schemas_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para schemas.\", \"dependencies\": [\"zod\"], \"domain\": \"Engine\", \"exports\": [\"RowSemanticTypeSchema\", \"FormaCalculoSchema\", \"BaseRefSchema\", \"CalculationRuleSchema\", \"CostRowSchema\", \"AnexoRowSchema\", \"AnexoSchema\", \"FichaJSONSchema\"], \"id\": \"src/lib/cost-engine/schemas.ts\", \"name\": \"schemas.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico schemas.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar schemas.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 397,
-    "domain": "components"
-  }
-}

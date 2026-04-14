@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_4____manejo_de_errores_incompleto____",
-  "content": "### 4. **Manejo de Errores Incompleto** 🟠\n**Severidad:** MEDIA\n\n**Problema:**\n```tsx\ntry {\n    const { error } = await supabase.from('inventory').upsert({...});\n    if (error) throw error;\n} catch (error) {\n    toast.error('Error al actualizar stock');\n    fetchProducts();  // ❌ Recargar todo es costoso\n}\n```\n\n**Issues:**\n- `fetchProducts()` es sledgehammer (reload completo)\n- No diferencia entre errores RLS, validación, red, etc.\n- No registra error para debugging\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "4. **Manejo de Errores Incompleto** 🟠"
-  }
-}

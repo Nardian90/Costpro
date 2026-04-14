@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_IPV_BUILDER_5__notas_de_versión_10_2__v5_7_21__end",
-  "content": "## 5. Notas de Versión 10.2 (v5.7.21)\n*   **Optimización Mobile-First**: Pestañas scrollables, tablas responsivas con wrapper estándar y layouts de tarjetas adaptativas para reglas de matching.\n*   **Ergonomía**: Botones de acción principal ajustados a 44px (touch target) para facilitar el uso con el pulgar en dispositivos móviles.\n*   **Generador Demo**: Integración de un generador de extractos bancarios realistas que permite probar el 100% de las funcionalidades del motor de matching sin archivos externos.\n*   **Refactorización UI**: Eliminación de contenedores de scroll redundantes en favor del estándar global de la aplicación.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
-    "header": "5. Notas de Versión 10.2 (v5.7.21)"
-  }
-}

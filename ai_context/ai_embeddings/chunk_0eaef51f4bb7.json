@@ -1,8 +1,0 @@
-{
-  "id": "bugs_documentation_7__objetivos_de_toque__touch_targets___botones_de_acción_en_ipvview",
-  "content": "## 7. Objetivos de Toque (Touch Targets): Botones de Acción en IPVView\n- **Descripción**: Varios botones de acción tienen una altura de `h-10` (40px), incumpliendo el estándar de accesibilidad de 44px (`h-11`).\n- **Impacto**: Dificultad de interacción en dispositivos táctiles.\n- **Solución**: Incrementar altura a `h-11` (44px).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/bugs_documentation.md",
-    "header": "7. Objetivos de Toque (Touch Targets): Botones de Acción en IPVView"
-  }
-}

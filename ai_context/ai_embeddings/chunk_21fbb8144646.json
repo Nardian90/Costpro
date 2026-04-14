@@ -1,8 +1,0 @@
-{
-  "id": "ARCHITECTURE_AI_PIPELINE_v8_4_3_política_de_confianza__confidence_score_",
-  "content": "### 4.3 Política de Confianza (Confidence Score)\n- **Umbral:** `confidenceThreshold` (definido en state.yaml, default 90).\n- **Si Score < Umbral:**\n  1.  `reviewRequired = true`\n  2.  Mover archivo a `quarantinePath`.\n  3.  Registrar entrada en `reviewQueue`.\n  4.  **NO** reemplazar el artefacto activo en `public/`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
-    "header": "4.3 Política de Confianza (Confidence Score)"
-  }
-}

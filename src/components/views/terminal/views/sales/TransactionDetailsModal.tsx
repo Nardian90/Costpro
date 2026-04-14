@@ -89,7 +89,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       description={`ID de Transacción: ${transaction.id}`}
       maxWidth="sm:max-w-2xl"
     >
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <p className="font-semibold text-muted-foreground">Fecha</p>
             <p>{formatDate(transaction.created_at)}</p>
@@ -108,7 +108,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             </Badge>
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 overflow-x-auto">
           <h3 className="font-semibold mb-2">Artículos</h3>
           <Table>
             <TableHeader>

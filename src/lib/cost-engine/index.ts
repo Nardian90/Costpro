@@ -534,7 +534,9 @@ const ruleOverride = activeRules[0];
     let formaCalculoToUse = row.formaCalculo;
 
     const isParent = ficha.rows.some(r => r.parentId === row.id);
-    if (isParent) {
+    // Respect explicit FIJO — do NOT override to sum(children) when solver/external code
+    // sets formaCalculo = 'FIJO' (e.g., Goal Seek needs to pin a value).
+    if (isParent && row.formaCalculo !== 'FIJO') {
         formulaToUse = 'sum(children)';
         formaCalculoToUse = 'FORMULA';
     }
@@ -738,7 +740,14 @@ const ruleOverride = activeRules[0];
 
       // Calculate VH if formula exists
       const isParentRow = ficha.rows.some(r => r.parentId === row.id);
-      const vhFormulaToUse = isParentRow ? 'sum(children)' : row.vhFormula;
+      // Respect explicit FIJO — do NOT recalculate VH from children or vhFormula when
+      // solver/external code sets formaCalculo = 'FIJO' (e.g., Goal Seek needs to pin a value).
+      let vhFormulaToUse: string | null | undefined;
+      if (row.formaCalculo === 'FIJO') {
+        vhFormulaToUse = undefined; // Don't evaluate vhFormula for FIJO rows
+      } else {
+        vhFormulaToUse = isParentRow ? 'sum(children)' : row.vhFormula;
+      }
       if (vhFormulaToUse) {
         try {
             const vhFormulaStrRaw = vhFormulaToUse.trim().startsWith('=')

@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_2__navegar_por_rol",
-  "content": "### 2. Navegar por Rol\nEl menú lateral muestra las opciones disponibles según tu rol:\n- **Admin**: Todas las vistas\n- **Encargado**: Dashboard, POS, Inventario, Catálogo, Historial, Auditoría, Cierre Caja, Configuración\n- **Cajero**: Dashboard, POS, Mis Ventas\n- **Almacén**: Inventario, Recepciones\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "2. Navegar por Rol"
-  }
-}

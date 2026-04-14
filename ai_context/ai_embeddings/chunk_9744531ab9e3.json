@@ -1,8 +1,0 @@
-{
-  "id": "audit_v5_resultado_end",
-  "content": "### Resultado\nEl módulo es ahora significativamente más robusto, \"íntegro\" en su manejo de datos y proactivo en la detección de errores del usuario.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/audit_v5.8_optimization.md",
-    "header": "Resultado"
-  }
-}

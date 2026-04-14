@@ -263,7 +263,7 @@ export default function InventoryAdjustmentModal({
             Vista Previa del Resultado
           </h4>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
              <div className="text-center">
                 <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo Stock</p>
                 <p className={cn("text-[clamp(1rem,5vw,1.25rem)] font-black", resultados.nuevo_stock !== stockActual && "text-primary")}>

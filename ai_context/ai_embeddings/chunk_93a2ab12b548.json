@@ -1,8 +1,0 @@
-{
-  "id": "VALIDATION_REPORT_FINAL_1__checklist_de_validación_e2e",
-  "content": "## 1. Checklist de Validación E2E\n\n| Proceso de Negocio | Estado | Observaciones |\n| :--- | :---: | :--- |\n| **Autenticación (Login)** | ✅ | Funcional con cuentas demo y manejo de errores. |\n| **Gestión Multi-Tienda** | ✅ | Cambio de sucursal y aislamiento de contexto operativo. |\n| **Terminal de Venta (POS)** | ✅ | Flujo completo: Selección → Carrito → Checkout → Registro. |\n| **Control de Inventario** | ✅ | Visualización de stock y alertas críticas integradas. |\n| **Ficha de Costo** | ✅ | Cálculos en tiempo real y exportación de reportes. |\n| **Auditoría del Sistema** | ✅ | Trazabilidad completa de acciones y fallbacks resilientes. |\n| **Seguridad por Roles** | ✅ | RLS verificado; visualización adaptativa según permisos. |\n| **Dashboards KPI** | ✅ | Consistencia de datos financieros y operativos. |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/VALIDATION_REPORT_FINAL.md",
-    "header": "1. Checklist de Validación E2E"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "DOCUMENTATION_AUDIT_d__documentación__as_code__end",
-  "content": "### D. Documentación \"As-Code\"\n- Asegurar que cada nuevo componente principal incluya un bloque de comentario JSDoc que describa su impacto en el negocio, no solo sus props.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
-    "header": "D. Documentación \"As-Code\""
-  }
-}

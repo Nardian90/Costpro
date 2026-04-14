@@ -1,8 +1,0 @@
-{
-  "id": "ADR-002-Seguridad_de_API_Keys_de_AI_consecuencias_end",
-  "content": "## Consecuencias\nMejora la seguridad y permite la rotación de llaves sin desplegar nuevo código.\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/ADR-002-Seguridad_de_API_Keys_de_AI.md",
-    "header": "Consecuencias"
-  }
-}

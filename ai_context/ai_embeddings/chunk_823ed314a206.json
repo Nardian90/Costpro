@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_legal_LegalView_tsx",
-  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/legal/LegalView.tsx\", \"inputs\": [], \"name\": \"LegalView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/legal/LegalView.tsx\", \"servicesUsed\": [\"supabaseClient\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 45,
-    "domain": "views"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "INTEGRITY_REPORT_summary_end",
-  "content": "## Summary\nGlobal Integrity: **PASSED (with 1 documented logic issue)**\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INTEGRITY_REPORT.md",
-    "header": "Summary"
-  }
-}

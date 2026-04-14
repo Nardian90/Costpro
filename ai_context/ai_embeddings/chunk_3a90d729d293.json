@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_antes____admin_bloqueado_",
-  "content": "### ANTES (❌ Admin bloqueado)\n\n| Policy | Operación | USING | WITH_CHECK | Problema |\n|--------|-----------|-------|-----------|----------|\n| \"Admin full access\" | ALL | `is_admin()` | NULL | ⚠️ is_admin() retorna FALSE |\n| \"Profiles visibility\" | SELECT | `id = auth.uid() OR get_my_role() = 'admin' OR ...` | NULL | ✅ OK |\n| \"Self profile update\" | UPDATE | `id = auth.uid()` | `(id = auth.uid() AND (is_admin() OR no change role))` | ❌ Admin NO puede editar otros |\n\n**Problema Específico:**\n- \"Admin full access\" existe pero es inútil porque `is_admin() = false`\n- \"Self profile update\" solo permite editar el propio perfil\n- **No hay policy que permita admin editar perfiles ajenos**\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "ANTES (❌ Admin bloqueado)"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_useStockMovements_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useStockMovements.\", \"dependencies\": [\"@tanstack/react-query\", \"zod\", \"@/lib/supabaseClient\", \"./base\", \"@/lib/rpc-validator\", \"@/validation/schemas\"], \"domain\": \"Domain\", \"exports\": [\"useStockMovements\"], \"id\": \"src/hooks/api/useStockMovements.ts\", \"name\": \"useStockMovements.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useStockMovements.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useStockMovements.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 338,
-    "domain": "components"
-  }
-}

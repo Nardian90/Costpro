@@ -1,8 +1,0 @@
-{
-  "id": "reference_rolesmanagementview_tsx",
-  "content": "## RolesManagementView.tsx\n**Ruta:** `src/components/views/terminal/views/users/RolesManagementView.tsx`\n\n**Acciones disponibles:** handleCreate, handleDelete, handleEdit, handleSubmit\n\n**Salidas esperadas:** Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "RolesManagementView.tsx"
-  }
-}

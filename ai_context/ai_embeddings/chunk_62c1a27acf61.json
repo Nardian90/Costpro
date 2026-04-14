@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_2____estados_innecesarios_y_confusos____",
-  "content": "### 2. **Estados Innecesarios y Confusos** 🟡\n**Severidad:** BAJA\n\n**Problema:**\n```tsx\nconst [recentReceptions, setRecentReceptions] = useState<any[]>([]);\nconst [isSessionChecking, setIsSessionChecking] = useState(true);\n```\n\n- `recentReceptions` se carga pero panel está oculto en modo recepción\n- `isSessionChecking` es overhead innecesario (Supabase maneja esto)\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "2. **Estados Innecesarios y Confusos** 🟡"
-  }
-}

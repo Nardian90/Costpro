@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_fase_1__backend__supabase____15_minutos",
-  "content": "### Fase 1: Backend (Supabase) - 15 minutos\n\n1. **Corregir `is_admin()`** → Problema raíz de todo\n2. **Consolidar policies en `stores`** → Elimina el comodín `true`\n3. **Agregar policy \"Admin can manage any profile\"`** → Permite ediciones\n4. **Ejecutar migrations** → Aplicar cambios\n\n**Estimado:** ~5 minutos si no hay errores\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "Fase 1: Backend (Supabase) - 15 minutos"
-  }
-}

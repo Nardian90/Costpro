@@ -162,13 +162,13 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                 <TableRow className="bg-muted/30 border-b-2">
                   <TableHead className="w-[40px] text-center"><Checkbox className="translate-y-1"/></TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead>Referencia</TableHead>
+                  <TableHead className="hidden lg:table-cell">Referencia</TableHead>
                   <TableHead className="max-w-[150px]">Concepto</TableHead>
-                  <TableHead className="text-center w-[60px]">Naturaleza</TableHead>
+                  <TableHead className="text-center w-[60px] hidden sm:table-cell">Naturaleza</TableHead>
                   <TableHead className="text-right">Neto</TableHead>
-                  <TableHead className="text-right">Comis.</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">Comis.</TableHead>
                   <TableHead className="text-right">Venta</TableHead>
-                  <TableHead className="text-right">Diferencia</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">Diferencia</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -184,10 +184,10 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <TableRow key={tx.referencia_origen} className={tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''}>
                           <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} /></TableCell>
                           <TableCell className="font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
-                          <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
+                          <TableCell className="font-mono text-[10px] max-w-[120px] truncate hidden lg:table-cell">{tx.referencia_origen}</TableCell>
                           <TableCell className="text-xs">
                             <div className="flex items-center gap-2 group max-w-[150px]">
-                                <div className="truncate font-medium cursor-pointer flex-1" title={tx.observaciones || "Sin concepto"} onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                                <div className="truncate font-medium cursor-pointer flex-1 hover:text-primary transition-colors" title={tx.observaciones || "Sin concepto"} onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
                                     {tx.observaciones || "Sin concepto"}
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
@@ -195,15 +195,15 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 </Button>
                             </div>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center hidden sm:table-cell">
                               <Badge variant="outline" className={`text-[10px] font-black uppercase px-2 py-0 border-2 ${tx.tipo === "Cr" ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : "text-red-500 border-red-500/20 bg-red-500/5"}`}>
                                   {tx.tipo}
                               </Badge>
                           </TableCell>
                           <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrencyCents(tx.importe_cents)}</TableCell>
-                          <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
+                          <TableCell className="text-right font-bold text-xs text-red-500 hidden lg:table-cell">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
                           <TableCell className="text-right font-black text-xs text-primary">{formatCurrencyCents(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
-                          <TableCell className={`text-right font-bold text-xs ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-orange-500' : 'text-red-500')}`}>{formatCurrencyCents(diff)}</TableCell>
+                          <TableCell className={`text-right font-bold text-xs hidden md:table-cell ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-orange-500' : 'text-red-500')}`}>{formatCurrencyCents(diff)}</TableCell>
                           <TableCell>{getStatusBadge(tx, diff, matched)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1 items-center">
