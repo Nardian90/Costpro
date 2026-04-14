@@ -1,8 +1,0 @@
-{
-  "id": "reference_transferqrreportview_tsx",
-  "content": "## TransferQRReportView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/TransferQRReportView.tsx`\n\n**Acciones disponibles:** handleExportPDF, handleUpdateRow\n\n**Salidas esperadas:** Card List, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "TransferQRReportView.tsx"
-  }
-}

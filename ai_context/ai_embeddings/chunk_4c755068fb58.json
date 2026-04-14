@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_providers_QueryProvider_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para QueryProvider.\", \"dependencies\": [\"@tanstack/react-query\", \"react\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/components/providers/QueryProvider.tsx\", \"name\": \"QueryProvider.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico QueryProvider.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con QueryProvider.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 13,
-    "domain": "components"
-  }
-}

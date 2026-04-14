@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_inventory_ProductReceptionView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ProductReceptionView.\", \"dependencies\": [\"react\", \"@/lib/supabaseClient\", \"@/store\", \"@/types\", \"sonner\", \"lucide-react\", \"@/hooks/api/useInventory\", \"@/hooks/ui/useDebounce\", \"@/lib/utils\", \"@/components/ui/ActionMenu\", \"@/components/ui/atomic\", \"@/components/ui/SecurityScrollContainer\", \"@/services/import-service\", \"@/validation/schemas\", \"papaparse\", \"@/components/ui/BaseModal\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/inventory/ProductReceptionView.tsx\", \"name\": \"ProductReceptionView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ProductReceptionView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ProductReceptionView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 77,
-    "domain": "components"
-  }
-}

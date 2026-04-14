@@ -1,9 +1,0 @@
-{
-  "id": "user_help_12",
-  "content": "{\"acciones\": [], \"descripcion_usuario\": \"Interfaz para gestionar ExecutiveKpiCards.\", \"feature\": \"ExecutiveKpiCards\", \"resultados\": [\"Card List\"]}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 12,
-    "domain": "user_help"
-  }
-}

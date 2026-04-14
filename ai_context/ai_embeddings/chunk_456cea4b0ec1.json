@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V2_END_TO_END____reporte_de_auditoría_técnica_v2_0__flujo_comercial_end_to_end",
-  "content": "# 🛡️ REPORTE DE AUDITORÍA TÉCNICA v2.0: FLUJO COMERCIAL END-TO-END\n**Fecha:** Marzo 2024\n**Equipo Auditor:** Elite QA, Backend, DB Architect, Security & IAM Specialist (Jules AI)\n**Estado:** 🔴 CRÍTICO (Fallas Graves de Seguridad y Concurrencia)\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
-    "header": "🛡️ REPORTE DE AUDITORÍA TÉCNICA v2.0: FLUJO COMERCIAL END-TO-END"
-  }
-}

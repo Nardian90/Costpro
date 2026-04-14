@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_dashboard_ConcentricDashboardRing_tsx",
-  "content": "{\"actions\": [], \"components\": [], \"id\": \"src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx\", \"inputs\": [], \"name\": \"ConcentricDashboardRing.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 6,
-    "domain": "views"
-  }
-}

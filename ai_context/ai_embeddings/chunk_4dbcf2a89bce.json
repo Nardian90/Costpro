@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION__cuándo_estará_listo_para_producción_",
-  "content": "### ¿Cuándo estará listo para producción?\n\n**Respuesta:** Después de ejecutar los 8 tests en `TESTING_MANUAL_RLS_FIXES.md` y que pasen todos.\n**Tiempo estimado:** 15 minutos\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "¿Cuándo estará listo para producción?"
-  }
-}

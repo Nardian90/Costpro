@@ -1,8 +1,0 @@
-{
-  "id": "glossary_glosario_de_términos_end",
-  "content": "# Glosario de términos\n\n**IPV:** Control de Inventario y Ventas. Módulo central para la reconciliación.\n\n**Matching Engine:** Conciliador Inteligente que cruza datos bancarios con ventas.\n\n**Decomposition:** Desglose de productos de un nivel superior (ej. Caja) a uno inferior (ej. Unidad).\n\n**Cost Sheet:** Ficha de Costo para el cálculo de rentabilidad y precios.\n\n**Bank Ingestion:** Proceso de carga y normalización de extractos bancarios.\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/glossary.md",
-    "header": "Glosario de términos"
-  }
-}

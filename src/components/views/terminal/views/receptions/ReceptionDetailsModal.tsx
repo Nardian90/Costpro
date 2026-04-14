@@ -106,7 +106,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
           {/* Items Table */}
           <div className="space-y-3">
              <h4 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Productos Recibidos</h4>
-             <div className="rounded-2xl border border-white/5 overflow-hidden">
+             <div className="rounded-2xl border border-white/5 overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest text-left">

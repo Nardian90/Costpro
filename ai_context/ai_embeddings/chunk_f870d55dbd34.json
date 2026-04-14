@@ -1,8 +1,0 @@
-{
-  "id": "VALIDATION_REPORT_FINAL_a__esquema_de_base_de_datos",
-  "content": "### A. Esquema de Base de Datos\n*   **Brecha:** Columnas faltantes (`logo_url` en stores, `roles` y `active_store_id` en profiles) y RPC `get_audit_logs` ausente.\n*   **Mitigación inmediata:** Implementación de hooks resilientes con fallbacks a consultas directas y relajación controlada de esquemas Zod.\n*   **Solución definitiva:** Se ha generado la migración SQL `supabase/migrations/20260128_final_hardening_schema.sql` lista para ser aplicada.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/VALIDATION_REPORT_FINAL.md",
-    "header": "A. Esquema de Base de Datos"
-  }
-}

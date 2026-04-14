@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_cost_sheet_CostSheetAuditView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/badge\", \"ui/card\", \"ui/scroll-area\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx\", \"inputs\": [], \"name\": \"CostSheetAuditView.tsx\", \"outputs\": [\"Card List\", \"Summary Panel\"], \"route\": \"src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx\", \"servicesUsed\": [\"cost-engine/validations\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 38,
-    "domain": "views"
-  }
-}

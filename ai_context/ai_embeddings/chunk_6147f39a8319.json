@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_card_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para card.\", \"dependencies\": [\"react\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/card.tsx\", \"name\": \"card.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico card.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con card.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 263,
-    "domain": "components"
-  }
-}

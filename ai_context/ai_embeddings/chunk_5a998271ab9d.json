@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST___archivos_modificados",
-  "content": "## 📂 Archivos Modificados\n\n1. `src/components/WarehouseView.tsx` - Componente principal\n2. `next.config.ts` - Configuración de imágenes\n3. `WAREHOUSE_VIEW_IMPLEMENTATION.md` - Documentación\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "📂 Archivos Modificados"
-  }
-}

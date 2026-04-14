@@ -1,8 +1,0 @@
-{
-  "id": "FLOW_IPV_MISMATCH_flujo_de_mismatch_ipv___documentación_técnica",
-  "content": "# Flujo de Mismatch IPV - Documentación Técnica\n\nEste documento detalla el ciclo de vida de una transacción desde su ingesta hasta la resolución de un mismatch en el módulo IPV.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
-    "header": "Flujo de Mismatch IPV - Documentación Técnica"
-  }
-}

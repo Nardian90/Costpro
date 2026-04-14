@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_data_demo_products_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para demo-products.\", \"dependencies\": [], \"domain\": \"Domain\", \"exports\": [\"DemoProduct\", \"DEMO_DATASET\"], \"id\": \"src/lib/data/demo-products.ts\", \"name\": \"demo-products.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico demo-products.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar demo-products.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 411,
-    "domain": "components"
-  }
-}

@@ -524,7 +524,7 @@ export const POSCart = ({
                                   })
                                 }
                                 className={cn(
-                                  "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
+                                  "px-2 py-0.5 rounded-lg text-xs font-black uppercase transition-all",
                                   discount?.type === "percentage"
                                     ? "bg-primary text-primary-foreground"
                                     : "text-muted-foreground",
@@ -540,7 +540,7 @@ export const POSCart = ({
                                   })
                                 }
                                 className={cn(
-                                  "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
+                                  "px-2 py-0.5 rounded-lg text-xs font-black uppercase transition-all",
                                   discount?.type === "fixed"
                                     ? "bg-primary text-primary-foreground"
                                     : "text-muted-foreground",
@@ -588,7 +588,7 @@ export const POSCart = ({
                                   value: parseFloat(e.target.value) || 0,
                                 })
                               }
-                              className="w-full pl-7 p-2 rounded-lg border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                              className="w-full pl-7 p-2 rounded-xl border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
                               placeholder="Monto personalizado"
                             />
                           </div>

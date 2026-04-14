@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_dashboard_DashboardView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para DashboardView.\", \"dependencies\": [\"react\", \"next/dynamic\", \"@/lib/utils\", \"@/store\", \"@/hooks/api/useProducts\", \"@/components/ui/StateRenderer\", \"@/types\", \"./useDashboardView\", \"@/store\", \"@/components/ui/toggle-group\", \"date-fns\", \"date-fns/locale\", \"@/components/ui/popover\", \"@/components/ui/calendar\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/dashboard/DashboardView.tsx\", \"name\": \"DashboardView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico DashboardView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con DashboardView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 35,
-    "domain": "components"
-  }
-}

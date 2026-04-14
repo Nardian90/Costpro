@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V2_END_TO_END___alto__split_brain_de_stock__architectural_risk_",
-  "content": "### 🟠 ALTO: Split-Brain de Stock (Architectural Risk)\n- **Descripción:** El stock se almacena de forma redundante en `products.stock_current` y `inventory.quantity`.\n- **Impacto:** Aunque existen triggers de sincronización, la existencia de dos fuentes de verdad aumenta la latencia y el riesgo de inconsistencia si un trigger falla o se deshabilita temporalmente.\n- **Evidencia:** Triggers `tr_sync_inventory_after_movement` y `trg_sync_products_stock_current`.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
-    "header": "🟠 ALTO: Split-Brain de Stock (Architectural Risk)"
-  }
-}

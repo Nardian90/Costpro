@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS__is_admin___",
-  "content": "### `is_admin()`\n\n**ANTES:**\n```sql\nCREATE OR REPLACE FUNCTION public.is_admin()\nRETURNS boolean\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1 FROM public.profiles\n    WHERE id = auth.uid()\n    AND role::text IN ('admin', 'superadmin')\n  );\nEND;\n$$;\n```\n\n**Problema:**\n- `role::text` convierte ENUM a text\n- Comparación `IN ('admin', 'superadmin')` falla con el ENUM\n- `EXISTS` retorna FALSE cuando el perfil no existe\n\n---\n\n**DESPUÉS:**\n```sql\nCREATE OR REPLACE FUNCTION public.is_admin()\nRETURNS boolean\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$\nBEGIN\n  RETURN EXISTS (\n    SELECT 1 FROM public.profiles\n    WHERE id = auth.uid()\n    AND role = ANY(ARRAY['admin', 'superadmin']::user_role[])\n  );\nEND;\n$$;\n```\n\n**Mejoras:**\n- `role = ANY(ARRAY[...])` compara ENUM con ENUM ✅\n- Más eficiente y seguro\n- Retorna `true` para admins reales\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "`is_admin()`"
-  }
-}

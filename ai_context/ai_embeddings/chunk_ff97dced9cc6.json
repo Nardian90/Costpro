@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_conciliación_de_inventario__control_de_inventario_y_ventas_",
-  "content": "## Conciliación de Inventario (Control de Inventario y Ventas)\n**Propósito:** Asegurar que cada peso recibido en el banco corresponda a una salida de inventario válida.\n\n**Acciones clave:**\n- Importar extracto bancario en BankIngestion\n- Verificar catálogo en CatalogTable\n- Ejecutar MatchingEngine para cruzar datos\n- Revisar resultados en MatchingAuditView\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "Conciliación de Inventario (Control de Inventario y Ventas)"
-  }
-}

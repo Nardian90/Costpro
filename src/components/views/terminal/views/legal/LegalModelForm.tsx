@@ -124,7 +124,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
         return (
           <div className="space-y-4">
             <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="min-w-[500px] space-y-4">
+              <div className="min-w-0 sm:min-w-[500px] space-y-4">
                 <div className="grid grid-cols-12 gap-4 px-2 mb-2">
                   <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto / Detalle del Cobro</div>
                   <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Importe ($)</div>

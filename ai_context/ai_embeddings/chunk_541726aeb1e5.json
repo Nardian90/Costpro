@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_logic_usePOSProducts_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para usePOSProducts.\", \"dependencies\": [\"react\", \"@/types\"], \"domain\": \"Domain\", \"exports\": [\"usePOSProducts\"], \"id\": \"src/hooks/logic/usePOSProducts.ts\", \"name\": \"usePOSProducts.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico usePOSProducts.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar usePOSProducts.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 329,
-    "domain": "components"
-  }
-}

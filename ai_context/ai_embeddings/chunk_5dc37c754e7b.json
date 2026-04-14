@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_POST_REFACTOR_próximos_pasos_recomendados__end",
-  "content": "### Próximos Pasos Recomendados:\n1. **Estandarización de Hooks:** Unificar la ubicación de los hooks de vista para eliminar la deuda técnica de co-localización mixta.\n2. **Implementación de Placeholders:** Completar las vistas secundarias (Settings, Help, Recepción) siguiendo los patrones ya establecidos.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
-    "header": "Próximos Pasos Recomendados:"
-  }
-}

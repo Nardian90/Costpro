@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_InventoryView_tsx",
-  "content": "{\"actions\": [\"handleAdjustProduct\", \"handleCategoryChange\", \"handleConfirmAdjustment\"], \"components\": [\"ui/ActionMenu\", \"ui/QueryInspector\", \"ui/SearchBar\", \"ui/StateRenderer\", \"ui/atomic\", \"ui/skeleton\"], \"id\": \"src/components/views/terminal/views/inventory/InventoryView.tsx\", \"inputs\": [], \"name\": \"InventoryView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/inventory/InventoryView.tsx\", \"servicesUsed\": [\"api/useInventory\", \"ui/useMobile\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 18,
-    "domain": "views"
-  }
-}

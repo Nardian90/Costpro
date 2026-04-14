@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_usersmanagementview",
-  "content": "## UsersManagementView\n**Propósito:** Interfaz para gestionar UsersManagementView.\n\n**Acciones clave:**\n- Select\n- Switch\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "UsersManagementView"
-  }
-}

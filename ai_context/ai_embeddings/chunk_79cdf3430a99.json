@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_academy___tests___sm2_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para sm2.test.\", \"dependencies\": [\"vitest\", \"../sm2\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/academy/__tests__/sm2.test.ts\", \"name\": \"sm2.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico sm2.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar sm2.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 406,
-    "domain": "components"
-  }
-}

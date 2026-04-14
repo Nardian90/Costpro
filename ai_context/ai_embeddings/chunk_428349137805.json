@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_supabaseClient_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para supabaseClient.\", \"dependencies\": [\"@supabase/supabase-js\"], \"domain\": \"Infrastructure\", \"exports\": [\"supabase\", \"getSupabaseAuthClient\"], \"id\": \"src/lib/supabaseClient.ts\", \"name\": \"supabaseClient.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico supabaseClient.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar supabaseClient.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 372,
-    "domain": "components"
-  }
-}

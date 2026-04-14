@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_recentcostsheets",
-  "content": "## RecentCostSheets\n**Propósito:** Interfaz para gestionar RecentCostSheets.\n\n**Acciones clave:**\n- handleSelect\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "RecentCostSheets"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V2_END_TO_END_1__resumen_ejecutivo",
-  "content": "## 1. RESUMEN EJECUTIVO\nSe ha completado una auditoría integral del flujo jerárquico y transaccional. Si bien el sistema presenta una base sólida con RPCs atómicos y aislamiento por tienda mediante RLS, se han detectado vulnerabilidades críticas en la capa de autorización (RBAC) y race conditions en el cálculo del costo promedio (WAC) que impiden su despliegue seguro en producción.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
-    "header": "1. RESUMEN EJECUTIVO"
-  }
-}

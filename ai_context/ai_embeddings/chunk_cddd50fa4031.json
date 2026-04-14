@@ -1,8 +1,0 @@
-{
-  "id": "POS_AUDIT_FINAL_rendimiento__zero_latency_",
-  "content": "### Rendimiento (Zero Latency)\n- **useDeferredValue:** Implementado en `usePOSProducts.ts` para que el filtrado de productos no bloquee el hilo principal de la UI.\n- **Transiciones:** El estado `isPending` se deriva tanto de las transiciones de categoría como del valor diferido de búsqueda, permitiendo feedback visual (opacidad) mientras se procesan los resultados.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POS_AUDIT_FINAL.md",
-    "header": "Rendimiento (Zero Latency)"
-  }
-}

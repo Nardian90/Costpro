@@ -1,8 +1,0 @@
-{
-  "id": "AUDITORIA_AJUSTES_DOCUMENTOS_resumen_del_proceso",
-  "content": "## Resumen del Proceso\nSe ha implementado un sistema de inversión (anulación) de documentos para el **Módulo Almacén**, permitiendo revertir ventas y recepciones con el correspondiente ajuste automático de stock.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDITORIA_AJUSTES_DOCUMENTOS.md",
-    "header": "Resumen del Proceso"
-  }
-}

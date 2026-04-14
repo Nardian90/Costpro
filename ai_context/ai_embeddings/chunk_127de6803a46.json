@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_aislamiento_multi_tenant",
-  "content": "#### Aislamiento Multi-tenant\n\n**ANTES:**\n```sql\n-- stores_visibility (SELECT)\nUSING: is_admin() OR EXISTS (... memberships ...)\n```\n\n**DESPUÉS:**\n```sql\nUSING: is_admin() OR EXISTS (... memberships ...)\n-- IGUAL\n```\n\n✅ Multi-tenant aislamiento **INTACTO**\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Aislamiento Multi-tenant"
-  }
-}

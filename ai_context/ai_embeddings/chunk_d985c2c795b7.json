@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_adapters_gemini_adapter_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para gemini-adapter.\", \"dependencies\": [\"../types\", \"@google/generative-ai\"], \"domain\": \"Integration\", \"exports\": [\"GeminiAdapter\"], \"id\": \"src/lib/ai/adapters/gemini-adapter.ts\", \"name\": \"gemini-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico gemini-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar gemini-adapter.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 447,
-    "domain": "components"
-  }
-}

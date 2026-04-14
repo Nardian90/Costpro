@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_IngestionErrorsTable_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para IngestionErrorsTable.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/components/ui/badge\", \"@/components/ui/button\", \"@/components/ui/input\", \"lucide-react\", \"@/lib/utils\", \"sonner\", \"@/lib/ipv/engine\", \"@/lib/ipv/utils\"], \"domain\": \"UI\", \"exports\": [\"IngestionErrorsTable\"], \"id\": \"src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx\", \"name\": \"IngestionErrorsTable.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico IngestionErrorsTable.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con IngestionErrorsTable.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 102,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_performance_end",
-  "content": "### Performance\n\n```\n✅ Misma complejidad (4 políticas vs 3 conflictivas)\n✅ Índices sin cambios\n✅ Queries sin cambios\n✅ Sin degradación esperada\n```\n\n---\n\n**Conclusión:** ✅ Seguridad mejorada, no relajada. Admin desbloqueado, users aislados.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Performance"
-  }
-}

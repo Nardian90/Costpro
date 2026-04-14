@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_cierre_de_caja",
-  "content": "### Cierre de Caja\n- Declaración de cajero\n- Resumen del sistema\n- Consolidado por forma de pago\n- Control de diferencias\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Cierre de Caja"
-  }
-}

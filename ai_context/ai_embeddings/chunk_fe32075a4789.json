@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_bot_service_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para bot-service.test.\", \"dependencies\": [\"vitest\", \"./bot-service\", \"@/lib/ai/orchestrator\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/services/bot-service.test.ts\", \"name\": \"bot-service.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico bot-service.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar bot-service.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 311,
-    "domain": "components"
-  }
-}

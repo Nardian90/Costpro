@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_help_help_OfflineSyncDiagram_test_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para OfflineSyncDiagram.test.\", \"dependencies\": [\"@testing-library/react\", \"vitest\", \"./OfflineSyncDiagram\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/help/help/OfflineSyncDiagram.test.tsx\", \"name\": \"OfflineSyncDiagram.test.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico OfflineSyncDiagram.test.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con OfflineSyncDiagram.test.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 62,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "QUICK_REFERENCE_RLS_FIX___cambios_resumidos",
-  "content": "## 📊 Cambios Resumidos\n\n| Componente | Cambio | Estado |\n|-----------|--------|--------|\n| `is_admin()` | Reparada (ENUM fix) | ✅ APPLIED |\n| `stores` policies | Consolidadas (4 claras) | ✅ APPLIED |\n| `profiles` policy | Nueva \"admin_full_access\" | ✅ APPLIED |\n| Frontend | `is_active` en payload | ✅ ALREADY THERE |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/QUICK_REFERENCE_RLS_FIX.md",
-    "header": "📊 Cambios Resumidos"
-  }
-}

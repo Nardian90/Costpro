@@ -1,9 +1,0 @@
-{
-  "id": "user_help_17",
-  "content": "{\"acciones\": [\"Calendar\"], \"descripcion_usuario\": \"Interfaz para gestionar HelpView.\", \"feature\": \"HelpView\", \"resultados\": [\"Card List\"]}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 17,
-    "domain": "user_help"
-  }
-}

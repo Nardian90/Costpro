@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_tools_registry_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para registry.\", \"dependencies\": [\"@supabase/supabase-js\", \"@/config/viewRegistry\", \"./definitions\", \"zod\", \"../../observability/system-health\"], \"domain\": \"Domain\", \"exports\": [\"ToolHandlerContext\", \"toolHandlers\"], \"id\": \"src/lib/ai/tools/registry.ts\", \"name\": \"registry.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico registry.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar registry.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 451,
-    "domain": "components"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_audit_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para audit-service.\", \"dependencies\": [\"@/lib/supabaseClient\"], \"domain\": \"Domain\", \"exports\": [\"auditService\"], \"id\": \"src/services/audit-service.ts\", \"name\": \"audit-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico audit-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar audit-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 324,
-    "domain": "components"
-  }
-}

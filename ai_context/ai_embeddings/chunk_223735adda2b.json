@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_release_gate_mri_engine_ts",
-  "content": "{\"business_logic\": \"Implementa la l\\u00f3gica central de reconciliaci\\u00f3n de transacciones bancarias con productos del cat\\u00e1logo, manejando descomposiciones y ajustes de precio.\", \"dependencies\": [], \"domain\": \"Engine\", \"exports\": [\"MRIDomain\", \"HardStop\", \"MRIResult\", \"MRI_WEIGHTS\", \"MRI_THRESHOLDS\", \"calculateMRI\", \"DEFAULT_MRI_DATA\"], \"id\": \"src/lib/release_gate/mri-engine.ts\", \"name\": \"mri-engine.ts\", \"technical_description\": \"Motor de conciliaci\\u00f3n IPV (Inventario vs Venta). Ejecuta algoritmos de cuadre multi-paso.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar mri-engine.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 408,
-    "domain": "components"
-  }
-}

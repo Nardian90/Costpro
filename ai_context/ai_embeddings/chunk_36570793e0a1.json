@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTION_HISTORY_historial_de_ejecución_del_pipeline_de_arquitectura_end",
-  "content": "# Historial de Ejecución del Pipeline de Arquitectura\n\n| Fecha | Fase | Descripción | Archivos Modificados |\n|-------|------|-------------|----------------------|\n| 2026-03-15 | 8 | Traducción a lenguaje de usuario | knowledge/user_help.json, knowledge/components.json |\n| 2026-03-15 | 8 | Refinamiento de metadatos del pipeline | docs/automation/ARCHITECTURE_MAINTENANCE_PIPELINE.md |\n| 2026-03-16 | 9 | Mapeo de flujos de vista y componentes | public/user_knowledge_base.json, public/master_user_manual.json |\n| 2026-03-17 | 10 | Detección y generación de flujos de trabajo (Academy, Wallet) | knowledge/workflows.json |\n| 2026-03-16 | 11 | Generación de manual maestro (Manual Maestro de Usuario) | knowledge/master_user_manual.json, public/master_user_manual.json |\n| 2026-03-16 | 12 | Generación de grafo de conocimiento (Knowledge Graph) | knowledge/knowledge_graph.json |\n| 2026-03-16 | 13 | Generación de índice de contexto para IA (AI Context Index) | knowledge/ai_context_index.json |\n| 2026-03-17 | 14 | Validación de consistencia global de artefactos | docs/architecture/INTEGRITY_REPORT.md, docs/mapa_vistas.md |\n| 2026-03-16 | 1 | Architecture Discovery | docs/mapa_vistas.md |\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/EXECUTION_HISTORY.md",
-    "header": "Historial de Ejecución del Pipeline de Arquitectura"
-  }
-}

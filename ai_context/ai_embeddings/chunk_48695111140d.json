@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_smart_annex_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para smart-annex.test.\", \"dependencies\": [\"vitest\", \"./index\", \"./types\"], \"domain\": \"Engine\", \"exports\": [], \"id\": \"src/lib/cost-engine/smart-annex.test.ts\", \"name\": \"smart-annex.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico smart-annex.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar smart-annex.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 394,
-    "domain": "components"
-  }
-}

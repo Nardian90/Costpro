@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_useReceptions_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useReceptions.\", \"dependencies\": [\"@tanstack/react-query\", \"@/lib/supabaseClient\", \"@/lib/rpc-validator\", \"@/validation/schemas\", \"./base\"], \"domain\": \"Domain\", \"exports\": [\"useReceptions\", \"useReceptionDetails\"], \"id\": \"src/hooks/api/useReceptions.ts\", \"name\": \"useReceptions.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useReceptions.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useReceptions.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 348,
-    "domain": "components"
-  }
-}

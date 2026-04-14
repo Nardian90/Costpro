@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_pos_POSView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para POSView.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\", \"sonner\", \"@/components/ui/SearchBar\", \"@/components/ui/ActionMenu\", \"@/components/ui/atomic\", \"./POSTableView\", \"@/components/ui/ViewSwitcher\", \"@/components/ui/StateRenderer\", \"@/components/ui/skeleton\", \"framer-motion\", \"@/hooks/logic/usePOSProducts\", \"@/hooks/ui/useMobile\", \"@/components/ui/Portal\", \"@/components/ui/BaseModal\", \"@/components/ui/atomic\", \"./POSCart\", \"./StickyCartSummary\", \"./usePOSView\", \"@/components/ui/QueryInspector\", \"@/components/modals/PriceSelectorModal\", \"@/components/modals/BarcodeScanner\", \"@/components/ui/SpeedDial\", \"@/types\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/pos/POSView.tsx\", \"name\": \"POSView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico POSView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con POSView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 129,
-    "domain": "components"
-  }
-}

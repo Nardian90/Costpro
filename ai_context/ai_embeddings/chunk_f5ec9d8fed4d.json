@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_2____tabla__reception_items__nunca_usado____",
-  "content": "### 2. **Tabla `reception_items` Nunca Usado** 🔴\n**Severidad:** CRÍTICA\n\n**Problema:**\n- Tipo define `ReceiptItem`, pero jamás se inserta\n- Viejo proyecto escribe aquí mediante RPC\n- **Impacto:** Pérdida de auditoría detallada de qué se recibió cuándo\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "2. **Tabla `reception_items` Nunca Usado** 🔴"
-  }
-}

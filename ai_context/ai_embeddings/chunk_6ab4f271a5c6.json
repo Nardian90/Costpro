@@ -1,8 +1,0 @@
-{
-  "id": "VALIDATION_REPORT_FINAL_2__reporte_de_brechas__gaps__y_mitigaciones",
-  "content": "## 2. Reporte de Brechas (Gaps) y Mitigaciones\n\nDurante la validación se detectaron discrepancias entre el frontend y el estado actual de la base de datos de pruebas. Se han mitigado de la siguiente manera:\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/VALIDATION_REPORT_FINAL.md",
-    "header": "2. Reporte de Brechas (Gaps) y Mitigaciones"
-  }
-}

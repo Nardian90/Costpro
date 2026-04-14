@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_LOG_2__comparativa_con_versión_anterior__v5_7_23_",
-  "content": "### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.23)\n\n| Dominio | v5.7.23 | v5.7.24 | Variación | Causa Concreta del Cambio |\n| :--- | :---: | :---: | :---: | :--- |\n| UX / Mobile | 9.0 | 9.5 | **(+0.5)** | Nueva Landing Page con diseño Bento y animaciones fluidas. |\n| DX | 8.5 | 9.0 | **(+0.5)** | Claridad en la estrategia de producto y especificación técnica. |\n| **Global Score** | **9.35**| **9.45**| **(+0.10)**| **Mejora drástica en la primera impresión del usuario y posicionamiento de producto.**|\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_LOG.md",
-    "header": "2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.23)"
-  }
-}

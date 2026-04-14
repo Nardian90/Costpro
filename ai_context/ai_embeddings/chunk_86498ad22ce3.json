@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V5_7_25___score_global__9_65___10_00",
-  "content": "### 🏆 SCORE GLOBAL: 9.65 / 10.00\n\n| Categoría | Score | Justificación |\n| :--- | :---: | :--- |\n| **Integridad de Datos** | 9.9 | Auditoría automática de sumas estructurales y validación de coeficientes. |\n| **Seguridad & RBAC** | 9.7 | RLS endurecido, prevención de recursión y asignación automática de rol 'costo'. |\n| **UX / UI (Mobile)** | 9.6 | Dashboard 'Cyber/Premium' coherente y navegación optimizada para flujos masivos. |\n| **Capacidad de Exportación** | 9.8 | Exportación PDF servidora con jsPDF-AutoTable siguiendo normas institucionales. |\n| **Mantenibilidad** | 9.4 | Sincronización estricta de versiones y tipado Zod en todo el stack. |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V5_7_25.md",
-    "header": "🏆 SCORE GLOBAL: 9.65 / 10.00"
-  }
-}

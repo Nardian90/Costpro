@@ -1,8 +1,0 @@
-{
-  "id": "DOC_MULTI_STORE_seguridad__rls_",
-  "content": "## Seguridad (RLS)\n- El acceso a los datos está doblemente protegido:\n  1. El usuario debe tener la tienda en su lista de acceso (`user_store_access`).\n  2. El usuario solo opera sobre la tienda marcada como `active_store_id`.\n- El rol `admin` actúa como superusuario saltándose estas restricciones de filtrado pero respetando la integridad referencial.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
-    "header": "Seguridad (RLS)"
-  }
-}

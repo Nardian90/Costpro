@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_catalog_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para catalog-service.\", \"dependencies\": [\"papaparse\", \"sonner\", \"@/types\", \"@/lib/supabaseClient\", \"./import-service\", \"@/validation/schemas\"], \"domain\": \"Domain\", \"exports\": [\"catalogService\"], \"id\": \"src/services/catalog-service.ts\", \"name\": \"catalog-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico catalog-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar catalog-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 325,
-    "domain": "components"
-  }
-}

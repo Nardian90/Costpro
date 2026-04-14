@@ -1,9 +1,0 @@
-{
-  "id": "components_src_store_index_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para index.\", \"dependencies\": [\"zustand\", \"zustand/middleware\", \"@/contracts/user\"], \"domain\": \"Infrastructure\", \"exports\": [\"ViewType\", \"useUIStore\", \"useAuthStore\"], \"id\": \"src/store/index.ts\", \"name\": \"index.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico index.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar index.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 362,
-    "domain": "components"
-  }
-}

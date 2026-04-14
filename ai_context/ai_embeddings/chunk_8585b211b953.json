@@ -1,8 +1,0 @@
-{
-  "id": "FLOW_IPV_MISMATCH_3__detección_y_registro_de_mismatch",
-  "content": "## 3. Detección y Registro de Mismatch\nSi ningún \"PASS\" logra completar el matching (estado `COMPLETO`):\n- **Estado Resultante:** La transacción queda como `PENDIENTE` (si no hubo ninguna línea) o `PARCIAL` (si se aplicaron algunas reglas pero no se cubrió el 100%).\n- **Fail Reason:** El motor genera un `failReason` descriptivo (ej: \"FALTA STOCK VIRTUAL\").\n- **Logs:** El motor genera un array de strings con el trazo de ejecución (ej: \"Intentando PASS 2... fallo\"). **Nota:** Actualmente estos logs solo se visualizan en la pantalla de Simulación.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
-    "header": "3. Detección y Registro de Mismatch"
-  }
-}

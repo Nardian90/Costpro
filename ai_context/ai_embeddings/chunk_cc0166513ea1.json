@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_observability_health_alerts_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para health-alerts.\", \"dependencies\": [\"@/lib/supabaseClient\", \"./health-engine\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/lib/observability/health-alerts.ts\", \"name\": \"health-alerts.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico health-alerts.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar health-alerts.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 401,
-    "domain": "components"
-  }
-}

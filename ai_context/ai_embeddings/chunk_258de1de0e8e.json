@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION_para_arquitecto_security__45_min_",
-  "content": "### Para Arquitecto/Security (45 min)\n```\n1. Este índice (2 min)\n2. DIAGNOSTICO_CRITICO_RLS.md (15 min)\n3. POLICIES_BEFORE_AFTER_ANALYSIS.md (10 min)\n4. supabase/migrations/.../fix_critical_rls_issues.sql (10 min review)\n5. Verificar no ha habido regressions en seguridad (8 min)\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "Para Arquitecto/Security (45 min)"
-  }
-}

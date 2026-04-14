@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_rss_NewsView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/StateRenderer\"], \"id\": \"src/components/views/terminal/views/rss/NewsView.tsx\", \"inputs\": [], \"name\": \"NewsView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/rss/NewsView.tsx\", \"servicesUsed\": [\"api/useRSS\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 44,
-    "domain": "views"
-  }
-}

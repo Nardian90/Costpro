@@ -1,8 +1,0 @@
-{
-  "id": "data-model_tabla___cash_adjustments_",
-  "content": "### Tabla: `cash_adjustments`\n**Índices:** `&id, fecha`\n\n```typescript\n// Interface: CashAdjustment\ninterface CashAdjustment {\n  id: string;\n  fecha: string;\n  monto_cents: number; // En Pesos\n  motivo: string;\n  aprobado_por: string;\n  created_at: string;\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/data-model.md",
-    "header": "Tabla: `cash_adjustments`"
-  }
-}

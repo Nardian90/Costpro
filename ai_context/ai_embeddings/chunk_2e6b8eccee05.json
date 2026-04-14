@@ -1,8 +1,0 @@
-{
-  "id": "SOLUCION_APLICADA_STATUS_cambios_no_rompen_seguridad__",
-  "content": "### Cambios NO rompen Seguridad ✅\n\n- ✅ `is_admin()` solo retorna true para admins reales (enum 'admin'/'superadmin')\n- ✅ `get_my_role()` verifica membership en `user_store_memberships`\n- ✅ Policies siguen checkeando `auth.uid()` vs `id` (no hay acceso global)\n- ✅ RLS sigue activo en todas las tablas\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
-    "header": "Cambios NO rompen Seguridad ✅"
-  }
-}

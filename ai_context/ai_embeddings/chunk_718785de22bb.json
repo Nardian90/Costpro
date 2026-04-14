@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST_test_4__cancelar_recepción",
-  "content": "### Test 4: Cancelar Recepción\n```\n1. Activar modo recepción\n2. Agregar 3 productos\n3. Click \"Cancelar Recepción\"\n4. Verificar que lista se limpió\n5. Verificar que stock NO cambió\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "Test 4: Cancelar Recepción"
-  }
-}

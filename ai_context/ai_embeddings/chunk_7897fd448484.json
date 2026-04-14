@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MISMATCH_2__integración_con_lógica_de_negocio___erp__9_5_10_",
-  "content": "### 2. Integración con Lógica de Negocio / ERP (9.5/10)\n- **Jerarquía y Descomposición:** La capacidad de realizar descomposiciones recursivas (ej: Caja -> Paquete -> Unidades) es de nivel empresarial (ERP). El sistema rastrea automáticamente el stock virtual disponible sumando ancestros.\n- **Trazabilidad de Inventario:** Cada descomposición genera un `ProductMovement` tipo `DECOMPOSITION`, permitiendo auditar por qué cambió el inventario físico sin una entrada manual.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MISMATCH.md",
-    "header": "2. Integración con Lógica de Negocio / ERP (9.5/10)"
-  }
-}

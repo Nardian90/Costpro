@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST___correcciones_aplicadas",
-  "content": "## 🔧 Correcciones Aplicadas\n\n1. **Error de tipo CartItem**: ✅ Corregido\n   - Función `addToCart` ahora construye objeto completo\n   - Cumple con interfaz CartItem\n\n2. **Configuración Next.js**: ✅ Agregada\n   - `remotePatterns` para Supabase Storage\n   - Permite cargar imágenes sin CORS errors\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "🔧 Correcciones Aplicadas"
-  }
-}

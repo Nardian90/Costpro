@@ -1,8 +1,0 @@
-{
-  "id": "SKU_ENFORCEMENT_AUDIT_mejoras_realizadas_",
-  "content": "### Mejoras Realizadas:\n- **Base de Datos:** Se aplicó una migración para establecer `sku` como `NOT NULL` y añadir un `CHECK (sku <> '')`.\n- **UI de Creación:** El modal `CreateProductModal.tsx` ahora exige nombre y SKU antes de permitir la creación.\n- **UI de Recepción:** `ProductReceptionView.tsx` valida que todos los productos en la lista tengan un SKU antes de procesar la recepción o exportar la lista.\n- **RPCs Hardened:** Se actualizaron `fn_process_receipt` y `process_bulk_import` para validar la presencia de SKU a nivel de servidor, lanzando excepciones descriptivas.\n- **Esquemas de Validación:** Se actualizó `productSchema` en `src/validation/schemas.ts` para que el SKU sea estrictamente obligatorio (`z.string().min(1)`).\n- **Pruebas Unitarias:** Se actualizaron las pruebas de esquema de producto para reflejar la obligatoriedad del SKU.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SKU_ENFORCEMENT_AUDIT.md",
-    "header": "Mejoras Realizadas:"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "FRONTEND_THEME_AUDIT_4__estándares_internacionales_cumplidos_end",
-  "content": "## 4. Estándares Internacionales Cumplidos\n- **Accesibilidad (WCAG 2.1)**: Asegurar contraste de al menos 4.5:1 en todos los botones primarios.\n- **Psicología del Color**: El verde transmite crecimiento, estabilidad y éxito financiero (ideal para una herramienta de costos).\n- **Coherencia de Marca**: Alineación 1:1 con el logo vectorial existente.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FRONTEND_THEME_AUDIT.md",
-    "header": "4. Estándares Internacionales Cumplidos"
-  }
-}

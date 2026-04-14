@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_IPV_BUILDER_4__evaluación_del_módulo",
-  "content": "## 4. Evaluación del Módulo\n\n| Criterio | Nota | Observaciones |\n| :--- | :--- | :--- |\n| **Integridad de Datos** | 10/10 | El uso de centavos y hashes de idempotencia es impecable. |\n| **Rendimiento** | 9.5/10 | El uso de Workers y Generación local de PDF garantiza latencia cero. |\n| **Usabilidad (UX)** | 10/10 | Interfaz adaptativa (Mobile-First), neumórfica y feedback claro. |\n| **Escalabilidad** | 8/10 | Limitada actualmente por el almacenamiento local (IndexedDB). |\n| **Mantenibilidad** | 10/10 | Código tipado, reglas declarativas y lógica desacoplada de la UI. |\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
-    "header": "4. Evaluación del Módulo"
-  }
-}

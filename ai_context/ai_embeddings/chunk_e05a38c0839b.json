@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv_matching_worker_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para matching.worker.\", \"dependencies\": [\"./engine\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/matching.worker.ts\", \"name\": \"matching.worker.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico matching.worker.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar matching.worker.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 428,
-    "domain": "components"
-  }
-}

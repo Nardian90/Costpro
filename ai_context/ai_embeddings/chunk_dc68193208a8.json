@@ -1,8 +1,0 @@
-{
-  "id": "AI_BOT_FLOW_componentes_clave_",
-  "content": "### Componentes Clave:\n- **Orquestador (`orchestrator.ts`):** Determina qué proveedor y qué API Key utilizar basado en una jerarquía de prioridades.\n- **Adaptadores (`adapters/`):** Normalizan las peticiones y respuestas para cada proveedor (ej. `GeminiAdapter`).\n- **Endpoints de API:**\n  - `/api/bot/chat`: Chat general del sistema.\n  - `/api/cost-sheets/ai/chat`: Especializado en el análisis y generación de fichas de costo (Darian).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
-    "header": "Componentes Clave:"
-  }
-}

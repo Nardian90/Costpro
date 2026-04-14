@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES_paso_2__revisar_consola_de_navegador",
-  "content": "### Paso 2: Revisar consola de navegador\n\n**DevTools (F12) → Console:**\n\n```\n// Buscar logs de la store service\n[DATABASE] select stores: { success: true, count: 2 }\n// O similar indicando que el SELECT funcionó\n```\n\n**Si ves esto, ✅ TEST PASS:**\n- No hay errores de CORS\n- No hay errores de RLS (403)\n- No hay \"memberships column not found\"\n\n**Si ves esto, ❌ TEST FAIL:**\n- Error 403: row security policy blocked access\n- Error: \"Cannot find memberships column\"\n- Network error 401\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "Paso 2: Revisar consola de navegador"
-  }
-}

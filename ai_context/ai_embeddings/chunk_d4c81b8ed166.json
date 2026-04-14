@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_release_gate_ReleaseGatePdfExporter_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ReleaseGatePdfExporter.\", \"dependencies\": [\"jspdf\", \"date-fns\", \"date-fns/locale\"], \"domain\": \"Domain\", \"exports\": [\"ReleaseGatePdfExporter\"], \"id\": \"src/lib/release_gate/ReleaseGatePdfExporter.ts\", \"name\": \"ReleaseGatePdfExporter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ReleaseGatePdfExporter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar ReleaseGatePdfExporter.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 407,
-    "domain": "components"
-  }
-}

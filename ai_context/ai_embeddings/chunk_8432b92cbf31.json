@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_IncomeReceiptSection_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para IncomeReceiptSection.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/components/ui/card\", \"@/components/ui/button\", \"@/components/ui/input\", \"@/components/ui/label\", \"./IncomeReceiptPreview\", \"../legal/LegalPdfExporter\", \"date-fns\", \"date-fns/locale\", \"sonner\"], \"domain\": \"UI\", \"exports\": [\"IncomeReceiptSection\"], \"id\": \"src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx\", \"name\": \"IncomeReceiptSection.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico IncomeReceiptSection.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con IncomeReceiptSection.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 97,
-    "domain": "components"
-  }
-}

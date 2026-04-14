@@ -1,8 +1,0 @@
-{
-  "id": "DOC_MULTI_STORE_tienda_activa",
-  "content": "## Tienda Activa\n- Solo puede haber **UNA** tienda activa por usuario a la vez.\n- Todas las operaciones de creación de datos (ventas, productos, movimientos) se filtran y asocian automáticamente a la `active_store_id` del usuario actual.\n- Las políticas de seguridad (RLS) garantizan que el usuario solo vea y modifique datos pertenecientes a su tienda activa.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
-    "header": "Tienda Activa"
-  }
-}

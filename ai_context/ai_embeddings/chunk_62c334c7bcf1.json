@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST_permisos_rls",
-  "content": "### Permisos RLS\n- Asegurar que tabla `inventory` permita:\n  - SELECT para el rol del usuario\n  - INSERT/UPDATE para recepción\n- Asegurar que tabla `products` permita:\n  - SELECT para todos\n  - UPDATE de `cost_price` para rol warehouse/admin\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "Permisos RLS"
-  }
-}

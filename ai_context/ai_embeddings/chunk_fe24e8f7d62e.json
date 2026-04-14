@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_IPV_BUILDER_1__resumen_ejecutivo",
-  "content": "## 1. Resumen Ejecutivo\nEl módulo **IPV Builder** ha sido implementado como un sistema de conciliación bancaria e inventario de alta precisión, diseñado para operar en entornos de alta transaccionalidad con un enfoque en la integridad de datos financieros y el rendimiento de la interfaz de usuario.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_IPV_BUILDER.md",
-    "header": "1. Resumen Ejecutivo"
-  }
-}

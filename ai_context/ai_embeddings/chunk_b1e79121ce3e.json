@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_gestión_de_usuarios",
-  "content": "### Gestión de Usuarios\n- Listado de usuarios\n- Asignación de roles\n- Control de estado (activo/inactivo)\n- Permisos por rol\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Gestión de Usuarios"
-  }
-}

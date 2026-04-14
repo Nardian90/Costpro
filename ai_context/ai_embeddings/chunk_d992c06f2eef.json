@@ -1,8 +1,0 @@
-{
-  "id": "ERROR_AUDIT_3__resumen_ejecutivo",
-  "content": "## 3. Resumen Ejecutivo\n\n- **Riesgo Actual:** Crítico. El sistema no compila y tiene fallos de lógica estructural en el terminal y el motor de costos.\n- **Zonas Críticas:** `TerminalView`, `Auth/Session`, `CostSheetCalculator`, `ProductReception`.\n- **Impacto si se despliega así:** El sistema es inoperable. El POS no cargaría, el login fallaría en la validación de tienda, y los cálculos de costos arrojarían errores de runtime (undefined access). Se ha perdido la integridad entre las interfaces de tipos y la implementación real.\n- **Estado de Ingeniería:** Se ha recuperado la visibilidad. El build falla \"correctamente\", exponiendo la deuda técnica acumulada y los errores de refactorización silenciosos.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
-    "header": "3. Resumen Ejecutivo"
-  }
-}

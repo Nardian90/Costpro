@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_CONTEXT_3__capacidades_avanzadas",
-  "content": "### 3. Capacidades Avanzadas\nEl motor destaca por:\n- **Backtracking (EXACT_SUM):** Resuelve combinaciones complejas en milisegundos.\n- **Recursive Decomposition:** Maneja jerarquías de productos (Big Bon) de forma transparente.\n- **Daily Locking:** Garantiza que un producto no cambie de precio múltiples veces el mismo día para diferentes transacciones.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_CONTEXT.md",
-    "header": "3. Capacidades Avanzadas"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "RECOMMENDATIONS_MATCHING_ENGINE_2__indicadores_visuales_de_inteligencia__action_badges_",
-  "content": "## 2. Indicadores Visuales de Inteligencia (Action Badges)\n\n**Problema:** No se sabe a simple vista qué transacciones requirieron \"magia\" del motor (descomposiciones o ajustes).\n\n**Solución Propuesta:**\n- En la `TransactionTable.tsx`, añadir una columna de \"Indicadores\":\n    - 📦 **Descompuesto:** Se muestra si existe un `ProductMovement` vinculado a esta transacción.\n    - ⚖️ **Precio Ajustado:** Se muestra si alguna línea tiene un `precio_unitario_cents` diferente al precio base del catálogo.\n    - 🪙 **Cash Fill:** Se muestra si alguna línea tiene `origen_dato: 'CASH_FILLER'`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/RECOMMENDATIONS_MATCHING_ENGINE.md",
-    "header": "2. Indicadores Visuales de Inteligencia (Action Badges)"
-  }
-}

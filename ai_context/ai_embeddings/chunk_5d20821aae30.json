@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_antes____problemático_",
-  "content": "### ANTES (❌ Problemático)\n\n| Policy | Operación | USING Condition | WITH_CHECK | Problema |\n|--------|-----------|-----------------|-----------|----------|\n| \"Stores management\" | ALL | `get_my_role() = 'admin' OR (get_my_role() = 'encargado' AND created_by = auth.uid())` | NULL | ⚠️ No especifica WITH_CHECK para INSERT/UPDATE |\n| \"Stores visibility\" | SELECT | `is_admin() OR EXISTS (memberships check)` | NULL | ✅ OK, pero redundante |\n| \"Users can view all stores\" | SELECT | **`true`** | NULL | 🔴 PROBLEMA: Comodín que contradice otras |\n\n**Problema Específico:**\n- 3 policies para SELECT (redundancia)\n- La tercera con `USING: true` es un comodín peligroso\n- Si PostgREST no sabe cuál aplicar, puede usar la más permisiva\n- Pero `is_admin()` retornaba FALSE, así que fallaba todo\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "ANTES (❌ Problemático)"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_1__resumen_ejecutivo",
-  "content": "## 1. Resumen Ejecutivo\nTras la remediación de hallazgos previos y una re-auditoría integral, el sistema **COSTPRO** ha demostrado cumplir satisfactoriamente con los estándares de seguridad, integridad y rendimiento exigidos. Se han validado los mecanismos de aislamiento, la precisión del motor contable y la resiliencia transaccional.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
-    "header": "1. Resumen Ejecutivo"
-  }
-}

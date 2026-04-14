@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_punto_de_venta__pos_",
-  "content": "## Punto de Venta (POS)\n**Propósito:** Agilizar las ventas directas y el registro de ingresos.\n\n**Acciones clave:**\n- Escanear productos\n- Gestionar carrito de compras\n- Procesar pagos y generar facturas\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "Punto de Venta (POS)"
-  }
-}

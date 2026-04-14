@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_tablas_supabase_afectadas_",
-  "content": "### Tablas Supabase Afectadas:\n1. **inventory** (lectura/escritura)\n   - Upsert en recepción y ajustes\n   - Conflict: `store_id, product_id`\n\n2. **products** (lectura/escritura)\n   - Lectura: JOIN con inventory\n   - Escritura: Actualización de `cost_price`\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "Tablas Supabase Afectadas:"
-  }
-}

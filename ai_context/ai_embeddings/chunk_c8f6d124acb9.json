@@ -1,8 +1,0 @@
-{
-  "id": "AI_BOT_FLOW_3__seguridad__normalización_de_keys",
-  "content": "## 3. Seguridad: Normalización de Keys\n\nEl sistema implementa una medida de seguridad de \"protección por reversión\":\n- La función `normalizeApiKey` verifica si la llave tiene un prefijo estándar (ej. `AIza`, `sk-`).\n- Si no lo tiene, intenta **invertir el string (reverse)** para verificar si así se vuelve válido.\n- Esto permite a los usuarios almacenar sus llaves de forma \"ofuscada\" en la base de datos o configuraciones.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
-    "header": "3. Seguridad: Normalización de Keys"
-  }
-}

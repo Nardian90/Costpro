@@ -262,7 +262,7 @@ export default function CashClosureView() {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center">
-                      <button className="w-11 h-11 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
+                      <button className="w-11 h-11 flex items-center justify-center rounded-xl border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>

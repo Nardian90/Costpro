@@ -1,9 +1,0 @@
-{
-  "id": "components_src_app_api_cost_sheets_export_pdf_route_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para route.\", \"dependencies\": [\"next/server\", \"jspdf\", \"jspdf-autotable\", \"expr-eval\"], \"domain\": \"Integration\", \"exports\": [\"runtime\"], \"id\": \"src/app/api/cost-sheets/export-pdf/route.ts\", \"name\": \"route.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico route.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar route.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 283,
-    "domain": "components"
-  }
-}

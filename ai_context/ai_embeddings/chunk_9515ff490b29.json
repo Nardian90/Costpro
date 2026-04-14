@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_CONTEXT_2__trazabilidad_y_logs",
-  "content": "### 2. Trazabilidad y Logs\nLa integración con `MatchingLogService` es robusta. Cada ejecución genera un `MatchingTrace` que desglosa el éxito o fallo de cada \"PASS\". Sin embargo, las **descomposiciones automáticas** (ej: Caja -> Unidades) se registran en `product_movements` pero no siempre son visibles dentro del detalle del log de matching en la UI de auditoría.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_CONTEXT.md",
-    "header": "2. Trazabilidad y Logs"
-  }
-}

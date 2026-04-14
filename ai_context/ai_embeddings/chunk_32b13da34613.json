@@ -1,8 +1,0 @@
-{
-  "id": "ERROR_AUDIT_estado_de_los_hallazgos_anteriores",
-  "content": "### Estado de los Hallazgos Anteriores\n- `src/lib/db.ts` (PrismaClient): **SOLUCIONADO** (Build-time generation).\n- Tipado de Supabase/RPCs: **SOLUCIONADO** (Capa de validación Zod integrada).\n- Stores Zustand (Inconsistencias): **MITIGADO** (Validación en el punto de entrada).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
-    "header": "Estado de los Hallazgos Anteriores"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_build_de_producción",
-  "content": "# Build de producción\nbun run build\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Build de producción"
-  }
-}

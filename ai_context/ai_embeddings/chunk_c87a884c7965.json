@@ -1,8 +1,0 @@
-{
-  "id": "ERROR_AUDIT_zona_roja__inminente_",
-  "content": "### Zona Roja (Inminente)\n- **TerminalView.tsx:** Es un monolito de +1500 líneas con referencias a variables inexistentes. Sugiere una refactorización fallida o incompleta.\n- **Flujo de Auth:** El desajuste en la interfaz `User` (`active_store_id`) afectará cualquier operación que dependa del contexto de la tienda activa.\n- **Motor de Costos:** La falta de `annexes` en el estado de cálculo impide la integridad de las fichas de costo v5.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ERROR_AUDIT.md",
-    "header": "Zona Roja (Inminente)"
-  }
-}

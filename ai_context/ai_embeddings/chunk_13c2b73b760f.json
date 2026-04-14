@@ -1,8 +1,0 @@
-{
-  "id": "theme-audit_evaluación_final__1_10_",
-  "content": "## Evaluación Final (1-10)\n| Área | Antes | Después |\n| --- | --- | --- |\n| Consistencia visual | 6 | 9 |\n| Uso de variables | 5 | 9 |\n| Soporte dark mode | 4 | 9 |\n| Mantenibilidad | 5 | 8 |\n\n**Score Global Final: 8.75/10**\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/theme-audit.md",
-    "header": "Evaluación Final (1-10)"
-  }
-}

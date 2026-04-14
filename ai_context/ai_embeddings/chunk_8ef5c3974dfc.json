@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_base_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para base.\", \"dependencies\": [\"@/lib/supabaseClient\", \"@/lib/logger\", \"@/store\", \"@/lib/query-inspector-utils\"], \"domain\": \"Domain\", \"exports\": [\"getCleanStoreId\"], \"id\": \"src/hooks/api/base.ts\", \"name\": \"base.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico base.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar base.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 347,
-    "domain": "components"
-  }
-}

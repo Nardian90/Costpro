@@ -1,8 +1,0 @@
-{
-  "id": "PRODUCT_VARIANT_LOGIC_beneficios_del_cod_hijo__end",
-  "content": "### Beneficios del cod_hijo:\n- **Claridad**: Al exportar el catálogo, el campo `cod_hijo` vendrá relleno con la clasificación inteligente que hizo el sistema, permitiendo al usuario validarla o ajustarla.\n- **Flexibilidad**: Permite manejar casos excepcionales donde el orden de precios no refleje la jerarquía real de descomposición.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
-    "header": "Beneficios del cod_hijo:"
-  }
-}

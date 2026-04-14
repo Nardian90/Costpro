@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_1____tabla__receptions__nunca_usado____",
-  "content": "### 1. **Tabla `receptions` Nunca Usado** 🔴\n**Severidad:** CRÍTICA\n\n**Problema:**\n- Tipos TypeScript definen interfaz `Receipt`:\n```typescript\nexport interface Receipt {\n  id: string;\n  created_at: string;\n  user_id: string | null;\n  status: 'active' | 'voided';\n  total_cost: number;\n  reference_doc: string | null;\n  notes: string | null;\n}\n```\n\n- **PERO** componente jamás escribe en tabla `receptions`\n- Viejo proyecto SÍ usa `fn_process_receipt` RPC que escribe aquí\n- **Impacto:** Imposible rastrear recepciones, violar auditoría fiscal\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "1. **Tabla `receptions` Nunca Usado** 🔴"
-  }
-}

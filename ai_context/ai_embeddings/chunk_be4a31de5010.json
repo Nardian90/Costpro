@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_case_2__admin_intenta_ver_stores_de_otro_tenant",
-  "content": "### Case 2: Admin intenta ver stores de otro tenant\n\n**Policies:**\n```sql\n-- stores_select_admin_or_member\nUSING: is_admin()  -- TRUE para admin\nOR EXISTS (... membership check ...)\n```\n\n**Admin VE todas las stores:** ✅ Correcto para Super-admin\n**User solo ve su tienda:** ✅ Correcto (membership check)\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Case 2: Admin intenta ver stores de otro tenant"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_pos_usePOSView_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para usePOSView.\", \"dependencies\": [\"react\", \"sonner\", \"@/lib/logger\", \"@/lib/utils\", \"@/store\", \"@/hooks/api/useProducts\", \"@/hooks/api/useTransactions\", \"@/types\", \"@/services/audit-service\", \"@/validation/schemas\", \"@/store/cart\", \"@/types\"], \"domain\": \"UI\", \"exports\": [\"usePOSView\"], \"id\": \"src/components/views/terminal/views/pos/usePOSView.ts\", \"name\": \"usePOSView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico usePOSView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar usePOSView.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 128,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_2__concurrency_risks__race_conditions_",
-  "content": "### 2. Concurrency Risks (Race Conditions)\n- **Description:** The schema lacks any form of optimistic or pessimistic locking, making it vulnerable to race conditions. Simultaneous sales or receptions of the same product could lead to stock levels being calculated incorrectly.\n- **Impact:** This can result in overselling or stock discrepancies, leading to operational inefficiencies and financial losses.\n- **Recommendation:** Implement an optimistic locking mechanism, such as a version number in the `inventory` table, to prevent concurrent updates from overwriting each other.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "2. Concurrency Risks (Race Conditions)"
-  }
-}

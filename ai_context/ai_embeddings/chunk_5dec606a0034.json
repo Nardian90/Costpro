@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_después____seguro_",
-  "content": "### DESPUÉS (✅ Seguro)\n\n| Policy | Operación | USING | WITH_CHECK | Propósito |\n|--------|-----------|-------|-----------|----------|\n| \"stores_select_admin_or_member\" | SELECT | `is_admin() OR EXISTS (membership)` | N/A | Admin O miembro activo |\n| \"stores_insert_admin_or_encargado\" | INSERT | N/A | `is_admin() OR (created_by = auth.uid() AND encargado)` | Controla INSERT con precisión |\n| \"stores_update_admin_or_encargado_creator\" | UPDATE | `is_admin() OR (creador encargado)` | Idem | Controla UPDATE con precisión |\n| \"stores_delete_admin\" | DELETE | `is_admin()` | N/A | Solo admin puede borrar |\n\n**Mejoras:**\n- ✅ 4 políticas claras, una por operación\n- ✅ Sin comodines (`true`)\n- ✅ Separación de USING vs WITH_CHECK\n- ✅ Cada role tiene su camino claro\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "DESPUÉS (✅ Seguro)"
-  }
-}

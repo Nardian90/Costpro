@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES___guía_de_validación_manual___test_rls_fixes_en_frontend",
-  "content": "# 🧪 GUÍA DE VALIDACIÓN MANUAL - Test RLS Fixes en Frontend\n\n**Objetivo:** Validar que las correcciones RLS funcionan correctamente desde la aplicación React\n**Duración esperada:** 15 minutos\n**Requisitos:** Usuario Admin logeado, acceso a 2+ tiendas activas\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "🧪 GUÍA DE VALIDACIÓN MANUAL - Test RLS Fixes en Frontend"
-  }
-}

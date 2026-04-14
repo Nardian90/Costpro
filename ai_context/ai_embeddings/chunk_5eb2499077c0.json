@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_legal_LegalPdfExporter_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para LegalPdfExporter.\", \"dependencies\": [\"jspdf\", \"jspdf-autotable\", \"date-fns\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/legal/LegalPdfExporter.ts\", \"name\": \"LegalPdfExporter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico LegalPdfExporter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar LegalPdfExporter.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 197,
-    "domain": "components"
-  }
-}

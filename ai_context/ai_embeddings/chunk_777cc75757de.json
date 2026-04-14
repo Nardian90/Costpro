@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MATCHING_ENGINE_5__mejora_recomendada__rule_registry_end",
-  "content": "## 5. Mejora Recomendada: Rule Registry\n\nPara garantizar la transparencia, se propone implementar un **\"Rule Registry\"**:\n\n1. **Persistencia de Trazas:** Añadir un campo `execution_trace` (JSON) en la tabla `bank_statements`.\n2. **Sincronización:** El motor debe devolver el array `logs` al finalizar cada transacción, y el componente `IPVView` debe guardarlo en la transacción correspondiente.\n3. **UI - Inspector de Matching:** En la `TransactionTable`, al hacer click en el estado de una transacción, abrir un popover con el trace:\n   - *[PASS 1] Fallido: No se encontraron códigos en observaciones.*\n   - *[PASS 2] Fallido: Sin combinación exacta con stock disponible.*\n   - *[PASS 3] Éxito: Ajustado precio de \"Refresco\" (+0.05) para cuadrar.*\n4. **Indicadores de Acción:** Añadir iconos pequeños en la tabla:\n   - 📦 (Producto descompuesto automáticamente)\n   - ⚖️ (Precio ajustado por Price Flex)\n   - 🪙 (Completado con Efectivo / Cash Fill)\n\n---\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
-    "header": "5. Mejora Recomendada: Rule Registry"
-  }
-}

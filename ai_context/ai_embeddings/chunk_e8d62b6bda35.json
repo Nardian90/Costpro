@@ -1,8 +1,0 @@
-{
-  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_3_1_aislamiento_multi_tenant_y_rls",
-  "content": "### 3.1 Aislamiento Multi-Tenant y RLS\n**Comando de Verificación:**\n```sql\n-- Ejecutado como rol 'authenticated' restringido\nSELECT count(*) FROM public.inventory WHERE store_id = 'a8fb4a65-a79a-4ac8-bf64-6cc6e3a2b506';\n```\n**Resultado:** `0 rows`.\n**Prueba IDOR RPC:**\nIntento de registrar movimiento en tienda ajena devolvió: `ERROR: 42501: Unauthorized store access`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
-    "header": "3.1 Aislamiento Multi-Tenant y RLS"
-  }
-}

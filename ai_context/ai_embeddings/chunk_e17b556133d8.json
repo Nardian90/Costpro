@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION___archivos_técnicos",
-  "content": "### 📄 ARCHIVOS TÉCNICOS\n\n**7. [`supabase/migrations/20260209_fix_critical_rls_issues.sql`](supabase/migrations/20260209_fix_critical_rls_issues.sql)**\n\n- ✅ Migration aplicada en Supabase\n- 🔧 5 pasos de corrección\n- 📝 Comentarios empresariales\n- 🔍 Queries de verificación manual\n- Status: DEPLOYED ✅\n\n---\n\n**8. [`supabase/VERIFICATION_TESTS.sql`](supabase/VERIFICATION_TESTS.sql)**\n\n- 8 suite de tests SQL\n- Verificación de seguridad\n- Checklist completo\n- Pruebas manuales desde frontend\n- Reutilizable después de cada deployment\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "📄 ARCHIVOS TÉCNICOS"
-  }
-}

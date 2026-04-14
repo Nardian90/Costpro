@@ -1,8 +1,0 @@
-{
-  "id": "CHANGELOG_added",
-  "content": "### Added\n- Multi-Store SKU isolation (Composite Key: store_id + sku).\n- Mandatory SKU validation in Catalog and Reception services.\n- New SVG diagram for SKU isolation in Help section.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/CHANGELOG.md",
-    "header": "Added"
-  }
-}

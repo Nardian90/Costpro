@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetView.\", \"dependencies\": [\"./DarianEditor\", \"@/components/ui/LazyRender\", \"react\", \"@/store/cost-sheet-store\", \"@/hooks/logic/useCostSheetCalculator\", \"./CostSheetNav\", \"./CostSheetCardView\", \"./CostSheetInteractiveTable\", \"./CostSheetAnnexEditor\", \"./CostSheetHeaderEditor\", \"./CostSheetSignatureEditor\", \"./CostSheetPreview\", \"./CostSheetNarrative\", \"./CostSheetWizard\", \"./CostSheetSummary\", \"./CostSheetFormulaGuide\", \"./CostSheetAuditView\", \"@/components/ui/BaseModal\", \"./CostSheetActionsPanel\", \"./CostSheetHelpPanel\", \"./CostSheetTemplateExplorer\", \"lucide-react\", \"./CostSheetSidebarNav\", \"./CostSheetBottomNav\", \"@/store\", \"./CostSheetMassiveGenerator\", \"./CostSheetExportModal\", \"./CostSheetQuickMode\", \"./CostSheetModeDropdown\", \"@/components/ui/ViewSwitcher\", \"@/components/ui/ActionMenu\", \"@/lib/utils\", \"lucide-react\", \"@/components/ui/skeleton\", \"@/components/ui/button\", \"sonner\", \"@/services/usage-service\", \"@/components/modals/UpgradeModal\", \"@/store\", \"@/services/export-service\", \"@/hooks/ui/useMobile\", \"@/components/ui/SpeedDial\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetView.tsx\", \"name\": \"CostSheetView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetView.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 156,
-    "domain": "components"
-  }
-}

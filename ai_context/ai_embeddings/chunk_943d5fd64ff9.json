@@ -1,8 +1,0 @@
-{
-  "id": "MAINTENANCE_LOG_paso_2___analizar_ui",
-  "content": "## Paso 2 — Analizar UI\n\nEscanear:\n\n/src/components\n/src/styles\n/src/views\n\nDetectar:\n\n* contenedores rígidos\n* overflow horizontal\n* grids no responsivos\n* tipografías grandes\n* botones pequeños\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
-    "header": "Paso 2 — Analizar UI"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "reference_recentcostsheets_tsx",
-  "content": "## RecentCostSheets.tsx\n**Ruta:** `src/components/views/terminal/views/dashboard/RecentCostSheets.tsx`\n\n**Acciones disponibles:** handleSelect\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "RecentCostSheets.tsx"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_cost_sheet_CostSheetTemplateExplorer_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para CostSheetTemplateExplorer.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/lib/utils\", \"@/components/ui/button\", \"@/components/ui/input\", \"@/store\", \"sonner\", \"@/lib/supabaseClient\", \"@/lib/data/costpro-reinicio\", \"@/lib/data/costpro-ejemplo\", \"@/lib/data/template-juice\", \"@/lib/data/template-pizza\", \"@/lib/data/template-pastry\", \"@/lib/data/template-furniture\", \"@/lib/data/template-industrial\", \"@/lib/data/template-consultancy\", \"@/lib/data/template-icecream\", \"@/lib/data/template-repair\", \"@/lib/data/template-shoes\", \"@/lib/data/template-logistics\", \"@/lib/data/template-lavar\"], \"domain\": \"UI\", \"exports\": [\"CostSheetTemplateExplorer\"], \"id\": \"src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx\", \"name\": \"CostSheetTemplateExplorer.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico CostSheetTemplateExplorer.\", \"user_description\": \"Gesti\\u00f3n y c\\u00e1lculo de fichas de costo para productos y servicios.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 169,
-    "domain": "components"
-  }
-}

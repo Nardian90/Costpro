@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES_problema___error_403__row_security_policy_blocked_access_",
-  "content": "### Problema: \"Error 403: row security policy blocked access\"\n\n**Causa probable:** RLS aún rechazando operaciones\n\n**Qué hacer:**\n1. Espera 60 segundos (cache PostgREST)\n2. Hard refresh del browser: Ctrl+Shift+R (Chrome) o Cmd+Shift+R (Mac)\n3. Limpia localStorage: Consola → `localStorage.clear(); location.reload();`\n4. Verifica que el usuario loggeado es realmente ADMIN\n   ```typescript\n   // En consola del browser\n   console.log(JSON.parse(localStorage.getItem('auth-store'))); // Ver user actual\n   ```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "Problema: \"Error 403: row security policy blocked access\""
-  }
-}

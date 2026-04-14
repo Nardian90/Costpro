@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_auditoría",
-  "content": "### Auditoría\n- Registro de acciones críticas\n- Filtros por usuario y tipo de evento\n- Tablas de auditoría\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Auditoría"
-  }
-}

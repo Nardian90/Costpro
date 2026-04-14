@@ -1,8 +1,0 @@
-{
-  "id": "README_POS___mejoras_implementadas",
-  "content": "## 🎓 Mejoras Implementadas\n\n1. **Sistema de Diseño Neumórfico Completo**\n   - Tokens CSS para efectos 3D\n   - Sombras duales (light/dark)\n   - Modo claro/oscuro con neumorfismo\n   - Componentes reutilizables\n\n2. **Responsive Design Avanzado**\n   - Tablas que se convierten a tarjetas en móvil\n   - Sidebar con drawer en móvil\n   - Grid responsive para tarjetas\n   - Touch targets de 44px+\n\n3. **Gestión de Estado con Zustand**\n   - AuthStore con persistencia\n   - CartStore para POS en tiempo real\n   - UIStore para preferencias\n\n4. **Tipado TypeScript Completo**\n   - Todos los modelos de datos tipados\n   - Enums para roles, estados, métodos de pago\n   - Interfaces para todos los componentes\n\n5. **Seguridad y Permisos**\n   - Matriz de permisos por rol\n   - Validación de acceso por vista\n   - Control de acciones críticas\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "🎓 Mejoras Implementadas"
-  }
-}

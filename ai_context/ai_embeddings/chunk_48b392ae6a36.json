@@ -1,8 +1,0 @@
-{
-  "id": "PERFORMANCE_GUIDELINES_explicit_selects",
-  "content": "### Explicit Selects\n- **Rule:** Never use `select('*')`.\n- **Reason:** Reduces payload size, network latency, and database CPU usage.\n- **Action:** Always list only the columns required for the specific view or component.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
-    "header": "Explicit Selects"
-  }
-}

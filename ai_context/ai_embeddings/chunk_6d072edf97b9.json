@@ -1,8 +1,0 @@
-{
-  "id": "DOC_MULTI_STORE_notas_técnicas_sobre_creación_de_usuarios_end",
-  "content": "## Notas Técnicas sobre Creación de Usuarios\n- La función `managed_create_user` es una implementación lógica que inserta registros en `public.profiles`.\n- En un entorno real de Supabase, la creación de un usuario requiere un registro previo en `auth.users`. Esta operación suele realizarse a través del SDK de Supabase Auth (Admin API) desde un entorno seguro (Edge Function o Servidor) y no directamente desde SQL, debido a restricciones de seguridad y manejo de credenciales.\n- Se ha implementado un trigger de restricción (`CONSTRAINT TRIGGER`) diferido para `validate_active_store`, lo que permite que la creación del perfil y la asignación de la tienda ocurran en la misma transacción sin conflictos de integridad circular.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
-    "header": "Notas Técnicas sobre Creación de Usuarios"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_frontend",
-  "content": "### Frontend\n- **Framework**: Next.js 15 con App Router\n- **Lenguaje**: TypeScript 5\n- **Estilos**: Tailwind CSS + CSS personalizado\n- **Estado**: Zustand (persist middleware)\n- **Iconos**: Lucide React\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Frontend"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "MAINTENANCE_LOG_2_tipografías_adaptativas",
-  "content": "## 2 Tipografías Adaptativas\n\nSi una tipografía supera 24px en móvil:\n\nfont-size: clamp(16px, 4vw, 24px);\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
-    "header": "2 Tipografías Adaptativas"
-  }
-}

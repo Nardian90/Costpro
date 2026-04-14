@@ -1,8 +1,0 @@
-{
-  "id": "THEME_AUDIT_MARCH_2024_2__anillo_maestro__costsheetmasterring_",
-  "content": "### 2. Anillo Maestro (CostSheetMasterRing)\n- **Estado Actual:**\n    - La variable `brandGreen` usa `dark:text-[currentColor]`. Esto es un error ya que hereda el color del padre (blanco/negro) en lugar de usar el verde primario.\n    - El precio central (`Total Venta`) usa `text-foreground` (Blanco en Dark).\n    - El label \"Total Venta\" usa `text-muted-foreground`.\n- **Impacto:** El gráfico pierde su identidad visual \"neon-green\" en modo oscuro.\n- **Corrección:** Cambiar `currentColor` por `text-primary` y `bg-primary`. Ajustar el color del precio a `text-primary` o un blanco con matiz verde.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/THEME_AUDIT_MARCH_2024.md",
-    "header": "2. Anillo Maestro (CostSheetMasterRing)"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_resumen_de_hallazgos",
-  "content": "## Resumen de Hallazgos\n\nA continuación se presenta un resumen de los hallazgos de la auditoría, comparando la vista de la ficha de costo en la aplicación con el archivo de FC adjunto.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT.md",
-    "header": "Resumen de Hallazgos"
-  }
-}

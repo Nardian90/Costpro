@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_TransactionBreakdown_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para TransactionBreakdown.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/components/ui/table\", \"@/components/ui/badge\", \"@/components/ui/input\", \"@/components/ui/button\", \"lucide-react\", \"@/lib/utils\", \"sonner\"], \"domain\": \"UI\", \"exports\": [\"TransactionBreakdown\"], \"id\": \"src/components/views/terminal/views/ipv/TransactionBreakdown.tsx\", \"name\": \"TransactionBreakdown.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico TransactionBreakdown.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con TransactionBreakdown.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 91,
-    "domain": "components"
-  }
-}

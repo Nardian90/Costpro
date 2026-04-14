@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_index_ts",
-  "content": "{\"businessRules\": [\"Recursive dependency extraction supporting ref(), vh(), and children/hijos references.\", \"Cycle detection and duplicate ID validation in the dependency graph.\", \"Bidirectional calculation engine using Decimal.js for precision and expr-eval for formula parsing.\"], \"business_logic\": \"L\\u00f3gica de negocio para index.\", \"dependencies\": [\"decimal.js\", \"expr-eval\", \"./formula-utils\"], \"domain\": \"Engine\", \"exports\": [\"extractDependencies\", \"validateFicha\", \"calculateFicha\"], \"id\": \"src/lib/cost-engine/index.ts\", \"name\": \"index.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico index.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar index.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 390,
-    "domain": "components"
-  }
-}

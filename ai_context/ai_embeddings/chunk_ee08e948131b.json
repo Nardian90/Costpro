@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_rss_RSSManagementView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para RSSManagementView.\", \"dependencies\": [\"react\", \"@/lib/utils\", \"@/hooks/api/useRSS\", \"@/components/ui/StateRenderer\", \"sonner\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/rss/RSSManagementView.tsx\", \"name\": \"RSSManagementView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico RSSManagementView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con RSSManagementView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 194,
-    "domain": "components"
-  }
-}

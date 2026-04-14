@@ -1,8 +1,0 @@
-{
-  "id": "reference_ipvview_tsx",
-  "content": "## IPVView.tsx\n**Ruta:** `src/components/views/terminal/views/ipv/IPVView.tsx`\n\n**Acciones disponibles:** handleForceMatch, handleGlobalRecalculate, handleImportBackup, handleRunMatching\n\n**Salidas esperadas:** Card List, Chart, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "IPVView.tsx"
-  }
-}

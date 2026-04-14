@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_gestión_de_billetera_y_notificaciones__billetera_digital_",
-  "content": "## Gestión de Billetera y Notificaciones (Billetera Digital)\n**Propósito:** Centralizar y analizar el flujo de caja proveniente de notificaciones bancarias digitales.\n\n**Acciones clave:**\n- Importar mensajes de texto o archivos de banco\n- Visualizar registros crudos en la pestaña BD\n- Analizar métricas financieras en Analytics Panel de Control\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "Gestión de Billetera y Notificaciones (Billetera Digital)"
-  }
-}

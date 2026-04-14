@@ -1,8 +1,0 @@
-{
-  "id": "MAINTENANCE_LOG_1_scroll_horizontal_seguro",
-  "content": "## 1 Scroll Horizontal Seguro\n\nSi un contenedor produce overflow en <380px:\n\noverflow-x: auto;\n\nNunca permitir scroll horizontal en:\n\nbody\nhtml\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
-    "header": "1 Scroll Horizontal Seguro"
-  }
-}

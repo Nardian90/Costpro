@@ -1,9 +1,0 @@
-{
-  "id": "components_src_services_transfer_service_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para transfer-service.\", \"dependencies\": [\"@/lib/supabaseClient\", \"@/types\", \"@/lib/rpc-validator\"], \"domain\": \"Domain\", \"exports\": [\"transferService\"], \"id\": \"src/services/transfer-service.ts\", \"name\": \"transfer-service.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico transfer-service.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar transfer-service.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 316,
-    "domain": "components"
-  }
-}

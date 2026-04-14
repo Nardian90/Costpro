@@ -1,8 +1,0 @@
-{
-  "id": "reference_academyview_tsx",
-  "content": "## AcademyView.tsx\n**Ruta:** `src/components/views/terminal/views/academy/AcademyView.tsx`\n\n**Acciones disponibles:** handleGenerate, handleScore\n\n**Salidas esperadas:** Card List, Chart\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "AcademyView.tsx"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_stock_history_StockHistoryView_tsx",
-  "content": "{\"actions\": [\"onDateRangeChange\", \"onRefresh\", \"onSearchChange\"], \"components\": [\"ui/ActionMenu\", \"ui/QueryInspector\", \"ui/SearchBar\"], \"id\": \"src/components/views/terminal/views/stock_history/StockHistoryView.tsx\", \"inputs\": [\"Calendar\"], \"name\": \"StockHistoryView.tsx\", \"outputs\": [], \"route\": \"src/components/views/terminal/views/stock_history/StockHistoryView.tsx\", \"servicesUsed\": [\"api/useStockMovements\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 22,
-    "domain": "views"
-  }
-}

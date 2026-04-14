@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_POST_REFACTOR_1__arquitectura_frontend",
-  "content": "## 1. Arquitectura Frontend\n\n- **Estado:** Excelente desacoplamiento. Se eliminó el God Component (`TerminalView.tsx`) a favor de un `TerminalShell.tsx` modular.\n- **Lazy Loading:** Implementado en el 100% de las vistas críticas, reduciendo el bundle size inicial.\n- **Estructura:** Organización por dominios (`src/components/views/terminal/views/`) facilita el mantenimiento independiente.\n- **Hallazgos:**\n    - ✔️ Uso de `React.lazy` y `Suspense`.\n    - ✔️ Vistas autocontenidas con hooks dedicados.\n    - ⚠️ Consistencia: Algunos hooks de vista están co-localizados, otros en `src/hooks/`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
-    "header": "1. Arquitectura Frontend"
-  }
-}

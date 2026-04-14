@@ -1,8 +1,0 @@
-{
-  "id": "AI_BOT_FLOW_5__tabla_de_base_de_datos___ai_api_keys___end",
-  "content": "## 5. Tabla de Base de Datos (`ai_api_keys`)\n\nLa persistencia se maneja en Supabase con la siguiente estructura:\n- `id`: UUID (PK)\n- `user_id`: UUID (FK a `auth.users`, NULL para llaves de sistema)\n- `provider`: Texto (ej. 'gemini', 'deepseek')\n- `api_key`: Texto (La llave, puede estar invertida)\n- `is_active`: Booleano\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AI_BOT_FLOW.md",
-    "header": "5. Tabla de Base de Datos (`ai_api_keys`)"
-  }
-}

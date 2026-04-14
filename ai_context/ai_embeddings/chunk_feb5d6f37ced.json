@@ -1,8 +1,0 @@
-{
-  "id": "reference_inventorycountview_tsx",
-  "content": "## InventoryCountView.tsx\n**Ruta:** `src/components/views/terminal/views/inventory_count/InventoryCountView.tsx`\n\n**Salidas esperadas:** Card List, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "InventoryCountView.tsx"
-  }
-}

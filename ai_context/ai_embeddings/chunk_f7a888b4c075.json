@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_3____typescript__tipos_incompletos____",
-  "content": "### 3. **TypeScript: Tipos Incompletos** 🟡\n**Severidad:** BAJA\n\n**Problema:**\n```tsx\nconst [recentReceptions, setRecentReceptions] = useState<any[]>([]);\n// ❌ 'any' es anti-patrón TypeScript\n\n// ✅ Debería ser:\nconst [recentReceptions, setRecentReceptions] = useState<StockMovement[]>([]);\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "3. **TypeScript: Tipos Incompletos** 🟡"
-  }
-}

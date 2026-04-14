@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_LOG_1__evaluación_por_dominio",
-  "content": "### 1. EVALUACIÓN POR DOMINIO\n\n| Dominio | Nota | Justificación |\n| :--- | :---: | :--- |\n| **Core Architecture** | 9.2 | **Mejorado.** Desacoplamiento total del flujo de autenticación y la interfaz de marketing. |\n| **Type Safety** | 9.8 | **Sin cambios.** |\n| **POS / Terminal** | 9.5 | **Sin cambios.** |\n| **Multi-Store & Roles**| 9.5 | **Sin cambios.** |\n| **UX / Mobile** | 9.5 | **Sobresaliente.** Implementación de Landing responsiva con micro-interacciones, modo oscuro/claro optimizado y navegación fluida. |\n| **Performance** | 8.8 | **Mejorado.** Optimización de assets estáticos y uso eficiente de Framer Motion para animaciones no bloqueantes. |\n| **Seguridad** | 9.5 | **Sin cambios.** |\n| **Observabilidad** | 9.5 | **Sin cambios.** |\n| **DX** | 9.0 | **Mejorado.** Nueva documentación estratégica (`SPECIFICATION_LANDING.md`) y componentes de UI altamente reutilizables. |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_LOG.md",
-    "header": "1. EVALUACIÓN POR DOMINIO"
-  }
-}

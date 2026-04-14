@@ -1,8 +1,0 @@
-{
-  "id": "MASTER_DOCUMENTATION_AUDIT_2026_03_2__evaluación_detallada__1_10_",
-  "content": "## 2. Evaluación Detallada (1-10)\n\n| Área | Calificación | Observaciones |\n| :--- | :---: | :--- |\n| **Terminal Views** | 6.5 | Buena cobertura en `mapa_vistas.md`, pero las descripciones funcionales son desiguales. |\n| **Servicios AI** | 4.5 | Falta documentación técnica profunda sobre los flujos de decisión y prompts. |\n| **Componentes UI** | 7.0 | El uso de Storybook o documentación JSDoc es consistente en componentes nuevos. |\n| **Utilidades Lib** | 5.0 | El núcleo lógico (engine.ts) requiere una guía de arquitectura dedicada. |\n| **Estructura Documental** | 4.0 | Dispersión crítica entre `docs/`, `knowledge/` y `public/`. |\n| **Limpieza del Proyecto** | 3.0 | Excesivos archivos sueltos en la raíz (.py, .diff, .txt, .log). |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MASTER_DOCUMENTATION_AUDIT_2026_03.md",
-    "header": "2. Evaluación Detallada (1-10)"
-  }
-}

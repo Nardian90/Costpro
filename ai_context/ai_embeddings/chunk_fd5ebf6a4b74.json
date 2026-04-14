@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_POS_4__ui_ux_y_responsividad__8_10_",
-  "content": "### 4. UI/UX y Responsividad (8/10)\n- **Hallazgo**: Diseño neumórfico altamente estético y coherente. El sistema de temas (Luz/Noche/Neumo) está bien integrado.\n- **Impacto**: Alta calidad percibida por el usuario final.\n- **Acción Realizada**: Se corrigió el orden del carrito en móvil. Ahora se muestra de forma prioritaria sobre el buscador cuando está abierto, siguiendo estándares de aplicaciones POS modernas.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_POS.md",
-    "header": "4. UI/UX y Responsividad (8/10)"
-  }
-}

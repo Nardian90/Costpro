@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_V2_END_TO_END___crítico__race_condition_en_wac_de_transferencias__data_integrity_",
-  "content": "### 🔴 CRÍTICO: Race Condition en WAC de Transferencias (Data Integrity)\n- **Descripción:** La función `confirm_transfer` calcula el nuevo costo promedio del almacén destino sin bloquear las filas mediante `FOR UPDATE`.\n- **Impacto:** Operaciones concurrentes en la tienda destino resultarán en un cálculo de costo promedio corrupto.\n- **Evidencia:** Falta de cláusula `FOR UPDATE` en el bloque de lógica WAC de la función `confirm_transfer`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_V2_END_TO_END.md",
-    "header": "🔴 CRÍTICO: Race Condition en WAC de Transferencias (Data Integrity)"
-  }
-}

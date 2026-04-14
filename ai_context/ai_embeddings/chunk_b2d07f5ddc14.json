@@ -1,8 +1,0 @@
-{
-  "id": "bugs_documentation_5__tipografía_responsiva__falta_de_clamp___en_título_principal_de_ipvview",
-  "content": "## 5. Tipografía Responsiva: Falta de clamp() en Título Principal de IPVView\n- **Descripción**: El encabezado \"IPV Builder\" usa clases estáticas `text-2xl sm:text-3xl` en lugar del estándar `text-[clamp(2rem,8vw,3rem)]`.\n- **Impacto**: Legibilidad subóptima en dispositivos intermedios.\n- **Solución**: Aplicar `clamp()` según los estándares de mantenimiento quirúrgico.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/bugs_documentation.md",
-    "header": "5. Tipografía Responsiva: Falta de clamp() en Título Principal de IPVView"
-  }
-}

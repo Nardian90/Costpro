@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_useSync_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useSync.\", \"dependencies\": [\"react\", \"@/lib/sync/offline-storage\", \"@/validation/schemas\", \"@/store\", \"uuid\", \"sonner\"], \"domain\": \"Domain\", \"exports\": [\"SyncStatus\", \"useSync\"], \"id\": \"src/hooks/useSync.ts\", \"name\": \"useSync.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useSync.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useSync.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 327,
-    "domain": "components"
-  }
-}

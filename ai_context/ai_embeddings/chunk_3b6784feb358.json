@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___engine_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para engine.test.\", \"dependencies\": [\"vitest\", \"../engine\", \"../../dexie\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/engine.test.ts\", \"name\": \"engine.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico engine.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar engine.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 439,
-    "domain": "components"
-  }
-}

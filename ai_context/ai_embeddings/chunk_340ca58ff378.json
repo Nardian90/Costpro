@@ -1,8 +1,0 @@
-{
-  "id": "HEALTH_RESOLUTION_PLAN_1__ciclos_detectados__2_",
-  "content": "## 1. Ciclos Detectados (2)\n\nLos ciclos de dependencia rompen la modularidad y dificultan las pruebas unitarias.\n\n| Ciclo | Componentes Involucrados | Complejidad | Estrategia de Resolución |\n| :--- | :--- | :--- | :--- |\n| **Ciclo A** | `InventoryCountTableView` <-> `InventoryCountView` | **Media** | Extraer lógica de estado compartida a un Hook (e.g., `useInventoryCount`) para que la vista y la tabla dependan del hook y no entre sí. |\n| **Ciclo B** | `InventoryCountView` <-> `InventoryCountCardView` | **Media** | Usar el patrón de Inyección de Dependencias o pasar callbacks a través de props para evitar que el hijo importe al padre. |\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/HEALTH_RESOLUTION_PLAN.md",
-    "header": "1. Ciclos Detectados (2)"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_6__traceability_and_internal_control",
-  "content": "### 6. Traceability and Internal Control\nThe traceability of stock movements is limited by the lack of a strongly typed `reference_id`. This makes it difficult to trace movements back to their source, which is a weakness from an internal control perspective.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "6. Traceability and Internal Control"
-  }
-}

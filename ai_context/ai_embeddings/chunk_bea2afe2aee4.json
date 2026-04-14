@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_api_useAuditLogs_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useAuditLogs.\", \"dependencies\": [\"@tanstack/react-query\", \"zod\", \"@/lib/supabaseClient\", \"@/lib/rpc-validator\", \"@/validation/schemas\", \"./base\"], \"domain\": \"Domain\", \"exports\": [\"AuditLogFilters\", \"useAuditLogs\"], \"id\": \"src/hooks/api/useAuditLogs.ts\", \"name\": \"useAuditLogs.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useAuditLogs.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useAuditLogs.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 346,
-    "domain": "components"
-  }
-}

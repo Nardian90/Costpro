@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_data_template_pizza_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-pizza.\", \"dependencies\": [\"@/contracts/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-pizza.ts\", \"name\": \"template-pizza.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-pizza.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-pizza.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 422,
-    "domain": "components"
-  }
-}

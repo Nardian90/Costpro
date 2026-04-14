@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES_paso_3__ir_a__gestión_____usuarios_",
-  "content": "### Paso 3: Ir a \"Gestión\" → \"Usuarios\"\n\n**Resultado esperado:**\n- ⚠️ Ver tablero VACÍO o \"No tienes permisos\"\n- ✅ NO debe ver lista de usuarios (solo admins/encargados ven)\n- ✅ Si ve error 403, es correcto (RLS funcionando)\n\n**DevTools:**\n```\n[DATABASE] select users: { success: true, data: [] }\n// O:\nError 403: row security policy blocked\n// Ambos son correctos - RLS aislando el acceso\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "Paso 3: Ir a \"Gestión\" → \"Usuarios\""
-  }
-}

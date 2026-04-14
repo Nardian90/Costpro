@@ -172,7 +172,7 @@ export default function MatchingHistoryView() {
       {/* Filters */}
       <Card className="border-primary/10">
         <CardContent className="p-4 flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px] space-y-1.5">
+          <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Referencia</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -185,7 +185,7 @@ export default function MatchingHistoryView() {
             </div>
           </div>
 
-          <div className="w-[140px] space-y-1.5">
+          <div className="w-full sm:w-[140px] space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Estado</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-10 rounded-xl">
@@ -200,7 +200,7 @@ export default function MatchingHistoryView() {
             </Select>
           </div>
 
-          <div className="w-[160px] space-y-1.5">
+          <div className="w-full sm:w-[160px] space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Regla Aplicada</label>
             <Select value={ruleFilter} onValueChange={setRuleFilter}>
               <SelectTrigger className="h-10 rounded-xl">
@@ -215,7 +215,7 @@ export default function MatchingHistoryView() {
             </Select>
           </div>
 
-          <div className="w-[140px] space-y-1.5">
+          <div className="w-full sm:w-[140px] space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confianza</label>
             <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
               <SelectTrigger className="h-10 rounded-xl">
@@ -248,7 +248,7 @@ export default function MatchingHistoryView() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Virtualized Table */}
-        <Card className={cn("xl:col-span-2 overflow-hidden flex flex-col h-[600px]", !selectedLogId && "xl:col-span-3")}>
+        <Card className={cn("xl:col-span-2 overflow-hidden flex flex-col h-[400px] sm:h-[600px]", !selectedLogId && "xl:col-span-3")}>
           <div className="flex-1 overflow-auto relative border-t" ref={parentRef}>
             <div
               style={{

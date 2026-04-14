@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___bigbon_simulation_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para bigbon_simulation.test.\", \"dependencies\": [\"vitest\", \"../engine\", \"../../dexie\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/bigbon_simulation.test.ts\", \"name\": \"bigbon_simulation.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico bigbon_simulation.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar bigbon_simulation.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 438,
-    "domain": "components"
-  }
-}

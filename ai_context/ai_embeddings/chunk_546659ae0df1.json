@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_reports_AuditLogsModal_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para AuditLogsModal.\", \"dependencies\": [\"react\", \"@/hooks/api/useAuditLogs\", \"../audit/AuditTimeline\", \"@/components/ui/StateRenderer\", \"@/components/ui/skeleton\", \"lucide-react\"], \"domain\": \"UI\", \"exports\": [\"AuditLogsModal\"], \"id\": \"src/components/views/terminal/views/reports/AuditLogsModal.tsx\", \"name\": \"AuditLogsModal.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico AuditLogsModal.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con AuditLogsModal.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 43,
-    "domain": "components"
-  }
-}

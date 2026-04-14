@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_sombras_neumórficas",
-  "content": "### Sombras Neumórficas\n- `--shadow-light`: Sombra clara (luz)\n- `--shadow-dark`: Sombra oscura (sombra)\n- Sombras duales para efecto 3D\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Sombras Neumórficas"
-  }
-}

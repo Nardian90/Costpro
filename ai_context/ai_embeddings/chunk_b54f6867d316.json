@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_InventoryTableView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/CostProLoader\", \"ui/ProductImage\"], \"id\": \"src/components/views/terminal/views/inventory/InventoryTableView.tsx\", \"inputs\": [], \"name\": \"InventoryTableView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/inventory/InventoryTableView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 17,
-    "domain": "views"
-  }
-}

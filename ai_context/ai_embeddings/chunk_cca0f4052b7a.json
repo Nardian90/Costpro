@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_users_RolesManagementView_tsx",
-  "content": "{\"actions\": [\"handleCreate\", \"handleDelete\", \"handleEdit\", \"handleSubmit\"], \"components\": [\"ui/ActionMenu\", \"ui/BaseModal\", \"ui/SearchBar\"], \"id\": \"src/components/views/terminal/views/users/RolesManagementView.tsx\", \"inputs\": [], \"name\": \"RolesManagementView.tsx\", \"outputs\": [\"Table\"], \"route\": \"src/components/views/terminal/views/users/RolesManagementView.tsx\", \"servicesUsed\": [\"api/useRoles\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 42,
-    "domain": "views"
-  }
-}

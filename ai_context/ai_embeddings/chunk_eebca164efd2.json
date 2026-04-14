@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_chart_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para chart.\", \"dependencies\": [\"react\", \"recharts\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [\"ChartConfig\"], \"id\": \"src/components/ui/chart.tsx\", \"name\": \"chart.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico chart.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con chart.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 233,
-    "domain": "components"
-  }
-}

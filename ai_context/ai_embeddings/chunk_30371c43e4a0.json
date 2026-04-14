@@ -1,8 +1,0 @@
-{
-  "id": "DOCUMENTATION_AUDIT_c__estandarización_de_guías",
-  "content": "### C. Estandarización de Guías\n- Crear una \"Guía Maestra de Arquitectura\" que unifique el contexto de Supabase, Next.js y la lógica de negocio de CostPro.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOCUMENTATION_AUDIT.md",
-    "header": "C. Estandarización de Guías"
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_sales_useSalesHistoryView_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useSalesHistoryView.\", \"dependencies\": [\"react\", \"@/store\", \"@/hooks/api/useTransactions\", \"@/hooks/api/useTransactions\", \"@/types\", \"@/hooks/api/useDocumentActions\", \"sonner\"], \"domain\": \"UI\", \"exports\": [\"useSalesHistoryView\"], \"id\": \"src/components/views/terminal/views/sales/useSalesHistoryView.ts\", \"name\": \"useSalesHistoryView.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useSalesHistoryView.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useSalesHistoryView.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 84,
-    "domain": "components"
-  }
-}

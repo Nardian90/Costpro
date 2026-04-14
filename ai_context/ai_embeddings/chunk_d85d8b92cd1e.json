@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_CHECKLIST_estructura_de_image_url",
-  "content": "### Estructura de image_url\n- Puede ser URL completa: `https://example.com/image.jpg`\n- Puede ser path relativo: `folder/product-123.jpg`\n- Puede ser NULL: Muestra icono Package\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_CHECKLIST.md",
-    "header": "Estructura de image_url"
-  }
-}

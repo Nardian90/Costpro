@@ -1,9 +1,0 @@
-{
-  "id": "user_help_18",
-  "content": "{\"acciones\": [\"handleProcessClosure\", \"handleRefresh\"], \"descripcion_usuario\": \"Interfaz para gestionar CashClosureView.\", \"feature\": \"CashClosureView\", \"resultados\": [\"Card List\", \"Table\"]}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 18,
-    "domain": "user_help"
-  }
-}

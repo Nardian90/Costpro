@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_dashboard_DashboardView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/StateRenderer\", \"ui/calendar\", \"ui/popover\", \"ui/toggle-group\"], \"id\": \"src/components/views/terminal/views/dashboard/DashboardView.tsx\", \"inputs\": [\"Calendar\"], \"name\": \"DashboardView.tsx\", \"outputs\": [\"Card List\", \"Summary Panel\"], \"route\": \"src/components/views/terminal/views/dashboard/DashboardView.tsx\", \"servicesUsed\": [\"api/useProducts\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 4,
-    "domain": "views"
-  }
-}

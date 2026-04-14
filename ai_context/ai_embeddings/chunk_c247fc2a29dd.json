@@ -1,8 +1,0 @@
-{
-  "id": "PERFORMANCE_GUIDELINES_skeletons",
-  "content": "### Skeletons\n- Every view must provide a `Skeleton` component that mirrors the actual layout during initial load.\n- Use `StateRenderer` to manage loading, error, and empty states consistently.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
-    "header": "Skeletons"
-  }
-}

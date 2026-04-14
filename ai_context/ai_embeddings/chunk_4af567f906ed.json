@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_data_template_pastry_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para template-pastry.\", \"dependencies\": [\"@/contracts/cost-sheet\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/data/template-pastry.ts\", \"name\": \"template-pastry.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico template-pastry.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar template-pastry.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 418,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "user_tasks_stockhistoryview",
-  "content": "## StockHistoryView\n**Propósito:** Interfaz para gestionar StockHistoryView.\n\n**Acciones clave:**\n- onDateRangeChange\n- onRefresh\n- onSearchChange\n- Calendar\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/user_tasks.md",
-    "header": "StockHistoryView"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTIVE_SUMMARY_RLS_FIX_bug_2__policies_conflictivas_en__stores_",
-  "content": "### Bug 2: Policies conflictivas en `stores`\n\n3 policies solapadas, una con `USING: true` que contradice las otras → lógica corrupta\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
-    "header": "Bug 2: Policies conflictivas en `stores`"
-  }
-}

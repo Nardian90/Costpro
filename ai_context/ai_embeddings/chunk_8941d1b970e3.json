@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_receptions_ReceptionsHistoryView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para ReceptionsHistoryView.\", \"dependencies\": [\"react\", \"lucide-react\", \"@/lib/utils\", \"sonner\", \"@/components/ui/SearchBar\", \"@/components/ui/QueryInspector\", \"@/components/ui/StateRenderer\", \"@/components/ui/skeleton\", \"./useReceptionsHistoryView\", \"./ReceptionDetailsModal\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx\", \"name\": \"ReceptionsHistoryView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico ReceptionsHistoryView.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con ReceptionsHistoryView.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 86,
-    "domain": "components"
-  }
-}

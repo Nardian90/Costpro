@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS__get_my_role___",
-  "content": "### `get_my_role()`\n\n**ANTES:**\n```sql\nBEGIN\n  SELECT role::text INTO v_role FROM public.profiles WHERE id = auth.uid();\n  RETURN v_role;  -- Puede retornar NULL\nEND;\n```\n\n**Problema:**\n- Si el perfil no existe, v_role = NULL\n- Las policies que usan `get_my_role() = 'admin'::text` falla con NULL\n\n---\n\n**DESPUÉS:**\n```sql\nBEGIN\n  SELECT role::text INTO v_role FROM public.profiles WHERE id = auth.uid();\n  RETURN COALESCE(v_role, 'usuario');  -- Default seguro\nEND;\n```\n\n**Mejoras:**\n- Nunca retorna NULL\n- Default: 'usuario' (rol más bajo)\n- Mejor manejo de edge cases\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "`get_my_role()`"
-  }
-}

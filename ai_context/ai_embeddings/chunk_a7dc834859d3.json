@@ -1,9 +1,0 @@
-{
-  "id": "components_src_store_session_store_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para session-store.\", \"dependencies\": [\"zustand\"], \"domain\": \"Infrastructure\", \"exports\": [\"useSessionStore\"], \"id\": \"src/store/session-store.ts\", \"name\": \"session-store.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico session-store.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar session-store.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 360,
-    "domain": "components"
-  }
-}

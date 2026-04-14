@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_punto_de_venta__pos_",
-  "content": "### Punto de Venta (POS)\n- Selección de productos con búsqueda\n- Carrito de compras en tiempo real\n- Aplicación de descuentos (porcentaje, fijo)\n- Múltiples métodos de pago\n- Emisión de tickets\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Punto de Venta (POS)"
-  }
-}

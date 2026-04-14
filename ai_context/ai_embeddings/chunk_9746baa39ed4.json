@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_1__insecure_rls_policies",
-  "content": "### 1. Insecure RLS Policies\n- **Description:** The RLS policies grant broad permissions to certain roles (e.g., `warehouse`), potentially allowing unauthorized access to sensitive data. The `deny_client_writes` policies are a good security measure, but the overall model could be more granular.\n- **Impact:** Weak RLS policies could lead to data breaches or unauthorized modifications of inventory data.\n- **Recommendation:** Refine the RLS policies to follow the principle of least privilege, granting users access only to the data they need to perform their duties.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "1. Insecure RLS Policies"
-  }
-}

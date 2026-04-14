@@ -1,9 +1,0 @@
-{
-  "id": "workflows_aprendizaje_conceptos",
-  "content": "{\"businessRules\": [], \"business_goal\": \"Capacitar a los usuarios en el uso del sistema y conceptos contables mediante repetici\\u00f3n espaciada.\", \"components\": [\"src/components/views/terminal/views/academy/MasteryDashboard.tsx\", \"src/components/views/terminal/views/academy/AcademyView.tsx\", \"src/components/views/terminal/views/academy/Flashcard.tsx\", \"src/app/api/academy/review/route.ts\", \"src/app/api/academy/review/[cardId]/route.ts\", \"src/app/api/academy/generate/route.ts\", \"src/lib/academy/sm2.ts\", \"src/lib/academy/__tests__/sm2.test.ts\"], \"id\": \"aprendizaje_conceptos\", \"name\": \"Aprendizaje y Capacitaci\\u00f3n (Academy)\", \"services\": [\"@/lib/academy/sm2\", \"@/lib/ai/orchestrator\", \"@/lib/auth\", \"@/lib/supabaseClient\", \"@/lib/utils\", \"@/store\", \"@/store/useAcademyStore\", \"@supabase/supabase-js\", \"framer-motion\", \"fs\", \"lucide-react\", \"next/server\", \"path\", \"pdf-parse/lib/pdf-parse.js\", \"react\", \"recharts\", \"sonner\", \"vitest\"], \"steps\": [\"Acceder al m\\u00f3dulo Academy\", \"Seleccionar categor\\u00eda de estudio\", \"Realizar sesiones de repaso con Flashcards\", \"Monitorear progreso en Mastery Dashboard\"], \"views\": [\"src/components/views/terminal/views/academy/AcademyView.tsx\"]}",
-  "metadata": {
-    "source": "knowledge/workflows.json",
-    "index": 5,
-    "domain": "workflows"
-  }
-}

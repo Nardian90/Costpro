@@ -1,8 +1,0 @@
-{
-  "id": "BIGBON_STATUS_mejoras_implementadas_",
-  "content": "### Mejoras Implementadas:\n1. **Flujo Automatizado**: Se rediseñó la acción \"BIG BON Simulation\" en el Catálogo para que sea un flujo \"one-click\" completo.\n2. **Reset Total**: La simulación ahora limpia todas las tablas de IPV (transacciones, productos, reglas, líneas y movimientos) para asegurar resultados deterministas.\n3. **Jerarquía de Productos**: Se carga automáticamente la jerarquía CAJA -> PQT -> UNIDADES con stock inicial estratégico.\n4. **Matching Realista**: Se generan transacciones bancarias que fuerzan la activación del motor de descomposición recursiva.\n5. **Trazabilidad Garantizada**: Los movimientos de descomposición se persisten en `product_movements` y son visibles en la vista de Trazabilidad/Movimientos.\n6. **Integración con el Motor**: A diferencia de la versión anterior que creaba líneas estáticas, esta versión utiliza la clase `MatchingEngine` real, validando que el algoritmo funciona correctamente en un entorno productivo.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/BIGBON_STATUS.md",
-    "header": "Mejoras Implementadas:"
-  }
-}

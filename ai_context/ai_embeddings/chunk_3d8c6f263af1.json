@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_sales_SalesHistoryView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/SearchBar\", \"ui/StateRenderer\", \"ui/skeleton\"], \"id\": \"src/components/views/terminal/views/sales/SalesHistoryView.tsx\", \"inputs\": [], \"name\": \"SalesHistoryView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/sales/SalesHistoryView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 20,
-    "domain": "views"
-  }
-}

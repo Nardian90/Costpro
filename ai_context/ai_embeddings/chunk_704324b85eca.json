@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_MATCHING_ENGINE_lista_de_inconsistencias_",
-  "content": "### Lista de inconsistencias:\n1. El motor registra logs de ejecución en un array pero **nunca los persiste** ni los envía a la UI en el flujo real (solo en simulación).\n2. Las descomposiciones automáticas ocurren pero no hay un indicador visual en la fila de la transacción de que esa venta provocó un movimiento de almacén.\n3. El `fail_reason` es genérico (\"FALTA STOCK VIRTUAL\") y no especifica de qué producto falta stock en una combinación compleja.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_MATCHING_ENGINE.md",
-    "header": "Lista de inconsistencias:"
-  }
-}

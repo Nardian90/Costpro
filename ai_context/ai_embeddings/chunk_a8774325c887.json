@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION___notas_técnicas_end",
-  "content": "## 📝 NOTAS TÉCNICAS\n\n- **Sin hardcoding**: Todas las URLs se construyen dinámicamente\n- **Type-safe**: Cumple con interfaces TypeScript\n- **Optimistic UI**: Actualización local antes de confirmar en BD\n- **Error handling**: Try/catch con rollback en caso de fallo\n- **Toast notifications**: Feedback visual en todas las operaciones\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "📝 NOTAS TÉCNICAS"
-  }
-}

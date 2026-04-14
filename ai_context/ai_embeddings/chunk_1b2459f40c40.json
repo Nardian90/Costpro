@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_POS_1__arquitectura_y_organización__6_10_",
-  "content": "### 1. Arquitectura y Organización (6/10)\n- **Hallazgo**: `TerminalView.tsx` es un componente masivo que actúa como controlador único para demasiadas responsabilidades (Dashboard, POS, Inventario, Usuarios, etc.).\n- **Impacto**: El archivo supera las 2000 líneas, lo que aumenta la carga cognitiva para el desarrollador y dificulta las pruebas unitarias.\n- **Acción**: Se recomienda la descomposición en sub-componentes especializados por vista bajo una estructura de carpetas `src/components/views/terminal/`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_POS.md",
-    "header": "1. Arquitectura y Organización (6/10)"
-  }
-}

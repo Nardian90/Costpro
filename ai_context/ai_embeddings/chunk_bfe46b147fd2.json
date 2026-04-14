@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_solución_5__verificar__get_my_role____retorna_valor_no_null__baja_",
-  "content": "### SOLUCIÓN 5: Verificar `get_my_role()` retorna valor no-NULL (BAJA)\n\n```sql\nCREATE OR REPLACE FUNCTION public.get_my_role()\nRETURNS text\nLANGUAGE plpgsql\nSECURITY DEFINER\nSET search_path = public\nAS $$\nDECLARE\n  v_role text;\nBEGIN\n  SELECT role::text INTO v_role FROM public.profiles WHERE id = auth.uid();\n  RETURN COALESCE(v_role, 'usuario');  -- Default si no existe\nEND;\n$$;\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "SOLUCIÓN 5: Verificar `get_my_role()` retorna valor no-NULL (BAJA)"
-  }
-}

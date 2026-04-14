@@ -1,8 +1,0 @@
-{
-  "id": "CHANGELOG_changed",
-  "content": "### Changed\n- Unified inventory views using the atomic ProductCard component.\n- Improved store selection UX in the multi-store header.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/CHANGELOG.md",
-    "header": "Changed"
-  }
-}

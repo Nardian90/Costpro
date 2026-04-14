@@ -10,6 +10,7 @@ import type { UserRole, User, Profile } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
 const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
+const PROFILE_FETCH_TIMEOUT = 30 * 1000; // 30 seconds — profile fetch can be slower
 
 /**
  * Manages Supabase session, syncs with Zustand, and handles online/offline state.
@@ -58,10 +59,19 @@ export function useSessionManager() {
                 try {
                     profileData = await Promise.race([
                         userService.getUserProfile(session.user.id),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT))
                     ]) as Profile | null;
                 } catch (err: any) {
-                    console.error('[SessionManager] Critical error fetching profile:', err);
+                    console.warn('[SessionManager] Profile fetch failed/timeout:', err.message);
+                    // On timeout or error, try to continue with session user data if we already have a user
+                    const existingUser = useAuthStore.getState().user;
+                    if (existingUser) {
+                        // Keep existing user data, just update the token
+                        login(existingUser, session.access_token, 'authenticated_valid');
+                        setStatus('stable');
+                        return;
+                    }
+                    // No existing user — mark invalid but don't block
                     setAuthStatus('authenticated_invalid_profile');
                     setLoading(false);
                     return;

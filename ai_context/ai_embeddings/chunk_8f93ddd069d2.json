@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_cash_closure_CashClosureView_tsx",
-  "content": "{\"actions\": [\"handleProcessClosure\", \"handleRefresh\"], \"components\": [\"ui/ActionMenu\"], \"id\": \"src/components/views/terminal/views/cash_closure/CashClosureView.tsx\", \"inputs\": [], \"name\": \"CashClosureView.tsx\", \"outputs\": [\"Card List\", \"Table\"], \"route\": \"src/components/views/terminal/views/cash_closure/CashClosureView.tsx\", \"servicesUsed\": [\"api/useCashClosures\", \"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 19,
-    "domain": "views"
-  }
-}

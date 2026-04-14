@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_tools_definitions_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para definitions.\", \"dependencies\": [\"../types\"], \"domain\": \"Domain\", \"exports\": [\"TOOLS\"], \"id\": \"src/lib/ai/tools/definitions.ts\", \"name\": \"definitions.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico definitions.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar definitions.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 450,
-    "domain": "components"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "ESTRATEGIA_BOT_ENCARGADO_b__flujo_de_información",
-  "content": "### B. Flujo de Información\n1.  **Captura:** Cada venta o movimiento de stock dispara un evento.\n2.  **Agregación:** Un proceso en segundo plano (pg_cron) resume métricas clave cada hora (ej. productos bajo el mínimo).\n3.  **Consulta:** El encargado pregunta: *\"¿Qué productos están en riesgo de agotarse?\"*\n4.  **Procesamiento (NLP):** El LLM interpreta la intención y solicita datos a la base de datos mediante **Function Calling** (ejecución de RPCs seguras).\n5.  **Respuesta:** El bot devuelve un análisis en lenguaje natural + un componente visual (ej. una tabla de pedidos sugeridos).\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
-    "header": "B. Flujo de Información"
-  }
-}

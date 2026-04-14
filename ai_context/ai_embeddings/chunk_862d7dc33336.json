@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_observability___tests___system_health_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para system-health.test.\", \"dependencies\": [\"vitest\", \"../system-health\"], \"domain\": \"Infrastructure\", \"exports\": [], \"id\": \"src/lib/observability/__tests__/system-health.test.ts\", \"name\": \"system-health.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico system-health.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar system-health.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 403,
-    "domain": "components"
-  }
-}

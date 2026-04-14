@@ -85,7 +85,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="p-1 hover:bg-primary/20 rounded-md transition-colors shrink-0"
+            className="p-1 hover:bg-primary/20 rounded-lg transition-colors shrink-0"
           >
             <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
           </button>

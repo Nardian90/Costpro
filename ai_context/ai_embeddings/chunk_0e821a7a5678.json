@@ -1,8 +1,0 @@
-{
-  "id": "SOLUCION_APLICADA_STATUS_test_3__policy_admin_en_profiles_existe__",
-  "content": "### Test 3: Policy admin en profiles existe ✅\n\n```sql\nSELECT policyname FROM pg_policies\nWHERE tablename='profiles' AND policyname='profiles_admin_full_access';\n-- Resultado: 1 row\n```\n\n**Status:** ✅ PASS - Policy existe\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
-    "header": "Test 3: Policy admin en profiles existe ✅"
-  }
-}

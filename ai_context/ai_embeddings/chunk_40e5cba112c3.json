@@ -1,8 +1,0 @@
-{
-  "id": "MAINTENANCE_LOG_3_touch_targets",
-  "content": "## 3 Touch Targets\n\nElementos interactivos deben cumplir:\n\nmin-height: 44px;\nmin-width: 44px;\n\nAplicar a:\n\n* botones\n* links\n* iconos interactivos\n* inputs\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/MAINTENANCE_LOG.md",
-    "header": "3 Touch Targets"
-  }
-}

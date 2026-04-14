@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_logger_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para logger.\", \"dependencies\": [], \"domain\": \"Infrastructure\", \"exports\": [\"logger\"], \"id\": \"src/lib/logger.ts\", \"name\": \"logger.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico logger.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar logger.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 377,
-    "domain": "components"
-  }
-}

@@ -50,7 +50,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[800px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[800px]">
         {/* Sidebar */}
         <div className="lg:col-span-3 space-y-4 flex flex-col">
            <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm flex-1 overflow-hidden flex flex-col">

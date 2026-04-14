@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS___archivos_afectados_end",
-  "content": "## 🔗 ARCHIVOS AFECTADOS\n\n| Archivo | Tipo | Cambio |\n|---------|------|--------|\n| `supabase/migrations/[new]_fix_rls_critical.sql` | SQL | Crear |\n| `src/components/views/terminal/views/users/useUsersView.ts` | TS | Editar línea ~70 |\n| `src/hooks/api/useUsers.ts` | TS | Verificar (sin cambios necesarios) |\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "🔗 ARCHIVOS AFECTADOS"
-  }
-}

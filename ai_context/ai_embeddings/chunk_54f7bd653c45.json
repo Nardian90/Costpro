@@ -1,8 +1,0 @@
-{
-  "id": "AUDIT_REPORT_POST_REFACTOR_3__seguridad_y_roles",
-  "content": "## 3. Seguridad y Roles\n\n- **Jerarquía:** Centralizada en `src/lib/roles.ts`.\n- **Implementación:** UI reactiva a permisos y bloqueo preventivo en el Shell si no hay tienda activa.\n- **Source of Truth:** El backend (RLS + RPC) es la autoridad final, el frontend solo orquestador.\n- **Hallazgos:**\n    - ✔️ Matriz Rol → Permisos validada en componentes de Gestión de Usuarios y Dashboard.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDIT_REPORT_POST_REFACTOR.md",
-    "header": "3. Seguridad y Roles"
-  }
-}

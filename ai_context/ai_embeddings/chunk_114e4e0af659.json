@@ -1,8 +1,0 @@
-{
-  "id": "TECHNICAL_AUDIT_V2_CERTIFICATION_3_2_integridad_matemática_wac__weighted_average_cost_",
-  "content": "### 3.2 Integridad Matemática WAC (Weighted Average Cost)\nSe realizó una secuencia de 3 recepciones y 1 venta con valores variables.\n*   **Cálculo Teórico:** `(40 unidades @ $30.00 + 10 unidades @ $10.00) / 50 total = $26.00`.\n*   **Resultado Sistema:** `$26.0000000000000000`.\n*   **Precisión:** 100% (Match exacto).\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TECHNICAL_AUDIT_V2_CERTIFICATION.md",
-    "header": "3.2 Integridad Matemática WAC (Weighted Average Cost)"
-  }
-}

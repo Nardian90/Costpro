@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_solución_4__pasar__is_active__en__useusersview_ts___media_",
-  "content": "### SOLUCIÓN 4: Pasar `is_active` en `useUsersView.ts` (MEDIA)\n\nEn [c:\\xampp\\htdocs\\Costpro\\src\\components\\views\\terminal\\views\\users\\useUsersView.ts](c:\\xampp\\htdocs\\Costpro\\src\\components\\views\\terminal\\views\\users\\useUsersView.ts#L70):\n\n```typescript\n// ANTES\nif (mode === 'edit' && selectedUserContractId) {\n  await updateUserMutation.mutateAsync({\n    id: selectedUserContractId,\n    full_name: data.fullName,\n    role: data.role,\n  });\n}\n\n// DESPUÉS\nif (mode === 'edit' && selectedUserContractId) {\n  await updateUserMutation.mutateAsync({\n    id: selectedUserContractId,\n    full_name: data.fullName,\n    role: data.role,\n    is_active: data.isActive,  // ✅ AGREGADO\n  });\n}\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "SOLUCIÓN 4: Pasar `is_active` en `useUsersView.ts` (MEDIA)"
-  }
-}

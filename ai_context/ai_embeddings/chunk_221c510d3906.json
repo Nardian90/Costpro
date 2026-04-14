@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_MatchingAuditView_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para MatchingAuditView.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/services/matching-log-service\", \"@/components/ui/card\", \"@/components/ui/button\", \"@/components/ui/input\", \"@/components/ui/badge\"], \"domain\": \"UI\", \"exports\": [\"MatchingAuditView\"], \"id\": \"src/components/views/terminal/views/ipv/MatchingAuditView.tsx\", \"name\": \"MatchingAuditView.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico MatchingAuditView.\", \"user_description\": \"Herramienta para la conciliaci\\u00f3n de inventarios y ventas (IPV). Permite cuadrar los registros bancarios con el stock f\\u00edsico.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 101,
-    "domain": "components"
-  }
-}

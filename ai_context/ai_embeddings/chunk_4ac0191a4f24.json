@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_wallet___tests___parser_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para parser.test.\", \"dependencies\": [\"vitest\", \"../parser\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/wallet/__tests__/parser.test.ts\", \"name\": \"parser.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico parser.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar parser.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 385,
-    "domain": "components"
-  }
-}

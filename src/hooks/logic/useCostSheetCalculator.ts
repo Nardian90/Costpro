@@ -257,10 +257,14 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     (template?.annexes || []).forEach(annex => {
       const isAdjActive = !!annex.isAdjustmentActive;
       const coef = isAdjActive ? (annex.coefficient !== undefined ? annex.coefficient : 1) : 1;
-      const adjCol = annex.adjustmentColumn || 'PRECIO UNITARIO';
+      const adjCol = annex.adjustmentColumn || (annex.id === 'II' ? 'HORAS MENSUALES' : 'PRECIO UNITARIO');
 
       const isPrice = (k: string) => k === 'price_unit' || k === 'rate' || k === 'price';
       const isNorm = (k: string) => k === 'norm' || k === 'consumption' || k === 'quantity' || k === 'qty';
+      // Annex II specific columns
+      const isTimeNorm = (k: string) => k === 'time_norm';
+      const isHourlyRate = (k: string) => k === 'hourly_rate';
+      const isWorkerCount = (k: string) => k === 'worker_count';
 
       const calculatedAnnex = {
         ...annex,
@@ -283,6 +287,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               } else if (adjCol === 'NORMA DE CONSUMO') {
                   Object.keys(draft).forEach(k => {
                       if (isNorm(k) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * coef;
+                      }
+                  });
+              } else if (adjCol === 'HORAS MENSUALES') {
+                  Object.keys(draft).forEach(k => {
+                      if (isTimeNorm(k) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * coef;
+                      }
+                  });
+              } else if (adjCol === 'TARIFA $/H') {
+                  Object.keys(draft).forEach(k => {
+                      if (isHourlyRate(k) && typeof draft[k] === 'number') {
+                          draft[k] = draft[k] * coef;
+                      }
+                  });
+              } else if (adjCol === 'CANT. OBREROS') {
+                  Object.keys(draft).forEach(k => {
+                      if (isWorkerCount(k) && typeof draft[k] === 'number') {
                           draft[k] = draft[k] * coef;
                       }
                   });
@@ -367,10 +389,17 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           (rows || []).forEach(r => {
               if (r.children && r.children.length > 0) {
                   calculateVH(r.children);
-                  vhSums[r.id] = r.children.reduce((sum, child) => {
-                      const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
-                      return sum + val;
-                  }, 0);
+                  // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
+                  // respect r.valorHistorico instead of summing children.
+                  const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
+                  if (isFixedValue) {
+                      vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+                  } else {
+                      vhSums[r.id] = r.children.reduce((sum, child) => {
+                          const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
+                          return sum + val;
+                      }, 0);
+                  }
               } else {
                   vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
               }
@@ -392,11 +421,14 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (['14', '14.1', '12', '12.1', '5'].includes(r.id)) type = 'TOTAL';
 
           // Map calculation method
-          let formula = r.formula || r.totalFormula;
+          // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
+          let formula = r.totalFormula || r.formula;
           const isParent = r.children && r.children.length > 0;
 
-          // Enforce sum(children) for parents
-          if (isParent) {
+          // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
+          // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
+          const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
+          if (isParent && !isFixedValue) {
               formula = '=sum(children)';
           }
 
@@ -405,8 +437,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
           if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
           if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-          if (r.is_percent) formaCalculo = 'COEFICIENTE';
-          if (formula) formaCalculo = 'FORMULA';
+          // is_percent must NOT override an explicit ValorFijo/FIJO calculationMethod
+          if (r.is_percent && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
+          // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
+          if (formula && !isFixedValue) formaCalculo = 'FORMULA';
 
           // Base Calculation mapping
           let baseCalculo: BaseRef | null = null;

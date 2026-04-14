@@ -1,8 +1,0 @@
-{
-  "id": "PERFORMANCE_GUIDELINES_rpc_vs__table_queries",
-  "content": "### RPC vs. Table Queries\n- **Rule:** Use RPCs for complex operations (joins, aggregations, pagination) and Table Queries for simple CRUD.\n- **Action:** Ensure RPCs are also selective in the columns they return.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PERFORMANCE_GUIDELINES.md",
-    "header": "RPC vs. Table Queries"
-  }
-}

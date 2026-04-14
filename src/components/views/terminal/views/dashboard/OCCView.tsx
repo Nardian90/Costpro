@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import {
   Search,
   TrendingUp,
@@ -70,7 +69,7 @@ export default function OCCView() {
         trend: '-0.4%',
         up: false,
         icon: TrendingDown,
-        color: 'text-blue-400'
+        color: 'text-primary'
       },
       {
         label: 'Alertas Críticas',
@@ -100,41 +99,38 @@ export default function OCCView() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20">
+    <div className="max-w-5xl mx-auto space-y-8 pb-20">
       {/* Header Section */}
       <header className="space-y-2">
         <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Centro de Comando Operativo</h1>
+            <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">Centro de Comando Operativo</h1>
         </div>
         <p className="text-sm font-medium text-muted-foreground max-w-2xl">
-            Bienvenido, <span className="text-foreground font-bold">{user?.fullName}</span>. Tienes <span className="text-destructive font-bold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
+            Bienvenido, <span className="text-foreground font-semibold">{user?.fullName}</span>. Tienes <span className="text-destructive font-semibold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
         </p>
       </header>
 
-      {/* Command Layer - Hero Input */}
-      <section className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-[36px] blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+      {/* Command Layer - Clean Search Card */}
+      <section>
         <button
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-          className="relative w-full flex items-center px-8 py-6 bg-card/50 backdrop-blur-xl border border-border/50 rounded-[32px] text-left hover:bg-card hover:border-primary/50 transition-all active:scale-[0.99]"
+          className="w-full flex items-center px-6 py-4 bg-card border border-border/50 rounded-2xl text-left hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.99]"
         >
-          <Search className="w-6 h-6 text-muted-foreground mr-6" />
-          <span className="flex-1 text-xl font-medium text-muted-foreground/50">Buscar o ejecutar acción...</span>
-          <div className="flex items-center gap-2">
-            <kbd className="px-3 py-1.5 bg-muted rounded-xl text-xs font-black border border-border flex items-center gap-2 text-muted-foreground uppercase tracking-widest shadow-sm">
-              <Command className="w-3.5 h-3.5" /> K
-            </kbd>
-          </div>
+          <Search className="w-5 h-5 text-muted-foreground mr-4" />
+          <span className="flex-1 text-base font-medium text-muted-foreground/50">Buscar o ejecutar acción...</span>
+          <kbd className="px-3 py-1.5 bg-muted rounded-xl text-xs font-semibold border border-border/50 flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+            <Command className="w-3.5 h-3.5" /> K
+          </kbd>
         </button>
       </section>
 
       {/* Quick Actions Grid */}
-      <section className="space-y-6">
+      <section className="space-y-4">
         <div className="flex items-center justify-between px-2">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 Acciones Principales
             </h2>
             <div className="h-px flex-1 bg-border/50 mx-6" />
@@ -144,79 +140,79 @@ export default function OCCView() {
             <button
               key={action.id}
               onClick={() => handleAction(action)}
-              className="group flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-[28px] hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-2xl hover:shadow-primary/5 transition-all active:scale-95"
+              className="group flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-2xl shadow-sm hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.98]"
             >
-              <div className="w-14 h-14 rounded-2xl bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-4 transition-colors">
-                <action.icon className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-xl bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center mb-3 transition-colors">
+                <action.icon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-black uppercase tracking-widest text-center">{action.label}</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-center">{action.label}</span>
             </button>
           ))}
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-            className="flex flex-col items-center justify-center p-6 bg-muted/20 border border-dashed border-border rounded-[28px] hover:bg-muted/40 transition-all opacity-60 hover:opacity-100"
+            className="flex flex-col items-center justify-center p-6 bg-muted/30 border border-dashed border-border/50 rounded-2xl hover:bg-muted/50 transition-all opacity-60 hover:opacity-100"
           >
-            <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-border flex items-center justify-center mb-4">
-              <Plus className="w-6 h-6 text-muted-foreground" />
+            <div className="w-12 h-12 rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-3">
+              <Plus className="w-5 h-5 text-muted-foreground" />
             </div>
-            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Más...</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Más...</span>
           </button>
         </div>
       </section>
 
       {/* Two Column Layout: Recents & Snapshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Actions */}
-        <section className="lg:col-span-1 space-y-6">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 px-2">
+        <section className="lg:col-span-1 space-y-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2 px-2">
                 <History className="w-3.5 h-3.5" /> Recientes
             </h2>
-            <div className="bg-card border border-border/50 rounded-[32px] p-4 space-y-2">
+            <div className="bg-card border border-border/50 rounded-2xl shadow-sm p-4 space-y-2">
               {recentActions.length > 0 ? recentActions.map((action) => (
                 <button
                   key={action.id}
                   onClick={() => handleAction(action)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-muted transition-colors text-left group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors text-left group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-background group-hover:text-primary transition-colors">
-                    <action.icon className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <action.icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate">{action.label}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Hace un momento</div>
+                    <div className="text-xs font-semibold truncate">{action.label}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Hace un momento</div>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               )) : (
                 <div className="py-12 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Sin actividad reciente</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground opacity-40">Sin actividad reciente</p>
                 </div>
               )}
             </div>
         </section>
 
         {/* Resumen Ejecutivo */}
-        <section className="lg:col-span-2 space-y-6">
+        <section className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between px-2">
-                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                    Resumen Ejecutivo
                 </h2>
                 <button
                   onClick={() => setCurrentView('dashboard')}
-                  className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1.5"
+                  className="text-xs font-semibold uppercase tracking-wider text-primary hover:underline flex items-center gap-1.5"
                 >
                   Ver Análisis <BarChart3 className="w-3 h-3" />
                 </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-card border border-border/50 rounded-[32px] p-8 space-y-4">
+                    <div key={idx} className="bg-card border border-border/50 rounded-2xl shadow-sm p-6 space-y-4">
                         <div className="flex items-center justify-between">
-                            <div className={cn("p-3 rounded-2xl bg-muted", stat.color)}>
-                                <stat.icon className="w-5 h-5" />
+                            <div className={cn("p-2.5 rounded-xl bg-muted", stat.color)}>
+                                <stat.icon className="w-4 h-4" />
                             </div>
                             <div className={cn(
-                                "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest",
+                                "flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider",
                                 stat.up ? "text-primary" : "text-destructive"
                             )}>
                                 {stat.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -224,8 +220,8 @@ export default function OCCView() {
                             </div>
                         </div>
                         <div>
-                            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-1">{stat.label}</div>
-                            <div className="text-3xl font-black tracking-tighter tabular-nums">{isLoading ? '...' : stat.value}</div>
+                            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</div>
+                            <div className="text-2xl font-bold font-display tracking-tight tabular-nums">{isLoading ? '...' : stat.value}</div>
                         </div>
                     </div>
                 ))}

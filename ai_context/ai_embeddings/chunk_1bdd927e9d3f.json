@@ -1,8 +1,0 @@
-{
-  "id": "POLICIES_BEFORE_AFTER_ANALYSIS_auth_check",
-  "content": "#### Auth Check\n\n**ANTES y DESPUÉS:**\n```sql\n-- Siempre verifica auth.uid()\nWHERE id = auth.uid()\n-- O comprueba membership con auth.uid()\nWHERE user_id = auth.uid()\n```\n\n✅ Autenticación **INTACTA**\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POLICIES_BEFORE_AFTER_ANALYSIS.md",
-    "header": "Auth Check"
-  }
-}

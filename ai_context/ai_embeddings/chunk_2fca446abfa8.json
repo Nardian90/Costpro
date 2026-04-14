@@ -1,8 +1,0 @@
-{
-  "id": "HEALTH_RESOLUTION_PLAN_3__estrategia_de_resolución_global",
-  "content": "## 3. Estrategia de Resolución Global\n\n1.  **Refactor de Inventario:** Priorizar la ruptura de ciclos en el módulo `inventory_count`. Es el punto más crítico de degradación (Score -10).\n2.  **Limpieza de API:** Auditar las 6 rutas huérfanas. Si no hay llamadas `fetch` activas en el código, eliminar para reducir superficie de ataque.\n3.  **Registro de Vistas:** Asegurar que todos los diagramas huérfanos estén registrados en `src/config/viewRegistry.ts`.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/HEALTH_RESOLUTION_PLAN.md",
-    "header": "3. Estrategia de Resolución Global"
-  }
-}

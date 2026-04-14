@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_ajuste_manual_individual__modal_",
-  "content": "### Ajuste Manual Individual (Modal)\n- Botón \"Editar\" (icono lápiz) en modo normal\n- Permite ajustes positivos (entrada) o negativos (salida)\n- Requiere motivo: Corrección, Merma, Otro\n- Actualiza directamente tabla `inventory`\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "Ajuste Manual Individual (Modal)"
-  }
-}

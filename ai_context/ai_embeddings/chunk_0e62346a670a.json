@@ -1,8 +1,0 @@
-{
-  "id": "DIAGNOSTICO_CRITICO_RLS_test_1___funciona__is_admin____ahora_",
-  "content": "### Test 1: ¿Funciona `is_admin()` ahora?\n\n```sql\n-- Como usuario admin en frontend\nSELECT public.is_admin() as is_admin_result;\n-- Esperado: true\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DIAGNOSTICO_CRITICO_RLS.md",
-    "header": "Test 1: ¿Funciona `is_admin()` ahora?"
-  }
-}

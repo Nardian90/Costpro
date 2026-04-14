@@ -1,8 +1,0 @@
-{
-  "id": "FLOW_IPV_MISMATCH_6__persistencia_y_efectos_end",
-  "content": "## 6. Persistencia y Efectos\nUna vez resuelto (Auto o Manual):\n- Se crean registros en `reconciliation_lines`.\n- Si hubo descomposiciones de paquetes (ej: Caja -> Unidades), se registran en `product_movements` con tipo `DECOMPOSITION`.\n- El estado de la transacción en `bank_statements` cambia a `COMPLETO`.\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/FLOW_IPV_MISMATCH.md",
-    "header": "6. Persistencia y Efectos"
-  }
-}

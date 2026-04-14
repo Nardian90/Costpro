@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_health_DetailedRelationshipGraph_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para DetailedRelationshipGraph.\", \"dependencies\": [\"react\", \"framer-motion\", \"lucide-react\", \"@/lib/utils\", \"@/components/ui/badge\"], \"domain\": \"UI\", \"exports\": [\"DetailedRelationshipGraph\"], \"id\": \"src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx\", \"name\": \"DetailedRelationshipGraph.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico DetailedRelationshipGraph.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con DetailedRelationshipGraph.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 27,
-    "domain": "components"
-  }
-}

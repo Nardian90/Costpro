@@ -1,8 +1,0 @@
-{
-  "id": "THEME_AUDIT_MARCH_2024_plan_de_acción",
-  "content": "## Plan de Acción\n\n1.  **Refactorizar `CostSheetNav.tsx`**: Añadir clases de color primario a los items generados dinámicamente.\n2.  **Corregir `CostSheetMasterRing.tsx`**:\n    - Eliminar `dark:text-[currentColor]`.\n    - Cambiar el precio central a `text-primary`.\n    - Asegurar que `CostSheetTelemetry` use `text-primary` explícitamente.\n3.  **Ajustar `HealthBattery.tsx`**:\n    - Forzar `text-primary` y `bg-primary/10` para estados saludables.\n4.  **Verificación Final**: Probar en Light y Dark mode.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/THEME_AUDIT_MARCH_2024.md",
-    "header": "Plan de Acción"
-  }
-}

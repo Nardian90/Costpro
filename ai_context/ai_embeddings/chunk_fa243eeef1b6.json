@@ -1,8 +1,0 @@
-{
-  "id": "bugs_documentation_informe_de_errores_y_mejoras___costpro",
-  "content": "# Informe de Errores y Mejoras - CostPro\n\nEste documento detalla 10 errores y violaciones de estándares encontrados en la aplicación, junto con sus respectivas soluciones aplicadas.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/bugs_documentation.md",
-    "header": "Informe de Errores y Mejoras - CostPro"
-  }
-}

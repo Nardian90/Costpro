@@ -1,8 +1,0 @@
-{
-  "id": "ARCHITECTURE_AI_PIPELINE_v8_3_1_capa_de_arquitectura__engine_1___determinista_",
-  "content": "### 3.1 Capa de Arquitectura (Engine 1 - Determinista)\n- `public/system_architecture.json` (Inventario estructural)\n- `public/architecture_manifest.json` (Metadatos del sistema)\n- `public/architecture_graph.json` (Grafo de dependencias AST)\n- `public/architecture_audit.json` (Salud, integridad + **Performance Metrics**)\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ARCHITECTURE_AI_PIPELINE_v8.md",
-    "header": "3.1 Capa de Arquitectura (Engine 1 - Determinista)"
-  }
-}

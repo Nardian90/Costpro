@@ -1,8 +1,0 @@
-{
-  "id": "ESTRATEGIA_BOT_ENCARGADO_ii__reaprovisionamiento_inteligente",
-  "content": "### II. Reaprovisionamiento Inteligente\n*   **Pedido Sugerido:** Basado en el *Runway* (Días de inventario restante = Stock Actual / Venta Diaria Promedio).\n*   **Análisis de Proveedores:** Recomendación de a qué proveedor comprar según el historial de costos y tiempos de entrega registrados en `receipts`.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
-    "header": "II. Reaprovisionamiento Inteligente"
-  }
-}

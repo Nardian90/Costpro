@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_AUDIT_REPORT_escala__1_10__1_crítico__10_excelente_",
-  "content": "### Escala: 1-10 (1=Crítico, 10=Excelente)\n\n| Criterio | Calificación | Justificación |\n|----------|-------------|---|\n| **Integridad de Datos** | **2/10** | Sin RPC atómico, sin garantía ACID, tablas inconsistentes |\n| **Seguridad (RLS/Permisos)** | **3/10** | RLS bypassable, sin validación de roles, upsert directo |\n| **UX** | **4/10** | Falta captura de detalles, sin validaciones visuales, incomplete modal |\n| **Confiabilidad** | **3/10** | Fallos a mitad de proceso generan inconsistencia |\n| **Modularidad de Código** | **6/10** | Componente monolítico (700 líneas), pero tipos bien definidos |\n| **Documentación** | **7/10** | Existe documentación, pero desactualizada respecto a negocio real |\n| **Cobertura de Funcionalidad** | **5/10** | Inventario ✓, Imágenes ✓, Recepción ❌ (faltan campos) |\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/WAREHOUSE_AUDIT_REPORT.md",
-    "header": "Escala: 1-10 (1=Crítico, 10=Excelente)"
-  }
-}

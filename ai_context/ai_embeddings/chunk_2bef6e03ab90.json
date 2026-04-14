@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_ui_separator_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para separator.\", \"dependencies\": [\"react\", \"@radix-ui/react-separator\", \"@/lib/utils\"], \"domain\": \"UI\", \"exports\": [], \"id\": \"src/components/ui/separator.tsx\", \"name\": \"separator.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico separator.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con separator.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 212,
-    "domain": "components"
-  }
-}

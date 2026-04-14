@@ -1,8 +1,0 @@
-{
-  "id": "README_POS___diseño_neumórfico",
-  "content": "### ✅ Diseño Neumórfico\n```css\n/* Efecto raised (sobresaliente) */\n.neu-raised {\n  background: var(--background);\n  box-shadow:\n    8px 8px 16px var(--shadow-dark),\n    -8px -8px 16px var(--shadow-light);\n  border-radius: var(--radius-lg);\n}\n\n/* Efecto inset (hundido) */\n.neu-inset {\n  background: var(--background);\n  box-shadow:\n    inset 8px 8px 16px var(--shadow-dark),\n    inset -8px -8px 16px var(--shadow-light);\n  border-radius: var(--radius-md);\n}\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "✅ Diseño Neumórfico"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "id": "README_POS_mis_ventas",
-  "content": "### Mis Ventas\n- Listado de transacciones\n- Filtros por estado y fecha\n- Vista de detalles del ticket\n- Estadísticas de ventas\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/README_POS.md",
-    "header": "Mis Ventas"
-  }
-}

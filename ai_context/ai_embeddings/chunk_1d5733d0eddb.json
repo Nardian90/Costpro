@@ -1,8 +1,0 @@
-{
-  "id": "AUDITORIA_IPV_MATCHING_PRO_2_1_motor_de_matching_actual",
-  "content": "### 2.1 Motor de Matching Actual\n**Funcionamiento:**\n1. Filtra reglas activas por prioridad.\n2. Ejecuta secuencialmente: Exact Match -> Partial Match -> Price Flex -> Tolerance.\n3. Utiliza backtracking para buscar combinaciones exactas (`findExactCombination`).\n\n**Limitaciones Detectadas:**\n- **Rigidez:** Si un producto entra en `PRICE_FLEX`, cambia su precio solo para esa transacción.\n- **Ambigüedad:** No hay scoring. Si dos combinaciones cuadran, elige la primera encontrada por el índice del catálogo.\n- **Fallas de Ingesta:** Al importar, si `id_grupo` no coincide exactamente entre filas, la recursividad de stock virtual falla.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/AUDITORIA_IPV_MATCHING_PRO.md",
-    "header": "2.1 Motor de Matching Actual"
-  }
-}

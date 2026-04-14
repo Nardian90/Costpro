@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION__cuál_es_el_root_cause_",
-  "content": "### ¿Cuál es el root cause?\n\n**Respuesta:** 3 bugs:\n1. `is_admin()` usaba `role::text` en lugar de comparación de ENUM\n2. 3 policies solapadas en `stores` + una con comodín `true`\n3. Falta policy permitiendo admin editar profiles de otros\n\n**Ver:** `DIAGNOSTICO_CRITICO_RLS.md` → \"Diagnóstico Detallado\"\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "¿Cuál es el root cause?"
-  }
-}

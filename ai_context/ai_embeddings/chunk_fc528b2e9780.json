@@ -1,8 +1,0 @@
-{
-  "id": "procedures_procedimiento__gestión_de_fichas_de_costo",
-  "content": "## Procedimiento: Gestión de Fichas de Costo\n1. Crear nueva ficha de costo\n2. Agregar insumos y mano de obra\n3. Calcular márgenes y precios sugeridos\n4. Generar reportes y anexos\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/procedures.md",
-    "header": "Procedimiento: Gestión de Fichas de Costo"
-  }
-}

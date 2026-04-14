@@ -213,7 +213,7 @@ export function ChatBot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="w-[380px] h-[600px] bg-background border border-border shadow-2xl rounded-[32px] flex flex-col overflow-hidden relative"
+            className="w-[calc(100vw-2rem)] sm:w-[380px] h-[calc(100vh-4rem)] sm:h-[600px] max-h-[600px] bg-background border border-border shadow-2xl rounded-[32px] flex flex-col overflow-hidden relative"
           >
             {/* Header */}
             <div className="h-20 bg-primary text-primary-foreground flex items-center justify-between px-6 relative overflow-hidden shrink-0">

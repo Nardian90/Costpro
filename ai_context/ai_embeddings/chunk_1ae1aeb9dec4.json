@@ -1,8 +1,0 @@
-{
-  "id": "reference_cashclosureview_tsx",
-  "content": "## CashClosureView.tsx\n**Ruta:** `src/components/views/terminal/views/cash_closure/CashClosureView.tsx`\n\n**Acciones disponibles:** handleProcessClosure, handleRefresh\n\n**Salidas esperadas:** Card List, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "CashClosureView.tsx"
-  }
-}

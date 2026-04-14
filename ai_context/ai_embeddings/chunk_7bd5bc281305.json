@@ -1,8 +1,0 @@
-{
-  "id": "theme-audit_resumen_ejecutivo",
-  "content": "## Resumen Ejecutivo\nEsta auditoría analiza el uso de colores y variables de tema en el proyecto Costpro, identificando inconsistencias, colores hardcodeados y problemas de contraste para asegurar una experiencia de usuario coherente y compatible con el modo oscuro.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/theme-audit.md",
-    "header": "Resumen Ejecutivo"
-  }
-}

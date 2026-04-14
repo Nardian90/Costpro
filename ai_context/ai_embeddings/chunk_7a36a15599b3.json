@@ -1,8 +1,0 @@
-{
-  "id": "EXECUTIVE_SUMMARY_RLS_FIX_si_necesitas_revertir__por_algún_motivo__",
-  "content": "### Si necesitas revertir (por algún motivo):\n\n```sql\n-- Ver todas las migrations aplicadas\nSELECT name FROM public.schema_migrations ORDER BY name DESC LIMIT 5;\n\n-- Revertir específica (si fuera necesario, NO recomendado)\n-- Supabase maneja esto automáticamente\n```\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/EXECUTIVE_SUMMARY_RLS_FIX.md",
-    "header": "Si necesitas revertir (por algún motivo):"
-  }
-}

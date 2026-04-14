@@ -1,8 +1,0 @@
-{
-  "id": "ESTRATEGIA_BOT_ENCARGADO_iii__análisis_de_ventas_y_tendencias",
-  "content": "### III. Análisis de Ventas y Tendencias\n*   **Resumen Ejecutivo Diario:** Al cierre del día, envío de un reporte: *\"Hoy vendiste un 15% más que el martes pasado. La categoría 'Bebidas' impulsó el crecimiento\".*\n*   **Predicción de Demanda:** Uso de promedios móviles ponderados para anticipar picos de demanda (fines de semana o festivos).\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/ESTRATEGIA_BOT_ENCARGADO.md",
-    "header": "III. Análisis de Ventas y Tendencias"
-  }
-}

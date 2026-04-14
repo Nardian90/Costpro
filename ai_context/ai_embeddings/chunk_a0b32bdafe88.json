@@ -1,8 +1,0 @@
-{
-  "id": "SPECIFICATION_LANDING_svg_1__el_flujo_de_automatización__workflow_",
-  "content": "### SVG 1: El Flujo de Automatización (Workflow)\n- **Visualización:** Un icono de Excel a la izquierda, una \"Caja de Procesamiento\" (Sistema) en el centro con engranajes o pulsos de luz, y múltiples \"Fichas de Costo\" emergiendo a la derecha.\n- **Mensaje:** Simplicidad y transformación de datos brutos en información estructurada.\n- **Dinámica:** Movimiento fluido de partículas desde el Excel hacia el sistema, y una cascada organizada de fichas generadas.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/explanation/SPECIFICATION_LANDING.md",
-    "header": "SVG 1: El Flujo de Automatización (Workflow)"
-  }
-}

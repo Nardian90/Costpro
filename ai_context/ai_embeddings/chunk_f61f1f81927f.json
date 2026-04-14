@@ -1,8 +1,0 @@
-{
-  "id": "TESTING_MANUAL_RLS_FIXES_paso_3__confirmar",
-  "content": "### Paso 3: Confirmar\n\n**Resultado esperado:**\n- ✅ Toggle se cambia inmediatamente\n- ✅ Toast: \"Usuario desactivado\"\n- ✅ Usuario sigue en lista pero marcado como inactivo\n- ✅ NO hay error 403\n\n**DevTools:**\n```\n[DATABASE] toggle-status: { success: true }\n// O:\n[DATABASE] update profiles: { success: true, is_active: false }\n```\n\n**Si falla ❌:**\n```\nfetch error: 403 Forbidden\nError al cambiar estado: row security policy blocked\n```\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/TESTING_MANUAL_RLS_FIXES.md",
-    "header": "Paso 3: Confirmar"
-  }
-}

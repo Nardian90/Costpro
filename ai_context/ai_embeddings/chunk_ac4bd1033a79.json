@@ -1,8 +1,0 @@
-{
-  "id": "POS_AUDIT_FINAL_2__archivos_intervenidos",
-  "content": "## 2. Archivos Intervenidos\n- `src/hooks/logic/usePOSProducts.ts`: Lógica de filtrado optimizada.\n- `src/components/views/terminal/views/pos/POSView.tsx`: Orquestación de modales y UX.\n- `src/components/views/terminal/views/pos/POSCart.tsx`: Limpieza de colores y estandarización de botones.\n- `src/components/views/terminal/views/pos/POSTableView.tsx`: Mejora de accesibilidad táctil y scroll.\n- `src/components/views/terminal/views/pos/StickyCartSummary.tsx`: Sincronización cromática con el tema primario.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/POS_AUDIT_FINAL.md",
-    "header": "2. Archivos Intervenidos"
-  }
-}

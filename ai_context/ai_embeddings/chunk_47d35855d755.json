@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_cost_engine_types_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para types.\", \"dependencies\": [\"decimal.js\"], \"domain\": \"Engine\", \"exports\": [\"FormaCalculo\", \"BaseRef\", \"RowSemanticType\", \"AuditEntry\", \"CalculationRule\", \"CostRow\", \"CalculatedRow\", \"AnexoRow\", \"Anexo\", \"FichaJSON\", \"ValidationError\", \"CalculationResult\"], \"id\": \"src/lib/cost-engine/types.ts\", \"name\": \"types.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico types.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar types.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 392,
-    "domain": "components"
-  }
-}

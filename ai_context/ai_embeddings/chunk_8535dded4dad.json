@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_ipv_CatalogTable_tsx",
-  "content": "{\"business_logic\": \"Visualiza y administra el cat\\u00e1logo de productos, permitiendo ajustes de stock y visualizaci\\u00f3n de m\\u00e9tricas de entrada/salida.\", \"dependencies\": [\"react\", \"dexie-react-hooks\", \"@/lib/dexie\", \"@/lib/ipv/engine\", \"@/components/ui/badge\", \"@/components/ui/BaseModal\", \"@/components/ui/button\", \"@/components/ui/card\", \"@/components/ui/label\", \"lucide-react\", \"@/components/ui/input\", \"@/lib/utils\", \"@/components/ui/switch\", \"sonner\", \"@/lib/supabaseClient\", \"@/hooks/api/useStores\", \"@/store\", \"@/lib/roles\", \"@/lib/ipv/utils\", \"@/lib/ipv/importUtils\", \"@/components/ui/ActionMenu\", \"xlsx\"], \"domain\": \"UI\", \"exports\": [\"CatalogTable\"], \"id\": \"src/components/views/terminal/views/ipv/CatalogTable.tsx\", \"name\": \"CatalogTable.tsx\", \"technical_description\": \"Componente de gesti\\u00f3n de inventario.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con CatalogTable.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 112,
-    "domain": "components"
-  }
-}

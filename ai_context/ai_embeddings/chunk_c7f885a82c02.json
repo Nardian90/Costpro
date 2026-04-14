@@ -1,8 +1,0 @@
-{
-  "id": "DOC_MULTI_STORE_roles_y_jerarquía",
-  "content": "## Roles y Jerarquía\n1. **admin**: Acceso total al sistema. Puede gestionar todos los usuarios, tiendas y límites.\n2. **encargado**: Puede crear tiendas y usuarios (limitado por el admin). Gestiona los recursos que ha creado.\n3. **usuario**: Rol operativo básico. Solo accede a las tiendas que le han sido asignadas.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/DOC_MULTI_STORE.md",
-    "header": "Roles y Jerarquía"
-  }
-}

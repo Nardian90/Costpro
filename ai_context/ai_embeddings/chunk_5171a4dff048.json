@@ -1,8 +1,0 @@
-{
-  "id": "INDEX_COMPLETE_RLS_DOCUMENTATION_____para_desarrolladores",
-  "content": "### 👨‍💻 PARA DESARROLLADORES\n\n**2. [`QUICK_REFERENCE_RLS_FIX.md`](QUICK_REFERENCE_RLS_FIX.md)** ⭐ **LECTURA RÁPIDA**\n\n- ⚡ Qué se arregló (copy-paste friendly)\n- 📝 Cambios en backend/frontend\n- 🧪 Testing rápido (SQL queries)\n- ✅ Testing en UI (5+5 min)\n- 🔍 Troubleshooting rápido\n- ⏱ Duración: 5 min lectura\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INDEX_COMPLETE_RLS_DOCUMENTATION.md",
-    "header": "👨‍💻 PARA DESARROLLADORES"
-  }
-}

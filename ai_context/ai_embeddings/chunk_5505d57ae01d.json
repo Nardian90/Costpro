@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ai_adapters_fallback_adapter_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para fallback-adapter.\", \"dependencies\": [\"../types\"], \"domain\": \"Integration\", \"exports\": [\"FallbackAdapter\"], \"id\": \"src/lib/ai/adapters/fallback-adapter.ts\", \"name\": \"fallback-adapter.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico fallback-adapter.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar fallback-adapter.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 444,
-    "domain": "components"
-  }
-}

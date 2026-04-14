@@ -70,6 +70,7 @@ const AccordionGroup = ({
           "w-full flex items-center justify-between p-4 transition-colors",
           isOpen ? "bg-primary/5 text-sidebar-foreground" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
         )}
+        aria-expanded={isOpen}
       >
         <div className="flex items-center gap-3">
           <Icon className="w-4 h-4" />
@@ -210,6 +211,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
               <button
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors active:scale-95"
+                aria-label="Cerrar panel de control"
               >
                 <XIcon className="w-5 h-5" />
               </button>

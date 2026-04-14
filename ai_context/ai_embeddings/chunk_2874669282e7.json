@@ -1,9 +1,0 @@
-{
-  "id": "user_help_2",
-  "content": "{\"acciones\": [\"Crear o importar productos\", \"Definir variaciones permitidas\", \"Organizar por grupos y subgrupos\"], \"descripcion_usuario\": \"Mantener un cat\\u00e1logo actualizado para la automatizaci\\u00f3n del matching.\", \"feature\": \"Gesti\\u00f3n de Productos y Precios\", \"resultados\": [\"Cumplimiento de: Mantener un cat\\u00e1logo actualizado para la automatizaci\\u00f3n del matching.\"]}",
-  "metadata": {
-    "source": "knowledge/user_help.json",
-    "index": 2,
-    "domain": "user_help"
-  }
-}

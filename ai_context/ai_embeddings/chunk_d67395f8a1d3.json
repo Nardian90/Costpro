@@ -1,8 +1,0 @@
-{
-  "id": "PRODUCT_VARIANT_LOGIC_beneficios",
-  "content": "## Beneficios\n- **Mayor % de Cuadre**: Permite satisfacer ventas de productos menores usando stock de formatos mayores.\n- **Trazabilidad**: Todos los cambios automáticos de inventario quedan registrados en la pestaña \"Movimientos\".\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/PRODUCT_VARIANT_LOGIC.md",
-    "header": "Beneficios"
-  }
-}

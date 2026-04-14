@@ -1,8 +1,0 @@
-{
-  "id": "audit_v5_desglose_de_evaluación",
-  "content": "### Desglose de Evaluación\n1. **Integridad de Exportación/Importación (JSON):** 5/10\n   - El proceso de exportación sobrescribe las fórmulas del encabezado con valores calculados, destruyendo la integridad de la ficha para futuras ediciones.\n   - No se garantiza la persistencia de metadatos críticos en todas las capas.\n\n2. **Robustez de Fórmulas:** 4/10\n   - Se detectó un error crítico en el regex de resolución de referencias (`ref`, `vh`) en el encabezado, usando el offset de la cadena en lugar del ID buscado.\n   - Falta de funciones especializadas como `REDONDEO` alineadas con la terminología contable en español.\n\n3. **Sección de Auditoría:** 6/10\n   - Cubre validaciones básicas (sumas de padres, ratios de utilidad).\n   - Carece de alertas para inconsistencias matemáticas avanzadas o dependencias circulares complejas en la UI.\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/audit_v5.8_optimization.md",
-    "header": "Desglose de Evaluación"
-  }
-}

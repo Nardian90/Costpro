@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv___tests___advanced_engine_test_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para advanced_engine.test.\", \"dependencies\": [\"vitest\", \"../engine\", \"../../dexie\"], \"domain\": \"Domain\", \"exports\": [], \"id\": \"src/lib/ipv/__tests__/advanced_engine.test.ts\", \"name\": \"advanced_engine.test.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico advanced_engine.test.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar advanced_engine.test.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 437,
-    "domain": "components"
-  }
-}

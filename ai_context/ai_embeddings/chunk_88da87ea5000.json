@@ -1,8 +1,0 @@
-{
-  "id": "INVENTORY_AUDIT_REPORT_5__scalability_and_performance",
-  "content": "### 5. Scalability and Performance\nThe `stock_movements` table is a potential performance bottleneck. As the table grows, query performance will degrade. A data archiving strategy, combined with proper indexing, is essential for maintaining performance over the long term.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/INVENTORY_AUDIT_REPORT.md",
-    "header": "5. Scalability and Performance"
-  }
-}

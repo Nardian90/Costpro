@@ -1,9 +1,0 @@
-{
-  "id": "components_src_app_layout_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para layout.\", \"dependencies\": [\"next\", \"next/font/google\", \"sonner\", \"@/components/theme-provider\", \"@/components/GlobalSessionManager\", \"@/components/ServiceWorkerRegister\", \"@/components/providers/QueryProvider\", \"@/components/providers/SyncProvider\", \"@/components/IntelligentThemeHandler\"], \"domain\": \"UI\", \"exports\": [\"metadata\", \"viewport\"], \"id\": \"src/app/layout.tsx\", \"name\": \"layout.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico layout.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con layout.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 278,
-    "domain": "components"
-  }
-}

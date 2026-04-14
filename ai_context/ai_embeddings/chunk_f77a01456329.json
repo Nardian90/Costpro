@@ -1,9 +1,0 @@
-{
-  "id": "components_src_hooks_ui_useDebounce_ts",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para useDebounce.\", \"dependencies\": [\"react\"], \"domain\": \"UI\", \"exports\": [\"useDebounce\"], \"id\": \"src/hooks/ui/useDebounce.ts\", \"name\": \"useDebounce.ts\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico useDebounce.\", \"user_description\": \"M\\u00f3dulo del sistema para gestionar useDebounce.ts.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 354,
-    "domain": "components"
-  }
-}

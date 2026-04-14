@@ -1,9 +1,0 @@
-{
-  "id": "components_src_lib_ipv_intelligentEngine_ts",
-  "content": "{\"businessRules\": [\"Greedy unit decomposition algorithm for BOX, PACK, and UNIT levels.\", \"Demand rounding to the nearest multiple of 10.\", \"Inventory reconstruction modes: Mode A (Only Sales), Mode B (Sales + Existing Receipts), Mode C (Stock Goal).\", \"Automatic generation of corrective receipts for negative stock points.\"], \"dependencies\": [], \"domain\": \"Engine\", \"id\": \"src/lib/ipv/intelligentEngine.ts\", \"name\": \"intelligentEngine.ts\", \"technical_description\": \"Core logic for intelligentEngine.ts\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 454,
-    "domain": "components"
-  }
-}

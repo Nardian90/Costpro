@@ -1,9 +1,0 @@
-{
-  "id": "components_src_components_views_terminal_views_pos_POSCart_tsx",
-  "content": "{\"business_logic\": \"L\\u00f3gica de negocio para POSCart.\", \"dependencies\": [\"react\", \"framer-motion\", \"@/components/ui/CostProLoader\", \"@/components/ui/ProductImage\", \"@/lib/utils\", \"jspdf\", \"jspdf-autotable\", \"html2canvas\", \"sonner\", \"@/types\", \"@/hooks/ui/useMobile\", \"@/hooks/api/useTaxes\", \"@/store\", \"@/components/ui/BaseModal\", \"@/components/ui/atomic\"], \"domain\": \"UI\", \"exports\": [\"POSCart\"], \"id\": \"src/components/views/terminal/views/pos/POSCart.tsx\", \"name\": \"POSCart.tsx\", \"technical_description\": \"M\\u00f3dulo t\\u00e9cnico POSCart.\", \"user_description\": \"Elemento de la interfaz de usuario para interactuar con POSCart.tsx.\"}",
-  "metadata": {
-    "source": "knowledge/components.json",
-    "index": 130,
-    "domain": "components"
-  }
-}

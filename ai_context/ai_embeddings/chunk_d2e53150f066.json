@@ -1,8 +1,0 @@
-{
-  "id": "DOWNLOAD_INSTRUCTIONS_crea_un_directorio_nuevo",
-  "content": "# Crea un directorio nuevo\nmkdir ~/mi-pos-project\ncd ~/mi-pos-project\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/DOWNLOAD_INSTRUCTIONS.md",
-    "header": "Crea un directorio nuevo"
-  }
-}

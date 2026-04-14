@@ -1,8 +1,0 @@
-{
-  "id": "ajustes_documentos_acceso_a_la_vista_de_ajustes",
-  "content": "## Acceso a la Vista de Ajustes\n\nPara visualizar únicamente los ajustes resultantes de estas inversiones:\n1. Diríjase al menú lateral izquierdo.\n2. Localice la categoría **INVENTARIO**.\n3. Haga clic en la opción **AJUSTES DOC.** (identificada con el icono de actualización/flechas circulares).\n\nEn esta vista podrá ver:\n- El tipo de ajuste (Aumento por venta invertida o Disminución por recepción invertida).\n- El producto afectado y la cantidad.\n- La referencia al documento original que motivó el ajuste.\n- La fecha y hora de la operación.\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/ajustes_documentos.md",
-    "header": "Acceso a la Vista de Ajustes"
-  }
-}

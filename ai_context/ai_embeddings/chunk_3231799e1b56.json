@@ -1,9 +1,0 @@
-{
-  "id": "views_src_components_views_terminal_views_inventory_InventoryCardView_tsx",
-  "content": "{\"actions\": [], \"components\": [\"ui/CostProLoader\", \"ui/atomic\"], \"id\": \"src/components/views/terminal/views/inventory/InventoryCardView.tsx\", \"inputs\": [], \"name\": \"InventoryCardView.tsx\", \"outputs\": [\"Card List\"], \"route\": \"src/components/views/terminal/views/inventory/InventoryCardView.tsx\", \"servicesUsed\": [\"utils\"]}",
-  "metadata": {
-    "source": "knowledge/views.json",
-    "index": 14,
-    "domain": "views"
-  }
-}

@@ -2,18 +2,9 @@
 
 import React from 'react';
 import { TrendingUp, DollarSign, Activity } from 'lucide-react';
-import { cn, formatCurrency , isDarkTheme} from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
-
-interface KpiCardProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  iconColor: string;
-  iconBg: string;
-  linePath: string;
-  lineColor: string;
-}
+import { isDarkTheme } from '@/lib/utils';
 
 const Sparkline = ({ path, color }: { path: string; color: string }) => (
   <svg className="w-16 h-8 overflow-visible" viewBox="0 0 60 20">
@@ -24,8 +15,7 @@ const Sparkline = ({ path, color }: { path: string; color: string }) => (
       strokeLinecap="round"
       strokeWidth="2"
     />
-    {/* Circle at the end of the path */}
-    <circle cx="60" cy={path.includes('T 60') ? path.split('T 60')[1].trim() : (path.includes('60') ? path.split('60').pop()?.split(' ')[1] : 10)} fill={color} r="2" />
+    <circle cx="60" cy={path.includes('T 60') ? path.split('T 60')[1].trim() : 10} fill={color} r="2" />
   </svg>
 );
 
@@ -45,29 +35,26 @@ export const ExecutiveKpiCards = ({
     {
       title: 'Ingresos Totales',
       value: sales,
-      icon: <TrendingUp className="w-6 h-6" />,
-      iconColor: 'text-[#39FF14]',
-      iconBg: 'bg-[#39FF14]/10 border-[#39FF14]/20',
+      icon: <TrendingUp className="w-5 h-5" />,
+      iconBg: 'bg-primary/10 text-primary',
       linePath: 'M0 15 Q 10 5, 20 12 T 40 8 T 60 18',
-      lineColor: '#39FF14'
+      lineColor: 'var(--primary)',
     },
     {
       title: 'Costo de Ventas',
       value: costs,
-      icon: <DollarSign className="w-6 h-6" />,
-      iconColor: 'text-slate-400 dark:text-slate-300',
-      iconBg: 'bg-slate-400/10 dark:bg-white/5 border-slate-400/20 dark:border-white/10',
+      icon: <DollarSign className="w-5 h-5" />,
+      iconBg: 'bg-muted text-muted-foreground',
       linePath: 'M0 5 Q 15 15, 30 8 T 60 12',
-      lineColor: isDark ? '#ffffff' : '#64748b' // White in dark, Slate-500 in light
+      lineColor: isDark ? '#94a3b8' : '#64748b',
     },
     {
       title: 'Utilidad Neta',
       value: profit,
-      icon: <Activity className="w-6 h-6" />,
-      iconColor: 'text-[#00E0FF]',
-      iconBg: 'bg-[#00E0FF]/10 border-[#00E0FF]/20',
+      icon: <Activity className="w-5 h-5" />,
+      iconBg: 'bg-emerald-500/10 text-emerald-500',
       linePath: 'M0 18 Q 15 2, 30 14 T 60 2',
-      lineColor: '#00E0FF'
+      lineColor: '#10b981',
     }
   ];
 
@@ -76,22 +63,24 @@ export const ExecutiveKpiCards = ({
       {cards.map((card, i) => (
         <div
           key={i}
-          className="bg-card/80 backdrop-blur-md p-5 rounded-[24px] border border-border/50 flex items-center justify-between shadow-sm"
+          className="bg-card p-4 sm:p-5 rounded-2xl border border-border/50 flex items-center justify-between shadow-sm transition-colors hover:border-border"
         >
-          <div className="flex items-center gap-4">
-            <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", card.iconBg, card.iconColor)}>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0", card.iconBg)}>
               {card.icon}
             </div>
-            <div>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground truncate">
                 {card.title}
               </p>
-              <h3 className="text-xl font-bold font-display text-foreground">
+              <h3 className="text-lg sm:text-xl font-bold font-display text-foreground tracking-tight">
                 {formatCurrency(card.value)}
               </h3>
             </div>
           </div>
-          <Sparkline path={card.linePath} color={card.lineColor} />
+          <div className="shrink-0 hidden sm:block">
+            <Sparkline path={card.linePath} color={card.lineColor} />
+          </div>
         </div>
       ))}
     </div>

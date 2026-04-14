@@ -1,8 +1,0 @@
-{
-  "id": "reference_productreceptionview_tsx",
-  "content": "## ProductReceptionView.tsx\n**Ruta:** `src/components/views/terminal/views/inventory/ProductReceptionView.tsx`\n\n**Acciones disponibles:** handleExport, handleFileChange, handleImportClick\n\n**Salidas esperadas:** Summary Panel, Table\n\n",
-  "metadata": {
-    "source": "knowledge/iso_manual/reference.md",
-    "header": "ProductReceptionView.tsx"
-  }
-}

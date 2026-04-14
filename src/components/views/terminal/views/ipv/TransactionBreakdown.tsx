@@ -219,7 +219,7 @@ export default function TransactionBreakdown() {
                     <TableCell>
                       <div className="text-xs font-black text-primary truncate max-w-[150px]">{l.transaction_ref}</div>
                       <div className="flex items-center gap-1 group">
-                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px] cursor-pointer" onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px] cursor-pointer hover:text-primary transition-colors" onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
                           {tx?.observaciones || "Manual / Global"}
                         </div>
                         {tx && <Info className="w-3 h-3 text-muted-foreground/50" />}

@@ -100,16 +100,16 @@ export default function MovementsView() {
       </div>
 
       <div className="px-4">
-        <Card className="border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm">
+        <Card className="border-none shadow-sm overflow-hidden bg-card/50 backdrop-blur-sm overflow-x-auto movements-table">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="w-[180px]">Fecha</TableHead>
+                <TableHead className="w-auto sm:w-[180px]">Fecha</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Origen</TableHead>
                 <TableHead className="text-center w-8"></TableHead>
                 <TableHead>Destino</TableHead>
-                <TableHead>Referencia</TableHead>
+                <TableHead className="hidden-mobile-col">Referencia</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -151,7 +151,7 @@ export default function MovementsView() {
                           <span className="text-[10px] text-primary/70 uppercase font-bold">Qty: +{m.cantidad_destino}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden-mobile-col">
                         <span className="text-xs font-mono opacity-60">
                           {m.referencia_transaccion || '---'}
                         </span>

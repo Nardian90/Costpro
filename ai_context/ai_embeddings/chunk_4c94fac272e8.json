@@ -1,8 +1,0 @@
-{
-  "id": "SOLUCION_APLICADA_STATUS_multi_tenant_aislamiento__",
-  "content": "### Multi-tenant Aislamiento ✅\n\n**Verificación:**\n```sql\n-- User de Store A NO puede acceder a Store B\nSELECT * FROM stores\nWHERE id IN (\n  SELECT store_id FROM user_store_memberships\n  WHERE user_id = 'user-a' AND store_id = 'store-b'\n);\n-- Resultado: 0 rows (aislamiento intacto)\n```\n\n**Status:** ✅ PASS - Aislamiento multi-tenant preservado\n\n---\n\n",
-  "metadata": {
-    "source": "knowledge/docs/reference/SOLUCION_APLICADA_STATUS.md",
-    "header": "Multi-tenant Aislamiento ✅"
-  }
-}

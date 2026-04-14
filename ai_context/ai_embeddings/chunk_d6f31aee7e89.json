@@ -1,8 +1,0 @@
-{
-  "id": "WAREHOUSE_VIEW_IMPLEMENTATION_indicadores_visuales_",
-  "content": "### Indicadores Visuales:\n- ✅ Badge verde \"OK\" si stock > min_stock\n- ⚠️ Badge rojo \"Stock Bajo\" si stock <= min_stock\n- 🟡 Fondo azul claro en productos agregados a recepción\n- 🟡 Badge amarillo \"Modo Recepción Activo\"\n\n",
-  "metadata": {
-    "source": "knowledge/docs/how-to/WAREHOUSE_VIEW_IMPLEMENTATION.md",
-    "header": "Indicadores Visuales:"
-  }
-}
