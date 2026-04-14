@@ -147,7 +147,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           ),
           th: ({ node, ...props }) => <th className="px-5 py-3.5 font-black" {...props} />,
           td: ({ node, ...props }) => <td className="px-5 py-3 border-b border-border/20 text-xs font-medium" {...props} />,
-          blockquote: ({ node, children, ...props }) => {
+          blockquote: ({ node, children, ...props }: any) => {
             // Get text content to detect callout type
             const textContent = React.Children.toArray(children)
               .map(c => typeof c === 'string' ? c : '')

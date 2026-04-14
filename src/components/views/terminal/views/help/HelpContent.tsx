@@ -18,6 +18,9 @@ import {
   ArrowUp,
   Sparkles,
   ArrowRight,
+  Calculator,
+  ShoppingCart,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +32,7 @@ interface HelpContentProps {
   glossary?: Record<string, string>;
   onSelectResult: (path: string) => void;
   onClearSearch: () => void;
+  onSearch: (q: string) => void;
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; bg: string }> = {
@@ -48,7 +52,7 @@ function TypeIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' }) {
     <div className={cn(
       "rounded-lg flex items-center justify-center border",
       config.bg,
-      size === 'md' ? "w-10 h-10" : "w-7 h-7"
+      size === 'md' ? 'w-10 h-10' : 'w-7 h-7'
     )}>
       <IconComp className={cn(iconSize, config.color)} />
     </div>
@@ -58,14 +62,14 @@ function TypeIcon({ type, size = 'sm' }: { type: string; size?: 'sm' | 'md' }) {
 function TypeBadge({ type }: { type: string }) {
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.iso;
   return (
-    <Badge variant="outline" className={cn(
-      "rounded-lg px-2.5 py-1 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 border",
+    <div className={cn(
+      "px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5",
       config.bg,
       config.color
     )}>
-      <config.icon className="w-3 h-3" />
+      <div className={cn("w-1 h-1 rounded-full", config.color.replace('text-', 'bg-'))} />
       {config.label}
-    </Badge>
+    </div>
   );
 }
 
@@ -76,7 +80,8 @@ export default function HelpContent({
   searchResults,
   glossary,
   onSelectResult,
-  onClearSearch
+  onClearSearch,
+  onSearch,
 }: HelpContentProps) {
   // ── Loading State ──
   if (loading) {
@@ -131,8 +136,7 @@ export default function HelpContent({
           </div>
         ) : (
           <div className="grid gap-3">
-            {searchResults.map((result, idx) => {
-              const config = TYPE_CONFIG[result.type] || TYPE_CONFIG.iso;
+            {searchResults.map((result: any, idx) => {
               return (
                 <button
                   key={`${result.path}-${idx}`}
