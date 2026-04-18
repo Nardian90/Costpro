@@ -406,7 +406,7 @@ export function calculateFicha(
     if (!anexo || !anexo.rows) return 0;
     const index = rowIndex - 1;
     if (index >= 0 && index < anexo.rows.length) {
-        return parseFloat(anexo.rows[index][field]) || (anexo.rows[index][field] ?? 0);
+        return parseFloat(String(anexo.rows[index][field])) || (anexo.rows[index][field] ?? 0);
     }
     return 0;
   };
@@ -416,7 +416,7 @@ export function calculateFicha(
     if (!anexo) return 0;
     const row = anexo.rows.find(r => r.classification === classification);
     if (!row) return 0;
-    return parseFloat(row[field]) || (row[field] ?? 0);
+    return parseFloat(String(row[field])) || (row[field] ?? 0);
   };
 
   parser.functions.GET_FILA_DATO = (search: string, field: string) => {
