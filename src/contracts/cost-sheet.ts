@@ -75,7 +75,7 @@ export interface CostSheetRowContract {
   type?: string;
   metadata?: Record<string, unknown>;
   // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
-  [key: string]: string | number | boolean | CostSheetRowContract[] | undefined;
+  [key: string]: any;
 }
 
 export interface CostSheetSectionContract {

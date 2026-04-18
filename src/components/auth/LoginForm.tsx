@@ -16,7 +16,7 @@ import { mapProfileToContract } from '@/contracts/user';
 import { safeNavigate } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
 
-const containerVariants = {
+const containerVariants: any = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -31,16 +31,16 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: any = {
   hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as any },
   },
 };
 
-const shakeVariants = {
+const shakeVariants: any = {
   hidden: { opacity: 0, y: -8 },
   visible: {
     opacity: 1,

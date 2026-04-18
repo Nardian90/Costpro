@@ -32,7 +32,7 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
       exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
       transition={{
         duration: 0.4,
-        ease: [0.22, 1, 0.36, 1]
+        ease: [0.22, 1, 0.36, 1] as any
       }}
       className="flex flex-col w-full"
     >

@@ -175,7 +175,7 @@ const CostSheetView = () => {
         activeId={activeSubSectionId}
         onSelect={(id) => {
             setActiveSubSectionId(id);
-            setActiveSection('main');
+            handleSetActiveSection('main');
         }}
       />
 
@@ -192,7 +192,7 @@ const CostSheetView = () => {
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
               <button
-                  onClick={() => { setActiveSection('audit'); setViewMode('expert'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  onClick={() => { handleSetActiveSection('audit'); setViewMode('expert'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="w-full text-left bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm hover:bg-destructive/15 hover:border-destructive/30 transition-all cursor-pointer group"
               >
                   <div className="bg-destructive text-foreground p-2 rounded-xl">
@@ -367,7 +367,7 @@ const CostSheetView = () => {
                     {activeSection === "ai-chat" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px] flex flex-col">
                              <div className="flex-1">
-                                <DarianEditor sheetData={data} isFullView={true} onSectionChange={setActiveSection} />
+                                <DarianEditor sheetData={data} isFullView={true} onSectionChange={handleSetActiveSection} />
                              </div>
                         </div>
                     )}
