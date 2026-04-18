@@ -32,7 +32,7 @@ export function safeEvaluate(parser: Parser, expression: string, context?: Recor
     const compiled = parser.parse(expression);
     // Wrap in a timeout check — if evaluation takes too long, it's likely a recursion bomb
     const start = Date.now();
-    const result = compiled.evaluate(context);
+    const result = compiled.evaluate(context as any);
     if (Date.now() - start > timeoutMs) {
       console.warn(`[Parser] Expression evaluation exceeded ${timeoutMs}ms: "${expression.substring(0, 50)}"`);
     }

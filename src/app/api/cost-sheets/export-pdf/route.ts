@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
         // FC branding box (skip if logo was placed in Pro mode)
         if (!headerLogoPlaced) {
-            pdf.setFillColor(isPro ? [240, 243, 245] : [255, 255, 255]);
+            pdf.setFillColor(isPro ? 240 : 255, isPro ? 243 : 255, isPro ? 245 : 255);
             if (isPro) {
                 pdf.rect(14, 8, 11, 10, 'F');
             }
