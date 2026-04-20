@@ -50,13 +50,13 @@ const dialogVariants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 400, damping: 30 },
+    transition: { type: 'spring', stiffness: 400, damping: 30 } as any,
   },
   exit: {
     opacity: 0,
     scale: 0.95,
     y: -10,
-    transition: { duration: 0.15 },
+    transition: { duration: 0.15 } as any,
   },
 };
 
