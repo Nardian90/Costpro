@@ -39,7 +39,7 @@ interface CommandItem {
   action: () => void;
 }
 
-const overlayVariants = {
+const overlayVariants: any = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
 };
