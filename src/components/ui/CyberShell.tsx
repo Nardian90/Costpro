@@ -59,7 +59,7 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
       </div>
 
       {/* === MAIN CONTENT === */}
-      <main className="relative z-10 max-w-full overflow-x-hidden">
+      <main className="relative z-10 max-w-full">
         {/* Animated gradient border wrapper */}
         <div className="relative p-[1px] rounded-none sm:rounded-2xl lg:rounded-3xl overflow-hidden animate-border-glow">
           {/* Animated gradient pseudo-border */}
@@ -73,7 +73,7 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
 
           {/* Inner glass container */}
           <div
-            className="relative rounded-none sm:rounded-2xl lg:rounded-3xl border border-border/60 dark:border-border/30 bg-card/60 dark:bg-white/[0.03] p-0 sm:p-5 lg:p-7 max-[380px]:p-3 backdrop-blur-2xl dark:backdrop-blur-3xl overflow-x-hidden"
+            className="relative rounded-none sm:rounded-2xl lg:rounded-3xl border border-border/60 dark:border-border/30 bg-card/60 dark:bg-white/[0.03] p-0 sm:p-5 lg:p-7 max-[380px]:p-3 backdrop-blur-2xl dark:backdrop-blur-3xl"
             style={{
               boxShadow:
                 'inset 0 1px 0 0 rgba(255,255,255,0.06), inset 0 0 24px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.04)',

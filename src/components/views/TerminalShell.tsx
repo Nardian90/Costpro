@@ -24,6 +24,7 @@ import { ChatBot } from '@/components/ui/ChatBot';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
+import { ChunkErrorBoundary } from '@/components/ui/ChunkErrorBoundary';
 import { toast } from 'sonner';
 
 // Lazy load views
@@ -43,13 +44,14 @@ const CashClosureView = lazy(() => import('./terminal/views/cash_closure/CashClo
 const StockHistoryView = lazy(() => import('./terminal/views/stock_history/StockHistoryView'));
 const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
 const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
+// Heavy views wrapped with chunk retry for Turbopack resilience
 const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
+const IPVView = lazy(() => import('./terminal/views/ipv/IPVView'));
 const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
 const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
 const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
 const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
 const ReportsView = lazy(() => import('./terminal/views/reports/ReportsView'));
-const IPVView = lazy(() => import('./terminal/views/ipv/IPVView'));
 const AcademyView = lazy(() => import('./terminal/views/academy/AcademyView'));
 const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
 const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
@@ -233,7 +235,7 @@ export default function TerminalShell() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-hidden">
+    <div className="h-screen flex bg-background text-foreground max-w-full overflow-hidden">
       <Sidebar
         sidebarOpen={sidebarOpen}
         sidebarSearch={sidebarSearch}
@@ -283,7 +285,7 @@ export default function TerminalShell() {
         />
 
         <div className={cn(
-          "flex-1 overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
+          "flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
           currentView === 'help' ? "p-0" : "px-0 sm:px-6 lg:px-10 pt-0 pb-32 lg:pb-40"
         )}>
           <AnimatePresence mode="wait">
@@ -310,9 +312,11 @@ export default function TerminalShell() {
                   <div className="h-48 bg-muted rounded-xl" />
                 </div>
               }>
-                <MobileSafeContainer>
-                  {renderActiveView()}
-                </MobileSafeContainer>
+                <ChunkErrorBoundary chunkName={String(currentView)}>
+                  <MobileSafeContainer>
+                    {renderActiveView()}
+                  </MobileSafeContainer>
+                </ChunkErrorBoundary>
               </Suspense>
             </motion.div>
           </AnimatePresence>

@@ -127,7 +127,7 @@
   --primary-light: #1a8a48;
   --primary-dark: #14532d;
 
-  --secondary: #64748b;
+  --secondary: #475569;
   --secondary-foreground: #ffffff;
   --secondary-light: #94a3b8;
 
@@ -142,10 +142,10 @@
   --destructive: var(--danger);
 
   --muted: #edf2f7;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
 
   --border: #d4d9e1;
-  --input: #d4d9e1;
+  --input: #c1c7cf;
   --ring: rgba(21, 128, 61, 0.4);
   --selection: rgba(21, 128, 61, 0.15);
 
@@ -804,10 +804,13 @@
     @apply border-border outline-ring/50;
     box-sizing: border-box;
   }
+  html {
+    height: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
-    min-height: 100vh;
-    max-width: 100vw;
+    min-height: 100%;
     overflow-x: hidden;
   }
 
@@ -943,7 +946,6 @@
 
     /* Ensure body safety */
     html, body {
-      overflow-x: hidden !important;
       width: 100% !important;
       position: relative !important;
     }
@@ -1360,12 +1362,31 @@
   font-family: var(--font-space-grotesk), sans-serif;
 }
 
+/* Enterprise 3D Metallic Brand Text (Grok-inspired green) */
+.costpro-brand-3d {
+  text-shadow:
+    0 1px 0 #86efac,
+    0 2px 0 #6ee7b7,
+    0 3px 0 #4ade80,
+    0 4px 0 #34d399,
+    0 5px 0 #22c55e,
+    0 6px 1px rgba(0,0,0,.1),
+    0 0 5px rgba(34,197,94,.15),
+    0 1px 3px rgba(0,0,0,.3),
+    0 3px 5px rgba(0,0,0,.2),
+    0 5px 10px rgba(0,0,0,.25),
+    0 10px 10px rgba(0,0,0,.2),
+    0 20px 20px rgba(0,0,0,.15),
+    0 2px 20px rgba(34,197,94,.2);
+}
+
 /* ============================================
    FAST LIGHT - CLEAN & POLISHED
    ============================================ */
 .fast-light {
   --radius: 0.5rem;
   --background: #ffffff;
+  --background-solid: #ffffff;
   --foreground: #1e293b;
   --card: #fafbfc;
   --card-foreground: #1e293b;
@@ -1376,10 +1397,26 @@
   --neumorphic-shadow-out-sm: none;
   --neumorphic-shadow-in-sm: none;
   --neumorphic-shadow-hover: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  /* Primary palette with light/dark variants */
   --primary: #15803d;
   --primary-foreground: #ffffff;
+  --primary-light: #16a34a;
+  --primary-dark: #14532d;
+
   --secondary: #64748b;
   --secondary-foreground: #ffffff;
+  --secondary-light: #94a3b8;
+
+  /* Semantic status colors */
+  --success: #10b981;
+  --success-light: #34d399;
+  --warning: #f59e0b;
+  --warning-light: #fbbf24;
+  --danger: #dc2626;
+  --danger-light: #f87171;
+  --destructive: #dc2626;
+
   --muted: #f4f6f8;
   --muted-foreground: #64748b;
   --accent: #f0fdf4;
@@ -1388,16 +1425,25 @@
   --input: #e5e7eb;
   --ring: rgba(22, 163, 74, 0.4);
   --selection: rgba(22, 163, 74, 0.12);
-  --destructive: #dc2626;
+
   --popover: #fafbfc;
   --popover-foreground: #1e293b;
-  --sidebar: #f9fafb;
+
+  /* Chart Colors - vibrant but harmonious */
+  --chart-1: #15803d;
+  --chart-2: #16a34a;
+  --chart-3: #ec4899;
+  --chart-4: #f59e0b;
+  --chart-5: #0ea5e9;
+
+  /* Sidebar - slightly warmer than background */
+  --sidebar: #f8f9fa;
   --sidebar-foreground: #334155;
   --sidebar-primary: #15803d;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #1e293b;
-  --sidebar-border: #eaecef;
+  --sidebar-border: #e8ebef;
   --sidebar-ring: rgba(22, 163, 74, 0.3);
 }
 
@@ -1407,6 +1453,7 @@
 .fast-dark {
   --radius: 0.5rem;
   --background: #09090b;
+  --background-solid: #09090b;
   --foreground: #fafafa;
   --card: #141417;
   --card-foreground: #fafafa;
@@ -1417,10 +1464,26 @@
   --neumorphic-shadow-out-sm: none;
   --neumorphic-shadow-in-sm: none;
   --neumorphic-shadow-hover: 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+
+  /* Primary palette with light/dark variants */
   --primary: #22c55e;
   --primary-foreground: #052e16;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+
   --secondary: #71717a;
   --secondary-foreground: #fafafa;
+  --secondary-light: #a1a1aa;
+
+  /* Semantic status colors - slightly brighter for dark bg */
+  --success: #34d399;
+  --success-light: #6ee7b7;
+  --warning: #fbbf24;
+  --warning-light: #fcd34d;
+  --danger: #f87171;
+  --danger-light: #fca5a5;
+  --destructive: #ef4444;
+
   --muted: #27272a;
   --muted-foreground: #a1a1aa;
   --accent: #052e16;
@@ -1429,14 +1492,23 @@
   --input: #3f3f46;
   --ring: rgba(34, 197, 94, 0.4);
   --selection: rgba(34, 197, 94, 0.2);
-  --destructive: #ef4444;
+
   --popover: #161619;
   --popover-foreground: #fafafa;
+
+  /* Chart Colors - vibrant against dark */
+  --chart-1: #22c55e;
+  --chart-2: #34d399;
+  --chart-3: #f472b6;
+  --chart-4: #fbbf24;
+  --chart-5: #38bdf8;
+
+  /* Sidebar - subtle lift from background */
   --sidebar: #0c0c0f;
   --sidebar-foreground: #a1a1aa;
   --sidebar-primary: #22c55e;
   --sidebar-primary-foreground: #052e16;
-  --sidebar-accent: #141417;
+  --sidebar-accent: #18181b;
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #3f3f46;
   --sidebar-ring: rgba(34, 197, 94, 0.3);
@@ -1698,17 +1770,7 @@
    VISUAL POLISH — GREEN GLOW EFFECTS
    ============================================ */
 
-.glow-sm {
-  box-shadow: 0 0 6px rgba(21, 128, 61, 0.25);
-}
-
-.glow-md {
-  box-shadow: 0 0 14px rgba(21, 128, 61, 0.35);
-}
-
-.glow-lg {
-  box-shadow: 0 0 24px rgba(21, 128, 61, 0.45);
-}
+/* Glow utility classes removed for performance */
 
 /* ============================================
    VISUAL POLISH — HOVER LIFT
@@ -2794,4 +2856,1672 @@
   0% { transform: scale(1); }
  50% { transform: scale(1.15); }
   100% { transform: scale(1); }
+}
+
+
+/* ============================================
+   LANDING PAGE V5.8 - VISUAL POLISH ANIMATIONS
+   ============================================ */
+
+/* Hero particle grid subtle animation */
+@keyframes hero-grid-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 40px; }
+}
+.animate-hero-grid {
+  animation: hero-grid-drift 20s linear infinite;
+}
+
+/* CTA button pulse glow */
+@keyframes cta-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+.animate-cta-pulse {
+  animation: cta-pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* Feature card gradient border on hover */
+.feature-card-polished {
+  position: relative;
+  overflow: hidden;
+}
+.feature-card-polished::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 30%, rgba(34, 197, 94, 0.3) 50%, transparent 70%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.feature-card-polished:hover::before {
+  opacity: 1;
+}
+
+/* How It Works animated dashed line */
+@keyframes dash-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -20; }
+}
+.animate-dash-flow line,
+.animate-dash-flow path {
+  animation: dash-flow 1.5s linear infinite;
+}
+
+/* Popular badge floating animation */
+@keyframes popular-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.animate-popular-float {
+  animation: popular-float 3s ease-in-out infinite;
+}
+
+/* Heart emoji pulse */
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.25); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+  60% { transform: scale(1); }
+}
+.animate-heart-pulse {
+  display: inline-block;
+  animation: heart-pulse 2.5s ease-in-out infinite;
+}
+
+/* Mail icon subtle bounce on hover */
+@keyframes mail-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-2px); }
+  60% { transform: translateY(0); }
+}
+
+/* Comparison table alternating rows + hover */
+.comparison-table-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+.comparison-table-row {
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.comparison-table-row:hover {
+  background: rgba(34, 197, 94, 0.06);
+}
+
+/* Testimonial card enhanced styling */
+.testimonial-card-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+.testimonial-card-enhanced::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+/* Avatar enhanced shadow */
+.avatar-shadow {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Pricing card glass effect enhanced */
+.pricing-card-glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Footer gradient top border */
+.footer-gradient-border {
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent, #22c55e, #10b981, #22c55e, transparent) 1;
+}
+
+/* Newsletter section enhanced gradient */
+.newsletter-gradient-bg {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(16, 185, 129, 0.04) 50%, rgba(34, 197, 94, 0.08) 100%);
+}
+
+/* Step badge gradient */
+.step-badge-gradient {
+  background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+}
+
+/* Reduced motion for new animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-grid,
+  .animate-cta-pulse,
+  .animate-popular-float,
+  .animate-heart-pulse {
+    animation: none;
+  }
+  .feature-card-polished::before {
+    transition: none;
+  }
+}
+
+/* ============================================
+   ROUND 3 STYLING POLISH UTILITIES
+   ============================================ */
+
+/* Smooth gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #22c55e 0%, #4ade80 40%, #10b981 70%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+}
+
+/* Noise texture overlay */
+.noise-overlay {
+  position: relative;
+}
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  z-index: 1;
+}
+
+/* Shimmer loading effect for skeleton states */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.04) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+/* Glowing border animation */
+@keyframes glow-border-pulse {
+  0%, 100% {
+    border-color: rgba(34, 197, 94, 0.2);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.05);
+  }
+  50% {
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.05);
+  }
+}
+
+.glow-border {
+  animation: glow-border-pulse 3s ease-in-out infinite;
+}
+
+/* ── Round 3: Keyframes for new animations ── */
+
+/* Star golden shimmer */
+@keyframes star-shimmer {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 0px transparent);
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+  }
+}
+
+.gold-star-shimmer {
+  color: #fbbf24 !important;
+  animation: star-shimmer 2.5s ease-in-out infinite;
+}
+.gold-star-shimmer:nth-child(2) { animation-delay: 0.2s; }
+.gold-star-shimmer:nth-child(3) { animation-delay: 0.4s; }
+.gold-star-shimmer:nth-child(4) { animation-delay: 0.6s; }
+.gold-star-shimmer:nth-child(5) { animation-delay: 0.8s; }
+
+/* Quote marks breathing */
+@keyframes quote-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.quote-breathe {
+  animation: quote-breathe 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Floating badge pulse */
+@keyframes float-badge-pulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.float-badge-pulse {
+  animation: float-badge-pulse 3s ease-in-out infinite;
+}
+
+/* Price glow on toggle */
+@keyframes price-glow {
+  0% { text-shadow: 0 0 0 transparent; }
+  30% { text-shadow: 0 0 12px rgba(34, 197, 94, 0.5), 0 0 24px rgba(34, 197, 94, 0.2); }
+  100% { text-shadow: 0 0 0 transparent; }
+}
+
+.price-glow-animate {
+  animation: price-glow 0.8s ease-out;
+}
+
+/* Dashed line pulse animation */
+@keyframes dash-pulse {
+  0% { stroke-dashoffset: 0; opacity: 0.3; }
+  50% { stroke-dashoffset: 20; opacity: 0.7; }
+  100% { stroke-dashoffset: 40; opacity: 0.3; }
+}
+
+/* How-it-works step connecting line animation */
+@keyframes connecting-line-draw {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+
+.step-line-animated {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(34, 197, 94, 0.4) 0px,
+    rgba(34, 197, 94, 0.4) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  background-size: 40px 2px;
+  animation: connecting-line-draw 1.5s linear infinite;
+}
+
+/* Step checkmark appearance */
+@keyframes checkmark-pop {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.step-checkmark-appear {
+  animation: checkmark-pop 0.4s ease-out forwards;
+}
+
+/* Step active glow */
+@keyframes step-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  50% { box-shadow: 0 0 16px 2px rgba(34, 197, 94, 0.15); }
+}
+
+.step-active-glow {
+  animation: step-glow 2s ease-in-out infinite;
+}
+
+/* FAQ answer slide-in */
+@keyframes answer-slide-in {
+  0% { opacity: 0; transform: translateX(-12px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Thumbs bounce on hover */
+@keyframes thumb-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  60% { transform: translateY(-1px); }
+}
+
+.thumb-bounce:hover {
+  animation: thumb-bounce 0.4s ease;
+}
+
+/* Newsletter input focus glow */
+.newsletter-input-glow:focus {
+  border-color: rgba(34, 197, 94, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15), 0 0 16px rgba(34, 197, 94, 0.1) !important;
+}
+
+/* Enterprise gold border accent */
+.enterprise-gold-border {
+  border-color: rgba(251, 191, 36, 0.3) !important;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.04) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(251, 191, 36, 0.04) 100%) !important;
+}
+.enterprise-gold-border:hover {
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.08) !important;
+}
+
+/* Popular ribbon wobble */
+@keyframes ribbon-wobble {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(1.5deg); }
+  75% { transform: translateX(-50%) rotate(-1.5deg); }
+}
+
+.ribbon-wobble {
+  animation: ribbon-wobble 4s ease-in-out infinite;
+}
+
+/* Feature card accent borders (unique per card) */
+.feature-accent-0 { --feature-accent: rgba(34, 197, 94, 0.6); }
+.feature-accent-1 { --feature-accent: rgba(20, 184, 166, 0.6); }
+.feature-accent-2 { --feature-accent: rgba(34, 211, 238, 0.6); }
+.feature-accent-3 { --feature-accent: rgba(251, 191, 36, 0.6); }
+.feature-accent-4 { --feature-accent: rgba(249, 115, 22, 0.6); }
+.feature-accent-5 { --feature-accent: rgba(244, 63, 94, 0.6); }
+
+.feature-accent-hover {
+  position: relative;
+}
+.feature-accent-hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--feature-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.feature-accent-hover:hover::before {
+  opacity: 1;
+}
+
+/* Feature icon hover rotation */
+.feature-icon-rotate {
+  transition: transform 0.3s ease;
+}
+.feature-icon-rotate:hover {
+  transform: rotate(5deg);
+}
+
+/* FAQ number expanded state */
+.faq-number-expanded {
+  background: rgba(34, 197, 94, 0.25) !important;
+  color: #22c55e !important;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.15);
+}
+
+/* ============================================
+   LANDING PAGE ENHANCED STYLES (Round 4)
+   ============================================ */
+
+/* --- 1. Glassmorphism Card Enhancement: .glass-card-v2 --- */
+.glass-card-v2 {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 24px -4px rgba(0, 0, 0, 0.12);
+}
+
+/* Light mode override */
+:root .glass-card-v2 {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 24px -4px rgba(0, 0, 0, 0.06);
+}
+
+/* --- 2. Number Counter: .counter-glow (animation removed) --- */
+.counter-glow {
+  color: var(--primary);
+  transition: color 0.3s ease;
+}
+
+/* --- 3. Enhanced FAQ Item Styling: .faq-answer-text --- */
+.faq-answer-text {
+  animation: faq-text-slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  padding-left: 0.5rem;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  color: var(--muted-foreground);
+  opacity: 0;
+}
+
+@keyframes faq-text-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- 4. Feature Card Hover Shine: .feature-card-shine --- */
+.feature-card-shine {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card-shine:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px -8px rgba(34, 197, 94, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* --- 5. Testimonial Card 3D Effect: .testimonial-3d --- */
+.testimonial-3d {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+  perspective: 800px;
+  will-change: transform;
+}
+
+.testimonial-3d:hover {
+  transform: perspective(800px) rotateY(2deg) scale(1.015);
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    -2px 0 16px rgba(34, 197, 94, 0.04);
+}
+
+/* Dark mode enhanced shadow */
+.dark .testimonial-3d:hover {
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    -2px 0 16px rgba(34, 197, 94, 0.06);
+}
+
+/* --- 6. Section Heading Underline: .section-heading-accent --- */
+.section-heading-accent {
+  position: relative;
+  display: inline-block;
+}
+
+.section-heading-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #15803d, #22c55e, #34d399);
+  background-size: 200% 100%;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.section-heading-accent.active::after,
+.section-heading-accent.in-view::after {
+  width: 60%;
+  animation: heading-underline-shimmer 3s ease-in-out 0.7s infinite;
+}
+
+@keyframes heading-underline-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- 7. Scroll Progress Glow Enhancement --- */
+@keyframes scroll-progress-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 8px rgba(34, 197, 94, 0.6),
+      0 0 20px rgba(34, 197, 94, 0.2);
+  }
+}
+
+.scroll-progress-near-complete {
+  animation: scroll-progress-pulse 1.2s ease-in-out infinite;
+  background: linear-gradient(90deg, #15803d, #22c55e, #34d399) !important;
+}
+
+/* --- 8. Pricing Card Hover Lift: .pricing-card-hover --- */
+.pricing-card-hover {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+  will-change: transform;
+}
+
+.pricing-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.dark .pricing-card-hover:hover {
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5) !important;
+}
+
+/* --- 9. Mobile Navigation Slide Enhancement --- */
+@keyframes mobile-nav-slide-in {
+  0% {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-nav-slide-out {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+}
+
+.mobile-nav-slide-enter {
+  animation: mobile-nav-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.mobile-nav-slide-exit {
+  animation: mobile-nav-slide-out 0.28s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+/* Backdrop overlay for mobile nav */
+.mobile-nav-backdrop {
+  animation: mobile-nav-backdrop-in 0.3s ease forwards;
+}
+
+@keyframes mobile-nav-backdrop-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* --- 10. Notification Toast Entry Animation: .toast-enter --- */
+@keyframes toast-slide-in-right {
+  0% {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-4px) scale(1.01);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out-right {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in-right 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.toast-exit {
+  animation: toast-slide-out-right 0.3s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+/* --- 11. Logo Text Gradient: .logo-gradient --- */
+@keyframes logo-gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.logo-gradient {
+  background: linear-gradient(
+    135deg,
+    #15803d 0%,
+    #22c55e 25%,
+    #34d399 50%,
+    #22c55e 75%,
+    #15803d 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: logo-gradient-flow 4s ease-in-out infinite;
+  font-weight: 800;
+}
+
+/* --- 12. How It Works Step Connector: .step-connector-line --- */
+@keyframes step-dash-flow {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.step-connector-line {
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-dasharray: 8 8;
+  stroke-linecap: round;
+  opacity: 0.4;
+  animation: step-dash-flow 1.5s linear infinite;
+}
+
+/* Solid variant for completed steps */
+.step-connector-line-completed {
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-dasharray: none;
+  opacity: 0.7;
+  transition: opacity 0.5s ease;
+}
+
+/* Active glowing variant */
+.step-connector-line-active {
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  stroke-dasharray: 8 8;
+  stroke-linecap: round;
+  opacity: 0.9;
+  animation: step-dash-flow 1s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.4));
+}
+
+@keyframes enterprise-cta-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), 0 0 50px rgba(245, 158, 11, 0.2); }
+}
+
+.enterprise-cta-pulse {
+  animation: enterprise-cta-glow 2.5s ease-in-out infinite;
+}
+
+
+/* ============================================
+   LANDING PAGE POLISH — V5.8 COMPONENT STYLES
+   ============================================ */
+
+/* 1. Hero Glow Mesh — removed for performance */
+/* 2. Nav Glass — simplified glass effect (blur removed) */
+.nav-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 3. Feature Icon Float — gentle floating animation for feature card icons */
+.feature-icon-float {
+  animation: icon-float 3s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes icon-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* 4. Pricing Shimmer — one-shot entrance shimmer for pricing cards */
+.pricing-shimmer {
+  opacity: 0;
+  animation: pricing-appear 0.6s ease-out forwards;
+}
+
+@keyframes pricing-appear {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* 5. FAQ Number Ping — expanding ring when FAQ item is opened */
+.faq-number-ping {
+  position: relative;
+}
+
+.faq-number-ping::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 2px solid rgba(34, 197, 94, 0.5);
+  animation: faq-ping-expand 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes faq-ping-expand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* 6. Footer Link Hover — green underline slides in from left */
+.footer-link-hover {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #22c55e, #10b981);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.footer-link-hover:hover::after {
+  width: 100%;
+}
+
+/* 7. Newsletter Glow Ring — animated ring around subscribe button on hover */
+.newsletter-glow-ring {
+  position: relative;
+  overflow: visible;
+}
+
+.newsletter-glow-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: transparent;
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+  pointer-events: none;
+}
+
+.newsletter-glow-ring:hover::before {
+  opacity: 1;
+  animation: glow-ring-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-ring-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.35);
+    transform: scale(1.03);
+  }
+}
+
+/* 8. Scroll Dot Active — enhanced active state for section nav dots */
+.scroll-dot-active {
+  position: relative;
+}
+
+.scroll-dot-active::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  background: rgba(34, 197, 94, 0.15);
+  animation: dot-pulse-ring 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse-ring {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.scroll-dot-active {
+  box-shadow:
+    0 0 6px rgba(34, 197, 94, 0.4),
+    0 0 12px rgba(34, 197, 94, 0.15);
+}
+
+/* 9. Badge Pop — pop-in animation for trust badges */
+.badge-pop {
+  animation: badge-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes badge-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 10. Testimonial Quote — decorative large quote mark */
+.testimonial-quote {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  font-size: 6rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  color: rgba(34, 197, 94, 0.12);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  animation: quote-fade-breathe 4s ease-in-out infinite;
+}
+
+@keyframes quote-fade-breathe {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+  }
+}
+
+/* ============================================
+   ROUND 7 — ADVANCED VISUAL EFFECTS
+   ============================================ */
+
+/* 1. Aurora Background — animated northern lights effect */
+.aurora-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.aurora-bg::before,
+.aurora-bg::after {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  top: -25%;
+  left: -25%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.aurora-bg::before {
+  background: radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(52, 211, 153, 0.04) 0%, transparent 50%);
+  animation: aurora-drift 12s ease-in-out infinite alternate;
+}
+
+.aurora-bg::after {
+  background: radial-gradient(ellipse at 70% 60%, rgba(34, 197, 94, 0.06) 0%, transparent 40%),
+              radial-gradient(ellipse at 30% 30%, rgba(20, 184, 166, 0.05) 0%, transparent 40%);
+  animation: aurora-drift 15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(3%, -2%) rotate(1deg) scale(1.02); }
+  66% { transform: translate(-2%, 3%) rotate(-1deg) scale(0.98); }
+  100% { transform: translate(1%, -1%) rotate(0.5deg) scale(1.01); }
+}
+
+/* 2. Neon Text — glowing text effect for headings */
+.neon-text {
+  color: #22c55e;
+  text-shadow:
+    0 0 7px rgba(34, 197, 94, 0.4),
+    0 0 20px rgba(34, 197, 94, 0.15),
+    0 0 40px rgba(34, 197, 94, 0.05);
+  transition: text-shadow 0.4s ease;
+}
+
+.neon-text:hover {
+  text-shadow:
+    0 0 8px rgba(34, 197, 94, 0.6),
+    0 0 24px rgba(34, 197, 94, 0.25),
+    0 0 56px rgba(34, 197, 94, 0.1);
+}
+
+/* 3. Morphing Blob — organic animated shape */
+.morphing-blob {
+  animation: blob-morph 8s ease-in-out infinite;
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+@keyframes blob-morph {
+  0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 40% 70% 40% 60%; }
+  75% { border-radius: 40% 60% 50% 50% / 60% 40% 60% 40%; }
+  100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+}
+
+/* 4. Card 3D Tilt — perspective transform on hover */
+.card-3d-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  will-change: transform;
+}
+
+.card-3d-tilt:hover {
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(34, 197, 94, 0.06);
+}
+
+/* 5. Scanline Overlay — subtle tech aesthetic */
+.scanline-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.015) 2px,
+    rgba(0, 0, 0, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 6. Gradient Border Spin — animated rotating border */
+@property --spin-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border-spin {
+  position: relative;
+  border: none !important;
+  background-clip: padding-box;
+}
+
+.gradient-border-spin::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--spin-angle),
+    #22c55e,
+    #10b981,
+    #14b8a6,
+    #22c55e
+  );
+  z-index: -1;
+  animation: border-spin 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border-spin:hover::before {
+  opacity: 1;
+}
+
+@keyframes border-spin {
+  to { --spin-angle: 360deg; }
+}
+
+/* 7. Glow Pulse Interactive — pulsing glow on interactive elements */
+.glow-pulse-interactive {
+  transition: box-shadow 0.3s ease, transform 0.15s ease;
+}
+
+.glow-pulse-interactive:hover {
+  box-shadow:
+    0 0 12px rgba(34, 197, 94, 0.15),
+    0 0 24px rgba(34, 197, 94, 0.08);
+  transform: translateY(-1px);
+}
+
+.glow-pulse-interactive:active {
+  box-shadow:
+    0 0 8px rgba(34, 197, 94, 0.2),
+    0 0 16px rgba(34, 197, 94, 0.1);
+  transform: translateY(0);
+}
+
+/* 8. Text Shimmer — animated gradient text sweep */
+.text-shimmer {
+  background: linear-gradient(
+    110deg,
+    #22c55e 0%,
+    #4ade80 25%,
+    #86efac 50%,
+    #4ade80 75%,
+    #22c55e 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-sweep 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* 9. Floating Orb — decorative animated floating orbs */
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  animation: orb-float 10s ease-in-out infinite;
+}
+
+.floating-orb:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 13s;
+}
+
+.floating-orb:nth-child(3) {
+  animation-delay: -7s;
+  animation-duration: 16s;
+}
+
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(20px, -30px) scale(1.05); }
+  50% { transform: translate(-10px, -50px) scale(0.95); }
+  75% { transform: translate(-30px, -20px) scale(1.02); }
+}
+
+/* 10. Theme Transition Overlay — smooth dark/light mode page flash */
+.theme-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(34, 197, 94, 0.06);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.theme-transition-overlay.active {
+  opacity: 1;
+  animation: theme-flash 0.4s ease-out forwards;
+}
+
+@keyframes theme-flash {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* ============================================
+   LANDING PAGE ANIMATION UTILITIES v5.8
+   ============================================ */
+
+/* --- Custom Property for shimmer-border rotation --- */
+@property --shimmer-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* --- Supporting Keyframes --- */
+
+@keyframes shimmer-rotate {
+  0%   { --shimmer-angle: 0deg; }
+  100% { --shimmer-angle: 360deg; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+
+/* Note: gradient-shift already defined earlier (lines ~452, ~1657) — reused below */
+
+@keyframes slide-in-blur-keyframes {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes glow-pulse-line {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+/* --- 1. magnetic-hover ---
+   Elements subtly follow the mouse cursor within their bounds.
+   Combine with a small JS handler that sets CSS custom properties:
+     onMouseMove → style="--mx: ...; --my: ..."
+*/
+.magnetic-hover {
+  transition: transform 0.2s ease-out;
+  transform: translate(
+    calc(var(--mx, 0) * 0.15),
+    calc(var(--my, 0) * 0.15)
+  );
+}
+
+/* --- 2. shimmer-border ---
+   Animated rotating gradient border using conic-gradient + @property.
+*/
+.shimmer-border {
+  --shimmer-angle: 0deg;
+  border: 2px solid transparent;
+  background-image:
+    linear-gradient(var(--background), var(--background)),
+    conic-gradient(from var(--shimmer-angle), #22c55e, #4ade80, #86efac, #2dd4bf, #22c55e);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: shimmer-rotate 3s linear infinite;
+}
+
+/* --- 3. breathing-card ---
+   Subtle scale breathing animation for cards that should feel alive.
+*/
+.breathing-card {
+  animation: breathe 4s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* --- 4. stagger-children > * ---
+   Apply animation-delay to each child using --i custom property.
+   Usage: each child should have style="--i: 0", style="--i: 1", etc.
+*/
+.stagger-children > * {
+  animation-delay: calc(var(--i, 0) * 0.08s);
+}
+
+/* --- 5. slide-in-blur ---
+   Entrance animation combining translateY with blur fade-in.
+*/
+.slide-in-blur {
+  animation: slide-in-blur-keyframes 0.5s ease-out both;
+}
+
+/* --- 6. glass-tooltip ---
+   Refined dark tooltip style with backdrop blur and subtle border.
+*/
+.glass-tooltip {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  padding: 8px 12px;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+/* --- 7. hover-lift-shadow ---
+   On hover: lifts element up with enhanced shadow and subtle green glow.
+*/
+.hover-lift-shadow {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(34, 197, 94, 0.06);
+}
+
+/* --- 8. text-gradient-animate ---
+   Animated gradient text using emerald/green/teal 3-stop gradient.
+*/
+.text-gradient-animate {
+  background: linear-gradient(
+    90deg,
+    #34d399 0%,
+    #86efac 25%,
+    #2dd4bf 50%,
+    #86efac 75%,
+    #34d399 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 3s linear infinite;
+}
+
+/* --- 9. ripple-effect ---
+   CSS-only ripple on click/active using ::after pseudo-element.
+*/
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(34, 197, 94, 0.35) 0%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ripple-effect:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* --- 10. glow-line ---
+   Decorative animated glowing accent line with pulsing opacity.
+*/
+.glow-line {
+  height: 2px;
+  width: 60px;
+  background: linear-gradient(90deg, transparent, #22c55e, transparent);
+  border-radius: 1px;
+  animation: glow-pulse-line 2s ease-in-out infinite;
+}
+
+/* ================================================================
+   Task 8-a: New CSS Styling Classes
+   ================================================================ */
+
+/* 1. Card Spotlight — mouse-following radial gradient spotlight on cards */
+.card-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    500px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(34, 197, 94, 0.1),
+    rgba(34, 197, 94, 0.04) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* 2. Text Reveal Up — character-by-character reveal from bottom using clip-path */
+.text-reveal-up {
+  animation: text-reveal-up-clip 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes text-reveal-up-clip {
+  0% {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0% 100%);
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 3. Border Gradient Animate — animated rotating gradient border (conic-gradient) */
+.border-gradient-animate {
+  position: relative;
+  z-index: 0;
+}
+
+.border-gradient-animate::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    #22c55e,
+    #10b981,
+    #14b8a6,
+    #06b6d4,
+    #22c55e
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-gradient-spin 4s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes border-gradient-spin {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+/* 4. Floating Orb Size Variants — soft glowing orbs with up/down movement */
+.floating-orb-sm {
+  width: 40px;
+  height: 40px;
+  box-shadow:
+    0 0 20px rgba(34, 197, 94, 0.2),
+    0 0 40px rgba(34, 197, 94, 0.08);
+  animation: orb-glow-float 3s ease-in-out infinite;
+}
+
+.floating-orb-md {
+  width: 80px;
+  height: 80px;
+  box-shadow:
+    0 0 30px rgba(34, 197, 94, 0.25),
+    0 0 60px rgba(34, 197, 94, 0.1);
+  animation: orb-glow-float 3s ease-in-out infinite;
+  animation-delay: -1s;
+}
+
+.floating-orb-lg {
+  width: 120px;
+  height: 120px;
+  box-shadow:
+    0 0 40px rgba(34, 197, 94, 0.3),
+    0 0 80px rgba(34, 197, 94, 0.12);
+  animation: orb-glow-float 3s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.floating-orb-sm,
+.floating-orb-md,
+.floating-orb-lg {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 0.35), rgba(16, 185, 129, 0.12), transparent 70%);
+}
+
+@keyframes orb-glow-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* 5. Glass Input — refined glass-style input with backdrop blur and focus glow */
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+.glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.08),
+    inset 0 0 0 1px rgba(34, 197, 94, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Light theme support for glass-input */
+@media (prefers-color-scheme: light) {
+  .glass-input {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+  }
+  .glass-input::placeholder {
+    color: rgba(0, 0, 0, 0.35);
+  }
+  .glass-input:focus {
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow:
+      0 0 0 3px rgba(34, 197, 94, 0.1),
+      inset 0 0 0 1px rgba(34, 197, 94, 0.15);
+    background: rgba(255, 255, 255, 0.85);
+  }
+}
+
+:root[data-theme='light'] .glass-input,
+[data-theme='light'] .glass-input,
+.light .glass-input {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+}
+
+:root[data-theme='light'] .glass-input::placeholder,
+[data-theme='light'] .glass-input::placeholder,
+.light .glass-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme='light'] .glass-input:focus,
+[data-theme='light'] .glass-input:focus,
+.light .glass-input:focus {
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.1),
+    inset 0 0 0 1px rgba(34, 197, 94, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* 6. Badge Shine — traveling light/shine effect on badges */
+.badge-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.25) 55%,
+    transparent 70%
+  );
+  transform: skewX(-20deg);
+  animation: badge-shine-move 3.6s ease-in-out infinite;
+  animation-delay: 3s;
+  pointer-events: none;
+}
+
+@keyframes badge-shine-move {
+  0%, 85% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* 7. Scroll Fade In — scroll-triggered fade-in animation */
+.scroll-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-fade-in-delay-1 {
+  transition-delay: 0.1s;
+}
+
+.scroll-fade-in-delay-2 {
+  transition-delay: 0.2s;
+}
+
+.scroll-fade-in-delay-3 {
+  transition-delay: 0.3s;
+}
+
+/* --- Reduced motion support for all new animation utilities --- */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-border,
+  .breathing-card,
+  .slide-in-blur,
+  .text-gradient-animate,
+  .ripple-effect::after,
+  .glow-line,
+  .card-spotlight::before,
+  .text-reveal-up,
+  .border-gradient-animate::before,
+  .floating-orb-sm,
+  .floating-orb-md,
+  .floating-orb-lg,
+  .badge-shine::after {
+    animation: none;
+  }
+
+  .slide-in-blur {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  .glow-line {
+    opacity: 0.7;
+  }
+
+  .text-reveal-up {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+
+  .scroll-fade-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  .floating-orb-sm,
+  .floating-orb-md,
+  .floating-orb-lg {
+    transform: none;
+  }
+
+  .border-gradient-animate::before {
+    display: none;
+  }
 }
