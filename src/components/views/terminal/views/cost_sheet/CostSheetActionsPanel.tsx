@@ -233,6 +233,22 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
+              {/* View Switcher - Prominent standalone section */}
+              <div className="p-4 border-b border-sidebar-border/50">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <LayoutGrid className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground/70">
+                      Modo de Diseño
+                    </span>
+                  </div>
+                  <ViewSwitcher
+                    currentView={layoutMode}
+                    onViewChange={setLayoutMode}
+                    className="w-full bg-background border-border"
+                  />
+                </div>
+              </div>
 
               <AccordionGroup
                 title="Ficha y Navegación"
@@ -302,16 +318,6 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 isOpen={openGroups.includes('export')}
                 onToggle={() => toggleGroup('export')}
               >
-                <div className="px-3 py-4 space-y-4 bg-primary/5 rounded-xl mb-2 mx-2 border border-primary/10">
-                   <div className="text-[8px] font-black text-sidebar-foreground/70 tracking-[0.4em] uppercase">
-                      Modo de Diseño
-                   </div>
-                   <ViewSwitcher
-                     currentView={layoutMode}
-                     onViewChange={setLayoutMode}
-                     className="w-full bg-background border-border"
-                   />
-                </div>
                 {('Exportar Excel'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-excel', 'Exportar Excel', FileSpreadsheet, undefined, 'primary')}
                 {('Exportar PDF'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-pdf', 'Exportar PDF', Download, undefined, 'success')}
               </AccordionGroup>
