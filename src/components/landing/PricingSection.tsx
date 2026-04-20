@@ -28,7 +28,7 @@ function PricingCalculator({ visible }: { visible: boolean }) {
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] as any }}
       className="overflow-hidden"
     >
       <div className="rounded-xl bg-gradient-to-br from-[#22c55e]/[0.06] via-transparent to-teal-500/[0.04] border border-[#22c55e]/15 p-4 mt-4">

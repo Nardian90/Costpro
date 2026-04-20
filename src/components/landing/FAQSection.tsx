@@ -204,7 +204,7 @@ export default function FAQSection({
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] as any }}
                           className="overflow-hidden"
                         >
                           <div className="border-l border-[#22c55e]/15 ml-7 pl-3 mb-2" />

@@ -113,7 +113,7 @@ export function DemoModal({
             initial={{ opacity: 0, x: 30, scale: 0.96 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -30, scale: 0.96 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] as any }}
             className={`w-full aspect-video bg-gradient-to-br ${demoSlides[demoSlideIndex].color} flex flex-col items-center justify-center p-8 relative overflow-hidden`}
           >
             {/* Grid pattern */}
