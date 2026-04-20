@@ -21,7 +21,7 @@ const inputFocusClasses =
 const strengthLabels = ['Débil', 'Regular', 'Buena', 'Fuerte'] as const;
 const strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e'] as const;
 
-const containerVariants = {
+const containerVariants: any = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -32,7 +32,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: any = {
   hidden: { opacity: 0, y: 12 },
   visible: {
     opacity: 1,
