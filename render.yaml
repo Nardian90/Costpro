@@ -1,9 +1,9 @@
 services:
   - type: web
     name: Costpro
-    runtime: bun
-    buildCommand: bun install && bun x prisma generate && bun run build
-    startCommand: bun .next/standalone/server.js
+    runtime: node
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node .next/standalone/server.js
     envVars:
       - key: NODE_VERSION
         value: 22
