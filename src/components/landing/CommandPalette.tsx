@@ -44,7 +44,7 @@ const overlayVariants = {
   visible: { opacity: 1 },
 };
 
-const dialogVariants = {
+const dialogVariants: any = {
   hidden: { opacity: 0, scale: 0.95, y: -10 },
   visible: {
     opacity: 1,
