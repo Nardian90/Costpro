@@ -1,0 +1,237 @@
+/* ============================================
+   BASE STYLES — Reset, Typography, Scrollbar,
+   Focus, Accessibility, Responsive foundations
+   ============================================ */
+
+@layer base {
+  /* ── Box Model Reset ── */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    line-height: var(--leading-normal);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Typography ── */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: var(--leading-tight);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h1 { font-size: clamp(2rem, 8vw, 3rem); }
+  h2 { font-size: clamp(1.5rem, 6vw, 2.25rem); }
+  h3 { font-size: var(--text-3xl); }
+  h4 { font-size: var(--text-xl); }
+  h5 { font-size: var(--text-lg); }
+  h6 { font-size: var(--text-base); }
+
+  p {
+    line-height: var(--leading-relaxed);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img, video, svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  /* ── Text Selection ── */
+  ::selection {
+    background: var(--selection, rgba(22, 163, 74, 0.15));
+    color: inherit;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    opacity: 0.5;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* ── Focus Ring ── */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* ── Base Transitions (exclude self-managed elements) ── */
+  button:not([class*="transition"]),
+  a:not([class*="transition"]),
+  input:not([class*="transition"]),
+  select:not([class*="transition"]),
+  textarea:not([class*="transition"]) {
+    transition-property: background-color, border-color, box-shadow, color, opacity;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-default);
+  }
+
+  /* ── Skip to Content (Accessibility) ── */
+  .skip-to-content {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: var(--z-splash);
+    padding: var(--space-3) var(--space-6);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    border-radius: 0 0 var(--radius-md) 0;
+    transition: left var(--duration-slow) var(--ease-out);
+  }
+
+  .skip-to-content:focus {
+    left: 0;
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+
+  /* ── Toast close touch target ── */
+  [data-slot="toast-close"] {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE FOUNDATIONS
+   ============================================ */
+
+/* ── Ultra-small screens (320px-380px) ── */
+@media (max-width: 380px) {
+  h1 { font-size: clamp(16px, 4vw, 24px) !important; }
+  h2.text-3xl,
+  .max-w-4xl.mx-auto h2 { font-size: clamp(16px, 4vw, 24px) !important; }
+
+  .text-3xl.font-black.uppercase,
+  .text-2xl.font-black.uppercase,
+  .space-y-12 h2,
+  .space-y-4 h2 {
+    font-size: clamp(18px, 4vw, 24px) !important;
+  }
+
+  /* Touch targets */
+  button, select, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  [data-slot="input"],
+  [data-slot="select-trigger"],
+  [data-slot="textarea"],
+  .neu-input,
+  .neu-btn,
+  .neu-btn-primary {
+    min-height: 44px !important;
+  }
+
+  /* Reduce large padding */
+  .p-6.md\:p-12,
+  .p-8.md\:p-12,
+  .lg\:p-10,
+  .p-12 {
+    padding: 1rem !important;
+  }
+
+  /* Force single column forms */
+  form .grid-cols-2,
+  form .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Footer */
+  footer a,
+  footer button {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  footer .flex-nowrap {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  footer .min-w-max {
+    min-width: 0 !important;
+  }
+}
+
+/* ── Small screens ── */
+@media (max-width: 420px) {
+  button, select, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

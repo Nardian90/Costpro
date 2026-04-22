@@ -23,6 +23,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { APP_DISPLAY_VERSION } from '@/config/app';
 
 interface HelpContentProps {
   doc: any;
@@ -93,7 +94,7 @@ export default function HelpContent({
         </div>
         <div className="text-center">
           <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Cargando documentación</h3>
-          <p className="text-[10px] font-medium text-muted-foreground/40 mt-1.5">CostPro Engine v5.8</p>
+          <p className="text-[10px] font-medium text-muted-foreground/40 mt-1.5">{`CostPro Engine ${APP_DISPLAY_VERSION}`}</p>
         </div>
       </div>
     );
@@ -221,7 +222,7 @@ export default function HelpContent({
             <div className="h-3 w-px bg-border/50" />
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider">
               <Clock className="w-3 h-3" />
-              <span>Doc v5.8</span>
+              <span>{`Doc ${APP_DISPLAY_VERSION}`}</span>
             </div>
             <div className="h-3 w-px bg-border/50 hidden sm:block" />
             <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider">

@@ -21,6 +21,7 @@ import { prefetchReceptions } from '@/hooks/api/useReceptions';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
 import { ChatBot } from '@/components/ui/ChatBot';
+import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
@@ -120,7 +121,7 @@ export default function TerminalShell() {
   if (loading) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
-        <CostProLoader size={260} text="COSTPRO" subtext="INICIALIZANDO TERMINAL..." />
+        <CostProLoader text="COSTPRO" subtext="INICIALIZANDO TERMINAL..." showText showSubtext />
       </div>
     );
   }
@@ -252,7 +253,7 @@ export default function TerminalShell() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <main id="main-content" className={cn("flex-1 min-h-screen flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
+      <main id="main-content" className={cn("flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
         <Header
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
@@ -285,31 +286,30 @@ export default function TerminalShell() {
         />
 
         <div className={cn(
-          "flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
-          currentView === 'help' ? "p-0" : "px-0 sm:px-6 lg:px-10 pt-0 pb-32 lg:pb-40"
+          "relative flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
+          currentView === 'help' ? "p-0" : "px-3 sm:px-4 pt-0 pb-24 lg:pb-28"
         )}>
-          <AnimatePresence mode="wait">
+          <ParticleBackground />
+          <AnimatePresence mode="popLayout">
             <motion.div
               key={currentView}
-              initial={{ opacity: 0, y: 8, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.99 }}
-              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as any }}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as any }}
               className={cn(
                 "mx-auto w-full",
                 (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
               )}
             >
               <Suspense fallback={
-                <div className="flex flex-col gap-6 p-6 animate-pulse">
-                  <div className="h-8 w-48 bg-muted rounded-lg" />
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="h-24 bg-muted rounded-xl" />
-                    <div className="h-24 bg-muted rounded-xl" />
-                    <div className="h-24 bg-muted rounded-xl" />
-                  </div>
-                  <div className="h-64 bg-muted rounded-xl" />
-                  <div className="h-48 bg-muted rounded-xl" />
+                <div className="flex items-center justify-center py-24 min-h-[50vh]">
+                  <CostProLoader
+                    text={String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    subtext="Cargando..."
+                    showText
+                    showSubtext
+                  />
                 </div>
               }>
                 <ChunkErrorBoundary chunkName={String(currentView)}>

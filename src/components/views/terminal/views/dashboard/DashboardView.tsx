@@ -158,13 +158,13 @@ export default function DashboardView() {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4">
-                <button className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all">
+                <button className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all enhanced-card">
                   <FileDown className="w-4 h-4 text-muted-foreground" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reporte</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('settings')}
-                  className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all"
+                  className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all enhanced-card"
                 >
                   <Settings2 className="w-4 h-4 text-muted-foreground" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ajustes</span>

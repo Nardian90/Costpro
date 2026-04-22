@@ -29,7 +29,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
             />
 
             {progress !== undefined && (
-                <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className="w-48 h-1 bg-muted rounded-full overflow-hidden">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}

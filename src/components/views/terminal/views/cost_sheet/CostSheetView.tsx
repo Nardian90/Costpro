@@ -257,6 +257,8 @@ const CostSheetView = () => {
                         setActiveSection={handleSetActiveSection}
                         viewMode={viewMode}
                         setViewMode={handleSetViewMode}
+                        layoutMode={layoutMode}
+                        setLayoutMode={setLayoutMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                         onImport={handleImportJSON}
                         onSave={handleExportJSON}

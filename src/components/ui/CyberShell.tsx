@@ -10,7 +10,7 @@ interface CyberShellProps {
 const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
   return (
     // Outer wrapper — full bleed on mobile, padded on tablet/desktop
-    <div className="min-h-screen bg-background text-foreground font-sans p-0 sm:p-4 lg:p-8 overflow-x-hidden relative">
+    <div className="h-full w-full bg-background text-foreground font-sans overflow-hidden relative">
       {/* === BACKGROUND LAYERS (GPU-composited, will-change on container only) === */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -59,12 +59,12 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
       </div>
 
       {/* === MAIN CONTENT === */}
-      <main className="relative z-10 max-w-full">
+      <main className="relative z-10 max-w-full h-full">
         {/* Animated gradient border wrapper */}
-        <div className="relative p-[1px] rounded-none sm:rounded-2xl lg:rounded-3xl overflow-hidden animate-border-glow">
+          <div className="relative rounded-none overflow-hidden animate-border-glow h-full">
           {/* Animated gradient pseudo-border */}
           <div
-            className="absolute inset-0 rounded-none sm:rounded-2xl lg:rounded-3xl"
+            className="absolute inset-0 rounded-none"
             style={{
               background:
                 'conic-gradient(from var(--cyber-angle, 0deg), var(--primary) 0%, transparent 15%, transparent 35%, var(--secondary, #4cd7f6) 50%, transparent 65%, transparent 85%, var(--primary) 100%)',
@@ -73,7 +73,7 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
 
           {/* Inner glass container */}
           <div
-            className="relative rounded-none sm:rounded-2xl lg:rounded-3xl border border-border/60 dark:border-border/30 bg-card/60 dark:bg-white/[0.03] p-0 sm:p-5 lg:p-7 max-[380px]:p-3 backdrop-blur-2xl dark:backdrop-blur-3xl"
+            className="relative rounded-none border border-border/60 dark:border-border/30 bg-card/60 dark:bg-white/[0.03] p-0 sm:p-2 max-[380px]:p-1 backdrop-blur-2xl dark:backdrop-blur-3xl h-full flex flex-col enhanced-glass transition-all duration-700"
             style={{
               boxShadow:
                 'inset 0 1px 0 0 rgba(255,255,255,0.06), inset 0 0 24px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.04)',
