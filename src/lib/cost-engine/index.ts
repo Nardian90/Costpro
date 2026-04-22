@@ -260,16 +260,18 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
       }
     }
 
-    // Check ref() in formulas
+    // Check ref() in formulas — WARNING (not CRITICAL) because:
+    // 1. Templates legitimately reference rows not yet created (e.g. pror targets like 1.1.1)
+    // 2. The calculation engine gracefully returns 0 for missing refs
+    // 3. CRITICAL would block export for valid templates
     const formulaToUse = row.formula || (row as any).totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         const refMatches = formulaToUse.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
         for (const match of refMatches) {
             const refId = match[1];
             if (!ids.has(refId) && !classifications.has(refId)) {
-                const msg = `Referencia en fórmula inexistente: ${refId}`;
-                errors.push(msg);
-                validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
+                const msg = `Referencia en fórmula no resuelta: ${refId}`;
+                validationErrors.push({ rowId: row.id, message: msg, type: 'WARNING', code: 'MISSING_REF' });
             }
         }
     }

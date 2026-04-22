@@ -152,6 +152,7 @@ export const shortcutsList = [
 export const sectionIds = ['hero', 'features', 'how-it-works', 'pricing', 'faq'];
 export const sectionLabels = ['Inicio', 'Funciones', 'Cómo Funciona', 'Precios', 'FAQ'];
 
+/* ── FIX #009: Feature list for v5.8 marketing badge ── */
 export const v58Features = [
   'Motor de costos mejorado con fórmulas avanzadas',
   'Integración con WhatsApp Business',

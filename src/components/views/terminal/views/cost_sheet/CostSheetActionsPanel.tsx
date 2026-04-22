@@ -10,6 +10,7 @@ import {
   LifeBuoy, GraduationCap, Scale
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { APP_DISPLAY_VERSION } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import ViewSwitcher, { ViewMode as LayoutViewMode } from '@/components/ui/ViewSwitcher';
 import { CostSheetViewMode } from './CostSheetModeDropdown';
@@ -205,7 +206,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 </div>
                 <div>
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground block">Panel de Control</span>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">v5.8.0</span>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">{APP_DISPLAY_VERSION}</span>
                 </div>
               </div>
               <button

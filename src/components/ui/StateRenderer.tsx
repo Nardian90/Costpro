@@ -15,7 +15,7 @@ interface StateRendererProps<T> {
 
 const DefaultLoadingComponent = () => (
   <div className="flex flex-col items-center justify-center py-20 w-full">
-    <CostProLoader size={160} text="CARGANDO" subtext="Sincronizando Datos" />
+    <CostProLoader text="CARGANDO" subtext="Sincronizando Datos" showText showSubtext />
   </div>
 );
 

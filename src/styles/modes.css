@@ -1,0 +1,386 @@
+/* ============================================
+   MODES — Performance vs Enhanced
+   Two activation methods:
+   1. prefers-reduced-motion → auto performance
+   2. Manual class on <html>:
+      .mode-performance
+      .mode-enhanced
+   ============================================ */
+
+/* ============================================
+   PERFORMANCE MODE — Ultra Optimized
+   - No animations, no transitions
+   - No backdrop-filter / blur
+   - No complex gradients
+   - Minimal shadows
+   - Prioritize Core Web Vitals
+   ============================================ */
+
+/* ── Auto: prefers-reduced-motion forces performance ── */
+@media (prefers-reduced-motion: reduce) {
+  .mode-enhanced {
+    /* Even if manually set, respect user preference */
+  }
+}
+
+.mode-performance {
+  /* ── Kill ALL animations and transitions ── */
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+
+  /* ── Kill backdrop-filter (GPU expensive) ── */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.mode-performance *,
+.mode-performance *::before,
+.mode-performance *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Allow specific critical transitions to remain ── */
+.mode-performance .allow-animations,
+.mode-performance .allow-animations *,
+.mode-performance .allow-animations *::before,
+.mode-performance .allow-animations *::after {
+  animation-duration: revert !important;
+  animation-iteration-count: revert !important;
+  transition-duration: revert !important;
+  backdrop-filter: revert !important;
+  -webkit-backdrop-filter: revert !important;
+}
+
+/* ── Performance: Reduce shadows ── */
+.mode-performance .neu-raised,
+.mode-performance .neu-card,
+.mode-performance .neu-btn {
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.mode-performance .neu-raised-hover:hover,
+.mode-performance .neu-card:hover,
+.mode-performance .neu-btn:hover {
+  box-shadow: var(--shadow-sm) !important;
+  transform: none !important;
+}
+
+/* ── Performance: Flatten glass effects ── */
+.mode-performance .glass-panel,
+.mode-performance .glass-card,
+.mode-performance .glass-card-interactive,
+.mode-performance .stats-glass-card,
+.mode-performance .form-card-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.mode-performance .glass-card-interactive:hover {
+  background: var(--card) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-color: var(--border) !important;
+}
+
+/* ── Performance: Landing page keeps dark glass cards ──
+   The landing page is ALWAYS dark-themed (#020617), so
+   we must NOT use var(--card) which is white in light mode. */
+.mode-performance .landing-tokens .stats-glass-card,
+.mode-performance .landing-tokens .glass-panel,
+.mode-performance .landing-tokens .glass-card,
+.mode-performance .landing-tokens .glass-card-interactive,
+.mode-performance .landing-tokens .form-card-glass,
+.mode-performance .landing-tokens .glass-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.mode-performance .landing-tokens .glass-card-interactive:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(34, 197, 94, 0.2) !important;
+  box-shadow: none !important;
+}
+
+/* ── Performance: Kill 3D transforms ── */
+.mode-performance .tilt-card {
+  perspective: none !important;
+  transform-style: flat !important;
+}
+
+.mode-performance .costpro-brand-3d {
+  text-shadow: none !important;
+}
+
+/* ── Performance: Simplify gradients ── */
+.mode-performance .text-gradient,
+.mode-performance .text-gradient-green,
+.mode-performance .text-shimmer-green,
+.mode-performance .text-gradient-animate {
+  -webkit-text-fill-color: var(--primary) !important;
+  background: none !important;
+  animation: none !important;
+}
+
+/* ── Performance: Kill floating elements ── */
+.mode-performance .animate-float,
+.mode-performance .animate-float-slow,
+.mode-performance .animate-float-medium,
+.mode-performance .animate-float-gentle,
+.mode-performance .animate-float-shape-1,
+.mode-performance .animate-float-shape-2,
+.mode-performance .animate-mesh-drift,
+.mode-performance .animate-mesh-drift-2,
+.mode-performance .breathing-card,
+.mode-performance .animate-pulse-glow,
+.mode-performance .animate-pulse-ring,
+.mode-performance .pulse-ring::before,
+.mode-performance .animate-subtle-glow,
+.mode-performance .animate-count-glow,
+.mode-performance .stat-number-glow {
+  animation: none !important;
+  transform: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Performance: Kill landing visual effects ── */
+.mode-performance .animate-gradient-shift,
+.mode-performance .animate-scroll-logos,
+.mode-performance .animate-scroll-integrations,
+.mode-performance .animate-corner-pulse,
+.mode-performance .animate-corner-pulse-delayed,
+.mode-performance .animate-play-pulse-ring,
+.mode-performance .animate-border-glow,
+.mode-performance .spy-ring-anim,
+.mode-performance .promo-shimmer,
+.mode-performance .glow-pulse-interactive,
+.mode-performance .float-badge-pulse,
+.mode-performance .badge-pop,
+.mode-performance .animate-glow-pulse-subtle,
+.mode-performance .feature-icon-float,
+.mode-performance .feature-card-shine::before,
+.mode-performance .animated-underline-gradient::after,
+.mode-performance .hover-lift-shadow:hover,
+.mode-performance .footer-link-hover::after {
+  animation: none !important;
+}
+
+.mode-performance .skeleton::after,
+.mode-performance .skeleton-shimmer::after {
+  animation: none !important;
+  background: var(--muted) !important;
+}
+
+/* ── Performance: Kill hover transforms ── */
+.mode-performance .hover-lift:hover {
+  transform: none !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.mode-performance .hover-underline-slide::after {
+  display: none !important;
+}
+
+/* ── Performance: Flatten bruma/glow effects ── */
+.mode-performance .bruma-effect,
+.mode-performance .glow-overlay,
+.mode-performance .glow-line,
+.mode-performance .stats-gradient-separator {
+  display: none !important;
+}
+/* Performance: Kill particle canvas on landing */
+.mode-performance canvas[class*="absolute"] {
+  display: none !important;
+}
+
+/* ── Performance: Reduce radius slightly ── */
+.mode-performance {
+  --radius: var(--radius-md);
+}
+
+.mode-performance .neu-raised,
+.mode-performance .neu-raised-sm,
+.mode-performance .neu-card {
+  border-radius: var(--radius-md) !important;
+}
+
+/* ============================================
+   ENHANCED MODE — Full Visual Experience
+   - Smooth animations (transform, opacity only)
+   - Bruma lateral effect (gradient + blur)
+   - Soft shadows with depth
+   - Controlled transitions (not excessive)
+   - Glow effects
+   ============================================ */
+
+.mode-enhanced {
+  /* ── Enhanced allows all effects by default ── */
+  /* These are overrides that ADD visual depth ── */
+}
+
+/* ── Enhanced: Richer shadows ── */
+.mode-enhanced .neu-card:hover {
+  box-shadow:
+    var(--neu-shadow-hover),
+    0 0 40px rgba(34, 197, 94, 0.05);
+  transition: transform var(--duration-slow) var(--ease-spring),
+              box-shadow var(--duration-slow) var(--ease-out);
+}
+
+.mode-enhanced .hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 24px -4px rgba(0, 0, 0, 0.15),
+    0 4px 8px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Enhanced: Deeper glass effects ── */
+.mode-enhanced .glass-card {
+  backdrop-filter: blur(32px) saturate(1.2);
+  -webkit-backdrop-filter: blur(32px) saturate(1.2);
+  border-color: var(--lp-glass-border, rgba(255, 255, 255, 0.08));
+}
+
+/* ── Enhanced: Subtle glow on primary elements ── */
+.mode-enhanced .neu-btn-primary {
+  box-shadow:
+    var(--neu-shadow-out),
+    0 4px 20px rgba(21, 128, 61, 0.35),
+    0 0 40px rgba(21, 128, 61, 0.1);
+}
+
+.mode-enhanced .neu-btn-primary:hover {
+  box-shadow:
+    var(--neu-shadow-hover),
+    0 8px 30px rgba(21, 128, 61, 0.45),
+    0 0 60px rgba(21, 128, 61, 0.15);
+}
+
+/* ── Enhanced: Bruma Effect (Right-side lateral fog) ── */
+.mode-enhanced .bruma-effect {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at 80% 50%,
+    rgba(34, 197, 94, 0.08) 0%,
+    rgba(34, 197, 94, 0.04) 30%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 1;
+  animation: bruma-drift 8s ease-in-out infinite alternate;
+}
+
+@keyframes bruma-drift {
+  0% { opacity: 0.6; transform: translateX(0); }
+  100% { opacity: 1; transform: translateX(-20px); }
+}
+
+/* ── Enhanced: Glow overlay for hero sections ── */
+.mode-enhanced .glow-overlay {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 60%;
+  height: 140%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(34, 197, 94, 0.06) 0%,
+    transparent 60%
+  );
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+/* ── Enhanced: Pricing card glow ── */
+.mode-enhanced .pricing-card-popular {
+  box-shadow:
+    0 0 50px rgba(34, 197, 94, 0.15),
+    0 0 100px rgba(34, 197, 94, 0.05);
+  transition: box-shadow var(--duration-slower) var(--ease-default);
+}
+
+.mode-enhanced .pricing-card-popular:hover {
+  box-shadow:
+    0 0 60px rgba(34, 197, 94, 0.2),
+    0 0 120px rgba(34, 197, 94, 0.08);
+}
+
+/* ── Enhanced: Form card enhanced glow ── */
+.mode-enhanced .form-card-glow {
+  box-shadow:
+    0 0 40px rgba(34, 197, 94, 0.1),
+    0 0 80px rgba(34, 197, 94, 0.05),
+    0 0 120px rgba(34, 197, 94, 0.02);
+}
+
+/* ── Enhanced: Stats number glow ── */
+.mode-enhanced .stat-number-glow {
+  text-shadow: 0 0 15px rgba(34, 197, 94, 0.25), 0 0 30px rgba(34, 197, 94, 0.1);
+}
+
+/* ── Enhanced: Glow line more prominent ── */
+.mode-enhanced .glow-line {
+  width: 80px;
+  height: 3px;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.3), 0 0 16px rgba(34, 197, 94, 0.1);
+}
+
+/* ── Enhanced: Scroll progress glow ── */
+.mode-enhanced .scroll-progress-near-complete {
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.7), 0 0 32px rgba(34, 197, 94, 0.3);
+}
+
+/* ── Enhanced: Spy ring more visible ── */
+.mode-enhanced .spy-ring-anim {
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+}
+
+/* ── Enhanced: Breathing card ── */
+.mode-enhanced .breathing-card {
+  animation: card-breathe-enhanced 4s ease-in-out infinite;
+}
+
+@keyframes card-breathe-enhanced {
+  0%, 100% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
+  50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.08); }
+}
+
+/* ============================================
+   CONNECTIVITY MODE (3G) — Legacy support
+   Forces performance optimizations
+   ============================================ */
+[data-connectivity="3g"] {
+  --neu-shadow-out: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neu-shadow-in: none;
+  --neu-shadow-out-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neu-shadow-in-sm: none;
+  --neu-shadow-hover: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+[data-connectivity="3g"] *:not(.allow-animations *) {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
+}
+
+/* ============================================
+   MODE TOGGLE ANIMATION
+   Smooth transition when switching modes
+   ============================================ */
+html.mode-transitioning * {
+  transition-duration: var(--duration-normal) var(--ease-default) !important;
+}

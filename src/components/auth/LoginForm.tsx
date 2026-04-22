@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -72,6 +72,22 @@ export default function LoginForm({ onBack }: LoginFormProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+
+  // FIX #010: Rate limiting — cooldown timer
+  useEffect(() => {
+    if (cooldownUntil <= 0) return;
+    const timer = setInterval(() => {
+      const remaining = cooldownUntil - Date.now();
+      if (remaining <= 0) {
+        setCooldownUntil(0);
+        setFailedAttempts(0);
+        clearInterval(timer);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownUntil]);
 
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
@@ -117,7 +133,9 @@ export default function LoginForm({ onBack }: LoginFormProps) {
     setError('');
     setLoading(true);
 
-    logger.info('AUTH', 'LOGIN_ATTEMPT', { email });
+    // FIX #011: Mask email in logs to protect PII
+    const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+    logger.info('AUTH', 'LOGIN_ATTEMPT', { email: maskedEmail });
 
     try {
       if (!email || !password) {
@@ -148,6 +166,11 @@ export default function LoginForm({ onBack }: LoginFormProps) {
       toast.success(`¡Bienvenido, ${userData.fullName}!`);
       safeNavigate.push(router, '/');
     } catch (err: any) {
+      setFailedAttempts(prev => prev + 1);
+      if (failedAttempts >= 2) {
+        setCooldownUntil(Date.now() + 30000); // 30s cooldown
+        toast.error('Demasiados intentos', { description: 'Por seguridad, espera 30 segundos antes de intentar de nuevo.' });
+      }
       setError(err.message || 'Error al iniciar sesión');
       toast.error(err.message || 'Error al iniciar sesión');
     } finally {
@@ -273,7 +296,7 @@ export default function LoginForm({ onBack }: LoginFormProps) {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || cooldownUntil > 0}
               className="w-full h-11 bg-gradient-to-r from-[#15803d] to-[#22c55e] hover:from-[#15803d] hover:to-[#16a34a] text-white font-semibold tracking-wide shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/30 transition-all duration-300"
               size="default"
             >
@@ -286,6 +309,11 @@ export default function LoginForm({ onBack }: LoginFormProps) {
                 </>
               )}
             </Button>
+            {cooldownUntil > 0 && (
+              <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
+                Espera {Math.ceil((cooldownUntil - Date.now()) / 1000)}s antes de intentar de nuevo
+              </p>
+            )}
           </motion.form>
 
           {/* Divider */}
@@ -314,6 +342,16 @@ export default function LoginForm({ onBack }: LoginFormProps) {
             </Button>
           </motion.div>
 
+          {/* FIX #014: Terms & Conditions */}
+          <motion.p className="text-center text-xs text-muted-foreground/60" variants={itemVariants}>
+            Al continuar, aceptas los{' '}
+            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); toast.info('Próximamente', { description: 'Los Términos y Condiciones estarán disponibles próximamente.' }); }}>
+              Términos de Servicio
+            </a>{' '}y{' '}
+            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); toast.info('Próximamente', { description: 'La Política de Privacidad estará disponible próximamente.' }); }}>
+              Política de Privacidad
+            </a>
+          </motion.p>
           {/* Register Link */}
           <motion.p className="text-center text-sm text-muted-foreground" variants={itemVariants}>
             ¿No tienes una cuenta?{' '}

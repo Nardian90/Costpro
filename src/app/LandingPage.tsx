@@ -74,7 +74,6 @@ export default function LandingPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [demoSlideIndex, setDemoSlideIndex] = useState(0);
   const [showBackToFeatures, setShowBackToFeatures] = useState(false);
-  const [expandedTooltip, setExpandedTooltip] = useState<number | null>(null);
   const [sectionProgress, setSectionProgress] = useState(0);
   const [showPromo, setShowPromo] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
@@ -357,12 +356,11 @@ export default function LandingPage() {
       return;
     }
     setIsSubscribing(true);
-    setTimeout(() => {
-      toast.success('¡Suscripción exitosa!', { description: 'Te enviaremos novedades y tips de gestión.' });
-      setNewsletterEmail('');
-      setIsSubscribing(false);
-      setNewsletterSubscribed(true);
-    }, 1500);
+    // FIX #002: Newsletter no simulada — informa al usuario que está en desarrollo
+    toast.info('Proximamente', { description: 'La suscripción al newsletter estará disponible pronto. Tu interés ha sido registrado.' });
+    setNewsletterEmail('');
+    setIsSubscribing(false);
+    setNewsletterSubscribed(true);
   }, [newsletterEmail]);
 
   const handleContactSubmit = useCallback(() => {
@@ -370,14 +368,16 @@ export default function LandingPage() {
       toast.error('Por favor, completa los campos requeridos');
       return;
     }
-    toast.success('Solicitud enviada', { description: 'Nuestro equipo de ventas se pondrá en contacto contigo pronto.' });
+    // FIX #004: Contact form no simulado — informa al usuario
+    toast.info('Proximamente', { description: 'El formulario de contacto estará conectado pronto. Mientras tanto, escríbenos a ventas@costpro.com' });
     setShowContactModal(false);
     setContactForm({ name: '', email: '', company: '', phone: '', message: '' });
   }, [contactForm]);
 
   const handleChatSend = useCallback(() => {
     if (!chatInput.trim()) return;
-    toast.info('Mensaje enviado', { description: 'Un agente te responderá pronto.' });
+    // FIX #003: Chat no simulado — informa al usuario
+    toast.info('Proximamente', { description: 'El chat en vivo estará disponible en planes Pro y Enterprise.' });
     setChatInput('');
   }, [chatInput]);
 
@@ -403,20 +403,16 @@ export default function LandingPage() {
     return () => { if (rafId) cancelAnimationFrame(rafId); };
   }, [differentiatorsInView]);
 
-  // Social proof popup - shows every 15-20 seconds, auto-dismiss after 5s
+  // FIX #017: Social proof popup — limited to once per session via sessionStorage
   useEffect(() => {
+    const alreadyShown = typeof window !== 'undefined' && sessionStorage.getItem('costpro-social-proof-shown');
+    if (alreadyShown) return;
     const showTimer = setTimeout(() => {
       setSocialProofIndex(Math.floor(Math.random() * 6));
       setSocialProofVisible(true);
-    }, 8000);
-    const interval = setInterval(() => {
-      setSocialProofVisible(false);
-      setTimeout(() => {
-        setSocialProofIndex((prev) => (prev + 1) % 6);
-        setSocialProofVisible(true);
-      }, 600);
-    }, 18000);
-    return () => { clearTimeout(showTimer); clearInterval(interval); };
+      sessionStorage.setItem('costpro-social-proof-shown', 'true');
+    }, 12000);
+    return () => { clearTimeout(showTimer); };
   }, []);
 
   useEffect(() => {
@@ -470,7 +466,7 @@ export default function LandingPage() {
   }, [handleToggleTheme]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] dark:bg-[#0a0f1a] pb-[env(safe-area-inset-bottom)]">
+    <div className="landing-tokens min-h-screen flex flex-col bg-[#020617] pb-[env(safe-area-inset-bottom)]">
       {/* ─── Reading Progress Bar ─── */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 pointer-events-none">
         <div className="h-full w-full bg-white/5" />
@@ -572,12 +568,11 @@ export default function LandingPage() {
         setShowMobileNav={setShowMobileNav}
         setShowChangelogPopover={setShowChangelogPopover}
         setShowWhatsNew={setShowWhatsNew}
+        setShowCommandPalette={setShowCommandPalette}
       >
         {/* ── FEATURES SECTION ── */}
         <FeaturesSection
           featuresInView={featuresInView}
-          expandedTooltip={expandedTooltip}
-          setExpandedTooltip={setExpandedTooltip}
           featuresRef={featuresRef}
           setShowDemoModal={setShowDemoModal}
         />
@@ -707,6 +702,8 @@ export default function LandingPage() {
         <div className="stats-gradient-separator w-full h-px" />
         {/* Stats bar with glassmorphism */}
         <div id="stats-section" className="stats-glass-card rounded-xl p-4">
+          {/* FIX #018: Disclaimer datos estimados */}
+          <p className="text-[9px] text-white/20 uppercase tracking-widest text-center mb-2">* Datos estimados</p>
           <div className="flex items-center gap-6 sm:gap-10">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
@@ -794,7 +791,7 @@ export default function LandingPage() {
 
         {/* Bottom gradient fade overlay */}
         <div className="relative -mb-2 -mt-2 h-20 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#052e16]/30 to-[#052e16]/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020617]/30 to-[#020617]/60" />
         </div>
 
         {/* Tagline */}

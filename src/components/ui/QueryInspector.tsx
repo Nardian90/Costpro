@@ -18,6 +18,8 @@ export const QueryInspector: React.FC = () => {
   const isAdmin = user?.role === 'admin';
   const [copied, setCopied] = useState(false);
 
+  /* FIX #060: Gate entire component to development only */
+  if (process.env.NODE_ENV !== 'development') return null;
   if (!isAdmin || !showQueries) return null;
 
   const handleCopy = () => {

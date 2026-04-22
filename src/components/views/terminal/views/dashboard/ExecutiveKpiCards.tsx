@@ -63,7 +63,7 @@ export const ExecutiveKpiCards = ({
       {cards.map((card, i) => (
         <div
           key={i}
-          className="bg-card p-4 sm:p-5 rounded-2xl border border-border/50 flex items-center justify-between shadow-sm transition-colors hover:border-border"
+          className="bg-card p-4 sm:p-5 rounded-2xl border border-border/50 flex items-center justify-between shadow-sm transition-all duration-500 enhanced-card hover:border-border"
         >
           <div className="flex items-center gap-3 sm:gap-4">
             <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0", card.iconBg)}>

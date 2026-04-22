@@ -1,10 +1,10 @@
 'use client';
-import { cn } from '@/lib/utils';
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, ClipboardList, Menu, HelpCircle, BarChart3, FolderOpen, Sparkles, Save, Download, Bot } from 'lucide-react';
+import { Save, Bot } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -13,6 +13,8 @@ interface CostSheetNavProps {
   setActiveSection: (id: string) => void;
   viewMode: any;
   setViewMode: (mode: any) => void;
+  layoutMode?: ViewMode;
+  setLayoutMode?: (mode: ViewMode) => void;
   onOpenActions?: () => void;
   onImport?: () => void;
   onSave?: () => void;
@@ -28,6 +30,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onImport,
   setActiveSection,
   topOffset,
+  layoutMode,
+  setLayoutMode,
 }) => {
   const navActions: Action[] = React.useMemo(() => {
     const actions: Action[] = [
@@ -89,13 +93,20 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection]);
 
   return (
-    <div className="mb-0">
+    <div className="mb-0 flex items-center gap-3">
       <ActionMenu
         actions={navActions}
         topOffset={topOffset}
-        sticky={true}
-        className="!z-10 shadow-none bg-transparent -mx-4 pl-4 pr-0 py-0"
+        sticky={false}
+        className="!z-10 shadow-none bg-transparent !p-0 flex-1 min-w-0"
       />
+      {/* Inline ViewSwitcher: toggle tarjeta ↔ tabla directly in the nav */}
+      {layoutMode !== undefined && setLayoutMode && (
+        <ViewSwitcher
+          currentView={layoutMode}
+          onViewChange={setLayoutMode}
+        />
+      )}
     </div>
   );
 };

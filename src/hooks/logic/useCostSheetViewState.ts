@@ -60,7 +60,7 @@ export function useCostSheetViewState(
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<CostSheetViewMode>('expert');
-  const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+  const [layoutMode, setLayoutMode] = useState<ViewMode>('table');
 
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = useMemo<GroupedSection[]>(() => {

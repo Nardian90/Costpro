@@ -1,77 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Play, Eye } from 'lucide-react';
 import { fadeUp } from './animations';
-import { features, featureTooltips, integrationPartners } from './data';
+import { features, integrationPartners } from './data';
+import { toast } from 'sonner';
 
 export interface FeaturesSectionProps {
   featuresInView: boolean;
-  expandedTooltip: number | null;
-  setExpandedTooltip: (v: number | null) => void;
   featuresRef: React.RefObject<HTMLDivElement | null>;
   setShowDemoModal: (v: boolean) => void;
 }
 
-function FeaturePreviewPopover({
-  feature,
-  index,
-  onClose,
-}: {
-  feature: typeof features[number];
-  index: number;
-  onClose: () => void;
-}) {
-  const tipBullets = feature.tip.split('.').filter(Boolean).map((s) => s.trim());
-
-  return (
-    <>
-      <div className="fixed inset-0 z-30" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, y: -6, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -6, scale: 0.95 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="absolute left-0 right-0 top-full mt-2 z-40 mx-2"
-      >
-        <div className="relative rounded-xl bg-[#111827]/95 backdrop-blur-xl border border-white/[0.12] shadow-xl shadow-black/40 p-4">
-          {/* Arrow pointing up */}
-          <div className="absolute -top-1.5 left-6 w-3 h-3 rotate-45 bg-[#111827]/95 border-l border-t border-white/[0.12]" />
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-md bg-[#22c55e]/15 flex items-center justify-center">
-              <feature.icon className="w-3.5 h-3.5 text-[#22c55e]" />
-            </div>
-            <span className="text-xs font-bold text-white/90">{feature.title}</span>
-          </div>
-          <ul className="space-y-1.5">
-            {tipBullets.map((bullet, i) => (
-              <li key={i} className="flex items-start gap-2 text-[11px] text-white/60 leading-relaxed">
-                <span className="w-1 h-1 rounded-full bg-[#22c55e] mt-1.5 shrink-0" />
-                <span>{bullet.endsWith('.') ? bullet : bullet + '.'}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </motion.div>
-    </>
-  );
-}
-
 export default function FeaturesSection({
   featuresInView,
-  expandedTooltip,
-  setExpandedTooltip,
   featuresRef,
   setShowDemoModal,
 }: FeaturesSectionProps) {
-  const [previewFeature, setPreviewFeature] = useState<number | null>(null);
-
   return (
     <>
       {/* ── FEATURES SECTION ── */}
       <div ref={featuresRef} id="features">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -79,60 +30,20 @@ export default function FeaturesSection({
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              className={`group relative flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.08] hover:border-[#22c55e]/20 hover:shadow-[0_0_20px_rgba(34,197,94,0.08)] hover:scale-[1.02] tilt-card transition-all duration-300 feature-card-underline feature-accent-hover feature-accent-${i} feature-card-shine hover-lift-shadow card-spotlight`}
+              className="group p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-[#22c55e]/20 transition-all duration-300"
             >
-              {/* Number badge top-right */}
-              <span className="absolute top-2 right-3 text-[10px] font-mono font-bold text-white/15 select-none pointer-events-none">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              {/* "?" tooltip toggle button for mobile */}
-              <button
-                onClick={() => setExpandedTooltip(expandedTooltip === i ? null : i)}
-                className={`absolute top-2 right-9 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200 z-10 ${
-                  expandedTooltip === i
-                    ? 'bg-[#22c55e] text-white'
-                    : 'bg-white/[0.08] text-white/30 hover:bg-[#22c55e]/20 hover:text-[#22c55e]/60'
-                }`}
-                aria-label="Más información"
-              >
-                <span className="text-[9px] font-bold leading-none">?</span>
-              </button>
-              {/* Tooltip info - ABOVE card (hover + click toggle) */}
-              <div className={`absolute -top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-all duration-200 delay-100 ${
-                expandedTooltip === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
-              }`}>
-                <div className="w-56 px-3 py-2 rounded-lg bg-[#111827]/95 backdrop-blur-xl border border-white/15 text-[11px] text-white/80 leading-relaxed shadow-xl shadow-black/30 glass-tooltip">
-                  {featureTooltips[feature.title] || ''}
-                </div>
-                {/* Arrow pointing down */}
-                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-[#111827]/95 border-r border-b border-white/15" />
-              </div>
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 feature-icon-rotate animate-glow-pulse-subtle feature-icon-float ${i % 2 === 0 ? 'bg-[#22c55e]/10' : 'bg-[#14b8a6]/10'} group-hover:bg-[#22c55e]/20`} style={{ '--float-delay': `${i * 0.2}s` } as React.CSSProperties}>
+              <div className="w-10 h-10 rounded-lg bg-[#22c55e]/10 flex items-center justify-center mb-3">
                 <feature.icon className="w-5 h-5 text-[#22c55e]" />
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold text-white/90 mb-0.5 slide-in-underline">{feature.title}</h3>
-                <p className="text-xs text-white/40 leading-relaxed line-clamp-2">{feature.desc}</p>
-                {/* Quick Preview Button */}
-                <button
-                  onClick={() => setPreviewFeature(previewFeature === i ? null : i)}
-                  className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-[9px] font-semibold text-white/40 hover:text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]/20 transition-all duration-200 group/btn"
-                  aria-label={`Vista rápida de ${feature.title}`}
-                >
-                  <Eye className="w-2.5 h-2.5" />
-                  <span>Vista rápida</span>
-                </button>
-                {/* Quick Preview Popover */}
-                <AnimatePresence>
-                  {previewFeature === i && (
-                    <FeaturePreviewPopover
-                      feature={feature}
-                      index={i}
-                      onClose={() => setPreviewFeature(null)}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
+              <h3 className="text-sm font-semibold text-white/90 mb-1">{feature.title}</h3>
+              <p className="text-xs text-white/40 leading-relaxed">{feature.desc}</p>
+              <button
+                onClick={() => toast.info(`Vista rápida: ${feature.title}`, { description: 'Próximamente disponible.' })}
+                className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] font-medium text-white/40 hover:text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]/20 transition-all duration-200"
+              >
+                <Eye className="w-3 h-3" />
+                <span>Vista rápida</span>
+              </button>
             </motion.div>
           ))}
         </div>

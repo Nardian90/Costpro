@@ -181,91 +181,97 @@ export function useCostSheetActions({
 
       const downloadPDF = async (opts: ExportOptions, filename: string) => {
         if (!calculationResult) return false;
-        const response = await fetch('/api/cost-sheets/export-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...calculationResult,
-            sections: data.sections,
-            signature: data.signature,
-            notes: data.footer || data.metadata?.notes,
-            exportOptions: opts
-          })
-        });
+        try {
+          const response = await fetch('/api/cost-sheets/export-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...calculationResult,
+              sections: data.sections,
+              signature: data.signature,
+              notes: data.footer || data.metadata?.notes,
+              exportOptions: opts
+            })
+          });
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
-          return true;
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            return true;
+          }
+
+          // Try to get error message from response
+          let errorMsg = `HTTP ${response.status}`;
+          try {
+            const errBody = await response.json();
+            errorMsg = errBody.error || errorMsg;
+          } catch (_e) { /* ignore parse error */ }
+          console.error('PDF export API error:', errorMsg);
+          return false;
+        } catch (fetchError: any) {
+          console.error('PDF export fetch error:', fetchError);
+          return false;
         }
-        return false;
       };
 
       try {
-        // Prioritize the declarative engine export
-        if (calculationResult) {
-          const h = calculationResult.metadata?.header || data?.header || {};
-          const evalCode = h.code || 'export';
-          const evalName = h.name || 'ficha';
-          const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/?%*:|"<>]/g, '-');
-
-          if (options.consolidated) {
-            const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
-            if (success) {
-              toast.success('PDF consolidado generado con éxito', { id: toastId });
-              if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
-              return;
-            }
-          } else {
-            // Separate export
-            let count = 0;
-            if (options.includeFC) {
-              await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
-              count++;
-            }
-
-            for (const annexId of options.includeAnnexes) {
-              await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
-              count++;
-            }
-
-            if (options.includeAudit) {
-              await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
-              count++;
-            }
-
-            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
-            return;
-          }
+        // Use the declarative engine export
+        if (!calculationResult) {
+          toast.error('No hay datos de cálculo disponibles para exportar. Recargue la ficha e intente de nuevo.', { id: toastId });
+          return;
         }
 
-        // Fallback to legacy report service if engine fails or not available
-        const { reportService } = await import('@/services/report-service');
-        const response = await reportService.generateReport(
-          {
-            type: 'cost_sheet',
-            data: data,
-            calculatedValues: calculatedValues,
-            calculatedAnnexes: calculatedAnnexes,
-            store_id: useAuthStore.getState().user?.activeStoreId,
-            name: data?.header?.name || 'Ficha de Costo',
-            exportOptions: options
-          },
-          useAuthStore.getState().token || ''
-        );
+        const h = calculationResult.metadata?.header || data?.header || {};
+        const evalCode = h.code || 'export';
+        const evalName = h.name || 'ficha';
+        const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/?%*:|"<>]/g, '-');
 
-        if (response.url) {
-          window.open(response.url, '_blank');
-          toast.success('PDF generado con éxito', { id: toastId });
+        if (options.consolidated) {
+          const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
+          if (success) {
+            toast.success('PDF consolidado generado con éxito', { id: toastId });
+            if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
+          } else {
+            throw new Error('El servidor no pudo generar el PDF. Verifique que los datos sean válidos.');
+          }
+          return;
         } else {
-          throw new Error('No se recibió la URL del PDF');
+          // Separate export
+          let count = 0;
+          let hadError = false;
+
+          if (options.includeFC) {
+            const ok = await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
+            if (!ok) { hadError = true; }
+            count++;
+          }
+
+          for (const annexId of options.includeAnnexes) {
+            const ok = await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
+            if (!ok) { hadError = true; }
+            count++;
+          }
+
+          if (options.includeAudit) {
+            const ok = await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
+            if (!ok) { hadError = true; }
+            count++;
+          }
+
+          if (hadError) {
+            toast.warning('Algunos PDFs no se pudieron generar. Revise los datos e intente de nuevo.', { id: toastId });
+          } else {
+            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
+            if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
+          }
+          return;
         }
       } catch (error: any) {
         console.error('PDF Export error:', error);

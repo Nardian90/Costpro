@@ -31,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { FormulaBuilder } from './FormulaBuilder';
 import { RESERVED_FORMULA_NAMES } from '@/lib/cost-engine/formula-utils';
+import { APP_DISPLAY_VERSION } from '@/config/app';
 
 interface FormulaEditorProps {
   initialValue: string;
@@ -86,11 +87,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
     setTimeout(() => { isSavingRef.current = false; }, 300);
   };
 
+  const modalOpeningRef = useRef(false);
+
   const handleBlur = () => {
     // Delay to allow mouse clicks on buttons to register and to avoid
     // racing with the save lock timeout (300ms). Must be > 300ms so that
     // a save-triggered blur always sees isSavingRef as true and bails out.
     setTimeout(() => {
+      // If the modal is opening, do NOT cancel — the user clicked Advanced Editor
+      if (modalOpeningRef.current) {
+        modalOpeningRef.current = false;
+        return;
+      }
       if (isSavingRef.current) return;
       // Auto-save if value changed from initial
       if (value.trim() !== initialValue.trim()) {
@@ -147,12 +155,12 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       <motion.div
         layout
         className={cn(
-          "flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1 rounded-lg border transition-all min-h-[38px]",
+          "flex items-center gap-0.5 p-0.5 rounded-lg border transition-all min-h-[34px]",
           isFocused ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-muted/30",
           className
         )}
       >
-        <div className="flex-1 flex items-center gap-2 pl-2">
+        <div className="flex-1 flex items-center gap-1 pl-1.5 min-w-0">
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
@@ -181,11 +189,11 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         )}
 
         {isFocused && (
-          <div className="flex items-center justify-end gap-1 pr-1 pb-1 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200">
+          <div className="flex items-center justify-end gap-0.5 pr-0.5 pb-0.5 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200 shrink-0">
              <Popover>
                 <PopoverTrigger asChild>
                   <button className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
-                    <HelpCircle className="w-3.5 h-3.5" />
+                    <HelpCircle className="w-3 h-3.5" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" className="w-64 p-3 z-[250]">
@@ -221,26 +229,26 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
              </Popover>
 
              <button
-               onMouseDown={(e) => { e.preventDefault(); setIsModalOpen(true); }}
+               onMouseDown={(e) => { e.preventDefault(); modalOpeningRef.current = true; setIsModalOpen(true); }}
                className="p-1 hover:bg-primary/20 text-primary rounded"
                title="Editor Avanzado"
              >
-                <Maximize2 className="w-3.5 h-3.5" />
+                <Maximize2 className="w-3 h-3.5" />
              </button>
 
              <button
                onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
-               className="p-1 hover:bg-primary/20 text-primary rounded"
+               className="p-1 hover:bg-green-500/20 text-green-600 rounded"
                title="Guardar (Enter)"
              >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-3 h-3.5" />
              </button>
              <button
                onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
                className="p-1 hover:bg-red-500/20 text-red-600 rounded"
                title="Cancelar (Esc)"
              >
-                <XIcon className="w-3.5 h-3.5" />
+                <XIcon className="w-3 h-3.5" />
              </button>
           </div>
         )}
@@ -263,7 +271,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-xs sm:text-xs font-black text-primary uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.8.0 • Motor de Costos Avanzado</p>
+                <p className="text-xs sm:text-xs font-black text-primary uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">{APP_DISPLAY_VERSION} • Motor de Costos Avanzado</p>
               </div>
             </div>
 

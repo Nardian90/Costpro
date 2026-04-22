@@ -26,6 +26,27 @@ interface SidebarProps {
   navRef: any;
 }
 
+/* FIX #023: Online status indicator reflecting real network/auth state */
+function OnlineStatusDot() {
+  const [isOnline, setIsOnline] = React.useState(true);
+
+  React.useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return (
+    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-sidebar ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} title={isOnline ? 'En línea' : 'Sin conexión'} />
+  );
+}
+
 const STORAGE_KEY = 'costpro.sidebar.state';
 const FOCUS_STORAGE_KEY = 'costpro.sidebar.focus';
 
@@ -353,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       role="navigation"
       aria-label="Barra lateral de navegación"
       className={cn(
-        "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
+        "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden enhanced-sidebar-edge",
         sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
       )}
     >
@@ -390,7 +411,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             )}
           </motion.div>
 
-          <div className="px-1 pb-0 sm:pb-3">
+          <div className="px-1 pb-1">
             <div className="relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
               <input
@@ -400,7 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 onChange={(e) => setSidebarSearch(e.target.value)}
                 aria-label="Buscar en el menú"
                 placeholder="BUSCAR..."
-                className="w-full h-10 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 sm:pr-16 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+                className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 sm:pr-16 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
               />
               {/* ⌘K keyboard shortcut badge - desktop only */}
               <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
@@ -415,7 +436,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           ref={navRef}
           role="menubar"
           aria-orientation="vertical"
-          className="flex-1 overflow-y-auto pt-1 px-3 pb-4 sm:p-4 no-scrollbar overscroll-contain scroll-smooth"
+          className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
             {focusedModuleId && focusedModule ? (
@@ -453,9 +474,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                       return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
                     })()}
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-sidebar">
-                    <div className="w-full h-full rounded-full bg-green-500 animate-ping opacity-75" />
-                  </div>
+                  {/* FIX #023: Online indicator reflects real network state */}
+                  <OnlineStatusDot />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-bold truncate text-sidebar-foreground leading-tight">
@@ -478,7 +498,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
               }}
               aria-label="Mejorar a Plan Pro"
-              className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2 animate-pulse"
+              /* FIX #044: Removed animate-pulse for WCAG accessibility */
+              className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2"
             >
               <Zap className="w-4.5 h-4.5 text-primary" />
               <div className="flex flex-col items-start">

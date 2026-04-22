@@ -291,6 +291,19 @@ export const calculateCostSheetHealth = (
         }
 
         // Rule 4: Sections 4, 6, 7 children -> pror(vh("1.1.1")) or pror(vh("2.1.1"))
+        // Also accept the expanded form: vh(X)/vh('1.1.1')*ref('1.1.1') (equivalent to pror(vh('1.1.1')))
+        const q = `['"]`; // matches single or double quote
+        const isProrPattern = (formula: string): boolean => {
+            // Shorthand: pror(vh('1.1.1')) or pror(vh("1.1.1")) — with optional whitespace
+            const shorthandRe = new RegExp(`pror\\s*\\(\\s*vh\\s*\\(\\s*${q}1\\.1\\.1${q}\\s*\\)\\s*\\)`, 'i');
+            // Shorthand: pror(vh('2.1.1'))
+            const shorthandRe2 = new RegExp(`pror\\s*\\(\\s*vh\\s*\\(\\s*${q}2\\.1\\.1${q}\\s*\\)\\s*\\)`, 'i');
+            // Expanded: vh(X)/vh('1.1.1')*ref('1.1.1') — the macro-expanded form of pror(vh('1.1.1'))
+            const expandedRe1 = new RegExp(`vh\\s*\\(\\s*${q}[^)]+${q}\\s*\\)\\s*/\\s*vh\\s*\\(\\s*${q}1\\.1\\.1${q}\\s*\\)\\s*\\*\\s*ref\\s*\\(\\s*${q}1\\.1\\.1${q}\\s*\\)`, 'i');
+            // Expanded: vh(X)/vh('2.1.1')*ref('2.1.1')
+            const expandedRe2 = new RegExp(`vh\\s*\\(\\s*${q}[^)]+${q}\\s*\\)\\s*/\\s*vh\\s*\\(\\s*${q}2\\.1\\.1${q}\\s*\\)\\s*\\*\\s*ref\\s*\\(\\s*${q}2\\.1\\.1${q}\\s*\\)`, 'i');
+            return shorthandRe.test(formula) || shorthandRe2.test(formula) || expandedRe1.test(formula) || expandedRe2.test(formula);
+        };
         ['4', '6', '7'].forEach(id => {
             const sec = data.sections.find(s => s.id === id || s.label?.startsWith(id + '.'));
             if (sec) {
@@ -300,7 +313,7 @@ export const calculateCostSheetHealth = (
                             checkPror(r.children);
                         } else {
                             const formula = r.formula || r.totalFormula || '';
-                            if (!formula.includes('pror(vh("1.1.1"))') && !formula.includes('pror(vh("2.1.1"))')) {
+                            if (formula && !isProrPattern(formula)) {
                                 standardResults.push({
                                     type: 'WARNING',
                                     category,
