@@ -4,6 +4,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { howItWorksSteps } from './data';
+import dynamic from 'next/dynamic';
+
+const InteractiveDemo = dynamic(() => import('./demo/InteractiveDemo'), { ssr: false });
 
 export interface HowItWorksSectionProps {
   howItWorksInView: boolean;
@@ -18,7 +21,7 @@ export default function HowItWorksSection({
 }: HowItWorksSectionProps) {
   return (
     <div ref={howItWorksRef} id="how-it-works">
-      <motion.div className="max-w-2xl mx-auto w-full">
+      <motion.div className="max-w-4xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={howItWorksInView ? { opacity: 1, y: 0 } : {}}
@@ -104,6 +107,9 @@ export default function HowItWorksSection({
             </motion.div>
           ))}
         </div>
+
+        {/* ── Interactive Demo Player ── */}
+        <InteractiveDemo />
       </motion.div>
     </div>
   );

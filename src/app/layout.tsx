@@ -81,6 +81,18 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
       <head>
+        {/* ── Theme flash prevention: inline style block (NOT inline style attributes) ──
+             This ensures CSS vars are controlled by class selectors, so next-themes
+             can toggle them by adding/removing 'dark' class. Inline style attributes
+             would override CSS rules and prevent theme switching. */}
+        <style dangerouslySetInnerHTML={{
+          __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#000000;--foreground:#ffffff;color-scheme:dark}`,
+        }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
+          }}
+        />
         {/* FIX #012: Supabase preconnect uses environment variable */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co'} />
         <script
@@ -97,7 +109,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground h-screen overflow-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
         suppressHydrationWarning
         translate="no"
       >
@@ -106,7 +118,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider
           attribute="class" enableSystem
-          defaultTheme="light"
+          defaultTheme="dark"
           disableTransitionOnChange
           themes={['light', 'dark', 'auto']}
         >

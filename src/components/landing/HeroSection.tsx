@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import {
   Sun, Moon, ChevronDown, ArrowRight, LogIn, Menu,
@@ -49,104 +49,130 @@ function GreenOrb({ className }: { className?: string }) {
   );
 }
 
-/* ── Subtle falling particles (Enhanced mode only) ── */
+/* ── Controlled immersion particles ──
+   Landing version: dots + soft glows only (no streaks).
+   Respects mode-enhanced / prefers-reduced-motion. */
 function ParticleRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
-  const particlesRef = useRef<Array<{
-    x: number; y: number; r: number; speed: number; opacity: number;
-    drift: number; color: string;
-  }>>([]);
+
+  interface Particle {
+    x: number; y: number; size: number;
+    speedY: number; speedX: number;
+    opacity: number;
+    drift: number; driftPhase: number; driftSpeed: number;
+    type: 'dot' | 'glow';
+  }
+
+  const particlesRef = useRef<Particle[]>([]);
 
   useEffect(() => {
-    // Only render in enhanced mode
     const html = document.documentElement;
-    if (!html.classList.contains('mode-enhanced')) return;
+    const isEnhanced = html.classList.contains('mode-enhanced');
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
+    let w = 0;
+    let h = 0;
+
     const resize = () => {
-      const parent = canvas.parentElement;
-      if (parent) {
-        canvas.width = parent.clientWidth * devicePixelRatio;
-        canvas.height = parent.clientHeight * devicePixelRatio;
-        canvas.style.width = parent.clientWidth + 'px';
-        canvas.style.height = parent.clientHeight + 'px';
-        ctx.scale(devicePixelRatio, devicePixelRatio);
-      }
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      w = rect.width;
+      h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+
     resize();
     window.addEventListener('resize', resize);
 
-    const w = () => canvas.parentElement?.clientWidth || 0;
-    const h = () => canvas.parentElement?.clientHeight || 0;
+    const isMobile = w < 768;
+    const COUNT = isMobile ? Math.min(10, Math.floor(w / 80)) : Math.min(16, Math.floor(w / 70));
 
-    // Particle colors: dark blues, metallic grays, subtle teal
-    const colors = [
-      'rgba(100,160,220,', // soft blue
-      'rgba(80,130,180,',  // steel blue
-      'rgba(140,160,180,', // metallic gray
-      'rgba(60,100,150,',  // deep blue
-      'rgba(34,197,94,',   // accent green (sparse)
-    ];
+    particlesRef.current = Array.from({ length: COUNT }, () => {
+      const isGlow = Math.random() < 0.35;
+      return {
+        x: Math.random() * w,
+        y: Math.random() * h * 1.2,
+        size: isGlow
+          ? Math.random() * 2.5 + 1.5
+          : Math.random() * 1.5 + 0.5,
+        speedY: isGlow
+          ? Math.random() * 0.15 + 0.06
+          : Math.random() * 0.25 + 0.08,
+        speedX: (Math.random() - 0.5) * 0.1,
+        opacity: isGlow
+          ? Math.random() * 0.14 + 0.06
+          : Math.random() * 0.15 + 0.04,
+        drift: Math.random() * 0.4 + 0.1,
+        driftSpeed: Math.random() * 0.004 + 0.001,
+        driftPhase: Math.random() * Math.PI * 2,
+        type: isGlow ? 'glow' as const : 'dot' as const,
+      };
+    });
 
-    // Init particles — low count for performance
-    const COUNT = Math.min(45, Math.floor(w() / 30));
-    particlesRef.current = Array.from({ length: COUNT }, () => ({
-      x: Math.random() * w(),
-      y: Math.random() * h(),
-      r: Math.random() * 1.5 + 0.5,
-      speed: Math.random() * 0.3 + 0.1,
-      opacity: Math.random() * 0.25 + 0.05,
-      drift: (Math.random() - 0.5) * 0.15,
-      color: Math.random() < 0.15 ? colors[4] : colors[Math.floor(Math.random() * 4)],
-    }));
+    // Base colors (dark theme — green accent + cool blues)
+    const baseR = 74, baseG = 222, baseB = 128;
 
-    let lastTime = performance.now();
+    const animate = () => {
+      if (!html.classList.contains('mode-enhanced')) {
+        ctx.clearRect(0, 0, w, h);
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
 
-    const draw = (now: number) => {
-      const dt = Math.min((now - lastTime) / 16, 3); // normalize to ~60fps
-      lastTime = now;
-
-      ctx.clearRect(0, 0, w(), h());
+      ctx.clearRect(0, 0, w, h);
 
       for (const p of particlesRef.current) {
-        p.y += p.speed * dt;
-        p.x += p.drift * dt;
+        p.y += p.speedY;
+        p.driftPhase += p.driftSpeed;
+        p.x += Math.sin(p.driftPhase) * p.drift * 0.3 + p.speedX;
 
-        // Wrap around
-        if (p.y > h() + 5) { p.y = -5; p.x = Math.random() * w(); }
-        if (p.x < -5) p.x = w() + 5;
-        if (p.x > w() + 5) p.x = -5;
+        if (p.y > h + 15) { p.y = -15; p.x = Math.random() * w; }
+        if (p.x < -15) p.x = w + 15;
+        if (p.x > w + 15) p.x = -15;
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + p.opacity + ')';
-        ctx.fill();
+        const r = baseR, g = baseG, b = baseB;
 
-        // Faint trail (motion blur illusion)
-        if (p.speed > 0.15) {
+        if (p.type === 'glow') {
+          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 5);
+          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.5})`);
+          grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.15})`);
+          grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
           ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x - p.drift * 8, p.y - p.speed * 12);
-          ctx.strokeStyle = p.color + (p.opacity * 0.3) + ')';
-          ctx.lineWidth = p.r * 0.5;
-          ctx.stroke();
+          ctx.arc(p.x, p.y, p.size * 5, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Bright core
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity * 1.1})`;
+          ctx.fill();
+        } else {
+          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${p.opacity})`);
+          grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
         }
       }
 
-      rafRef.current = requestAnimationFrame(draw);
+      rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(draw);
+    animate();
 
-    // Observe mode changes
     const observer = new MutationObserver(() => {
       if (!html.classList.contains('mode-enhanced')) {
-        cancelAnimationFrame(rafRef.current);
+        ctx.clearRect(0, 0, w, h);
       }
     });
     observer.observe(html, { attributes: true, attributeFilter: ['class'] });
@@ -162,7 +188,7 @@ function ParticleRain() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.7 }}
+      style={{ opacity: 0.8 }}
     />
   );
 }
@@ -185,6 +211,7 @@ export interface HeroSectionProps {
   setShowChangelogPopover: (v: boolean) => void;
   setShowWhatsNew: (v: boolean) => void;
   setShowCommandPalette?: (v: boolean) => void;
+  setLoginDefaultTab?: (tab: 'login' | 'register') => void;
   children?: React.ReactNode;
   bottomContent?: React.ReactNode;
   socialProofPopup?: React.ReactNode;
@@ -202,12 +229,17 @@ export default function HeroSection({
   setShowLoginModal,
   setShowMobileNav,
   setShowCommandPalette,
+  setLoginDefaultTab,
   children,
   bottomContent,
   socialProofPopup,
 }: HeroSectionProps) {
   const [showNotifications, setShowNotifications] = React.useState(false);
   const [searchFocused, setSearchFocused] = React.useState(false);
+
+  /* ── Ken Burns + Fade-out + Zoom on scroll for background image ── */
+  const { scrollY } = useScroll();
+  const bgOpacity = useTransform(scrollY, [0, 500], [1, 0]);
   // FIX #006: Search input connected to Command Palette via prop
   const handleSearchFocus = () => {
     setSearchFocused(true);
@@ -226,12 +258,42 @@ export default function HeroSection({
 
   return (
     <div ref={leftPanelRef} className="relative flex-1">
-      {/* ── Dark background (like x.ai — near-black) ── */}
-      <div className="absolute inset-0 bg-[#020617]" />
+      {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ── */}
+      <div className="relative w-full" style={{ height: '100vh' }}>
+        {/* ── Layer 0: Solid dark base ── */}
+        <div className="absolute inset-0 bg-[#020617]" />
 
-      {/* ── Nebula glow effect (x.ai-inspired cosmic cloud) ── */}
+      {/* ── Layer 1: Background image — Ken Burns + Parallax (Apple/Stripe style) ── */}
+      <motion.div
+        className="absolute pointer-events-none"
+        style={{
+          top: '-8%',
+          left: '-8%',
+          right: '-8%',
+          bottom: '-8%',
+          backgroundImage: `url('/enhanced-bg.jpg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+          opacity: bgOpacity,
+        }}
+        initial={{ scale: 1 }}
+        animate={{ scale: 1.12 }}
+        transition={{ duration: 12, ease: [0.25, 0.1, 0.25, 1] }}
+        aria-hidden="true"
+      />
+
+      {/* ── Layer 2: Readability overlay — controls how subtle the image appears ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(165deg, rgba(2,6,23,0.78) 0%, rgba(2,6,23,0.65) 40%, rgba(2,6,23,0.72) 100%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* ── Layer 3: Nebula glow (x.ai-inspired cosmic cloud) ── */}
       <div className="absolute top-0 right-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-        {/* Large soft nebula — right side */}
         <div
           className="absolute -top-[20%] -right-[15%] w-[60vw] h-[80vh] rounded-full pointer-events-none"
           style={{
@@ -239,7 +301,6 @@ export default function HeroSection({
             filter: 'blur(60px)',
           }}
         />
-        {/* Brighter core glow */}
         <div
           className="absolute top-[5%] right-[5%] w-[30vw] h-[50vh] rounded-full pointer-events-none"
           style={{
@@ -249,7 +310,7 @@ export default function HeroSection({
         />
       </div>
 
-      {/* ── Floating particles ── */}
+      {/* ── Layer 4: Controlled immersion particles ── */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <ParticleRain />
         <GreenOrb className="absolute top-[15%] right-[20%] w-3 h-3 opacity-40" />
@@ -447,12 +508,70 @@ export default function HeroSection({
             </p>
           </motion.div>
 
+          {/* ── HERO CTA BUTTONS ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65, duration: 0.6 }}
+            className="mt-8 flex flex-col sm:flex-row items-center gap-3"
+          >
+            {/* Primary CTA — "Comenzar Gratis" */}
+            <button
+              onClick={() => {
+                if (setLoginDefaultTab) setLoginDefaultTab('register');
+                setShowLoginModal(true);
+              }}
+              className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+              style={{
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%)',
+                boxShadow: '0 0 30px rgba(34,197,94,0.25), 0 4px 15px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
+                minWidth: '200px',
+              }}
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                Comenzar Gratis
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </span>
+              {/* Shimmer overlay */}
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{
+                    background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)',
+                    animation: 'none',
+                  }}
+                />
+              </div>
+            </button>
+
+            {/* Secondary CTA — "Ver Demo" */}
+            <button
+              onClick={() => {
+                if (setLoginDefaultTab) setLoginDefaultTab('login');
+                setShowLoginModal(true);
+              }}
+              className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300"
+              style={{ minWidth: '140px' }}
+            >
+              Iniciar Sesión
+            </button>
+          </motion.div>
+
+          {/* CTA subtext — trust signal */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.0, duration: 0.5 }}
+            className="mt-3 text-[11px] text-white/20"
+          >
+            Sin tarjeta de crédito · Configuración en 2 minutos · Cancela cuando quieras
+          </motion.p>
+
           {/* Search bar — centered */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-            className="mt-10 w-full max-w-xl"
+            transition={{ delay: 1.1, duration: 0.5 }}
+            className="mt-6 w-full max-w-xl"
           >
             <div className={`relative flex items-center gap-3 px-5 py-3.5 rounded-2xl border transition-all duration-300 ${
               searchFocused
@@ -478,8 +597,8 @@ export default function HeroSection({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-8 flex items-center gap-3"
+            transition={{ delay: 1.5, duration: 0.6 }}
+            className="mt-6 flex items-center gap-3"
           >
             <button
               className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all duration-200"
@@ -514,6 +633,16 @@ export default function HeroSection({
           </motion.div>
         </motion.div>
       </div>
+
+      {/* ── Bottom gradient fade — inside hero viewport, overlaps children ── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-72 z-10 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(2,6,23,0.5) 25%, rgba(2,6,23,0.8) 55%, #020617 100%)',
+        }}
+        aria-hidden="true"
+      />
+      </div>{/* end hero viewport */}
 
       {/* ── All other landing sections below (seamless dark continuation) ── */}
       <div className="relative z-10 bg-[#020617]">

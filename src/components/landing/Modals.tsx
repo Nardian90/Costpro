@@ -331,10 +331,14 @@ export function WhatsNewModal({
 export function LoginModal({
   showLoginModal,
   setShowLoginModal,
+  defaultTab = 'login',
 }: {
   showLoginModal: boolean;
   setShowLoginModal: (v: boolean) => void;
+  defaultTab?: 'login' | 'register';
 }) {
+  // Key forces re-mount when tab changes, ensuring LoginForm initializes correctly
+  const formKey = `${showLoginModal}-${defaultTab}`;
   return (
     <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-white/10">
@@ -344,7 +348,7 @@ export function LoginModal({
             <DialogDescription className="sr-only">Formulario de acceso a CostPro</DialogDescription>
           </DialogHeader>
           <Suspense fallback={<DataDecryption />}>
-            <LoginForm />
+            <LoginForm key={formKey} defaultTab={defaultTab} />
           </Suspense>
         </div>
       </DialogContent>

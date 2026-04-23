@@ -62,10 +62,11 @@ const shakeVariants: any = {
 
 interface LoginFormProps {
   onBack?: () => void;
+  defaultTab?: 'login' | 'register';
 }
 
-export default function LoginForm({ onBack }: LoginFormProps) {
-  const [isRegistering, setIsRegistering] = useState(false);
+export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
+  const [isRegistering, setIsRegistering] = useState(defaultTab === 'register');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

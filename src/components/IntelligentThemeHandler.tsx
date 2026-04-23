@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 
 const emptySubscribe = () => () => {};
 
-export type UIMode = 'performance' | 'enhanced';
+type UIMode = 'performance' | 'enhanced';
 
 const STORAGE_KEY = 'costpro-ui-storage';
 const MODE_KEY = 'costpro-mode';
