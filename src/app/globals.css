@@ -130,6 +130,11 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
+/* ── Mesh Gradient Orbs: hide in light mode (designed for dark backgrounds only) ── */
+html:not(.dark) .mesh-orb {
+  opacity: 0;
+}
+
 /* ── 3D Tilt card ── */
 .tilt-card {
   perspective: 800px;

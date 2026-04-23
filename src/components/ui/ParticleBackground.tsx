@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback } from 'react';
+import { useScroll, useTransform, motion } from 'framer-motion';
 
 interface Particle {
   x: number;
@@ -43,15 +44,15 @@ export function ParticleBackground() {
       x: Math.random() * w,
       y: startY !== undefined ? startY : Math.random() * h * 1.2,
       size: type === 'streak'
-        ? Math.random() * 1.5 + 1.5
+        ? Math.random() * 0.8 + 0.8
         : type === 'glow'
-          ? Math.random() * 2.5 + 1.5
-          : Math.random() * 2 + 0.8,
+          ? Math.random() * 1.2 + 0.8
+          : Math.random() * 1.0 + 0.4,
       speedY: type === 'streak'
-        ? Math.random() * 1.2 + 0.6
+        ? Math.random() * 0.6 + 0.3
         : type === 'glow'
-          ? Math.random() * 0.5 + 0.2
-          : Math.random() * 0.7 + 0.3,
+          ? Math.random() * 0.25 + 0.1
+          : Math.random() * 0.35 + 0.15,
       speedX: (Math.random() - 0.5) * 0.15,
       opacity: type === 'streak'
         ? Math.random() * 0.2 + 0.15
@@ -90,7 +91,7 @@ export function ParticleBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    const PARTICLE_COUNT = 55;
+    const PARTICLE_COUNT = 18;
     particlesRef.current = [];
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       particlesRef.current.push(createParticle(w, h));
@@ -120,7 +121,7 @@ export function ParticleBackground() {
 
         if (p.type === 'streak') {
           p.trail.push({ x: p.x, y: p.y });
-          if (p.trail.length > 8) p.trail.shift();
+          if (p.trail.length > 5) p.trail.shift();
         }
 
         if (p.y > h + 20) {
@@ -151,12 +152,12 @@ export function ParticleBackground() {
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
           ctx.fill();
         } else if (p.type === 'glow') {
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 5);
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
           gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.6})`);
           gradient.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${p.opacity * 0.2})`);
           gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 5, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
           ctx.fillStyle = gradient;
           ctx.fill();
 
@@ -186,26 +187,22 @@ export function ParticleBackground() {
     };
   }, [createParticle]);
 
+  /* ── Scroll fade-out for mesh background ── */
+  const { scrollY } = useScroll();
+  const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
+
   return (
     <>
-      {/* ── Layer 1: Background image — plain, no effects ── */}
-      <div
-        className="absolute inset-0 z-[-3] pointer-events-none enhanced-layer"
+      {/* ── Layer 1: Mesh Gradient — animated orbs (pure CSS, 0 GPU cost) ── */}
+      <motion.div
+        className="absolute inset-0 z-[-3] pointer-events-none enhanced-layer overflow-hidden"
         aria-hidden="true"
-        style={{
-          backgroundImage: `url('/enhanced-bg.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
-        }}
-      />
-
-      {/* ── Layer 2: Semi-transparent overlay for content readability ── */}
-      <div
-        className="absolute inset-0 z-[-2] pointer-events-none enhanced-layer readability-overlay"
-        aria-hidden="true"
-      />
+        style={{ opacity: meshFade }}
+      >
+        <div className="mesh-orb mesh-orb-1" />
+        <div className="mesh-orb mesh-orb-2" />
+        <div className="mesh-orb mesh-orb-3" />
+      </motion.div>
 
       {/* ── Layer 3: Particle canvas ── */}
       <canvas
@@ -224,12 +221,50 @@ export function ParticleBackground() {
           opacity: 1;
         }
 
-        /* ── Readability overlay: semi-transparent wash so text stays crisp ── */
-        .readability-overlay {
-          background: linear-gradient(160deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0.45) 100%);
+        /* ── Mesh Gradient Orbs ── */
+        .mesh-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(100px);
+          will-change: transform;
         }
-        html.dark .readability-overlay {
-          background: linear-gradient(160deg, rgba(10,15,25,0.55) 0%, rgba(10,15,25,0.42) 50%, rgba(10,15,25,0.50) 100%);
+        .mesh-orb-1 {
+          width: 50vw; height: 50vh;
+          top: -10%; left: -10%;
+          background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.08) 40%, transparent 70%);
+          animation: mesh-float-1 18s ease-in-out infinite;
+        }
+        .mesh-orb-2 {
+          width: 45vw; height: 45vh;
+          bottom: -15%; right: -5%;
+          background: radial-gradient(circle, rgba(20,184,166,0.15) 0%, rgba(6,182,212,0.06) 40%, transparent 70%);
+          animation: mesh-float-2 22s ease-in-out infinite;
+        }
+        .mesh-orb-3 {
+          width: 35vw; height: 35vh;
+          top: 30%; right: 20%;
+          background: radial-gradient(circle, rgba(74,222,128,0.08) 0%, rgba(34,211,238,0.04) 40%, transparent 70%);
+          animation: mesh-float-3 25s ease-in-out infinite;
+        }
+
+        @keyframes mesh-float-1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(8vw, 12vh) scale(1.1); }
+          66% { transform: translate(-5vw, 5vh) scale(0.95); }
+        }
+        @keyframes mesh-float-2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-10vw, -8vh) scale(1.05); }
+          66% { transform: translate(6vw, -3vh) scale(1.1); }
+        }
+        @keyframes mesh-float-3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-8vw, 10vh) scale(1.15); }
+        }
+
+        /* ── Respect reduced motion ── */
+        @media (prefers-reduced-motion: reduce) {
+          .mesh-orb { animation: none !important; }
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */

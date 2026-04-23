@@ -50,6 +50,7 @@ export default function LandingPage() {
   const [pricingInView, setPricingInView] = useState(false);
   const [faqInViewState, setFaqInViewState] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginDefaultTab, setLoginDefaultTab] = useState<'login' | 'register'>('login');
   const [mouseGlowPos, setMouseGlowPos] = useState({ x: 0, y: 0 });
   const [differentiatorsInView, setDifferentiatorsInView] = useState(false);
   const [diffStats, setDiffStats] = useState([0, 0, 0, 0]);
@@ -569,6 +570,7 @@ export default function LandingPage() {
         setShowChangelogPopover={setShowChangelogPopover}
         setShowWhatsNew={setShowWhatsNew}
         setShowCommandPalette={setShowCommandPalette}
+        setLoginDefaultTab={setLoginDefaultTab}
       >
         {/* ── FEATURES SECTION ── */}
         <FeaturesSection
@@ -856,7 +858,7 @@ export default function LandingPage() {
         handleContactSubmit={handleContactSubmit}
       />
       <WhatsNewModal showWhatsNew={showWhatsNew} setShowWhatsNew={setShowWhatsNew} />
-      <LoginModal showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} />
+      <LoginModal showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} defaultTab={loginDefaultTab} />
 
       {/* ─── COMMAND PALETTE (Ctrl+K) ─── */}
       <CommandPalette
