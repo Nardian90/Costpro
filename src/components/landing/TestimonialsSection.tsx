@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronRight, Share2, Link, MessageCircle } from 'lucide-react';
+import { Check, Share2, Link, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { slideRight, StarRating, AvatarInitials } from './animations';
 import { testimonials } from './data';
@@ -38,11 +38,13 @@ export default function TestimonialsSection({
   };
 
   const handleShareTwitter = () => {
-    toast.info('Compartir en Twitter — próximamente');
+    const text = encodeURIComponent(`"${testimonials[currentTestimonial].text}" — ${testimonials[currentTestimonial].name}, ${testimonials[currentTestimonial].role}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleShareLinkedIn = () => {
-    toast.info('Compartir en LinkedIn — próximamente');
+    const text = encodeURIComponent(testimonials[currentTestimonial].text);
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://costpro.onrender.com')}&summary=${text}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -140,6 +142,10 @@ export default function TestimonialsSection({
           </motion.div>
         </AnimatePresence>
 
+        <p className="text-[9px] text-white/20 text-center mt-2 italic">
+          Testimonios basados en experiencias reales de usuarios de CostPro
+        </p>
+
         {/* Enhanced Pagination Dots */}
         <div className="flex items-center justify-center gap-3 mt-4">
           {testimonials.map((_, i) => (
@@ -174,12 +180,7 @@ export default function TestimonialsSection({
             <span className="text-[9px] text-white/25">← Desliza para navegar →</span>
           </motion.div>
         </div>
-        <button
-          onClick={() => toast.info('Más testimonios próximamente')}
-          className="mt-2 mx-auto block text-[11px] text-[#22c55e]/60 hover:text-[#22c55e] transition-colors flex items-center gap-1"
-        >
-          Ver más testimonios <ChevronRight className="w-3 h-3" />
-        </button>
+
       </div>
     </motion.div>
   );

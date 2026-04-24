@@ -148,21 +148,24 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 
         {/* Center content */}
         <div className="relative z-10 flex flex-col items-center gap-8">
-          {/* Logo text (hidden during line phase) */}
-          {phase !== 'line' && (
-            <div className={`cp-splash-logo-${id}`}>
-              <h1
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-none"
-                style={{
-                  fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
-                  fontWeight: 900,
-                  color: 'var(--foreground)',
-                }}
-              >
-                Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
-              </h1>
-            </div>
-          )}
+          {/* Logo text — always in DOM so it reserves space; invisible during line phase */}
+          <div
+            className={cn(
+              phase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
+            )}
+            style={{ transition: 'opacity 0.15s ease' }}
+          >
+            <h1
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-none"
+              style={{
+                fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
+                fontWeight: 900,
+                color: 'var(--foreground)',
+              }}
+            >
+              Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
+            </h1>
+          </div>
 
           {/* Green line — 300px wide × 5px tall, animation via scaleX */}
           <div className="flex items-center justify-center">

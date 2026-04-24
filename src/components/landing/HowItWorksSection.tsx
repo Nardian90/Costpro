@@ -4,9 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { howItWorksSteps } from './data';
-import dynamic from 'next/dynamic';
-
-const InteractiveDemo = dynamic(() => import('./demo/InteractiveDemo'), { ssr: false });
 
 export interface HowItWorksSectionProps {
   howItWorksInView: boolean;
@@ -108,8 +105,6 @@ export default function HowItWorksSection({
           ))}
         </div>
 
-        {/* ── Interactive Demo Player ── */}
-        <InteractiveDemo />
       </motion.div>
     </div>
   );

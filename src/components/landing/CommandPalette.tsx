@@ -73,8 +73,10 @@ export default function CommandPalette({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [previouslyFocused, setPreviouslyFocused] = useState<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Reset state when palette opens (React-sanctioned pattern for syncing state from props)
   if (isOpen !== prevIsOpen) {
@@ -82,6 +84,7 @@ export default function CommandPalette({
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
+      setPreviouslyFocused(document.activeElement as HTMLElement);
     }
   }
 
@@ -89,7 +92,7 @@ export default function CommandPalette({
     () => [
       { id: 'nav-hero', label: 'Ir a Inicio', group: 'Navegación', icon: Home, action: () => onNavigate('hero') },
       { id: 'nav-features', label: 'Ir a Funciones', group: 'Navegación', icon: Layers, action: () => onNavigate('features') },
-      { id: 'nav-howitworks', label: 'Ir a Cómo Funciona', group: 'Navegación', icon: BookOpen, action: () => onNavigate('howItWorks') },
+      { id: 'nav-howitworks', label: 'Ir a Cómo Funciona', group: 'Navegación', icon: BookOpen, action: () => onNavigate('how-it-works') },
       { id: 'nav-pricing', label: 'Ir a Precios', group: 'Navegación', icon: DollarSign, action: () => onNavigate('pricing-section') },
       { id: 'nav-faq', label: 'Ir a FAQ', group: 'Navegación', icon: HelpCircle, action: () => onNavigate('faq') },
       { id: 'nav-testimonials', label: 'Ir a Testimonios', group: 'Navegación', icon: Star, action: () => onNavigate('testimonials-section') },
@@ -153,10 +156,30 @@ export default function CommandPalette({
       } else if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const focusableElements = dialogRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusableElements || focusableElements.length === 0) return;
+        const first = focusableElements[0] as HTMLElement;
+        const last = focusableElements[focusableElements.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+        }
       }
     },
     [filtered, safeSelectedIndex, executeCommand, onClose],
   );
+
+  // Restore focus on close
+  useEffect(() => {
+    if (!isOpen && previouslyFocused) {
+      previouslyFocused.focus();
+    }
+  }, [isOpen, previouslyFocused]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -196,11 +219,13 @@ export default function CommandPalette({
 
           {/* Dialog */}
           <motion.div
+            ref={dialogRef}
             variants={dialogVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={handleKeyDown}
             className="relative w-full max-w-lg rounded-2xl bg-black/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/40 overflow-hidden"
           >
             {/* Search Input */}

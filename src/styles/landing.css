@@ -3,6 +3,20 @@
    Modular and DRY, respects mode overrides
    ============================================ */
 
+/*
+ * Viewport-critical animations (above-the-fold hero):
+ *   - cursor-blink, hero-glow-pulse, hero-illum-drift, hero-core-pulse,
+ *     hero-hotspot-pulse, hero-streak-flow, hero-bloom, hero-edge-glow
+ *   - shimmer (promo banner), float-shape-1/2 (decorative)
+ *   - animate-spin-slow, animate-gradient-shift, animate-cursor-blink
+ *
+ * Potentially lazy-loadable (below fold):
+ *   - float, float-slow, float-medium, float-gentle (feature cards)
+ *   - scroll-logos, scroll-integrations (infinite scroll carousels)
+ *   - feature-card-shine, icon-float (hover-triggered, light)
+ *   - breathing-card, pulse-glow, corner-pulse (section accents)
+ */
+
 /* ── Keyframes ── */
 
 @keyframes shimmer {
@@ -813,4 +827,48 @@
   background: var(--primary) !important;
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
   transform: scale(1.3);
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Nav Link: Stripe/Vercel-style animated underline ──
+   Underline scales from center on hover with smooth easing. */
+.nav-link-hover {
+  position: relative;
+  cursor: pointer;
+}
+
+.nav-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  border-radius: 1px;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0;
+}
+
+.nav-link-hover:hover::after {
+  width: 100%;
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
+}
+
+/* Subtle glow effect on the underline */
+.nav-link-hover:hover::after {
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4), 0 0 12px rgba(34, 197, 94, 0.15);
 }

@@ -346,10 +346,10 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
           {/* FIX #014: Terms & Conditions */}
           <motion.p className="text-center text-xs text-muted-foreground/60" variants={itemVariants}>
             Al continuar, aceptas los{' '}
-            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); toast.info('Próximamente', { description: 'Los Términos y Condiciones estarán disponibles próximamente.' }); }}>
+            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'terminos' })); }}>
               Términos de Servicio
             </a>{' '}y{' '}
-            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); toast.info('Próximamente', { description: 'La Política de Privacidad estará disponible próximamente.' }); }}>
+            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'privacidad' })); }}>
               Política de Privacidad
             </a>
           </motion.p>

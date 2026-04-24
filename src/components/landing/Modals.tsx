@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Suspense } from 'react';
 import {
-  Keyboard, Search, Building2, Send, Copy, Sparkles, Zap, X, Play,
+  Keyboard, Search, Building2, Send, Copy, Sparkles, Zap, X, Play, Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import DataDecryption from '@/components/ui/DataDecryption';
@@ -232,11 +232,11 @@ export function ContactModal({
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
           <Send className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
           <span className="text-xs text-muted-foreground">O escríbenos a</span>
-          <span className="text-xs font-semibold text-foreground">ventas@costpro.com</span>
+          <span className="text-xs font-semibold text-foreground">adrianpompasantana@gmail.com</span>
           <button
             onClick={() => {
-              navigator.clipboard.writeText('ventas@costpro.com');
-              toast.success('Copiado!', { description: 'ventas@costpro.com copiado al portapapeles' });
+              navigator.clipboard.writeText('adrianpompasantana@gmail.com');
+              toast.success('Copiado!', { description: 'adrianpompasantana@gmail.com copiado al portapapeles' });
             }}
             className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors shrink-0"
             aria-label="Copiar correo"
@@ -244,6 +244,11 @@ export function ContactModal({
             <Copy className="w-3 h-3" />
             Copiar correo
           </button>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+          <Phone className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+          <span className="text-xs text-muted-foreground">O llámanos al</span>
+          <span className="text-xs font-semibold text-foreground">+53 53183215</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
           <div className="space-y-1.5">

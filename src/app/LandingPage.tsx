@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import {
-  CheckCircle2, Lock, Headphones, Globe, X, Cookie,
+  CheckCircle2, Lock, Headphones, Globe, X, Cookie, Sparkles,
 } from 'lucide-react';
 
 // ── Shared data, animations, hooks ──
 import { statsData, clientLogos, integrationPartners, sectionIds, sectionLabels, differentiatorsData, diffProgressBars } from '@/components/landing/data';
 import SectionDivider from '@/components/landing/SectionDivider';
-import { useAnimatedCounter } from '@/components/landing/hooks';
+import { useAnimatedCounter, useCookieConsent, usePromoBanner, useTestimonialRotation } from '@/components/landing/hooks';
 
 // ── Extracted components ──
 import HeroSection from '@/components/landing/HeroSection';
@@ -22,26 +22,32 @@ import PricingSection from '@/components/landing/PricingSection';
 import FAQSection from '@/components/landing/FAQSection';
 import NewsletterSection from '@/components/landing/NewsletterSection';
 import FooterSection from '@/components/landing/FooterSection';
+import type { FooterLinkId } from '@/components/landing/FooterSection';
+import FooterModals from '@/components/landing/FooterModals';
 import FloatingElements from '@/components/landing/FloatingElements';
 import {
   ShortcutsModal, DemoModal, ContactModal, WhatsNewModal, LoginModal,
 } from '@/components/landing/Modals';
 import CommandPalette from '@/components/landing/CommandPalette';
+import InteractiveDemo from '@/components/landing/demo/InteractiveDemo';
 
 /* ── Landing / Login Split Screen ── */
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
+  // ── Extracted hooks (3.2) ──
+  const { showCookieBanner, handleAcceptCookies, handleRejectCookies, handleReopenCookieSettings } = useCookieConsent();
+  const { showPromo, handleDismissPromo } = usePromoBanner();
+  const { currentTestimonial, setCurrentTestimonial, testimonialProgress, setTestimonialProgress } = useTestimonialRotation(3);
+
   const [statsVisible, setStatsVisible] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState('');
-  const [isAnnual, setIsAnnual] = useState(false);
+
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -62,9 +68,7 @@ export default function LandingPage() {
   const [showFab, setShowFab] = useState(false);
   const [faqFeedback, setFaqFeedback] = useState<Record<number, 'up' | 'down' | null>>({});
   const [animatedStatsVisible, setAnimatedStatsVisible] = useState(false);
-  const [isSubscribing, setIsSubscribing] = useState(false);
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
-  const [testimonialProgress, setTestimonialProgress] = useState(0);
+
   const [testimonialTilt, setTestimonialTilt] = useState({ x: 0, y: 0 });
   const [showConfetti, setShowConfetti] = useState(false);
   const [shortcutsSearch, setShortcutsSearch] = useState('');
@@ -76,22 +80,19 @@ export default function LandingPage() {
   const [demoSlideIndex, setDemoSlideIndex] = useState(0);
   const [showBackToFeatures, setShowBackToFeatures] = useState(false);
   const [sectionProgress, setSectionProgress] = useState(0);
-  const [showPromo, setShowPromo] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [newsletterInView, setNewsletterInView] = useState(false);
+  const [activeFooterModal, setActiveFooterModal] = useState<FooterLinkId | null>(null);
 
   const stat1 = useAnimatedCounter(statsData[0].value, 2000);
   const stat2 = useAnimatedCounter(statsData[1].value, 1800);
   const stat3 = useAnimatedCounter(statsData[2].value, 2200);
 
-  // Newsletter subscriber counter
-  const subscriberCounter = useAnimatedCounter(2400, 2000);
-
   // Footer animated stats counters
-  const footerStat1 = useAnimatedCounter(5, 1500);
-  const footerStat2 = useAnimatedCounter(500, 2000);
-  const footerStat3 = useAnimatedCounter(7, 1200);
+  const footerStat1 = useAnimatedCounter(2, 1500);
+  const footerStat2 = useAnimatedCounter(10, 2000);
+  const footerStat3 = useAnimatedCounter(2, 1200);
   const footerStat4 = useAnimatedCounter(99.9, 2500);
 
   const heroRef = useRef<HTMLDivElement>(null);
@@ -112,27 +113,14 @@ export default function LandingPage() {
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  // Auto-rotate testimonials every 6 seconds with progress
+  // Listen for footer modal requests from LoginForm
   useEffect(() => {
-    const progressInterval = setInterval(() => {
-      setTestimonialProgress((prev) => {
-        const next = prev + 100 / 60;
-        return next >= 100 ? 0 : next;
-      });
-    }, 100);
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % 3);
-    }, 6000);
-    return () => { clearInterval(interval); clearInterval(progressInterval); };
-  }, []);
-
-  // Promo banner - localStorage check
-  useEffect(() => {
-    const dismissed = typeof window !== 'undefined' && localStorage.getItem('costpro-promo-dismissed');
-    if (!dismissed) {
-      const timer = setTimeout(() => queueMicrotask(() => setShowPromo(true)), 600);
-      return () => clearTimeout(timer);
-    }
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent;
+      if (ce.detail) setActiveFooterModal(ce.detail as FooterLinkId);
+    };
+    window.addEventListener('open-footer-modal', handler);
+    return () => window.removeEventListener('open-footer-modal', handler);
   }, []);
 
   // Cursor blink (after splash)
@@ -318,26 +306,6 @@ export default function LandingPage() {
     return () => sectionObserver.disconnect();
   }, []);
 
-  const handleAcceptCookies = useCallback(() => {
-    localStorage.setItem('costpro-cookie-consent', 'accepted');
-    setShowCookieBanner(false);
-  }, []);
-
-  const handleRejectCookies = useCallback(() => {
-    localStorage.setItem('costpro-cookie-consent', 'rejected');
-    setShowCookieBanner(false);
-  }, []);
-
-  const handleReopenCookieSettings = useCallback(() => {
-    setShowCookieBanner(true);
-    localStorage.removeItem('costpro-cookie-consent');
-  }, []);
-
-  const handleDismissPromo = useCallback(() => {
-    localStorage.setItem('costpro-promo-dismissed', 'true');
-    setShowPromo(false);
-  }, []);
-
   const handleToggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, [setTheme]);
@@ -346,31 +314,13 @@ export default function LandingPage() {
     setOpenFaq(openFaq === index ? null : index);
   }, [openFaq]);
 
-  const handleNewsletterSubmit = useCallback(() => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!newsletterEmail.trim()) {
-      toast.error('Por favor, ingresa tu correo electrónico');
-      return;
-    }
-    if (!emailRegex.test(newsletterEmail.trim())) {
-      toast.error('Correo electrónico inválido', { description: 'Por favor, verifica que el formato sea correcto.' });
-      return;
-    }
-    setIsSubscribing(true);
-    // FIX #002: Newsletter no simulada — informa al usuario que está en desarrollo
-    toast.info('Proximamente', { description: 'La suscripción al newsletter estará disponible pronto. Tu interés ha sido registrado.' });
-    setNewsletterEmail('');
-    setIsSubscribing(false);
-    setNewsletterSubscribed(true);
-  }, [newsletterEmail]);
-
   const handleContactSubmit = useCallback(() => {
     if (!contactForm.name.trim() || !contactForm.email.trim()) {
       toast.error('Por favor, completa los campos requeridos');
       return;
     }
     // FIX #004: Contact form no simulado — informa al usuario
-    toast.info('Proximamente', { description: 'El formulario de contacto estará conectado pronto. Mientras tanto, escríbenos a ventas@costpro.com' });
+    toast.info('En breve', { description: 'El formulario de contacto estará conectado pronto. Mientras tanto, escríbenos a adrianpompasantana@gmail.com o llama al +53 53183215' });
     setShowContactModal(false);
     setContactForm({ name: '', email: '', company: '', phone: '', message: '' });
   }, [contactForm]);
@@ -378,7 +328,7 @@ export default function LandingPage() {
   const handleChatSend = useCallback(() => {
     if (!chatInput.trim()) return;
     // FIX #003: Chat no simulado — informa al usuario
-    toast.info('Proximamente', { description: 'El chat en vivo estará disponible en planes Pro y Enterprise.' });
+    toast.info('Escríbenos directamente', { description: 'WhatsApp: +53 53183215 o adrianpompasantana@gmail.com' });
     setChatInput('');
   }, [chatInput]);
 
@@ -430,15 +380,6 @@ export default function LandingPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [showDemoModal]);
-
-  // Cookie consent - show after 3s
-  useEffect(() => {
-    const hasConsented = typeof window !== 'undefined' && localStorage.getItem('costpro-cookie-consent');
-    if (!hasConsented) {
-      const timer = setTimeout(() => setShowCookieBanner(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   // How it works step advancement on scroll
   useEffect(() => {
@@ -497,33 +438,6 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* ─── PROMO ANNOUNCEMENT BANNER ─── */}
-      <AnimatePresence>
-        {showPromo && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 32, opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="relative overflow-hidden w-full bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-500 shadow-lg shadow-emerald-500/20"
-          >
-            <div className="absolute inset-0 promo-shimmer" />
-            <div className="relative flex items-center justify-center px-4 h-8 gap-2">
-              <span className="text-xs font-bold text-white tracking-wide">
-                🚀 Lanzamiento v5.8 — Motor de costos con IA integrada
-              </span>
-              <button
-                onClick={handleDismissPromo}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors pointer-events-auto"
-                aria-label="Cerrar promoción"
-              >
-                <X className="w-3 h-3 text-white" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ─── Section Navigation Dots ─── */}
       <div className="fixed right-3 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center">
         <div className="relative flex flex-col items-center" style={{ minHeight: `calc(${sectionIds.length} * 28px + ${(sectionIds.length - 1)} * 16px)` }}>
@@ -553,25 +467,23 @@ export default function LandingPage() {
 
       {/* ─── HERO SECTION (left panel with dark background) ─── */}
       <HeroSection
-        mounted={mounted}
-        theme={theme}
-        cursorVisible={cursorVisible}
         heroInView={heroInView}
-        animatedStatsVisible={animatedStatsVisible}
-        showChangelogPopover={showChangelogPopover}
         showMobileNav={showMobileNav}
-        mouseGlowPos={mouseGlowPos}
         leftPanelRef={leftPanelRef}
         heroRef={heroRef}
         animatedStatsRef={animatedStatsRef}
-        handleToggleTheme={handleToggleTheme}
         setShowLoginModal={setShowLoginModal}
         setShowMobileNav={setShowMobileNav}
-        setShowChangelogPopover={setShowChangelogPopover}
-        setShowWhatsNew={setShowWhatsNew}
         setShowCommandPalette={setShowCommandPalette}
         setLoginDefaultTab={setLoginDefaultTab}
+        showPromo={showPromo}
+        handleDismissPromo={handleDismissPromo}
       >
+        {/* ── INTERACTIVE DEMO (right after Hero, before Features) ── */}
+        <InteractiveDemo />
+
+        <SectionDivider />
+
         {/* ── FEATURES SECTION ── */}
         <FeaturesSection
           featuresInView={featuresInView}
@@ -655,8 +567,6 @@ export default function LandingPage() {
         {/* ── PRICING SECTION ── */}
         <PricingSection
           pricingInView={pricingInView}
-          isAnnual={isAnnual}
-          setIsAnnual={setIsAnnual}
           pricingRef={pricingRef}
           setShowContactModal={setShowContactModal}
         />
@@ -677,127 +587,89 @@ export default function LandingPage() {
 
         {/* ── Newsletter ── */}
         <NewsletterSection
-          newsletterEmail={newsletterEmail}
-          setNewsletterEmail={setNewsletterEmail}
-          isSubscribing={isSubscribing}
-          newsletterSubscribed={newsletterSubscribed}
-          setNewsletterSubscribed={setNewsletterSubscribed}
-          handleNewsletterSubmit={handleNewsletterSubmit}
           newsletterInView={newsletterInView}
-          subscriberCount={subscriberCounter.count}
-          subscriberCountStarted={subscriberCounter.hasStarted}
-          startSubscriberCount={subscriberCounter.start}
         />
 
-        {/* Social Proof Bar */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="overflow-hidden py-2">
-          <div className="flex animate-scroll-logos whitespace-nowrap">
-            {[...clientLogos, ...clientLogos].map((logo, i) => (
-              <span key={i} className="mx-8 text-[11px] font-semibold text-white/20 uppercase tracking-widest shrink-0">
-                {logo}
-              </span>
-            ))}
-          </div>
-        </div>
-
         <div className="stats-gradient-separator w-full h-px" />
-        {/* Stats bar with glassmorphism */}
-        <div id="stats-section" className="stats-glass-card rounded-xl p-4">
-          {/* FIX #018: Disclaimer datos estimados */}
-          <p className="text-[9px] text-white/20 uppercase tracking-widest text-center mb-2">* Datos estimados</p>
-          <div className="flex items-center gap-6 sm:gap-10">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
-              <div>
-                <motion.span
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
-                >
-                  {stat1.count.toLocaleString()}{statsData[0].suffix}
-                </motion.span>
-                <span className="text-xs text-white/40 ml-1.5 hidden sm:inline">{statsData[0].label}</span>
-                <span className="text-[10px] text-white/40 ml-1 sm:hidden">{statsData[0].label}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
-              <div>
-                <motion.span
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-                  className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
-                >
-                  {stat2.count.toLocaleString()}{statsData[1].suffix}
-                </motion.span>
-                <span className="text-xs text-white/40 ml-1.5 hidden sm:inline">{statsData[1].label}</span>
-                <span className="text-[10px] text-white/40 ml-1 sm:hidden">{statsData[1].label}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
-              <div>
-                <motion.span
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-                  className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
-                >
-                  {stat3.count}{statsData[2].prefix}{statsData[2].suffix}
-                </motion.span>
-                <span className="text-xs text-white/40 ml-1.5 hidden sm:inline">{statsData[2].label}</span>
-                <span className="text-[10px] text-white/40 ml-1 sm:hidden">{statsData[2].label}</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Trust badges */}
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-[#22c55e]/60" />
-            <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Encriptación SSL</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Headphones className="w-3.5 h-3.5 text-[#22c55e]/60" />
-            <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Soporte 24/7</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-[#22c55e]/60" />
-            <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">99.9% Uptime</span>
-          </div>
-        </div>
-
-        {/* Integration Partners (bottom) */}
-        <div className="py-3">
-          <p className="text-[9px] font-semibold text-white/25 uppercase tracking-[0.2em] text-center mb-3">Integraciones compatibles</p>
-          <div className="overflow-hidden">
-            <div className="flex animate-scroll-integrations whitespace-nowrap">
-              {[...integrationPartners, ...integrationPartners, ...integrationPartners, ...integrationPartners].map((partner, i) => (
-                <div
-                  key={i}
-                  className="inline-flex items-center gap-2 mx-3 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.08] hover:border-[#22c55e]/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.06)] transition-all duration-300 shrink-0"
-                >
-                  <div className="w-5 h-5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-[#22c55e]">{partner.letter}</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-white/30">{partner.name}</span>
+        {/* Stats + Trust badges + Tagline — centered container */}
+        <div className="max-w-2xl mx-auto w-full space-y-5">
+          {/* Stats bar with glassmorphism */}
+          <div id="stats-section" className="stats-glass-card rounded-xl p-5">
+            {/* FIX #018: Disclaimer datos estimados */}
+            <p className="text-[9px] text-white/20 uppercase tracking-widest text-center mb-3">* Datos estimados</p>
+            <div className="flex items-center justify-center gap-8 sm:gap-12">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                <div>
+                  <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
+                  >
+                    {stat1.count.toLocaleString()}{statsData[0].suffix}
+                  </motion.span>
+                  <span className="text-[10px] text-white/40 ml-1.5">{statsData[0].label}</span>
                 </div>
-              ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                <div>
+                  <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                    className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
+                  >
+                    {stat2.count.toLocaleString()}{statsData[1].suffix}
+                  </motion.span>
+                  <span className="text-[10px] text-white/40 ml-1.5">{statsData[1].label}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                <div>
+                  <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={statsVisible ? { scale: 1, opacity: 1 } : {}}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+                    className="inline-block text-xl sm:text-2xl font-extrabold text-white font-[family-name:var(--font-space-grotesk)] tracking-tight stat-number-glow"
+                  >
+                    {stat3.count}{statsData[2].prefix}{statsData[2].suffix}
+                  </motion.span>
+                  <span className="text-[10px] text-white/40 ml-1.5">{statsData[2].label}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-[#22c55e]/60" />
+              <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Encriptación SSL</span>
+            </div>
+            <div className="w-px h-3 bg-white/[0.08]" />
+            <div className="flex items-center gap-1.5">
+              <Headphones className="w-3.5 h-3.5 text-[#22c55e]/60" />
+              <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">Soporte 24/7</span>
+            </div>
+            <div className="w-px h-3 bg-white/[0.08]" />
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-[#22c55e]/60" />
+              <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">99.9% Uptime</span>
             </div>
           </div>
         </div>
 
         {/* Bottom gradient fade overlay */}
-        <div className="relative -mb-2 -mt-2 h-20 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#020617]/30 to-[#020617]/60" />
+        <div className="h-10 pointer-events-none">
+          <div className="h-full bg-gradient-to-b from-transparent to-[#020617]" />
         </div>
 
         {/* Tagline */}
-        <p className="text-xs text-white/40 font-medium tracking-wide uppercase animate-subtle-glow text-gradient-animate">
+        <p className="pb-8 text-xs text-white/40 font-medium tracking-wide uppercase animate-subtle-glow text-gradient-animate text-center">
           Protege tus costos y precios
         </p>
       </HeroSection>
@@ -808,6 +680,8 @@ export default function LandingPage() {
         showCookieBanner={showCookieBanner}
         footerRef={footerRef}
         handleReopenCookieSettings={handleReopenCookieSettings}
+        onContactClick={() => setShowContactModal(true)}
+        onLinkClick={setActiveFooterModal}
         footerStats={[
           { count: footerStat1.count, suffix: '+', label: 'Años en el mercado', hasStarted: footerStat1.hasStarted, start: footerStat1.start },
           { count: footerStat2.count, suffix: '+', label: 'Empresas activas', hasStarted: footerStat2.hasStarted, start: footerStat2.start },
@@ -859,6 +733,7 @@ export default function LandingPage() {
       />
       <WhatsNewModal showWhatsNew={showWhatsNew} setShowWhatsNew={setShowWhatsNew} />
       <LoginModal showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal} defaultTab={loginDefaultTab} />
+      <FooterModals activeModal={activeFooterModal} onClose={() => setActiveFooterModal(null)} />
 
       {/* ─── COMMAND PALETTE (Ctrl+K) ─── */}
       <CommandPalette
