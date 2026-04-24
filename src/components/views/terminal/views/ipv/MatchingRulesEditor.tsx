@@ -692,6 +692,12 @@ export function MatchingRulesEditor() {
             </div>
         </DndContext>
       </div>
+
+      <ResetMatchingModal
+        open={isResetModalOpen}
+        onOpenChange={setIsResetModalOpen}
+        rules={rules || []}
+      />
     </div>
   );
 }
