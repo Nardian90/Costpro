@@ -145,7 +145,7 @@ export default function FloatingElements({
                 </div>
               </div>
               <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                <button onClick={() => toast.info('Demo próximamente disponible')} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Ver Demo</button>
+                <button onClick={() => setShowContactModal(true)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Solicitar Demo</button>
                 <button onClick={() => toast.info('Soporte técnico disponible en Pro y Enterprise')} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Soporte Técnico</button>
                 <button onClick={() => scrollToSection(3)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Planes y Precios</button>
               </div>

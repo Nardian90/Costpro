@@ -126,7 +126,7 @@ export default function RootLayout({
           <QueryProvider>
             <SyncProvider>
               <GlobalSessionManager />
-              {children}
+              <main id="main-content">{children}</main>
               <Toaster position="top-right" richColors />
               <ServiceWorkerRegister />
             </SyncProvider>

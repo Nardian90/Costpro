@@ -4,11 +4,18 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Cookie } from 'lucide-react';
 
+export type FooterLinkId =
+  | 'costos' | 'pos' | 'inventario' | 'reportes' | 'multi-tienda'
+  | 'sobre-nosotros' | 'blog' | 'carreras' | 'partners'
+  | 'privacidad' | 'terminos' | 'seguridad' | 'sla';
+
 export interface FooterSectionProps {
   footerInView: boolean;
   showCookieBanner: boolean;
   footerRef: React.RefObject<HTMLElement | null>;
   handleReopenCookieSettings: () => void;
+  onContactClick?: () => void;
+  onLinkClick?: (id: FooterLinkId) => void;
   footerStats: Array<{
     count: number;
     suffix: string;
@@ -18,11 +25,33 @@ export interface FooterSectionProps {
   }>;
 }
 
+/* ── Reusable footer link component ── */
+function FooterLink({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        onClick={onClick}
+        className="text-sm text-white/40 hover:text-[#22c55e] transition-colors duration-200 cursor-pointer inline-block py-0.5 px-1 rounded-md text-left"
+      >
+        {label}
+      </button>
+    </li>
+  );
+}
+
 export default function FooterSection({
   footerInView,
   showCookieBanner,
   footerRef,
   handleReopenCookieSettings,
+  onContactClick,
+  onLinkClick,
   footerStats,
 }: FooterSectionProps) {
   // Start counter animations when footer comes into view
@@ -58,50 +87,60 @@ export default function FooterSection({
             {/* Social Media Icons */}
             <div className="flex items-center gap-2 pt-1">
               {[
-                { label: 'Twitter / X', letter: '𝕏', href: '#' },
-                { label: 'LinkedIn', letter: 'in', href: '#' },
-                { label: 'GitHub', letter: 'GH', href: '#' },
-                { label: 'YouTube', letter: 'YT', href: '#' },
+                { label: 'Twitter / X', letter: '𝕏', title: 'Próximamente' },
+                { label: 'LinkedIn', letter: 'in', title: 'Próximamente' },
+                { label: 'GitHub', letter: 'GH', title: 'Próximamente' },
+                { label: 'YouTube', letter: 'YT', title: 'Próximamente' },
               ].map((social) => (
-                <a
+                <div
                   key={social.label}
-                  href={social.href}
+                  title={social.title}
                   aria-label={social.label}
-                  className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-[10px] font-bold text-white/40 hover:bg-[#22c55e]/15 hover:border-[#22c55e]/25 hover:text-[#22c55e] hover:scale-110 transition-all duration-200"
+                  className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-[10px] font-bold text-white/30 cursor-default"
                 >
                   {social.letter}
-                </a>
+                </div>
               ))}
             </div>
           </div>
+
           {/* Producto */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/90">Producto</h4>
             <ul className="space-y-2">
-              {['Control de Costos', 'Punto de Venta', 'Inventario', 'Reportes', 'Multi-Tienda'].map(item => (
-                <li key={item}><span className="text-sm text-white/40 hover:text-[#22c55e] transition-colors cursor-pointer inline-block py-0.5 px-1 rounded-md">{item}</span></li>
-              ))}
+              <FooterLink label="Control de Costos" onClick={() => onLinkClick?.('costos')} />
+              <FooterLink label="Punto de Venta" onClick={() => onLinkClick?.('pos')} />
+              <FooterLink label="Inventario" onClick={() => onLinkClick?.('inventario')} />
+              <FooterLink label="Reportes" onClick={() => onLinkClick?.('reportes')} />
+              <FooterLink label="Multi-Tienda" onClick={() => onLinkClick?.('multi-tienda')} />
             </ul>
           </div>
+
           {/* Empresa */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/90">Empresa</h4>
             <ul className="space-y-2">
-              {['Sobre Nosotros', 'Blog', 'Carreras', 'Contacto', 'Partners'].map(item => (
-                <li key={item}><span className="text-sm text-white/40 hover:text-[#22c55e] transition-colors cursor-pointer inline-block py-0.5 px-1 rounded-md">{item}</span></li>
-              ))}
+              <FooterLink label="Sobre Nosotros" onClick={() => onLinkClick?.('sobre-nosotros')} />
+              <FooterLink label="Blog" onClick={() => onLinkClick?.('blog')} />
+              <FooterLink label="Carreras" onClick={() => onLinkClick?.('carreras')} />
+              <FooterLink label="Contacto" onClick={() => onContactClick?.()} />
+              <FooterLink label="Partners" onClick={() => onLinkClick?.('partners')} />
             </ul>
           </div>
+
           {/* Legal */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/90">Legal</h4>
             <ul className="space-y-2">
-              {['Privacidad', 'Términos', 'Cookies', 'Seguridad', 'SLA'].map(item => (
-                <li key={item}><span className="text-sm text-white/40 hover:text-[#22c55e] transition-colors cursor-pointer inline-block py-0.5 px-1 rounded-md">{item}</span></li>
-              ))}
+              <FooterLink label="Privacidad" onClick={() => onLinkClick?.('privacidad')} />
+              <FooterLink label="Términos" onClick={() => onLinkClick?.('terminos')} />
+              <FooterLink label="Cookies" onClick={handleReopenCookieSettings} />
+              <FooterLink label="Seguridad" onClick={() => onLinkClick?.('seguridad')} />
+              <FooterLink label="SLA" onClick={() => onLinkClick?.('sla')} />
             </ul>
           </div>
         </div>
+
         {/* Stats Bar */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -118,16 +157,17 @@ export default function FooterSection({
             </div>
           ))}
         </motion.div>
+
         <div className="mt-10 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <p className="text-xs text-white/40">© 2024 CostPro. Todos los derechos reservados.</p>
+            <p className="text-xs text-white/40">© 2025 CostPro. Todos los derechos reservados.</p>
             {/* Cookie settings button - show when banner is hidden */}
             {!showCookieBanner && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={handleReopenCookieSettings}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] text-white/40 hover:text-[#22c55e] hover:border-[#22c55e]/20 hover:bg-[#22c55e]/5 transition-all duration-200"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] text-white/40 hover:text-[#22c55e] hover:border-[#22c55e]/20 hover:bg-[#22c55e]/5 transition-all duration-200 cursor-pointer"
                 aria-label="Configuración de cookies"
               >
                 <Cookie className="w-3 h-3" />

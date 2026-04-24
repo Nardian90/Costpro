@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
-import { useTheme } from 'next-themes';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
-  Sun, Moon, ChevronDown, ArrowRight, LogIn, Menu,
-  Search, Sparkles, Shield,
+  ChevronDown, ArrowRight,
+  Search, Sparkles, Shield, X,
 } from 'lucide-react';
 
 /* ── Typewriter Text Component ── */
@@ -55,6 +54,7 @@ function GreenOrb({ className }: { className?: string }) {
 function ParticleRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   interface Particle {
     x: number; y: number; size: number;
@@ -74,6 +74,14 @@ function ParticleRain() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
+
+    // Respect prefers-reduced-motion
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (motionQuery.matches) {
+      return;
+    }
+
+    let isVisible = true;
 
     let w = 0;
     let h = 0;
@@ -116,12 +124,24 @@ function ParticleRain() {
       };
     });
 
+    // IntersectionObserver to pause when off-screen
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => { isVisible = entry.isIntersecting; },
+      { threshold: 0 }
+    );
+    if (containerRef.current) intersectionObserver.observe(containerRef.current);
+
     // Base colors (dark theme — green accent + cool blues)
     const baseR = 74, baseG = 222, baseB = 128;
 
     const animate = () => {
       if (!html.classList.contains('mode-enhanced')) {
         ctx.clearRect(0, 0, w, h);
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      if (!isVisible) {
         rafRef.current = requestAnimationFrame(animate);
         return;
       }
@@ -180,52 +200,45 @@ function ParticleRain() {
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
+      intersectionObserver.disconnect();
       observer.disconnect();
     };
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.8 }}
-    />
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ opacity: 0.8 }}
+      />
+    </div>
   );
 }
 
 export interface HeroSectionProps {
-  mounted: boolean;
-  theme: string | undefined;
-  cursorVisible: boolean;
   heroInView: boolean;
-  animatedStatsVisible: boolean;
-  showChangelogPopover: boolean;
   showMobileNav: boolean;
-  mouseGlowPos: { x: number; y: number };
   leftPanelRef: React.RefObject<HTMLDivElement | null>;
   heroRef: React.RefObject<HTMLDivElement | null>;
   animatedStatsRef: React.RefObject<HTMLDivElement | null>;
-  handleToggleTheme: () => void;
   setShowLoginModal: (v: boolean) => void;
   setShowMobileNav: (v: boolean) => void;
-  setShowChangelogPopover: (v: boolean) => void;
-  setShowWhatsNew: (v: boolean) => void;
   setShowCommandPalette?: (v: boolean) => void;
   setLoginDefaultTab?: (tab: 'login' | 'register') => void;
   children?: React.ReactNode;
   bottomContent?: React.ReactNode;
   socialProofPopup?: React.ReactNode;
+  showPromo?: boolean;
+  handleDismissPromo?: () => void;
 }
 
 export default function HeroSection({
-  mounted,
-  theme,
   heroInView,
   showMobileNav,
   leftPanelRef,
   heroRef,
   animatedStatsRef,
-  handleToggleTheme,
   setShowLoginModal,
   setShowMobileNav,
   setShowCommandPalette,
@@ -233,8 +246,9 @@ export default function HeroSection({
   children,
   bottomContent,
   socialProofPopup,
+  showPromo,
+  handleDismissPromo,
 }: HeroSectionProps) {
-  const [showNotifications, setShowNotifications] = React.useState(false);
   const [searchFocused, setSearchFocused] = React.useState(false);
 
   /* ── Ken Burns + Fade-out + Zoom on scroll for background image ── */
@@ -257,11 +271,9 @@ export default function HeroSection({
   ];
 
   return (
-    <div ref={leftPanelRef} className="relative flex-1">
+    <div ref={leftPanelRef} className="relative flex-1 bg-[#020617]">
       {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ── */}
-      <div className="relative w-full" style={{ height: '100vh' }}>
-        {/* ── Layer 0: Solid dark base ── */}
-        <div className="absolute inset-0 bg-[#020617]" />
+      <div className="relative w-full overflow-hidden" style={{ height: '100vh' }}>
 
       {/* ── Layer 1: Background image — Ken Burns + Parallax (Apple/Stripe style) ── */}
       <motion.div
@@ -322,6 +334,33 @@ export default function HeroSection({
 
       {/* ── Content layer ── */}
       <div className="relative z-10 flex flex-col min-h-screen">
+        {/* ── PROMO BANNER (inside hero layered system — no top cut) ── */}
+        <AnimatePresence>
+          {showPromo && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 32, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="relative overflow-hidden w-full bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-500 shadow-lg shadow-emerald-500/20 shrink-0"
+            >
+              <div className="absolute inset-0 promo-shimmer" />
+              <div className="relative flex items-center justify-center px-4 h-8 gap-2">
+                <span className="text-xs font-bold text-white tracking-wide">
+                  Lanzamiento v5.8 — Motor de costos con IA integrada
+                </span>
+                <button
+                  onClick={handleDismissPromo}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors pointer-events-auto"
+                  aria-label="Cerrar promoción"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Top Navigation Bar ── */}
         <motion.nav
           initial={{ opacity: 0, y: -10 }}
@@ -346,7 +385,7 @@ export default function HeroSection({
                 key={`${link.href}-${idx}`}
                 href={link.href}
                 onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="px-3.5 py-1.5 text-[13px] font-medium text-white/40 hover:text-white/80 transition-colors duration-200"
+                className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/40 hover:text-white/80 transition-colors duration-200"
               >
                 {link.label}
               </a>
@@ -355,73 +394,10 @@ export default function HeroSection({
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Theme toggle */}
-            <button
-              onClick={handleToggleTheme}
-              className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.06] transition-colors"
-              aria-label="Cambiar tema"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={theme === 'dark' ? 'dark' : 'light'}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {mounted && theme === 'dark' ? (
-                    <Sun className="w-4 h-4 text-white/50" />
-                  ) : (
-                    <Moon className="w-4 h-4 text-white/50" />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </button>
-
-            {/* Notification */}
-            <div className="relative hidden sm:block">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.06] transition-colors"
-                aria-label="Notificaciones"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/50">
-                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-                </svg>
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500" />
-              </button>
-              <AnimatePresence>
-                {showNotifications && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full right-0 mt-2 z-50 w-72 rounded-xl bg-[#111827]/95 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-black/50 p-4"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-white/90">Notificaciones</span>
-                        <span className="text-[10px] font-semibold text-amber-500 px-2 py-0.5 rounded-full bg-amber-500/10">Próximamente</span>
-                      </div>
-                      <div className="flex items-center justify-center py-6">
-                        <div className="text-center">
-                          <p className="text-xs text-white/40 leading-relaxed">Las notificaciones en tiempo real estarán disponibles próximamente.</p>
-                          <p className="text-[10px] text-white/20 mt-1">Inicia sesión para ver las novedades del sistema.</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* Login CTA */}
             <button
               onClick={() => setShowLoginModal(true)}
-              className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200"
+              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
             >
               <span>Iniciar Sesión</span>
             </button>
@@ -461,7 +437,7 @@ export default function HeroSection({
                       document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                       setShowMobileNav(false);
                     }}
-                    className="block px-4 py-3 text-sm text-white/60 hover:text-white/90 rounded-lg hover:bg-white/[0.06] transition-all"
+                    className="nav-link-hover block px-4 py-3 text-sm text-white/60 hover:text-white/90 rounded-lg hover:bg-white/[0.06] transition-all"
                   >
                     {link.label}
                   </a>
@@ -645,7 +621,7 @@ export default function HeroSection({
       </div>{/* end hero viewport */}
 
       {/* ── All other landing sections below (seamless dark continuation) ── */}
-      <div className="relative z-10 bg-[#020617]">
+      <div className="relative z-10">
         {children}
       </div>
 

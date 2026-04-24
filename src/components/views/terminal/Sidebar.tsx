@@ -493,9 +493,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           {user?.plan === 'free' && user?.role !== 'admin' && (
             <button
               onClick={() => {
-                const whatsappNumber = "+5353183215";
+                const whatsappNumber = "+53 53183215";
                 const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
-                window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+                window.open(`https://wa.me/${whatsappNumber.replace(/\\D/g, '')}?text=${message}`, '_blank');
               }}
               aria-label="Mejorar a Plan Pro"
               /* FIX #044: Removed animate-pulse for WCAG accessibility */

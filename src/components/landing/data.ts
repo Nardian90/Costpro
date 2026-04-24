@@ -3,6 +3,7 @@ import {
   Store, ShieldCheck, Users, Star, HelpCircle,
   CreditCard, RefreshCw, Wifi, UserPlus, Settings,
   Rocket, TrendingUp, Zap, Clock, Building2, Server, Award,
+  Smartphone, CheckCircle, Monitor, Database, Upload, Lock, Globe,
 } from 'lucide-react';
 
 /* ── Feature data ── */
@@ -16,8 +17,8 @@ export const features = [
 ];
 
 export const statsData = [
-  { value: 10000, suffix: '+', label: 'Usuarios activos', prefix: '' },
-  { value: 500, suffix: '+', label: 'Tiendas', prefix: '' },
+  { value: 90, suffix: '+', label: 'Usuarios activos', prefix: '' },
+  { value: 20, suffix: '+', label: 'Tiendas', prefix: '' },
   { value: 2, suffix: 'M+', label: 'Transacciones', prefix: '' },
 ];
 
@@ -34,7 +35,7 @@ export const howItWorksSteps = [
   { icon: TrendingUp, title: 'Crece', desc: 'Escala con reportes avanzados y análisis predictivo' },
 ];
 
-export const faqIcons = [HelpCircle, ShieldCheck, CreditCard, RefreshCw, Wifi];
+export const faqIcons = [HelpCircle, ShieldCheck, CreditCard, RefreshCw, Wifi, Users, Smartphone, CheckCircle, Monitor, Database, Upload, Lock, Settings, Globe];
 
 export const differentiatorsData = [
   { icon: TrendingUp, stat: '23%', desc: 'Reducción promedio en costos operativos' },
@@ -45,35 +46,35 @@ export const differentiatorsData = [
 
 export const pricingPlans = [
   {
-    name: 'Starter',
+    name: 'Gratis',
     priceMonthly: 0,
     priceAnnual: 0,
     price: 'Gratis',
     period: '',
-    desc: 'Perfecto para emprendedores que inician',
-    features: ['Hasta 50 productos', '1 sucursal', 'Reportes básicos', 'Soporte por email', 'Control de costos esencial'],
+    desc: 'Comienza a crear tus fichas de costo desde hoy',
+    features: ['Hasta 3 fichas de costo en PDF al día', 'Motor de costos básico (individual)', 'Plantillas predefinidas'],
     cta: 'Comenzar gratis',
     popular: false,
   },
   {
     name: 'Pro',
-    priceMonthly: 29,
-    priceAnnual: 23,
-    price: '$29',
+    priceMonthly: 1000,
+    priceAnnual: 800,
+    price: 'CUP $1,000',
     period: '/mes',
-    desc: 'Para negocios en crecimiento',
-    features: ['Productos ilimitados', 'Hasta 5 sucursales', 'Reportes avanzados + PDF/Excel', 'Soporte prioritario 24/7', 'Punto de venta completo', 'Módulo de inventario inteligente', 'Integración bancaria (IPV)'],
-    cta: 'Prueba gratis 14 días',
+    desc: 'Fichas ilimitadas para tu negocio',
+    features: ['Fichas de costo ilimitadas en PDF', 'Historial y versionado completo', 'Reportes avanzados', 'Soporte por WhatsApp y teléfono'],
+    cta: 'Comenzar Pro',
     popular: true,
   },
   {
-    name: 'Enterprise',
+    name: 'Premium',
     priceMonthly: 0,
     priceAnnual: 0,
     price: 'Custom',
     period: '',
-    desc: 'Solución a medida para grandes empresas',
-    features: ['Todo en Pro', 'Sucursales ilimitadas', 'API dedicada', 'SLA garantizado', 'Capacitación personalizada', 'Migración asistida', 'Panel ejecutivo VIP'],
+    desc: 'Acceso a todos los módulos de CostPro',
+    features: ['Todo en Pro', 'Módulo Multi-Tienda', 'Módulo IPV Inteligente', 'Soporte WhatsApp + teléfono + presencial'],
     cta: 'Contactar ventas',
     popular: false,
   },
@@ -87,19 +88,29 @@ export const faqItems = [
   { q: '¿Puedo cambiar de plan en cualquier momento?', a: 'Sí, puedes escalar o reducir tu plan en cualquier momento. Los cambios se aplican de inmediato y solo pagas la diferencia proporcional.', category: 'Precios' },
   { q: '¿Ofrecen migración desde otro sistema?', a: 'Sí, nuestro equipo de soporte te ayuda a migrar tus datos desde cualquier sistema. El proceso es gratuito para planes Pro y Enterprise.', category: 'Técnico' },
   { q: '¿Funciona sin conexión a internet?', a: 'CostPro tiene modo offline que te permite continuar operando sin internet. Los datos se sincronizan automáticamente cuando recuperas la conexión.', category: 'Técnico' },
+  { q: '¿Qué tipo de negocios puede usar CostPro?', a: 'CostPro es ideal para restaurantes, ferreterías, tiendas retail, farmacias, negocios de alimentos y cualquier PYME que necesite controlar costos, inventario y ventas. Nuestros usuarios abarcan más de 12 sectores diferentes.', category: 'General' },
+  { q: '¿CostPro funciona en dispositivos móviles?', a: 'Sí, CostPro es completamente responsivo. Puedes acceder desde cualquier dispositivo con navegador: computadora, tablet o teléfono móvil. También ofrecemos una experiencia optimizada para tablets en el punto de venta.', category: 'General' },
+  { q: '¿Puedo usar CostPro sin tarjeta de crédito?', a: 'Absolutamente. El plan Gratis no requiere tarjeta de crédito. Para el plan Pro, aceptamos transferencias bancarias y pagos vía WhatsApp. Solo necesitas una tarjeta si prefieres pagar en línea de forma recurrente.', category: 'Precios' },
+  { q: '¿Existe alguna tarifa de configuración o activación?', a: 'No. La configuración es completamente gratuita y puedes empezar a usar CostPro en menos de 2 minutos. No hay tarifas ocultas ni costos de activación en ninguno de nuestros planes.', category: 'Precios' },
+  { q: '¿Qué pasa si supero los límites de mi plan?', a: 'Recibirás una notificación cuando te acerques al límite de tu plan. En el plan Gratis, las fichas adicionales se bloquean hasta el día siguiente. En el plan Pro, los límites son suficientemente amplios para la mayoría de las PYMEs.', category: 'Precios' },
+  { q: '¿Qué navegadores son compatibles con CostPro?', a: 'CostPro funciona correctamente en los últimas versiones de Google Chrome, Mozilla Firefox, Microsoft Edge y Safari. Recomendamos Chrome o Edge para la mejor experiencia, especialmente en el módulo de punto de venta.', category: 'Técnico' },
+  { q: '¿Cómo se realizan las copias de seguridad de mis datos?', a: 'Realizamos copias de seguridad automáticas cada 6 horas con retención de 30 días. Tus datos están protegidos con encriptación AES-256 y almacenados en servidores con certificación SOC2. También puedes exportar tus datos manualmente en cualquier momento.', category: 'Técnico' },
+  { q: '¿Puedo importar mis datos desde Excel u otro sistema?', a: 'Sí, CostPro soporta importación de datos desde archivos Excel y CSV. Nuestro equipo de soporte te guía en el proceso de migración, que es gratuito para planes Pro. También puedes registrar productos manualmente uno a uno.', category: 'Técnico' },
+  { q: '¿Cuántos usuarios pueden usar CostPro simultáneamente?', a: 'En el plan Gratis puedes tener 1 usuario. En el plan Pro hasta 5 usuarios con roles personalizados. En el plan Premium, el límite es flexible según las necesidades de tu negocio, con roles granulares y permisos por sucursal.', category: 'Técnico' },
 ];
 
 export const clientLogos = [
-  'Restaurante El Sabor', 'Ferretería Industrial', 'Tienda Pro', 'Café Buen Día',
-  'Market Express', 'Distribuidora Norte', 'Farmacia Vida', 'Automotriz GT',
+  'Construcción', 'Transportación', 'Alimentos y Bebidas', 'Ferretería Industrial',
+  'Farmacia', 'Automotriz', 'Textil', 'Retail y Tiendas',
+  'Manufactura', 'Servicios Profesionales', 'Logística', 'Salud',
 ];
 
 /* ── Animated Stats Counter Data ── */
 export const animatedStatsData = [
-  { value: 500, prefix: '+', label: 'Empresas activas', icon: Building2, decimals: 0 },
-  { value: 50000, prefix: '+', label: 'Transacciones/mes', icon: BarChart3, decimals: 0 },
+  { value: 90, prefix: '+', label: 'Usuarios activos', icon: Building2, decimals: 0 },
+  { value: 2, prefix: '', label: 'Millones de transacciones', icon: BarChart3, decimals: 0 },
   { value: 99.9, prefix: '', label: 'Uptime garantizado', icon: Server, decimals: 1 },
-  { value: 4.9, prefix: '★ ', label: 'Calificación promedio', icon: Award, decimals: 1 },
+  { value: 4.8, prefix: '★ ', label: 'Calificación promedio', icon: Award, decimals: 1 },
 ];
 
 export const integrationPartners = [
@@ -129,11 +140,15 @@ export const demoSlides = [
 export const diffProgressBars = [85, 70, 95, 60];
 
 export const comparisonRows = [
-  { feature: 'Productos', starter: '50', pro: '∞', enterprise: '∞' },
-  { feature: 'Sucursales', starter: '1', pro: '5', enterprise: '∞' },
-  { feature: 'Reportes', starter: 'Básicos', pro: 'Avanzados', enterprise: 'VIP' },
-  { feature: 'Soporte', starter: 'Email', pro: '24/7', enterprise: 'Dedicado' },
-  { feature: 'Integración bancaria', starter: false, pro: true, enterprise: true },
+  { feature: 'Fichas de costo en PDF', starter: '3/día', pro: 'Ilimitadas', enterprise: 'Ilimitadas' },
+  { feature: 'Motor de costos (individual)', starter: true, pro: true, enterprise: true },
+  { feature: 'Generación masiva de fichas PDF', starter: false, pro: true, enterprise: true },
+  { feature: 'Reportes avanzados', starter: false, pro: true, enterprise: true },
+  { feature: 'Módulo Multi-Tienda', starter: false, pro: false, enterprise: true },
+  { feature: 'Módulo IPV Inteligente', starter: false, pro: false, enterprise: true },
+  { feature: 'Soporte WhatsApp', starter: false, pro: true, enterprise: true },
+  { feature: 'Soporte teléfono', starter: false, pro: true, enterprise: true },
+  { feature: 'Soporte presencial', starter: false, pro: false, enterprise: true },
 ];
 
 export const shortcutsList = [

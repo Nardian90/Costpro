@@ -2,14 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Minus, Sparkles, Percent, Calculator, ChevronDown, TrendingDown } from 'lucide-react';
+import { Check, Minus, Sparkles, Calculator, ChevronDown, TrendingDown, MessageCircle, Phone, UserRound } from 'lucide-react';
 import { pricingPlans, comparisonRows } from './data';
 import { ConfettiBurst } from './animations';
 
 export interface PricingSectionProps {
   pricingInView: boolean;
-  isAnnual: boolean;
-  setIsAnnual: (v: boolean) => void;
   pricingRef: React.RefObject<HTMLDivElement | null>;
   setShowContactModal: (v: boolean) => void;
 }
@@ -78,12 +76,12 @@ function PricingCalculator({ visible }: { visible: boolean }) {
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
               <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Manual</p>
-              <p className="text-sm font-extrabold text-white/60 tabular-nums">${Number(manualCost).toLocaleString()}</p>
+              <p className="text-sm font-extrabold text-white/60 tabular-nums">CUP ${Number(manualCost).toLocaleString()}</p>
               <p className="text-[9px] text-white/30">/mes</p>
             </div>
             <div>
               <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">CostPro</p>
-              <p className="text-sm font-extrabold text-[#22c55e] tabular-nums">${Number(costProCost).toLocaleString()}</p>
+              <p className="text-sm font-extrabold text-[#22c55e] tabular-nums">CUP ${Number(costProCost).toLocaleString()}</p>
               <p className="text-[9px] text-white/30">/mes</p>
             </div>
             <div className="flex flex-col items-center justify-center">
@@ -102,8 +100,6 @@ function PricingCalculator({ visible }: { visible: boolean }) {
 
 export default function PricingSection({
   pricingInView,
-  isAnnual,
-  setIsAnnual,
   pricingRef,
   setShowContactModal,
 }: PricingSectionProps) {
@@ -141,33 +137,6 @@ export default function PricingSection({
             Comienza gratis y escala cuando estés listo
           </p>
 
-          {/* Monthly / Annual Toggle */}
-          <div className="flex items-center justify-center gap-3 mt-4">
-            <span className={`text-xs font-medium transition-colors ${!isAnnual ? 'text-white' : 'text-white/40'}`}>Mensual</span>
-            <button
-              onClick={() => setIsAnnual(!isAnnual)}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${
-                isAnnual ? 'bg-[#22c55e]' : 'bg-white/20'
-              }`}
-              role="switch"
-              aria-checked={isAnnual}
-              aria-label="Cambiar entre plan mensual y anual"
-            >
-              <motion.span
-                animate={{ x: isAnnual ? 20 : 2 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
-              />
-            </button>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs font-medium transition-colors ${isAnnual ? 'text-white' : 'text-white/40'}`}>Anual</span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20">
-                <Percent className="w-3 h-3 text-[#22c55e]" />
-                <span className="text-[10px] font-bold text-[#22c55e]">Ahorrás 20%</span>
-              </span>
-            </div>
-          </div>
-
           {/* Savings Calculator Toggle */}
           <button
             onClick={() => setShowCalculator(!showCalculator)}
@@ -201,7 +170,7 @@ export default function PricingSection({
               className={`relative p-5 rounded-xl backdrop-blur-md transition-all duration-300 group pricing-card-hover pricing-shimmer ${
                 plan.popular
                   ? 'bg-white/[0.08] border-2 border-[#22c55e]/40 shadow-[0_0_40px_rgba(34,197,94,0.15),0_0_80px_rgba(34,197,94,0.08)] animate-border-rotate pricing-popular-hover pricing-popular-border -translate-y-2 shimmer-border border-gradient-animate'
-                  : plan.name === 'Enterprise'
+                  : plan.name === 'Premium'
                     ? 'enterprise-gold-border'
                     : 'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] hover:border-[#22c55e]/20'
               } hover:-translate-y-[4px] hover:shadow-[0_16px_48px_rgba(34,197,94,0.18)] hover:backdrop-blur-lg`}
@@ -215,24 +184,21 @@ export default function PricingSection({
               )}
               <h3 className="text-sm font-bold text-white">{plan.name}</h3>
               <div className="mt-2 flex items-baseline gap-1">
-                {plan.name === 'Enterprise' ? (
+                {plan.name === 'Premium' ? (
                   <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">Custom</span>
                 ) : plan.priceMonthly === 0 ? (
                   <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">Gratis</span>
                 ) : (
-                  <div className="flex items-baseline gap-1.5" key={isAnnual ? 'annual' : 'monthly'}>
-                    {isAnnual && (
-                      <span className="text-sm text-white/30 line-through">${plan.priceMonthly}</span>
-                    )}
+                  <div className="flex items-baseline gap-1.5">
                     <motion.span
                       className={`text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] ${plan.popular ? 'text-[#22c55e]' : 'text-white'} price-glow-animate`}
                     >
-                      ${isAnnual ? plan.priceAnnual : plan.priceMonthly}
+                      CUP ${plan.priceMonthly.toLocaleString()}
                     </motion.span>
                   </div>
                 )}
                 {plan.period && plan.priceMonthly > 0 && (
-                  <span className="text-xs text-white/40">/{isAnnual ? 'mes' : 'mes'}</span>
+                  <span className="text-xs text-white/40">/{plan.period.replace('/', '')}</span>
                 )}
               </div>
               <p className="mt-1 text-[11px] text-white/40">{plan.desc}</p>
@@ -244,30 +210,35 @@ export default function PricingSection({
                   </li>
                 ))}
               </ul>
-              {plan.name === 'Enterprise' && (
+              {plan.name === 'Premium' && (
                 <div className="mt-3 space-y-1.5">
-                  {['✓ Soporte dedicado', '✓ SLA garantizado', '✓ Onboarding personalizado'].map((badge) => (
-                    <span key={badge} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/15 text-[9px] font-semibold text-[#22c55e]/80 mr-1">
-                      {badge}
+                  {[
+                    { icon: <MessageCircle className="w-2.5 h-2.5" />, text: 'WhatsApp' },
+                    { icon: <Phone className="w-2.5 h-2.5" />, text: 'Teléfono' },
+                    { icon: <UserRound className="w-2.5 h-2.5" />, text: 'Presencial' },
+                  ].map((badge) => (
+                    <span key={badge.text} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/15 text-[9px] font-semibold text-[#22c55e]/80 mr-1">
+                      {badge.icon}
+                      {badge.text}
                     </span>
                   ))}
                 </div>
               )}
               <button
                 onClick={() => {
-                  if (plan.name === 'Enterprise') {
+                  if (plan.name === 'Premium') {
                     setShowContactModal(true);
                   }
                 }}
                 className={`mt-4 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 relative overflow-hidden glow-pulse-interactive ${
                   plan.popular
                     ? 'bg-[#22c55e] text-white hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20'
-                    : plan.name === 'Enterprise'
+                    : plan.name === 'Premium'
                       ? 'bg-gradient-to-r from-amber-500/90 to-yellow-500/90 text-white border border-amber-400/40 hover:from-amber-500 hover:to-yellow-500 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] enterprise-cta-pulse'
                       : 'bg-white/[0.08] text-white border border-white/10 hover:bg-white/[0.12]'
                 }`}
               >
-                {plan.name === 'Enterprise' && (
+                {plan.name === 'Premium' && (
                   <span className="absolute -top-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg bg-gradient-to-r from-amber-400 to-yellow-400 text-[7px] font-bold text-white shadow-lg">
                     <Sparkles className="w-2 h-2" />
                     Custom
@@ -292,9 +263,9 @@ export default function PricingSection({
               <thead>
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left py-2.5 px-3 text-white/50 font-medium">Función</th>
-                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Starter</th>
+                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Gratis</th>
                   <th className="py-2.5 px-2 text-[#22c55e] font-bold text-center bg-[#22c55e]/[0.06]">Pro ✓</th>
-                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Enterprise</th>
+                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Premium</th>
                 </tr>
               </thead>
               <tbody>
