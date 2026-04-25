@@ -1,6 +1,6 @@
 import { db, BankTransaction, ReconciliationLine, Product, MatchingRule, ProductMovement, MatchingTrace } from '../dexie';
 import { useAuthStore } from '@/store';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { generateHash } from '../utils';
 import { isProductAMedida } from './utils';
 
