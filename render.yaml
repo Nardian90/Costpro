@@ -1,9 +1,9 @@
 services:
   - type: web
     name: Costpro
-    runtime: node
-    buildCommand: npm install --legacy-peer-deps && npm run build
-    startCommand: npm run start
+    runtime: bun
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
     envVars:
       - key: NODE_VERSION
         value: 22

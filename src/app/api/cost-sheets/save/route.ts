@@ -199,6 +199,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('[SaveCostSheet] Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Error interno al guardar la ficha de costo" }, { status: 500 });
   }
 }

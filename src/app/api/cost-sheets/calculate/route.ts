@@ -46,6 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch (error: any) {
     console.error('Calculation API Error:', error);
-    return NextResponse.json({ ok: false, errors: [error.message] }, { status: 500 });
+    return NextResponse.json({ ok: false, errors: ["Error interno en el motor de cálculo"] }, { status: 500 });
   }
 }
