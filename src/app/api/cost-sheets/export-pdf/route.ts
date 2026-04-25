@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
       // ── Title bar with dark background ──
       const titleBg: [number, number, number] = isPro ? primaryColor : [50, 50, 50];
-      pdf.setFillColor(...titleBg);
+      pdf.setFillColor(titleBg[0], titleBg[1], titleBg[2]);
       pdf.rect(marginL, 8, contentW, 10, 'F');
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "bold");
