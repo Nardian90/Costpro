@@ -1,9 +1,8 @@
 'use client';
 import { LazyRender } from '@/components/ui/LazyRender';
 import { toast } from 'sonner';
-import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronRight,
@@ -14,27 +13,35 @@ import {
   Settings2,
   ArrowRight,
   LayoutGrid,
-  Info,
+  Sparkles,
   FunctionSquare,
   AlertTriangle,
   XCircle,
-  HelpCircle,
-  CheckCircle2,
-  CornerDownRight,
   MoreVertical
 } from 'lucide-react';
 import { cn, formatAccounting, formatCurrency } from '@/lib/utils';
 import { isResultRow } from '@/lib/cost-engine/constants';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { CostSheetRow, CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
+import { CostSheetRow, CostSheetSection, CalculatedRowValue, CostSheetAnnex } from '@/types/cost-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormulaEditor } from './FormulaEditor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
-import CircularProgress from './CircularProgress';
 
+// Define types based on our hook and data structure
+type CalculatedValues = Record<string, CalculatedRowValue>;
 
+interface CostSheetCardViewProps {
+  sections: CostSheetSection[];
+  groupedSections?: { id: string, label: string, sectionIds: string[] }[];
+  calculatedValues: CalculatedValues;
+  annexes: CostSheetAnnex[];
+  activeSubSectionId: string;
+  setActiveSubSectionId: (id: string) => void;
+  onOpenSections?: () => void;
+  hideHeader?: boolean;
+}
 
 interface RowCardProps {
   row: CostSheetRow;
@@ -43,7 +50,6 @@ interface RowCardProps {
   numbering: string;
   calculated: CalculatedRowValue;
   calculatedValues: Record<string, CalculatedRowValue>;
-  calculatedHeader?: any;
   path: (string | number)[];
   annexes: any[];
   suggestions: any;
@@ -56,7 +62,6 @@ const RowCard: React.FC<RowCardProps> = memo(({
   numbering,
   calculated,
   calculatedValues,
-  calculatedHeader,
   path,
   annexes,
   suggestions
@@ -99,55 +104,49 @@ const RowCard: React.FC<RowCardProps> = memo(({
   };
 
   const handleTotalSave = (val: string) => {
-    handleValueChange('formula', val);
+    if (val.startsWith('=')) {
+        handleValueChange('formula', val);
+        handleValueChange('totalFormula', val);
+    } else {
+        handleValueChange('formula', null);
+        handleValueChange('totalFormula', null);
+        handleValueChange('total', parseFloat(val) || 0);
+    }
     setIsEditingTotal(false);
   };
 
   return (
     <div className={cn(
-      "mb-3 rounded-2xl border transition-all",
-      isResult ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card border-border/50",
-      level > 0 && "ml-4 border-l-2 border-l-primary/30"
+      "p-4 rounded-3xl border transition-all duration-300 relative overflow-hidden",
+      isResult ? "bg-primary/5 border-primary/20" : "bg-card border-border/50",
+      level > 0 && "ml-4 border-l-2",
+      isExpanded && "shadow-lg"
     )}>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2 flex-1 min-w-0">
-            <span className="text-xs font-black text-muted-foreground/50 tabular-nums shrink-0 mt-1">
+      {/* Background patterns for visual interest */}
+      <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+          <LayoutGrid className="w-24 h-24 rotate-12" />
+      </div>
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="text-[10px] font-black font-mono text-muted-foreground/40 shrink-0">
               {numbering}
             </span>
-
             <div className="flex-1 min-w-0">
-              {isEditingLabel ? (
-                <Input
-                  autoFocus
-                  className="h-8 text-sm font-bold bg-background/50 border-primary/30"
-                  defaultValue={row.label}
-                  onBlur={(e) => {
-                    handleValueChange('label', e.target.value);
-                    setIsEditingLabel(false);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleValueChange('label', (e.target as HTMLInputElement).value);
-                      setIsEditingLabel(false);
-                    }
-                  }}
-                />
-              ) : (
-                <div className="flex flex-col">
-                  <span
-                    className="text-sm font-bold text-foreground leading-tight cursor-text"
-                    onClick={() => setIsEditingLabel(true)}
-                  >
+               {isEditingLabel ? (
+                 <Input
+                    autoFocus
+                    className="h-8 text-xs font-bold uppercase tracking-widest bg-muted/50 border-primary/20 rounded-xl"
+                    defaultValue={row.label}
+                    onBlur={(e) => { handleValueChange('label', e.target.value); setIsEditingLabel(false); }}
+                    onKeyDown={(e) => e.key === 'Enter' && (handleValueChange('label', (e.target as HTMLInputElement).value) || setIsEditingLabel(false))}
+                 />
+               ) : (
+                 <h4 className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)}>
                     {row.label}
-                  </span>
-                  {['13', '13.1'].includes(row.id) && (calculatedValues?.['12.1']?.total ?? calculatedValues?.['12']?.total) > 0 && (
-                    <span className="mt-1 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      {(((calculatedValues['13.1']?.total ?? calculatedValues['13']?.total) / (calculatedValues['12.1']?.total ?? calculatedValues['12']?.total)) * 100).toFixed(1)}% s/ costo
-                    </span>
-                  )}
-                </div>
-              )}
+                 </h4>
+               )}
             </div>
           </div>
 
@@ -201,88 +200,104 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     onSave={handleVHSave}
                     onCancel={() => setIsEditingVH(false)}
                     suggestions={suggestions}
+                    compact
                   />
                 </div>
               ) : (
-                <div className={cn(
-                  "p-2 rounded-xl border border-border/50 text-right transition-all",
-                  (hasChildren || row.vhFormula) ? "bg-muted/30 font-bold border-dashed border-primary/30" : "bg-background"
-                )}>
-                  <span className="text-xs font-black tabular-nums">
+                <div className="flex items-baseline gap-1">
+                  <span className={cn(
+                    "text-lg font-black font-mono tracking-tighter transition-colors",
+                    (row.vhFormula || hasChildren) ? "text-primary/70" : "text-foreground"
+                  )}>
                     {hasChildren
                       ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                       : (row.vhFormula
-                          ? formatAccounting(safeCalculated.calculatedVH ?? 0)
-                          : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
-                    {isRowPercent && "%"}
+                          ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
+                          : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.valorHistorico ?? 0)))}
                   </span>
-                  {row.vhFormula && <FunctionSquare className="w-2.5 h-2.5 text-primary/40 absolute left-2 top-2.5" />}
+                  {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/30" />}
+                  {isRowPercent && <span className="text-[10px] font-bold text-muted-foreground">%</span>}
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-1 text-right">
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground/60">Total Actual</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-primary/60">Total {row.um || row.unit || "CUP"}</p>
             <div
               className="relative cursor-pointer group/total"
-              onClick={() => setIsEditingTotal(true)}
+              onClick={() => !hasChildren && setIsEditingTotal(true)}
             >
               {isEditingTotal ? (
-                <div className="z-20 relative">
-                  <FormulaEditor
-                    initialValue={row.formula || String(safeCalculated.total)}
-                    onSave={handleTotalSave}
-                    onCancel={() => setIsEditingTotal(false)}
-                    suggestions={suggestions}
-                  />
-                </div>
+                 <div className="z-20 relative">
+                    <FormulaEditor
+                      initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
+                      onSave={handleTotalSave}
+                      onCancel={() => setIsEditingTotal(false)}
+                      suggestions={suggestions}
+                      compact
+                    />
+                 </div>
               ) : (
-                <div className={cn(
-                  "p-2 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-end gap-2 transition-all",
-                  "hover:bg-primary/10"
-                )}>
-                  {criticalErrors.length > 0 ? (
-                    <XCircle className="w-3 h-3 text-destructive animate-pulse" />
-                  ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
-                    <AlertTriangle className="w-3 h-3 text-amber-500 animate-bounce" />
-                  ) : (
-                    <CheckCircle2 className="w-3 h-3 text-primary opacity-40" />
-                  )}
-                  <span className="text-sm font-black text-primary tabular-nums">
-                    {formatCurrency(safeCalculated.total)}
+                <div className="flex items-center justify-end gap-1.5">
+                  <span className="text-xl font-black font-mono tracking-tighter text-primary drop-shadow-sm">
+                    {formatAccounting(safeCalculated.total)}
                   </span>
+                  {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Validation Badges */}
+        {(criticalErrors.length > 0 || warningErrors.length > 0 || hasEngineWarnings) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {criticalErrors.map((e, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-destructive/10 border border-destructive/20 text-[9px] font-bold text-destructive uppercase tracking-widest">
+                <XCircle className="w-2.5 h-2.5" />
+                {e.message}
+              </div>
+            ))}
+            {warningErrors.map((e, idx) => (
+              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+                <AlertTriangle className="w-2.5 h-2.5" />
+                {e.message}
+              </div>
+            ))}
+            {hasEngineWarnings && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">
+                <Sparkles className="w-2.5 h-2.5" />
+                Calculado
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Children Container */}
       <AnimatePresence>
         {isExpanded && hasChildren && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-border/50 bg-muted/20"
+            className="mt-4 space-y-4 pt-4 border-t border-border/30"
           >
-            <div className="p-2 space-y-1">
-              {row.children?.map((child, childIdx) => (
-                <RowCard
-                  key={child.id}
-                  row={child}
-                  level={level + 1}
-                  index={childIdx}
-                  numbering={`${numbering}.${childIdx + 1}`}
-                  calculated={calculatedValues?.[child.id] || {} as any}
-                  calculatedValues={calculatedValues}
-                  path={[...path, 'children', childIdx]}
-                  annexes={annexes}
-                  suggestions={suggestions}
-                />
-              ))}
-            </div>
+            {row.children!.map((child, childIdx) => (
+              <RowCard
+                key={child.id}
+                row={child}
+                level={level + 1}
+                index={childIdx}
+                numbering={`${numbering}.${childIdx + 1}`}
+                calculated={calculatedValues?.[child.id] || {} as any}
+                calculatedValues={calculatedValues}
+                path={[...path, 'children', childIdx]}
+                annexes={annexes}
+                suggestions={suggestions}
+              />
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -290,82 +305,30 @@ const RowCard: React.FC<RowCardProps> = memo(({
   );
 });
 
-interface CostSheetCardViewProps {
-  sections: CostSheetSection[];
-  groupedSections: any[];
-  calculatedValues: Record<string, CalculatedRowValue>;
-  calculatedHeader?: any;
-  annexes: any[];
-  activeSubSectionId: string;
-  setActiveSubSectionId: (id: string) => void;
-  onOpenSections: () => void;
-}
-
 const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   sections,
   groupedSections,
   calculatedValues,
-  calculatedHeader,
   annexes,
   activeSubSectionId,
   setActiveSubSectionId,
-  onOpenSections
+  onOpenSections,
+  hideHeader = false
 }) => {
-  const { addMainSection, removeMainSection, updateValue, addMainRow } = useCostSheetStore();
-  const sectionInputRef = React.useRef<HTMLInputElement>(null);
-  const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
+  const { updateValue, addMainRow, addMainSection, removeMainSection } = useCostSheetStore();
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  const toggleSection = (sectionId: string) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
+  const toggleSection = (id: string) => {
+    setCollapsedSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const handleImportSectionExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-        const importedRows = await importSectionFromExcel(file);
-        if (importedRows && importedRows.length > 0) {
-            updateValue(['sections', sectionIndex, 'rows'], importedRows);
-            toast.success("Sección importada correctamente");
-        }
-    } catch (error) {
-        console.error("Error importing section:", error);
-        toast.error("Error al importar la sección. Verifique el formato.");
-    } finally {
-        if (sectionInputRef.current) sectionInputRef.current.value = '';
-    }
-  }, [updateValue]);
-
-  // KPI Calculation logic matching Summary
-  const getTotal = (id: string) => calculatedValues?.[id]?.total || 0;
-  const totalCost = (getTotal('12.1') || getTotal('12'));
-  const utility = (getTotal('13.1') || getTotal('13'));
-  const finalPrice = (getTotal('14.1') || getTotal('14'));
-
-  // Indirect Expenses Coefficient
-  const g4 = getTotal('4');
-  const g6 = getTotal('6');
-  const g7 = getTotal('7');
-  const s2 = getTotal('2');
-  const indirectCoef = s2 > 0 ? (g4 + g6 + g7) / s2 : 0;
-
-  // Percentages relative to Final Price (match Stitch design)
-  const costPercent = finalPrice > 0 ? (totalCost / finalPrice) * 100 : 0;
-  const utilityPercent = finalPrice > 0 ? (utility / finalPrice) * 100 : 0;
-  const pricePercent = finalPrice > 0 ? 100 : 0;
 
   const currentGroup = groupedSections?.find(g => g.id === activeSubSectionId);
   const isAll = activeSubSectionId === 'all';
   const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
   // Suggestions for FormulaEditor
-  const suggestions = React.useMemo(() => {
+  const suggestions = useMemo(() => {
     const list: any[] = [
       ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ];
@@ -383,99 +346,45 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
     });
     list.push(
       { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
-      { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
-      { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
-      { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
-      { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
-      { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
-      { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
-      { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' }
+      { label: 'PCT', value: 'PCT(', description: 'Porcentaje de un valor' },
+      { label: 'hijos', value: 'hijos', description: 'Referencia a filas hijas' }
     );
     return list;
   }, [sections, annexes]);
 
 
-  if (!activeSubSectionId) {
+  if (!sections || sections.length === 0) {
     return (
-        <div className="py-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="p-12 text-center bg-muted/20 rounded-[2.5rem] border-2 border-dashed border-border/50 mx-4">
             <div className="max-w-md mx-auto space-y-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 neu-raised-sm">
-                    <LayoutGrid className="w-10 h-10 text-primary animate-pulse" />
+                <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto rotate-12">
+                    <LayoutGrid className="w-10 h-10 text-primary" />
                 </div>
-                <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">Seleccione una Sección</h2>
-                <div className="grid grid-cols-1 gap-3 pt-4">
-                    {groupedSections.map((item, idx) => (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveSubSectionId(item.id)}
-                            className="w-full flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
-                        >
-                            <div className="flex items-center gap-3 text-left">
-                                <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
-                                <span className="font-bold text-xs uppercase tracking-wider">{item.label}</span>
-                            </div>
-                            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
-                        </button>
-                    ))}
-                    <Button
-                        onClick={addMainSection}
-                        variant="outline"
-                        className="w-full h-14 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span className="font-bold uppercase tracking-widest text-xs">Nueva Sección</span>
-                    </Button>
+                <div className="space-y-2">
+                    <h3 className="text-2xl font-black uppercase tracking-tight italic">Tablero Vacío</h3>
+                    <p className="text-sm text-muted-foreground font-medium">Esta ficha aún no tiene una estructura de costos. Empieza diseñando la primera sección.</p>
                 </div>
+                <Button
+                  onClick={addMainSection}
+                  className="w-full h-16 rounded-[1.5rem] bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Crear Primera Sección
+                </Button>
             </div>
         </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
-      <input
-        type="file"
-        ref={sectionInputRef}
-        className="hidden"
-        accept=".xlsx,.xls"
-        onChange={(e) => {
-            if (importingSectionIndex !== null) {
-                handleImportSectionExcel(e, importingSectionIndex);
-                setImportingSectionIndex(null);
-            }
-        }}
-      />
-      {/* Top circular KPIs */}
-      <div className="bg-card backdrop-blur-md rounded-[2.5rem] p-6 border border-border/50 shadow-sm mx-2">
-        <div className="flex items-center justify-around">
-          <CircularProgress
-            value={costPercent}
-            label="Costo Total"
-            subLabel={formatCurrency(totalCost)}
-            color="text-primary"
-          />
-          <CircularProgress
-            value={utilityPercent}
-            label="Utilidad"
-            subLabel={formatCurrency(utility)}
-            color="text-primary"
-          />
-          <CircularProgress
-            value={pricePercent}
-            label="P. Venta"
-            subLabel={formatCurrency(finalPrice)}
-            color="text-primary"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-4 mt-8">
-          <h3 className="text-lg font-black uppercase tracking-tighter italic flex items-center gap-2">
-            <div className="w-1 h-5 bg-primary rounded-full" />
-            Análisis de Desglose
-          </h3>
-          <span className="text-xs font-black text-muted-foreground/50 uppercase tracking-widest">
+    <div className="space-y-12 pb-24" data-testid="cost-sheet-card-view">
+      <div className="px-4">
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/10 rounded-2xl p-3 mb-8">
+          <div className="flex items-center gap-3">
+             <LayoutGrid className="w-4 h-4 text-primary" />
+             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70">Modo Tarjeta Activo</span>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
             {annexes?.[0]?.data?.[0]?.um || 'UND'} / TOTAL
           </span>
         </div>
@@ -486,32 +395,34 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
           return (
             <LazyRender key={section.id}>
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-4 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
+              {!hideHeader && (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
+                    >
+                      <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} />
+                    </button>
+                    <Input
+                      className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
+                      value={section.label}
+                      onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 w-9 p-0 bg-primary/5 text-primary rounded-xl"
+                    onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
                   >
-                    <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} />
-                  </button>
-                  <Input
-                    className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
-                    value={section.label}
-                    onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
-                  />
+                    <Settings2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-9 w-9 p-0 bg-primary/5 text-primary rounded-xl"
-                  onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
-                >
-                  <Settings2 className="w-4 h-4" />
-                </Button>
-              </div>
+              )}
 
-<AnimatePresence initial={false}>
-                {!collapsedSections[section.id] && (
+              <AnimatePresence initial={false}>
+                {(!collapsedSections[section.id] || hideHeader) && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
@@ -519,7 +430,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <div className="space-y-1 pt-2">
+                    <div className="space-y-4 pt-2">
                       {(section?.rows || []).map((row, rowIndex) => (
                         <RowCard
                           key={row.id}
@@ -559,16 +470,12 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         section={activeSectionForActions?.section}
         onExport={() => activeSectionForActions && exportSectionToExcel(activeSectionForActions.section, calculatedValues)}
         onImport={() => {
-            if (activeSectionForActions) {
-                setImportingSectionIndex(activeSectionForActions.index);
-                setTimeout(() => sectionInputRef.current?.click(), 0);
-            }
+            toast.info("Importación desde Excel no disponible en vista de tarjetas");
         }}
         onAddRow={() => activeSectionForActions && addMainRow(['sections', activeSectionForActions.index, 'rows'])}
         onRemove={() => {
             if (activeSectionForActions) {
                 removeMainSection(activeSectionForActions.index);
-                setActiveSubSectionId('');
                 setActiveSectionForActions(null);
             }
         }}
@@ -576,5 +483,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
     </div>
   );
 });
+
+CostSheetCardView.displayName = 'CostSheetCardView';
 
 export default CostSheetCardView;
