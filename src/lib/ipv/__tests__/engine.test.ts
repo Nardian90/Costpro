@@ -4,6 +4,12 @@ import { MatchingEngine } from '../engine';
 import { BankTransaction, Product, MatchingRule } from '../../dexie';
 
 // Mock Dexie
+vi.mock('@/store', () => ({
+  useAuthStore: {
+    getState: () => ({ user: { id: 'test-user', fullName: 'Test User' } })
+  }
+}));
+
 vi.mock('../../dexie', () => ({
   db: {
     transaction: vi.fn((mode, tables, callback) => callback()),
@@ -23,7 +29,18 @@ vi.mock('../../dexie', () => ({
       equals: vi.fn().mockReturnThis(),
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
+    },
+    matching_logs: {
+      add: vi.fn().mockResolvedValue({}),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      reverse: vi.fn().mockReturnThis(),
+      sortBy: vi.fn().mockResolvedValue([]),
+    },
+    period_closures: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
     }
   }
 }));
@@ -44,7 +61,7 @@ describe('MatchingEngine', () => {
 
   it('should respect STOCK_LIMIT rule', async () => {
     const limitedRules: MatchingRule[] = [
-      { id: 'stock', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
+      { id: 'stock', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true, meta: { allow_negative: false } },
       { id: 'exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true }
     ];
 
@@ -172,5 +189,54 @@ describe('MatchingEngine', () => {
     expect(onProgress).toHaveBeenCalledTimes(2);
     expect(onProgress).toHaveBeenNthCalledWith(1, 50);
     expect(onProgress).toHaveBeenNthCalledWith(2, 100);
+  });
+
+  it('should prevent matching if period is closed', async () => {
+    // Setup closed period in mock
+    const { db } = await import('../../dexie');
+    (db.period_closures.first as any).mockResolvedValueOnce({ status: 'CLOSED' });
+
+    const tx: BankTransaction = {
+      id: 'tx_closed',
+      fecha: '2025-08-01',
+      referencia_corta: 'CLOSED',
+      referencia_origen: 'CLOSED',
+      observaciones: 'CLOSED',
+      importe_cents: 260,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: '',
+      ingestion_hash: ''
+    };
+
+    const result = await engine.matchTransaction(tx);
+    expect(result.status).toBe('PENDIENTE');
+    expect(result.logs[0]).toContain('Error: El periodo 2025-08 está cerrado');
+    expect(result.trace[0].rule).toBe('CUT_OFF');
+  });
+
+  it('should include NIIF 15 compliance fields in reconciliation lines', async () => {
+    const tx: BankTransaction = {
+      id: 'tx_niif',
+      fecha: '2025-08-01',
+      referencia_corta: 'REF_NIIF',
+      referencia_origen: 'REF_NIIF',
+      observaciones: 'PAGO COD:1',
+      importe_cents: 260,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: '',
+      ingestion_hash: ''
+    };
+
+    const result = await engine.matchTransaction(tx);
+    expect(result.status).toBe('COMPLETO');
+    expect(result.lines).toHaveLength(1);
+
+    const line = result.lines[0];
+    expect(line.control_transfer_date).toBe('2025-08-01');
+    expect(line.performance_obligation_id).toBeDefined();
+    expect(line.performance_obligation_id).toContain('PO-1-');
+    expect(line.sale_id).toBeDefined();
   });
 });

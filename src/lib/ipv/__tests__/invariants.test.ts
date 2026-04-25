@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MatchingEngine } from '../engine';
-import { Product, MatchingRule, BankTransaction } from '../../dexie';
+import { Product, MatchingRule, BankTransaction, ReconciliationLine } from '../../dexie';
+import { AccountingIntegrityService } from '../integrity-service';
 
 // Mock Dexie & Services
+vi.mock('@/store', () => ({
+  useAuthStore: {
+    getState: () => ({ user: { id: 'test-user', fullName: 'Test User' } })
+  }
+}));
+
 vi.mock('../../dexie', () => ({
   db: {
     matching_cache: {
@@ -34,7 +41,15 @@ vi.mock('../../dexie', () => ({
     intelligent_receipts: {
       put: vi.fn().mockResolvedValue("mock-id")
     },
-    transaction: vi.fn((type, tables, callback) => callback())
+    transaction: vi.fn((type, tables, callback) => callback()),
+    period_closures: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
+    },
+    bank_statements: {
+      toArray: vi.fn().mockResolvedValue([]),
+    }
   }
 }));
 
@@ -45,6 +60,7 @@ vi.mock('../../services/matching-log-service', () => ({
 }));
 
 describe('IPV Invariants', () => {
+  const service = new AccountingIntegrityService();
   const products: Product[] = [
     {
         cod: 'PROD1',
@@ -72,12 +88,14 @@ describe('IPV Invariants', () => {
         unit_factor: 10,
         unit_level: 'BOX',
         stock_inicial_manual: 1,
-        created_at: ''
+        created_at: '',
+        id_grupo: 'GRP1',
+        cod_hijo: 'PROD1'
     }
   ];
 
   const rules: MatchingRule[] = [
-    { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
+    { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true, meta: { allow_negative: false } },
     { id: '2', tipo: 'HARD_REF', prioridad: 2, activo: true },
     { id: '3', tipo: 'EXACT_SUM', prioridad: 3, activo: true }
   ];
@@ -107,7 +125,7 @@ describe('IPV Invariants', () => {
       id: 'tx2',
       fecha: '2025-01-01',
       referencia_origen: 'REF2',
-      observaciones: 'PAGO Producto Test 100', // Forces HARD_REF to PROD1
+      observaciones: 'PAGO PROD1', // Forces HARD_REF to PROD1
       importe_cents: 1500, // 15 units of PROD1
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
@@ -158,5 +176,43 @@ describe('IPV Invariants', () => {
           const p = modifiedProducts.find(prod => prod.cod === line.product_cod);
           expect(line.precio_unitario_cents).toBe(p?.precio_cents);
       }
+  });
+
+  it('should detect missing NIIF 15 fields', async () => {
+    const lines: ReconciliationLine[] = [
+      {
+        id: '1', transaction_ref: 'T1', fecha_operacion: '2024-01-01',
+        transfer_amount_cents: 1000, cash_amount_cents: 0, total_amount_cents: 1000,
+        status: 'VALID', product_cod: 'P1', product_name: 'P1', product_um: 'U',
+        cantidad: 1, precio_unitario_cents: 1000, created_at: '', reconciliation_hash: '',
+        payment_status: 'MATCHED', origen_dato: 'AUTO_MATCH'
+      }
+    ];
+
+    const res = (service as any).checkNIIF15Compliance(lines);
+    expect(res.status).toBe('ERROR');
+    expect(res.details.missing_control_date).toBe(1);
+    expect(res.details.missing_performance_obligation).toBe(1);
+    expect(res.details.missing_sale_id).toBe(1);
+    expect(res.details.missing_user_id).toBe(1);
+  });
+
+  it('should pass if NIIF 15 fields are present', async () => {
+    const lines: ReconciliationLine[] = [
+      {
+        id: '1', transaction_ref: 'T1', fecha_operacion: '2024-01-01',
+        transfer_amount_cents: 1000, cash_amount_cents: 0, total_amount_cents: 1000,
+        status: 'VALID', product_cod: 'P1', product_name: 'P1', product_um: 'U',
+        cantidad: 1, precio_unitario_cents: 1000, created_at: '', reconciliation_hash: '',
+        payment_status: 'MATCHED', origen_dato: 'AUTO_MATCH',
+        control_transfer_date: '2024-01-01',
+        performance_obligation_id: 'PO-1',
+        sale_id: 'SALE-1',
+        user_id: 'test-user'
+      }
+    ];
+
+    const res = (service as any).checkNIIF15Compliance(lines);
+    expect(res.status).toBe('OK');
   });
 });
