@@ -20,6 +20,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { cn, formatAccounting, formatCurrency } from '@/lib/utils';
+import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import { isResultRow } from '@/lib/cost-engine/constants';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { CostSheetRow, CostSheetSection, CalculatedRowValue, CostSheetAnnex } from '@/types/cost-sheet';
@@ -140,7 +141,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     className="h-8 text-xs font-bold uppercase tracking-widest bg-muted/50 border-primary/20 rounded-xl"
                     defaultValue={row.label}
                     onBlur={(e) => { handleValueChange('label', e.target.value); setIsEditingLabel(false); }}
-                    onKeyDown={(e) => e.key === 'Enter' && (handleValueChange('label', (e.target as HTMLInputElement).value) || setIsEditingLabel(false))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { handleValueChange('label', (e.target as HTMLInputElement).value); setIsEditingLabel(false); } }}
                  />
                ) : (
                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)}>
@@ -200,7 +201,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     onSave={handleVHSave}
                     onCancel={() => setIsEditingVH(false)}
                     suggestions={suggestions}
-                    compact
+
                   />
                 </div>
               ) : (
@@ -235,7 +236,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                       onSave={handleTotalSave}
                       onCancel={() => setIsEditingTotal(false)}
                       suggestions={suggestions}
-                      compact
+
                     />
                  </div>
               ) : (
