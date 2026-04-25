@@ -27,6 +27,7 @@ Se empleó una técnica de **Auditoría de Caja Blanca** (análisis estático de
 
 ### Fase II: APIs y Persistencia
 - **Seguridad de Endpoints:** Implementación correcta de `rateLimit` y validación de esquemas con `Zod`.
+- **Hardening de Seguridad:** Se detectó y corrigió una vulnerabilidad de fuga de información técnica en las respuestas de error (`/api/cost-sheets/*`). Ahora las respuestas son sanitizadas y localizadas al español.
 - **Integridad de Datos:** Los procesos de guardado y carga realizan un merge inteligente con plantillas base, asegurando que ninguna ficha pierda la estructura ministerial requerida.
 
 ### Fase III: Interfaz de Usuario (UI/UX)
@@ -42,13 +43,13 @@ Se empleó una técnica de **Auditoría de Caja Blanca** (análisis estático de
 
 ## 3. Market Readiness Index (MRI)
 
-### ** MRI Score Final: 93.8 / 100 **
+### ** MRI Score Final: 94.5 / 100 **
 
 | Categoría | Puntaje | Peso | Hallazgo Principal |
 | :--- | :---: | :---: | :--- |
 | Arquitectura | 95 | 35% | JSON-first altamente desacoplado. |
 | Cumplimiento | 100 | 25% | Soporte nativo y validado de Res. 148. |
-| Seguridad | 90 | 20% | Sandbox robusto; mínima fuga en logs de error. |
+| Seguridad | 95 | 20% | Sandbox robusto y APIs sanitizadas. |
 | UX/Performance | 88 | 20% | Solver optimizado; UI técnica de alto nivel. |
 
 ---
@@ -57,5 +58,5 @@ Se empleó una técnica de **Auditoría de Caja Blanca** (análisis estático de
 El módulo de costo de **CostPro** se encuentra en un estado de madurez excepcional. La lógica es determinista, segura y cumple con los estándares legales cubanos más exigentes.
 
 **Recomendaciones finales:**
-1. Sanitizar mensajes de error en `/api/cost-sheets/calculate` para evitar devolver trazas de error crudas al cliente.
-2. Implementar virtualización de filas (Virtual List) en la vista de tabla para fichas que excedan las 500 líneas.
+1. Implementar virtualización de filas (Virtual List) en la vista de tabla para fichas que excedan las 500 líneas.
+2. Considerar el uso de Web Workers para cálculos masivos en el cliente si se proyectan fichas de >2000 filas.
