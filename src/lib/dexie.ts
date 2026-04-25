@@ -146,6 +146,7 @@ export interface MatchingLog {
   trace?: MatchingTrace[];
   applied_rules?: string[];
   matching_confidence?: number;
+  sale_id?: string; // Trazabilidad NIIF 15
 
   // Detalles del fallo (si aplica)
   fail_reason?: string;
@@ -175,6 +176,12 @@ export interface ReconciliationLine {
   // Status
   status: 'VALID' | 'INVALID_ORPHAN';
   payment_status: 'MATCHED' | 'PARTIAL' | 'OVERPAYMENT';
+
+  // NIIF 15 & Traceability
+  control_transfer_date?: string; // Fecha de transferencia de control (Requisito NIIF 15)
+  performance_obligation_id?: string; // Obligación de desempeño asociada
+  sale_id?: string; // Identificador único de la venta (Trazabilidad)
+  user_id?: string; // Usuario que realizó la acción (Auditoría)
 
   // Operational (SC-3-01)
   product_cod: string;
@@ -530,6 +537,15 @@ export class IPVDatabase extends Dexie {
     });
     this.version(32).stores({
       product_price_changes: "&id, product_cod, fecha"
+    });
+
+    this.version(33).stores({
+      reconciliation_lines: "&id, transaction_ref, reconciliation_hash, fecha_operacion, product_cod, origen_dato, parent_transaction_id, source_type, status, payment_status, sale_id"
+    });
+
+    this.version(34).stores({
+      reconciliation_lines: "&id, transaction_ref, reconciliation_hash, fecha_operacion, product_cod, origen_dato, parent_transaction_id, source_type, status, payment_status, sale_id, user_id",
+      matching_logs: "&id, transaction_ref, fecha_ejecucion, resultado_estado, matching_confidence, sale_id, *applied_rules"
     });
   }
 }

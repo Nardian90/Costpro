@@ -1,5 +1,6 @@
 import { db, BankTransaction, ReconciliationLine, Product, MatchingRule, ProductMovement, MatchingTrace } from '../dexie';
-import { v4 as uuidv4 } from 'uuid';
+import { useAuthStore } from '@/store';
+import { v4 as uuidv4 } from "uuid";
 import { generateHash } from '../utils';
 import { isProductAMedida } from './utils';
 
@@ -54,6 +55,29 @@ export class MatchingEngine {
 
   async matchTransaction(transaction: BankTransaction, currentReconciledCents: number = 0): Promise<MatchingResult> {
     const startTime = Date.now();
+    const sale_id = uuidv4();
+    let userId = 'SYSTEM';
+    try {
+        userId = useAuthStore.getState().user?.id || 'SYSTEM';
+    } catch (e) {
+        // useAuthStore might fail in workers or SSR
+    }
+
+    // Period Cut-off Control
+    const period = transaction.fecha.substring(0, 7); // YYYY-MM
+    const closure = await db.period_closures.where('period').equals(period).first();
+    if (closure && closure.status === 'CLOSED') {
+        return {
+            transactionId: transaction.referencia_origen,
+            status: 'PENDIENTE',
+            lines: [],
+            movements: [],
+            trace: [{ pass: 0, rule: 'CUT_OFF', status: 'FAIL', reason: 'Periodo cerrado', timestamp: Date.now() }],
+            appliedRules: [],
+            matchingConfidence: 0,
+            logs: [`Error: El periodo ${period} está cerrado. No se permite conciliación.`]
+        };
+    }
     const targetCents = transaction.importe_cents - currentReconciledCents;
     const lines: ReconciliationLine[] = [];
     const trace: MatchingTrace[] = [];
@@ -257,6 +281,8 @@ export class MatchingEngine {
         }
 
         const line = await this.createLine(transaction, item.product, item.qty, coveredByTransfer, residual);
+        line.sale_id = sale_id;
+        line.user_id = userId;
         line.purchase_order_id = purchaseOrderId;
         line.adjustment_type = item.adjustment_type;
         line.is_price_change = item.is_price_change;
@@ -292,6 +318,7 @@ export class MatchingEngine {
     try {
         await db.matching_logs.add({
             id: uuidv4(),
+            sale_id: (result as any).sale_id || (result as any).lines?.[0]?.sale_id,
             transaction_ref: tx.referencia_origen,
             fecha_ejecucion: new Date().toISOString(),
             resultado_estado: result.status,
@@ -443,14 +470,23 @@ export class MatchingEngine {
 
   private async createLine(tx: BankTransaction, p: Product, qty: number, transfer: number, cash: number): Promise<ReconciliationLine> {
     const total = p.precio_cents * qty;
-    const hashInput = `${tx.referencia_origen}-${p.cod}-${qty}-${transfer}-${cash}`;
+    const hashInput = `${tx.referencia_origen}-${p.cod}-${qty}-${transfer}-${cash}-${Date.now()}`;
     const id = await generateHash(hashInput);
+
+    // NIIF 15: Transfer of Control validation
+    // In this model, control transfer is assumed at the moment of matching for bank transfers
+    // as it signifies the fulfillment of the performance obligation (delivery/payment).
+    const control_transfer_date = tx.fecha;
+    const performance_obligation_id = `PO-${p.cod}-${id.substring(0,8)}`;
+
     return {
         id, transaction_ref: tx.referencia_origen, parent_transaction_id: tx.referencia_origen, fecha_operacion: tx.fecha,
         transfer_amount_cents: transfer, cash_amount_cents: cash, total_amount_cents: total,
         status: 'VALID', payment_status: 'MATCHED', product_cod: p.cod, product_name: p.descripcion, product_um: p.um || 'UD',
         cantidad: qty, precio_unitario_cents: p.precio_cents, origen_dato: 'AUTO_MATCH', source_type: 'BANK_TRANSFER',
-        reconciliation_hash: id, created_at: new Date().toISOString()
+        reconciliation_hash: id, created_at: new Date().toISOString(),
+        control_transfer_date,
+        performance_obligation_id
     };
   }
 

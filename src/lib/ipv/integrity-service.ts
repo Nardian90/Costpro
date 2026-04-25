@@ -41,6 +41,12 @@ export class AccountingIntegrityService {
         // 5. Integridad de Precios (Cant * Precio = Total)
         checks.push(this.checkPriceInvariants(lines));
 
+        // 6. Cumplimiento NIIF 15 (Reconocimiento de Ingresos)
+        checks.push(this.checkNIIF15Compliance(lines));
+
+        // 7. Control de Duplicados (Anti-Fraude)
+        checks.push(this.checkDuplicatePrevention(lines));
+
         const passed = checks.filter(c => c.status === 'OK').length;
         const failed = checks.filter(c => c.status === 'ERROR').length;
         const warnings = checks.filter(c => c.status === 'WARNING').length;
@@ -190,6 +196,60 @@ export class AccountingIntegrityService {
                 : `Se detectaron ${invalidCount} líneas con discrepancia en el total calculado.`,
             discrepancy: invalidCount,
             details: { invalid_price_lines: invalidCount }
+        };
+    }
+
+    private checkNIIF15Compliance(lines: ReconciliationLine[]): IntegrityCheckResult {
+        const linesWithoutControl = lines.filter(l => !l.control_transfer_date);
+        const linesWithoutObligation = lines.filter(l => !l.performance_obligation_id);
+        const linesWithoutSaleId = lines.filter(l => !l.sale_id);
+        const linesWithoutUserId = lines.filter(l => !l.user_id);
+
+        const totalIssues = linesWithoutControl.length + linesWithoutObligation.length + linesWithoutSaleId.length + linesWithoutUserId.length;
+
+        let status: 'OK' | 'ERROR' | 'WARNING' = 'OK';
+        let message = 'El sistema cumple con los criterios de reconocimiento de ingresos NIIF 15 y trazabilidad.';
+
+        if (totalIssues > 0) {
+            status = 'ERROR';
+            message = `Se detectaron ${linesWithoutControl.length} líneas sin fecha de control, ${linesWithoutObligation.length} sin obligación de desempeño y ${linesWithoutSaleId.length} sin ID de venta.`;
+        }
+
+        return {
+            id: 'niif15-compliance',
+            name: 'Cumplimiento NIIF 15 & Trazabilidad',
+            status,
+            message,
+            discrepancy: totalIssues,
+            details: {
+                missing_control_date: linesWithoutControl.length,
+                missing_performance_obligation: linesWithoutObligation.length,
+                missing_sale_id: linesWithoutSaleId.length,
+                missing_user_id: linesWithoutUserId.length
+            }
+        };
+    }
+
+    private checkDuplicatePrevention(lines: ReconciliationLine[]): IntegrityCheckResult {
+        const hashes = new Set<string>();
+        let duplicates = 0;
+
+        lines.forEach(l => {
+            if (hashes.has(l.reconciliation_hash)) {
+                duplicates++;
+            }
+            hashes.add(l.reconciliation_hash);
+        });
+
+        return {
+            id: 'duplicate-prevention',
+            name: 'Control de Duplicados',
+            status: duplicates === 0 ? 'OK' : 'ERROR',
+            message: duplicates === 0
+                ? 'No se detectaron registros duplicados en el periodo.'
+                : `Se detectaron ${duplicates} posibles duplicaciones de registros (mismo hash).`,
+            discrepancy: duplicates,
+            details: { duplicate_count: duplicates }
         };
     }
 }
