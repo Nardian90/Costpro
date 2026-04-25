@@ -15,7 +15,6 @@ import CostSheetPreview from './CostSheetPreview';
 import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
-import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetExportModal } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
@@ -34,11 +33,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
   Eye, Edit, AlertTriangle, ArrowLeft, Table2,
-  Wand2, BookOpen, Zap as ZapIcon
+  Wand2, BookOpen, Zap as ZapIcon, HelpCircle
 } from 'lucide-react';
 
 import { useCostSheetViewState } from '@/hooks/logic/useCostSheetViewState';
 import { useCostSheetActions } from '@/hooks/logic/useCostSheetActions';
+import { useExpertModeState } from '@/hooks/ui/useExpertModeState';
+import { ExpertModeAccordion } from './ExpertModeAccordion';
+import { cn } from '@/lib/utils';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
@@ -52,7 +54,6 @@ const CostSheetView = () => {
     calculatedAnnexes,
     audits,
     validations,
-    healthPercent,
     calculationResult,
     isBlocked,
     deepValidationErrors
@@ -60,11 +61,11 @@ const CostSheetView = () => {
 
   // ── Extracted Hooks ─────────────────────────────────────────────────
   const viewState = useCostSheetViewState(data, activeSection);
+  const expertState = useExpertModeState();
 
   const {
     confirmation,
     setConfirmation,
-    askConfirmation,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,
@@ -91,8 +92,6 @@ const CostSheetView = () => {
     setIsUpgradeModalOpen,
     onOpenAnnexes,
     onOpenSections,
-    allActions,
-    mainActions,
     secondaryActions,
     setCurrentView
   } = useCostSheetActions({
@@ -119,8 +118,7 @@ const CostSheetView = () => {
     effectiveLayoutMode,
     groupedSections,
     isAnnexActive,
-    navItems,
-    subSectionActions
+    navItems
   } = viewState;
 
   // ── Loading Skeleton ────────────────────────────────────────────────
@@ -146,7 +144,11 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
-      <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
+      <CostSheetHelpPanel
+        isOpen={isHelpPanelOpen || expertState.isHelpOpen}
+        onClose={() => { setIsHelpPanelOpen(false); expertState.closeHelp(); }}
+        contextId={expertState.helpContext}
+      />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
@@ -182,7 +184,7 @@ const CostSheetView = () => {
       <CostSheetSidebarNav
         isOpen={isAnnexesSidebarOpen}
         onClose={() => setIsAnnexesSidebarOpen(false)}
-        title="Anexos Disponibles"
+        title="Anexos de la Ficha"
         type="annexes"
         items={data?.annexes || []}
         activeId={activeSection}
@@ -272,7 +274,6 @@ const CostSheetView = () => {
                     {activeSection === 'kpis' && (
                          <div className="animate-in zoom-in-95 duration-500 py-8">
                             <CostSheetSummary />
-                            {/* CostSheetFormulaGuide movido al HelpPanel */}
                         </div>
                     )}
                     {activeSection === 'header' && (
@@ -280,23 +281,109 @@ const CostSheetView = () => {
                             <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                         </div>
                     )}
-                    {(activeSection === 'main' || activeSection === 'all-content' || activeSection === 'expert-content') && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {(activeSection === 'all-content' || activeSection === 'expert-content') && (
-                                <>
-                                    <div className="px-8 py-10 mb-12 bg-card rounded-[2.5rem] border border-border shadow-sm">
-                                        <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
-                                            <ZapIcon className="w-8 h-8" />
-                                            Ficha: Vista Consolidada
-                                        </h2>
-                                        <p className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground mt-2 pl-1">Todas las Secciones y Anexos</p>
-                                    </div>
-                                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-12">
-                                        <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
-                                    </div>
-                                </>
-                            )}
 
+                    {(activeSection === 'all-content' || activeSection === 'expert-content') && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <div className="px-8 py-10 mb-6 bg-card rounded-[2.5rem] border border-border shadow-sm">
+                                <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+                                    <ZapIcon className="w-8 h-8" />
+                                    Ficha: Vista Consolidada
+                                </h2>
+                                <p className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground mt-2 pl-1">Exploración Progresiva Asistida</p>
+                            </div>
+
+                            {/* Header Section (Always Visible) */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between px-2">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Datos Generales</h3>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 rounded-xl text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-[10px]"
+                                        onClick={() => expertState.setHelpContext('header')}
+                                    >
+                                        <HelpCircle className="w-3.5 h-3.5 mr-2" />
+                                        Ayuda Contextual
+                                    </Button>
+                                </div>
+                                <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
+                            </div>
+
+                            {/* Body Sections (Individual Accordions) */}
+                            <div className="space-y-4">
+                                {(data?.sections || []).map((section: any) => (
+                                <ExpertModeAccordion
+                                    key={section.id}
+                                    id={section.id}
+                                    title={section.label || `Sección ${section.id}`}
+                                    isExpanded={expertState.expandedSections.includes(section.id)}
+                                    onToggle={() => expertState.toggleSection(section.id)}
+                                    onHelp={() => expertState.setHelpContext(section.id)}
+                                >
+                                    <LazyRender>
+                                    {effectiveLayoutMode === "grid" ? (
+                                        <CostSheetCardView
+                                            sections={[section]}
+                                            calculatedValues={calculatedValues}
+                                            annexes={data?.annexes || []}
+                                            activeSubSectionId="all"
+                                            setActiveSubSectionId={() => {}}
+                                            hideHeader={true}
+                                        />
+                                    ) : (
+                                        <CostSheetInteractiveTable
+                                            sections={[section]}
+                                            calculatedValues={calculatedValues}
+                                            annexes={data?.annexes || []}
+                                            activeSubSectionId="all"
+                                            setActiveSubSectionId={() => {}}
+                                            hideHeader={true}
+                                        />
+                                    )}
+                                    </LazyRender>
+                                </ExpertModeAccordion>
+                                ))}
+                            </div>
+
+                            {/* Annexes Container */}
+                            <ExpertModeAccordion
+                                id="annexes-root"
+                                title="Anexos de la Ficha"
+                                isExpanded={expertState.isAnnexesRootExpanded}
+                                onToggle={() => expertState.toggleAnnexesRoot()}
+                                onHelp={() => expertState.setHelpContext('annexes-root')}
+                                icon={<BookOpen className={cn("w-5 h-5 transition-transform duration-300", expertState.isAnnexesRootExpanded && "rotate-90")} />}
+                                className="border-primary/20 bg-primary/5"
+                            >
+                                <div className="space-y-4 pt-4">
+                                {(data?.annexes || []).map((annex: any) => (
+                                    <ExpertModeAccordion
+                                    key={annex.id}
+                                    id={annex.id}
+                                    title={`Anexo ${annex.id}: ${annex.title}`}
+                                    isExpanded={expertState.activeAnnexId === annex.id}
+                                    onToggle={() => expertState.setActiveAnnex(annex.id)}
+                                    onHelp={() => expertState.setHelpContext(annex.id)}
+                                    className="bg-background"
+                                    >
+                                    <CostSheetAnnexEditor
+                                        activeAnnexId={annex.id}
+                                        layoutMode={layoutMode}
+                                        calculatedAnnexes={calculatedAnnexes}
+                                    />
+                                    </ExpertModeAccordion>
+                                ))}
+                                </div>
+                            </ExpertModeAccordion>
+
+                            <div className="mt-12 pt-12 border-t border-border/50 animate-in fade-in duration-700">
+                                <CostSheetSignatureEditor />
+                            </div>
+                        </div>
+                    )}
+
+                    {activeSection === 'main' && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
                             <LazyRender>
                                 {(effectiveLayoutMode === "grid") ? (
                                     <CostSheetCardView
@@ -304,7 +391,7 @@ const CostSheetView = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={(activeSection === 'all-content' || activeSection === 'expert-content') ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={activeSubSectionId}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -314,7 +401,7 @@ const CostSheetView = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={(activeSection === 'all-content' || activeSection === 'expert-content') ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={activeSubSectionId}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -322,9 +409,10 @@ const CostSheetView = () => {
                             </LazyRender>
                         </div>
                     )}
-                    {isAnnexActive && (
+
+                    {isAnnexActive && (activeSection !== 'all-content' && activeSection !== 'expert-content') && (
                         <div className="space-y-12">
-                            {(activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content') ? (
+                            {activeSection === 'all-annexes' ? (
                                 (data?.annexes || []).map((annex: any) => (
                                     <LazyRender key={annex.id}>
                                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -346,13 +434,9 @@ const CostSheetView = () => {
                                     calculatedAnnexes={calculatedAnnexes}
                                 />
                             )}
-                            {(activeSection === 'all-content' || activeSection === 'expert-content') && (
-                                <div className="mt-12 pt-12 border-t border-border/50 animate-in fade-in duration-700">
-                                    <CostSheetSignatureEditor />
-                                </div>
-                            )}
                         </div>
                     )}
+
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
