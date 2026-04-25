@@ -56,7 +56,12 @@ export class MatchingEngine {
   async matchTransaction(transaction: BankTransaction, currentReconciledCents: number = 0): Promise<MatchingResult> {
     const startTime = Date.now();
     const sale_id = uuidv4();
-    const userId = useAuthStore.getState().user?.id || 'SYSTEM';
+    let userId = 'SYSTEM';
+    try {
+        userId = useAuthStore.getState().user?.id || 'SYSTEM';
+    } catch (e) {
+        // useAuthStore might fail in workers or SSR
+    }
 
     // Period Cut-off Control
     const period = transaction.fecha.substring(0, 7); // YYYY-MM
