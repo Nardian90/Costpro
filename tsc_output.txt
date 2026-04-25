@@ -1,0 +1,8 @@
+src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx(143,61): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx(203,21): error TS2322: Type '{ initialValue: string; onSave: (val: string) => void; onCancel: () => void; suggestions: any; compact: true; }' is not assignable to type 'IntrinsicAttributes & FormulaEditorProps'.
+  Property 'compact' does not exist on type 'IntrinsicAttributes & FormulaEditorProps'.
+src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx(238,23): error TS2322: Type '{ initialValue: string; onSave: (val: string) => void; onCancel: () => void; suggestions: any; compact: true; }' is not assignable to type 'IntrinsicAttributes & FormulaEditorProps'.
+  Property 'compact' does not exist on type 'IntrinsicAttributes & FormulaEditorProps'.
+src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx(471,52): error TS2304: Cannot find name 'exportSectionToExcel'.
+src/components/views/terminal/views/cost_sheet/CostSheetView.tsx(150,9): error TS2322: Type '{ isOpen: boolean; onClose: () => void; contextId: string | null; }' is not assignable to type 'IntrinsicAttributes & CostSheetHelpPanelProps'.
+  Property 'contextId' does not exist on type 'IntrinsicAttributes & CostSheetHelpPanelProps'.

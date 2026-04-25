@@ -2,19 +2,24 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X as XIcon, HelpCircle } from 'lucide-react';
+import { X as XIcon, HelpCircle, BookOpen, AlertCircle, Zap, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
+import { getHelpContent } from '@/lib/cost-engine/help-provider';
 
 interface CostSheetHelpPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  contextId?: string | null;
 }
 
 export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
   isOpen,
   onClose,
+  contextId,
 }) => {
+  const help = contextId ? getHelpContent(contextId) : null;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -25,7 +30,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] lg:hidden"
           />
 
           {/* Panel */}
@@ -35,7 +40,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed right-0 top-0 h-screen w-80 sm:w-96 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-50 flex flex-col overflow-hidden"
+              "fixed right-0 top-0 h-screen w-80 sm:w-96 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[101] flex flex-col overflow-hidden"
             )}
           >
             {/* Header */}
@@ -44,7 +49,9 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
                 <div className="p-2 rounded-xl bg-primary/10">
                   <HelpCircle className="w-5 h-5 text-primary" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-foreground">Ayuda y Guía</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
+                  {help ? 'Ayuda Contextual' : 'Ayuda y Guía'}
+                </span>
               </div>
               <button
                 onClick={onClose}
@@ -55,10 +62,73 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
-              <div className="px-2">
-                <CostSheetFormulaGuide />
-              </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+              {help ? (
+                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <section className="space-y-3">
+                    <div className="flex items-center gap-2 text-primary">
+                      <BookOpen className="w-4 h-4" />
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Qué es</h4>
+                    </div>
+                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+                      {help.definition}
+                    </p>
+                  </section>
+
+                  <section className="space-y-3">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Target className="w-4 h-4" />
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Para qué sirve</h4>
+                    </div>
+                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+                      {help.purpose}
+                    </p>
+                  </section>
+
+                  <section className="space-y-3 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Zap className="w-4 h-4" />
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Guía Operativa</h4>
+                    </div>
+                    <p className="text-sm text-foreground/90 leading-relaxed font-bold">
+                      {help.operation}
+                    </p>
+                  </section>
+
+                  <section className="space-y-3">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Impacto en Resultados</h4>
+                    <div className="p-4 bg-muted/30 rounded-2xl border border-border/50 italic text-xs text-muted-foreground">
+                      {help.impact}
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <div className="flex items-center gap-2 text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Errores Comunes</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {help.commonErrors.map((error, idx) => (
+                        <li key={idx} className="text-xs text-destructive/80 font-medium flex items-start gap-2">
+                          <span className="mt-1 w-1.5 h-1.5 rounded-full bg-destructive/30 shrink-0" />
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <button
+                    onClick={() => onClose()}
+                    className="w-full mt-8 p-4 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              ) : (
+                <div className="px-2">
+                  <CostSheetFormulaGuide />
+                </div>
+              )}
             </div>
 
             {/* Footer */}
