@@ -6,7 +6,7 @@ import yaml from 'js-yaml';
 
 export const dynamic = 'force-dynamic';
 
-export const GET = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     const readFile = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
@@ -93,3 +93,7 @@ export const GET = withAuth(async (req, session) => {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 });
+
+export async function GET(req: NextRequest) {
+  return handler(req);
+}

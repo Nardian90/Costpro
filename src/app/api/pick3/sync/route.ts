@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export const POST = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     const url = new URL(req.url);
     const forceFull = url.searchParams.get('full') === 'true';
@@ -59,3 +59,7 @@ export const POST = withAuth(async (req, session) => {
     }, { status: 500 });
   }
 });
+
+export async function POST(req: NextRequest) {
+  return handler(req);
+}

@@ -3,7 +3,7 @@ import { withAuth } from '@/lib/auth-middleware';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { rateLimit } from '@/lib/rate-limit';
 
-export const POST = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -36,3 +36,7 @@ export const POST = withAuth(async (req, session) => {
     return NextResponse.json({ ok: false, errors: [error.message] }, { status: 500 });
   }
 });
+
+export async function POST(req: NextRequest) {
+  return handler(req);
+}

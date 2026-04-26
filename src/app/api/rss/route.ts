@@ -10,7 +10,7 @@ export const revalidate = 3600;
 
 const parser = new Parser();
 
-export const GET = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -113,3 +113,7 @@ export const GET = withAuth(async (req, session) => {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 });
+
+export async function GET(req: NextRequest) {
+  return handler(req);
+}
