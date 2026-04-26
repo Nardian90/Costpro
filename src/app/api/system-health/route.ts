@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
 import { calculateMRI, DEFAULT_MRI_DATA } from '@/lib/release_gate/mri-engine';
 import { calculateSHI } from '@/lib/observability/health-engine';
@@ -7,7 +7,9 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+
 const handler = withAuth(async (req, session) => {
+
   try {
     const readJson = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
@@ -63,6 +65,7 @@ const handler = withAuth(async (req, session) => {
     console.error('Error in system-health API:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+
 });
 
 export async function GET(req: NextRequest) {

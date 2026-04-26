@@ -19,7 +19,9 @@ function safeParseNum(val: unknown): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
+
 const handler = withAuth(async (req, session) => {
+
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -743,6 +745,7 @@ const handler = withAuth(async (req, session) => {
     console.error('PDF Export Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
 });
 
 export async function POST(req: NextRequest) {

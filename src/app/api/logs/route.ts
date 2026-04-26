@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 /**
  * Endpoint for receiving and persisting client-side logs in production.
  */
+
 const handler = withAuth(async (req, session) => {
+
   try {
     const { context, error } = await req.json();
     const logEntry = `[${new Date().toISOString()}] [${context}] ${JSON.stringify(error)}\n`;
@@ -27,6 +29,7 @@ const handler = withAuth(async (req, session) => {
     // NEVER return 500 to avoid blocking the client flow
     return NextResponse.json({ success: false, error: 'Silently ignored' }, { status: 200 });
   }
+
 });
 
 export async function POST(req: NextRequest) {

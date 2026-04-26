@@ -10,7 +10,9 @@ export const revalidate = 3600;
 
 const parser = new Parser();
 
+
 const handler = withAuth(async (req, session) => {
+
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -112,6 +114,7 @@ const handler = withAuth(async (req, session) => {
     console.error('RSS API Error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+
 });
 
 export async function GET(req: NextRequest) {
