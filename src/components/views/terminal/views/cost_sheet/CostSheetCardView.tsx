@@ -24,6 +24,7 @@ import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-s
 import { isResultRow } from '@/lib/cost-engine/constants';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { CostSheetRow, CostSheetSection, CalculatedRowValue, CostSheetAnnex } from '@/types/cost-sheet';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormulaEditor } from './FormulaEditor';
@@ -73,6 +74,38 @@ const RowCard: React.FC<RowCardProps> = memo(({
   const [isEditingTotal, setIsEditingTotal] = useState(false);
 
   const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
+  const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
+    const findSuggested = (rows: any[]): any => {
+      for (const r of rows) {
+        if (r.id === rowId) return r;
+        if (r.children) {
+          const found = findSuggested(r.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    let suggested = null;
+    if (reinicioTemplate?.sections) {
+      for (const s of reinicioTemplate.sections) {
+        suggested = findSuggested(s.rows);
+        if (suggested) break;
+      }
+    }
+    if (suggested) {
+      if (suggested.totalFormula) {
+        updateValue([...path, 'totalFormula'], suggested.totalFormula);
+        updateValue([...path, 'formula'], suggested.totalFormula);
+      }
+      if (suggested.vhFormula) {
+        updateValue([...path, 'vhFormula'], suggested.vhFormula);
+        updateValue([...path, 'valorHistorico'], 0);
+      }
+      toast.success("Fórmulas sugeridas aplicadas");
+    } else {
+      toast.error("No se encontró fórmula sugerida");
+    }
+  };
 
   const hasChildren = row.children && row.children.length > 0;
   const isRowPercent = row.isPercent ?? row.is_percent;
@@ -174,6 +207,9 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     </Button>
                     <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'down')}>
                       <ChevronDown className="w-3.5 h-3.5" /> Bajar
+                    </Button>
+                                        <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => applySuggestedFormula(row.id, path)}>
+                      <Wand2 className="w-3.5 h-3.5" /> Sugerir Fórmula
                     </Button>
                     <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => addMainRow([...path, 'children'])}>
                       <Plus className="w-3.5 h-3.5" /> Añadir Hijo
