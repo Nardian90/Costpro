@@ -24,12 +24,14 @@ interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
   layoutMode?: ViewMode;
   calculatedAnnexes?: any[];
+  hideBorder?: boolean;
 }
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   activeAnnexId,
   layoutMode = 'table',
-  calculatedAnnexes = []
+  calculatedAnnexes = [],
+  hideBorder = false
 }) => {
   const data = useCostSheetStore(state => state.data);
   const updateValue = useCostSheetStore(state => state.updateValue);
