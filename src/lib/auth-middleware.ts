@@ -39,13 +39,15 @@ export function withAuth(handler: AuthHandler) {
   return async (req: NextRequest): Promise<Response> => {
     const session = await getServerSession(req);
 
-    // TEMPORARY: If no session, allow but provide empty session if it's a cost-sheet route
-    // to maintain compatibility with tokenless client calls while transition happens.
+    // BACKWARD COMPATIBILITY: Allow anonymous access for cost-sheets until hooks are updated
     const isCostSheetRoute = req.nextUrl.pathname.startsWith('/api/cost-sheets/');
 
     if (!session) {
       if (isCostSheetRoute) {
-        return handler(req, { user: { id: 'anonymous', role: 'usuario' }, token: '' } as any);
+        return handler(req, {
+          user: { id: 'anonymous', role: 'usuario', roles: [], memberships: [] },
+          token: ''
+        } as any);
       }
       return NextResponse.json(
         { error: 'No autorizado', message: 'Se requiere sesión activa' },
@@ -53,21 +55,25 @@ export function withAuth(handler: AuthHandler) {
       );
     }
 
-    // Fetch app-level profile data
+    // RBAC Enrichment: Fetch app-level profile data (profiles.role / roles array)
     const admin = getSupabaseAdmin();
     let enrichedUser = { ...session.user } as any;
 
     if (admin) {
-      const { data: profile } = await admin
-        .from('profiles')
-        .select('role, roles, memberships:user_store_memberships(*)')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        const { data: profile } = await admin
+          .from('profiles')
+          .select('role, roles, memberships:user_store_memberships(*)')
+          .eq('id', session.user.id)
+          .single();
 
-      if (profile) {
-        enrichedUser.role = profile.role;
-        enrichedUser.roles = profile.roles;
-        enrichedUser.memberships = profile.memberships;
+        if (profile) {
+          enrichedUser.role = profile.role;
+          enrichedUser.roles = profile.roles;
+          enrichedUser.memberships = profile.memberships;
+        }
+      } catch (err) {
+        console.error('[withAuth] RBAC Enrichment Error:', err);
       }
     }
 
@@ -89,7 +95,7 @@ export function withRole(requiredRole: UserRole, handler: AuthHandler) {
       );
     }
 
-    // Fetch app-level profile data for RBAC check
+    // RBAC Check: Fetch app-level profile data for authorization
     const admin = getSupabaseAdmin();
     if (!admin) {
       return NextResponse.json(

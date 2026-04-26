@@ -4,7 +4,7 @@ import { calculateFicha, validateFicha } from '@/lib/cost-engine';
 import { rateLimit } from '@/lib/rate-limit';
 import { withAuth } from '@/lib/auth-middleware';
 
-export const POST = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -50,3 +50,7 @@ export const POST = withAuth(async (req, session) => {
     return NextResponse.json({ ok: false, errors: ["Error interno en el motor de cálculo"] }, { status: 500 });
   }
 });
+
+export async function POST(req: NextRequest) {
+  return handler(req);
+}

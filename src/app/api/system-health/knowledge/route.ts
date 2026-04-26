@@ -5,7 +5,7 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-export const GET = withAuth(async (req, session) => {
+const handler = withAuth(async (req, session) => {
   try {
     const readJson = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
@@ -30,3 +30,7 @@ export const GET = withAuth(async (req, session) => {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
+
+export async function GET(req: NextRequest) {
+  return handler(req);
+}
