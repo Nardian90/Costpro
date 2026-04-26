@@ -373,6 +373,7 @@ const CostSheetView = () => {
                                         activeAnnexId={annex.id}
                                         layoutMode={layoutMode}
                                         calculatedAnnexes={calculatedAnnexes}
+                                        hideBorder={true}
                                     />
                                     </ExpertModeAccordion>
                                 ))}

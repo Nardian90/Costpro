@@ -80,6 +80,41 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
+  const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
+    // Basic implementation: Find the row in the default template (reinicio)
+    const findSuggested = (rows: any[]): any => {
+      for (const r of rows) {
+        if (r.id === rowId) return r;
+        if (r.children) {
+          const found = findSuggested(r.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    let suggested = null;
+    if (reinicioTemplate?.sections) {
+      for (const s of reinicioTemplate.sections) {
+        suggested = findSuggested(s.rows);
+        if (suggested) break;
+      }
+    }
+
+    if (suggested) {
+      if (suggested.totalFormula) {
+        updateValue([...path, 'totalFormula'], suggested.totalFormula);
+        updateValue([...path, 'formula'], suggested.totalFormula);
+      }
+      if (suggested.vhFormula) {
+        updateValue([...path, 'vhFormula'], suggested.vhFormula);
+        updateValue([...path, 'valorHistorico'], 0);
+      }
+      toast.success("Fórmulas sugeridas aplicadas");
+    } else {
+      toast.error("No se encontró fórmula sugerida para este concepto");
+    }
+  };
 
   const handleToggle = () => setIsExpanded(!isExpanded);
 
@@ -183,6 +218,15 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     title="Mover abajo"
                 >
                     <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
+                    onClick={() => applySuggestedFormula(row.id, path)}
+                    title="Aplicar fórmula sugerida"
+                >
+                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
                 <Button
                     variant="ghost"
@@ -315,8 +359,18 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     size="icon"
                     className="h-6 w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={() => reorderMainRow(path, 'down')}
+                    title="Mover abajo"
                 >
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
+                    onClick={() => applySuggestedFormula(row.id, path)}
+                    title="Aplicar fórmula sugerida"
+                >
+                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
                 <Button
                     variant="ghost"
