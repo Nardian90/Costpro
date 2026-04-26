@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withAuth(async (req, session) => {
   try {
     const readFile = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
@@ -91,4 +92,4 @@ export async function GET() {
     console.error('Intelligence API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "@/lib/auth";
+import { withRole } from '@/lib/auth-middleware';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,11 +9,9 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRole('admin', async (req, session) => {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const { data: requesterProfile } = await supabaseAdmin
       .from('profiles')
@@ -22,22 +20,6 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!requesterProfile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 });
-
-    // Robust role check
-    const rawRoles = requesterProfile.roles;
-    const roleNames: string[] = [];
-    if (Array.isArray(rawRoles)) {
-      rawRoles.forEach(r => { if (r.name) roleNames.push(r.name.toLowerCase()); });
-    } else if (rawRoles && typeof rawRoles === 'object' && (rawRoles as any).name) {
-      roleNames.push((rawRoles as any).name.toLowerCase());
-    }
-    if (requesterProfile.role) {
-      roleNames.push(requesterProfile.role.toLowerCase());
-    }
-
-    if (!roleNames.includes('admin')) {
-      return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
-    }
 
     const { user_id } = await req.json();
     if (!user_id) return NextResponse.json({ error: 'ID de usuario requerido' }, { status: 400 });
@@ -60,4 +42,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});

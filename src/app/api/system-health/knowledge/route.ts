@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import fs from 'fs';
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withAuth(async (req, session) => {
   try {
     const readJson = (relPath: string) => {
       const fullPath = path.join(/*turbopackIgnore: true*/process.cwd(), relPath);
@@ -28,4 +29,4 @@ export async function GET() {
     console.error('Error in system-health/knowledge API:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

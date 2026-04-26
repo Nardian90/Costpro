@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "@/lib/auth";
+import { withRole } from '@/lib/auth-middleware';
 import crypto from 'crypto';
 
 // Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
@@ -20,15 +20,9 @@ function getSupabaseAdmin() {
   });
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRole('admin', async (req, session) => {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-
-    // 1. Verify requester session
-    const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
 
     // 2. Fetch requester role
     const { data: requesterProfile, error: profileError } = await supabaseAdmin
@@ -132,4 +126,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});
