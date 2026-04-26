@@ -297,17 +297,8 @@ const CostSheetView = () => {
 
                             {/* Header Section (Always Visible) */}
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between px-2">
+                                <div className="px-2">
                                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Datos Generales</h3>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 rounded-xl text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-[10px]"
-                                        onClick={() => expertState.setHelpContext('header')}
-                                    >
-                                        <HelpCircle className="w-3.5 h-3.5 mr-2" />
-                                        Ayuda Contextual
-                                    </Button>
                                 </div>
                                 <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                             </div>
