@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "@/lib/auth";
+import { withRole } from '@/lib/auth-middleware';
 
 // Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
 function getSupabaseAdmin() {
@@ -19,13 +19,9 @@ function getSupabaseAdmin() {
   });
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRole('admin', async (req, session) => {
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
 
     // Verify Admin/Encargado role
     const { data: requesterProfile } = await supabaseAdmin
@@ -36,36 +32,6 @@ export async function POST(req: NextRequest) {
 
     if (!requesterProfile) {
       return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 });
-    }
-
-    // Robust role check (supports object, array, and direct role column)
-    const rawRoles = requesterProfile.roles;
-    const roleNames: string[] = [];
-
-    // Add roles from joined table
-    if (Array.isArray(rawRoles)) {
-      rawRoles.forEach(r => { if (r.name) roleNames.push(r.name.toLowerCase()); });
-    } else if (rawRoles && typeof rawRoles === 'object' && (rawRoles as any).name) {
-      roleNames.push((rawRoles as any).name.toLowerCase());
-    }
-
-    // Add role from text column as fallback
-    if (requesterProfile.role) {
-      roleNames.push(requesterProfile.role.toLowerCase());
-    }
-
-    const hasPermission = roleNames.some(name =>
-      name === 'admin' ||
-      name === 'encargado' ||
-      name === 'superadmin' ||
-      name === 'manager'
-    );
-
-    if (!hasPermission) {
-      return NextResponse.json({
-        error: 'No tienes permisos suficientes',
-        debug_roles: roleNames
-      }, { status: 403 });
     }
 
     const { user_id, is_active } = await req.json();
@@ -95,4 +61,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});

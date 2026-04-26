@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { rateLimit } from '@/lib/rate-limit';
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req, session) => {
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -70,4 +71,4 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
-}
+});

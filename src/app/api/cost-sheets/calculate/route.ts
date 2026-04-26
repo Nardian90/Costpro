@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { calculateFicha, validateFicha } from '@/lib/cost-engine';
 import { rateLimit } from '@/lib/rate-limit';
+import { withAuth } from '@/lib/auth-middleware';
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req, session) => {
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -48,4 +49,4 @@ export async function POST(req: NextRequest) {
     console.error('Calculation API Error:', error);
     return NextResponse.json({ ok: false, errors: ["Error interno en el motor de cálculo"] }, { status: 500 });
   }
-}
+});
