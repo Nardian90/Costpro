@@ -67,7 +67,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
         isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
       )}>
         <div className="overflow-hidden">
-          <div className="p-6 pt-2 border-t border-border/50">
+          <div className="p-2 sm:p-6 pt-2 border-t border-border/50">
             {children}
           </div>
         </div>

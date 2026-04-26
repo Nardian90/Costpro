@@ -151,9 +151,9 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
   return (
     <div className={cn(
-      "p-4 rounded-3xl border transition-all duration-300 relative overflow-hidden",
+      "p-3 sm:p-4 rounded-[1.5rem] sm:rounded-[2rem] border transition-all duration-300 relative overflow-hidden",
       isResult ? "bg-primary/5 border-primary/20" : "bg-card border-border/50",
-      level > 0 && "ml-4 border-l-2",
+      level > 0 && "ml-2 sm:ml-4 border-l-2",
       isExpanded && "shadow-lg"
     )}>
       {/* Background patterns for visual interest */}
@@ -415,7 +415,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
 
   return (
     <div className="space-y-12 pb-24" data-testid="cost-sheet-card-view">
-      <div className="px-4">
+      <div className="px-0 sm:px-4">
         <div className="flex items-center justify-between bg-primary/5 border border-primary/10 rounded-2xl p-3 mb-8">
           <div className="flex items-center gap-3">
              <LayoutGrid className="w-4 h-4 text-primary" />
@@ -431,7 +431,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
 
           return (
             <LazyRender key={section.id}>
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-4 mb-8">
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-1 sm:px-4 mb-8">
               {!hideHeader && (
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
