@@ -66,6 +66,7 @@ const CostSheetView = () => {
   const {
     confirmation,
     setConfirmation,
+    askConfirmation,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,
@@ -92,6 +93,8 @@ const CostSheetView = () => {
     setIsUpgradeModalOpen,
     onOpenAnnexes,
     onOpenSections,
+    allActions,
+    mainActions,
     secondaryActions,
     setCurrentView
   } = useCostSheetActions({
