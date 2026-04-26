@@ -17,7 +17,7 @@ import {
   FunctionSquare,
   AlertTriangle,
   XCircle,
-  MoreVertical
+  MoreVertical, Wand2
 } from 'lucide-react';
 import { cn, formatAccounting, formatCurrency } from '@/lib/utils';
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
