@@ -4,7 +4,9 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { rateLimit } from '@/lib/rate-limit';
 
+
 const handler = withAuth(async (req, session) => {
+
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -71,6 +73,7 @@ const handler = withAuth(async (req, session) => {
   } catch (error: any) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
+
 });
 
 export async function POST(req: NextRequest) {
