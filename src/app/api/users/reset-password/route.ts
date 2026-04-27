@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "@/lib/auth";
+import { withRole } from '@/lib/auth-middleware';
+
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,11 +10,13 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
-export async function POST(req: NextRequest) {
+
+const handler = withRole('admin', async (req, session) => {
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
-    const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+
 
     const { data: requesterProfile } = await supabaseAdmin
       .from('profiles')
@@ -60,4 +63,8 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+});
+
+export async function POST(req: NextRequest) {
+  return handler(req);
 }

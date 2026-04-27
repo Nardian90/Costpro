@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import fs from 'fs';
 import path from 'path';
 
@@ -7,9 +8,11 @@ export const dynamic = 'force-dynamic';
 /**
  * Endpoint for receiving and persisting client-side logs in production.
  */
-export async function POST(request: Request) {
+
+const handler = withAuth(async (req, session) => {
+
   try {
-    const { context, error } = await request.json();
+    const { context, error } = await req.json();
     const logEntry = `[${new Date().toISOString()}] [${context}] ${JSON.stringify(error)}\n`;
 
     try {
@@ -26,4 +29,9 @@ export async function POST(request: Request) {
     // NEVER return 500 to avoid blocking the client flow
     return NextResponse.json({ success: false, error: 'Silently ignored' }, { status: 200 });
   }
+
+});
+
+export async function POST(req: NextRequest) {
+  return handler(req);
 }

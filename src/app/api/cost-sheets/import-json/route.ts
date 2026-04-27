@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { rateLimit } from '@/lib/rate-limit';
 
-export async function POST(req: NextRequest) {
+
+const handler = withAuth(async (req, session) => {
+
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -34,4 +37,9 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ ok: false, errors: [error.message] }, { status: 500 });
   }
+
+});
+
+export async function POST(req: NextRequest) {
+  return handler(req);
 }
