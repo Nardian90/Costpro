@@ -86,7 +86,7 @@ describe('Integrated IPV Matching Flow', () => {
     expect(lines.length).toBe(1);
     expect(lines[0].product_cod).toBe('CERV-001');
     expect(lines[0].cantidad).toBe(2);
-    expect(lines[0].importe_linea_cents).toBe(500);
+    expect(lines[0].total_amount_cents).toBe(500);
 
     const logs = await db.matching_logs.toArray();
     expect(logs.length).toBe(1);

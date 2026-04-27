@@ -29,7 +29,7 @@ describe('MatchingEngine - Global Goal Date Priority', () => {
     // In our case, idealQty = max(1, floor(10 / (3/2))) = max(1, floor(6.6)) = 6.
     // So 6 items on 01-02, then it moves to 01-03.
     const dateCounts = lines.reduce((acc, l) => {
-        acc[l.fecha_operacion] = (acc[l.fecha_operacion] || 0) + l.importe_linea_cents;
+        acc[l.fecha_operacion] = (acc[l.fecha_operacion] || 0) + l.total_amount_cents;
         return acc;
     }, {} as Record<string, number>);
 

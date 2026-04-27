@@ -17,6 +17,26 @@ vi.mock('../../dexie', () => ({
     },
     matching_logs: {
       add: vi.fn().mockResolvedValue({}),
+      put: vi.fn().mockResolvedValue({}),
+      toArray: vi.fn().mockResolvedValue([]),
+    },
+    period_closures: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
+    },
+    products: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      above: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([]),
+      clear: vi.fn(),
+      bulkPut: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+    },
+    bank_statements: {
+      clear: vi.fn(),
+      add: vi.fn(),
     }
   }
 }));
@@ -39,13 +59,13 @@ describe('MatchingEngine Advanced Simulation', () => {
     const lines = await engine.distributeGlobalGoal(3000, 0, dates);
 
     expect(lines.length).toBeGreaterThanOrEqual(3);
-    const totalDistributed = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+    const totalDistributed = lines.reduce((sum, l) => sum + l.total_amount_cents, 0);
     expect(totalDistributed).toBeGreaterThan(2900);
     expect(totalDistributed).toBeLessThanOrEqual(3000);
 
     const perDay = new Map();
     lines.forEach(l => {
-        perDay.set(l.fecha_operacion, (perDay.get(l.fecha_operacion) || 0) + l.importe_linea_cents);
+        perDay.set(l.fecha_operacion, (perDay.get(l.fecha_operacion) || 0) + l.total_amount_cents);
     });
     expect(perDay.size).toBe(3);
   });
