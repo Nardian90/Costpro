@@ -16,7 +16,29 @@ vi.mock('../../dexie', () => ({
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
     },
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
+    matching_logs: {
+      add: vi.fn().mockResolvedValue({}),
+      put: vi.fn().mockResolvedValue({}),
+      toArray: vi.fn().mockResolvedValue([]),
+    },
+    period_closures: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
+    },
+    products: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      above: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([]),
+      clear: vi.fn(),
+      bulkPut: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+    },
+    bank_statements: {
+      clear: vi.fn(),
+      add: vi.fn(),
+    }
   }
 }));
 
