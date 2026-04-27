@@ -49,7 +49,7 @@ export function useCostSheetActions({
   viewState
 }: UseCostSheetActionsParams) {
   const { setSheet, loadExample } = useCostSheetStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const {
     activeCostSection: activeSection,
     setActiveCostSection: setActiveSection,
@@ -184,7 +184,7 @@ export function useCostSheetActions({
         try {
           const response = await fetch('/api/cost-sheets/export-pdf', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
               ...calculationResult,
               sections: data.sections,

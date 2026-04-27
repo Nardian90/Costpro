@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store';
 import { z } from 'zod';
 import { toast } from 'sonner';
 
@@ -14,9 +15,7 @@ export async function validateRPCResponse<T>(
 
     // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
-      fetch('/api/logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      fetch('/api/logs', { method: 'POST', headers: { Authorization: `Bearer ${useAuthStore.getState().token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           context: `Zod Validation Error: RPC ${rpcName}`,
           error: errorData,
@@ -51,9 +50,7 @@ export async function validateRPCArrayResponse<T>(
       console.error(`[Zod Validation Error] RPC: ${rpcName} (Array)`, errorData);
 
       if (process.env.NODE_ENV === 'production') {
-        fetch('/api/logs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      fetch('/api/logs', { method: 'POST', headers: { Authorization: `Bearer ${useAuthStore.getState().token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             context: `Zod Validation Error: RPC ${rpcName} (Array)`,
             error: errorData,
@@ -86,9 +83,7 @@ export async function validateResponse<T>(
     console.error(`[Zod Validation Error] ${context}:`, errorData);
 
     if (process.env.NODE_ENV === 'production') {
-        fetch('/api/logs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      fetch('/api/logs', { method: 'POST', headers: { Authorization: `Bearer ${useAuthStore.getState().token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             context: `Zod Validation Error: ${context}`,
             error: errorData,
