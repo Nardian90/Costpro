@@ -121,12 +121,7 @@ export function useUsersView() {
                 throw new Error('No hay sesión activa.');
             }
 
-            const response = await fetch('/api/users/toggle-status', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+            const response = await fetch('/api/users/toggle-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ user_id: userId, is_active: isActive })
             });
 
@@ -194,7 +189,7 @@ export function useUsersView() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer `
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ user_id: userId })
             });

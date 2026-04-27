@@ -1,7 +1,9 @@
-'use client';
+'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
+import { useAuthStore } from '@/store';
 
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -9,18 +11,29 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            refetchOnWindowFocus: true,
+            staleTime: 60 * 1000,
             retry: 1,
+            refetchOnWindowFocus: false,
           },
           mutations: {
-            onError: (error, variables, context) => {
-               console.error('[Mutation Error]:', error);
+            onError: (error: any, variables, context) => {
+               // Log audit for failed mutations in production
+               const { token } = useAuthStore.getState();
                fetch('/api/logs', {
                  method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ context: 'Mutation Error', error: String(error) }),
-               }).catch(err => console.error('Failed to log mutation error:', err));
+                 headers: {
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${token}`
+                 },
+                 body: JSON.stringify({
+                    context: 'MUTATION_ERROR',
+                    error: {
+                        message: error.message,
+                        stack: error.stack,
+                        variables
+                    }
+                 }),
+               }).catch(() => { /* Silent ignore if logging fails */ });
             }
           }
         },
@@ -30,6 +43,7 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }

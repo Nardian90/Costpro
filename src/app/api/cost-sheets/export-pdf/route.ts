@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
@@ -18,7 +19,9 @@ function safeParseNum(val: unknown): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
-export async function POST(req: NextRequest) {
+
+const handler = withAuth(async (req, session) => {
+
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -742,4 +745,9 @@ export async function POST(req: NextRequest) {
     console.error('PDF Export Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+});
+
+export async function POST(req: NextRequest) {
+  return handler(req);
 }

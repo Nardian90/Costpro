@@ -128,7 +128,7 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      const response = await fetch('/api/pick3/sync', { method: 'POST' });
+      const response = await fetch('/api/pick3/sync', { method: 'POST', headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` } });
       const data = await response.json();
       const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
       if (error) throw error;

@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
 import { Pick3PdfService } from '@/services/pick3/Pick3PdfService';
 import { Pick3Storage } from '@/services/pick3/storage';
@@ -7,7 +8,9 @@ import { logger } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function POST(req: Request) {
+
+const handler = withAuth(async (req, session) => {
+
   try {
     const url = new URL(req.url);
     const forceFull = url.searchParams.get('full') === 'true';
@@ -57,4 +60,9 @@ export async function POST(req: Request) {
       error: String(error)
     }, { status: 500 });
   }
+
+});
+
+export async function POST(req: NextRequest) {
+  return handler(req);
 }

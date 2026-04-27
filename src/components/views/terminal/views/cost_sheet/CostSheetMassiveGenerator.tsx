@@ -415,7 +415,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         // 3. Export PDF
         const response = await fetch('/api/cost-sheets/export-pdf', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization':  `Bearer ${useAuthStore.getState().token}` },
           body: JSON.stringify({
             ...result,
             sections: currentSheet?.sections,

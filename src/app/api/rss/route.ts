@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth-middleware';
 import Parser from 'rss-parser';
 import { createClient } from '@supabase/supabase-js';
 import { RSSNewsItem } from '@/types';
@@ -9,7 +10,9 @@ export const revalidate = 3600;
 
 const parser = new Parser();
 
-export async function GET(req: NextRequest) {
+
+const handler = withAuth(async (req, session) => {
+
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -111,4 +114,9 @@ export async function GET(req: NextRequest) {
     console.error('RSS API Error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+
+});
+
+export async function GET(req: NextRequest) {
+  return handler(req);
 }
