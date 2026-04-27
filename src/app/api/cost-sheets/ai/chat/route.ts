@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limiting (stricter for AI chat)
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
-    const { allowed, remaining, resetAt } = rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
+    const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
 
     if (!allowed) {
       return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
