@@ -42,3 +42,13 @@ test-results/
 # Python
 __pycache__/
 *.pyc
+
+# Debug artifacts (no deben estar en git)
+logs/*.png
+logs/*.html
+logs/debug_*.png
+logs/page_content.html
+logs/stitch_screen.html
+
+# Upstash / Redis local
+.upstash/
