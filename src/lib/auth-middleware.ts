@@ -39,16 +39,7 @@ export function withAuth(handler: AuthHandler) {
   return async (req: NextRequest): Promise<Response> => {
     const session = await getServerSession(req);
 
-    // BACKWARD COMPATIBILITY: Allow anonymous access for cost-sheets until hooks are updated
-    const isCostSheetRoute = req.nextUrl.pathname.startsWith('/api/cost-sheets/');
-
     if (!session) {
-      if (isCostSheetRoute) {
-        return handler(req, {
-          user: { id: 'anonymous', role: 'usuario', roles: [], memberships: [] },
-          token: ''
-        } as any);
-      }
       return NextResponse.json(
         { error: 'No autorizado', message: 'Se requiere sesión activa' },
         { status: 401 }

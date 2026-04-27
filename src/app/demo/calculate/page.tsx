@@ -1,4 +1,5 @@
 'use client';
+import { useAuthStore } from '@/store';
 
 import React, { useState, useEffect } from 'react';
 import { useCalculateFicha, useImportJson } from '@/hooks/logic/useCostEngine';
@@ -83,7 +84,7 @@ export default function CostEngineDemo() {
     }
     const response = await fetch('/api/cost-sheets/export-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ` },
         body: JSON.stringify(calculateMutation.data)
     });
     if (response.ok) {

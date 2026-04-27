@@ -1,14 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FichaJSON, CalculationResult } from '@/lib/cost-engine/types';
+import { useAuthStore } from '@/store';
 
 export const useCalculateFicha = () => {
   const queryClient = useQueryClient();
+  const { token } = useAuthStore();
 
   return useMutation({
     mutationFn: async (ficha: FichaJSON): Promise<CalculationResult> => {
       const response = await fetch('/api/cost-sheets/calculate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(ficha),
       });
 
@@ -26,6 +31,8 @@ export const useCalculateFicha = () => {
 };
 
 export const useImportJson = () => {
+  const { token } = useAuthStore();
+
   return useMutation({
     mutationFn: async (file: File): Promise<FichaJSON> => {
       const text = await file.text();
@@ -33,7 +40,10 @@ export const useImportJson = () => {
 
       const response = await fetch('/api/cost-sheets/import-json', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(json),
       });
 
@@ -49,6 +59,8 @@ export const useImportJson = () => {
 };
 
 export const useImportAnexo = () => {
+  const { token } = useAuthStore();
+
   return useMutation({
     mutationFn: async ({ file, anexoId }: { file: File; anexoId: string }) => {
       const formData = new FormData();
@@ -57,6 +69,9 @@ export const useImportAnexo = () => {
 
       const response = await fetch('/api/cost-sheets/import-anexo', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 

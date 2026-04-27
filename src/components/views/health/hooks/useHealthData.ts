@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store';
 import { useState, useEffect } from 'react';
 
 export interface HealthData {
@@ -29,9 +30,10 @@ export function useHealthData() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    const { token } = useAuthStore.getState();
     try {
       setLoading(true);
-      const response = await fetch('/api/intelligence');
+      const response = await fetch('/api/intelligence', { headers: { 'Authorization': `Bearer ${token}` } });
       if (!response.ok) {
         throw new Error('Failed to fetch system intelligence data from v9.0 engine');
       }

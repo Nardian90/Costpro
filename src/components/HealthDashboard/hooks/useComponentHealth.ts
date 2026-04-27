@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/store';
 import { useState, useEffect } from 'react';
 
 export function useComponentHealth(pollingInterval: number = 60000) {
@@ -7,7 +8,7 @@ export function useComponentHealth(pollingInterval: number = 60000) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/system-health/knowledge');
+      const res = await fetch('/api/system-health/knowledge', { headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` } });
       if (!res.ok) throw new Error('Failed to fetch components knowledge');
       const json = await res.json();
 
