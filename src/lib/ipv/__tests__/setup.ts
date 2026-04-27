@@ -18,3 +18,10 @@ if (typeof global !== 'undefined') {
 
 // ✅ AGREGAR timeout para async operations
 vi.setConfig({ testTimeout: 30000 });
+import '@testing-library/jest-dom';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+});

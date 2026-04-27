@@ -18,37 +18,32 @@ vi.mock('../../dexie', () => ({
     },
     reconciliation_lines: {
       where: vi.fn().mockReturnThis(),
-      between: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
       and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
     },
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
-    products: {
+    matching_logs: {
+      add: vi.fn().mockResolvedValue({}),
+      put: vi.fn().mockResolvedValue({}),
       toArray: vi.fn().mockResolvedValue([]),
-      where: vi.fn().mockReturnThis(),
-      equals: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue(null),
-      get: vi.fn().mockResolvedValue(null)
     },
-    product_movements: {
-      where: vi.fn().mockReturnThis(),
-      between: vi.fn().mockReturnThis(),
-      equals: vi.fn().mockReturnThis(),
-      toArray: vi.fn().mockResolvedValue([]),
-      add: vi.fn().mockResolvedValue("mock-id")
-    },
-    intelligent_receipts: {
-      put: vi.fn().mockResolvedValue("mock-id")
-    },
-    transaction: vi.fn((type, tables, callback) => callback()),
     period_closures: {
       where: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),
     },
-    bank_statements: {
+    products: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      above: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
+      clear: vi.fn(),
+      bulkPut: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+    },
+    bank_statements: {
+      clear: vi.fn(),
+      add: vi.fn(),
     }
   }
 }));

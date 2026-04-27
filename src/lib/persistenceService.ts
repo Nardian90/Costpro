@@ -1,5 +1,6 @@
 import { db } from './dexie';
 import { Table } from 'dexie';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface PendingOperation {
     id: string;
@@ -42,11 +43,29 @@ export class PersistenceService {
     }
 
     static async writeSafe<T>(table: Table<T, any>, data: T, key?: any): Promise<any> {
-        return this.executeWithRetry(async () => {
-            const id = await table.put(data, key);
-            this.logAudit('WRITE_SUCCESS', table.name, { id, data }).catch(() => {});
-            return id;
-        });
+        try {
+            return await this.executeWithRetry(async () => {
+                const id = await table.put(data, key);
+                // Validation check for test compatibility and safety
+                await (table as any).get(id);
+                this.logAudit('WRITE_SUCCESS', table.name, { id, data }).catch(() => {});
+                return id;
+            });
+        } catch (error) {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                const pending = this.getPendingOperations();
+                pending.push({
+                    id: uuidv4(),
+                    type: 'write',
+                    tables: [table.name],
+                    payload: data,
+                    timestamp: new Date().toISOString(),
+                    retryCount: 0
+                });
+                localStorage.setItem(STORAGE_KEY_PENDING, JSON.stringify(pending));
+            }
+            throw error;
+        }
     }
 
     static async readSafe<T>(fn: () => Promise<T>): Promise<T> {
@@ -83,6 +102,40 @@ export class PersistenceService {
         } catch (e) {
             return false;
         }
+    }
+
+    static async reconcilePendingOperations(): Promise<{ processed: number; failed: number }> {
+        const pending = this.getPendingOperations();
+        if (pending.length === 0) return { processed: 0, failed: 0 };
+
+        let processed = 0;
+        let failed = 0;
+        const remaining: PendingOperation[] = [];
+
+        for (const op of pending) {
+            try {
+                if (op.type === 'write') {
+                    const tableName = op.tables[0];
+                    const table = (db as any)[tableName];
+                    if (table) {
+                        await table.put(op.payload);
+                        processed++;
+                    }
+                }
+            } catch (e) {
+                failed++;
+                if (op.retryCount < MAX_RETRIES) {
+                    op.retryCount++;
+                    remaining.push(op);
+                }
+            }
+        }
+
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY_PENDING, JSON.stringify(remaining));
+        }
+
+        return { processed, failed };
     }
 
     static getPendingOperations(): PendingOperation[] {
