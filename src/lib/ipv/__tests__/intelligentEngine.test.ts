@@ -4,36 +4,39 @@ import { Product } from '../../dexie';
 // Mock Dexie MUST be at the top level
 vi.mock('../../dexie', () => ({
   db: {
+    matching_cache: {
+      get: vi.fn().mockResolvedValue(null),
+      put: vi.fn(),
+    },
     reconciliation_lines: {
       where: vi.fn().mockReturnThis(),
-      between: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
-      toArray: vi.fn().mockResolvedValue([])
-    },
-    products: {
+      and: vi.fn().mockReturnThis(),
       toArray: vi.fn().mockResolvedValue([]),
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
+    },
+    matching_logs: {
+      add: vi.fn().mockResolvedValue({}),
+      put: vi.fn().mockResolvedValue({}),
+      toArray: vi.fn().mockResolvedValue([]),
+    },
+    period_closures: {
       where: vi.fn().mockReturnThis(),
-      above: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),
-      get: vi.fn().mockResolvedValue(null)
     },
-    product_movements: {
-        where: vi.fn().mockReturnThis(),
-        between: vi.fn().mockReturnThis(),
-        equals: vi.fn().mockReturnThis(),
-        toArray: vi.fn().mockResolvedValue([]),
-    matching_logs: { add: vi.fn().mockResolvedValue({}) },
-        add: vi.fn().mockResolvedValue("mock-id")
+    products: {
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      above: vi.fn().mockReturnThis(),
+      toArray: vi.fn().mockResolvedValue([]),
+      clear: vi.fn(),
+      bulkPut: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
     },
-    intelligent_receipts: {
-        put: vi.fn().mockResolvedValue("mock-id")
-    },
-    ipv_settings: {
-        get: vi.fn().mockResolvedValue({ entidad_nombre: 'TEST' })
-    },
-    transaction: vi.fn((type, tables, callback) => callback())
+    bank_statements: {
+      clear: vi.fn(),
+      add: vi.fn(),
+    }
   }
 }));
 
