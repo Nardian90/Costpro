@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { type BankTransaction } from '../dexie';
-import { generateHash } from './engine';
+import { generateHash } from '../utils';
 import { extractCommission, standardizeDate } from './utils';
 import { enrichTransactions } from './parser';
 
@@ -26,8 +26,6 @@ export async function parseBandecTxt(text: string): Promise<{
     // Regex to match the date header: 16/03/26 or 16/03/2026
     const dateHeaderRegex = /^(\d{2}\/\d{2}\/\d{2,4})\s*$/;
     // Regex to match a transaction line.
-    // Captures: Ref Corriente, Ref Original, Amount (with dots and commas), Type (Cr/Db)
-    // Updated to be more flexible with whitespace and handle potential variations.
     const txLineRegex = /^\s*([A-Z0-9]+)\s+([A-Z0-9]+)\s+([0-9,.]+)\s+(Cr|Db)/;
 
     // Regex for balances and period
@@ -40,7 +38,6 @@ export async function parseBandecTxt(text: string): Promise<{
     let observationsBuffer: string[] = [];
 
     const parseAmount = (raw: string): number => {
-        // BANDEC TXT uses comma for thousands and dot for decimal: 1,330.00
         const clean = raw.replace(/,/g, '');
         return parseFloat(clean);
     };
@@ -49,27 +46,23 @@ export async function parseBandecTxt(text: string): Promise<{
         const line = lines[i];
         const trimmedLine = line.trim();
 
-        // Check for period
         const periodMatch = line.match(periodRegex);
         if (periodMatch) {
-            const hasta = periodMatch[2]; // Use HASTA as period identifier YYYY-MM
+            const hasta = periodMatch[2];
             const parts = hasta.split('/');
             period = `${parts[2]}-${parts[1]}`;
         }
 
-        // Check for account
         const accountMatch = line.match(accountRegex);
         if (accountMatch) {
             accountNumber = accountMatch[1];
         }
 
-        // Check for opening balance
         const openMatch = line.match(openingBalanceRegex);
         if (openMatch) {
             openingBalance = parseAmount(openMatch[1]);
         }
 
-        // Check for closing balance
         const closeMatch = line.match(closingBalanceRegex);
         if (closeMatch) {
             closingBalance = parseAmount(closeMatch[1]);
@@ -90,10 +83,8 @@ export async function parseBandecTxt(text: string): Promise<{
             const refCorriente = txMatch[1];
             const refOriginal = txMatch[2];
             const rawAmount = txMatch[3];
-
             const amount = parseAmount(rawAmount);
             const importeCents = Math.round(amount * 100);
-
             const tipo = txMatch[4] as 'Cr' | 'Db';
 
             currentTx = {
@@ -122,7 +113,6 @@ export async function parseBandecTxt(text: string): Promise<{
         transactions.push(await finalizeTx(currentTx as BankTransaction, observationsBuffer));
     }
 
-    // Enriquecer con la nueva lógica de identidad de clientes
     const enriched = await enrichTransactions(transactions);
 
     return {
@@ -136,19 +126,11 @@ export async function parseBandecTxt(text: string): Promise<{
 
 async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTransaction> {
     const rawObs = buffer.join(' ');
-    const cleanObs = rawObs
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
+    const cleanObs = rawObs.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     tx.observaciones = cleanObs;
-
-    // extractCommission should return cents too
     const commissionCents = extractCommission(cleanObs);
     tx.comision_cents = commissionCents;
     tx.importe_venta_cents = tx.importe_cents + commissionCents;
-
     tx.ingestion_hash = await generateHash(`${tx.referencia_origen}-${tx.fecha}-${tx.importe_cents}`);
-
     return tx;
 }
