@@ -44,7 +44,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const { data: searchData, isFetching: isSearching } = useInventory(user?.storeId || '', debouncedSearchTerm, '', 5);
+    const { data: searchData, isFetching: isSearching } = useInventory(user?.activeStoreId || '', debouncedSearchTerm, '', 5);
     const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
 
     const registerReceptionMutation = useRegisterReception();
@@ -56,7 +56,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         return Array.from(receptionItems.values()).reduce((acc, item) => acc + (item.quantity * item.cost), 0);
     }, [receptionItems]);
 
-    if (!user?.storeId) {
+    if (!user?.activeStoreId) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center bg-amber-500/5 rounded-3xl border-2 border-dashed border-amber-500/20 gap-6">
                 <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !user?.storeId) return;
+        if (!file || !user?.activeStoreId) return;
 
         const headerAliases: { [key: string]: string[] } = {
             sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
@@ -147,7 +147,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             const { data: products, error } = await supabase
                 .from('products')
                 .select('id, name, cost_price, sku')
-                .eq('store_id', user.storeId)
+                .eq('store_id', user.activeStoreId)
                 .in('sku', skus);
 
             if (error) throw error;
@@ -264,7 +264,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         console.log('[ProductReceptionView] Pre-confirmation diagnostic:', {
             hasUser: !!user,
             userId: user?.id,
-            storeId: user?.storeId,
+            storeId: user?.activeStoreId,
             itemsCount: receptionItems.size
         });
 
@@ -284,7 +284,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             return;
         }
 
-        if (!user.storeId) {
+        if (!user.activeStoreId) {
             toast.error('No hay una tienda activa seleccionada. Por favor, seleccione una tienda primero.');
             return;
         }
@@ -305,7 +305,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
         try {
              await registerReceptionMutation.mutateAsync({
-                p_store_id: user.storeId,
+                p_store_id: user.activeStoreId,
                 p_supplier: receptionDetails.supplier,
                 p_reception_date: receptionDetails.receptionDate,
                 p_invoice_number: receptionDetails.invoiceNumber,
