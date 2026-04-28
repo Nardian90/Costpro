@@ -34,6 +34,9 @@ export function StoreModals({
     const [bankAccount, setBankAccount] = useState('');
     const [logoUrl, setLogoUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [resetConfirmInput, setResetConfirmInput] = useState('');
+
+    const isResetConfirmed = resetConfirmInput === selectedStore?.name;
 
     useEffect(() => {
         if (selectedStore && mode === 'edit') {
@@ -49,6 +52,7 @@ export function StoreModals({
             setBankAccount('');
             setLogoUrl('');
         }
+        setResetConfirmInput('');
     }, [selectedStore, mode, isOpen]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,33 +141,80 @@ export function StoreModals({
                 </span>
             }
             footer={
-                (mode === 'delete' || mode === 'reset') ? (
+                (mode === 'delete') ? (
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-none h-11">
                             Cancelar
                         </Button>
                         <Button
-                            variant={mode === 'delete' ? 'destructive' : 'default'}
+                            variant="destructive"
                             onClick={() => onSubmit(mode, {})}
                             disabled={isSubmitting}
-                            className={`flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs ${mode === 'reset' ? 'bg-orange-600 hover:bg-orange-700 text-foreground border-none' : ''}`}
+                            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
                         >
-                            {isSubmitting ? (mode === 'delete' ? 'Eliminando...' : 'Reiniciando...') : (mode === 'delete' ? 'Eliminar' : 'Reiniciar')}
+                            {isSubmitting ? 'Eliminando...' : 'Eliminar'}
                         </Button>
                     </div>
                 ) : null
             }
         >
-            {mode === 'reset' && (
-                <div className="py-4 px-4 rounded-xl bg-orange-500/10 border border-orange-500/20 flex gap-4 items-center mb-4 mt-4">
-                    <AlertTriangle className="w-8 h-8 text-orange-500 shrink-0" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 leading-tight">
-                        ADVERTENCIA: Esta operación es irreversible y afectará a todos los datos operativos de la sucursal {selectedStore?.name}.
-                    </p>
-                </div>
-            )}
+            {mode === 'reset' ? (
+                <div className="space-y-4 mt-4">
+                    {/* Ícono de advertencia */}
+                    <div className="flex items-center gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+                        <AlertTriangle className="w-8 h-8 text-destructive flex-shrink-0" />
+                        <div>
+                            <p className="font-black text-sm uppercase tracking-tight text-destructive">
+                                Acción irreversible
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Se eliminarán permanentemente todos los datos de <strong>{selectedStore?.name}</strong>
+                            </p>
+                        </div>
+                    </div>
 
-            {mode !== 'delete' && mode !== 'reset' && (
+                    {/* Lista de qué se borra */}
+                    <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
+                        <li>Historial completo de ventas y transacciones</li>
+                        <li>Recepciones de mercancía registradas</li>
+                        <li>Ajustes de inventario documentados</li>
+                        <li>Transferencias enviadas y recibidas</li>
+                        <li>Movimientos de caja (arqueos)</li>
+                    </ul>
+
+                    {/* Input de confirmación */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                            Escribe <span className="text-foreground">{selectedStore?.name}</span> para confirmar
+                        </label>
+                        <input
+                            type="text"
+                            value={resetConfirmInput}
+                            onChange={e => setResetConfirmInput(e.target.value)}
+                            placeholder={selectedStore?.name || ''}
+                            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-1 focus:ring-destructive outline-none"
+                            autoComplete="off"
+                        />
+                    </div>
+
+                    {/* Botones */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-2.5 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={() => onSubmit('reset', {})}
+                            disabled={!isResetConfirmed || isSubmitting}
+                            className="flex-1 py-2.5 rounded-xl bg-destructive text-white text-xs font-black uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+                        >
+                            {isSubmitting ? 'Reiniciando...' : 'Confirmar reinicio'}
+                        </button>
+                    </div>
+                </div>
+            ) : mode !== 'delete' && (
                 <form onSubmit={handleSubmit} className="grid gap-6 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                         <Label htmlFor="name" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
