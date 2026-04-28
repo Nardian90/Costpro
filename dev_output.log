@@ -1,0 +1,22 @@
+Resolving dependencies
+Resolved, downloaded and extracted [156]
+Saved lockfile
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 622ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+Error: Turbopack build failed with 1 errors:
+./src/app
+Error: Next.js inferred your workspace root, but it may not be correct.
+    We couldn't find the Next.js package (next/package.json) from the project directory: /app/src/app
+     To fix this, set turbopack.root in your Next.js config, or ensure the Next.js package is resolvable from this directory.
+    Note: For security and performance reasons, files outside of the project directory will not be compiled.
+    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+
+    at ignore-listed frames
+[?25h
