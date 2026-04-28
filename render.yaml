@@ -6,9 +6,9 @@ services:
     startCommand: bun run start
     envVars:
       - key: NODE_VERSION
-        value: 22
-      - key: DATABASE_URL
-        value: ''
+        value: 20
+      - key: BUN_VERSION
+        value: 1.2.14
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
