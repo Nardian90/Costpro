@@ -1,4 +1,3 @@
-// src/components/ProductReceptionView.tsx
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
@@ -20,6 +19,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 
 interface ProductReceptionViewProps {
     onCancel: () => void;
+    preselectedProduct?: Product | null;
 }
 
 interface ReceptionItem {
@@ -30,7 +30,7 @@ interface ReceptionItem {
     expiresAt?: string;
 }
 
-export default function ProductReceptionView({ onCancel }: ProductReceptionViewProps) {
+export default function ProductReceptionView({ onCancel, preselectedProduct }: ProductReceptionViewProps) {
     const { user } = useAuthStore();
     const { setIsCreateProductModalOpen } = useUIStore();
 
@@ -48,60 +48,29 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
 
     const registerReceptionMutation = useRegisterReception();
-    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-    const totalCost = useMemo(() => {
-        return Array.from(receptionItems.values()).reduce((acc, item) => acc + (item.quantity * item.cost), 0);
-    }, [receptionItems]);
-
-    if (!user?.activeStoreId) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 text-center bg-amber-500/5 rounded-3xl border-2 border-dashed border-amber-500/20 gap-6">
-                <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center">
-                    <AlertTriangle className="w-10 h-10 text-amber-500" />
-                </div>
-                <div className="space-y-2">
-                    <h3 className="text-2xl font-black uppercase tracking-tight text-amber-600">Contexto de Tienda Requerido</h3>
-                    <p className="text-muted-foreground text-sm max-w-md mx-auto font-medium">
-                        Para registrar una recepción, debes tener una tienda activa seleccionada.
-                        Por favor, selecciona una tienda en la sección de <span className="font-bold text-primary">Tiendas</span> antes de continuar.
-                    </p>
-                </div>
-                <button
-                    onClick={onCancel}
-                    className="px-8 py-3 min-h-[44px] flex items-center justify-center bg-amber-500 text-foreground font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
-                >
-                    Volver al Inventario
-                </button>
-            </div>
-        );
-    }
-
-    const addToReception = (product: Product) => {
+    const addReceptionItem = (product: Product) => {
         if (receptionItems.has(product.id)) {
-            toast.info(`${product.name} ya está en la lista de recepción.`);
+            toast.info(`${product.name} ya está en la lista`);
             return;
         }
+
         const newItems = new Map(receptionItems);
         newItems.set(product.id, {
-            product,
+            product: {
+                id: product.id,
+                name: product.name,
+                cost_price: product.cost_price,
+                sku: product.sku
+            },
             quantity: 1,
-            cost: product.cost_price || 0,
+            cost: product.cost_price || 0
         });
         setReceptionItems(newItems);
         setSearchTerm('');
-    };
-
-    const updateReceptionItem = (productId: string, field: keyof ReceptionItem, value: any) => {
-        const newItems = new Map(receptionItems);
-        const item = newItems.get(productId);
-        if (item) {
-            (item[field] as any) = value;
-            newItems.set(productId, item);
-            setReceptionItems(newItems);
-        }
     };
 
     const removeReceptionItem = (productId: string) => {
@@ -110,383 +79,257 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         setReceptionItems(newItems);
     };
 
-    const handleImportClick = () => {
-        setImportErrors([]); // Clear old errors before a new import attempt
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !user?.activeStoreId) return;
-
-        const headerAliases: { [key: string]: string[] } = {
-            sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
-            quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty', 'unidades'],
-            cost: ['cost', 'costo', 'Costo', 'Cost Price', 'precio_compra'],
-        };
-
-        const result = await importService.parseAndValidate(file, receptionImportRowSchema, headerAliases);
-
-        if (result.errors.length > 0) {
-            setImportErrors(result.errors);
-            toast.error(`Importación fallida. Se encontraron ${result.errors.length} errores.`);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-            return;
-        }
-
-        if (result.data.length === 0) {
-            toast.error('El archivo CSV está vacío.');
-            return;
-        }
-
-        const toastId = toast.loading(`Validando ${result.data.length} productos...`);
-        try {
-            const seenSkus = new Set(result.data.map(d => d.item.sku));
-            const skus = Array.from(seenSkus);
-
-            const { data: products, error } = await supabase
-                .from('products')
-                .select('id, name, cost_price, sku')
-                .eq('store_id', user.activeStoreId)
-                .in('sku', skus);
-
-            if (error) throw error;
-
-            const productMap = new Map(products?.map(p => [p.sku, p]));
-            const newItems = new Map(receptionItems);
-            let importedCount = 0;
-            const notFoundErrors: { row: number; message: string }[] = [];
-
-            result.data.forEach(({ row, item }) => {
-                const product = productMap.get(item.sku);
-                if (product) {
-                    const existing = newItems.get(product.id);
-                    newItems.set(product.id, {
-                        product,
-                        quantity: (existing?.quantity || 0) + item.quantity,
-                        cost: item.cost,
-                    });
-                    importedCount++;
-                } else {
-                    notFoundErrors.push({ row, message: `El SKU '${item.sku}' no fue encontrado en esta tienda.` });
-                }
-            });
-
-            if (notFoundErrors.length > 0) {
-                setImportErrors(notFoundErrors);
-                toast.error(`Importación parcial. ${notFoundErrors.length} productos no se encontraron.`, { id: toastId });
-            } else {
-                toast.success(`¡Éxito! ${importedCount} productos añadidos a la lista.`, { id: toastId });
-            }
-
+    const updateReceptionItem = (productId: string, field: keyof ReceptionItem, value: any) => {
+        const newItems = new Map(receptionItems);
+        const item = newItems.get(productId);
+        if (item) {
+            newItems.set(productId, { ...item, [field]: value });
             setReceptionItems(newItems);
-        } catch (error: any) {
-            toast.error(`Error al procesar: ${error.message}`, { id: toastId });
-        } finally {
-            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    const handleExport = () => {
-        const invalidItems = Array.from(receptionItems.values()).filter(item => !item.product.sku);
-        if (invalidItems.length > 0) {
-            toast.error(`Hay ${invalidItems.length} productos sin SKU. Todos los productos deben tener un SKU para ser recibidos.`);
+    const processReception = async () => {
+        if (!user?.activeStoreId) {
+            toast.error('No se detectó una tienda activa');
             return;
         }
 
         if (receptionItems.size === 0) {
-            toast.error('No hay productos para exportar.');
+            toast.error('Agrega al menos un producto para recibir');
             return;
         }
 
-        const data = Array.from(receptionItems.values()).map(item => ({
-            SKU: item.product.sku || '',
-            'Nombre del Producto': item.product.name,
-            Cantidad: item.quantity,
-            Costo: item.cost
-        }));
+        try {
+            const payload = {
+                p_store_id: user.activeStoreId,
+                p_supplier: receptionDetails.supplier,
+                p_invoice_number: receptionDetails.invoiceNumber,
+                p_reception_date: receptionDetails.receptionDate,
+                p_items: Array.from(receptionItems.values()).map(item => ({
+                    product_id: item.product.id,
+                    quantity: item.quantity,
+                    unit_cost: item.cost,
+                }))
+            };
 
-        const csv = Papa.unparse(data);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `reception_${receptionDetails.invoiceNumber || 'draft'}_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            await registerReceptionMutation.mutateAsync(payload);
+            toast.success('Recepción registrada correctamente');
+            onCancel();
+        } catch (error: any) {
+            console.error('Error in reception:', error);
+            toast.error(error.message || 'Error al procesar la recepción');
+        }
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const { data: rows, errors } = results;
+
+                if (errors.length > 0) {
+                    toast.error('Error al leer el archivo CSV');
+                    return;
+                }
+
+                // Process import through the standard import service logic
+                // For Sprint 2, we will simplify: look up products by SKU and add them
+                const newItems = new Map(receptionItems);
+                let loadedCount = 0;
+
+                toast.promise(
+                    (async () => {
+                        for (const row of rows as any[]) {
+                            const { sku, cantidad, costo } = row;
+                            if (!sku) continue;
+
+                            // Direct DB lookup for each SKU in the CSV
+                            const { data: product } = await supabase
+                                .from('products')
+                                .select('id, name, sku, cost_price')
+                                .eq('sku', sku)
+                                .eq('store_id', user?.activeStoreId)
+                                .single();
+
+                            if (product) {
+                                newItems.set(product.id, {
+                                    product,
+                                    quantity: parseInt(cantidad) || 0,
+                                    cost: parseFloat(costo) || product.cost_price || 0
+                                });
+                                loadedCount++;
+                            }
+                        }
+                        setReceptionItems(newItems);
+                        return loadedCount;
+                    })(),
+                    {
+                        loading: 'Procesando archivo...',
+                        success: (count) => `Se cargaron ${count} productos correctamente`,
+                        error: 'Error al importar productos'
+                    }
+                );
+            }
+        });
     };
 
     const downloadTemplate = () => {
-        const data = [
-            { SKU: 'PROD-001', 'Nombre del Producto': 'Producto Ejemplo', Cantidad: 10, Costo: 15.50 },
-            { SKU: 'PROD-002', 'Nombre del Producto': 'Otro Producto', Cantidad: 5, Costo: 20.00 }
-        ];
-        const csv = Papa.unparse(data);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
+        const csvContent = "sku,nombre,cantidad,costo\nSKU-123,Producto Ejemplo,10,5.50";
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'reception_template.csv');
+        link.setAttribute("href", url);
+        link.setAttribute("download", "plantilla_recepcion.csv");
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
+    const totalCost = useMemo(() => {
+        return Array.from(receptionItems.values()).reduce((sum, item) => sum + (item.quantity * item.cost), 0);
+    }, [receptionItems]);
+
     const actions: Action[] = [
-        {
-            id: 'import',
-            label: 'Importar CSV',
-            icon: Upload,
-            onClick: handleImportClick,
-            variant: 'outline',
-        },
-        {
-            id: 'export',
-            label: 'Exportar Lista',
-            icon: Download,
-            onClick: handleExport,
-            variant: 'outline',
-        },
         {
             id: 'help',
             label: 'Ayuda',
             icon: HelpCircle,
-            onClick: () => setIsHelpModalOpen(true),
-            variant: 'outline',
+            onClick: () => setIsHelpModalOpen(true)
         },
+        {
+            id: 'import',
+            label: 'Importar CSV',
+            icon: Upload,
+            onClick: () => fileInputRef.current?.click()
+        }
     ];
 
-    const processReception = async () => {
-        // Diagnostic logging before validation as per protocol
-        console.log('[ProductReceptionView] Pre-confirmation diagnostic:', {
-            hasUser: !!user,
-            userId: user?.id,
-            storeId: user?.activeStoreId,
-            itemsCount: receptionItems.size
-        });
-
-        const invalidItems = Array.from(receptionItems.values()).filter(item => !item.product.sku);
-        if (invalidItems.length > 0) {
-            toast.error(`Hay ${invalidItems.length} productos sin SKU. Todos los productos deben tener un SKU para ser recibidos.`);
-            return;
-        }
-
-        if (receptionItems.size === 0) {
-            toast.error('Agregue al menos un producto a la recepción.');
-            return;
-        }
-
-        if (!user) {
-            toast.error('No se encontró una sesión activa. Por favor, inicie sesión nuevamente.');
-            return;
-        }
-
-        if (!user.activeStoreId) {
-            toast.error('No hay una tienda activa seleccionada. Por favor, seleccione una tienda primero.');
-            return;
-        }
-
-        if (!receptionDetails.supplier || !receptionDetails.invoiceNumber) {
-            toast.error('Por favor, complete el proveedor y el número de factura.');
-            return;
-        }
-
-        const toastId = toast.loading('Registrando recepción...');
-
-        const itemsPayload = Array.from(receptionItems.values()).map(item => ({
-            product_id: item.product.id,
-            sku: item.product.sku,
-            quantity: item.quantity,
-            unit_cost: item.cost
-        }));
-
-        try {
-             await registerReceptionMutation.mutateAsync({
-                p_store_id: user.activeStoreId,
-                p_supplier: receptionDetails.supplier,
-                p_reception_date: receptionDetails.receptionDate,
-                p_invoice_number: receptionDetails.invoiceNumber,
-                p_items: itemsPayload
-                // p_user_id is not required as it's handled by auth.uid() in the latest RPC
-            });
-
-            toast.success('¡Recepción registrada con éxito!', { id: toastId });
-            onCancel(); // Return to the main inventory view
-        } catch (err: any) {
-            toast.error(err.message || 'Error al procesar la recepción.', { id: toastId });
-        }
-    };
-
     return (
-        <div className="pb-28 md:pb-0 relative">
+        <div className="space-y-6 pb-20 md:pb-0">
             <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".csv"
                 className="hidden"
+                accept=".csv"
+                onChange={handleFileUpload}
             />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 hidden sm:block">
-                    Nueva Recepción de Productos
-                </h2>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-black text-primary uppercase tracking-tighter">Nueva Recepción</h2>
+                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Registra ingreso de mercancía al almacén</p>
+                </div>
                 <ActionMenu actions={actions} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Left side: Form and Items List */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Reception Details Form */}
-                    <div className="neu-card !p-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-black text-muted-foreground uppercase">Proveedor</label>
-                                <input
-                                    type="text"
-                                    value={receptionDetails.supplier}
-                                    onChange={(e) => setReceptionDetails({ ...receptionDetails, supplier: e.target.value })}
-                                    className="neu-input w-full mt-1 text-base"
-                                    placeholder="Nombre del proveedor"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                               <div>
-                                    <label className="text-xs font-black text-muted-foreground uppercase">Fecha</label>
-                                    <input
-                                        type="date"
-                                        value={receptionDetails.receptionDate}
-                                        onChange={(e) => setReceptionDetails({ ...receptionDetails, receptionDate: e.target.value })}
-                                        className="neu-input w-full mt-1 text-base"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-black text-muted-foreground uppercase">Factura #</label>
-                                    <input
-                                        type="text"
-                                        value={receptionDetails.invoiceNumber}
-                                        onChange={(e) => setReceptionDetails({ ...receptionDetails, invoiceNumber: e.target.value })}
-                                        className="neu-input w-full mt-1 text-base"
-                                        placeholder="INV-123"
-                                    />
-                                </div>
-                            </div>
+                    {/* Header Info */}
+                    <div className="neu-card grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Proveedor</label>
+                            <input
+                                type="text"
+                                placeholder="Nombre del proveedor"
+                                value={receptionDetails.supplier}
+                                onChange={(e) => setReceptionDetails({ ...receptionDetails, supplier: e.target.value })}
+                                className="neu-input w-full"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">No. Factura</label>
+                            <input
+                                type="text"
+                                placeholder="REF-00123"
+                                value={receptionDetails.invoiceNumber}
+                                onChange={(e) => setReceptionDetails({ ...receptionDetails, invoiceNumber: e.target.value })}
+                                className="neu-input w-full"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Fecha de Entrada</label>
+                            <input
+                                type="date"
+                                value={receptionDetails.receptionDate}
+                                onChange={(e) => setReceptionDetails({ ...receptionDetails, receptionDate: e.target.value })}
+                                className="neu-input w-full"
+                            />
                         </div>
                     </div>
 
-                    {/* Import Error Display */}
-                    {importErrors.length > 0 && (
-                        <div className="neu-card border-danger/20 bg-danger/5 !p-4">
-                            <details>
-                                <summary className="cursor-pointer font-bold text-danger flex justify-between items-center">
-                                    <span>Importación Fallida: {importErrors.length} errores encontrados.</span>
-                                    <span className="text-xs font-black uppercase tracking-widest">Ver Detalles</span>
-                                </summary>
-                                <div className="table-scroll-wrapper mt-4 max-h-48 overflow-y-auto pr-2">
-                                    <table className="data-table sticky-column-1 w-full text-xs">
-                                        <thead className="sticky-header">
-                                            <tr className="text-left font-black uppercase text-xs border-b border-danger/20">
-                                                <th className="p-2">Fila</th>
-                                                <th className="p-2">Error</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {importErrors.map((error, index) => (
-                                                <tr key={index} className="border-b border-danger/10">
-                                                    <td className="p-2 font-bold">{error.row}</td>
-                                                    <td className="p-2">{error.message}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </details>
-                        </div>
-                    )}
-
-                    {/* Product Search */}
+                    {/* Search & Add */}
                     <div className="relative">
-                        <SearchInput
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onClear={() => setSearchTerm('')}
-                            placeholder="Buscar producto para agregar..."
-                            className="w-full"
-                            inputClassName="!pl-14"
-                        />
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 block mb-1">Buscar producto para agregar</label>
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Escribe nombre o SKU..."
+                                className="neu-input w-full pl-10 h-14 text-sm"
+                            />
+                            {isSearching && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+
                         {debouncedSearchTerm && (
-                            <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 max-h-64 overflow-y-auto shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {isSearching ? (
-                                    <div className="p-8 text-center flex flex-col items-center gap-3">
-                                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Buscando...</span>
-                                    </div>
-                                ) : searchResults.length > 0 ? (
-                                    <div className="divide-y divide-white/5">
-                                        {searchResults.map(p => (
-                                            <div
-                                                key={p.id}
-                                                onClick={() => addToReception(p)}
-                                                className="p-4 hover:bg-primary/10 cursor-pointer flex justify-between items-center transition-colors group"
-                                            >
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-sm group-hover:text-primary transition-colors">{p.name}</span>
-                                                    <span className="text-xs font-mono text-muted-foreground uppercase">{p.sku || 'S/N'}</span>
-                                                </div>
-                                                <div className="neu-raised-sm p-2 group-hover:bg-primary group-hover:text-foreground transition-all">
-                                                    <Plus className="w-4 h-4" />
-                                                </div>
+                            <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 p-2 shadow-2xl max-h-60 overflow-y-auto">
+                                {searchResults.length > 0 ? (
+                                    searchResults.map((p) => (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => addReceptionItem(p)}
+                                            className="w-full p-3 flex items-center justify-between hover:bg-primary/10 rounded-xl transition-colors text-left"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold truncate">{p.name}</p>
+                                                <p className="text-[10px] text-muted-foreground font-mono uppercase">{p.sku}</p>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <PlusCircle className="w-5 h-5 text-primary" />
+                                        </button>
+                                    ))
                                 ) : (
-                                    <div className="p-8 text-center space-y-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-tight">No se encontraron productos</p>
-                                            <p className="text-xs text-muted-foreground/60 italic">Intenta con otro término o SKU</p>
-                                        </div>
-                                        <div className="pt-2 border-t border-white/5">
-                                            <PrimaryButton
-                                                label="+ Agregar nuevo producto al catálogo"
-                                                icon={PlusCircle}
-                                                onClick={() => {
-                                                    const { setInitialProductName } = useUIStore.getState();
-                                                    setInitialProductName(searchTerm);
-                                                    setIsCreateProductModalOpen(true);
-                                                    setSearchTerm('');
-                                                }}
-                                                className="w-full !py-2 !text-xs"
-                                            />
-                                        </div>
+                                    <div className="p-4 text-center">
+                                        <p className="text-xs font-bold text-muted-foreground">No se encontraron productos</p>
+                                        <button
+                                            onClick={() => setIsCreateProductModalOpen(true)}
+                                            className="mt-2 text-primary text-xs font-black uppercase hover:underline"
+                                        >
+                                            + Crear nuevo producto
+                                        </button>
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    {/* Reception Items List */}
+                    {/* Items List */}
                     <div className="table-scroll-wrapper">
-                        <table className="data-table w-full min-w-[700px]">
+                        <table className="w-full text-left border-separate border-spacing-y-2">
                             <thead>
-                                <tr className="text-left font-black uppercase text-xs text-muted-foreground border-b border-white/5">
-                                    <th className="pb-4 pl-4 sticky-column-1">Producto</th>
-                                    <th className="pb-4 text-center">Cant.</th>
-                                    <th className="pb-4 text-center">Costo Unit.</th>
-                                    <th className="pb-4 text-right">Subtotal</th>
-                                    <th className="pb-4 text-right pr-4">Acción</th>
+                                <tr className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-4">
+                                    <th className="pb-2 pl-4">Producto</th>
+                                    <th className="pb-2 text-center">Cant.</th>
+                                    <th className="pb-2 text-center">Costo Unit.</th>
+                                    <th className="pb-2 text-right">Subtotal</th>
+                                    <th className="pb-2 pr-4"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody>
                                 {Array.from(receptionItems.values()).map(({ product, quantity, cost }) => (
-                                    <tr key={product.id} className="group hover:bg-primary/5 transition-colors">
-                                        <td className="py-4 pl-4 sticky-column-1">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-sm">{product.name}</span>
-                                                <span className="text-xs font-mono text-muted-foreground uppercase">{product.sku || 'S/N'}</span>
-                                            </div>
+                                    <tr key={product.id} className="neu-card border-none hover:bg-white/2 transition-colors">
+                                        <td className="py-4 pl-4 min-w-[200px]">
+                                            <p className="text-sm font-bold line-clamp-1">{product.name}</p>
+                                            <p className="text-[10px] text-muted-foreground font-mono uppercase">{product.sku}</p>
                                         </td>
                                         <td className="py-4 px-2 w-24">
                                             <input
