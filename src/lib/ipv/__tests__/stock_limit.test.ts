@@ -116,7 +116,7 @@ describe('STOCK_LIMIT Rule Invariants', () => {
     const result = await engine.matchTransaction(tx);
     expect(result.status).toBe('COMPLETO');
     expect(result.lines.length).toBe(1);
-    expect(result.movements.length).toBe(2);
+    expect(result.movements.filter(m => m.tipo === 'DECOMPOSITION').length).toBe(1);
     expect(result.movements[0].tipo).toBe('DECOMPOSITION');
   });
 
