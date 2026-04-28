@@ -15,7 +15,7 @@ self.onmessage = async (e) => {
 
       const results = await engine.reconcileAll(
         transactions,
-        (percentage) => {
+        (percentage: number) => {
           self.postMessage({
             type: 'PROGRESS',
             percentage
