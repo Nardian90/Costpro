@@ -1,8 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
-import { db, BankTransaction, Product, MatchingRule, ReconciliationLine, ProductMovement, RulesConfig } from '../dexie';
+import { db, BankTransaction, Product, MatchingRule, ReconciliationLine, ProductMovement } from '../dexie';
 import { generateHash } from '../utils';
+export { generateHash };
 import { useAuthStore } from '../../store/index';
 
+export type RulesConfig = MatchingRule[];
 export interface MatchingTrace {
   pass: number;
   rule: string;
@@ -356,6 +358,20 @@ export class MatchingEngine {
         cantidad: qty, precio_unitario_cents: p.precio_cents, origen_dato: 'AUTO_MATCH', source_type: 'BANK_TRANSFER',
         reconciliation_hash: id, created_at: new Date().toISOString(), control_transfer_date: tx.fecha, performance_obligation_id: `PO-${p.cod}-${id.substring(0,8)}`
     };
+  }
+
+  async matchSimulation(targetCents: number): Promise<MatchingResult> {
+    const mockTx: BankTransaction = {
+      referencia_origen: `SIM-${uuidv4().substring(0, 8)}`,
+      fecha: new Date().toISOString().split("T")[0],
+      importe_cents: targetCents,
+      descripcion: "SIMULACION",
+      tipo: "TRANSFERENCIA",
+      processed: false,
+      created_at: new Date().toISOString()
+    } as any;
+
+    return this.matchTransaction(mockTx, 0);
   }
 
   async reconcileAll(txs: any[], onProgress?: any): Promise<MatchingResult[]> {
