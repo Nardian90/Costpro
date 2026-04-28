@@ -43,7 +43,7 @@ describe('Templates Verification', () => {
         // Annex I: (1.5 * 120) + (0.1 * 100) + (0.4 * 5) = 180 + 10 + 2 = 192
         expect(values['1'].total).toBe(192);
         // Total costs (Section 12) includes Section 2 (Labor), 4 (Asociados), 6 (Admón), 7 (Dist)
-        expect(values['12'].total).toBeGreaterThan(200);
+        expect(values['12.1'].total).toBeGreaterThan(200);
     });
 
     it('should correctly calculate industrialTemplate with all annexes', async () => {
@@ -59,6 +59,6 @@ describe('Templates Verification', () => {
         expect(values['2.1'].total).toBe(17500);
 
         // Verify Section 12 (Costo Total)
-        expect(values['12'].total).toBeGreaterThan(500000);
+        expect(values['12.1'].total).toBeGreaterThan(500000);
     });
 });

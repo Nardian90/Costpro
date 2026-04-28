@@ -62,7 +62,7 @@ export function evaluateAnnexExpressionShared(
         const index = parseInt(rowIndex) - 1;
         if (index >= 0 && index < targetAnnex.data.length) {
           const val = targetAnnex.data[index][field];
-          return String(val ?? 0);
+          return typeof val === 'string' ? JSON.stringify(val) : String(val ?? 0);
         }
         return '0';
       },
@@ -175,7 +175,7 @@ export function evaluateHeaderExpressionShared(
         const index = parseInt(rowIndex) - 1;
         if (index >= 0 && index < targetAnnex.data.length) {
           const val = targetAnnex.data[index][field];
-          return String(val ?? 0);
+          return typeof val === 'string' ? JSON.stringify(val) : String(val ?? 0);
         }
         return '0';
       },
@@ -192,7 +192,7 @@ export function evaluateHeaderExpressionShared(
         );
         if (matches.length > 0) {
           const val = matches[0][field];
-          return String(val ?? 0);
+          return typeof val === 'string' ? JSON.stringify(val) : String(val ?? 0);
         }
         return '0';
       },
@@ -384,23 +384,21 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
 export function buildVHSums(sections: any[]): Record<string, number> {
   const vhSums: Record<string, number> = {};
 
-  const calculateVH = (rows: CostSheetRow[]) => {
+  const calculateVH = (rows: any[]) => {
     (rows || []).forEach(r => {
       if (r.children && r.children.length > 0) {
         calculateVH(r.children);
-        // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
-        // respect r.valorHistorico instead of summing children.
         const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-        if (isFixedValue) {
-          vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+        if (isFixedValue && (r.valorHistorico !== undefined || r.value !== undefined)) {
+          vhSums[r.id] = Number(r.value ?? r.valorHistorico ?? 0);
         } else {
-          vhSums[r.id] = r.children.reduce((sum, child) => {
-            const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
-            return sum + val;
+          vhSums[r.id] = r.children.reduce((sum: number, child: any) => {
+            const val = vhSums[child.id] ?? child.value ?? child.valorHistorico ?? 0;
+            return sum + Number(val || 0);
           }, 0);
         }
       } else {
-        vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+        vhSums[r.id] = Number(r.value ?? r.valorHistorico ?? 0);
       }
     });
   };
@@ -467,11 +465,12 @@ export function buildEngineRows(
       let formula = r.totalFormula || r.formula;
       const isParent = r.children && r.children.length > 0;
 
+
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && !isFixedValue) {
-        formula = '=sum(children)';
+      if (isParent && (!formula || formula === 'VH')) {
+          formula = 'sum(children)';
       }
 
       // Map formaCalculo
@@ -484,7 +483,7 @@ export function buildEngineRows(
       const isPercentRow = r.isPercent === true || (r as any).is_percent === true;
       if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
       // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
-      if (formula && !isFixedValue) formaCalculo = 'FORMULA';
+      if (formula) formaCalculo = 'FORMULA';
 
       // Base Calculation mapping
       let baseCalculo: BaseRef | null = null;
