@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 import { storeService } from '@/services/store-service';
 import { userService } from '@/services/user-service';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCartStore } from '@/store/cart';
 
 export type StoreFormMode = 'create' | 'edit' | 'delete' | 'reset' | null;
 
@@ -21,6 +22,10 @@ export function useStoresView() {
     const [storeFormMode, setStoreFormMode] = useState<StoreFormMode>(null);
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Cart Store Integration
+    const cartItemCount = useCartStore(state => state.getItemCount());
+    const clearCart = useCartStore(state => state.clearCart);
 
     // Data Fetching
     const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
@@ -35,27 +40,50 @@ export function useStoresView() {
         return storesData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [storesData, searchTerm]);
 
+    // Internal execution function
+    const executeStoreChange = async (storeId: string) => {
+        if (!user) return;
+        try {
+            updateUser({ activeStoreId: storeId });
+            await userService.setActiveStore(user.id, storeId);
+            toast.success('Tienda cambiada exitosamente');
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
+        } catch (error: any) {
+            logger.error('DATABASE', 'SET_ACTIVE_STORE_FAILED', { storeId, error });
+            toast.error('Error al cambiar de tienda');
+        }
+    };
+
     // Operations
     const handleSetActiveStore = async (storeId: string) => {
         if (!user) return;
-        try {
-          // Update local state
-          updateUser({ activeStoreId: storeId });
-          // Persist to DB
-          await userService.setActiveStore(user.id, storeId);
-          toast.success('Tienda cambiada exitosamente');
 
-          // Invalidate queries to refresh data in current view without reload
-          queryClient.invalidateQueries({ queryKey: ['products'] });
-          queryClient.invalidateQueries({ queryKey: ['transactions'] });
-          queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory'] });
-          queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-
-        } catch (error: any) {
-          logger.error('DATABASE', 'SET_ACTIVE_STORE_FAILED', { storeId, error });
-          toast.error('Error al cambiar de tienda');
+        if (cartItemCount > 0) {
+            toast.warning(
+                `Tienes ${cartItemCount} producto(s) en el carrito activo. Cambiar de tienda cancelará la venta en curso.`,
+                {
+                    duration: 9000,
+                    action: {
+                        label: 'Cambiar y cancelar venta',
+                        onClick: async () => {
+                            clearCart();
+                            await executeStoreChange(storeId);
+                        }
+                    },
+                    cancel: {
+                        label: 'Mantenerme aquí',
+                        onClick: () => { }
+                    }
+                }
+            );
+            return;
         }
+
+        await executeStoreChange(storeId);
     };
 
     const handleStoreFormSubmit = async (mode: StoreFormMode, data: Partial<Store>) => {
