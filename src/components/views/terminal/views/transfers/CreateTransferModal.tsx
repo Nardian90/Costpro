@@ -1,4 +1,3 @@
-// src/components/views/terminal/views/transfers/CreateTransferModal.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -71,6 +70,25 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
       return;
     }
 
+    // Validación de stock suficiente
+    const stockErrors: string[] = [];
+    for (const [, item] of selectedItems) {
+      const available = item.product.stock_current ?? 0;
+      if (item.quantity > available) {
+        stockErrors.push(
+          `• ${item.product.name}: solicitado ${item.quantity}, disponible ${available}`
+        );
+      }
+    }
+
+    if (stockErrors.length > 0) {
+      toast.error(
+        `Stock insuficiente en ${stockErrors.length} producto(s):\n${stockErrors.join('\n')}`,
+        { duration: 6000 }
+      );
+      return;
+    }
+
     const items = Array.from(selectedItems.values()).map(item => ({
       product_id: item.product.id,
       quantity: item.quantity,
@@ -95,6 +113,11 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
     }
   };
 
+  // Computed value para usar en el botón:
+  const hasStockErrors = Array.from(selectedItems.values()).some(
+    item => item.quantity > (item.product.stock_current ?? 0)
+  );
+
   return (
     <BaseModal
       open={isOpen}
@@ -116,7 +139,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
           </button>
           <button
             onClick={handleCreate}
-            disabled={createTransferMutation.isPending}
+            disabled={hasStockErrors || createTransferMutation.isPending}
             className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
@@ -202,12 +225,27 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center">
                        <span className="text-xs font-black text-muted-foreground uppercase">Cant.</span>
-                       <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => updateQuantity(product.id, parseInt(e.target.value) || 0)}
-                        className="neu-inset-sm w-16 text-center font-bold text-sm !py-1"
-                       />
+                       <div className="flex items-center gap-2">
+                         <input
+                          type="number"
+                          value={quantity}
+                          onChange={(e) => updateQuantity(product.id, parseInt(e.target.value) || 0)}
+                          className={cn(
+                            "w-20 px-2 py-1 rounded-lg border text-center text-sm font-bold",
+                            quantity > (product.stock_current ?? 0)
+                              ? "border-destructive bg-destructive/5"
+                              : "border-border bg-background"
+                          )}
+                         />
+                         <span className={cn(
+                            "text-xs font-bold whitespace-nowrap",
+                            quantity > (product.stock_current ?? 0)
+                              ? "text-destructive"
+                              : "text-muted-foreground"
+                          )}>
+                            / {product.stock_current ?? 0} disp.
+                          </span>
+                       </div>
                     </div>
                     <button
                       onClick={() => removeItem(product.id)}
