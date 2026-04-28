@@ -1,4 +1,3 @@
-// src/components/InventoryCardView.tsx
 'use client';
 
 import React, { useRef, useCallback } from 'react';
@@ -46,11 +45,28 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.2, delay: index % 10 * 0.03 }}
                             >
-                                <ProductCard
-                                    product={product}
-                                    variant="inventory"
-                                    onEdit={() => onAdjust?.(product)}
-                                />
+                                <div className="relative group">
+                                    <ProductCard
+                                        product={product}
+                                        variant="inventory"
+                                        onEdit={() => onAdjust?.(product)}
+                                    />
+                                    {/* Badge de alerta de stock */}
+                                    <div className="absolute top-3 left-3 flex flex-col gap-1 pointer-events-none z-10">
+                                        {(product.stock_current ?? 0) === 0 && (
+                                          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20 backdrop-blur-md shadow-sm">
+                                            Agotado
+                                          </span>
+                                        )}
+                                        {(product.stock_current ?? 0) > 0 &&
+                                         (product.min_stock ?? 0) > 0 &&
+                                         (product.stock_current ?? 0) <= (product.min_stock ?? 0) && (
+                                          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 backdrop-blur-md shadow-sm">
+                                            En mínimo
+                                          </span>
+                                        )}
+                                    </div>
+                                </div>
                             </motion.div>
                         );
                     })}

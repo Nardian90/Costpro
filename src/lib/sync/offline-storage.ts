@@ -1,12 +1,29 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { syncOperationSchema, type syncOperationSchema as SyncOperation } from '@/validation/schemas';
+import { syncOperationSchema } from '@/validation/schemas';
 import { z } from 'zod';
 
 type SyncOperationType = z.infer<typeof syncOperationSchema>;
 
 const SYNC_QUEUE_KEY = 'sync_queue';
 const OFFLINE_SNAPSHOT_KEY = 'offline_snapshot';
+
+// Prioridad de operaciones: menor número = mayor prioridad
+// Las ventas deben procesarse antes que los ajustes para evitar stock negativo temporal
+const OPERATION_PRIORITY: Record<string, number> = {
+  'sale':               1,
+  'payment':            1,
+  'checkout':           1,
+  'reception':          2,
+  'reception_create':   2,
+  'transfer_confirm':   3,
+  'transfer_create':    3,
+  'inventory_adjust':   4,
+  'inventory_count':    4,
+};
+
+const getOperationPriority = (entity: string): number =>
+  OPERATION_PRIORITY[entity] ?? 5; // default al final
 
 // Configure localforage
 localforage.config({
@@ -51,7 +68,14 @@ export const offlineStorage = {
    */
   async getPendingOperations(): Promise<SyncOperationType[]> {
     const queue = await this.getQueue();
-    return queue.filter(op => op.status === 'pending' || op.status === 'failed');
+    return queue
+      .filter(op => op.status === 'pending' || op.status === 'failed')
+      .sort((a, b) => {
+        const priorityDiff = getOperationPriority(a.entity) - getOperationPriority(b.entity);
+        if (priorityDiff !== 0) return priorityDiff;
+        // Mismo nivel de prioridad: FIFO por timestamp de creación
+        return a.clientClock - b.clientClock;
+      });
   },
 
   /**

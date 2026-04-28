@@ -1,4 +1,3 @@
-// src/components/InventoryTableView.tsx
 'use client';
 
 import React, { useRef, useCallback } from 'react';
@@ -17,7 +16,7 @@ interface InventoryTableViewProps {
 }
 
 const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void }>(({ product, onAdjust }, ref) => {
-    const isLowStock = product.stock_current <= product.min_stock;
+    const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
             <td className="p-4" data-label="Producto">
@@ -36,7 +35,24 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                 </div>
             </td>
             <td className="p-4 text-xs font-mono text-muted-foreground" data-label="SKU">{product.sku || '-'}</td>
-            <td className="p-4 text-right font-black text-lg" data-label="Stock">{product.stock_current}</td>
+            <td className="p-4 text-right font-black text-lg" data-label="Stock">
+                <div className="flex flex-col items-end gap-1">
+                    <span>{product.stock_current}</span>
+                    {/* Badge de alerta de stock */}
+                    {(product.stock_current ?? 0) === 0 && (
+                      <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20 whitespace-nowrap">
+                        Agotado
+                      </span>
+                    )}
+                    {(product.stock_current ?? 0) > 0 &&
+                     (product.min_stock ?? 0) > 0 &&
+                     (product.stock_current ?? 0) <= (product.min_stock ?? 0) && (
+                      <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 whitespace-nowrap">
+                        En mínimo
+                      </span>
+                    )}
+                </div>
+            </td>
             <td className="p-4 text-right font-bold text-primary" data-label="Precio">{formatCurrency(product.price || 0)}</td>
             <td className="p-4 text-right text-muted-foreground" data-label="Costo">{formatCurrency(product.cost_price || 0)}</td>
             <td className="p-4 text-center" data-label="Estado">
