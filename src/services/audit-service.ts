@@ -45,8 +45,81 @@ export const auditService = {
     });
 
     if (error) {
-      console.error('[AuditService] Error logging invoice_without_price:', error);
+      console.error('[AuditService] Error logging sale_below_cost:', error);
       // We don't throw here to avoid blocking the main flow if auditing fails
     }
+  },
+
+  async logTransferCreated(params: {
+    userId: string;
+    transferId: string;
+    originStoreId: string;
+    destinationStoreId: string;
+    items: Array<{ productId: string; quantity: number; unitCost: number }>;
+  }): Promise<void> {
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'transfer_created',
+      table_name: 'transfers',
+      record_id: params.transferId,
+      store_id: params.originStoreId,
+      metadata: {
+        transfer_id: params.transferId,
+        origin_store_id: params.originStoreId,
+        destination_store_id: params.destinationStoreId,
+        items_count: params.items.length,
+        total_units: params.items.reduce((s, i) => s + i.quantity, 0),
+        items: params.items,
+        created_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logTransferCreated failed:', error);
+  },
+
+  async logTransferConfirmed(params: {
+    userId: string;
+    transferId: string;
+    originStoreId: string;
+    destinationStoreId: string;
+    items: Array<{ productId: string; quantity: number; unitCost: number }>;
+  }): Promise<void> {
+    const totalUnits = params.items.reduce((s, i) => s + i.quantity, 0);
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'transfer_confirmed',
+      table_name: 'transfers',
+      record_id: params.transferId,
+      store_id: params.destinationStoreId,
+      metadata: {
+        transfer_id: params.transferId,
+        origin_store_id: params.originStoreId,
+        destination_store_id: params.destinationStoreId,
+        total_units_moved: totalUnits,
+        items: params.items,
+        confirmed_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logTransferConfirmed failed:', error);
+  },
+
+  async logTransferCancelled(params: {
+    userId: string;
+    transferId: string;
+    storeId: string;
+    reason?: string;
+  }): Promise<void> {
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'transfer_cancelled',
+      table_name: 'transfers',
+      record_id: params.transferId,
+      store_id: params.storeId,
+      metadata: {
+        transfer_id: params.transferId,
+        reason: params.reason || 'Cancelled by user',
+        cancelled_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logTransferCancelled failed:', error);
   }
 };
