@@ -1,4 +1,3 @@
-// src/components/InventoryView.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
@@ -21,6 +20,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
 import { QueryInspector } from '@/components/ui/QueryInspector';
+import { useStockAlerts } from '@/hooks/logic/useStockAlerts';
+import StockAlertsPanel from './StockAlertsPanel';
 
 const PAGE_LIMIT = 20;
 
@@ -55,6 +56,7 @@ export default function InventoryView() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+    const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(null);
 
     const { mutateAsync: adjustStock } = useAdjustStock();
 
@@ -81,6 +83,8 @@ export default function InventoryView() {
             (!p.store_id || uuidRegex.test(p.store_id))
         );
     }, [data]);
+
+    const stockAlerts = useStockAlerts(products);
 
     const uniqueCategories = useMemo(() => {
         const categorySet = new Set(products.map(p => p.category).filter(Boolean));
@@ -143,7 +147,12 @@ export default function InventoryView() {
     };
 
     if (currentView === 'reception') {
-        return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
+        return (
+            <ProductReceptionView
+              onCancel={() => { setCurrentView('inventory'); setPreselectedProduct(null); }}
+              preselectedProduct={preselectedProduct}
+            />
+        );
     }
 
     return (
@@ -220,6 +229,16 @@ export default function InventoryView() {
                 <ActionMenu
                     actions={actions}
                     position="bottom"
+                />
+            )}
+
+            {stockAlerts.length > 0 && (
+                <StockAlertsPanel
+                    alerts={stockAlerts}
+                    onReceive={(product) => {
+                    setPreselectedProduct(product);
+                    setCurrentView('reception');
+                    }}
                 />
             )}
         </div>

@@ -20,6 +20,7 @@ export interface NavModule {
   featureFlag?: string;
   isDirect?: boolean;
   ariaLabel?: string;
+  allowedRoles?: string[]; // undefined = acceso para todos los roles
 }
 
 export const SIDEBAR_STRUCTURE: NavModule[] = [
@@ -28,14 +29,15 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     label: 'COSTOS',
     type: 'group',
     icon: FileText,
-    ariaLabel: 'Módulo de Costos',
+    allowedRoles: ['admin', 'manager', 'costo'],
     children: [
-      { id: 'templates', label: 'Plantillas', type: 'item', icon: FolderOpen },
+      { id: 'cost_home', label: 'Inicio Costos', type: 'item', icon: LayoutDashboard },
+      { id: 'cost_sheets', label: 'Fichas de Costo', type: 'item', icon: FileText },
       {
-        id: 'cost_views',
-        label: 'Vistas de Ficha',
+        id: 'cost_editor',
+        label: 'Editor de Ficha',
         type: 'submenu',
-        icon: Layout,
+        icon: FolderOpen,
         children: [
           { id: 'header', label: 'Encabezado', type: 'item', icon: Layout },
           { id: 'open-sections', label: 'Secciones', type: 'item', icon: ListFilter },
@@ -97,17 +99,18 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Building,
     ariaLabel: 'Operaciones Multi-Tienda',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
-      { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño' },
+      { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', allowedRoles: ['admin', 'manager', 'encargado'] },
       {
         id: 'punto_venta',
         label: 'Punto de Venta',
         type: 'submenu',
         ariaLabel: 'Gestión de ventas y caja',
         children: [
-          { id: 'pos', label: 'Terminal de Venta', type: 'item', icon: ShoppingCart, ariaLabel: 'Realizar ventas' },
-          { id: 'sales', label: 'Historial de Ventas', type: 'item', icon: Receipt, ariaLabel: 'Consultar ventas' },
-          { id: 'cash', label: 'Arqueo de Caja', type: 'item', icon: DollarSign, ariaLabel: 'Gestión de efectivo' }
+          { id: 'pos', label: 'Terminal de Venta', type: 'item', icon: ShoppingCart, ariaLabel: 'Realizar ventas', allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'] },
+          { id: 'sales', label: 'Historial de Ventas', type: 'item', icon: Receipt, ariaLabel: 'Consultar ventas', allowedRoles: ['admin', 'manager', 'encargado'] },
+          { id: 'cash', label: 'Arqueo de Caja', type: 'item', icon: DollarSign, ariaLabel: 'Gestión de efectivo', allowedRoles: ['admin', 'manager', 'encargado'] }
         ]
       },
       {
@@ -116,10 +119,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         type: 'submenu',
         ariaLabel: 'Control de existencias y catálogo',
         children: [
-          { id: 'catalog', label: 'Catálogo Maestro', type: 'item', icon: Package, ariaLabel: 'Gestionar productos' },
-          { id: 'inventory', label: 'Stock Actual', type: 'item', icon: Package, ariaLabel: 'Ver existencias' },
-          { id: 'history', label: 'Trazabilidad Stock', type: 'item', icon: History, ariaLabel: 'Movimientos de inventario' },
-          { id: 'inventory_adjustments', label: 'Ajustes Documentales', type: 'item', icon: RefreshCcw, ariaLabel: 'Corregir inventario' }
+          { id: 'catalog', label: 'Catálogo Maestro', type: 'item', icon: Package, ariaLabel: 'Gestionar productos', allowedRoles: ['admin', 'manager', 'encargado'] },
+          { id: 'inventory', label: 'Stock Actual', type: 'item', icon: Package, ariaLabel: 'Ver existencias', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'history', label: 'Trazabilidad Stock', type: 'item', icon: History, ariaLabel: 'Movimientos de inventario', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'inventory_adjustments', label: 'Ajustes Documentales', type: 'item', icon: RefreshCcw, ariaLabel: 'Corregir inventario', allowedRoles: ['admin', 'manager', 'encargado'] }
         ]
       },
       {
@@ -128,10 +131,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         type: 'submenu',
         ariaLabel: 'Operaciones de almacén y logística',
         children: [
-          { id: 'recepcion', label: 'Nueva Recepción', type: 'item', icon: Warehouse, ariaLabel: 'Recibir mercancía' },
-          { id: 'reception_list', label: 'Historial Recepciones', type: 'item', icon: History, ariaLabel: 'Consultar recepciones' },
-          { id: 'transferencias', label: 'Transferencia Stock', type: 'item', icon: ArrowLeftRight, ariaLabel: 'Mover entre almacenes' },
-          { id: 'inventory_count', label: 'Auditoría Conteo', type: 'item', icon: ClipboardList, ariaLabel: 'Realizar inventario físico' }
+          { id: 'recepcion', label: 'Nueva Recepción', type: 'item', icon: Warehouse, ariaLabel: 'Recibir mercancía', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'reception_list', label: 'Historial Recepciones', type: 'item', icon: History, ariaLabel: 'Consultar recepciones', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'transferencias', label: 'Transferencia Stock', type: 'item', icon: ArrowLeftRight, ariaLabel: 'Mover entre almacenes', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'inventory_count', label: 'Auditoría Conteo', type: 'item', icon: ClipboardList, ariaLabel: 'Realizar inventario físico', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] }
         ]
       }
     ]
@@ -224,6 +227,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Settings,
     ariaLabel: 'Ajustes del Sistema',
+    allowedRoles: ['admin'],
     children: [
       {
         id: 'administrativa',

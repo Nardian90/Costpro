@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
-import { useFilteredNavigation } from "@/hooks/ui/useFilteredNavigation";
 import { SidebarFocusMode } from './SidebarFocusMode';
 
 interface SidebarProps {
@@ -68,7 +67,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 }) => {
   const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab, activeCostSection } = useUIStore();
   const { user } = useAuthStore();
-  const filteredNavigation = useFilteredNavigation();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -455,7 +453,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 exit={{ opacity: 0 }}
                 className="space-y-1 sm:space-y-4"
               >
-                {filteredNavigation.map(module => renderModule(module))}
+                {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
               </motion.div>
             )}
           </AnimatePresence>

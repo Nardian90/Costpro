@@ -161,7 +161,7 @@ export interface Product {
   updated_at?: string | null;
   stock_current: number;
   cost_average?: number | null;
-  min_stock: number;
+  min_stock?: number | null;
   store_id?: string | null;
   public_image_url?: string | null;
   is_active?: boolean;
