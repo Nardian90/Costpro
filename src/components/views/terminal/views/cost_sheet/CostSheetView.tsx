@@ -48,6 +48,8 @@ import { CostSheetProblemsPanel } from './CostSheetProblemsPanel';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { GitCompare, ListFilter } from 'lucide-react';
 import { useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
+
 import { cn } from '@/lib/utils';
 
 const CostSheetView = () => {
@@ -70,23 +72,6 @@ const CostSheetView = () => {
   // ── Extracted Hooks ─────────────────────────────────────────────────
   const viewState = useCostSheetViewState(data, activeSection);
   const expertState = useExpertModeState();
-  const {
-    isComparisonMode,
-    toggleComparisonMode,
-    createScenario,
-    setPrimaryScenario,
-    updateRowValue,
-    initializeScenarios
-  } = useScenarioStore();
-
-  const { calcV1, calcV2, calcV3 } = useScenarioCalculator();
-  const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
-
-  useEffect(() => {
-    if (isEditing && data && viewMode === 'expert') {
-      initializeScenarios();
-    }
-  }, [isEditing, data?.id, viewMode]);
 
   const {
     confirmation,
@@ -149,6 +134,64 @@ const CostSheetView = () => {
     navItems
   } = viewState;
 
+
+  const {
+    isComparisonMode,
+    toggleComparisonMode,
+    createScenario,
+    setPrimaryScenario,
+    updateRowValue,
+    initializeScenarios
+  } = useScenarioStore();
+
+  const { calcV1, calcV2, calcV3 } = useScenarioCalculator();
+  const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
+
+  useEffect(() => {
+    if (isEditing && data && viewMode === 'expert') initializeScenarios();
+  }, [isEditing, data?.id, viewMode, initializeScenarios]);
+
+  const { expandedSections, toggleSection, expandAllSections, setHelpContext, toggleProblems } = expertState;
+
+  const handleScenarioAction = (action: string, id: any) => {
+    switch (action) {
+      case 'setPrimary': setPrimaryScenario(id); break;
+      case 'duplicate': createScenario(id, 'Copia de ' + id); break;
+      case 'exportPdf': handleExportPDF({ includeFC: true, includeAnnexes: [], includeAudit: true, scenarioId: id } as any); break;
+    }
+  };
+
+  const getSectionCompletion = useCallback((section: any) => {
+    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
+    const filled = rows.filter((r: any) => calculatedValues[r.id]?.total !== 0);
+    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
+  }, [calculatedValues]);
+
+  useExpertModeKeyboard({
+    toggleAllSections: () => expandAllSections(data.sections.map((s: any) => s.id)),
+    toggleHelp: () => setHelpContext('general'),
+    toggleProblems: () => toggleProblems(),
+    toggleComparison: () => toggleComparisonMode(),
+    expandSection: (n: number) => data.sections[n-1] && toggleSection(data.sections[n-1].id),
+    save: handleExportJSON,
+    closePanels: () => {},
+    showShortcuts: () => {
+      toast.info('Atajos de Teclado', {
+        description: (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono">
+            <span>Alt+E</span><span>Expandir Todo</span>
+            <span>Alt+C</span><span>Comparar</span>
+            <span>Alt+P</span><span>Problemas</span>
+            <span>Alt+H</span><span>Ayuda</span>
+            <span>Alt+1-9</span><span>Ir a Sección</span>
+            <span>Cmd+S</span><span>Guardar</span>
+          </div>
+        ),
+        duration: 5000,
+      });
+    }
+  }, viewMode === 'expert' && isEditing);
+
   // ── Loading Skeleton ────────────────────────────────────────────────
 
   if (!data || !data.header || !data.annexes || !data.sections) {
@@ -192,36 +235,6 @@ const CostSheetView = () => {
         onOpenHelp={() => setIsHelpPanelOpen(true)}
                         onOpenSystemHelp={() => setCurrentView("help")}
                         onOpenAcademy={() => setCurrentView("academy")}
-  const handleScenarioAction = (action: string, id: any) => {
-    switch (action) {
-      case 'setPrimary':
-        setPrimaryScenario(id);
-        break;
-      case 'duplicate':
-        createScenario(id, 'Copia de ' + id);
-        break;
-      case 'exportPdf':
-        handleExportPDF({ includeFC: true, includeAnnexes: [], includeAudit: true, scenarioId: id } as any);
-        break;
-    }
-  };
-
-  const getSectionCompletion = useCallback((section: any) => {
-    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
-    const filled = rows.filter((r: any) => calculatedValues[r.id]?.total !== 0);
-    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
-  }, [calculatedValues]);
-
-  useExpertModeKeyboard({
-    toggleAllSections: () => expandAllSections(data.sections.map((s: any) => s.id)),
-    toggleHelp: () => setHelpContext('general'),
-    toggleProblems: () => toggleProblems(),
-    toggleComparison: () => toggleComparisonMode(),
-    expandSection: (n: number) => data.sections[n-1] && toggleSection(data.sections[n-1].id),
-    save: handleExportJSON,
-    closePanels: () => {},
-    showShortcuts: () => {}
-  }, viewMode === 'expert' && isEditing);
         onQuickGenerate={() => setViewMode('quick')}
         onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
       />
@@ -338,20 +351,20 @@ const CostSheetView = () => {
                             <CostSheetSummary />
                         </div>
                     )}
+
                     {viewMode === 'expert' && activeSection === 'main' && (
-                        <div className='flex justify-end mb-6'>
+                        <div className="flex justify-end mb-6">
                             <Button
                                 variant={isComparisonMode ? 'default' : 'outline'}
-                                size='sm'
-                                className='rounded-xl gap-2'
+                                size="sm"
+                                className="rounded-xl gap-2"
                                 onClick={() => toggleComparisonMode()}
                             >
-                                <GitCompare className='w-4 h-4' />
+                                <GitCompare className="w-4 h-4" />
                                 {isComparisonMode ? 'Modo Individual' : 'Comparar Escenarios'}
                             </Button>
                         </div>
                     )}
-
                     {activeSection === 'header' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
@@ -451,7 +464,7 @@ const CostSheetView = () => {
                     )}
 
                     {activeSection === 'main' && (
-                        <div className='space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative'>
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
                             {isComparisonMode ? (
                                 <CostSheetComparisonTable
                                     sections={data.sections}
@@ -476,7 +489,7 @@ const CostSheetView = () => {
                                             onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                         />
                                     ) : (
-                                        <div className='space-y-4'>
+                                        <div className="space-y-4">
                                             {data.sections.map((section) => (
                                                 <ExpertModeAccordion
                                                     key={section.id}
@@ -493,7 +506,7 @@ const CostSheetView = () => {
                                                         groupedSections={groupedSections}
                                                         calculatedValues={calculatedValues}
                                                         annexes={data?.annexes || []}
-                                                        activeSubSectionId='all'
+                                                        activeSubSectionId="all"
                                                         setActiveSubSectionId={() => {}}
                                                         hideHeader={true}
                                                     />
@@ -505,22 +518,6 @@ const CostSheetView = () => {
                             )}
                         </div>
                     )}
-                                    />
-                                ) : (
-                                    <CostSheetInteractiveTable
-                                        sections={data?.sections || []}
-                                        groupedSections={groupedSections}
-                                        calculatedValues={calculatedValues}
-                                        annexes={data?.annexes || []}
-                                        activeSubSectionId={activeSubSectionId}
-                                        setActiveSubSectionId={setActiveSubSectionId}
-                                        onOpenSections={() => setIsSectionsSidebarOpen(true)}
-                                    />
-                                )}
-                            </LazyRender>
-                        </div>
-                    )}
-
                     {isAnnexActive && (activeSection !== 'all-content' && activeSection !== 'expert-content') && (
                         <div className="space-y-12">
                             {activeSection === 'all-annexes' ? (
@@ -667,6 +664,11 @@ const CostSheetView = () => {
       >
         <p className="text-sm text-muted-foreground">{confirmation.message}</p>
       </BaseModal>
+
+      <CostSheetProblemsPanel
+        problems={deepValidationErrors.map((e: any) => ({ ...e, sectionLabel: (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === e.rowId || (r.children && r.children.some((c: any) => c.id === e.rowId))))?.label }))}
+        onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: any = (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === rowId || (r.children && r.children.some((c: any) => c.id === rowId)))); if (section && !expandedSections.includes(section.id)) toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
+      />
     </div>
   );
 };
