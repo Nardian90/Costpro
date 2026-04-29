@@ -81,6 +81,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'costos',
+    allowedRoles: ['admin', 'manager', 'encargado', 'costo'],
     label: 'COSTOS',
     type: 'group',
     icon: FileText,
