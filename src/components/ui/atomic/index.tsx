@@ -1,139 +1,125 @@
-'use client';
-
 import React from 'react';
-import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Slot } from '@radix-ui/react-slot';
-import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw, Camera, Tag, Printer } from 'lucide-react';
-import ProductImage from '../ProductImage';
-import { HorizontalScroll } from '../HorizontalScroll';
-import type { Product } from '@/types';
+import {
+  Building,
+  Edit,
+  Trash2,
+  Plus,
+  RotateCcw,
+  Target,
+  Check,
+  Eye,
+  Search,
+  Download,
+  Tag,
+  Camera,
+  Printer,
+  RefreshCw,
+  DollarSign,
+  Package,
+  LayoutGrid,
+  List,
+  X
+} from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
 
-// --- BUTTONS ---
+// Helper component for horizontal scroll
+const HorizontalScroll: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+  <div className={cn("flex overflow-x-auto no-scrollbar", className)}>
+    {children}
+  </div>
+);
 
-interface BaseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  icon?: LucideIcon;
-  label?: string;
-  asChild?: boolean;
-}
-
-export const PrimaryButton: React.FC<BaseButtonProps> = ({ icon: Icon, label, className, asChild = false, children, ...props }) => {
-  const Comp = asChild ? Slot : "button";
+// Helper for product images
+export const ProductImage: React.FC<{ src?: string; alt?: string; name?: string; className?: string; forceShow?: boolean }> = ({ src, alt, name, className, forceShow }) => {
+  if (src) return <img src={src} alt={alt || name} className={cn("object-cover", className)} />;
+  if (forceShow) return <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}><Package className="w-1/3 h-1/3 opacity-20" /></div>;
   return (
-    <Comp
-      className={cn(
-        "flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto transition-all",
-        "bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs rounded-xl",
-        "hover:brightness-110 active:scale-95 shadow-lg shadow-primary/20",
-        "disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap overflow-hidden",
-        className
-      )}
-      {...props}
-    >
-      {asChild ? children : (
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 shrink-0" />}
-          {label && <span className="truncate">{label}</span>}
-          {children}
-        </div>
-      )}
-    </Comp>
-  );
-};
-
-export const SecondaryButton: React.FC<BaseButtonProps> = ({ icon: Icon, label, className, asChild = false, children, ...props }) => {
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      className={cn(
-        "flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto transition-all",
-        "bg-muted text-foreground font-bold uppercase tracking-widest text-xs rounded-xl border border-border",
-        "hover:bg-muted active:scale-95",
-        "disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap overflow-hidden",
-        className
-      )}
-      {...props}
-    >
-      {asChild ? children : (
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-4 h-4 shrink-0" />}
-          {label && <span className="truncate">{label}</span>}
-          {children}
-        </div>
-      )}
-    </Comp>
-  );
-};
-
-export const IconButton: React.FC<BaseButtonProps> = ({ icon: Icon, className, ...props }) => {
-  if (!Icon) return null;
-  return (
-    <button
-      className={cn(
-        "flex items-center justify-center min-h-[44px] min-w-[44px] p-2 transition-all",
-        "bg-background border border-border text-foreground rounded-xl",
-        "hover:bg-muted active:scale-90 shadow-sm",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
-        className
-      )}
-      {...props}
-    >
-      <Icon className="w-5 h-5" />
-    </button>
-  );
-};
-
-// --- SEARCH ---
-
-interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  onClear?: () => void;
-  inputClassName?: string;
-}
-
-export const SearchInput: React.FC<SearchInputProps> = ({ onClear, value, className, inputClassName, ...props }) => {
-  return (
-    <div className={cn("relative w-full", className)}>
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-        <Search className="w-5 h-5" />
-      </div>
-      <input
-        type="text"
-        value={value}
-        onChange={props.onChange}
-        placeholder={props.placeholder}
-        className={cn(
-          "w-full pl-12 pr-12 py-3 min-h-[44px] text-base rounded-xl border border-border bg-background transition-all outline-none",
-          "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-          "placeholder:text-muted-foreground/50 placeholder:uppercase placeholder:text-xs placeholder:tracking-widest placeholder:font-bold",
-          inputClassName
-        )}
-        {...props}
-      />
-      {value && onClear && (
-        <button
-          onClick={onClear}
-          className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-          type="button"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      )}
+    <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}>
+      <span className="text-xl font-bold">{(name || '?').charAt(0).toUpperCase()}</span>
     </div>
   );
 };
 
-// --- PRODUCT CARD ---
+const resolveProductImage = (product: any) => product.public_image_url || product.image_url;
 
-interface ProductCardProps {
-  product: Product;
-  onEdit?: (product: Product) => void;
-  onViewPrices?: (product: Product) => void;
-  onDelete?: (product: Product) => void;
-  onToggleActive?: (product: Product) => void;
-  onPrintLabel?: (product: Product) => void;
-  onClick?: (product: Product) => void;
+export interface PrimaryButtonProps {
+  label?: string;
+  icon?: any;
+  onClick?: () => void;
   className?: string;
-  variant?: 'catalog' | 'pos' | 'inventory';
+  disabled?: boolean;
+  asChild?: boolean;
+  children?: React.ReactNode;
 }
+
+export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={cn(
+      "w-full py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50",
+      className
+    )}
+  >
+    {Icon && <Icon className="w-3.5 h-3.5" />}
+    {label}
+    {children}
+  </button>
+);
+
+export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={cn(
+      "py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50",
+      className
+    )}
+  >
+    {Icon && <Icon className="w-3 h-3" />}
+    {label}
+    {children}
+  </button>
+);
+
+export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: string; title?: string; className?: string; variant?: 'ghost' | 'outline' | 'primary' }> = ({ icon: Icon, onClick, label, title, className, variant = 'ghost' }) => (
+  <button
+    onClick={onClick}
+    aria-label={label || title}
+    title={title}
+    className={cn(
+      "p-2 rounded-lg transition-all active:scale-90",
+      variant === 'ghost' && "hover:bg-muted text-muted-foreground hover:text-foreground",
+      variant === 'outline' && "border border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+      variant === 'primary' && "bg-primary text-foreground shadow-lg shadow-primary/20",
+      className
+    )}
+  >
+    <Icon className="w-4 h-4" />
+  </button>
+);
+
+export const SearchInput: React.FC<any> = ({ value, onChange, placeholder, className, ...props }) => (
+  <div className={cn("relative group", className)}>
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full bg-muted/20 border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+      {...props}
+    />
+    {value && (
+      <button
+        onClick={() => onChange('')}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    )}
+  </div>
+);
 
 export const CategoryChips: React.FC<{
   categories: string[];
@@ -142,10 +128,17 @@ export const CategoryChips: React.FC<{
   className?: string;
 }> = ({ categories, selectedCategory, onCategoryChange, className }) => {
   return (
-    <HorizontalScroll className={cn("gap-2 py-2", className)}>
+    <div
+      role="radiogroup"
+      aria-label="Filtrar inventario por categoría"
+      className={cn("flex overflow-x-auto no-scrollbar gap-2 py-2", className)}
+    >
       <button
         type="button"
+        role="radio"
+        aria-checked={selectedCategory === ''}
         onClick={() => onCategoryChange('')}
+        aria-label="Mostrar todos los productos"
         className={cn(
           "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
           selectedCategory === ''
@@ -159,7 +152,10 @@ export const CategoryChips: React.FC<{
         <button
           key={cat}
           type="button"
+          role="radio"
+          aria-checked={selectedCategory === cat}
           onClick={() => onCategoryChange(cat)}
+          aria-label={`Filtrar por ${cat}`}
           className={cn(
             "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
             selectedCategory === cat
@@ -170,11 +166,11 @@ export const CategoryChips: React.FC<{
           {cat}
         </button>
       ))}
-    </HorizontalScroll>
+    </div>
   );
 };
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+export const ProductCard: React.FC<any> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog'
 }) => {
   const isOutOfStock = product.stock_current <= 0;
@@ -187,6 +183,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <button
         type="button"
         onClick={() => !isOutOfStock && onClick?.(product)}
+        aria-label={`Agregar ${product.name} al carrito. Precio: ${formatCurrency(product.price)}. Stock: ${product.stock_current}`}
         className={cn(
           "flex flex-row items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-border bg-card transition-all w-full text-left relative overflow-hidden",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
@@ -388,3 +385,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     </div>
   );
 };
+
+export const ViewSwitcher: React.FC<{ currentView: 'grid' | 'table'; onViewChange: (view: 'grid' | 'table') => void }> = ({ currentView, onViewChange }) => (
+  <div className="flex p-1 bg-muted/50 rounded-xl border border-border">
+    <button
+      onClick={() => onViewChange('grid')}
+      className={cn(
+        "p-2 rounded-lg transition-all",
+        currentView === 'grid' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+      )}
+      aria-label="Vista de cuadrícula"
+      aria-pressed={currentView === 'grid'}
+    >
+      <LayoutGrid className="w-4 h-4" />
+    </button>
+    <button
+      onClick={() => onViewChange('table')}
+      className={cn(
+        "p-2 rounded-lg transition-all",
+        currentView === 'table' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+      )}
+      aria-label="Vista de lista"
+      aria-pressed={currentView === 'table'}
+    >
+      <List className="w-4 h-4" />
+    </button>
+  </div>
+);

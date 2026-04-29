@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { StockAlert } from '@/hooks/logic/useStockAlerts';
 import { Product } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useReducedMotion, motionSafe } from '@/hooks/ui/useReducedMotion';
 
 interface StockAlertsPanelProps {
   alerts: StockAlert[];
@@ -14,6 +15,7 @@ interface StockAlertsPanelProps {
 
 export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const prefersReduced = useReducedMotion();
 
   const criticalCount = alerts.filter(a => a.severity === 'critical').length;
   const warningCount = alerts.filter(a => a.severity === 'warning').length;
@@ -43,17 +45,18 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
         {isOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              {...motionSafe(prefersReduced, { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } })}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 z-40 bg-black/20"
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              {...motionSafe(prefersReduced, {
+                initial: { x: '100%' },
+                animate: { x: 0 },
+                exit: { x: '100%' },
+                transition: { type: 'spring', damping: 25, stiffness: 200 } as any
+              })}
               className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border shadow-xl flex flex-col"
               role="dialog"
               aria-label="Panel de alertas de stock"

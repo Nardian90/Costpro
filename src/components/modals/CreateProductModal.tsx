@@ -43,7 +43,7 @@ export const CreateProductModal = () => {
       toast.error('El nombre y el SKU son obligatorios');
       return;
     }
-    if (!user?.storeId) {
+    if (!user?.activeStoreId) {
       toast.error('No hay una tienda activa seleccionada');
       return;
     }
@@ -51,7 +51,7 @@ export const CreateProductModal = () => {
     try {
       await createProductMutation.mutateAsync({
         ...form,
-        store_id: user.storeId
+        store_id: user.activeStoreId
       });
       toast.success('Producto creado con éxito');
       handleClose();
