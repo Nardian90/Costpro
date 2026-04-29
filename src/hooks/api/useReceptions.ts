@@ -58,3 +58,87 @@ export function useReceptionDetails(receiptId?: string) {
     enabled: !!receiptId,
   });
 }
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { auditService } from '@/services/audit-service';
+import { useAuthStore } from '@/store';
+
+/**
+ * Edita campos de cabecera de una recepción (proveedor, nro. factura, notas).
+ * No edita los ítems — el inventario ya fue afectado al recibir.
+ */
+export function useUpdateReception() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      receiptId: string;
+      supplier?: string;
+      referenceDoc?: string;
+      notes?: string;
+    }) => {
+      const updatePayload: Record<string, any> = {
+        updated_at: new Date().toISOString()
+      };
+      if (params.supplier !== undefined) updatePayload.supplier = params.supplier;
+      if (params.referenceDoc !== undefined) updatePayload.reference_doc = params.referenceDoc;
+      if (params.notes !== undefined) updatePayload.notes = params.notes;
+
+      const { data, error } = await supabase
+        .from('receipts')
+        .update(updatePayload)
+        .eq('id', params.receiptId)
+        .neq('status', 'voided') // No editar si ya está anulada
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['receptions'] });
+      queryClient.invalidateQueries({ queryKey: ['receipt-items', variables.receiptId] });
+    }
+  });
+}
+
+/**
+ * Anula una recepción (soft-delete: status = 'voided').
+ * No revierte el inventario — eso requiere una inversión de documento separada.
+ */
+export function useVoidReception() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      receiptId: string;
+      storeId: string;
+      reason?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('receipts')
+        .update({
+          status: 'voided',
+          updated_at: new Date().toISOString(),
+          // Se agrega updated_at para que coincida con la lógica de auditoría si se desea
+        })
+        .eq('id', params.receiptId)
+        .neq('status', 'voided')
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (_, variables) => {
+      const { user } = useAuthStore.getState();
+      if (user?.id) {
+        await auditService.logReceptionVoided({
+          userId: user.id,
+          receiptId: variables.receiptId,
+          storeId: variables.storeId,
+          reason: variables.reason
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['receptions'] });
+    }
+  });
+}

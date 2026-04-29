@@ -1,9 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2, RefreshCcw, Copy } from 'lucide-react';
+import {
+  Calendar,
+  Building2,
+  FileText,
+  Eye,
+  RefreshCcw,
+  Copy,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
-import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -39,16 +47,16 @@ export default function ReceptionsHistoryView() {
     isInverting,
     handleExportCSV,
     receiptItems,
-    loadingDetails
+    loadingDetails,
+    // FM-06 additions
+    isEditMode,
+    handleEdit,
+    handleVoidRequest,
+    handleVoidConfirm,
+    handleUpdateSubmit,
+    isUpdating,
+    isVoiding,
   } = useReceptionsHistoryView();
-
-  const handleEdit = (id: string) => {
-    toast.info(`Edición de recepción ${id.split('-')[0]} no implementada aún.`);
-  };
-
-  const handleDelete = (id: string) => {
-    toast.error(`Eliminación de recepción ${id.split('-')[0]} restringida por seguridad.`);
-  };
 
   return (
     <>
@@ -188,12 +196,21 @@ export default function ReceptionsHistoryView() {
                             <Copy className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEdit(rec.id)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95 priority-low"
+                            onClick={() => handleEdit(rec)}
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
                             title="Editar"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
+                          {rec.status !== 'voided' && (
+                            <button
+                              onClick={() => handleVoidRequest(rec)}
+                              className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
+                              title="Anular"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -211,6 +228,11 @@ export default function ReceptionsHistoryView() {
         items={receiptItems}
         isLoading={loadingDetails}
         onExport={() => selectedReceipt && handleExportCSV(selectedReceipt, receiptItems)}
+        isEditMode={isEditMode}
+        onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
+        onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt!)}
+        isUpdating={isUpdating}
+        isVoiding={isVoiding}
       />
     </>
   );

@@ -6,6 +6,7 @@ import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lu
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -14,9 +15,27 @@ interface ReceptionDetailsModalProps {
   items: ReceiptItem[];
   isLoading: boolean;
   onExport?: () => void;
+  // Nuevas props para edición y anulación:
+  isEditMode?: boolean;
+  onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string }) => void;
+  onVoidRequest?: () => void;
+  isUpdating?: boolean;
+  isVoiding?: boolean;
 }
 
-export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoading, onExport }: ReceptionDetailsModalProps) {
+export function ReceptionDetailsModal({
+  receipt,
+  isOpen,
+  onClose,
+  items,
+  isLoading,
+  onExport,
+  isEditMode = false,
+  onUpdateSubmit,
+  onVoidRequest,
+  isUpdating = false,
+  isVoiding = false
+}: ReceptionDetailsModalProps) {
   if (!receipt && !isLoading) return null;
 
   const subtotal = receipt?.total_cost || 0;
@@ -32,76 +51,149 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <Package className="w-6 h-6 text-primary" />
           </div>
-          Detalle de Recepción
+          {isEditMode ? 'Editar Recepción' : 'Detalle de Recepción'}
         </div>
       }
-      description="Muestra el listado de productos y cantidades recibidas en esta operación."
+      description={isEditMode ? "Modifica los datos de cabecera de la recepción." : "Muestra el listado de productos y cantidades recibidas en esta operación."}
       maxWidth="sm:max-w-2xl"
       footer={
         <div className="flex justify-between items-center w-full">
-          <button
-            onClick={onExport}
-            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
-          >
-            <Download className="w-4 h-4" />
-            Exportar CSV
-          </button>
-          <button
-            onClick={onClose}
-            className="px-8 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
-          >
-            Cerrar Detalle
-          </button>
+          <div className="flex items-center gap-4">
+            {!isEditMode && receipt?.status !== 'voided' && onVoidRequest && (
+              <button
+                onClick={onVoidRequest}
+                disabled={isVoiding}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive hover:underline disabled:opacity-50"
+              >
+                {isVoiding ? 'Anulando...' : 'Anular recepción'}
+              </button>
+            )}
+            {!isEditMode && (
+              <button
+                onClick={onExport}
+                className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                Exportar CSV
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
+            >
+              {isEditMode ? 'Cancelar' : 'Cerrar'}
+            </button>
+            {isEditMode && (
+              <button
+                onClick={() => onUpdateSubmit?.({
+                  supplier: (document.getElementById('edit-supplier') as HTMLInputElement)?.value,
+                  referenceDoc: (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value
+                })}
+                disabled={isUpdating}
+                className="px-8 py-3 bg-primary text-white border border-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isUpdating ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            )}
+          </div>
         </div>
       }
     >
         <div className="space-y-6">
-          {/* Metadata Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                <Hash className="w-3 h-3" /> ID Ref
+          {isEditMode ? (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Proveedor
+                </label>
+                <input
+                  type="text"
+                  defaultValue={receipt?.supplier || ''}
+                  id="edit-supplier"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  placeholder="Nombre del proveedor..."
+                />
               </div>
-              <div className="font-bold text-xs truncate text-primary">{receipt?.id}</div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  N° Documento referencia / Factura
+                </label>
+                <input
+                  type="text"
+                  defaultValue={receipt?.reference_doc || ''}
+                  id="edit-reference-doc"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  placeholder="Número de factura o documento..."
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground italic px-1">
+                Nota: Los ítems no pueden editarse porque el inventario ya fue afectado al momento de la recepción original.
+              </p>
             </div>
+          ) : (
+            /* Metadata Grid */
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="neu-card !p-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <Hash className="w-3 h-3" /> ID Ref
+                </div>
+                <div className="font-bold text-xs truncate text-primary">{receipt?.id?.split('-')[0]}</div>
+              </div>
 
-            <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                <Calendar className="w-3 h-3" /> Fecha
+              <div className="neu-card !p-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <Calendar className="w-3 h-3" /> Fecha
+                </div>
+                <div className="font-bold text-xs uppercase">
+                  {formatDate(receipt?.reception_date)}
+                </div>
               </div>
-              <div className="font-bold text-xs uppercase">
-                {formatDate(receipt?.reception_date)}
-              </div>
-            </div>
 
-            <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                <Building2 className="w-3 h-3" /> Proveedor
+              <div className="neu-card !p-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <Building2 className="w-3 h-3" /> Proveedor
+                </div>
+                <div className="font-bold text-xs truncate">{receipt?.supplier || 'N/A'}</div>
               </div>
-              <div className="font-bold text-xs truncate">{receipt?.supplier || 'N/A'}</div>
-            </div>
 
-             <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                <FileText className="w-3 h-3" /> Factura #
+               <div className="neu-card !p-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <FileText className="w-3 h-3" /> Factura #
+                </div>
+                <div className="font-bold text-xs truncate">{receipt?.reference_doc || 'N/A'}</div>
               </div>
-              <div className="font-bold text-xs truncate">{receipt?.reference_doc || 'N/A'}</div>
-            </div>
 
-            <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                <User className="w-3 h-3" /> Recibido por
+              <div className="neu-card !p-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
+                  <User className="w-3 h-3" /> Recibido por
+                </div>
+                <div className="font-bold text-xs truncate text-muted-foreground italic">
+                  ID: {receipt?.user_id?.split('-')[0]}
+                </div>
               </div>
-              <div className="font-bold text-xs truncate text-muted-foreground italic">
-                SISTEMA (ID: {receipt?.user_id?.split('-')[0]})
-              </div>
-            </div>
 
-            <div className="neu-card !p-3 space-y-1 bg-primary/5 border-primary/20">
-              <div className="text-xs font-black text-primary uppercase tracking-widest">Total Costo</div>
-              <div className="font-black text-lg text-primary">{formatCurrency(receipt?.total_cost || 0)}</div>
+              <div className={cn(
+                "neu-card !p-3 space-y-1 bg-primary/5 border-primary/20",
+                receipt?.status === 'voided' && "border-destructive/20 bg-destructive/5"
+              )}>
+                <div className={cn(
+                  "text-xs font-black uppercase tracking-widest",
+                  receipt?.status === 'voided' ? "text-destructive" : "text-primary"
+                )}>
+                  {receipt?.status === 'voided' ? 'Anulada' : 'Total Costo'}
+                </div>
+                <div className={cn(
+                  "font-black text-lg",
+                  receipt?.status === 'voided' ? "text-destructive" : "text-primary"
+                )}>
+                  {formatCurrency(receipt?.total_cost || 0)}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Items Table */}
           <div className="space-y-3">
