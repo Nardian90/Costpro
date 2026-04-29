@@ -1,37 +1,32 @@
 'use client';
 
-import * as React from 'react';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, Zap, ChevronDown, Calculator, X, ArrowLeft } from 'lucide-react';
+import {
+  ChevronDown,
+  LogOut,
+  X,
+  Search,
+  Zap,
+  Calculator,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ViewType, useUIStore, useAuthStore } from '@/store';
-import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
+import { useUIStore, useAuthStore, ViewType } from '@/store';
+import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
-import { useFilteredNavigation } from "@/hooks/ui/useFilteredNavigation";
 import { SidebarFocusMode } from './SidebarFocusMode';
 
 interface SidebarProps {
-  sidebarOpen: boolean;
-  sidebarSearch: string;
-  setSidebarSearch: (val: string) => void;
-  navigationItems: NavigationItem[];
-  currentView: string;
-  onViewChange: (view: ViewType) => void;
-  onPrefetchView?: (view: ViewType) => void;
-  onLogout: () => void;
   onClose?: () => void;
-  logoHeight: any;
-  logoOpacity: any;
-  logoScale: any;
-  navRef: any;
+  onViewChange: (view: ViewType) => void;
+  onLogout: () => void;
+  onPrefetchView?: (view: ViewType) => void;
 }
 
-/* FIX #023: Online status indicator reflecting real network/auth state */
-function OnlineStatusDot() {
-  const [isOnline, setIsOnline] = React.useState(true);
+const OnlineStatusDot = () => {
+  const [isOnline, setIsOnline] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsOnline(navigator.onLine);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -44,141 +39,88 @@ function OnlineStatusDot() {
   }, []);
 
   return (
-    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-sidebar ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} title={isOnline ? 'En línea' : 'Sin conexión'} />
+    <div className={cn(
+      "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar shadow-sm transition-colors duration-500",
+      isOnline ? "bg-green-500" : "bg-red-500"
+    )} />
   );
-}
-
-const STORAGE_KEY = 'costpro.sidebar.state';
-const FOCUS_STORAGE_KEY = 'costpro.sidebar.focus';
+};
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(({
-  sidebarOpen,
-  sidebarSearch,
-  setSidebarSearch,
-  navigationItems,
-  currentView,
-  onViewChange,
-  onPrefetchView,
-  onLogout,
   onClose,
-  logoHeight,
-  logoOpacity,
-  logoScale,
-  navRef
+  onViewChange,
+  onLogout,
+  onPrefetchView
 }) => {
-  const { isCalculatorOpen, setIsCalculatorOpen, setIpvActiveTab, ipvActiveTab, activeCostSection } = useUIStore();
+  const {
+    sidebarOpen,
+    currentView,
+    ipvActiveTab,
+    setIpvActiveTab,
+    isCalculatorOpen,
+    setIsCalculatorOpen,
+    activeCostSection,
+    setActiveCostSection
+  } = useUIStore();
   const { user } = useAuthStore();
-  const filteredNavigation = useFilteredNavigation();
+  const navigationItems = useFilteredNavigation();
+
+  const [expandedModules, setExpandedModules] = useState<string[]>(['costos', 'tienda']);
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut: Cmd/Ctrl+K to focus search
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
+      if (e.key === 'Escape' && sidebarSearch) {
+        setSidebarSearch('');
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [sidebarSearch]);
 
-  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(FOCUS_STORAGE_KEY);
-  });
-
-  const [expandedModules, setExpandedModules] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed.expanded) ? parsed.expanded : [];
-      }
-    } catch (e) {
-      console.warn('Sidebar state load failed, using defaults', e);
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ expanded: expandedModules }));
-  }, [expandedModules]);
-
-  useEffect(() => {
-    if (focusedModuleId) {
-      localStorage.setItem(FOCUS_STORAGE_KEY, focusedModuleId);
+  const toggleModule = useCallback((moduleId: string, isSubmenu: boolean) => {
+    if (isSubmenu) {
+      setExpandedModules(prev =>
+        prev.includes(moduleId)
+          ? prev.filter(id => id !== moduleId)
+          : [...prev, moduleId]
+      );
     } else {
-      localStorage.removeItem(FOCUS_STORAGE_KEY);
-    }
-  }, [focusedModuleId]);
-
-  // Accessibility: Handle keyboard ESC to close sidebar or focus mode
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (focusedModuleId) {
-          setFocusedModuleId(null);
-        } else if (sidebarOpen && onClose) {
-          onClose();
-        }
-      }
-
-      // Shortcuts Alt+1, Alt+2, etc.
-      if (e.altKey && !isNaN(Number(e.key))) {
-        const index = Number(e.key) - 1;
-        if (index >= 0 && index < SIDEBAR_STRUCTURE.length) {
-          setFocusedModuleId(SIDEBAR_STRUCTURE[index].id);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sidebarOpen, onClose, focusedModuleId]);
-
-  // Deep search for parents to expand when view changes
-  useEffect(() => {
-    const findParents = (modules: NavModule[], targetId: string, parents: string[] = []): string[] | null => {
-      for (const modItem of modules) {
-        if (modItem.id === targetId) return parents;
-        if (modItem.children) {
-          const result = findParents(modItem.children, targetId, [...parents, modItem.id]);
-          if (result) return result;
-        }
-      }
-      return null;
-    };
-
-    const effectiveViewId = currentView === 'ipv' ? ipvActiveTab : currentView;
-    const mappedViewId = ipvActiveTab ?
-        (ipvActiveTab === 'reports' ? 'reports_ipv' :
-         ipvActiveTab === 'dashboard' ? 'dashboard_ipv' :
-         ipvActiveTab === 'catalog' ? 'catalog_ipv' :
-         ipvActiveTab === 'audit' ? 'audit_ipv' : ipvActiveTab) : currentView;
-
-    const parents = findParents(SIDEBAR_STRUCTURE, mappedViewId as string);
-    if (parents) {
-      // If the view belongs to a module, we could automatically focus it, but
-      // per requirements, focus is user-triggered.
-    }
-  }, [currentView, ipvActiveTab]);
-
-  const toggleModule = useCallback((moduleId: string, isSubmenu = false) => {
-    if (!isSubmenu) {
       setFocusedModuleId(moduleId);
-      return;
     }
-
-    setExpandedModules(prev =>
-      prev.includes(moduleId)
-        ? prev.filter(id => id !== moduleId)
-        : [...prev, moduleId]
-    );
   }, []);
 
-      const renderNavItem = useCallback((itemId: string) => {
+  const filteredNavigation = useMemo(() => {
+    if (!sidebarSearch) return navigationItems;
+
+    const searchLower = sidebarSearch.toLowerCase();
+    const filterRec = (modules: NavModule[]): NavModule[] => {
+      return modules.reduce((acc: NavModule[], mod) => {
+        const matches = mod.label.toLowerCase().includes(searchLower);
+        const filteredChildren = mod.children ? filterRec(mod.children) : [];
+
+        if (matches || filteredChildren.length > 0) {
+          acc.push({
+            ...mod,
+            children: filteredChildren.length > 0 ? filteredChildren : mod.children
+          });
+        }
+        return acc;
+      }, []);
+    };
+
+    return filterRec(navigationItems);
+  }, [navigationItems, sidebarSearch]);
+
+  const renderNavItem = useCallback((itemId: string) => {
     const item = SIDEBAR_STRUCTURE.flatMap(m => [m, ...(m.children || [])])
       .flatMap(m => [m, ...(m.children || [])])
       .find(m => m.id === itemId);
@@ -189,7 +131,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       c.id === item.id || c.children?.some(gc => gc.id === item.id)
     );
 
-    const isCostSheetSubItem = ['templates', 'header', 'open-sections', 'open-annexes', 'signature', 'expert-content', 'view-kpis', 'view-expert', 'view-assisted', 'view-reading', 'gen-quick', 'gen-expert', 'tool-import', 'tool-save', 'tool-export-excel', 'tool-export-pdf', 'res-help', 'res-system-help', 'res-academy'].includes(item.id);
+    const isCostSheetSubItem = [
+      'templates', 'header', 'open-sections', 'open-annexes',
+      'signature', 'expert-content', 'view-kpis', 'view-expert',
+      'view-assisted', 'view-reading', 'gen-quick', 'gen-expert',
+      'tool-import', 'tool-save', 'tool-export-excel', 'tool-export-pdf',
+      'res-help', 'res-system-help', 'res-academy'
+    ].includes(item.id);
+
     const isActive = (currentView === item.id) ||
                      (item.id === 'cost-sheets' && currentView === 'cost-sheets' && !isCostSheetSubItem) ||
                      (isCostSheetSubItem && currentView === 'cost-sheets' && activeCostSection === item.id) ||
@@ -218,8 +167,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                      ));
 
     const handleItemClick = () => {
-      if (item.id === 'cost-sheets') {
+      if (item.id === 'cost-sheets' || isCostSheetSubItem) {
         onViewChange('cost-sheets');
+        if (isCostSheetSubItem) {
+          setActiveCostSection(item.id);
+        }
       } else if (isIpvSubItem) {
         onViewChange('ipv');
         const tabId = item.id === 'reports_ipv' ? 'reports' :
@@ -283,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab]);
+  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
 
   const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
     const hasAvailableItems = (m: NavModule): boolean => {
@@ -301,28 +253,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
     const isExpanded = expandedModules.includes(mod.id) || !!sidebarSearch;
 
-    if (mod.type === 'group' && mod.isDirect && !focusedModuleId) {
-      return (
-        <div key={mod.id} className="space-y-1" role="group" aria-label={mod.ariaLabel}>
-          {mod.label && (
-            <div className="px-4 flex flex-col items-start mb-1 mt-3 sm:mb-2 sm:mt-6 first:mt-0">
-              <span className="text-[10px] font-black text-primary/40 tracking-[0.4em] uppercase">{mod.label}</span>
-            </div>
-          )}
-          <div className="space-y-0.5 sm:space-y-1">
-            {mod.children?.map(child => renderModuleInner(child, depth + 1))}
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div key={mod.id} className="space-y-1" role="none">
+      <div key={mod.id} className="relative">
         <button
-          role="menuitem"
           aria-expanded={isExpanded}
-          aria-haspopup="true"
-          aria-label={mod.ariaLabel || mod.label}
           onClick={() => toggleModule(mod.id, mod.type === 'submenu')}
           className={cn(
             "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
@@ -365,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         </AnimatePresence>
       </div>
     );
-  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem, focusedModuleId]);
+  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem]);
 
   const focusedModule = useMemo(() =>
     SIDEBAR_STRUCTURE.find(m => m.id === focusedModuleId),
@@ -386,17 +320,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <div className="h-full w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-gradient-shift" style={{ backgroundSize: '200% 100%' }} />
         </div>
 
-        <motion.div
+        <div
           id="sidebar-logo-container"
-          style={{
-            height: logoHeight,
-            opacity: logoOpacity,
-            overflowX: 'auto'
-          }}
           className="shrink-0 no-scrollbar max-w-full overflow-x-hidden"
         >
-          <motion.div
-            style={{ scale: logoScale }}
+          <div
             className="px-4 pt-4 pb-2 flex items-center justify-between"
           >
             <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
@@ -411,7 +339,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 <X className="w-4 h-4" />
               </button>
             )}
-          </motion.div>
+          </div>
 
           <div className="px-1 pb-1">
             <div className="relative group">
@@ -431,11 +359,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               </kbd>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <nav
           id="sidebar-nav"
-          ref={navRef}
           role="menubar"
           aria-orientation="vertical"
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
@@ -500,7 +427,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 window.open(`https://wa.me/${whatsappNumber.replace(/\\D/g, '')}?text=${message}`, '_blank');
               }}
               aria-label="Mejorar a Plan Pro"
-              /* FIX #044: Removed animate-pulse for WCAG accessibility */
               className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2"
             >
               <Zap className="w-4.5 h-4.5 text-primary" />
