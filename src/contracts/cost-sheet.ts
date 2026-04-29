@@ -8,11 +8,11 @@
  * @see {@link /src/types/cost-sheet.ts} - Definición original (ahora obsoleta)
  *
  * @author Jules
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2024-01-22
  */
 
-import { IndirectConfig } from '@/types/cost-sheet';
+import { IndirectConfig, ScenarioConfig, CostSheetScenario } from '@/types/cost-sheet';
 
 // ============================================
 // Tipos Base y Contratos
@@ -129,6 +129,8 @@ export interface CostSheetDataContract {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
+  scenarioConfig?: ScenarioConfig;
+  scenarios?: CostSheetScenario[];
   [key: string]: string | number | boolean | object | undefined;
 }
 
