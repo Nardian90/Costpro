@@ -132,6 +132,14 @@ export async function POST(req: NextRequest) {
       baseData.header = { ...baseData.header, ...updateData.header };
     }
 
+    // --- Scenario Support ---
+    if (updateData.scenarios) {
+      baseData.scenarios = updateData.scenarios;
+    }
+    if (updateData.scenarioConfig) {
+      baseData.scenarioConfig = updateData.scenarioConfig;
+    }
+
     // 2. Build engine-ready Ficha using the shared pipeline (DRY: avoids duplicating buildEngineFicha logic)
     const ficha: any = buildEngineFicha(baseData as any);
 

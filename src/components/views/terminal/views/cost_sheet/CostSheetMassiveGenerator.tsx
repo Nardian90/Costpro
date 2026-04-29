@@ -96,7 +96,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     includeFinancialSummary: true,
     includeUtilityNote: true,
     showDateTime: true,
-    alwaysZip: true,
+    alwaysZip: false,
     pdfFormat: "standard"
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -319,7 +319,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             pdfFormat: 'standard',
             includeAudit: false,
             includeFC: true,
-            alwaysZip: true
+            alwaysZip: false
         }));
     }
 
@@ -424,7 +424,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 pdfFormat: 'standard',
                 includeAudit: false,
                 includeFC: true,
-                alwaysZip: true
+                alwaysZip: false
             } : exportOptions
           })
         });
@@ -756,13 +756,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                 <div key={a.id} className="flex items-center gap-2">
                                     <Checkbox
                                         id={`m-annex-${a.id}`}
-                                        checked={exportOptions.includeAnnexes.includes(a.id)}
+                                        checked={exportOptions.includeAnnexes?.includes(a.id)}
                                         onCheckedChange={(checked) => {
                                             setExportOptions(prev => ({
                                                 ...prev,
                                                 includeAnnexes: checked
-                                                    ? [...prev.includeAnnexes, a.id]
-                                                    : prev.includeAnnexes.filter(id => id !== a.id)
+                                                    ? [...(prev.includeAnnexes || []), a.id]
+                                                    : prev.includeAnnexes?.filter(id => id !== a.id)
                                             }));
                                         }}
                                     />

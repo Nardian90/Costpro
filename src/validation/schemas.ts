@@ -492,6 +492,36 @@ export const manageUserMembershipsParamsSchema = z.object({
   ),
 });
 
+
+// ============================================
+// Scenarios
+// ============================================
+
+export const scenarioIdSchema = z.enum(['v1', 'v2', 'v3']);
+export const scenarioColorSchema = z.enum(['blue', 'violet', 'amber']);
+
+export const scenarioRowValuesSchema = z.object({
+  valorHistorico: z.number().optional(),
+  totalFormula: z.string().optional(),
+  vhFormula: z.string().optional(),
+  coeficiente: z.number().optional(),
+  baseDeCalculoRef: z.string().optional(),
+}).catchall(z.any());
+
+export const costSheetScenarioSchema = z.object({
+  id: scenarioIdSchema,
+  label: z.string(),
+  color: scenarioColorSchema,
+  createdAt: z.number(),
+  values: z.record(z.string(), scenarioRowValuesSchema),
+  header: z.record(z.string(), z.any()).optional(),
+}).catchall(z.any());
+
+export const scenarioConfigSchema = z.object({
+  primaryScenarioId: scenarioIdSchema,
+  comparisonBaseId: scenarioIdSchema,
+}).catchall(z.any());
+
 // ============================================
 // Cost Sheet
 // ============================================
@@ -582,6 +612,8 @@ export const costSheetDataSchema = z
     sections: z.array(costSheetSectionSchema),
     annexes: z.array(costSheetAnnexSchema),
     signature: costSheetSignatureSchema,
+    scenarioConfig: scenarioConfigSchema.optional(),
+    scenarios: z.array(costSheetScenarioSchema).optional(),
   })
   .catchall(z.any());
 

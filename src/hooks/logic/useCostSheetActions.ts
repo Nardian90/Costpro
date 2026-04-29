@@ -253,7 +253,7 @@ export function useCostSheetActions({
             count++;
           }
 
-          for (const annexId of options.includeAnnexes) {
+          for (const annexId of options.includeAnnexes || []) {
             const ok = await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
             if (!ok) { hadError = true; }
             count++;

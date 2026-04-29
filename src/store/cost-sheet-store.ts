@@ -42,7 +42,7 @@ export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
       data: reinicioTemplate as CostSheetDataContract,
-      updateValue: (path, value) =>
+      updateValue: (path: (string | number)[], value: any) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -54,7 +54,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             current[path[path.length - 1]] = value;
           })
         ),
-      updateValues: (updates) =>
+      updateValues: (updates: UpdateValuePayload[]) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -68,7 +68,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             });
           })
         ),
-      reorderRow: (annexId, rowIndex, direction) =>
+      reorderRow: (annexId: string, rowIndex: number, direction: "up" | "down") =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -85,7 +85,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      reorderMainRow: (path, direction) =>
+      reorderMainRow: (path: (string | number)[], direction: "up" | "down") =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -118,7 +118,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             });
           })
         ),
-      removeMainSection: (index) =>
+      removeMainSection: (index: number) =>
         set(
           produce((draft: CostSheetState) => {
             if (draft.data?.sections?.[index]) {
@@ -126,7 +126,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      addMainRow: (parentPath) =>
+      addMainRow: (parentPath: (string | number)[]) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -148,7 +148,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      removeMainRow: (path) =>
+      removeMainRow: (path: (string | number)[]) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -164,7 +164,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      addRow: (annexId) =>
+      addRow: (annexId: string) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -203,7 +203,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      removeRow: (annexId, rowIndex) =>
+      removeRow: (annexId: string, rowIndex: number) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -215,7 +215,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      setSheet: (data) => {
+      setSheet: (data: CostSheetDataContract) => {
         const result = costSheetDataSchema.safeParse(data);
         if (result.success) {
           set({ data: result.data as CostSheetDataContract });
@@ -240,7 +240,7 @@ export const useCostSheetStore = create<CostSheetState>()(
           toast.error('Error: la plantilla de ejemplo tiene datos inválidos');
         }
       },
-      updateAnnexAdjustment: (annexId, coefficient, adjustmentColumn, isAdjustmentActive) =>
+      updateAnnexAdjustment: (annexId: string, coefficient: number, adjustmentColumn: string, isAdjustmentActive?: boolean) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data?.annexes) return;
@@ -256,7 +256,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      updateUtilityFormula: (percentage) =>
+      updateUtilityFormula: (percentage: number) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -270,7 +270,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             }
           })
         ),
-      updateIndirectConfig: (config) =>
+      updateIndirectConfig: (config: Partial<IndirectConfig>) =>
         set(
           produce((draft: CostSheetState) => {
             if (!draft.data) return;
@@ -304,6 +304,6 @@ export const useCostSheetStore = create<CostSheetState>()(
   )
 );
 
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && ((globalThis as any).process?.env?.NODE_ENV) === 'development') {
   (window as any).useCostSheetStore = useCostSheetStore;
 }
