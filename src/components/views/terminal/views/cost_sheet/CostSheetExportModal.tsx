@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export interface ExportOptions {
   includeFC: boolean;
@@ -29,6 +30,12 @@ export interface ExportOptions {
   alwaysZip?: boolean;
   pdfFormat: "standard" | "pro";
   logo?: string; // base64 string for Pro mode company logo
+  includeComparison?: boolean;
+  scenarioId?: string;
+  includeFC_v2?: boolean; // For backward compatibility if needed
+  includeFC_v3?: boolean;
+  includeFC_v4?: boolean;
+  includeFC_v5?: boolean;
 }
 
 interface CostSheetExportModalProps {
@@ -53,8 +60,11 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     includeFinancialSummary: true,
     includeUtilityNote: true,
     showDateTime: true,
+    alwaysZip: false,
     pdfFormat: "standard"
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleToggleAnnex = (id: string) => {
     setOptions(prev => ({
@@ -72,119 +82,108 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     }));
   };
 
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        toast.error('El logo no puede superar los 2MB');
+        toast.error("El logo debe ser menor a 2MB");
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setLogoPreview(base64);
-        setOptions(prev => ({ ...prev, logo: base64 }));
+        setOptions(prev => ({ ...prev, logo: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveLogo = () => {
-    setLogoPreview(null);
     setOptions(prev => ({ ...prev, logo: undefined }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[85vh] w-[95vw] sm:w-full">
-        <DialogHeader className="p-4 sm:p-6 border-b border-sidebar-border/50 shrink-0 z-10 relative bg-sidebar/95 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-             <div className="p-2 sm:p-3 rounded-2xl bg-primary/10 shrink-0">
-                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-             </div>
-             <div className="min-w-0">
-                <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-tight text-foreground truncate">
-                    Opciones de Exportación
-                </DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm text-muted-foreground font-medium line-clamp-1 sm:line-clamp-none">
-                    Selecciona qué elementos deseas incluir en el PDF.
-                </DialogDescription>
-             </div>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-sidebar-border shadow-2xl rounded-3xl">
+        <DialogHeader className="p-6 sm:p-8 pb-4 shrink-0 bg-sidebar/50 backdrop-blur-md border-b border-sidebar-border/50">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+              <Download className="w-6 h-6" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-black tracking-tight">Exportar Documentos</DialogTitle>
+              <DialogDescription className="font-medium text-muted-foreground/80">
+                Selecciona los documentos y el formato de salida.
+              </DialogDescription>
+            </div>
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
-            <div className="p-4 sm:p-6 space-y-6 pb-12">
-                {/* PDF Format Selection */}
-                <div className="space-y-4">
-                    <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
-                        Formato del Reporte
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "standard" }))}
-                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1.5 ${
-                                options.pdfFormat === "standard"
-                                ? "bg-primary/10 border-primary shadow-sm"
-                                : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
-                            }`}
-                        >
-                            <FileText className={`w-5 h-5 ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`} />
-                            <span className={`text-xs font-bold ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`}>Estándar</span>
-                            <span className={`text-[10px] leading-tight text-center ${options.pdfFormat === "standard" ? "text-primary/60" : "text-muted-foreground/60"}`}>
-                                Formato limpio y profesional sin logo
-                            </span>
-                        </button>
-                        <button
-                            onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "pro" }))}
-                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-1.5 relative ${
-                                options.pdfFormat === "pro"
-                                ? "bg-amber-500/10 border-amber-500/60 shadow-sm shadow-amber-500/10"
-                                : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
-                            }`}
-                        >
-                            <Layout className={`w-5 h-5 ${options.pdfFormat === "pro" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
-                            <span className={`text-xs font-bold ${options.pdfFormat === "pro" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>Pro (Ink-Save)</span>
-                            <span className={`text-[10px] leading-tight text-center ${options.pdfFormat === "pro" ? "text-amber-600/60 dark:text-amber-400/60" : "text-muted-foreground/60"}`}>
-                                Diseño premium con logo y énfasis visual
-                            </span>
-                        </button>
-                    </div>
+        <ScrollArea className="flex-1 px-6 sm:px-8 py-6">
+            <div className="space-y-8 pb-6">
+                {/* Format selection */}
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => setOptions(prev => ({ ...prev, pdfFormat: 'standard' }))}
+                        className={cn(
+                            "flex flex-col items-start p-4 rounded-3xl border-2 transition-all text-left group",
+                            options.pdfFormat === 'standard'
+                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
+                                : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
+                        )}
+                    >
+                        <div className={cn(
+                            "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
+                            options.pdfFormat === 'standard' ? "bg-primary text-primary-foreground" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
+                        )}>
+                            <FileText className="w-5 h-5" />
+                        </div>
+                        <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Estándar</span>
+                        <span className="text-xs text-muted-foreground font-medium">Básico y limpio</span>
+                    </button>
 
-                    {/* Logo Upload for Pro Mode */}
-                    {options.pdfFormat === "pro" && (
-                        <div className="space-y-3 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-                            <div className="flex items-center gap-2 px-1">
-                                <ImagePlus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                <span className="text-xs font-black uppercase tracking-[0.15em] text-amber-600 dark:text-amber-400">
-                                    Logo de la Empresa
-                                </span>
-                            </div>
+                    <button
+                        onClick={() => setOptions(prev => ({ ...prev, pdfFormat: 'pro' }))}
+                        className={cn(
+                            "flex flex-col items-start p-4 rounded-3xl border-2 transition-all text-left group",
+                            options.pdfFormat === 'pro'
+                                ? "bg-amber-500/5 border-amber-500 shadow-lg shadow-amber-500/5"
+                                : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
+                        )}
+                    >
+                        <div className={cn(
+                            "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
+                            options.pdfFormat === 'pro' ? "bg-amber-500 text-white" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
+                        )}>
+                            <ImagePlus className="w-5 h-5" />
+                        </div>
+                        <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Pro</span>
+                        <span className="text-xs text-muted-foreground font-medium">Con logo corporativo</span>
+                    </button>
+                </div>
 
+                {/* Logo Upload (Only Pro) */}
+                <div className={cn(
+                    "overflow-hidden transition-all duration-500",
+                    options.pdfFormat === 'pro' ? "max-h-40 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                )}>
+                    {options.pdfFormat === 'pro' && (
+                        <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/20">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-3 block">Identidad Visual</Label>
                             <input
-                                ref={fileInputRef}
                                 type="file"
-                                accept="image/*"
+                                ref={fileInputRef}
                                 className="hidden"
+                                accept="image/*"
                                 onChange={handleLogoUpload}
                             />
-
-                            {logoPreview ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="relative w-16 h-16 rounded-xl border border-amber-500/30 bg-sidebar/80 overflow-hidden shrink-0">
-                                        <img
-                                            src={logoPreview}
-                                            alt="Logo preview"
-                                            className="w-full h-full object-contain p-1"
-                                        />
+                            {options.logo ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-2xl border-2 border-amber-500/20 bg-white p-2 overflow-hidden">
+                                        <img src={options.logo} alt="Logo" className="w-full h-full object-contain" />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-muted-foreground truncate">Logo cargado</p>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-muted-foreground truncate">Logo cargado</p>
                                         <Button
                                             type="button"
                                             variant="ghost"
@@ -333,6 +332,17 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                             />
                         </div>
 
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
+                            <div>
+                                <Label htmlFor="alwaysZip" className="font-bold text-sm block">Forzar ZIP</Label>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Comprimir salida incluso para un solo archivo</span>
+                            </div>
+                            <Switch
+                                id="alwaysZip"
+                                checked={options.alwaysZip || false}
+                                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, alwaysZip: checked }))}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
