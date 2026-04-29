@@ -7,7 +7,7 @@ import {
   FileDown,
   Settings2,
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { useUIStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import MultiStoreDashboardView from './MultiStoreDashboardView';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
@@ -33,6 +34,12 @@ const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod =
 
 export default function DashboardView() {
   const { user } = useAuthStore();
+  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
+
+  if (isAdminOrManager) {
+    return <MultiStoreDashboardView />;
+  }
+
   const {
     summary,
     kpis,

@@ -121,5 +121,26 @@ export const auditService = {
       }
     });
     if (error) console.error('[AuditService] logTransferCancelled failed:', error);
-  }
+  },
+
+  async logReceptionVoided(params: {
+    userId: string;
+    receiptId: string;
+    storeId: string;
+    reason?: string;
+  }): Promise<void> {
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'reception_voided',
+      table_name: 'receipts',
+      record_id: params.receiptId,
+      store_id: params.storeId,
+      metadata: {
+        receipt_id: params.receiptId,
+        reason: params.reason || 'Anulada manualmente',
+        voided_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logReceptionVoided failed:', error);
+  },
 };
