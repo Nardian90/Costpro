@@ -33,11 +33,12 @@ export const makeTransfer = (overrides: Partial<Transfer> = {}): Transfer => ({
   id: 'txfr-test-001',
   origin_store_id: 'store-a',
   destination_store_id: 'store-b',
-  status: 'pending',
+  status: 'PENDIENTE',
   created_by: 'user-test-001',
   created_at: '2025-01-15T10:00:00Z',
+  updated_at: '2025-01-15T10:00:00Z',
   items: [
-    { id: 'item-1', product_id: 'prod-test-001', quantity: 5, unit_cost: 60 }
+    { id: 'item-1', transfer_id: 'txfr-test-001', product_id: 'prod-test-001', quantity: 5, unit_cost: 60 }
   ],
   notes: null,
   ...overrides,
