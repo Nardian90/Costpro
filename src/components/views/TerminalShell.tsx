@@ -1,95 +1,76 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useTransition, Suspense, memo } from 'react';
+import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { useStores } from '@/hooks/api/useStores';
+import { userService } from '@/services/user-service';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthStore, useUIStore, ViewType, useCostSheetStore } from '@/store';
+import { Building as BuildingIcon, X } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { Sidebar } from './terminal/Sidebar';
 import { Header } from './terminal/Header';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
-import { useIsMobile } from '@/hooks/ui/useMobile';
-import { Building as BuildingIcon } from 'lucide-react';
-import { userService } from '@/services/user-service';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
-import { useStores } from '@/hooks/api/useStores';
 import { prefetchProducts } from '@/hooks/api/useProducts';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
 import { prefetchDashboardData } from '@/hooks/api/useDashboard';
 import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
 import { prefetchReceptions } from '@/hooks/api/useReceptions';
-import { CostProLoader } from '@/components/ui/CostProLoader';
-import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
-import { ChatBot } from '@/components/ui/ChatBot';
+import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
+import { ChunkErrorBoundary } from '@/components/ui/ChunkErrorBoundary';
 import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
-import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
-import { ChunkErrorBoundary } from '@/components/ui/ChunkErrorBoundary';
-import { toast } from 'sonner';
+import { ChatBot } from '@/components/ui/ChatBot';
+import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 
-// Lazy load views
-const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
-const OCCView = lazy(() => import('./terminal/views/dashboard/OCCView'));
-const WalletView = lazy(() => import('./terminal/views/wallet/WalletView'));
-const POSView = lazy(() => import('./terminal/views/pos/POSView'));
-const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
-const UsersManagementView = lazy(() => import('./terminal/views/users/UsersManagementView'));
-const RolesManagementView = lazy(() => import('./terminal/views/users/RolesManagementView'));
-const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
-const NewsView = lazy(() => import('./terminal/views/rss/NewsView'));
-const RSSManagementView = lazy(() => import('./terminal/views/rss/RSSManagementView'));
-const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
-const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
-const CashClosureView = lazy(() => import('./terminal/views/cash_closure/CashClosureView'));
-const StockHistoryView = lazy(() => import('./terminal/views/stock_history/StockHistoryView'));
-const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
-const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
-// Heavy views wrapped with chunk retry for Turbopack resilience
-const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
-const IPVView = lazy(() => import('./terminal/views/ipv/IPVView'));
-const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
-const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
-const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
-const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
-const ReportsView = lazy(() => import('./terminal/views/reports/ReportsView'));
-const AcademyView = lazy(() => import('./terminal/views/academy/AcademyView'));
-const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
-const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
-const HealthView = lazy(() => import('./health/HealthView'));
-const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
-const SettingsView = lazy(() => import("./terminal/views/settings/SettingsView"));
-const Pick3IntelligenceView = lazy(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
-
+// Views
+const DashboardView = React.lazy(() => import('./terminal/views/dashboard/DashboardView'));
+const POSView = React.lazy(() => import('./terminal/views/pos/POSView'));
+const SalesHistoryView = React.lazy(() => import('./terminal/views/sales/SalesHistoryView'));
+const UsersManagementView = React.lazy(() => import('./terminal/views/users/UsersManagementView'));
+const RolesManagementView = React.lazy(() => import('./terminal/views/users/RolesManagementView'));
+const StoresManagementView = React.lazy(() => import('./terminal/views/stores/StoresManagementView'));
+const AuditGlobalView = React.lazy(() => import('./terminal/views/audit/AuditGlobalView'));
+const InventoryView = React.lazy(() => import('./terminal/views/inventory/InventoryView'));
+const CatalogView = React.lazy(() => import('./terminal/views/catalog/CatalogView'));
+const CostSheetView = React.lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
+const ReportsView = React.lazy(() => import('./terminal/views/reports/ReportsView'));
+const IPVView = React.lazy(() => import('./terminal/views/ipv/IPVView'));
+const AcademyView = React.lazy(() => import('./terminal/views/academy/AcademyView'));
+const InventoryAdjustmentsView = React.lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
+const LegalView = React.lazy(() => import('./terminal/views/legal/LegalView'));
+const SettingsView = React.lazy(() => import('./terminal/views/settings/SettingsView'));
+const HelpView = React.lazy(() => import('./terminal/views/help/HelpView'));
+const ProductReceptionView = React.lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
+const TransferenciasView = React.lazy(() => import('./terminal/views/transfers/TransferenciasView'));
+const WalletView = React.lazy(() => import('./terminal/views/wallet/WalletView'));
+const Pick3IntelligenceView = React.lazy(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
 
 export default function TerminalShell() {
-  const { user, loading, status, logout, updateUser } = useAuthStore();
-  const setActiveSection = useCostSheetStore(state => state.updateValue);
+  const { user, status, loading, logout, updateUser } = useAuthStore();
+  const { currentView, setCurrentView, setActiveCostSection } = useUIStore();
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
-
-  const {
-    currentView, setCurrentView,
-    sidebarOpen, toggleSidebar, setSidebarOpen, setActiveCostSection
-  } = useUIStore();
-
   const [sidebarSearch, setSidebarSearch] = useState('');
+  const nav = useTerminalNavigation(user as any, sidebarSearch);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Hooks
-  const nav = useTerminalNavigation(user, sidebarSearch);
-  const router = useRouter();
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Fetch all stores (mainly for admin view in header)
   const { data: allStores = [] } = useStores(
     user?.id || '',
     user?.role === 'admin',
     false
   );
 
-
-  // LOGOUT HANDLER
-   const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await userService.logout();
     } catch (error: any) {
@@ -100,7 +81,6 @@ export default function TerminalShell() {
     }
   };
 
-  // Initial check on mount & prefetching
   useEffect(() => {
     if (status === 'unauthenticated') {
       window.location.reload();
@@ -110,10 +90,10 @@ export default function TerminalShell() {
     if (user?.activeStoreId && status === 'authenticated_valid') {
       prefetchProducts(queryClient, user.activeStoreId);
     }
-  }, [loading, user, router, queryClient]);
+  }, [loading, user, router, queryClient, status]);
 
   useEffect(() => {
-    if (user?.role === 'costo' && currentView === 'dashboard') {
+    if (user?.role === 'costo' && (currentView as any) === 'dashboard') {
       setCurrentView('cost-sheets');
     }
   }, [user, currentView, setCurrentView]);
@@ -135,7 +115,7 @@ export default function TerminalShell() {
 
     if (costSheetSubViews.includes(view as string)) {
       startTransition(() => {
-        setCurrentView('cost-sheets' as ViewType);
+        setCurrentView('cost-sheets');
         setActiveCostSection(view as string);
       });
     } else {
@@ -164,10 +144,9 @@ export default function TerminalShell() {
         prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
         break;
       case 'audit':
-        prefetchAuditLogs(queryClient);
+        prefetchAuditLogs(queryClient, { storeIds: [user.activeStoreId] });
         break;
       case 'recepcion':
-      case 'reception_list':
         prefetchReceptions(queryClient, user.activeStoreId, user.role === 'admin');
         break;
     }
@@ -175,7 +154,6 @@ export default function TerminalShell() {
 
   const renderView = (view: ViewType) => {
     switch (view) {
-        case 'occ': return <OCCView />;
         case 'dashboard': return <DashboardView />;
         case 'pick3-intelligence': return <Pick3IntelligenceView />;
         case 'wallet': return <WalletView />;
@@ -184,14 +162,9 @@ export default function TerminalShell() {
         case 'users': return <UsersManagementView />;
         case 'roles': return <RolesManagementView />;
         case 'stores': return <StoresManagementView />;
-        case 'news': return <NewsView />;
-        case 'rss_management': return <RSSManagementView />;
-        case 'audit': return <AuditLogsView />;
+        case 'audit': return <AuditGlobalView />;
         case 'inventory': return <InventoryView />;
-        case 'cash': return <CashClosureView />;
-        case 'history': return <StockHistoryView />;
         case 'catalog': return <CatalogView />;
-        case 'inventory_count': return <InventoryCountView />;
         case 'cost-sheets': return <CostSheetView />;
         case 'reports': return <ReportsView />;
         case 'ipv': return <IPVView />;
@@ -200,12 +173,16 @@ export default function TerminalShell() {
         case 'legal': return <LegalView />;
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
-        case 'wiki': return <WikiView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
-        case 'reception_list': return <ReceptionsHistoryView />;
         case 'transferencias': return <TransferenciasView />;
-        case 'health': return <HealthView />;
-        default: return <div>Default View Placeholder</div>;
+        case 'health': return <div>Health View Placeholder</div>;
+        case 'cash': return <div>Cash View Placeholder</div>;
+        case 'history': return <div>History View Placeholder</div>;
+        case 'inventory_count': return <div>Inventory Count Placeholder</div>;
+        case 'news': return <div>News Placeholder</div>;
+        case 'rss_management': return <div>RSS Management Placeholder</div>;
+        case 'wiki': return <div>Wiki Placeholder</div>;
+        default: return <div>Default View Placeholder: {view}</div>;
     }
   };
 
@@ -260,24 +237,19 @@ export default function TerminalShell() {
           currentView={currentView}
           navigationItems={nav.navigationItems}
           onViewChange={handleViewChange}
-          user={user}
+          user={user as any}
           allStores={allStores}
           handleSetActiveStore={async (id) => {
             try {
-              // Update local state first for immediate UI response
               updateUser({ activeStoreId: id });
-              // Persist to DB
-              await userService.setActiveStore(user.id, id);
+              await userService.setActiveStore(user!.id, id);
               toast.success('Sucursal actualizada correctamente');
-
-              // Invalidate all store-dependent queries
               queryClient.invalidateQueries({ queryKey: ['products'] });
               queryClient.invalidateQueries({ queryKey: ['transactions'] });
               queryClient.invalidateQueries({ queryKey: ['dashboard'] });
               queryClient.invalidateQueries({ queryKey: ['inventory'] });
               queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
               queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-
             } catch (error) {
               console.error('Error al cambiar de sucursal:', error);
               toast.error('No se pudo persistir el cambio de sucursal');

@@ -118,6 +118,7 @@ export default function InventoryView() {
             icon: currentView === 'inventory' ? Plus : X,
             onClick: () => setCurrentView(prev => prev === 'inventory' ? 'reception' : 'inventory'),
             variant: currentView === 'inventory' ? 'primary' : 'danger',
+            ariaLabel: currentView === 'inventory' ? "Ir a registrar nueva recepción de mercancía" : "Volver al listado de inventario"
         },
     ];
 
@@ -177,6 +178,7 @@ export default function InventoryView() {
                     onChange={setSearchTerm}
                     placeholder="Buscar por nombre o SKU en inventario..."
                     showSettings={false}
+                    aria-label="Buscar productos en el catálogo por nombre o SKU"
                 />
 
                 <CategoryChips

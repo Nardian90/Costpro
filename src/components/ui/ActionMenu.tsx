@@ -20,12 +20,14 @@ export interface Action {
   disabled?: boolean;
   active?: boolean;
   className?: string;
+  ariaLabel?: string;
   component?: React.ReactNode;
 }
 
 interface ActionMenuProps {
   actions: Action[];
   className?: string;
+  ariaLabel?: string;
   sticky?: boolean;
   position?: 'top' | 'bottom';
   topOffset?: string;
@@ -176,7 +178,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                           !action.active && !action.variant && 'hover:neu-raised-sm',
                           action.className
                         )}
-                        aria-label={action.label}
+                        aria-label={action.ariaLabel || action.label}
                       >
                         {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
                         <span className="font-semibold">{action.label}</span>
