@@ -7,8 +7,10 @@ import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { useStoresView } from './useStoresView';
 import { StoreModals } from './StoreModals';
+import { useAuthStore } from '@/store';
 
 export default function StoresManagementView() {
+  const { user } = useAuthStore();
   const {
     searchTerm,
     setSearchTerm,
@@ -45,6 +47,14 @@ export default function StoresManagementView() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {stores.map((store) => (
             <div key={store.id} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all flex flex-col shadow-sm">
+              {/* Descripción oculta para screen readers */}
+              <span id={`store-desc-${store.id}`} className="sr-only">
+                Tienda {store.name}.
+                {store.address ? ` Dirección: ${store.address}.` : ' Sin dirección registrada.'}
+                Estado: {store.is_active ? 'activa' : 'inactiva'}.
+                {store.id === user?.activeStoreId ? ' Esta es tu tienda activa.' : ''}
+              </span>
+
               <div className="flex items-start justify-between mb-6">
                 <div className="w-14 h-14 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
                   {store.logo_url && getStoreLogoUrl(store.logo_url) ? (
@@ -68,13 +78,21 @@ export default function StoresManagementView() {
                 {activeStoreId !== store.id ? (
                   <button
                     onClick={() => handleSetActiveStore(store.id)}
+                    aria-label={`Activar ${store.name} como tienda de trabajo`}
+                    aria-pressed={false}
+                    aria-describedby={`store-desc-${store.id}`}
                     className="w-full py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
                   >
                     <Target className="w-3.5 h-3.5" />
                     Seleccionar Tienda
                   </button>
                 ) : (
-                  <div className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                  <div
+                    role="status"
+                    aria-label={`Tienda actual: ${store.name}`}
+                    aria-pressed={true}
+                    className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                  >
                     <Check className="w-3.5 h-3.5" />
                     Tienda Actual
                   </div>
@@ -83,6 +101,7 @@ export default function StoresManagementView() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleEditStore(store)}
+                    aria-label={`Editar configuración de ${store.name}`}
                     className="py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Edit className="w-3 h-3" />
@@ -91,6 +110,7 @@ export default function StoresManagementView() {
                   {isAdmin && (
                     <button
                       onClick={() => handleResetStore(store)}
+                      aria-label={`Reiniciar todos los datos de ${store.name}`}
                       className="py-2 rounded-xl border border-border hover:bg-orange-500/10 hover:text-orange-500 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -100,6 +120,8 @@ export default function StoresManagementView() {
                   {isAdmin && (
                     <button
                       onClick={() => handleDeleteStore(store)}
+                      aria-label={`Eliminar tienda ${store.name}`}
+                      aria-describedby={`store-desc-${store.id}`}
                       className="col-span-2 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />

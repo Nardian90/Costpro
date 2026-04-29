@@ -3,14 +3,16 @@
 import React from 'react';
 import { CostProLoader } from './CostProLoader';
 
-interface StateRendererProps<T> {
+export interface StateRendererProps<T> {
   isLoading: boolean;
-  error: Error | null;
+  error?: Error | null;
   data: T[] | undefined | null;
   children: (data: T[]) => React.ReactNode;
   loadingComponent?: React.ReactNode;
   errorComponent?: React.ReactNode;
   emptyComponent?: React.ReactNode;
+  isEmpty?: boolean;
+  emptyMessage?: string;
 }
 
 const DefaultLoadingComponent = () => (
@@ -26,10 +28,10 @@ const DefaultErrorComponent = ({ message }: { message: string }) => (
   </div>
 );
 
-const DefaultEmptyComponent = () => (
+const DefaultEmptyComponent = ({ message }: { message?: string }) => (
   <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-muted/20 border border-border rounded-2xl p-8">
     <p className="font-bold text-foreground">No hay datos disponibles</p>
-    <p className="text-sm text-muted-foreground">No se encontraron registros para mostrar.</p>
+    <p className="text-sm text-muted-foreground">{message || 'No se encontraron registros para mostrar.'}</p>
   </div>
 );
 
@@ -41,19 +43,23 @@ export function StateRenderer<T>({
   loadingComponent,
   errorComponent,
   emptyComponent,
+  isEmpty,
+  emptyMessage,
 }: StateRendererProps<T>) {
 
   if (isLoading) {
-    return loadingComponent || <DefaultLoadingComponent />;
+    return (loadingComponent as any) || <DefaultLoadingComponent />;
   }
 
   if (error) {
-    return errorComponent || <DefaultErrorComponent message={error.message} />;
+    return (errorComponent as any) || <DefaultErrorComponent message={error.message} />;
   }
 
-  if (!data || data.length === 0) {
-    return emptyComponent || <DefaultEmptyComponent />;
+  const effectiveEmpty = isEmpty ?? (!data || data.length === 0);
+
+  if (effectiveEmpty) {
+    return (emptyComponent as any) || <DefaultEmptyComponent message={emptyMessage} />;
   }
 
-  return <>{children(data)}</>;
+  return <>{children(data as T[])}</>;
 }

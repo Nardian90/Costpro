@@ -168,7 +168,7 @@ const SuccessView = ({ onGeneratePDF, onShareWhatsApp, onExportAsImage, onClearL
     <PrimaryButton
       label="Nueva Venta"
       icon={RefreshCw}
-      onClick={onClearLastSale}
+      onClick={onClearLastSale || (() => {})}
       className="w-full max-w-sm h-16 text-xl rounded-2xl shadow-2xl"
     />
   </motion.div>

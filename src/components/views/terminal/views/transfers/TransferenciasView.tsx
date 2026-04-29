@@ -16,7 +16,7 @@ import {
 import { useIncomingTransfers, useOutgoingTransfers } from '@/hooks/api/useTransfers';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import { cn, formatDate, safeFormatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CreateTransferModal from './CreateTransferModal';
@@ -62,6 +62,24 @@ export default function TransferenciasView() {
   const isLoading = activeTab === 'incoming' ? isLoadingIncoming : isLoadingOutgoing;
   const error = activeTab === 'incoming' ? errorIncoming : errorOutgoing;
 
+  const tabs = [
+    { id: 'outgoing', label: 'Salientes', icon: ArrowUpRight },
+    { id: 'incoming', label: 'Entrantes', icon: ArrowDownLeft }
+  ] as const;
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
+    if (e.key === 'ArrowRight') {
+      const next = (currentIndex + 1) % tabs.length;
+      setActiveTab(tabs[next].id);
+      document.getElementById(`tab-${tabs[next].id}`)?.focus();
+    }
+    if (e.key === 'ArrowLeft') {
+      const prev = (currentIndex - 1 + tabs.length) % tabs.length;
+      setActiveTab(tabs[prev].id);
+      document.getElementById(`tab-${tabs[prev].id}`)?.focus();
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDIENTE':
@@ -85,91 +103,105 @@ export default function TransferenciasView() {
         <ActionMenu actions={actions} />
       </div>
 
-      <div className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit">
-        <button
-          onClick={() => setActiveTab('outgoing')}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-            activeTab === 'outgoing' ? "bg-primary text-primary-foreground shadow-lg scale-105" : "hover:bg-white/5 text-muted-foreground"
-          )}
-        >
-          <ArrowUpRight className="w-4 h-4" />
-          Salientes
-        </button>
-        <button
-          onClick={() => setActiveTab('incoming')}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-            activeTab === 'incoming' ? "bg-primary text-primary-foreground shadow-lg scale-105" : "hover:bg-white/5 text-muted-foreground"
-          )}
-        >
-          <ArrowDownLeft className="w-4 h-4" />
-          Entrantes
-        </button>
+      <div
+        role="tablist"
+        aria-label="Filtrar transferencias por dirección"
+        className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit"
+      >
+        {tabs.map((tab, idx) => (
+          <button
+            key={tab.id}
+            id={`tab-${tab.id}`}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(e) => handleTabKeyDown(e, idx)}
+            className={cn(
+              "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+              activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg scale-105" : "hover:bg-white/5 text-muted-foreground"
+            )}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <StateRenderer
-        isLoading={isLoading}
-        error={error as Error}
-        data={currentData}
-        emptyComponent={
-          <div className="py-24 text-center neu-card bg-white/2 space-y-4">
-             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto">
-                <ArrowLeftRight className="w-10 h-10 text-muted-foreground opacity-20" />
-             </div>
-             <div>
-                <p className="text-xs font-black uppercase text-primary/70 tracking-[0.2em]">No hay transferencias</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                  {activeTab === 'incoming' ? 'No tienes solicitudes de transferencia pendientes por recibir.' : 'No has realizado ninguna solicitud de transferencia recientemente.'}
-                </p>
-             </div>
-          </div>
-        }
+      <div
+        role="tabpanel"
+        id={`panel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        tabIndex={0}
       >
-        {(transfers) => (
-          <div className="grid grid-cols-1 gap-4">
-            {transfers.map((t: any) => (
-              <div
-                key={t.id}
-                onClick={() => setSelectedTransferId(t.id)}
-                className="neu-card hover:border-primary/30 transition-all cursor-pointer group !p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-4">
-                   <div className={cn(
-                     "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                     activeTab === 'outgoing' ? "bg-amber-500/10" : "bg-green-600/10"
-                   )}>
-                      {activeTab === 'outgoing' ? <ArrowUpRight className="w-6 h-6 text-amber-500" /> : <ArrowDownLeft className="w-6 h-6 text-green-600" />}
-                   </div>
-                   <div>
-                      <div className="flex items-center gap-2">
-                         <span className="text-sm font-black uppercase tracking-tight">
-                            {activeTab === 'outgoing' ? `Hacia: ${t.destination_store?.name}` : `Desde: ${t.origin_store?.name}`}
-                         </span>
-                         {getStatusBadge(t.status)}
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                         <span>ID: {t.id.split('-')[0]}</span>
-                         <span>•</span>
-                         <span>Solicitado por: {t.creator?.full_name}</span>
-                         <span>•</span>
-                         <span>{isValid(new Date(t.created_at)) ? format(new Date(t.created_at), 'PPPp', { locale: es }) : '—'}</span>
-                      </div>
-                   </div>
-                </div>
+        <StateRenderer
+          isLoading={isLoading}
+          error={error as Error}
+          data={currentData}
+          emptyComponent={
+            <div className="py-24 text-center neu-card bg-white/2 space-y-4">
+               <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                  <ArrowLeftRight className="w-10 h-10 text-muted-foreground opacity-20" />
+               </div>
+               <div>
+                  <p className="text-xs font-black uppercase text-primary/70 tracking-[0.2em]">No hay transferencias</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    {activeTab === 'incoming' ? 'No tienes solicitudes de transferencia pendientes por recibir.' : 'No has realizado ninguna solicitud de transferencia recientemente.'}
+                  </p>
+               </div>
+            </div>
+          }
+        >
+          {(transfers) => (
+            <div className="grid grid-cols-1 gap-4">
+              {transfers.map((t: any) => (
+                <div
+                  key={t.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedTransferId(t.id)}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelectedTransferId(t.id)}
+                  aria-label={`Ver detalles de transferencia ${activeTab === 'outgoing' ? 'hacia' : 'desde'} ${activeTab === 'outgoing' ? t.destination_store?.name : t.origin_store?.name}. Estado: ${t.status}`}
+                  className="neu-card hover:border-primary/30 transition-all cursor-pointer group !p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4">
+                     <div className={cn(
+                       "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                       activeTab === 'outgoing' ? "bg-amber-500/10" : "bg-green-600/10"
+                     )}>
+                        {activeTab === 'outgoing' ? <ArrowUpRight className="w-6 h-6 text-amber-500" /> : <ArrowDownLeft className="w-6 h-6 text-green-600" />}
+                     </div>
+                     <div>
+                        <div className="flex items-center gap-2">
+                           <span className="text-sm font-black uppercase tracking-tight">
+                              {activeTab === 'outgoing' ? `Hacia: ${t.destination_store?.name}` : `Desde: ${t.origin_store?.name}`}
+                           </span>
+                           {getStatusBadge(t.status)}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                           <span>ID: {t.id.split('-')[0]}</span>
+                           <span>•</span>
+                           <span>Solicitado por: {t.creator?.full_name}</span>
+                           <span>•</span>
+                           <span>{isValid(new Date(t.created_at)) ? format(new Date(t.created_at), 'PPPp', { locale: es }) : '—'}</span>
+                        </div>
+                     </div>
+                  </div>
 
-                <div className="flex items-center gap-6">
-                   <div className="text-right">
-                      <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Productos</p>
-                      <p className="text-sm font-black text-primary group-hover:scale-110 transition-transform origin-right">VER DETALLE</p>
-                   </div>
-                   <ArrowLeftRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center gap-6">
+                     <div className="text-right">
+                        <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Productos</p>
+                        <p className="text-sm font-black text-primary group-hover:scale-110 transition-transform origin-right">VER DETALLE</p>
+                     </div>
+                     <ArrowLeftRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </StateRenderer>
+              ))}
+            </div>
+          )}
+        </StateRenderer>
+      </div>
 
       <CreateTransferModal
         isOpen={isCreateModalOpen}
