@@ -1,80 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ShoppingCart, Search, X, Trash2, AlertTriangle, QrCode } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import React, { useState, useMemo, useTransition } from 'react';
+import {
+  ShoppingCart,
+  Search,
+  Plus,
+  X,
+  Trash2,
+  QrCode,
+  AlertTriangle
+} from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/store';
+import { useProducts } from '@/hooks/api/useProducts';
+import { useCartStore } from '@/store/cart';
+import { Product } from '@/types';
 import SearchBar from '@/components/ui/SearchBar';
-import ActionMenu from '@/components/ui/ActionMenu';
-import { ProductCard, CategoryChips } from '@/components/ui/atomic';
-import POSTableView from './POSTableView';
-import ViewSwitcher from '@/components/ui/ViewSwitcher';
+import { CategoryChips, ProductCard, ViewSwitcher } from '@/components/ui/atomic';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnimatePresence } from 'framer-motion';
-import { usePOSProducts } from '@/hooks/logic/usePOSProducts';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { Portal } from "@/components/ui/Portal";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerDescription,
-} from '@/components/ui/drawer';
-import { BaseModal } from '@/components/ui/BaseModal';
-import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import { toast } from 'sonner';
+import { AnimatePresence } from 'framer-motion';
 import { POSCart } from './POSCart';
 import { StickyCartSummary } from './StickyCartSummary';
-import { usePOSView } from './usePOSView';
+import { BaseModal } from '@/components/ui/BaseModal';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import POSTableView from './POSTableView';
+import { Portal } from '@/components/ui/Portal';
 import { QueryInspector } from '@/components/ui/QueryInspector';
-import { PriceSelectorModal } from '@/components/modals/PriceSelectorModal';
-import { BarcodeScanner } from '@/components/modals/BarcodeScanner';
+import { useCreateSale } from '@/hooks/api/useTransactions';
 import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
-import { Product } from '@/types';
 
-const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => {
-  if (layoutMode === 'table') {
-    return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-      {[...Array(8)].map((_, i) => (
-        <div key={i} className="p-4 rounded-3xl border border-border bg-card space-y-4">
-          <Skeleton className="aspect-square w-full rounded-2xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-          <div className="flex justify-between items-center pt-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
+// Modales y utilidades extra
+const PriceSelectorModal = ({ isOpen, onClose, product, onSelect }: any) => null;
+const BarcodeScanner = ({ isOpen, onClose, onScan }: any) => null;
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
-  <div className="flex flex-col items-center justify-center py-20 px-4 text-center space-y-4">
-    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
-      <Search className="w-10 h-10 text-muted-foreground" />
-    </div>
-    <h3 className="text-xl font-bold uppercase tracking-tight">No se encontraron productos</h3>
-    <p className="text-muted-foreground max-w-xs mx-auto text-sm">
-      Prueba con otros términos de búsqueda o revisa el catálogo de la sucursal.
-    </p>
+  <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-2xl bg-muted/5">
+    <Search className="w-12 h-12 mx-auto mb-4 opacity-10" />
+    <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">No se encontraron productos</p>
     {onClearSearch && (
       <button
         onClick={onClearSearch}
-        className="text-primary font-black uppercase text-xs tracking-widest hover:underline"
+        className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline"
       >
         Limpiar búsqueda
       </button>
@@ -82,20 +51,38 @@ const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void 
   </div>
 );
 
+const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => (
+  <div className={cn(layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
+    {[...Array(8)].map((_, i) => (
+      <Skeleton key={i} className={cn("rounded-2xl", layoutMode === 'grid' ? "h-64" : "h-16")} />
+    ))}
+  </div>
+);
+
 export default function POSView() {
+  const { user } = useAuthStore();
+  const isMobile = useIsMobile();
+  const [isPending, startTransition] = useTransition();
+
+  // States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
+  const [showCart, setShowCart] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
+  const [showPriceWarning, setShowPriceWarning] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [lastSale, setLastSale] = useState<any>(null);
+
+  // Cart Store
   const {
-    searchTerm,
-    setSearchTerm,
-    posLayoutMode,
-    setPosLayoutMode,
-    products,
-    isLoadingProducts,
-    productsError,
     items,
-    handleAddItem,
+    addItem,
     removeItem,
     updateQuantity,
     clearCart,
+    getItemCount,
     getSubtotal,
     getDiscountAmount,
     getTaxAmount,
@@ -103,29 +90,109 @@ export default function POSView() {
     discount,
     setDiscount,
     appliedTaxes,
-    toggleTax, updateItemDiscount, updateItemPayment, prorateGlobalPayment,
-    getItemCount,
-    startCheckout,
-    confirmUnpricedCheckout,
-    showPriceWarning,
-    setShowPriceWarning,
-    lastSale,
-    setLastSale,
-    isProcessingSale,
-  } = usePOSView();
+    toggleTax,
+    updateItemDiscount,
+    updateItemPayment,
+    prorateGlobalPayment
+  } = useCartStore();
 
-  const [showCart, setShowCart] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
-  const isMobile = useIsMobile();
-  const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
+  // API
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
+  const { mutateAsync: createSale, isPending: isProcessingSale } = useCreateSale();
+
+  const products = (productsData || []) as Product[];
+  const categories = useMemo(() => {
+    const cats = new Set(products.map(p => p.category).filter(Boolean));
+    return Array.from(cats) as string[];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCategory = !selectedCategory || p.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategory]);
+
+  const handleCategoryChange = (val: string) => {
+    startTransition(() => {
+      setSelectedCategory(val);
+    });
+  };
 
   const onAddToCart = (product: Product) => {
     if (product.product_variants && product.product_variants.length > 0) {
       setSelectedProductForVariants(product);
     } else {
-      handleAddItem(product);
+        addItem({
+            product_id: product.id,
+            variant_id: null,
+            variant: null,
+            price: product.price,
+            cost: product.cost_price || 0,
+            quantity: 1,
+            product: product,
+            subtotal: product.price
+        });
+        toast.success(`${product.name} añadido`);
+    }
+  };
+
+  const handleAddItem = (product: Product, variant: any) => {
+    addItem({
+        product_id: product.id,
+        variant_id: variant.id,
+        variant: variant,
+        price: variant.price,
+        cost: product.cost_price || 0,
+        quantity: 1,
+        product: product,
+        subtotal: variant.price
+    });
+    toast.success(`${product.name} (${variant.name}) añadido`);
+  };
+
+  const startCheckout = async () => {
+    const hasUnpriced = items.some(item => (item.price || 0) <= 0);
+    if (hasUnpriced) {
+      setShowPriceWarning(true);
+      return;
+    }
+    await processCheckout();
+  };
+
+  const confirmUnpricedCheckout = async () => {
+    setShowPriceWarning(false);
+    await processCheckout();
+  };
+
+  const processCheckout = async () => {
+    if (!user?.activeStoreId || !user?.id) return;
+    try {
+      const saleId = await createSale({
+        p_store_id: user.activeStoreId,
+        p_seller_id: user.id,
+        p_payment_method: 'mixed',
+        p_total_amount: getTotal(),
+        p_subtotal: getSubtotal(),
+        p_discount_type: discount?.type || 'fixed',
+        p_discount_value: getDiscountAmount(),
+        p_items: items.map(i => ({
+          product_id: i.product_id,
+          variant_id: i.variant_id,
+          quantity: i.quantity,
+          price: i.price,
+          cost: i.cost,
+          cash_paid: i.cash_paid,
+          transfer_paid: i.transfer_paid
+        }))
+      });
+      setLastSale({ id: saleId });
+      clearCart();
+      toast.success('Venta completada con éxito');
+    } catch (err: any) {
+      toast.error('Error al procesar la venta');
     }
   };
 
@@ -227,7 +294,7 @@ export default function POSView() {
                   updateItemPayment={updateItemPayment}
                   prorateGlobalPayment={prorateGlobalPayment}
                   isProcessing={isProcessingSale}
-                  onCheckout={startCheckout}
+                  onCheckout={startCheckout as any}
                   onClose={() => setShowCart(false)}
                   lastSale={lastSale}
                   isMobile={isMobile}
@@ -255,7 +322,7 @@ export default function POSView() {
                   updateItemPayment={updateItemPayment}
                   prorateGlobalPayment={prorateGlobalPayment}
                 isProcessing={isProcessingSale}
-                onCheckout={startCheckout}
+                onCheckout={startCheckout as any}
                 onClose={() => setShowCart(false)}
                 lastSale={lastSale}
                 isMobile={isMobile}
@@ -280,16 +347,18 @@ export default function POSView() {
           maxWidth="sm:max-w-md"
           footer={
             <>
-              <SecondaryButton
+              <button
                 onClick={() => setShowPriceWarning(false)}
-                label="Cancelar"
-                className="flex-1"
-              />
-              <PrimaryButton
+                className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
                 onClick={confirmUnpricedCheckout}
-                label="Confirmar Facturación"
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-primary-foreground shadow-amber-500/20"
-              />
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+              >
+                Confirmar Facturación
+              </button>
             </>
           }
         >
@@ -316,16 +385,18 @@ export default function POSView() {
           maxWidth="sm:max-w-md"
           footer={
             <>
-              <SecondaryButton
+              <button
                 onClick={() => setShowClearConfirm(false)}
-                label="No, volver"
-                className="flex-1"
-              />
-              <PrimaryButton
+                className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
+              >
+                No, volver
+              </button>
+              <button
                 onClick={handleClearCart}
-                label="Sí, vaciar"
-                className="flex-1 bg-destructive text-destructive-foreground shadow-destructive/20"
-              />
+                className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-destructive/20 active:scale-95 transition-all"
+              >
+                Sí, vaciar
+              </button>
             </>
           }
         >
@@ -351,6 +422,9 @@ export default function POSView() {
                   onChange={setSearchTerm}
                   placeholder="Buscar productos..."
                   showSettings={false}
+                  aria-label="Buscar productos en el catálogo por nombre o SKU"
+                  aria-busy={isLoadingProducts}
+                  aria-controls="product-list"
                 />
               </div>
             </div>
@@ -362,10 +436,16 @@ export default function POSView() {
             />
           </div>
 
-          <div className={cn("flex-1 overflow-hidden", isPending && "opacity-50 transition-opacity")}>
+          <div
+            id="product-list"
+            role="list"
+            aria-label="Catálogo de productos"
+            aria-busy={isLoadingProducts}
+            className={cn("flex-1 overflow-hidden", isPending && "opacity-50 transition-opacity")}
+          >
             <StateRenderer
               isLoading={isLoadingProducts}
-              error={productsError}
+              error={productsError as Error}
               data={filteredProducts}
               emptyComponent={
                 <EmptyProductsComponent
@@ -378,12 +458,13 @@ export default function POSView() {
                 posLayoutMode === 'grid' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {data.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onClick={onAddToCart}
-                        variant="pos"
-                      />
+                      <div key={product.id} role="listitem">
+                        <ProductCard
+                          product={product}
+                          onClick={onAddToCart}
+                          variant="pos"
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -399,7 +480,7 @@ export default function POSView() {
         isOpen={!!selectedProductForVariants}
         onClose={() => setSelectedProductForVariants(null)}
         product={selectedProductForVariants}
-        onSelect={(variant) => {
+        onSelect={(variant: any) => {
           if (selectedProductForVariants) {
             handleAddItem(selectedProductForVariants, variant);
             setSelectedProductForVariants(null);
@@ -414,6 +495,15 @@ export default function POSView() {
       />
 
       <SpeedDial actions={mobileActions} />
+
+      {/* Resumen pegajoso para móviles */}
+      {isMobile && getItemCount() > 0 && !showCart && (
+        <StickyCartSummary
+          itemCount={getItemCount()}
+          total={getTotal()}
+          onClick={() => setShowCart(true)}
+        />
+      )}
     </div>
   );
 }

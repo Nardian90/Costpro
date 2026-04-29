@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,10 +34,12 @@ const AuditLoadingSkeleton = () => (
 );
 
 export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps) => {
-  const { data: logs = [], isLoading, error } = useAuditLogs({
-    store_id: storeId,
-    limit: 100
+  const { data, isLoading, error } = useAuditLogs({
+    storeIds: storeId ? [storeId] : [],
+    pageSize: 100
   });
+
+  const logs = useMemo(() => data?.pages.flatMap(p => p.logs) ?? [], [data]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,7 +67,7 @@ export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps
               </div>
             }
           >
-            {(data) => <AuditTimeline logs={data} />}
+            {(data: any[]) => <AuditTimeline logs={data} />}
           </StateRenderer>
         </div>
       </DialogContent>

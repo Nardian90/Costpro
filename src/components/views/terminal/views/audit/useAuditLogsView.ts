@@ -1,36 +1,31 @@
-'use client'
-
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useAuditLogs } from '@/hooks/api/useAuditLogs';
-import { useDebounce } from '@/hooks/ui/useDebounce';
 
-export function useAuditLogsView() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [dateRange, setDateRange] = useState({ from: '', to: '' });
-    const [selectedStoreId, setSelectedStoreId] = useState('all');
+export function useAuditLogsView(filters: any = {}) {
+    const { store_id, search_term, date_from, date_to } = filters;
 
-    const debouncedSearch = useDebounce(searchTerm, 500);
-
-    // Data Fetching with backend filtering
-    const { data: auditLogsData = [], isLoading: isLoadingLogs, error: logsError } = useAuditLogs({
-        search_term: debouncedSearch,
-        date_from: dateRange.from || undefined,
-        date_to: dateRange.to ? `${dateRange.to}T23:59:59` : undefined,
-        store_id: selectedStoreId === 'all' ? undefined : selectedStoreId
+    const {
+        data,
+        isLoading: isLoadingLogs,
+        error: logsError,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useAuditLogs({
+        storeIds: store_id ? [store_id] : [],
+        action: undefined, // Could be added if needed
+        dateFrom: date_from,
+        dateTo: date_to
     });
 
-    return {
-        // State
-        searchTerm,
-        setSearchTerm,
-        dateRange,
-        setDateRange,
-        selectedStoreId,
-        setSelectedStoreId,
+    const auditLogsData = useMemo(() => data?.pages.flatMap(p => p.logs) ?? [], [data]);
 
-        // Data
+    return {
         logs: auditLogsData,
         isLoading: isLoadingLogs,
-        error: logsError
+        error: logsError,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
     };
 }

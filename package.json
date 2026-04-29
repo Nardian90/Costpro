@@ -61,7 +61,7 @@
     "@tanstack/react-virtual": "^3.13.23",
     "@types/d3": "^7.4.3",
     "@types/lodash": "^4.17.15",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.6.0",
     "@types/papaparse": "^5.5.2",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
@@ -121,9 +121,9 @@
     "recharts": "^2.15.4",
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.3",
-    "sonner": "^2.0.6",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.2.4",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.182.0",
     "ts-node": "^10.9.2",
@@ -134,8 +134,8 @@
     "workbox-window": "^7.4.0",
     "xlsx": "^0.18.5",
     "z-ai-web-dev-sdk": "^0.0.15",
-    "zod": "^4.0.2",
-    "zustand": "^5.0.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
