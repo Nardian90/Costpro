@@ -1,4 +1,6 @@
 import {
+  Activity,
+  ListFilter,
   Home,
   FileText,
   Package,

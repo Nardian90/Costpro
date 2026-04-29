@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDown,
   LogOut,
@@ -69,17 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
 
-  const navRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Scroll animations for logo
-  const { scrollYProgress } = useScroll({
-    container: navRef
-  });
-
-  const logoHeight = useTransform(scrollYProgress, [0, 0.05], [80, 0]);
-  const logoOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
-  const logoScale = useTransform(scrollYProgress, [0, 0.05], [1, 0.8]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -330,17 +320,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <div className="h-full w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-gradient-shift" style={{ backgroundSize: '200% 100%' }} />
         </div>
 
-        <motion.div
+        <div
           id="sidebar-logo-container"
-          style={{
-            height: logoHeight,
-            opacity: logoOpacity,
-            overflowX: 'auto'
-          }}
           className="shrink-0 no-scrollbar max-w-full overflow-x-hidden"
         >
-          <motion.div
-            style={{ scale: logoScale }}
+          <div
             className="px-4 pt-4 pb-2 flex items-center justify-between"
           >
             <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
@@ -355,7 +339,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 <X className="w-4 h-4" />
               </button>
             )}
-          </motion.div>
+          </div>
 
           <div className="px-1 pb-1">
             <div className="relative group">
@@ -375,11 +359,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               </kbd>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <nav
           id="sidebar-nav"
-          ref={navRef}
           role="menubar"
           aria-orientation="vertical"
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
