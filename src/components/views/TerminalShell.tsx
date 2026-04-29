@@ -70,9 +70,7 @@ export default function TerminalShell() {
     false
   );
 
-
-  // LOGOUT HANDLER
-   const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await userService.logout();
     } catch (error: any) {
@@ -83,7 +81,6 @@ export default function TerminalShell() {
     }
   };
 
-  // Initial check on mount & prefetching
   useEffect(() => {
     if (status === 'unauthenticated') {
       window.location.reload();
@@ -178,6 +175,13 @@ export default function TerminalShell() {
         case 'help': return <HelpView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
         case 'transferencias': return <TransferenciasView />;
+        case 'health': return <div>Health View Placeholder</div>;
+        case 'cash': return <div>Cash View Placeholder</div>;
+        case 'history': return <div>History View Placeholder</div>;
+        case 'inventory_count': return <div>Inventory Count Placeholder</div>;
+        case 'news': return <div>News Placeholder</div>;
+        case 'rss_management': return <div>RSS Management Placeholder</div>;
+        case 'wiki': return <div>Wiki Placeholder</div>;
         default: return <div>Default View Placeholder: {view}</div>;
     }
   };
@@ -237,20 +241,15 @@ export default function TerminalShell() {
           allStores={allStores}
           handleSetActiveStore={async (id) => {
             try {
-              // Update local state first for immediate UI response
               updateUser({ activeStoreId: id });
-              // Persist to DB
               await userService.setActiveStore(user!.id, id);
               toast.success('Sucursal actualizada correctamente');
-
-              // Invalidate all store-dependent queries
               queryClient.invalidateQueries({ queryKey: ['products'] });
               queryClient.invalidateQueries({ queryKey: ['transactions'] });
               queryClient.invalidateQueries({ queryKey: ['dashboard'] });
               queryClient.invalidateQueries({ queryKey: ['inventory'] });
               queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
               queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-
             } catch (error) {
               console.error('Error al cambiar de sucursal:', error);
               toast.error('No se pudo persistir el cambio de sucursal');
