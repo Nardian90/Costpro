@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
-import { useReceptions, useReceptionDetails } from '@/hooks/api/useReceptions';
+import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
 import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
 import { toast } from 'sonner';
@@ -14,6 +14,13 @@ export function useReceptionsHistoryView() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+
+  // FM-06 additions
+  const [editingReceiptId, setEditingReceiptId] = useState<string | null>(null);
+  const [voidConfirmInput, setVoidConfirmInput] = useState('');
+
+  const updateReceptionMutation = useUpdateReception();
+  const voidReceptionMutation = useVoidReception();
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
@@ -55,6 +62,49 @@ export function useReceptionsHistoryView() {
 
   const handleCloseDetails = () => {
     setSelectedReceiptId(null);
+    setEditingReceiptId(null);
+  };
+
+  const handleEdit = (receipt: Receipt) => {
+    setEditingReceiptId(receipt.id);
+    setSelectedReceiptId(receipt.id); // abre el modal existente en modo edición
+  };
+
+  const handleVoidRequest = (receipt: Receipt) => {
+    setSelectedReceiptId(receipt.id); // abre modal en modo anulación
+    setEditingReceiptId(null);
+    setVoidConfirmInput('');
+  };
+
+  const handleVoidConfirm = async (receipt: Receipt) => {
+    if (!user?.activeStoreId && !user?.storeId) return;
+    try {
+      await voidReceptionMutation.mutateAsync({
+        receiptId: receipt.id,
+        storeId: user?.activeStoreId || user?.storeId || '',
+        reason: 'Anulada por encargado'
+      });
+      setSelectedReceiptId(null);
+      toast.success('Recepción anulada correctamente');
+    } catch (error) {
+      console.error('Error voiding reception:', error);
+      toast.error('Error al anular la recepción');
+    }
+  };
+
+  const handleUpdateSubmit = async (receiptId: string, updates: {
+    supplier?: string;
+    referenceDoc?: string;
+    notes?: string;
+  }) => {
+    try {
+      await updateReceptionMutation.mutateAsync({ receiptId, ...updates });
+      setEditingReceiptId(null);
+      toast.success('Recepción actualizada');
+    } catch (error) {
+      console.error('Error updating reception:', error);
+      toast.error('Error al actualizar la recepción');
+    }
   };
 
   const handleInvert = async (receipt: Receipt) => {
@@ -132,6 +182,18 @@ export function useReceptionsHistoryView() {
     isDetailsModalOpen: !!selectedReceiptId,
     handleViewDetails,
     handleCloseDetails,
+
+    // FM-06
+    editingReceiptId,
+    isEditMode: !!editingReceiptId,
+    voidConfirmInput,
+    setVoidConfirmInput,
+    handleEdit,
+    handleVoidRequest,
+    handleVoidConfirm,
+    handleUpdateSubmit,
+    isUpdating: updateReceptionMutation.isPending,
+    isVoiding: voidReceptionMutation.isPending,
 
     // Actions
     handleInvert,

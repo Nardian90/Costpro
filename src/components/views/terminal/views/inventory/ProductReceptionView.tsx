@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore, useUIStore } from '@/store';
 import type { Product } from '@/types';
@@ -48,6 +48,25 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
     const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
 
     const registerReceptionMutation = useRegisterReception();
+    useEffect(() => {
+        if (!preselectedProduct) return;
+
+        setReceptionItems(prev => {
+            if (prev.has(preselectedProduct.id)) return prev;
+
+            const next = new Map(prev);
+            next.set(preselectedProduct.id, {
+                product: preselectedProduct,
+                quantity: 1,
+                cost: preselectedProduct.cost_price || preselectedProduct.cost_average || 0
+            });
+            return next;
+        });
+
+        toast.info(`${preselectedProduct.name} preseleccionado — ajusta la cantidad y el costo.`, {
+            duration: 5000
+        });
+    }, [preselectedProduct]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
