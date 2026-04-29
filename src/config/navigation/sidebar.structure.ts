@@ -1,59 +1,99 @@
 import {
-  TrendingUp, BarChart3, Wallet, FileText, ShoppingCart, Receipt,
-  DollarSign, Package, Warehouse, History, ArrowLeftRight, ClipboardList,
-  RefreshCcw, HeartPulse, Shield, Settings, Users, ShieldCheck, Building,
-  Rss, Newspaper, Scale, HelpCircle, Book, GraduationCap, BarChart4,
-  Zap, Database, FileSearch, Workflow, Table2, PackageSearch, Cpu, Wand2,
-  Target, AlertCircle, ListFilter, QrCode, ArrowRightLeft, MoreHorizontal,
-  LayoutDashboard, LayoutGrid, Layers, PenTool, Layout, FileSpreadsheet, FolderOpen,
-  Eye, Sparkles, BookOpen, Download, Upload, Save, Activity
+  Activity,
+  ListFilter,
+  Home,
+  FileText,
+  Package,
+  ShoppingCart,
+  Users,
+  Settings,
+  HelpCircle,
+  TrendingUp,
+  History,
+  Shield,
+  Layers,
+  LayoutGrid,
+  Database,
+  Search,
+  PlusCircle,
+  FileSearch,
+  BarChart4,
+  Cpu,
+  Zap,
+  Target,
+  AlertCircle,
+  ClipboardList,
+  RefreshCcw,
+  Warehouse,
+  ArrowLeftRight,
+  Receipt,
+  DollarSign,
+  Building,
+  GraduationCap,
+  Scale,
+  Book,
+  Newspaper,
+  Rss,
+  MoreHorizontal,
+  Wallet,
+  BarChart3,
+  QrCode,
+  ArrowRightLeft,
+  Workflow,
+  Table2,
+  PackageSearch,
+  ShieldCheck,
+  HeartPulse,
+  Wand2,
+  Sparkles,
+  BookOpen,
+  FolderOpen,
+  Save,
+  Download,
+  FileSpreadsheet,
+  Upload
 } from 'lucide-react';
 
-export type NavItemType = 'group' | 'submenu' | 'item';
+export type NavItemType = 'item' | 'submenu' | 'group';
 
 export interface NavModule {
   id: string;
   label: string;
   type: NavItemType;
   icon?: any;
-  children?: NavModule[];
-  featureFlag?: string;
-  isDirect?: boolean;
   ariaLabel?: string;
-  allowedRoles?: string[]; // undefined = acceso para todos los roles
+  children?: NavModule[];
+  allowedRoles?: string[];
+  isBeta?: boolean;
+  isNew?: boolean;
 }
 
 export const SIDEBAR_STRUCTURE: NavModule[] = [
-    {
-    id: 'estrategico',
+  {
+    id: 'core',
+    label: 'ESCRITORIO',
+    type: 'group',
+    icon: Home,
+    ariaLabel: 'Navegación principal',
+    children: [
+      { id: 'occ', label: 'Centro de Control', type: 'item', icon: Home, ariaLabel: 'Ir al escritorio principal' },
+    ]
+  },
+  {
+    id: 'costos',
+    allowedRoles: ['admin', 'manager', 'encargado', 'costo'],
     label: 'COSTOS',
     type: 'group',
     icon: FileText,
-    allowedRoles: ['admin', 'manager', 'costo'],
+    ariaLabel: 'Módulo de Gestión de Costos',
     children: [
-      { id: 'cost_home', label: 'Inicio Costos', type: 'item', icon: LayoutDashboard },
-      { id: 'cost_sheets', label: 'Fichas de Costo', type: 'item', icon: FileText },
       {
-        id: 'cost_editor',
-        label: 'Editor de Ficha',
+        id: 'cost_views',
+        label: 'Vistas de Trabajo',
         type: 'submenu',
-        icon: FolderOpen,
+        icon: LayoutGrid,
         children: [
-          { id: 'header', label: 'Encabezado', type: 'item', icon: Layout },
-          { id: 'open-sections', label: 'Secciones', type: 'item', icon: ListFilter },
-          { id: 'open-annexes', label: 'Anexos', type: 'item', icon: FileSpreadsheet },
-          { id: 'signature', label: 'Firmas', type: 'item', icon: PenTool },
-          { id: 'expert-content', label: 'Modo Todo (Experto)', type: 'item', icon: Zap }
-        ]
-      },
-      {
-        id: 'cost_modes',
-        label: 'Modos de Visualización',
-        type: 'submenu',
-        icon: Eye,
-        children: [
-          { id: 'view-kpis', label: 'Tablero (KPIs)', type: 'item', icon: BarChart3 },
-          { id: 'view-expert', label: 'Modo Experto', type: 'item', icon: Zap },
+          { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2 },
           { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
           { id: 'view-reading', label: 'Lectura Narrativa', type: 'item', icon: BookOpen }
         ]
@@ -69,12 +109,21 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         ]
       },
       {
+        id: 'cost_templates',
+        label: 'Plantillas',
+        type: 'submenu',
+        icon: FolderOpen,
+        children: [
+          { id: 'templates', label: 'Explorador Plantillas', type: 'item', icon: FolderOpen },
+          { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload }
+        ]
+      },
+      {
         id: 'cost_tools',
         label: 'Herramientas',
         type: 'submenu',
         icon: Settings,
         children: [
-          { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload },
           { id: 'tool-save', label: 'Guardar Ficha', type: 'item', icon: Save },
           { id: 'tool-export-excel', label: 'Exportar Excel', type: 'item', icon: FileSpreadsheet },
           { id: 'tool-export-pdf', label: 'Exportar PDF', type: 'item', icon: Download }

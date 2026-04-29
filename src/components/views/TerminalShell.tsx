@@ -1,55 +1,56 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, Suspense, memo } from 'react';
-import { useAuthStore, useUIStore, ViewType } from '@/store';
-import { useStores } from '@/hooks/api/useStores';
-import { userService } from '@/services/user-service';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useTransition, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { Sidebar } from '@/components/views/terminal/Sidebar';
+import { Header } from '@/components/views/terminal/Header';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building as BuildingIcon, X } from 'lucide-react';
-import { CostProLoader } from '@/components/ui/CostProLoader';
-import { Sidebar } from './terminal/Sidebar';
-import { Header } from './terminal/Header';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
+import { useStores } from '@/hooks/api/useStores';
+import { userService } from '@/services/user-service';
 import { prefetchProducts } from '@/hooks/api/useProducts';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
 import { prefetchDashboardData } from '@/hooks/api/useDashboard';
 import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
 import { prefetchReceptions } from '@/hooks/api/useReceptions';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+import { BuildingIcon } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 import { ChunkErrorBoundary } from '@/components/ui/ChunkErrorBoundary';
-import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { ChatBot } from '@/components/ui/ChatBot';
 import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
-import { useIsMobile } from '@/hooks/ui/useMobile';
 
-// Views
-const DashboardView = React.lazy(() => import('./terminal/views/dashboard/DashboardView'));
-const POSView = React.lazy(() => import('./terminal/views/pos/POSView'));
-const SalesHistoryView = React.lazy(() => import('./terminal/views/sales/SalesHistoryView'));
-const UsersManagementView = React.lazy(() => import('./terminal/views/users/UsersManagementView'));
-const RolesManagementView = React.lazy(() => import('./terminal/views/users/RolesManagementView'));
-const StoresManagementView = React.lazy(() => import('./terminal/views/stores/StoresManagementView'));
-const AuditGlobalView = React.lazy(() => import('./terminal/views/audit/AuditGlobalView'));
-const InventoryView = React.lazy(() => import('./terminal/views/inventory/InventoryView'));
-const CatalogView = React.lazy(() => import('./terminal/views/catalog/CatalogView'));
-const CostSheetView = React.lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
-const ReportsView = React.lazy(() => import('./terminal/views/reports/ReportsView'));
-const IPVView = React.lazy(() => import('./terminal/views/ipv/IPVView'));
-const AcademyView = React.lazy(() => import('./terminal/views/academy/AcademyView'));
-const InventoryAdjustmentsView = React.lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
-const LegalView = React.lazy(() => import('./terminal/views/legal/LegalView'));
-const SettingsView = React.lazy(() => import('./terminal/views/settings/SettingsView'));
-const HelpView = React.lazy(() => import('./terminal/views/help/HelpView'));
-const ProductReceptionView = React.lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
-const TransferenciasView = React.lazy(() => import('./terminal/views/transfers/TransferenciasView'));
-const WalletView = React.lazy(() => import('./terminal/views/wallet/WalletView'));
-const Pick3IntelligenceView = React.lazy(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
+// Lazy views
+const DashboardView = dynamic(() => import('./terminal/views/dashboard/DashboardView'));
+const Pick3IntelligenceView = dynamic(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
+const WalletView = dynamic(() => import('./terminal/views/wallet/WalletView'));
+const POSView = dynamic(() => import('./terminal/views/pos/POSView'));
+const SalesHistoryView = dynamic(() => import('./terminal/views/sales/SalesHistoryView'));
+const UsersManagementView = dynamic(() => import('./terminal/views/users/UsersManagementView'));
+const RolesManagementView = dynamic(() => import('./terminal/views/users/RolesManagementView'));
+const StoresManagementView = dynamic(() => import('./terminal/views/stores/StoresManagementView'));
+const AuditGlobalView = dynamic(() => import('./terminal/views/audit/AuditGlobalView'));
+const InventoryView = dynamic(() => import('./terminal/views/inventory/InventoryView'));
+const CatalogView = dynamic(() => import('./terminal/views/catalog/CatalogView'));
+const CostSheetView = dynamic(() => import('./terminal/views/cost_sheet/CostSheetView'));
+const ReportsView = dynamic(() => import('./terminal/views/reports/ReportsView'));
+const IPVView = dynamic(() => import('./terminal/views/ipv/IPVView'));
+const AcademyView = dynamic(() => import('./terminal/views/academy/AcademyView'));
+const InventoryAdjustmentsView = dynamic(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
+const LegalView = dynamic(() => import('./terminal/views/legal/LegalView'));
+const SettingsView = dynamic(() => import('./terminal/views/settings/SettingsView'));
+const HelpView = dynamic(() => import('./terminal/views/help/HelpView'));
+const ProductReceptionView = dynamic(() => import('./terminal/views/inventory/ProductReceptionView'));
+const TransferenciasView = dynamic(() => import('./terminal/views/transfers/TransferenciasView'));
 
 export default function TerminalShell() {
   const { user, status, loading, logout, updateUser } = useAuthStore();
@@ -215,19 +216,10 @@ export default function TerminalShell() {
   return (
     <div className="h-screen flex bg-background text-foreground max-w-full overflow-hidden">
       <Sidebar
-        sidebarOpen={sidebarOpen}
-        sidebarSearch={sidebarSearch}
-        setSidebarSearch={setSidebarSearch}
-        navigationItems={nav.navigationItems}
-        currentView={currentView}
         onViewChange={handleViewChange}
-        onPrefetchView={handlePrefetchView}
         onLogout={handleLogout}
-        logoHeight={nav.logoHeight}
-        logoOpacity={nav.logoOpacity}
-        logoScale={nav.logoScale}
-        navRef={nav.navRef}
         onClose={() => setSidebarOpen(false)}
+        onPrefetchView={handlePrefetchView}
       />
 
       <main id="main-content" className={cn("flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
