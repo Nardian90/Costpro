@@ -12,7 +12,11 @@ export interface CostSheetHeader {
   revisedBy?: string;
   approvedBy?: string;
   signature?: string;
-  [key: string]: string | number | boolean | undefined;
+  product_code?: string;
+  production_level?: number | string;
+  capacity_utilization?: number | string;
+  sale_price?: number | string;
+  [key: string]: any;
 }
 
 export interface CostSheetRow {
@@ -24,11 +28,10 @@ export interface CostSheetRow {
   baseDeCalculoRef?: string | null;
   baseRef?: string | null;
   base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO' | 'ANEXO_REF' | 'FIJO' | 'MANUAL';
   totalFormula?: string | null;
   formula?: string;
   isPercent?: boolean;
-  /** @deprecated Use isPercent instead. Kept for backward compatibility with existing data. */
   is_percent?: boolean;
   children?: CostSheetRow[];
   helpText?: string;
@@ -40,7 +43,8 @@ export interface CostSheetRow {
   type?: string;
   coeficiente?: number;
   um?: string;
-  [key: string]: string | number | boolean | undefined | null | CostSheetRow[] | Record<string, unknown>;
+  total?: number;
+  [key: string]: any;
 }
 
 export interface CostSheetSection {
@@ -81,18 +85,47 @@ export interface IndirectConfig {
   isSimulation?: boolean;
 }
 
+export type ScenarioId = 'v1' | 'v2' | 'v3';
+export type ScenarioColor = 'blue' | 'violet' | 'amber';
+
+export interface ScenarioRowValues {
+  valorHistorico?: number;
+  totalFormula?: string;
+  vhFormula?: string;
+  coeficiente?: number;
+  baseDeCalculoRef?: string;
+}
+
+export type ScenarioValues = Record<string, ScenarioRowValues>;
+
+export interface CostSheetScenario {
+  id: ScenarioId;
+  label: string;
+  color: ScenarioColor;
+  createdAt: number;
+  values: ScenarioValues;
+  header?: Partial<CostSheetHeader>;
+}
+
+export interface ScenarioConfig {
+  primaryScenarioId: ScenarioId;
+  comparisonBaseId: ScenarioId;
+}
+
 export interface CostSheetData {
   id?: string;
   name?: string;
   version?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
   header: CostSheetHeader;
   sections: CostSheetSection[];
   annexes: CostSheetAnnex[];
   signature: CostSheetSignature;
   indirectConfig?: IndirectConfig;
   footer?: string;
-  [key: string]: string | number | boolean | undefined | null | CostSheetHeader | CostSheetSection[] | CostSheetAnnex[] | CostSheetSignature | IndirectConfig | Record<string, unknown>;
+  scenarioConfig?: ScenarioConfig;
+  scenarios?: CostSheetScenario[];
+  [key: string]: any;
 }
 
 export interface CalculatedRowValue {

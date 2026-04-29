@@ -10,6 +10,7 @@ interface ExpertModeState {
   isAnnexesRootExpanded: boolean;
   helpContext: string | null;
   isHelpOpen: boolean;
+  isProblemsOpen: boolean;
 }
 
 const initialState: ExpertModeState = {
@@ -18,6 +19,7 @@ const initialState: ExpertModeState = {
   isAnnexesRootExpanded: false,
   helpContext: null,
   isHelpOpen: false,
+  isProblemsOpen: false,
 };
 
 export const useExpertModeState = () => {
@@ -55,6 +57,20 @@ export const useExpertModeState = () => {
     });
   }, []);
 
+  const expandAllSections = useCallback((sectionIds: string[]) => {
+    setState(prev => ({
+      ...prev,
+      expandedSections: sectionIds
+    }));
+  }, []);
+
+  const collapseAllSections = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      expandedSections: []
+    }));
+  }, []);
+
   const setActiveAnnex = useCallback((annexId: string | null) => {
     setState(prev => ({
       ...prev,
@@ -84,13 +100,23 @@ export const useExpertModeState = () => {
     }));
   }, []);
 
+  const toggleProblems = useCallback((open?: boolean) => {
+    setState(prev => ({
+      ...prev,
+      isProblemsOpen: open !== undefined ? open : !prev.isProblemsOpen
+    }));
+  }, []);
+
   return {
     ...state,
     toggleSection,
+    expandAllSections,
+    collapseAllSections,
     setActiveAnnex,
     toggleAnnexesRoot,
     setHelpContext,
     closeHelp,
+    toggleProblems,
     isLoaded
   };
 };

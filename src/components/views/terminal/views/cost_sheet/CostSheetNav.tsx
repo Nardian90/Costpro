@@ -2,13 +2,17 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Save, Bot } from 'lucide-react';
+import { Save, Bot, Clock } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface CostSheetNavProps {
-  navItems: any[];
-  annexes: any[];
+  navItems?: any[];
+  annexes?: any[];
   activeSection: string;
   setActiveSection: (id: string) => void;
   viewMode: any;
@@ -21,6 +25,11 @@ interface CostSheetNavProps {
   onExportExcel?: () => void;
   onExportPdf?: () => void;
   topOffset?: string;
+  isEditing?: boolean;
+  lastSavedAt?: number | null;
+  isSaving?: boolean;
+  versions?: any[];
+  onRestoreVersion?: (v: any) => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -32,6 +41,11 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   topOffset,
   layoutMode,
   setLayoutMode,
+  isEditing,
+  lastSavedAt,
+  isSaving,
+  versions = [],
+  onRestoreVersion
 }) => {
   const navActions: Action[] = React.useMemo(() => {
     const actions: Action[] = [
@@ -47,7 +61,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     title="Guardar Ficha"
                 >
                     <Save className="w-4 h-4" />
-                    <span className="hidden sm:inline">Guardar</span>
+                    <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar'}</span>
                 </button>
             ),
             tooltip: "Guardar Ficha"
@@ -87,10 +101,65 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             tooltip: "Darian AI Expert"
         },
 
+        // 4. Historial / Auto-save status
+        {
+            id: 'history-popover',
+            label: 'Historial',
+            onClick: () => {},
+            component: (
+                <div className="flex items-center gap-2">
+                    {lastSavedAt && (
+                        <span className="hidden lg:block text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                            Guardado {formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: es })}
+                        </span>
+                    )}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button
+                                className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-muted-foreground hover:bg-muted/10 rounded-xl"
+                                title="Historial de Versiones"
+                            >
+                                <Clock className="w-5 h-5" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0 rounded-3xl border-sidebar-border overflow-hidden bg-card" align="end">
+                            <div className="p-4 border-b border-sidebar-border/50 bg-sidebar/30">
+                                <h4 className="text-xs font-black uppercase tracking-widest">Historial de Autoguardado</h4>
+                                <p className="text-[10px] text-muted-foreground font-medium">Últimas 15 capturas automáticas</p>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto p-2">
+                                {versions.length === 0 ? (
+                                    <div className="p-8 text-center text-xs text-muted-foreground font-medium">No hay versiones aún</div>
+                                ) : (
+                                    versions.map((v, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => onRestoreVersion?.(v)}
+                                            className="w-full text-left p-3 rounded-2xl hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                                        >
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs font-bold">{v.label || 'Captura automática'}</span>
+                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                    {formatDistanceToNow(v.timestamp, { addSuffix: true, locale: es })}
+                                                </span>
+                                            </div>
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest rounded-lg">Restaurar</Button>
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            )
+        }
+
     ];
 
     return actions;
-  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection]);
+  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection, isSaving, lastSavedAt, versions, onRestoreVersion]);
 
   return (
     <div className="mb-0 flex items-center gap-3">
