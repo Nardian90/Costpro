@@ -13,9 +13,9 @@ describe('useFilteredNavigation', () => {
 
     const { result } = renderHook(() => useFilteredNavigation());
 
-    // Warehouse should have access to 'tienda' but not 'estrategico' (Costos)
+    // Warehouse should have access to 'tienda' but not 'costos' (Costos)
     const storeModule = result.current.find(m => m.id === 'tienda');
-    const costModule = result.current.find(m => m.id === 'estrategico');
+    const costModule = result.current.find(m => m.id === 'costos');
 
     expect(storeModule).toBeDefined();
     expect(costModule).toBeUndefined();
@@ -33,7 +33,7 @@ describe('useFilteredNavigation', () => {
 
     const { result } = renderHook(() => useFilteredNavigation());
 
-    expect(result.current.find(m => m.id === 'estrategico')).toBeDefined();
+    expect(result.current.find(m => m.id === 'costos')).toBeDefined();
     expect(result.current.find(m => m.id === 'tienda')).toBeDefined();
   });
 });
