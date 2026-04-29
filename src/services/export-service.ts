@@ -57,12 +57,18 @@ export const exportToPDF = async (element: HTMLElement, fileName: string) => {
 export const exportToCSV = (data: any, calculatedValues: any, fileName: string) => {
   try {
     let csvContent = "data:text/csv;charset=utf-8,";
+
+    // Header Info
+    csvContent += `FICHA DE COSTO: ${data.header?.name || 'S/N'}\n`;
+    csvContent += `CODIGO: ${data.header?.code || 'S/N'}\n`;
+    csvContent += `FECHA: ${data.header?.date || ''}\n\n`;
+
     csvContent += "ID,Concepto,Valor Historico,Metodo,Base,Coeficiente,Total\n";
 
     const flatten = (rows: any[], level = 0) => {
       rows.forEach(row => {
         const calc = calculatedValues[row.id] || {};
-        const label = row.label.replace(/,/g, '');
+        const label = (row.label || '').replace(/,/g, '');
         const vh = calc.valorHistorico || 0;
         const method = row.calculationMethod || (row.formula ? 'Fórmula' : 'Libre');
         const base = row.baseDeCalculoRef || '-';
@@ -77,10 +83,38 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string) 
       });
     };
 
-    data.sections.forEach((s: any) => {
-      csvContent += `\n--- ${s.label.toUpperCase()} ---\n`;
-      flatten(s.rows);
-    });
+    if (data.sections) {
+      data.sections.forEach((s: any) => {
+        csvContent += `\n--- ${s.label.toUpperCase()} ---\n`;
+        flatten(s.rows || []);
+      });
+    }
+
+    // Annexes Export
+    if (data.annexes && data.annexes.length > 0) {
+      csvContent += `\n\n=== ANEXOS ===\n`;
+      data.annexes.forEach((annex: any) => {
+        csvContent += `\n--- ANEXO ${annex.id}: ${annex.title?.toUpperCase()} ---\n`;
+
+        // Headers
+        const headers = annex.columns.map((c: any) => c.label || c.title || c.key);
+        csvContent += headers.join(',') + "\n";
+
+        // Rows (Even if empty, structure is preserved)
+        if (annex.data && annex.data.length > 0) {
+          annex.data.forEach((row: any) => {
+            const rowValues = annex.columns.map((col: any) => {
+              const val = row[col.key];
+              if (val === undefined || val === null) return '';
+              return typeof val === 'string' ? val.replace(/,/g, ';') : val;
+            });
+            csvContent += rowValues.join(',') + "\n";
+          });
+        } else {
+          csvContent += "(Anexo vacío)\n";
+        }
+      });
+    }
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
