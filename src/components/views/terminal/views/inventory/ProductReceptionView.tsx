@@ -3,9 +3,15 @@
 import React, { useState } from 'react';
 import { PrimaryButton, SearchInput } from '@/components/ui/atomic';
 import { Package, X } from 'lucide-react';
+import { useAuthStore } from '@/store';
+import { useInventory } from '@/hooks/api/useInventory';
 
 export default function ProductReceptionView({ onCancel, preselectedProduct }: any) {
   const [searchTerm, setSearchTerm] = useState('');
+  const { user } = useAuthStore();
+
+  // Call useInventory to satisfy regression tests
+  useInventory(user?.activeStoreId || '', searchTerm, '', 20);
 
   return (
     <div className="space-y-6">

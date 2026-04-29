@@ -100,7 +100,7 @@ export default function AuditGlobalView() {
     const q = searchText.toLowerCase();
     return allLogs.filter(log =>
       log.action.includes(q) ||
-      log.record_id?.toLowerCase().includes(q) ||
+      (log.record_id && log.record_id.toLowerCase().includes(q)) ||
       (log.profiles?.full_name && log.profiles.full_name.toLowerCase().includes(q)) ||
       JSON.stringify(log.metadata).toLowerCase().includes(q)
     );
@@ -235,7 +235,7 @@ export default function AuditGlobalView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {logs.map((log: AuditLogEntry) => (
                     <AuditRow key={log.id} entry={log} />
                   ))}
                 </tbody>
