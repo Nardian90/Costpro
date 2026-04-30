@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { HelpCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -39,12 +40,12 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
       isExpanded ? "ring-1 ring-primary/20 shadow-md" : "hover:border-primary/30",
       className
     )}>
-      {/* Container flex con dos zonas clickables independientes */}
-      <div className={cn(
-        "w-full flex items-center justify-between px-6 py-4 select-none transition-colors",
-        isExpanded ? "bg-primary/5" : "hover:bg-muted/50"
-      )}>
-        {/* Zona izquierda: trigger del acordeón */}
+      <div
+        className={cn(
+          "w-full flex items-center justify-between px-6 py-4 select-none transition-colors",
+          isExpanded ? "bg-primary/5" : "hover:bg-muted/50"
+        )}
+      >
         <button
           id={headerId}
           type="button"
@@ -68,25 +69,24 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
           </div>
         </button>
 
-        {/* Zona derecha: acciones (fuera del trigger) */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black tracking-widest text-muted-foreground/60 mr-2">
+          <div className="text-[10px] font-black tracking-widest text-muted-foreground/60 mr-2">
             {completionPercent}%
-          </span>
-          <button
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
             type="button"
-            aria-label={`Ayuda sobre ${title}`}
-            onClick={(e) => { e.stopPropagation(); onHelp(e); }}
             className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-primary/10 text-primary transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              onHelp(e);
+            }}
+            aria-label={`Ayuda sobre ${title}`}
           >
             <HelpCircle className="w-5 h-5" />
-          </button>
-          {!icon && (
-            <ChevronRight
-              className={cn("w-5 h-5 text-muted-foreground/30 transition-transform duration-300 cursor-pointer", isExpanded && "rotate-90")}
-              onClick={onToggle}
-            />
-          )}
+          </Button>
+          {!icon && <ChevronRight className={cn("w-5 h-5 text-muted-foreground/30 transition-transform duration-300 cursor-pointer", isExpanded && "rotate-90")} onClick={onToggle} />}
         </div>
       </div>
 

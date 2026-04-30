@@ -238,12 +238,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
 
   const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
-    const findInTree = (mods: NavModule[], id: string): boolean =>
-      mods.some(m => m.id === id || (m.children ? findInTree(m.children, id) : false));
-
     const hasAvailableItems = (m: NavModule): boolean => {
-      if (m.type === "item") return findInTree(navigationItems, m.id);
-      return m.children?.some(child => hasAvailableItems(child)) ?? false;
+      if (m.type === 'item') {
+        return navigationItems.some(ni => ni.id === m.id);
+      }
+      return m.children?.some(child => hasAvailableItems(child)) || false;
     };
 
     if (!hasAvailableItems(mod)) return null;
