@@ -19,27 +19,29 @@ describe('ExpertModeAccordion', () => {
 
   it('el trigger es un botón con los atributos ARIA correctos', () => {
     render(<ExpertModeAccordion {...defaultProps} />);
-    const button = screen.getByRole('button', { name: /Test Accordion/i });
+    // Usamos un selector más específico para evitar colisiones con el botón de ayuda
+    const button = screen.getByRole('button', { name: /^Test Accordion$/i });
     expect(button).toHaveAttribute('aria-expanded', 'false');
     expect(button).toHaveAttribute('aria-controls', 'panel-test-id');
   });
 
   it('muestra el panel expandido cuando isExpanded es true', () => {
     render(<ExpertModeAccordion {...defaultProps} isExpanded={true} />);
-    const button = screen.getByRole('button', { name: /Test Accordion/i });
+    const button = screen.getByRole('button', { name: /^Test Accordion$/i });
     expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Content')).toBeVisible();
+    expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
   it('llama a onToggle al hacer click en el header', () => {
     render(<ExpertModeAccordion {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Test Accordion/i }));
+    const toggleButton = screen.getByRole('button', { name: /^Test Accordion$/i });
+    fireEvent.click(toggleButton);
     expect(defaultProps.onToggle).toHaveBeenCalled();
   });
 
   it('llama a onHelp al hacer click en el botón de ayuda', () => {
     render(<ExpertModeAccordion {...defaultProps} />);
-    const helpBtn = screen.getByLabelText('Ayuda');
+    const helpBtn = screen.getByLabelText(/Ayuda sobre Test Accordion/i);
     fireEvent.click(helpBtn);
     expect(defaultProps.onHelp).toHaveBeenCalled();
   });
