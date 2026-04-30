@@ -1,3 +1,7 @@
+import { Clock } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { es } from 'date-fns/locale';
+import { formatDistanceToNow } from 'date-fns';
 'use client';
 import { DarianEditor } from './DarianEditor';
 import { LazyRender } from '@/components/ui/LazyRender';
@@ -148,8 +152,15 @@ const CostSheetView = () => {
   const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
 
   useEffect(() => {
-    if (isEditing && data && viewMode === 'expert') initializeScenarios();
-  }, [isEditing, data?.id, viewMode, initializeScenarios]);
+    if (isEditing && data && viewMode === 'expert') {
+      initializeScenarios();
+      // Redirigir a 'main' para que el usuario vea los acordeones y el botón de comparación
+      if (activeSection === 'expert-content' || activeSection === 'all-content') {
+        handleSetActiveSection('main');
+      }
+    }
+  }, [isEditing, data?.id, viewMode]);
+  // Nota: no incluir handleSetActiveSection ni activeSection en deps para evitar loop
 
   const { expandedSections, toggleSection, expandAllSections, setHelpContext, toggleProblems } = expertState;
 
@@ -373,6 +384,71 @@ const CostSheetView = () => {
 
                     {(activeSection === 'all-content' || activeSection === 'expert-content') && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {/* Barra de herramientas modo experto — siempre visible en expert-content */}
+                            {viewMode === 'expert' && (
+                                <div className="flex items-center justify-between px-2 mb-2">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                                        Modo Experto
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {/* Autoguardado */}
+                                        {lastSavedAt && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                                Guardado {formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: es })}
+                                            </span>
+                                        )}
+                                        {/* Botón comparar */}
+                                        <Button
+                                            variant={isComparisonMode ? 'default' : 'outline'}
+                                            size="sm"
+                                            className="rounded-xl gap-2 h-8 text-[10px]"
+                                            onClick={() => {
+                                                toggleComparisonMode();
+                                                handleSetActiveSection('main');
+                                            }}
+                                        >
+                                            <GitCompare className="w-3.5 h-3.5" />
+                                            {isComparisonMode ? 'Individual' : 'Comparar'}
+                                        </Button>
+                                        {/* Historial de versiones */}
+                                        {versions.length > 0 && (
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="rounded-xl gap-1.5 h-8 text-[10px]">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        {versions.length} versión{versions.length !== 1 ? 'es' : ''}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent align="end" className="w-72 p-2 rounded-2xl">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest px-2 py-1 text-muted-foreground">
+                                                        Historial de versiones
+                                                    </p>
+                                                    <div className="max-h-56 overflow-y-auto space-y-1">
+                                                        {versions.map((v: any, i: number) => (
+                                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 group">
+                                                                <div>
+                                                                    <p className="text-xs font-bold">{v.label || 'Autosave'}</p>
+                                                                    <p className="text-[10px] text-muted-foreground">
+                                                                        {formatDistanceToNow(v.timestamp, { addSuffix: true, locale: es })}
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-7 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    onClick={() => restoreVersion(v)}
+                                                                >
+                                                                    Restaurar
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             <div className="px-8 py-10 mb-6 bg-card rounded-[2.5rem] border border-border shadow-sm">
                                 <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
                                     <ZapIcon className="w-8 h-8" />
@@ -666,8 +742,30 @@ const CostSheetView = () => {
       </BaseModal>
 
       <CostSheetProblemsPanel
-        problems={deepValidationErrors.map((e: any) => ({ ...e, sectionLabel: (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === e.rowId || (r.children && r.children.some((c: any) => c.id === e.rowId))))?.label }))}
-        onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: any = (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === rowId || (r.children && r.children.some((c: any) => c.id === rowId)))); if (section && !expandedSections.includes(section.id)) toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
+        problems={deepValidationErrors.map((e: any) => ({
+            ...e,
+            sectionLabel: (data.sections as any[]).find(s =>
+                s.rows.some((r: any) =>
+                    r.id === e.rowId ||
+                    (r.children && r.children.some((c: any) => c.id === e.rowId))
+                )
+            )?.label
+        }))}
+        onGoTo={(rowId: string) => {
+            handleSetActiveSection('main');
+            const section: any = (data.sections as any[]).find(s =>
+                s.rows.some((r: any) =>
+                    r.id === rowId ||
+                    (r.children && r.children.some((c: any) => c.id === rowId))
+                )
+            );
+            if (section && !expandedSections.includes(section.id)) toggleSection(section.id);
+            setTimeout(() => {
+                const el = document.getElementById(rowId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        }}
+        alwaysVisible={viewMode === 'expert' && isEditing}
       />
     </div>
   );
