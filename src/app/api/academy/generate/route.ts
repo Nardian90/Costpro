@@ -1,72 +1,48 @@
+import { academyGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
-// @ts-ignore
-import pdf from 'pdf-parse';
-import fs from 'fs';
-import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
+import fs from 'fs';
+import path from 'path';
 
-// Use standard Node runtime because pdf-parse needs fs and Buffer
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
+// Supabase Admin client for server-side operations
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error('Configuración de Supabase incompleta (URL o Service Role Key faltante)');
-  }
-
-  return createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  if (!url || !key) throw new Error('Configuración de Supabase incompleta');
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
-export async function GET() {
-  const manualsDir = path.join(/*turbopackIgnore: true*/process.cwd(), 'public', 'manuals');
-  try {
-    if (!fs.existsSync(manualsDir)) {
-      return NextResponse.json({ files: [] });
-    }
-    const files = fs.readdirSync(manualsDir).filter(f => f.endsWith('.pdf'));
-    return NextResponse.json({ files });
-  } catch (e) {
-    return NextResponse.json({ files: [] });
-  }
-}
+export const runtime = 'nodejs';
+export const maxDuration = 120; // 2 minutes for processing PDFs and AI
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify session
     const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const rawBody = await req.json();
+    const parsed = academyGenerateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+    const { filename, limit, aiProvider, aiApiKey } = parsed.data;
+
+    // Load PDF text content from pre-indexed docs/manuals (simulated logic for MVP)
+    const manualsDir = path.join(process.cwd(), 'docs/manuals');
+    const baseName = filename.replace('.pdf', '');
+    const txtPath = path.join(manualsDir, baseName + '.txt');
+
+    if (!fs.existsSync(txtPath)) {
+        return NextResponse.json({ error: `Manual text file not found: ${baseName}.txt` }, { status: 404 });
     }
 
-    const { filename, limit = 3, aiProvider, aiApiKey } = await req.json();
-    if (!filename) {
-      return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
-    }
+    let fullText = fs.readFileSync(txtPath, 'utf8');
 
-    const filePath = path.join(/*turbopackIgnore: true*/process.cwd(), 'public', 'manuals', filename);
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
-    }
-
-    const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdf(dataBuffer);
-    let fullText = data.text;
-
-    // Search for companion JSON file
-    const baseName = filename.replace(/\.pdf$/i, '');
-    const manualsDir = path.join(/*turbopackIgnore: true*/process.cwd(), "public", "manuals");
+    // Companion JSON logic
     const jsonPaths = [
-        path.join(manualsDir, `${baseName}.json`),
+        path.join(manualsDir, baseName + '.json'),
         path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),
         path.join(manualsDir, baseName.replace(/^Res/, 'Res ') + '.json')
     ];

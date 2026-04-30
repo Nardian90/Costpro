@@ -1,3 +1,4 @@
+import { botChatSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
@@ -19,7 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const { messages, aiProvider, aiApiKey, storeId } = body;
+    const parsed = botChatSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+    const { messages, aiProvider, aiApiKey, storeId } = parsed.data;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });

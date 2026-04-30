@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 'use client'
 
 import { useEffect } from 'react'
@@ -12,10 +13,10 @@ export default function ServiceWorkerRegister() {
             import('workbox-window').then(({ Workbox }) => {
               const wb = new Workbox('/sw.js');
               wb.addEventListener('activated', () => {
-                console.log('ServiceWorker activated');
+                logger.info('DATABASE', 'SERVICEWORKER_ACTIVATED')
               });
               wb.register().catch((err: Error) => {
-                console.warn('ServiceWorker registration failed:', err.message);
+                logger.warn('DATABASE', 'SERVICEWORKER_REGISTRATION_FAILED:', { data: err.message })
               });
             });
           }
