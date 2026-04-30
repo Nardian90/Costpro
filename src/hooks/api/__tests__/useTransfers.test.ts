@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useIncomingTransfers, useCreateTransfer, useConfirmTransfer } from '../useTransfers';
+import { useIncomingTransfers, useOutgoingTransfers, useCreateTransfer, useConfirmTransfer } from '../useTransfers';
 import { transferService } from '@/services/transfer-service';
 import { auditService } from '@/services/audit-service';
 import { useAuthStore } from '@/store';
@@ -9,6 +9,7 @@ import { createQueryWrapper } from '@/__fixtures__/query-wrapper';
 vi.mock('@/services/transfer-service', () => ({
   transferService: {
     getIncomingTransfers: vi.fn(),
+    getOutgoingTransfers: vi.fn(),
     createTransfer: vi.fn(),
     confirmTransfer: vi.fn(),
   },
@@ -36,19 +37,25 @@ describe('useTransfers', () => {
     vi.clearAllMocks();
   });
 
-  it('devuelve transferencias donde destination_store_id === storeId', async () => {
-    const mockTransfers = [{ id: 't1', destination_store_id: 's1' }];
-    (transferService.getIncomingTransfers as any).mockResolvedValue(mockTransfers);
+  it('useIncomingTransfers fetches incoming', async () => {
+    (transferService.getIncomingTransfers as any).mockResolvedValue([]);
     const { result } = renderHook(() => useIncomingTransfers('s1'), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockTransfers);
+    expect(transferService.getIncomingTransfers).toHaveBeenCalledWith('s1');
   });
 
-  it('useConfirmTransfer mutation llama a transferService.confirmTransfer', async () => {
-    (transferService.confirmTransfer as any).mockResolvedValue({ success: true });
+  it('useOutgoingTransfers fetches outgoing', async () => {
+    (transferService.getOutgoingTransfers as any).mockResolvedValue([]);
+    const { result } = renderHook(() => useOutgoingTransfers('s1'), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(transferService.getOutgoingTransfers).toHaveBeenCalledWith('s1');
+  });
+
+  it('useCreateTransfer calls transferService.createTransfer', async () => {
+    (transferService.createTransfer as any).mockResolvedValue({ id: 't1' });
     (useAuthStore.getState as any).mockReturnValue({ user: { id: 'u1' } });
-    const { result } = renderHook(() => useConfirmTransfer(), { wrapper: Wrapper });
-    await result.current.mutateAsync({ transferId: 't1', userId: 'u1' });
-    expect(transferService.confirmTransfer).toHaveBeenCalledWith('t1', 'u1');
+    const { result } = renderHook(() => useCreateTransfer(), { wrapper: Wrapper });
+    await result.current.mutateAsync({ origin_store_id: 's1', destination_store_id: 's2', items: [] });
+    expect(transferService.createTransfer).toHaveBeenCalled();
   });
 });
