@@ -876,3 +876,4 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
     </motion.div>
   );
 };
+export default CostSheetTemplateExplorer;

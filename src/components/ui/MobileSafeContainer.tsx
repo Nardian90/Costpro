@@ -29,3 +29,4 @@ export const MobileSafeContainer: React.FC<MobileSafeContainerProps> = ({ childr
     </div>
   );
 };
+export default MobileSafeContainer;

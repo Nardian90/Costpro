@@ -56,3 +56,4 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
     </motion.div>
   );
 };
+export default SidebarFocusMode;
