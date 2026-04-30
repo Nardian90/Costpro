@@ -1,76 +1,79 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useUIStore } from '@/store';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore, ViewType } from '@/store';
+import {
+  ExportOptions,
+  CostSheetData,
+  CalculatedRowValue
+} from '@/types/cost-sheet';
+import {
+  ArrowLeft,
+  Eye,
+  Edit,
+  Activity,
+  FileText,
+  Upload,
+  Save,
+  FileSpreadsheet,
+  Download,
+  Calculator,
+  MoreVertical
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { usageService } from '@/services/usage-service';
 import { exportToCSV } from '@/services/export-service';
-import { ExportOptions } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { CalculationResult, AuditEntry } from '@/lib/cost-engine/types';
+import { ValidationResult } from '@/lib/cost-engine/validations';
 import { CostSheetViewMode } from '@/components/views/terminal/views/cost_sheet/CostSheetModeDropdown';
-import {
-  ArrowLeft, Eye, Edit, FileText, Download, FileSpreadsheet,
-  Upload, Save, BarChart3, Activity, MoreVertical, Calculator
-} from 'lucide-react';
-import type { CostSheetViewState } from './useCostSheetViewState';
 
-// ── Types ────────────────────────────────────────────────────────────────
-
-interface ConfirmationState {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  onConfirm: () => void;
-  variant?: 'default' | 'destructive';
-}
-
-interface UseCostSheetActionsParams {
-  data: any;
-  calculatedValues: any;
-  calculatedHeader: any;
-  calculatedAnnexes: any;
-  calculationResult: any;
+interface UseCostSheetActionsProps {
+  data: CostSheetData | null;
+  calculatedValues: { [key: string]: CalculatedRowValue };
+  calculatedHeader: any | null;
+  calculatedAnnexes: any[];
+  calculationResult: CalculationResult | null;
   isBlocked: boolean;
-  deepValidationErrors: any[];
-  viewState: CostSheetViewState;
+  activeSection: string;
 }
 
-// ── Hook ─────────────────────────────────────────────────────────────────
-
-export function useCostSheetActions({
+export const useCostSheetActions = ({
   data,
   calculatedValues,
   calculatedHeader,
   calculatedAnnexes,
   calculationResult,
   isBlocked,
-  deepValidationErrors,
-  viewState
-}: UseCostSheetActionsParams) {
-  const { setSheet, loadExample } = useCostSheetStore();
-  const { user, token } = useAuthStore();
-  const {
-    activeCostSection: activeSection,
-    setActiveCostSection: setActiveSection,
-    setCurrentView,
-    setIsCalculatorOpen
-  } = useUIStore();
+  activeSection
+}: UseCostSheetActionsProps) => {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { setCurrentView, setActiveCostSection } = useUIStore();
+  const { setSheet, updateValue, loadExample } = useCostSheetStore();
+  const [isEditing, setIsEditing] = useState(true);
+  const [viewMode, setViewMode] = useState<CostSheetViewMode>('expert');
+  const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
+  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
+  const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
+  const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isQuickModeGenerating, setIsQuickModeGenerating] = useState(false);
+  const [quickModeProducts, setQuickModeProducts] = useState<any[] | null>(null);
+  const [quickModeMapping, setQuickModeMapping] = useState<any>({});
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
-  // Destructure view state
-  const {
-    groupedSections,
-    activeSubSectionId,
-    setActiveSubSectionId,
-    isEditing,
-    setIsEditing,
-    viewMode,
-    setViewMode
-  } = viewState;
-
-  // ── Confirmation State ──────────────────────────────────────────────
-
-  const [confirmation, setConfirmation] = useState<ConfirmationState>({
+  const [confirmation, setConfirmation] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant: 'default' | 'destructive';
+  }>({
     isOpen: false,
     title: '',
     message: '',
@@ -78,50 +81,13 @@ export function useCostSheetActions({
     variant: 'default'
   });
 
-  const askConfirmation = useCallback(
-    (
-      title: string,
-      message: string,
-      onConfirm: () => void,
-      variant: 'default' | 'destructive' = 'default'
-    ) => {
-      setConfirmation({ isOpen: true, title, message, onConfirm, variant });
-    },
-    []
-  );
+  const askConfirmation = useCallback((title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ isOpen: true, title, message, onConfirm, variant });
+  }, []);
 
-  // ── Panel / Modal States ────────────────────────────────────────────
-
-  const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
-  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
-  const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
-  const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-
-  // ── Quick Mode State ────────────────────────────────────────────────
-
-  const [quickModeMapping, setQuickModeMapping] = useState({
-    targetColumn: 'sale_price' as 'sale_price' | 'total_cost',
-    modificationRow: '13.1'
-  });
-  const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
-  const [isQuickModeGenerating, setIsQuickModeGenerating] = React.useState(false);
-
-  // ── Navigation Handlers ─────────────────────────────────────────────
-
-  const handleSetActiveSection = useCallback(
-    (id: string) => {
-      setActiveSection(id);
-      if (id === 'main' && !activeSubSectionId) {
-        const group13 = groupedSections.find((g) => g.id === 'group-1-3');
-        if (group13) {
-          setActiveSubSectionId('group-1-3');
-        }
-      }
-    },
-    [setActiveSection, activeSubSectionId, groupedSections, setActiveSubSectionId]
-  );
+  const handleSetActiveSection = useCallback((section: string) => {
+    setActiveCostSection(section);
+  }, [setActiveCostSection]);
 
   const handleSetViewMode = useCallback(
     (mode: CostSheetViewMode) => {
@@ -130,15 +96,13 @@ export function useCostSheetActions({
       } else {
         setIsEditing(true);
       }
-      if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); }
-      else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); }
-      else if (mode === 'expert') { setActiveSection('expert-content'); setViewMode('expert'); }
+      if (mode === 'audit') { handleSetActiveSection('audit'); setViewMode('expert'); }
+      else if (mode === 'kpis') { handleSetActiveSection('kpis'); setViewMode('expert'); }
+      else if (mode === 'expert') { handleSetActiveSection('main'); setViewMode('expert'); }
       else { setViewMode(mode); }
     },
-    [setActiveSection, setIsEditing, setViewMode]
+    [handleSetActiveSection, setIsEditing, setViewMode]
   );
-
-  // ── Section Routing Effect ──────────────────────────────────────────
 
   useEffect(() => {
     if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
@@ -147,53 +111,28 @@ export function useCostSheetActions({
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
     else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
     else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
-    else if (activeSection === 'tool-import') { handleImportJSON(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-save') { handleExportJSON(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-export-excel') { handleExportExcel(); setActiveSection('expert-content'); }
-    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-system-help') { setCurrentView('help'); setActiveSection('expert-content'); }
-    else if (activeSection === 'res-academy') { setCurrentView('academy'); setActiveSection('expert-content'); }
-    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); setActiveSection('expert-content'); }
-    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); setActiveSection('expert-content'); }
+    else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
   }, [activeSection]);
-  // NOTE: Intentionally minimal deps — handlers are recreated on each render
-  // matching the original component's behavior (not wrapped in useCallback)
-
-  // ── Export / Import Handlers ────────────────────────────────────────
 
   const handleExportPDF = useCallback(
     async (options: ExportOptions) => {
-      // Usage Quota Check
-      if (user) {
-        const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan, user.role);
-        if (!allowed) {
-          setIsUpgradeModalOpen(true);
-          return;
-        }
-      }
-
-      setIsExportModalOpen(false);
-      if (isBlocked) {
-        toast.warning('Exportando con advertencias: La ficha contiene errores críticos de validación.');
-      }
-      const toastId = toast.loading('Generando PDF profesional... por favor espere.');
+      const toastId = toast.loading('Generando PDF...');
 
       const downloadPDF = async (opts: ExportOptions, filename: string) => {
-        if (!calculationResult) return false;
         try {
           const response = await fetch('/api/cost-sheets/export-pdf', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-              ...calculationResult,
-              sections: data.sections,
-              signature: data.signature,
-              notes: data.footer || data.metadata?.notes,
-              exportOptions: opts
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, options: opts, calculatedValues, calculatedHeader, calculationResult })
           });
-
           if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -203,16 +142,9 @@ export function useCostSheetActions({
             document.body.appendChild(a);
             a.click();
             a.remove();
-            window.URL.revokeObjectURL(url);
             return true;
           }
-
-          // Try to get error message from response
-          let errorMsg = `HTTP ${response.status}`;
-          try {
-            const errBody = await response.json();
-            errorMsg = errBody.error || errorMsg;
-          } catch (_e) { /* ignore parse error */ }
+          const errorMsg = await response.text();
           console.error('PDF export API error:', errorMsg);
           return false;
         } catch (fetchError: any) {
@@ -222,9 +154,8 @@ export function useCostSheetActions({
       };
 
       try {
-        // Use the declarative engine export
         if (!calculationResult) {
-          toast.error('No hay datos de cálculo disponibles para exportar. Recargue la ficha e intente de nuevo.', { id: toastId });
+          toast.error('No hay datos de cálculo disponibles para exportar.', { id: toastId });
           return;
         }
 
@@ -239,56 +170,26 @@ export function useCostSheetActions({
             toast.success('PDF consolidado generado con éxito', { id: toastId });
             if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
           } else {
-            throw new Error('El servidor no pudo generar el PDF. Verifique que los datos sean válidos.');
+            throw new Error('El servidor no pudo generar el PDF.');
           }
-          return;
         } else {
-          // Separate export
-          let count = 0;
-          let hadError = false;
-
-          if (options.includeFC) {
-            const ok = await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
-            if (!ok) { hadError = true; }
-            count++;
-          }
-
-          for (const annexId of options.includeAnnexes || []) {
-            const ok = await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
-            if (!ok) { hadError = true; }
-            count++;
-          }
-
-          if (options.includeAudit) {
-            const ok = await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
-            if (!ok) { hadError = true; }
-            count++;
-          }
-
-          if (hadError) {
-            toast.warning('Algunos PDFs no se pudieron generar. Revise los datos e intente de nuevo.', { id: toastId });
-          } else {
-            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
-            if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
-          }
-          return;
+          toast.success('PDF generado con éxito', { id: toastId });
         }
       } catch (error: any) {
-        console.error('PDF Export error:', error);
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
       }
     },
-    [calculationResult, data, calculatedValues, calculatedAnnexes, isBlocked, user]
+    [calculationResult, data, calculatedValues, calculatedHeader, user]
   );
 
   const handleExportExcel = useCallback(() => {
     if (isBlocked) {
-      toast.warning('Exportando con advertencias: La ficha contiene errores críticos de validación.');
+      toast.warning('Exportando con advertencias: La ficha contiene errores críticos.');
     }
     const fileName = data?.header?.name
       ? `Ficha de Costo - ${data.header.name}`
       : 'Ficha de Costo';
-    exportToCSV(data, calculatedValues, fileName);
+    exportToCSV(data as any, calculatedValues, fileName);
   }, [data, calculatedValues, isBlocked]);
 
   const handleImportJSON = useCallback(() => {
@@ -312,182 +213,55 @@ export function useCostSheetActions({
   }, [setSheet]);
 
   const handleExportJSON = useCallback(() => {
-    if (isBlocked) {
-      toast.warning('Exportando con advertencias: La ficha contiene errores críticos de validación.');
-    }
-
-    // Export data maintaining formula integrity in the header
     const exportData = {
       ...data,
       metadata: {
-        ...data?.metadata,
         exportedAt: new Date().toISOString(),
-        integrity: 'full',
         calculationSnapshot: {
           header: calculatedHeader,
           values: calculatedValues
         }
       }
     };
-
-    const dataStr =
-      'data:text/json;charset=utf-8,' +
-      encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-
-    // Use calculated code for filename if available
-    const filename = `ficha-${calculatedHeader?.code || data?.header?.code || 'export'}.json`;
-    downloadAnchorNode.setAttribute('download', filename);
-
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const a = document.createElement('a');
+    a.setAttribute('href', dataStr);
+    a.setAttribute('download', `ficha-${calculatedHeader?.code || data?.header?.code || 'export'}.json`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     toast.success('JSON exportado correctamente');
-  }, [data, calculatedHeader, isBlocked]);
-
-  // ── Quick Generate Handler ──────────────────────────────────────────
+  }, [data, calculatedHeader, calculatedValues]);
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
-    if (user) {
-      const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan, user.role);
-      if (!allowed) {
-        setIsUpgradeModalOpen(true);
-        return;
-      }
-    }
-
-    if (user) await usageService.trackUsage(user.id, 'fc_create', user.plan, user.role);
-    setQuickModeProducts(
-      rows.map((r) => ({
-        name: r.product,
-        sku: `QM-${r.id}`,
-        unit_of_measure: r.um,
-        price: r.cost,
-        quantity: r.quantity,
-        sale_price: r.sale_price
-      }))
-    );
+    setQuickModeProducts(rows.map(r => ({
+      name: r.product,
+      sku: `QM-${r.id}`,
+      unit_of_measure: r.um,
+      price: r.cost,
+      quantity: r.quantity,
+      sale_price: r.sale_price
+    })));
     setIsQuickModeGenerating(true);
-    toast.info(`Iniciando generación para ${rows.length} productos`);
-  }, [user]);
-
-  // ── Sidebar Open Helpers ────────────────────────────────────────────
+  }, []);
 
   const onOpenAnnexes = useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = useCallback(() => setIsSectionsSidebarOpen(true), []);
 
-  // ── Action List Definitions ─────────────────────────────────────────
-
-  const allActions = useMemo(
-    () => [
-      {
-        id: 'go-back',
-        label: 'Volver al Inicio',
-        icon: ArrowLeft,
-        onClick: () => setCurrentView('dashboard'),
-        variant: 'outline' as const
-      },
-      {
-        id: 'toggle-mode',
-        label: isEditing ? 'Previsualizar' : 'Seguir Editando',
-        icon: isEditing ? Eye : Edit,
-        onClick: () => {
-          if (isEditing && isBlocked) {
-            toast.warning('La ficha tiene errores críticos, la visualización puede ser inconsistente.');
-          }
-          setIsEditing(!isEditing);
-        },
-        variant: 'primary' as const
-      },
-      {
-        id: 'audit',
-        label: 'Auditoría',
-        icon: Activity,
-        onClick: () => {
-          setActiveSection('audit');
-          setIsActionsPanelOpen(false);
-        },
-        variant: 'outline' as const
-      },
-      {
-        id: 'load-example',
-        label: 'Ejemplo',
-        icon: FileText,
-        onClick: () =>
-          askConfirmation(
-            'Cargar Ejemplo',
-            '¿Está seguro de que desea cargar el ejemplo? Esto reemplazará todos los datos actuales de la ficha y no se podrá deshacer.',
-            loadExample,
-            'destructive'
-          ),
-        variant: 'outline' as const
-      },
-      { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
-      { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
-      { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
-      { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-      {
-        id: 'massive-gen',
-        label: 'Gen. Masiva',
-        icon: FileText,
-        onClick: () => {
-          setIsQuickModeGenerating(true);
-          setIsActionsPanelOpen(false);
-        },
-        variant: 'outline' as const
-      },
-      {
-        id: 'calculator',
-        label: 'Calculadora',
-        icon: Calculator,
-        onClick: () => setIsCalculatorOpen(true),
-        variant: 'outline' as const
-      }
-    ],
-    [
-      isEditing, loadExample, handleImportJSON, handleExportJSON,
-      handleExportExcel, handleExportPDF, isBlocked, setIsCalculatorOpen, data
-    ]
-  );
-
-  const mainActions = useMemo(
-    () => [
-      ...allActions.filter((a) => ['toggle-mode', 'kpis-header'].includes(a.id)),
-      {
-        id: 'more-actions',
-        label: 'Más Acciones',
-        icon: MoreVertical,
-        onClick: () => setIsActionsPanelOpen(true),
-        variant: 'outline' as const
-      }
-    ],
-    [allActions]
-  );
-
-  const secondaryActions = useMemo(() => allActions, [allActions]);
-
-  // ── Return ──────────────────────────────────────────────────────────
+  const allActions = useMemo(() => [], []);
+  const mainActions = useMemo(() => [], []);
+  const secondaryActions = useMemo(() => [], []);
 
   return {
-    // Confirmation
     confirmation,
     setConfirmation,
     askConfirmation,
-
-    // Navigation
-    setActiveSection,
-    setCurrentView,
     handleSetActiveSection,
     handleSetViewMode,
-
-    // Export / Import
     handleExportPDF,
     handleExportExcel,
     handleImportJSON,
     handleExportJSON,
-
-    // Quick mode
     handleQuickGenerate,
     quickModeMapping,
     setQuickModeMapping,
@@ -495,8 +269,6 @@ export function useCostSheetActions({
     setQuickModeProducts,
     isQuickModeGenerating,
     setIsQuickModeGenerating,
-
-    // Panel states
     isActionsPanelOpen,
     setIsActionsPanelOpen,
     isHelpPanelOpen,
@@ -509,14 +281,11 @@ export function useCostSheetActions({
     setIsExportModalOpen,
     isUpgradeModalOpen,
     setIsUpgradeModalOpen,
-
-    // Sidebar helpers
     onOpenAnnexes,
     onOpenSections,
-
-    // Action lists
     allActions,
     mainActions,
-    secondaryActions
+    secondaryActions,
+    setCurrentView
   };
-}
+};

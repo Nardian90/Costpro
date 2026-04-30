@@ -67,3 +67,4 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
     </div>
   );
 };
+export default CostSheetBanner;

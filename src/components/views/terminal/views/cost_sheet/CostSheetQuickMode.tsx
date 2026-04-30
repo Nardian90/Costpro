@@ -216,3 +216,4 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
     </div>
   );
 };
+export default CostSheetQuickMode;
