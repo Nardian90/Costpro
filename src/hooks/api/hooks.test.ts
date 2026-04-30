@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { profileSchema, transactionSchema } from '@/validation/schemas';
 
 describe('Zod Schema Resilience', () => {
   it('should handle partial/invalid profile data gracefully using defaults', () => {
     const invalidProfile = {
-      id: 'not-a-uuid',
+      id: '550e8400-e29b-41d4-a716-446655440001', // id is strict z.string()
       full_name: '',
       email: 'invalid-email',
       memberships: 'not-an-array' // Should be preprocessed to []
@@ -12,7 +12,7 @@ describe('Zod Schema Resilience', () => {
 
     const result = profileSchema.safeParse(invalidProfile);
 
-    // We expect success because of our hardening
+    // email and full_name have .catch()
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.full_name).toBe('Usuario sin nombre');
@@ -24,22 +24,18 @@ describe('Zod Schema Resilience', () => {
 
   it('should handle invalid memberships within the array', () => {
     const profileWithBadMemberships = {
-      id: 'some-valid-id',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       full_name: 'Test User',
       email: 'test@example.com',
       memberships: [
-        { store_id: '', role: 'invalid-role' }, // store_id '' transforms to null, role defaults to clerk
-        { store_id: 'bad-uuid' } // bad uuid might fail if not careful, but we used .or(z.string()) if we wanted,
-                                 // actually we used .uuid().or(z.string().length(0).transform(() => null))
+        { store_id: '', role: 'invalid-role' },
+        { store_id: 'bad-uuid' }
       ]
     };
 
     const result = profileSchema.safeParse(profileWithBadMemberships);
-    // If it fails, it should at least not throw
-    // Our userStoreMembershipSchema: store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional()
 
-    // Because of our .catch([]), it now succeeds but returns an empty array
-    // instead of failing the whole profile.
+    // Currently memberships: z.preprocess(...).catch([])
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.memberships).toHaveLength(0);
@@ -48,7 +44,7 @@ describe('Zod Schema Resilience', () => {
 
   it('should handle transaction defaults', () => {
     const emptyTransaction = {
-      id: 'some-id'
+      id: '550e8400-e29b-41d4-a716-446655440001'
     };
     const result = transactionSchema.safeParse(emptyTransaction);
     expect(result.success).toBe(true);

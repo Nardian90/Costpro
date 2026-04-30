@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useReceptions, useVoidReception } from '../useReceptions';
+import { useReceptions } from '../useReceptions';
 import { supabase } from '@/lib/supabaseClient';
 import { createQueryWrapper } from '@/__fixtures__/query-wrapper';
-import { auditService } from '@/services/audit-service';
-import { useAuthStore } from '@/store';
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
@@ -34,12 +32,23 @@ describe('useReceptions', () => {
   });
 
   it('fetches receptions from receipts table', async () => {
+    const mockData = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        status: 'active',
+        total_cost: 100,
+        created_at: new Date().toISOString(),
+        user_id: '550e8400-e29b-41d4-a716-446655440002',
+        store_id: '550e8400-e29b-41d4-a716-446655440003'
+      }
+    ];
+
     (supabase.from as any).mockImplementation((table: string) => {
         if (table === 'receipts') {
             return {
                 select: vi.fn().mockReturnThis(),
                 eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: [{ id: '550e8400-e29b-41d4-a716-446655440001', status: 'active', total_cost: 100 }], error: null })
+                order: vi.fn().mockResolvedValue({ data: mockData, error: null })
             };
         }
         return { select: vi.fn().mockReturnThis() };
