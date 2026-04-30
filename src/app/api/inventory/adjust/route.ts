@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
+import { inventoryAdjustSchema, zodError } from '@/validation/api-schemas';
 import { AdjustInventoryResponse } from "@/types/inventory";
 import { getServerSession } from "@/lib/auth";
 
@@ -15,17 +16,16 @@ export async function POST(request: NextRequest) {
 
   const userId = session.user.id;
 
-  const { productId, quantity, movementType, version, storeId, reason } =
-    await request.json();
-
-  if (!productId || !storeId || !version) {
-    return NextResponse.json(
-      { error: "Bad Request", message: "Missing required fields." },
-      { status: 400 }
-    );
-  }
-
   try {
+    const rawBody = await request.json();
+    // console.log('[API ADJUST] Body:', JSON.stringify(rawBody));
+    const parsed = inventoryAdjustSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      // console.log('[API ADJUST] Validation failed:', JSON.stringify(parsed.error.issues));
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+    const { productId, quantity, movementType, version, storeId, reason } = parsed.data;
+
     const authClient = getSupabaseAuthClient(session.token);
 
     const { data, error } = await authClient.rpc("register_stock_movement", {

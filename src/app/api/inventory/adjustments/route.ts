@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
+import { inventoryAdjustmentsSchema, zodError } from '@/validation/api-schemas';
 import { getServerSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -14,31 +15,12 @@ export async function POST(request: NextRequest) {
 
   const userId = session.user.id;
 
-  const { storeId, items } = await request.json();
-
-  if (!storeId || !items || !Array.isArray(items)) {
-    return NextResponse.json(
-      { error: "Bad Request", message: "Missing or invalid fields." },
-      { status: 400 }
-    );
+  const rawBody = await request.json();
+  const parsed = inventoryAdjustmentsSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(zodError(parsed.error), { status: 400 });
   }
-
-  // 🛡️ Sentinel: Input validation to ensure each item has the required properties and types.
-  for (const item of items) {
-    if (
-      !item.product_id ||
-      typeof item.product_id !== "string" ||
-      !item.quantity ||
-      typeof item.quantity !== "number" ||
-      !item.reason ||
-      typeof item.reason !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Bad Request", message: "Invalid item structure." },
-        { status: 400 }
-      );
-    }
-  }
+  const { storeId, items } = parsed.data;
 
   try {
     const authClient = getSupabaseAuthClient(session.token);
