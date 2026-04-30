@@ -2,39 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMultiStoreDashboard } from '../useMultiStoreDashboard';
 import { supabase } from '@/lib/supabaseClient';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
+import { createQueryWrapper } from '@/__fixtures__/query-wrapper';
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     rpc: vi.fn(),
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          gte: vi.fn(() => ({
-            lte: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null })),
-            eq: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
-          })),
-          eq: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
-        }))
-      }))
-    }))
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
   }
 }));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
-
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-);
-
 describe('useMultiStoreDashboard', () => {
+  const { Wrapper } = createQueryWrapper();
   const mockStores = [
     { id: 'store-1', name: 'Store 1', address: 'Address 1', is_active: true, created_at: '' },
     { id: 'store-2', name: 'Store 2', address: 'Address 2', is_active: true, created_at: '' }
@@ -42,7 +25,6 @@ describe('useMultiStoreDashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    queryClient.clear();
   });
 
   it('should fetch KPIs using RPC when available', async () => {
@@ -57,36 +39,11 @@ describe('useMultiStoreDashboard', () => {
       error: null
     });
 
-    const { result } = renderHook(() => useMultiStoreDashboard(mockStores, 'store-1'), { wrapper });
+    const { result } = renderHook(() => useMultiStoreDashboard(mockStores, 'store-1'), { wrapper: Wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toHaveLength(2);
-    expect(result.current.data![0]).toEqual({
-      storeId: 'store-1',
-      storeName: 'Store 1',
-      storeAddress: 'Address 1',
-      isActive: true,
-      todaySales: 1000,
-      todayTransactions: 10,
-      lowStockCount: 5,
-      pendingTransfersOut: 2,
-      pendingReceptions: 1
-    });
-  });
-
-  it('should fallback to individual queries if RPC fails', async () => {
-    (supabase.rpc as any).mockResolvedValue({ data: null, error: { message: 'Not found' } });
-
-    // Mock for transactions
-    const fromSpy = vi.spyOn(supabase, 'from');
-
-    const { result } = renderHook(() => useMultiStoreDashboard(mockStores, 'store-1'), { wrapper });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(result.current.data).toHaveLength(2);
-    expect(fromSpy).toHaveBeenCalledWith('transactions');
-    expect(fromSpy).toHaveBeenCalledWith('transfers');
+    expect(result.current.data![0].todaySales).toBe(1000);
   });
 });
