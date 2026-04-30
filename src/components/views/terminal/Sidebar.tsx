@@ -1,258 +1,139 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
-  ChevronDown,
-  LogOut,
   X,
   Search,
+  ChevronDown,
+  LogOut,
   Zap,
   Calculator,
+  ChevronRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { useTerminalNavigation, NavModule } from '@/hooks/ui/useTerminalNavigation';
 import { cn } from '@/lib/utils';
-import { useUIStore, useAuthStore, ViewType } from '@/store';
-import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
-import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
-import { SidebarFocusMode } from './SidebarFocusMode';
+import { SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
+import SidebarFocusMode from './SidebarFocusMode';
+import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
+import { useIsMobile } from '@/hooks/ui/useMobile';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
-  onClose?: () => void;
   onViewChange: (view: ViewType) => void;
   onLogout: () => void;
-  onPrefetchView?: (view: ViewType) => void;
+  onClose: () => void;
+  onPrefetchView: (view: ViewType) => void;
 }
 
-const OnlineStatusDot = () => {
-  const [isOnline, setIsOnline] = useState(true);
-
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  return (
-    <div className={cn(
-      "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar shadow-sm transition-colors duration-500",
-      isOnline ? "bg-green-500" : "bg-red-500"
-    )} />
-  );
-};
-
-export const Sidebar: React.FC<SidebarProps> = React.memo(({
-  onClose,
-  onViewChange,
-  onLogout,
-  onPrefetchView
-}) => {
+const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }: SidebarProps) => {
+  const { user } = useAuthStore();
   const {
-    sidebarOpen,
     currentView,
-    ipvActiveTab,
-    setIpvActiveTab,
+    sidebarState,
+    setSidebarState,
     isCalculatorOpen,
     setIsCalculatorOpen,
-    activeCostSection,
-    setActiveCostSection
+    activeCostSection
   } = useUIStore();
-  const { user } = useAuthStore();
-  const navigationItems = useFilteredNavigation();
-
-  const [expandedModules, setExpandedModules] = useState<string[]>(['costos', 'tienda']);
+  const isMobile = useIsMobile();
   const [sidebarSearch, setSidebarSearch] = useState('');
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
-
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      if (e.key === 'Escape' && sidebarSearch) {
-        setSidebarSearch('');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sidebarSearch]);
+  const { filteredNavigation, navigationItems } = useTerminalNavigation(user as any, sidebarSearch);
 
   const toggleModule = useCallback((moduleId: string, isSubmenu: boolean) => {
-    if (isSubmenu) {
-      setExpandedModules(prev =>
-        prev.includes(moduleId)
-          ? prev.filter(id => id !== moduleId)
-          : [...prev, moduleId]
-      );
-    } else {
-      setFocusedModuleId(moduleId);
+    if (sidebarState === 'rail') {
+       setSidebarState('expanded');
+       setExpandedModules([moduleId]);
+       return;
     }
-  }, []);
-
-  const filteredNavigation = useMemo(() => {
-    if (!sidebarSearch) return navigationItems;
-
-    const searchLower = sidebarSearch.toLowerCase();
-    const filterRec = (modules: NavModule[]): NavModule[] => {
-      return modules.reduce((acc: NavModule[], mod) => {
-        const matches = mod.label.toLowerCase().includes(searchLower);
-        const filteredChildren = mod.children ? filterRec(mod.children) : [];
-
-        if (matches || filteredChildren.length > 0) {
-          acc.push({
-            ...mod,
-            children: filteredChildren.length > 0 ? filteredChildren : mod.children
-          });
-        }
-        return acc;
-      }, []);
-    };
-
-    return filterRec(navigationItems);
-  }, [navigationItems, sidebarSearch]);
-
-  const renderNavItem = useCallback((itemId: string) => {
-    const item = SIDEBAR_STRUCTURE.flatMap(m => [m, ...(m.children || [])])
-      .flatMap(m => [m, ...(m.children || [])])
-      .find(m => m.id === itemId);
-
-    if (!item || !item.icon) return null;
-
-    const isIpvSubItem = SIDEBAR_STRUCTURE.find(m => m.id === 'ipv_module')?.children?.some(c =>
-      c.id === item.id || c.children?.some(gc => gc.id === item.id)
+    setExpandedModules(prev =>
+      prev.includes(moduleId) ? prev.filter(id => id !== moduleId) : [...prev, moduleId]
     );
+  }, [sidebarState, setSidebarState]);
 
-    const isCostSheetSubItem = [
-      'templates', 'header', 'open-sections', 'open-annexes',
-      'signature', 'expert-content', 'view-kpis', 'view-expert',
-      'view-assisted', 'view-reading', 'gen-quick', 'gen-expert',
-      'tool-import', 'tool-save', 'tool-export-excel', 'tool-export-pdf',
-      'res-help', 'res-system-help', 'res-academy'
-    ].includes(item.id);
+  const handleNavClick = useCallback((view: ViewType) => {
+    onViewChange(view);
+  }, [onViewChange]);
 
-    const isActive = (currentView === item.id) ||
-                     (item.id === 'cost-sheets' && currentView === 'cost-sheets' && !isCostSheetSubItem) ||
-                     (isCostSheetSubItem && currentView === 'cost-sheets' && activeCostSection === item.id) ||
-                     (isIpvSubItem && currentView === 'ipv' && (
-                        ipvActiveTab === item.id ||
-                        (item.id === 'reports_ipv' && ipvActiveTab === 'reports') ||
-                        (item.id === 'dashboard_ipv' && ipvActiveTab === 'dashboard') ||
-                        (item.id === 'catalog_ipv' && ipvActiveTab === 'catalog') ||
-                        (item.id === 'audit_ipv' && ipvActiveTab === 'audit') ||
-                        (item.id === 'receipts' && ipvActiveTab === 'receipts') ||
-                        (item.id === 'intelligent-receipts' && ipvActiveTab === 'intelligent-receipts') ||
-                        (item.id === 'transfers' && ipvActiveTab === 'transfers') ||
-                        (item.id === 'qr' && ipvActiveTab === 'qr') ||
-                        (item.id === 'ingestion' && ipvActiveTab === 'ingestion') ||
-                        (item.id === 'pivot' && ipvActiveTab === 'pivot') ||
-                        (item.id === 'rules' && ipvActiveTab === 'rules') ||
-                        (item.id === 'sim' && ipvActiveTab === 'sim') ||
-                        (item.id === 'breakdown' && ipvActiveTab === 'breakdown') ||
-                        (item.id === 'planning' && ipvActiveTab === 'planning') ||
-                        (item.id === 'errors' && ipvActiveTab === 'errors') ||
-                        (item.id === 'mapping-rules' && ipvActiveTab === 'mapping-rules') ||
-                        (item.id === 'mvt' && ipvActiveTab === 'mvt') ||
-                        (item.id === 'mipyme' && ipvActiveTab === 'mipyme') ||
-                        (item.id === 'customers' && ipvActiveTab === 'customers') ||
-                        (item.id === 'movements' && ipvActiveTab === 'movements')
-                     ));
+  const renderNavItem = useCallback((item: any, depth = 0) => {
+    const isActive = currentView === item.id || (currentView === 'cost-sheets' && activeCostSection === item.id);
+    const isRail = sidebarState === 'rail';
 
-    const handleItemClick = () => {
-      if (item.id === 'cost-sheets' || isCostSheetSubItem) {
-        onViewChange('cost-sheets');
-        if (isCostSheetSubItem) {
-          setActiveCostSection(item.id);
-        }
-      } else if (isIpvSubItem) {
-        onViewChange('ipv');
-        const tabId = item.id === 'reports_ipv' ? 'reports' :
-                      item.id === 'dashboard_ipv' ? 'dashboard' :
-                      item.id === 'catalog_ipv' ? 'catalog' :
-                      item.id === 'audit_ipv' ? 'audit' :
-                      item.id === 'receipts' ? 'receipts' :
-                      item.id === 'intelligent-receipts' ? 'intelligent-receipts' :
-                      item.id === 'transfers' ? 'transfers' :
-                      item.id === 'qr' ? 'qr' :
-                      item.id === 'ingestion' ? 'ingestion' :
-                      item.id === 'pivot' ? 'pivot' :
-                      item.id === 'rules' ? 'rules' :
-                      item.id === 'sim' ? 'sim' :
-                      item.id === 'breakdown' ? 'breakdown' :
-                      item.id === 'planning' ? 'planning' :
-                      item.id === 'errors' ? 'errors' :
-                      item.id === 'mapping-rules' ? 'mapping-rules' :
-                      item.id === 'mvt' ? 'mvt' :
-                      item.id === 'mipyme' ? 'mipyme' :
-                      item.id === 'customers' ? 'customers' :
-                      item.id === 'movements' ? 'movements' : item.id;
-        setIpvActiveTab(tabId);
-      } else {
-        onViewChange(item.id as ViewType);
-      }
-    };
+    if (isRail && depth === 0) {
+      return (
+        <TooltipProvider key={item.id} delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleNavClick(item.id as ViewType)}
+                onMouseEnter={() => onPrefetchView(item.id as ViewType)}
+                className={cn(
+                  "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
+                  isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                {item.icon && <item.icon className="w-5 h-5" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-bold uppercase tracking-widest text-[10px]">
+              {item.label}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
 
     return (
       <button
         key={item.id}
-        role="menuitem"
-        aria-current={isActive ? 'page' : undefined}
-        aria-label={item.label}
-        data-testid={`nav-${item.id}`}
-        onClick={handleItemClick}
-        onMouseEnter={() => onPrefetchView?.((isIpvSubItem ? 'ipv' : item.id) as ViewType)}
+        onClick={() => handleNavClick(item.id as ViewType)}
+        onMouseEnter={() => onPrefetchView(item.id as ViewType)}
         className={cn(
-          "w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-          isActive
-            ? "bg-primary text-primary-foreground shadow-lg shadow-[0_0_12px_rgba(34,197,94,0.15)]"
-            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-primary/5"
+          "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+          isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
         )}
       >
-        <item.icon className={cn(
-          "w-4 h-4 transition-transform duration-200 group-hover:scale-110",
-          isActive ? "text-primary-foreground" : "text-muted-foreground/50 group-hover:text-primary"
-        )} />
-        <span className={cn(
-          "text-[10px] sm:text-[11px] lg:text-xs font-black uppercase tracking-[0.2em] truncate",
-          isActive ? "translate-x-1" : "group-hover:translate-x-1"
-        )}>
-          {item.label}
-        </span>
+        {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-50")} />}
+        <span className="text-xs uppercase tracking-wider truncate">{item.label}</span>
         {isActive && (
-          <motion.div
-            layoutId="active-indicator"
-            className="absolute left-0 w-1 h-5 bg-primary-foreground rounded-r-full"
-            transition={{ type: "spring", stiffness: 400, damping: 40 }}
-          />
+          <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
+  }, [currentView, activeCostSection, handleNavClick, onPrefetchView, sidebarState]);
 
-  const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
-    const findInTree = (mods: NavModule[], id: string): boolean =>
-      mods.some(m => m.id === id || (m.children ? findInTree(m.children, id) : false));
-
-    const hasAvailableItems = (m: NavModule): boolean => {
-      if (m.type === "item") return findInTree(navigationItems, m.id);
-      return m.children?.some(child => hasAvailableItems(child)) ?? false;
-    };
-
-    if (!hasAvailableItems(mod)) return null;
+  const renderModule = useCallback((mod: NavModule, depth = 0) => {
+    const isExpanded = expandedModules.includes(mod.id);
+    const isRail = sidebarState === 'rail';
 
     if (mod.type === 'item') {
-      return renderNavItem(mod.id);
+      return renderNavItem(mod, depth);
     }
 
-    const isExpanded = expandedModules.includes(mod.id) || !!sidebarSearch;
+    if (isRail && depth === 0) {
+      return (
+        <TooltipProvider key={mod.id} delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => toggleModule(mod.id, true)}
+                className="w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2 text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+              >
+                {mod.icon && <mod.icon className="w-5 h-5" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-bold uppercase tracking-widest text-[10px]">
+              {mod.label}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
 
     return (
       <div key={mod.id} className="relative">
@@ -272,14 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
              )}>{mod.label}</span>
           </div>
-          <div className="flex items-center gap-2">
-            {mod.children && mod.children.length > 0 && (
-              <span className="bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                {mod.children.length}
-              </span>
-            )}
-            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
-          </div>
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
         </button>
 
         <AnimatePresence initial={false}>
@@ -293,18 +167,26 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               role="menu"
             >
               <div className="pt-1 pb-2 space-y-0.5">
-                {mod.children?.map(child => renderModuleInner(child, depth + 1))}
+                {mod.children?.map(child => renderModule(child, depth + 1))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
     );
-  }, [expandedModules, sidebarSearch, navigationItems, toggleModule, renderNavItem]);
+  }, [expandedModules, toggleModule, renderNavItem, sidebarState]);
 
   const focusedModule = useMemo(() =>
     SIDEBAR_STRUCTURE.find(m => m.id === focusedModuleId),
   [focusedModuleId]);
+
+  const sidebarWidthClass = useMemo(() => {
+    switch (sidebarState) {
+      case 'expanded': return "w-64 lg:w-72 translate-x-0";
+      case 'rail': return "w-20 translate-x-0";
+      case 'closed': return "w-0 -translate-x-full border-r-0";
+    }
+  }, [sidebarState]);
 
   return (
     <aside
@@ -312,10 +194,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       aria-label="Barra lateral de navegación"
       className={cn(
         "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden enhanced-sidebar-edge",
-        sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
+        sidebarWidthClass
       )}
     >
-      <div className="relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
+      <div className={cn(
+        "relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden transition-all duration-300",
+        sidebarState === 'expanded' ? "w-64 lg:w-72" : sidebarState === 'rail' ? "w-20" : "w-0"
+      )}>
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-[2px] z-50 overflow-hidden">
           <div className="h-full w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0 animate-gradient-shift" style={{ backgroundSize: '200% 100%' }} />
@@ -326,12 +211,20 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           className="shrink-0 no-scrollbar max-w-full overflow-x-hidden"
         >
           <div
-            className="px-4 pt-4 pb-2 flex items-center justify-between"
+            className={cn(
+              "px-4 pt-4 pb-2 flex items-center justify-between",
+              sidebarState === 'rail' && "justify-center"
+            )}
           >
-            <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
-              COST<span className="text-green-500 dark:text-green-400">PRO</span>
-            </h2>
-            {onClose && !focusedModuleId && (
+            {sidebarState !== 'rail' ? (
+              <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
+                COST<span className="text-green-500 dark:text-green-400">PRO</span>
+              </h2>
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs">CP</div>
+            )}
+
+            {onClose && !focusedModuleId && !isMobile && sidebarState === 'expanded' && (
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -340,26 +233,35 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 <X className="w-4 h-4" />
               </button>
             )}
+            {isMobile && (
+               <button
+                onClick={onClose}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95"
+               >
+                 <X className="w-4 h-4" />
+               </button>
+            )}
           </div>
 
-          <div className="px-1 pb-1">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={sidebarSearch}
-                onChange={(e) => setSidebarSearch(e.target.value)}
-                aria-label="Buscar en el menú"
-                placeholder="BUSCAR..."
-                className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 sm:pr-16 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
-              />
-              {/* ⌘K keyboard shortcut badge - desktop only */}
-              <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
-                ⌘K
-              </kbd>
+          {sidebarState === 'expanded' && (
+            <div className="px-1 pb-1">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={sidebarSearch}
+                  onChange={(e) => setSidebarSearch(e.target.value)}
+                  aria-label="Buscar en el menú"
+                  placeholder="BUSCAR..."
+                  className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+                />
+                <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
+                  ⌘K
+                </kbd>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <nav
@@ -369,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
-            {focusedModuleId && focusedModule ? (
+            {focusedModuleId && focusedModule && sidebarState === 'expanded' ? (
               <SidebarFocusMode onBack={() => setFocusedModuleId(null)}
                 key="focus-mode"
                 module={focusedModule}
@@ -381,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-1 sm:space-y-4"
+                className={cn("space-y-1 sm:space-y-4", sidebarState === 'rail' && "space-y-2")}
               >
                 {filteredNavigation.map(module => renderModule(module))}
               </motion.div>
@@ -394,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <div className="h-px bg-gradient-to-r from-transparent via-sidebar-border to-transparent" />
 
           {/* User profile section */}
-          {user && (
+          {user && sidebarState === 'expanded' && (
             <div className="px-4 pt-4 pb-2">
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
@@ -404,7 +306,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                       return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
                     })()}
                   </div>
-                  {/* FIX #023: Online indicator reflects real network state */}
                   <OnlineStatusDot />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -419,13 +320,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             </div>
           )}
 
-          <div className="p-4 space-y-1">
-          {user?.plan === 'free' && user?.role !== 'admin' && (
+          <div className={cn("p-4 space-y-1", sidebarState === 'rail' && "p-2 items-center flex flex-col")}>
+          {user?.plan === 'free' && user?.role !== 'admin' && sidebarState === 'expanded' && (
             <button
               onClick={() => {
                 const whatsappNumber = "+53 53183215";
                 const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
-                window.open(`https://wa.me/${whatsappNumber.replace(/\\D/g, '')}?text=${message}`, '_blank');
+                window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
               }}
               aria-label="Mejorar a Plan Pro"
               className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2"
@@ -437,14 +338,17 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               </div>
             </button>
           )}
-          <div className="flex items-center justify-between gap-2">
+          <div className={cn("flex items-center justify-between gap-2", sidebarState === 'rail' && "flex-col")}>
             <button
               onClick={onLogout}
               aria-label="Cerrar sesión"
-              className="flex-1 flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
+              className={cn(
+                "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50",
+                sidebarState === 'expanded' ? "flex-1" : "w-12 h-12 justify-center"
+              )}
             >
               <LogOut className="w-4.5 h-4.5" />
-              <span className="text-xs uppercase tracking-wider">Salir</span>
+              {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
             </button>
 
             <button
@@ -452,7 +356,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               aria-label="Abrir calculadora"
               aria-pressed={isCalculatorOpen}
               className={cn(
-                "p-3.5 rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
                 isCalculatorOpen
                   ? "bg-primary/10 text-primary border border-primary/20"
                   : "hover:bg-primary/5 text-sidebar-foreground/60"
@@ -469,3 +374,5 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 });
 
 Sidebar.displayName = 'Sidebar';
+
+export default Sidebar;

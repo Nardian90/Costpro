@@ -1052,3 +1052,4 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     </Dialog>
   );
 };
+export default CostSheetMassiveGenerator;

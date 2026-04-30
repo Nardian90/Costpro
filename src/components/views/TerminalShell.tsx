@@ -3,67 +3,72 @@
 import React, { useState, useEffect, useTransition, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
-import { Sidebar } from '@/components/views/terminal/Sidebar';
 import { Header } from '@/components/views/terminal/Header';
-import { useIsMobile } from '@/hooks/ui/useMobile';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import Sidebar from '@/components/views/terminal/Sidebar';
+import { ParticleBackground } from '@/components/ui/ParticleBackground';
 import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
-import { useStores } from '@/hooks/api/useStores';
-import { userService } from '@/services/user-service';
+import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProducts } from '@/hooks/api/useProducts';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
 import { prefetchDashboardData } from '@/hooks/api/useDashboard';
 import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
 import { prefetchReceptions } from '@/hooks/api/useReceptions';
-import { useQueryClient } from '@tanstack/react-query';
+import { useStores } from '@/hooks/api/useStores';
+import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
-import dynamic from 'next/dynamic';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { BuildingIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
-import { ParticleBackground } from '@/components/ui/ParticleBackground';
-import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
-import { ChunkErrorBoundary } from '@/components/ui/ChunkErrorBoundary';
-import { CreateProductModal } from '@/components/modals/CreateProductModal';
-import { CommandPalette } from '@/components/ui/CommandPalette';
-import { ChatBot } from '@/components/ui/ChatBot';
-import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
+import dynamic from 'next/dynamic';
+import { useIsMobile } from '@/hooks/ui/useMobile';
+import ChunkErrorBoundary from '@/components/ui/ChunkErrorBoundary';
+import MobileSafeContainer from '@/components/ui/MobileSafeContainer';
 
-// Lazy views
-const DashboardView = dynamic(() => import('./terminal/views/dashboard/DashboardView'));
-const Pick3IntelligenceView = dynamic(() => import('./terminal/views/pick3/Pick3IntelligenceView'));
-const WalletView = dynamic(() => import('./terminal/views/wallet/WalletView'));
-const POSView = dynamic(() => import('./terminal/views/pos/POSView'));
-const SalesHistoryView = dynamic(() => import('./terminal/views/sales/SalesHistoryView'));
-const UsersManagementView = dynamic(() => import('./terminal/views/users/UsersManagementView'));
-const RolesManagementView = dynamic(() => import('./terminal/views/users/RolesManagementView'));
-const StoresManagementView = dynamic(() => import('./terminal/views/stores/StoresManagementView'));
-const AuditGlobalView = dynamic(() => import('./terminal/views/audit/AuditGlobalView'));
-const InventoryView = dynamic(() => import('./terminal/views/inventory/InventoryView'));
-const CatalogView = dynamic(() => import('./terminal/views/catalog/CatalogView'));
-const CostSheetView = dynamic(() => import('./terminal/views/cost_sheet/CostSheetView'));
-const ReportsView = dynamic(() => import('./terminal/views/reports/ReportsView'));
-const IPVView = dynamic(() => import('./terminal/views/ipv/IPVView'));
-const AcademyView = dynamic(() => import('./terminal/views/academy/AcademyView'));
-const InventoryAdjustmentsView = dynamic(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
-const LegalView = dynamic(() => import('./terminal/views/legal/LegalView'));
-const SettingsView = dynamic(() => import('./terminal/views/settings/SettingsView'));
-const HelpView = dynamic(() => import('./terminal/views/help/HelpView'));
-const ProductReceptionView = dynamic(() => import('./terminal/views/inventory/ProductReceptionView'));
-const TransferenciasView = dynamic(() => import('./terminal/views/transfers/TransferenciasView'));
+const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
+const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
+const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
+const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
+const SalesHistoryView = dynamic(() => import('@/components/views/terminal/views/sales/SalesHistoryView'), { ssr: false });
+const UsersManagementView = dynamic(() => import('@/components/views/terminal/views/users/UsersManagementView'), { ssr: false });
+const RolesManagementView = dynamic(() => import('@/components/views/terminal/views/users/RolesManagementView'), { ssr: false });
+const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
+const AuditGlobalView = dynamic(() => import('@/components/views/terminal/views/audit/AuditGlobalView'), { ssr: false });
+const InventoryView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryView'), { ssr: false });
+const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
+const CostSheetView = dynamic(() => import('@/components/views/terminal/views/cost_sheet/CostSheetView'), { ssr: false });
+const ReportsView = dynamic(() => import('@/components/views/terminal/views/reports/ReportsView'), { ssr: false });
+const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
+const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
+const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
+const LegalView = dynamic(() => import('@/components/views/terminal/views/legal/LegalView'), { ssr: false });
+const SettingsView = dynamic(() => import('@/components/views/terminal/views/settings/SettingsView'), { ssr: false });
+const HelpView = dynamic(() => import('@/components/views/terminal/views/help/HelpView'), { ssr: false });
+const ProductReceptionView = dynamic(() => import('@/components/views/terminal/views/inventory/ProductReceptionView'), { ssr: false });
+const TransferenciasView = dynamic(() => import('@/components/views/terminal/views/transfers/TransferenciasView'), { ssr: false });
+
+const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
+const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
+const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
+const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
+const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
 
 export default function TerminalShell() {
-  const { user, status, loading, logout, updateUser } = useAuthStore();
-  const { currentView, setCurrentView, setActiveCostSection } = useUIStore();
+  const { user, logout, loading, status, updateUser } = useAuthStore();
+  const {
+    currentView,
+    setCurrentView,
+    setActiveCostSection,
+    sidebarState,
+    setSidebarState,
+    toggleSidebar: globalToggleSidebar
+  } = useUIStore();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
   const [sidebarSearch, setSidebarSearch] = useState('');
   const nav = useTerminalNavigation(user as any, sidebarSearch);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const { data: allStores = [] } = useStores(
     user?.id || '',
@@ -126,7 +131,7 @@ export default function TerminalShell() {
     }
 
     if (isMobile) {
-      setSidebarOpen(false);
+      setSidebarState('closed');
     }
   };
 
@@ -213,19 +218,28 @@ export default function TerminalShell() {
     return renderView(currentView);
   };
 
+  const sidebarWidths = {
+    'expanded': 'pl-64 lg:pl-72',
+    'rail': 'pl-20',
+    'closed': 'pl-0'
+  };
+
   return (
     <div className="h-screen flex bg-background text-foreground max-w-full overflow-hidden">
       <Sidebar
         onViewChange={handleViewChange}
         onLogout={handleLogout}
-        onClose={() => setSidebarOpen(false)}
+        onClose={() => setSidebarState('closed')}
         onPrefetchView={handlePrefetchView}
       />
 
-      <main id="main-content" className={cn("flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden", sidebarOpen && !isMobile && "pl-64 lg:pl-72")} role="main">
+      <main id="main-content" className={cn(
+        "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
+        !isMobile && sidebarWidths[sidebarState]
+      )} role="main">
         <Header
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
+          sidebarState={sidebarState}
+          toggleSidebar={globalToggleSidebar}
           currentView={currentView}
           navigationItems={nav.navigationItems}
           onViewChange={handleViewChange}
@@ -288,10 +302,10 @@ export default function TerminalShell() {
       </main>
 
       <AnimatePresence>
-        {sidebarOpen && isMobile && (
+        {sidebarState !== 'closed' && isMobile && (
           <motion.div
             className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-30"
-            onClick={toggleSidebar}
+            onClick={() => setSidebarState('closed')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
