@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useTransition, Suspense } from 'react';
@@ -80,7 +81,7 @@ export default function TerminalShell() {
     try {
       await userService.logout();
     } catch (error: any) {
-      console.warn('[TerminalShell] Logout error (silent):', error);
+      logger.warn('DATABASE', '[TERMINALSHELL]_LOGOUT_ERROR_(SILENT):', { data: error })
     } finally {
       logout();
       window.location.reload();

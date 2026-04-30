@@ -158,12 +158,70 @@ const CostSheetView = () => {
   }, [data?.annexes, activeSection]);
 
   useEffect(() => {
-      if (activeSection === 'expert-content' || activeSection === 'all-content') {
-        handleSetActiveSection('main');
-      }
-  }, [activeSection]);
+    if (isEditing && data && viewMode === 'expert') initializeScenarios();
+  }, [isEditing, data?.id, viewMode, initializeScenarios]);
 
-  if (!data) return null;
+  const { expandedSections, toggleSection, expandAllSections, setHelpContext, toggleProblems } = expertState;
+
+  const handleScenarioAction = (action: string, id: any) => {
+    switch (action) {
+      case 'setPrimary': setPrimaryScenario(id); break;
+      case 'duplicate': createScenario(id, 'Copia de ' + id); break;
+      case 'exportPdf': handleExportPDF({ includeFC: true, includeAnnexes: [], includeAudit: true, scenarioId: id } as any); break;
+    }
+  };
+
+  const getSectionCompletion = useCallback((section: any) => {
+    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
+    const filled = rows.filter((r: any) => calculatedValues[r.id]?.total !== 0);
+    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
+  }, [calculatedValues]);
+
+  useExpertModeKeyboard({
+    toggleAllSections: () => expandAllSections(data.sections.map((s: any) => s.id)),
+    toggleHelp: () => setHelpContext('general'),
+    toggleProblems: () => toggleProblems(),
+    toggleComparison: () => toggleComparisonMode(),
+    expandSection: (n: number) => data.sections[n-1] && toggleSection(data.sections[n-1].id),
+    save: handleExportJSON,
+    closePanels: () => {},
+    showShortcuts: () => {
+      toast.info('Atajos de Teclado', {
+        description: (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono">
+            <span>Alt+E</span><span>Expandir Todo</span>
+            <span>Alt+C</span><span>Comparar</span>
+            <span>Alt+P</span><span>Problemas</span>
+            <span>Alt+H</span><span>Ayuda</span>
+            <span>Alt+1-9</span><span>Ir a Sección</span>
+            <span>Cmd+S</span><span>Guardar</span>
+          </div>
+        ),
+        duration: 5000,
+      });
+    }
+  }, viewMode === 'expert' && isEditing);
+
+  // ── Loading Skeleton ────────────────────────────────────────────────
+
+  if (!data || !data.header || !data.annexes || !data.sections) {
+    return (
+      <div className="w-full max-w-none px-2 pb-32 pt-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-12 h-12 rounded-2xl" />
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-12 w-full mb-8" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen pb-32">
@@ -246,73 +304,6 @@ const CostSheetView = () => {
 
                     {(activeSection === 'all-content' || activeSection === 'expert-content' || activeSection === 'main') && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            {/* Barra de herramientas modo experto — siempre visible en expert-content */}
-                            {viewMode === 'expert' && (
-                                <div className="flex items-center justify-between px-2 mb-2">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
-                                        Modo Experto
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        {/* Autoguardado */}
-                                        {lastSavedAt && (
-                                            <span className="text-[10px] text-muted-foreground">
-                                                Guardado {formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: es })}
-                                            </span>
-                                        )}
-                                        {/* Botón comparar */}
-                                        <Button
-                                            variant={isComparisonMode ? 'default' : 'outline'}
-                                            size="sm"
-                                            className="rounded-xl gap-2 h-8 text-[10px]"
-                                            onClick={() => {
-                                                toggleComparisonMode();
-                                                handleSetActiveSection('main');
-                                            }}
-                                        >
-                                            <GitCompare className="w-3.5 h-3.5" />
-                                            {isComparisonMode ? 'Individual' : 'Comparar'}
-                                        </Button>
-                                        {/* Historial de versiones */}
-                                        {versions.length > 0 && (
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="rounded-xl gap-1.5 h-8 text-[10px]">
-                                                        <Clock className="w-3.5 h-3.5" />
-                                                        {versions.length} versión{versions.length !== 1 ? 'es' : ''}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent align="end" className="w-72 p-2 rounded-2xl">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest px-2 py-1 text-muted-foreground">
-                                                        Historial de versiones
-                                                    </p>
-                                                    <div className="max-h-56 overflow-y-auto space-y-1">
-                                                        {versions.map((v: any, i: number) => (
-                                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 group">
-                                                                <div>
-                                                                    <p className="text-xs font-bold">{v.label || 'Autosave'}</p>
-                                                                    <p className="text-[10px] text-muted-foreground">
-                                                                        {formatDistanceToNow(v.timestamp, { addSuffix: true, locale: es })}
-                                                                    </p>
-                                                                </div>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-7 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    onClick={() => restoreVersion(v)}
-                                                                >
-                                                                    Restaurar
-                                                                </Button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Visual Hierarchy: Header -> Sections -> Annexes -> Signature */}
                             <div className="px-8 py-10 mb-6 bg-card rounded-[2.5rem] border border-border shadow-sm">
                                 <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
                                     <ZapIcon className="w-8 h-8" />
@@ -582,30 +573,8 @@ const CostSheetView = () => {
       </BaseModal>
 
       <CostSheetProblemsPanel
-        problems={deepValidationErrors.map((e: any) => ({
-            ...e,
-            sectionLabel: (data.sections as any[]).find(s =>
-                s.rows.some((r: any) =>
-                    r.id === e.rowId ||
-                    (r.children && r.children.some((c: any) => c.id === e.rowId))
-                )
-            )?.label
-        }))}
-        onGoTo={(rowId: string) => {
-            handleSetActiveSection('main');
-            const section: any = (data.sections as any[]).find(s =>
-                s.rows.some((r: any) =>
-                    r.id === rowId ||
-                    (r.children && r.children.some((c: any) => c.id === rowId))
-                )
-            );
-            if (section && !expandedSections.includes(section.id)) toggleSection(section.id);
-            setTimeout(() => {
-                const el = document.getElementById(rowId);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 500);
-        }}
-        alwaysVisible={viewMode === 'expert' && isEditing}
+        problems={deepValidationErrors.map((e: any) => ({ ...e, sectionLabel: (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === e.rowId || (r.children && r.children.some((c: any) => c.id === e.rowId))))?.label }))}
+        onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: any = (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === rowId || (r.children && r.children.some((c: any) => c.id === rowId)))); if (section && !expandedSections.includes(section.id)) toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
       />
     </div>
   );

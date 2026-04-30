@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -53,7 +54,7 @@ export function ChatBot() {
   }, [isOpen, setIsOpen]);
 
   const handleAction = (action: any) => {
-    console.log('[AI Controller] Action received:', action);
+    logger.info('DATABASE', '[AI_CONTROLLER]_ACTION_RECEIVED:', { data: action })
 
     switch (action.type) {
       case 'navigation':
@@ -75,7 +76,7 @@ export function ChatBot() {
         break;
 
       default:
-        console.warn('Acción AI desconocida:', action.type);
+        logger.warn('DATABASE', 'ACCIÓN_AI_DESCONOCIDA:', { data: action.type })
     }
   };
 
@@ -125,7 +126,7 @@ export function ChatBot() {
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('[Chat] Request cancelled by user');
+        logger.info('DATABASE', '[CHAT]_REQUEST_CANCELLED_BY_USER')
         return;
       }
 

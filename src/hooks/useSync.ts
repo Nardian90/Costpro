@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useState, useEffect, useCallback } from 'react';
 import { offlineStorage } from '@/lib/sync/offline-storage';
 import { syncBatchSchema, syncBatchResponseSchema } from '@/validation/schemas';
@@ -126,7 +127,7 @@ export function useSync() {
       const jitter = Math.random() * 1000;
       const finalDelay = delay + jitter;
 
-      console.log(`Retrying sync in ${Math.round(finalDelay)}ms (attempt ${nextAttempt})`);
+      logger.info('DATABASE', `Retrying sync in ${Math.round(finalDelay)}ms (attempt ${nextAttempt})`);
       setTimeout(processQueue, finalDelay);
     }
   }, [queueSize, status, user?.id, updateQueueSize, retryAttempt]);

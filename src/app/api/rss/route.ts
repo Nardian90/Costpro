@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
 import Parser from 'rss-parser';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { RSSNewsItem } from '@/types';
 
 // Cache results for 60 minutes
@@ -10,21 +10,9 @@ export const revalidate = 3600;
 
 const parser = new Parser();
 
-
 const handler = withAuth(async (req, session) => {
-
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: req.headers.get('Authorization') || '',
-          },
-        },
-      }
-    );
+    const supabase = getSupabaseAuthClient(session.token);
 
     // 1. Fetch active feeds and settings
     const [{ data: feeds }, { data: settings }] = await Promise.all([
