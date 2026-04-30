@@ -1,41 +1,40 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useStockAlerts } from '../useStockAlerts';
-import { Product } from '@/types';
+import { makeProduct } from '@/__fixtures__';
 
 describe('useStockAlerts', () => {
-  const mockProducts: Product[] = [
-    { id: '1', name: 'Product A', stock_current: 0, min_stock: 5, price: 10, cost_price: 5 } as Product,
-    { id: '2', name: 'Product B', stock_current: 2, min_stock: 5, price: 10, cost_price: 5 } as Product,
-    { id: '3', name: 'Product C', stock_current: 10, min_stock: 5, price: 10, cost_price: 5 } as Product,
-    { id: '4', name: 'Product D', stock_current: 5, min_stock: 5, price: 10, cost_price: 5 } as Product,
-    { id: '5', name: 'Product E', stock_current: 0, min_stock: 0, price: 10, cost_price: 5 } as Product,
-  ];
-
-  it('should filter and sort products based on stock alerts', () => {
-    const { result } = renderHook(() => useStockAlerts(mockProducts));
-
-    expect(result.current).toHaveLength(4);
-
-    // Sort order: currentStock 0, 0, 2, 5
-    expect(result.current[0].product.id).toBe('1');
+  it('clasifica como critical cuando stock_current === 0', () => {
+    const products = [makeProduct({ id: 'p1', stock_current: 0, min_stock: 10 })];
+    const { result } = renderHook(() => useStockAlerts(products));
+    expect(result.current).toHaveLength(1);
     expect(result.current[0].severity).toBe('critical');
-
-    expect(result.current[1].product.id).toBe('5');
-    expect(result.current[1].severity).toBe('critical');
-
-    expect(result.current[2].product.id).toBe('2');
-    expect(result.current[2].severity).toBe('warning');
-
-    expect(result.current[3].product.id).toBe('4');
-    expect(result.current[3].severity).toBe('warning');
   });
 
-  it('should return an empty array if no products trigger alerts', () => {
-    const safeProducts: Product[] = [
-      { id: '3', name: 'Product C', stock_current: 10, min_stock: 5, price: 10, cost_price: 5 } as Product,
+  it('clasifica como warning cuando 0 < stock_current <= min_stock', () => {
+    const products = [makeProduct({ id: 'p1', stock_current: 5, min_stock: 10 })];
+    const { result } = renderHook(() => useStockAlerts(products));
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0].severity).toBe('warning');
+  });
+
+  it('escenario mixto: [agotado, en_mínimo, ok] → solo 2 alertas ordenadas', () => {
+    const products = [
+      makeProduct({ id: 'p1', stock_current: 0, min_stock: 10 }),   // critical
+      makeProduct({ id: 'p2', stock_current: 5, min_stock: 10 }),   // warning
+      makeProduct({ id: 'p3', stock_current: 50, min_stock: 10 }),  // ok
     ];
-    const { result } = renderHook(() => useStockAlerts(safeProducts));
+    const { result } = renderHook(() => useStockAlerts(products));
+    expect(result.current).toHaveLength(2);
+    expect(result.current[0].severity).toBe('critical');
+    expect(result.current[1].severity).toBe('warning');
+    expect(result.current[0].product.id).toBe('p1');
+    expect(result.current[1].product.id).toBe('p2');
+  });
+
+  it('no incluye producto con stock > min_stock', () => {
+    const products = [makeProduct({ id: 'p1', stock_current: 15, min_stock: 10 })];
+    const { result } = renderHook(() => useStockAlerts(products));
     expect(result.current).toHaveLength(0);
   });
 });
