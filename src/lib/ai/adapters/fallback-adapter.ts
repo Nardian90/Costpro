@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { LLMProvider, Message, LLMResponse } from '../types';
 
 export class FallbackAdapter implements LLMProvider {
@@ -14,7 +15,7 @@ export class FallbackAdapter implements LLMProvider {
       try {
         return await provider.getResponse(messages, options);
       } catch (error: any) {
-        console.warn('AI Fallback trigger:', error.message);
+        logger.warn('DATABASE', 'AI_FALLBACK_TRIGGER:', { data: error.message })
         errors.push(error);
         continue;
       }

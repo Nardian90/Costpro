@@ -8,6 +8,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { SyncProvider } from "@/components/providers/SyncProvider";
 import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
+import { headers } from 'next/headers';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,11 +74,13 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get('x-nonce') ?? '';
+
   return (
     <html lang="es" suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
       <head>
@@ -85,10 +88,13 @@ export default function RootLayout({
              This ensures CSS vars are controlled by class selectors, so next-themes
              can toggle them by adding/removing 'dark' class. Inline style attributes
              would override CSS rules and prevent theme switching. */}
-        <style dangerouslySetInnerHTML={{
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
           __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#000000;--foreground:#ffffff;color-scheme:dark}`,
         }} />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
@@ -96,6 +102,7 @@ export default function RootLayout({
         {/* FIX #012: Supabase preconnect uses environment variable */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co'} />
         <script
+          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({

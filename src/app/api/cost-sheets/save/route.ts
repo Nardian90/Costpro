@@ -6,6 +6,7 @@ import { calculateFicha } from '@/lib/cost-engine';
 import { buildEngineFicha } from '@/lib/cost-engine/build-ficha';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
+import { costSheetSaveSchema, zodError } from '@/validation/api-schemas';
 
 export const runtime = 'nodejs';
 
@@ -33,10 +34,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { updateData, currentData } = await req.json();
-    if (!updateData) {
-      return NextResponse.json({ error: 'Faltan datos de actualización' }, { status: 400 });
+    const rawBody = await req.json();
+    const parsed = costSheetSaveSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
+    const { updateData, currentData } = parsed.data as any;
 
     // Use authenticated client for database operations
     const supabase = getSupabaseAuthClient(session.token);
@@ -187,7 +190,7 @@ export async function POST(req: NextRequest) {
         name: baseData.header.name || 'Ficha sin nombre',
         description: baseData.metadata?.description || 'Generado por Darian AI',
         category: baseData.header.category || 'General',
-        data: exportData,
+        data: exportData as any,
         created_by: session.user.id
       })
       .select()
