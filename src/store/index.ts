@@ -10,10 +10,12 @@ export { useAcademyStore } from './useAcademyStore';
 
 export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence';
 
+export type SidebarState = 'expanded' | 'rail' | 'closed';
+
 interface UIState {
   currentView: ViewType;
   previousView: ViewType | null;
-  sidebarOpen: boolean;
+  sidebarState: SidebarState;
   isCalculatorOpen: boolean;
   themePreference: 'light' | 'dark' | 'auto';
   connectivity: '3g' | '4g';
@@ -25,7 +27,7 @@ interface UIState {
   ipvActiveTab: string;
   activeCostSection: string;
   setCurrentView: (view: ViewType) => void;
-  setSidebarOpen: (open: boolean) => void;
+  setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
   setIsCalculatorOpen: (open: boolean) => void;
   setThemePreference: (pref: 'light' | 'dark' | 'auto') => void;
@@ -44,7 +46,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       currentView: 'occ',
       previousView: null,
-      sidebarOpen: true,
+      sidebarState: 'expanded',
       isCalculatorOpen: false,
       themePreference: 'light',
       connectivity: '4g',
@@ -59,8 +61,15 @@ export const useUIStore = create<UIState>()(
         previousView: state.currentView,
         currentView: view
       })),
-      setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarState: (sidebarState) => set({ sidebarState }),
+      toggleSidebar: () => set((state) => {
+        const next: Record<SidebarState, SidebarState> = {
+          'expanded': 'rail',
+          'rail': 'closed',
+          'closed': 'expanded'
+        };
+        return { sidebarState: next[state.sidebarState] };
+      }),
       setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
       setThemePreference: (themePreference) => set({ themePreference }),
       setConnectivity: (connectivity) => set({ connectivity }),
@@ -76,6 +85,16 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'costpro-ui-storage',
+      version: 2, // Increment version due to sidebarOpen -> sidebarState change
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2) {
+          return {
+            ...persistedState,
+            sidebarState: persistedState.sidebarOpen ? 'expanded' : 'closed',
+          };
+        }
+        return persistedState;
+      },
     }
   )
 );

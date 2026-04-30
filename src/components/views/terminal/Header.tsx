@@ -1,13 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Menu, X, HelpCircle, Building as BuildingIcon, ChevronDown, Check, User, Settings, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuthStore, ViewType } from '@/store';
-import { UserContract } from '@/contracts/user';
-import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
-import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
+import {
+  Menu,
+  X,
+  ChevronDown,
+  BuildingIcon,
+  Check,
+  User,
+  Settings,
+  LogOut,
+  HelpCircle,
+  Layout
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +21,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
+import { cn } from '@/lib/utils';
+import { UserContract } from '@/contracts/user';
+import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
+import { ViewType, SidebarState } from '@/store';
 
 interface HeaderProps {
-  sidebarOpen: boolean;
+  sidebarState: SidebarState;
   toggleSidebar: () => void;
   currentView: string;
   navigationItems: NavigationItem[];
@@ -29,7 +40,7 @@ interface HeaderProps {
 }
 
 export const Header = ({
-  sidebarOpen,
+  sidebarState,
   toggleSidebar,
   currentView,
   navigationItems,
@@ -49,6 +60,14 @@ export const Header = ({
   const activeStore = storesToShow.find(s => s.id === user?.activeStoreId);
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
+  const SidebarIcon = () => {
+    switch (sidebarState) {
+      case 'expanded': return <X className="w-5 h-5" />;
+      case 'rail': return <Layout className="w-5 h-5" />;
+      case 'closed': return <Menu className="w-5 h-5" />;
+    }
+  };
+
   return (
     <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -56,9 +75,9 @@ export const Header = ({
           <button
             onClick={toggleSidebar}
             className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
-            aria-label={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-label="Cambiar estado del menú"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <SidebarIcon />
           </button>
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
@@ -214,3 +233,4 @@ export const Header = ({
     </header>
   );
 };
+export default Header;

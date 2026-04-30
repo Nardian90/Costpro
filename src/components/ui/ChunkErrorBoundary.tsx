@@ -172,3 +172,4 @@ export function withChunkRetry(
     );
   };
 }
+export default ChunkErrorBoundary;

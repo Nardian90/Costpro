@@ -23,7 +23,7 @@ interface CostSheetNarrativeProps {
   calculatedHeader?: any;
 }
 
-export default function CostSheetNarrative({ data, calculatedValues, calculatedHeader }: CostSheetNarrativeProps) {
+function CostSheetNarrative({ data, calculatedValues, calculatedHeader }: CostSheetNarrativeProps) {
   const header = data?.header;
   const sections = data?.sections || [];
 
@@ -145,3 +145,4 @@ export default function CostSheetNarrative({ data, calculatedValues, calculatedH
     </div>
   );
 }
+export default CostSheetNarrative;
