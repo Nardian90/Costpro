@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import React, { useMemo, useRef, useState } from 'react';
 import {
   Calculator,
@@ -175,7 +176,7 @@ export const CostSheetSummary: React.FC = () => {
 
     // Guard: prevent double invocation if already solving
     if (isSolvingRef.current) {
-      console.warn('[CostSheetSummary] Solver already running, skipping duplicate call.');
+      logger.warn('COST_SHEET', '[COSTSHEETSUMMARY]_SOLVER_ALREADY_RUNNING,_SKIPPIN')
       return;
     }
     isSolvingRef.current = true;
@@ -273,7 +274,7 @@ export const CostSheetSummary: React.FC = () => {
 
     // Guard: prevent double-confirm (e.g. rapid clicks on the confirm button)
     if (isConfirmingRef.current) {
-      console.warn('[CostSheetSummary] Solver confirm already in progress, skipping duplicate.');
+      logger.warn('COST_SHEET', '[COSTSHEETSUMMARY]_SOLVER_CONFIRM_ALREADY_IN_PROGR')
       return;
     }
     isConfirmingRef.current = true;

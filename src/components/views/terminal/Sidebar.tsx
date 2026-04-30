@@ -105,7 +105,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         )}
       </button>
     );
-  }, [currentView, activeCostSection, handleNavClick, onPrefetchView, sidebarState]);
+  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
+
+  const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
+    const hasAvailableItems = (m: NavModule): boolean => {
+      if (m.type === 'item') {
+        return navigationItems.some(ni => ni.id === m.id);
+      }
+      return m.children?.some(child => hasAvailableItems(child)) || false;
+    };
 
   const renderModule = useCallback((mod: NavModule, depth = 0) => {
     const isExpanded = expandedModules.includes(mod.id);

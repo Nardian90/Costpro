@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -27,7 +28,7 @@ export function usePWA() {
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
       setIsInstallable(false);
-      console.log('PWA was installed');
+      logger.info('DATABASE', 'PWA_WAS_INSTALLED')
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
@@ -48,7 +49,7 @@ export function usePWA() {
 
       // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
+      logger.info('DATABASE', `User response to the install prompt: ${outcome}`);
 
       // We've used the prompt, and can't use it again, throw it away
       setDeferredPrompt(null);

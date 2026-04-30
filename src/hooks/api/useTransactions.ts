@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
@@ -31,7 +32,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
         return await validateRPCArrayResponse(data, transactionSchema, rpcName);
       } catch (err) {
-        console.warn('[Transactions] RPC failed, falling back to table query', err);
+        logger.warn('DATABASE', '[TRANSACTIONS]_RPC_FAILED,_FALLING_BACK_TO_TABLE_Q', { data: err })
         const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
         let query = supabase.from('transactions').select(columns);
         if (!isAdmin && cleanStoreId) {

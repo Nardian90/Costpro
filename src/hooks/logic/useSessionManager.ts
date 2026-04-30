@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useSessionStore } from '@/store/session-store';
@@ -62,7 +63,7 @@ export function useSessionManager() {
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT))
                     ]) as Profile | null;
                 } catch (err: any) {
-                    console.warn('[SessionManager] Profile fetch failed/timeout:', err.message);
+                    logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED/TIMEOUT:', { data: err.message })
                     // On timeout or error, try to continue with session user data if we already have a user
                     const existingUser = useAuthStore.getState().user;
                     if (existingUser) {
@@ -100,7 +101,7 @@ export function useSessionManager() {
                 setLoading(false);
             }
         } catch (error: any) {
-            console.warn(`Session check failed: ${error.message}`);
+            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: `Session check failed: ${error.message}` });
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
             setLoading(false);
             setStatus('error');
@@ -168,7 +169,7 @@ export function useSessionManager() {
         const timer = setTimeout(() => {
             const { loading, setLoading } = useAuthStore.getState();
             if (loading) {
-                console.warn('[SessionManager] Emergency loading clear triggered.');
+                logger.warn('DATABASE', '[SESSIONMANAGER]_EMERGENCY_LOADING_CLEAR_TRIGGERED')
                 setLoading(false);
             }
         }, 5000);

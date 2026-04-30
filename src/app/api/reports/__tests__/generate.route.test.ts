@@ -1,6 +1,10 @@
 import { NextRequest } from 'next/server';
 import { POST } from '../generate/route';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+vi.mock('@/lib/auth', () => ({
+  getServerSession: vi.fn()
+}));
 
 vi.mock('@/lib/supabaseClient', () => ({
   getSupabaseAuthClient: vi.fn().mockReturnValue({
@@ -46,7 +50,14 @@ vi.mock('jspdf', () => ({
 vi.mock('jspdf-autotable', () => ({ default: vi.fn() }));
 
 describe('POST /api/reports/generate', () => {
-  it('retorna 401 sin Authorization header', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('retorna 401 sin sesión', async () => {
+    const { getServerSession } = await import('@/lib/auth');
+    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+
     const req = new NextRequest('http://localhost/api/reports/generate', {
         method: 'POST',
         body: JSON.stringify({ type: 'inventory' })
@@ -56,6 +67,12 @@ describe('POST /api/reports/generate', () => {
   });
 
   it('genera reporte exitosamente', async () => {
+    const { getServerSession } = await import('@/lib/auth');
+    vi.mocked(getServerSession).mockResolvedValueOnce({
+      user: { id: 'u1' },
+      token: 'valid-token'
+    } as any);
+
     const req = new NextRequest('http://localhost/api/reports/generate', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer valid-token' },

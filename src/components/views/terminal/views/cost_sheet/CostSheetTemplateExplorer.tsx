@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -303,7 +304,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
               });
             }
           } catch (e) {
-            console.warn(`Skipping invalid JSON file: ${entry.name}`);
+            logger.warn('COST_SHEET', 'SKIP_INVALID_JSON', { message: `Skipping invalid JSON file: ${entry.name}` });
           }
         }
       }
