@@ -142,3 +142,11 @@ export interface CalculatedRowValue {
   hasWarnings?: boolean;
   validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING' | 'INFO', code: string }[];
 }
+
+export interface ExportOptions {
+  includeFC?: boolean;
+  includeAudit?: boolean;
+  includeAnnexes?: string[];
+  consolidated?: boolean;
+  exportMode?: 'comparison' | 'standard';
+}

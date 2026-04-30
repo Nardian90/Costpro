@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 import { calculateFicha } from './index';
 import { buildEngineFicha } from './build-ficha';
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
@@ -102,7 +101,7 @@ export function solveCoefficient(
   const slope = y1 - y0;
 
   if (Math.abs(slope) < 1e-10) {
-    logger.warn('COST_SHEET', '[SOLVER]_ANNEX_COEFFICIENT_HAS_NO_MEASURABLE_EFFEC')
+    console.warn('[Solver] Annex coefficient has no measurable effect on target.');
     return 1;
   }
 

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
-import { aiChatSchema, zodError } from '@/validation/api-schemas';
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -35,11 +34,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido en la solicitud' }, { status: 400 });
     }
 
-    const parsed = aiChatSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    const { messages, sheetData, aiProvider, aiApiKey } = body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json({ error: 'Mensajes inválidos' }, { status: 400 });
     }
-    const { messages, sheetData, aiProvider, aiApiKey } = parsed.data;
 
     // Security: Validate AI provider against whitelist
     const VALID_PROVIDERS = ['openai', 'anthropic', 'google', 'claude', 'gpt', 'gemini'];
@@ -54,14 +53,14 @@ export async function POST(req: NextRequest) {
 
     // Sanitize sheetData to avoid sending too much data to the LLM
     const sanitizedSheetData = sheetData ? {
-      header: (sheetData as any).header,
-      sectionsCount: (sheetData as any).sections?.length || 0,
-      annexesCount: (sheetData as any).annexes?.length || 0,
-      summary: (sheetData as any).summary
+      header: sheetData.header,
+      sectionsCount: sheetData.sections?.length || 0,
+      annexesCount: sheetData.annexes?.length || 0,
+      summary: sheetData.summary
     } : null;
 
     const systemPrompt = {
-      role: 'system' as const,
+      role: 'system',
       content: `Eres Darian, experto en Costpro y regulaciones de Cuba (Res. 148/2023).
       Tu misión es generar propuestas de fichas de costo profesionales.
 

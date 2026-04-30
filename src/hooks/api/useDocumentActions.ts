@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,7 +23,7 @@ export function useInvertDocument() {
       const { type, id, items: providedItems } = props;
       let storeId = props.storeId;
 
-      logger.info('DATABASE', `[Invert] Starting inversion for ${type} ${id} in store ${storeId}`);
+      console.log(`[Invert] Starting inversion for ${type} ${id} in store ${storeId}`);
 
       // 0. Fetch document to get storeId and status if not provided or to verify
       const docTable = type === 'sale' ? 'transactions' : 'receipts';
@@ -47,7 +46,7 @@ export function useInvertDocument() {
       // 1. Fetch items if not provided
       let items = providedItems;
       if (!items || items.length === 0) {
-        logger.info('DATABASE', `[Invert] No items provided, fetching for ${type} ${id}`);
+        console.log(`[Invert] No items provided, fetching for ${type} ${id}`);
         const table = type === 'sale' ? 'transaction_items' : 'receipt_items';
         const foreignKey = type === 'sale' ? 'transaction_id' : 'receipt_id';
 
@@ -61,7 +60,7 @@ export function useInvertDocument() {
         throw new Error('No se encontraron items para invertir en este documento.');
       }
 
-      logger.info('DATABASE', `[Invert] Inverting ${items.length} items`);
+      console.log(`[Invert] Inverting ${items.length} items`);
 
       // 2. Perform adjustments for each item
       const reason = `INVERSION - ${type === 'sale' ? 'Anulación Venta' : 'Anulación Recepción'} ${id.split('-')[0]}`;
@@ -69,7 +68,7 @@ export function useInvertDocument() {
       for (const item of items) {
         const quantityDelta = type === 'sale' ? Math.abs(item.quantity) : -Math.abs(item.quantity);
 
-        logger.info('DATABASE', `[Invert] Adjusting product ${item.product_id} with delta ${quantityDelta}`);
+        console.log(`[Invert] Adjusting product ${item.product_id} with delta ${quantityDelta}`);
 
         const { error: adjError } = await supabase.rpc('perform_inventory_adjustment', {
           p_product_id: item.product_id,
@@ -87,7 +86,7 @@ export function useInvertDocument() {
       const table = type === 'sale' ? 'transactions' : 'receipts';
       const updateData = { status: 'voided', updated_at: new Date().toISOString() };
 
-      logger.info('DATABASE', `[Invert] Updating ${table} ${id} status to voided`);
+      console.log(`[Invert] Updating ${table} ${id} status to voided`);
 
       await withTableLogging('update', table, () =>
         supabase.from(table)

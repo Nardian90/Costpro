@@ -278,3 +278,4 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
         </div>
     );
 };
+export default DarianEditor;

@@ -1,4 +1,4 @@
-import { reportsGenerateSchema, zodError } from '@/validation/api-schemas';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -7,89 +7,150 @@ import { ReportType } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { COLUMN_LABELS } from '@/contracts/reports';
-import { getServerSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const rawBody = await req.json();
-    const parsed = reportsGenerateSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
-    const body = parsed.data;
+    const body = await req.json();
     const {
+      report_definition_id,
       type,
-      from,
-      to,
-      store_id,
+      filters,
+      date_range,
       columns,
+      store_id,
       name
-    } = (body as any);
+    } = body;
 
-    const supabase = getSupabaseAuthClient(session.token);
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
 
-    // 1. Create Report Run record
+    const token = authHeader.split(' ')[1];
+    const supabase = getSupabaseAuthClient(token);
+
+    // 1. Create a record in report_runs
     const { data: runData, error: runError } = await supabase
       .from('report_runs')
       .insert({
-        report_definition_id: (body as any).definition_id || '00000000-0000-0000-0000-000000000000',
-        executed_by: session.user.id,
-        status: 'pending',
+        report_definition_id,
+        executed_by: (await supabase.auth.getUser()).data.user?.id,
         parameters_snapshot: body,
-        store_id: store_id || null
+        status: 'pending',
+        store_id
       })
       .select()
       .single();
 
     if (runError) throw runError;
 
-    // 2. Fetch Data based on Type
+    // 2. Fetch Data
     let data: any[] = [];
-    switch (type) {
+    const from = date_range?.from;
+    const to = date_range?.to;
+
+    // Special case for cost_sheet: data is already provided in the body
+    if (type === 'cost_sheet') {
+      data = body.data?.sections || [];
+    }
+
+    switch (type as ReportType) {
+      case 'sales':
+        const { data: salesData, error: salesError } = await supabase
+          .rpc('get_transactions', {
+            p_store_id: store_id,
+            p_date_from: from ? from + 'T00:00:00' : null,
+            p_date_to: to ? to + 'T23:59:59' : null,
+            p_limit: 10000
+          });
+        if (salesError) throw salesError;
+        data = salesData || [];
+        break;
+
       case 'inventory':
         const { data: invData, error: invError } = await supabase
-          .from('inventory')
-          .select('product:products(name, sku, category), quantity, unit_cost, total_cost:quantity*unit_cost')
-          .eq('store_id', store_id);
+          .rpc('get_paginated_products', {
+            p_store_id: store_id,
+            p_limit: 10000,
+            p_offset: 0
+          });
         if (invError) throw invError;
         data = invData || [];
         break;
 
-      case 'sales':
-        let sQuery = supabase.from('sales').select('*, profiles(full_name)');
-        if (store_id) sQuery = sQuery.eq('store_id', store_id);
-        if (from) sQuery = sQuery.gte('created_at', from);
-        if (to) sQuery = sQuery.lte('created_at', to);
-        const { data: sData, error: sError } = await sQuery.order('created_at', { ascending: false });
-        if (sError) throw sError;
-        data = sData || [];
+      case 'audit':
+        const { data: auditData, error: auditError } = await supabase
+          .rpc('get_audit_logs', {
+            p_store_id: store_id,
+            p_date_from: from ? from + 'T00:00:00' : null,
+            p_date_to: to ? to + 'T23:59:59' : null,
+            p_limit: 10000
+          });
+        if (auditError) throw auditError;
+        data = auditData || [];
         break;
 
       case 'profit':
-        let pQuery = supabase.from('sales').select('created_at, total_amount');
-        if (store_id) pQuery = pQuery.eq('store_id', store_id);
-        if (from) pQuery = pQuery.gte('created_at', from);
-        if (to) pQuery = pQuery.lte('created_at', to);
-        const { data: pData, error: pError } = await pQuery;
-        if (pError) throw pError;
-        const grouped = (pData || []).reduce((acc: any, curr: any) => {
-            const date = curr.created_at.split('T')[0];
-            if (!acc[date]) acc[date] = 0;
-            acc[date] += curr.total_amount;
-            return acc;
-        }, {});
-        data = Object.keys(grouped).map(date => ({
-            date,
-            total_sales: grouped[date],
-            estimated_profit: grouped[date] * 0.3 // Simplified for MVP
-        }));
+        // Reuse transactions but ensure cost and profit are included
+        const { data: profitData, error: profitError } = await supabase
+          .rpc('get_transactions', {
+            p_store_id: store_id,
+            p_date_from: from ? from + 'T00:00:00' : null,
+            p_date_to: to ? to + 'T23:59:59' : null,
+            p_limit: 10000
+          });
+        if (profitError) throw profitError;
+        data = profitData || [];
+        break;
+
+      case 'kardex':
+        if (!filters?.product_id) throw new Error('Se requiere product_id para el reporte de Kardex');
+        const { data: kardexData, error: kardexError } = await supabase
+          .rpc('get_product_stock_ledger_paginated', {
+            p_product_id: filters.product_id,
+            p_store_id: store_id,
+            p_limit: 1000,
+            p_offset: 0
+          });
+        if (kardexError) throw kardexError;
+        data = kardexData || [];
         break;
 
       case 'purchases':
-        let eQuery = supabase.from('receptions').select('created_at, total_cost');
+        let query = supabase.from('receipts').select('*');
+        if (store_id) query = query.eq('store_id', store_id);
+        if (from) query = query.gte('created_at', from);
+        if (to) query = query.lte('created_at', to);
+
+        const { data: purchaseData, error: purchaseError } = await query.order('created_at', { ascending: false }).limit(1000);
+        if (purchaseError) throw purchaseError;
+        data = purchaseData || [];
+        break;
+
+      case 'daily_income':
+        const { data: incData, error: incError } = await supabase
+          .rpc('get_transactions', {
+            p_store_id: store_id,
+            p_date_from: from ? from + 'T00:00:00' : null,
+            p_date_to: to ? to + 'T23:59:59' : null,
+            p_limit: 10000
+          });
+        if (incError) throw incError;
+        const gIncome = (incData || []).reduce((acc: any, curr: any) => {
+            const date = curr.created_at.split('T')[0];
+            if (!acc[date]) acc[date] = 0;
+            const amt = parseFloat(String(curr.total_amount || '0'));
+            if (!isNaN(amt)) acc[date] = (acc[date] || 0) + amt;
+            return acc;
+        }, {});
+        data = Object.keys(gIncome).map(date => ({
+            date,
+            total_income: gIncome[date]
+        })).sort((a, b) => b.date.localeCompare(a.date));
+        break;
+
+      case 'daily_expenses':
+        let eQuery = supabase.from('receipts').select('*');
         if (store_id) eQuery = eQuery.eq('store_id', store_id);
         if (from) eQuery = eQuery.gte('created_at', from);
         if (to) eQuery = eQuery.lte('created_at', to);
@@ -118,18 +179,18 @@ export async function POST(req: NextRequest) {
 
     // 3. Generate PDF
     const doc = new jsPDF({
-      orientation: (body as any).orientation || 'portrait',
+      orientation: body.orientation || 'portrait',
       unit: 'mm',
-      format: (body as any).format || 'a4'
+      format: body.format || 'a4'
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
     if (type === 'cost_sheet') {
-      const costData = (body as any).data;
-      const calcValues = (body as any).calculatedValues;
-      const calcAnnexes = (body as any).calculatedAnnexes;
+      const costData = body.data;
+      const calcValues = body.calculatedValues;
+      const calcAnnexes = body.calculatedAnnexes;
 
       // --- CUSTOM COST SHEET GENERATOR ---
 

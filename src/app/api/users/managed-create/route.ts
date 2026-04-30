@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
-import { managedCreateUserSchema, zodError } from '@/validation/api-schemas';
+
 import crypto from 'crypto';
 
 // Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
@@ -21,9 +21,13 @@ function getSupabaseAdmin() {
   });
 }
 
+
 const handler = withRole('admin', async (req, session) => {
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
+
+    // 1. Verify requester session
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -54,11 +58,7 @@ const handler = withRole('admin', async (req, session) => {
 
     const requesterRole = roleNames.includes('admin') ? 'admin' : (roleNames.includes('encargado') || roleNames.includes('manager') ? 'encargado' : 'other');
 
-    const rawBody = await req.json();
-    const parsed = managedCreateUserSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
+    const body = await req.json();
     const {
       p_email,
       p_full_name,
@@ -68,7 +68,7 @@ const handler = withRole('admin', async (req, session) => {
       p_max_stores,
       p_max_users,
       p_password
-    } = parsed.data;
+    } = body;
 
     const targetRole = (p_role || '').toLowerCase();
 

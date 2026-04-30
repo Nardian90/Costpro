@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 import { createClient } from '@supabase/supabase-js'
 
 // Fallback Supabase credentials provided by user
@@ -9,7 +8,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_KEY;
 
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  logger.warn('DATABASE', 'ENV_MISSING', { detail: 'Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.' });
+  console.warn(
+    'Supabase environment variables are missing. ' +
+    'Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.'
+  );
 }
 
 // Initialize the Supabase client.

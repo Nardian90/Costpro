@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
@@ -36,7 +35,7 @@ export default function HomePage() {
     const timer = setTimeout(() => {
       const state = useAuthStore.getState();
       if (state.loading) {
-        logger.warn('DATABASE', '[HOMEPAGE]_AUTH_CHECK_TIMEOUT,_FORCING_READY_STATE')
+        console.warn('[HomePage] Auth check timeout, forcing ready state');
         useAuthStore.getState().setLoading(false);
         useAuthStore.getState().setStatus('unauthenticated');
         setIsReady(true);

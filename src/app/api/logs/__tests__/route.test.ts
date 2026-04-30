@@ -35,7 +35,7 @@ describe('POST /api/logs', () => {
   });
 
   it('retorna success: true y escribe en fs', async () => {
-    const req = makeRequest({ context: 'TEST', error: { message: 'some error' } });
+    const req = makeRequest({ context: 'TEST', error: 'some error' });
     const res = await POST(req);
     const json = await res.json();
 
@@ -46,7 +46,7 @@ describe('POST /api/logs', () => {
 
   it('ignora silenciosamente si falla fs (retorna 200)', async () => {
     vi.mocked(fs.appendFileSync).mockImplementationOnce(() => { throw new Error('No write perms'); });
-    const req = makeRequest({ context: 'TEST', error: { message: 'err' } });
+    const req = makeRequest({ context: 'TEST', error: 'err' });
     const res = await POST(req);
     expect(res.status).toBe(200);
     expect((await res.json()).success).toBe(true);

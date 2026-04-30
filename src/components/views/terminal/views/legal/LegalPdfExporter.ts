@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
@@ -26,7 +25,7 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
         const logoFormat = receiptData.logo_url.split(';')[0].split('/')[1].toUpperCase();
         docInstance.addImage(receiptData.logo_url, logoFormat === 'PNG' ? 'PNG' : 'JPEG', 15, yOffset + 14, 20, 20);
       } catch (e) {
-        logger.warn('DATABASE', 'COULD_NOT_ADD_LOGO_TO_PDF', { data: e })
+        console.warn('Could not add logo to PDF', e);
       }
     }
 

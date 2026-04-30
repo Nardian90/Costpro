@@ -1,14 +1,26 @@
-import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAuthClient } from '@/lib/supabaseClient';
-import { syncBatchSchema } from '@/validation/schemas';
-import { withAuth } from '@/lib/auth-middleware';
+import { createClient } from '@supabase/supabase-js';
+import { syncBatchSchema, syncBatchResponseSchema } from '@/validation/schemas';
+import { z } from 'zod';
 
-export const runtime = 'nodejs';
+// We use the service role key to bypass RLS when checking/updating sync_log,
+// but we'll use the user's session for the actual operations to respect their permissions.
+// Actually, it's better to use the user's client for operations and service role only for sync_log if needed.
+// But for simplicity and safety, we'll use the user's client for everything and handle sync_log with it.
 
-const handler = withAuth(async (req, session) => {
+export async function POST(req: NextRequest) {
   try {
-    const supabase = getSupabaseAuthClient(session.token);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: req.headers.get('Authorization') || '',
+          },
+        },
+      }
+    );
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -106,9 +118,11 @@ const handler = withAuth(async (req, session) => {
                 .eq('reference_doc', `${op.payload.p_supplier} | ${op.payload.p_invoice_number}`)
                 .maybeSingle();
               serverData = data;
+            } else if (op.entity === 'sale' && op.payload.p_invoice_number) {
+               // Similar for sales if they had an invoice number
             }
           } catch (fetchErr) {
-            logger.warn('DATABASE', 'FAILED_TO_FETCH_SERVER_DATA_FOR_CONFLICT:', { data: fetchErr })
+            console.warn('Failed to fetch server data for conflict:', fetchErr);
           }
         }
 
@@ -126,8 +140,4 @@ const handler = withAuth(async (req, session) => {
     console.error('Batch sync error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
-});
-
-export async function POST(req: NextRequest) {
-  return handler(req);
 }

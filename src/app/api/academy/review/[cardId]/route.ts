@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateSM2 } from '@/lib/academy/sm2';
-import { academyReviewSchema, zodError } from '@/validation/api-schemas';
 import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
@@ -14,12 +13,7 @@ export async function POST(
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const userId = session.user.id;
-  const rawBody = await req.json();
-  const parsed = academyReviewSchema.safeParse(rawBody);
-  if (!parsed.success) {
-    return NextResponse.json(zodError(parsed.error), { status: 400 });
-  }
-  const { score } = parsed.data; // 0-5
+  const { score } = await req.json(); // 0-5
   const { cardId } = await params;
 
   try {

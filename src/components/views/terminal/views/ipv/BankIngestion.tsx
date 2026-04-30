@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 'use client';
 import { Card } from '@/components/ui/card';
 
@@ -189,7 +188,7 @@ export function BankIngestion() {
 
         if (validation.warnings.length > 0) {
             toast.warning(`Atención: ${validation.warnings.length} advertencias detectadas.`);
-            logger.warn('DATABASE', 'ADVERTENCIAS_DE_IMPORTACIÓN:', { data: validation.warnings })
+            console.warn("Advertencias de importación:", validation.warnings);
         }
 
         if (normalized.length > 0) {

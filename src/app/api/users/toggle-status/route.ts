@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
-import { toggleUserStatusSchema, zodError } from '@/validation/api-schemas';
+
 
 // Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
 function getSupabaseAdmin() {
@@ -20,7 +20,9 @@ function getSupabaseAdmin() {
   });
 }
 
+
 const handler = withRole('admin', async (req, session) => {
+
   try {
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -69,12 +71,11 @@ const handler = withRole('admin', async (req, session) => {
       }, { status: 403 });
     }
 
-    const rawBody = await req.json();
-    const parsed = toggleUserStatusSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    const { user_id, is_active } = await req.json();
+
+    if (!user_id) {
+      return NextResponse.json({ error: 'Falta user_id' }, { status: 400 });
     }
-    const { user_id, is_active } = parsed.data;
 
     // Update profile
     const { error: updateError } = await supabaseAdmin

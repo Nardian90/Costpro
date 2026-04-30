@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 'use client';
 
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
@@ -53,11 +52,10 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.warn('DATABASE', 'CHUNK_LOAD_ERROR', {
-      chunkName: this.props.chunkName,
-      message: error.message,
-      stack: error.stack
-    });
+    console.warn(
+      `[ChunkErrorBoundary${this.props.chunkName ? `: ${this.props.chunkName}` : ''}] Chunk load error caught:`,
+      error.message
+    );
   }
 
   handleRetry = () => {

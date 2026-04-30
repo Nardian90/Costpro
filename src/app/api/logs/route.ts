@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
-import { logsSchema, zodError } from '@/validation/api-schemas';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,12 +12,7 @@ export const dynamic = 'force-dynamic';
 const handler = withAuth(async (req, session) => {
 
   try {
-    const rawBody = await req.json();
-    const parsed = logsSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
-    const { context, error } = parsed.data;
+    const { context, error } = await req.json();
     const logEntry = `[${new Date().toISOString()}] [${context}] ${JSON.stringify(error)}\n`;
 
     try {

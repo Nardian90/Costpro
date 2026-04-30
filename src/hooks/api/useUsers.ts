@@ -32,7 +32,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
           // Fallback if full column set fails
           if (profilesRes.error && profilesRes.error.code === '42703') {
-             logger.warn('DATABASE', '[USEUSERS]_COLUMN_MISSING,_RETRYING_WITH_LIMITED_C')
+             console.warn('[useUsers] Column missing, retrying with limited columns');
              let retryQuery = supabase.from('profiles').select('id, full_name, email, is_active, store_id, active_store_id, created_at').order('full_name');
              if (isEncargado) {
                retryQuery = retryQuery.neq('role', 'admin');
@@ -50,7 +50,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
             membershipsRes = await supabase.from('user_store_memberships')
               .select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
           } catch (mErr) {
-            logger.warn('DATABASE', '[USEUSERS]_MEMBERSHIPS_FETCH_FAILED_SILENTLY:', { data: mErr })
+            console.warn('[useUsers] Memberships fetch failed silently:', mErr);
             membershipsRes = { data: [] };
           }
 

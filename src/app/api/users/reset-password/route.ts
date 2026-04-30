@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
-import { resetPasswordSchema, zodError } from '@/validation/api-schemas';
 
 
 function getSupabaseAdmin() {
@@ -43,13 +42,8 @@ const handler = withRole('admin', async (req, session) => {
       return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
     }
 
-    const rawBody = await req.json();
-    const parsed = resetPasswordSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
-    const { user_id } = parsed.data;
-
+    const { user_id } = await req.json();
+    if (!user_id) return NextResponse.json({ error: 'ID de usuario requerido' }, { status: 400 });
 
     const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user_id);
     if (getUserError || !targetUser.user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });

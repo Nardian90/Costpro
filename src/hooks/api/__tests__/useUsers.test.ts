@@ -31,17 +31,14 @@ describe('useUsers', () => {
         is_active: true,
         store_id: '550e8400-e29b-41d4-a716-446655440003',
         active_store_id: '550e8400-e29b-41d4-a716-446655440003',
-        created_at: new Date().toISOString(),
-        plan: 'free',
-        created_by: '550e8400-e29b-41d4-a716-446655440004'
+        created_at: new Date().toISOString()
     }];
 
     (supabase.from as any).mockImplementation((table: string) => {
         if (table === 'profiles') {
             return {
                 select: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: mockUsers, error: null }),
-                neq: vi.fn().mockReturnThis()
+                order: vi.fn().mockResolvedValue({ data: mockUsers, error: null })
             };
         }
         if (table === 'user_store_memberships') {

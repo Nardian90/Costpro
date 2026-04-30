@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 import { Parser } from 'expr-eval';
 import Decimal from 'decimal.js';
 
@@ -24,7 +23,7 @@ export function safeEvaluate(parser: Parser, expression: string, context?: Recor
     const start = Date.now();
     const result = compiled.evaluate(context as any);
     if (Date.now() - start > timeoutMs) {
-      logger.warn('COST_SHEET', `[Parser] Expression evaluation exceeded ${timeoutMs}ms: "${expression.substring(0, 50)}"`);
+      console.warn(`[Parser] Expression evaluation exceeded ${timeoutMs}ms: "${expression.substring(0, 50)}"`);
     }
 
     if (typeof result === 'number') return { result };

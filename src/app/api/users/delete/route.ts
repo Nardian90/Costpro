@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
-import { deleteUserSchema, zodError } from '@/validation/api-schemas';
 
 
 function getSupabaseAdmin() {
@@ -19,13 +18,8 @@ const handler = withRole('admin', async (req, session) => {
 
 
 
-    const rawBody = await req.json();
-    const parsed = deleteUserSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
-    const { user_id } = parsed.data;
-
+    const { user_id } = await req.json();
+    if (!user_id) return NextResponse.json({ error: 'Falta user_id' }, { status: 400 });
 
     const { data: requesterProfile } = await supabaseAdmin
       .from('profiles')

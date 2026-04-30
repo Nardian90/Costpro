@@ -1,4 +1,3 @@
-import { logger } from '@/lib/logger';
 import { type Dexie } from 'dexie';
 
 export interface BackupMetadata {
@@ -77,7 +76,7 @@ export async function importFullBackup(db: Dexie, file: File) {
                 if (!fullBackup.metadata || !fullBackup.data) {
                     // Fallback for old backup format
                     if (typeof fullBackup === 'object' && !Array.isArray(fullBackup)) {
-                         logger.warn('DATABASE', 'OLD_BACKUP_FORMAT_DETECTED._ATTEMPTING_LEGACY_IMPO')
+                         console.warn('Old backup format detected. Attempting legacy import.');
                          await db.transaction('rw', db.tables, async () => {
                             for (const table of db.tables) {
                                 await table.clear();
