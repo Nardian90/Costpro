@@ -145,6 +145,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
             className="hidden"
             ref={fileInputRef}
             onChange={handleImport}
+            aria-label="Importar plantilla MVT"
           />
           <Button
             variant="outline"

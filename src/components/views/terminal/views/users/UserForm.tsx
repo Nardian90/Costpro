@@ -116,10 +116,11 @@ export default function UserForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-x-auto no-scrollbar">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label htmlFor="user-fullname" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Nombre Completo
           </label>
           <input
+            id="user-fullname"
             {...register('fullName')}
             className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             placeholder="Ej: Juan Pérez"
@@ -130,10 +131,11 @@ export default function UserForm({
         </div>
 
         <div>
-          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label htmlFor="user-email" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Correo Electrónico
           </label>
           <input
+            id="user-email"
             {...register('email')}
             type="email"
             readOnly={mode === 'edit'}
@@ -150,10 +152,11 @@ export default function UserForm({
 
         {mode === 'create' && (
           <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
-             <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
+             <label htmlFor="user-password" className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
               Asignar Contraseña (Opcional)
             </label>
             <input
+              id="user-password"
               {...register('password')}
               type="password"
               placeholder="Dejar en blanco para enviar correo de recuperación"
@@ -170,10 +173,11 @@ export default function UserForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+            <label htmlFor="user-role" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
               Rol de Usuario
             </label>
             <select
+              id="user-role"
               {...register('role')}
               className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
             >
@@ -188,10 +192,11 @@ export default function UserForm({
           </div>
 
           <div>
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+            <label htmlFor="user-status" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
               Estado
             </label>
             <select
+              id="user-status"
               {...register('isActive', { setValueAs: (v) => v === 'true' || v === true })}
               className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
             >
@@ -204,10 +209,11 @@ export default function UserForm({
         {isAdmin && selectedRole === 'encargado' && (
           <div className="grid grid-cols-2 gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
             <div>
-              <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
+              <label htmlFor="user-max-stores" className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
                 Límite de Tiendas
               </label>
               <input
+                id="user-max-stores"
                 {...register('maxStoresLimit', { valueAsNumber: true })}
                 type="number"
                 min="1"
@@ -218,10 +224,11 @@ export default function UserForm({
               )}
             </div>
             <div>
-              <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
+              <label htmlFor="user-max-users" className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
                 Límite de Usuarios
               </label>
               <input
+                id="user-max-users"
                 {...register('maxUsersLimit', { valueAsNumber: true })}
                 type="number"
                 min="0"
@@ -241,9 +248,9 @@ export default function UserForm({
       {/* Tiendas Asignadas */}
       <div className="pt-4 border-t border-border">
         <div className="flex items-center justify-between mb-4">
-          <label className="text-xs font-black uppercase text-primary tracking-widest block">
+          <span className="text-xs font-black uppercase text-primary tracking-widest block">
             Tiendas Asignadas (Multi-Tienda)
-          </label>
+          </span>
           <button
             type="button"
             disabled={!canAddMoreStores}
@@ -277,8 +284,9 @@ export default function UserForm({
           {fields.map((field, index) => (
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 sm:gap-2 items-stretch sm:items-end bg-muted/20 p-4 sm:p-3 rounded-xl border border-border/50 relative group">
               <div className="flex-1 space-y-2">
-                 <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
+                 <label htmlFor={`membership-${index}-store`} className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
                  <select
+                  id={`membership-${index}-store`}
                   {...register(`memberships.${index}.store_id` as const)}
                   className={cn(
                     "w-full p-3.5 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
@@ -298,8 +306,9 @@ export default function UserForm({
               </div>
               <div className="grid grid-cols-2 sm:flex gap-2">
                 <div className="flex-1 sm:w-24 space-y-2">
-                  <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
+                  <label htmlFor={`membership-${index}-role`} className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
                   <select
+                    id={`membership-${index}-role`}
                     {...register(`memberships.${index}.role` as const)}
                     className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
@@ -313,8 +322,9 @@ export default function UserForm({
                   </select>
                 </div>
                 <div className="flex-1 sm:w-24 space-y-2">
-                   <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
+                   <label htmlFor={`membership-${index}-status`} className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
                    <select
+                    id={`membership-${index}-status`}
                     {...register(`memberships.${index}.status` as const)}
                     className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >

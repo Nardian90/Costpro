@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import { rateLimit } from '@/lib/rate-limit';
 
 
@@ -40,6 +40,7 @@ const handler = withAuth(async (req, session) => {
       const result = Papa.parse(text, { header: true, dynamicTyping: true });
       data = result.data;
     } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      const XLSX = await createWorkbook();
       const workbook = XLSX.read(buffer, { type: 'array' });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];

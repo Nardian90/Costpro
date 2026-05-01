@@ -39,6 +39,14 @@ interface HeaderProps {
   allStores?: any[];
 }
 
+function SidebarIcon({ sidebarState }: { sidebarState: string }) {
+  switch (sidebarState) {
+    case 'expanded': return <X className="w-5 h-5" />;
+    case 'rail': return <Layout className="w-5 h-5" />;
+    case 'closed': return <Menu className="w-5 h-5" />;
+  }
+}
+
 export const Header = ({
   sidebarState,
   toggleSidebar,
@@ -60,14 +68,6 @@ export const Header = ({
   const activeStore = storesToShow.find(s => s.id === user?.activeStoreId);
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
-  const SidebarIcon = () => {
-    switch (sidebarState) {
-      case 'expanded': return <X className="w-5 h-5" />;
-      case 'rail': return <Layout className="w-5 h-5" />;
-      case 'closed': return <Menu className="w-5 h-5" />;
-    }
-  };
-
   return (
     <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -77,7 +77,7 @@ export const Header = ({
             className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
             aria-label="Cambiar estado del menú"
           >
-            <SidebarIcon />
+            <SidebarIcon sidebarState={sidebarState} />
           </button>
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">

@@ -11,11 +11,12 @@ import {
 import { cn } from '@/lib/utils';
 import { Download, Upload, Plus, Trash2, Settings, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { CostSheetSection } from '@/types/cost-sheet';
 
 interface CostSheetSectionActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  section: any;
+  section: CostSheetSection | null;
   onExport: () => void;
   onImport: () => void;
   onAddRow: () => void;

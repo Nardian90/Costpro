@@ -308,6 +308,7 @@ export default function IPVControlPanel({ onSelect, onExportBackup, onImportBack
                             onChange={handleFileChange}
                             accept=".json"
                             className="hidden"
+                            aria-label="Importar respaldo de IPV"
                         />
                     </div>
                 </div>

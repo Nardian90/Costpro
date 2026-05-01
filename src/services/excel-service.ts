@@ -1,13 +1,14 @@
 
-import * as XLSX from 'xlsx';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import { toast } from 'sonner';
 import { CostSheetAnnex, CostSheetHeader, CostSheetSection, CostSheetRow } from '@/types/cost-sheet';
 
 /**
  * Utility to export an annex to Excel
  */
-export const exportAnnexToExcel = (annex: CostSheetAnnex, fileName?: string) => {
+export const exportAnnexToExcel = async (annex: CostSheetAnnex, fileName?: string) => {
   try {
+    const XLSX = await createWorkbook();
     const name = fileName || `Anexo ${annex.id} - ${annex.title}`;
 
     // Map data to use labels as headers
@@ -35,7 +36,8 @@ export const exportAnnexToExcel = (annex: CostSheetAnnex, fileName?: string) => 
 /**
  * Utility to import an annex from Excel
  */
-export const importAnnexFromExcel = (file: File, annex: CostSheetAnnex): Promise<any[]> => {
+export const importAnnexFromExcel = async (file: File, annex: CostSheetAnnex): Promise<any[]> => {
+  const XLSX = await createWorkbook();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -81,8 +83,9 @@ export const importAnnexFromExcel = (file: File, annex: CostSheetAnnex): Promise
 /**
  * Utility to export a template for massive cost sheet generation
  */
-export const exportMassiveTemplate = () => {
+export const exportMassiveTemplate = async () => {
   try {
+    const XLSX = await createWorkbook();
     const template = [
       {
         'SKU': 'SKU001',
@@ -117,7 +120,8 @@ export const exportMassiveTemplate = () => {
 /**
  * Utility to import product list for massive generation
  */
-export const importMassiveProducts = (file: File): Promise<any[]> => {
+export const importMassiveProducts = async (file: File): Promise<any[]> => {
+  const XLSX = await createWorkbook();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -151,8 +155,9 @@ export const importMassiveProducts = (file: File): Promise<any[]> => {
   });
 };
 
-export const exportHeaderToExcel = (header: CostSheetHeader, fileName?: string) => {
+export const exportHeaderToExcel = async (header: CostSheetHeader, fileName?: string) => {
   try {
+    const XLSX = await createWorkbook();
     const name = fileName || `Encabezado - ${header.name || 'Ficha'}`;
 
     // Format header as a single row with labels
@@ -189,7 +194,8 @@ export const exportHeaderToExcel = (header: CostSheetHeader, fileName?: string) 
 /**
  * Utility to import header from Excel
  */
-export const importHeaderFromExcel = (file: File): Promise<Partial<CostSheetHeader>> => {
+export const importHeaderFromExcel = async (file: File): Promise<Partial<CostSheetHeader>> => {
+  const XLSX = await createWorkbook();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -240,8 +246,9 @@ export const importHeaderFromExcel = (file: File): Promise<Partial<CostSheetHead
 /**
  * Utility to export a section of the main table to Excel
  */
-export const exportSectionToExcel = (section: CostSheetSection, calculatedValues: any, fileName?: string) => {
+export const exportSectionToExcel = async (section: CostSheetSection, calculatedValues: any, fileName?: string) => {
   try {
+    const XLSX = await createWorkbook();
     const name = fileName || `Sección - ${section.label}`;
 
     const flattenRows = (rows: CostSheetRow[], level = 0, numbering = ''): any[] => {
@@ -282,7 +289,8 @@ export const exportSectionToExcel = (section: CostSheetSection, calculatedValues
 /**
  * Utility to import section rows from Excel
  */
-export const importSectionFromExcel = (file: File): Promise<CostSheetRow[]> => {
+export const importSectionFromExcel = async (file: File): Promise<CostSheetRow[]> => {
+  const XLSX = await createWorkbook();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {

@@ -41,7 +41,7 @@ vi.mock('../../dexie', () => ({
 }));
 
 // Import after mock
-import { analizarVentas, descomponerUnidades, corregirNegativos, reconstruirRecepciones, generarRecepcionDesdeSaldoInicial } from '../intelligentEngine';
+import { descomponerUnidades, corregirNegativos, reconstruirRecepciones, generarRecepcionDesdeSaldoInicial } from '../intelligentEngine';
 import { db } from '../../dexie';
 
 describe('Intelligent Receipts Engine', () => {
@@ -95,7 +95,7 @@ describe('Intelligent Receipts Engine', () => {
             ];
 
             vi.spyOn(db.products, 'where').mockReturnThis();
-            vi.spyOn(db.products, 'above').mockReturnValue({
+            vi.spyOn(db.products as any, 'above').mockReturnValue({
                 toArray: vi.fn().mockResolvedValue(products)
             } as any);
 

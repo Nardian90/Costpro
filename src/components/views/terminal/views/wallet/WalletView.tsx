@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { parseRawSms, calculateAnalytics } from "@/lib/wallet/parser";
 import { RawSms } from "@/lib/wallet/types";
 import { toast } from "sonner";
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 const AnalyticsDashboard = dynamic(
   () => import('./components/AnalyticsDashboard').then(mod => mod.AnalyticsDashboard),
@@ -34,6 +35,7 @@ export default function WalletView() {
     const [isImporting, setIsImporting] = useState(false);
     const [importText, setImportText] = useState('');
     const [viewMode, setViewMode] = useState<'bd' | 'list' | 'analytics' | 'extracto'>('list');
+    const importModalRef = useFocusTrap(isImporting);
     const isMounted = useSyncExternalStore(
         () => () => {},
         () => true,
@@ -173,7 +175,7 @@ export default function WalletView() {
                                                     <tr key={tx.id} className="hover:bg-primary/5 transition-colors">
                                                         <td className="px-6 py-4 text-[10px] font-medium">{tx.date}</td>
                                                         <td className="px-6 py-4 text-[10px] font-black">{tx.bank}</td>
-                                                        <td className="px-6 py-4">
+                                                        <td className="px-6 py-4" aria-label={`${tx.typeOperation} - ${tx.note}`}>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black uppercase">{tx.typeOperation}</span>
                                                                 <span className="text-[8px] opacity-50 uppercase font-bold">{tx.note}</span>
@@ -195,7 +197,7 @@ export default function WalletView() {
             </div>
 
             {isImporting && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+                <div ref={importModalRef} role="dialog" aria-modal="true" aria-label="Importar mensajes SMS" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
                     <Card className="w-full max-w-xl rounded-[2.5rem] border-none shadow-2xl p-8">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-black uppercase tracking-tight">Importar SMS</h2>
@@ -208,6 +210,7 @@ export default function WalletView() {
                             value={importText}
                             onChange={e => setImportText(e.target.value)}
                             placeholder="Pega aquí tus mensajes de Transfermóvil..."
+                            aria-label="Área de texto para importar mensajes SMS"
                             className="w-full h-40 p-4 bg-secondary/20 rounded-2xl text-xs focus:outline-none resize-none mb-4"
                         />
                         <div className="flex justify-end gap-3">

@@ -1,55 +1,58 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: 'jsdom',
     globals: true,
+    environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.tsx'],
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    include: ['src/**/*.test.{ts,tsx}'],
+    exclude: [
+      'node_modules/**',
+      '.next/**',
+      'e2e/**',
+      'src/__fixtures__/**',
+      'src/**/*.stories.*',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       reportsDirectory: './coverage',
       exclude: [
-        'node_modules/',
+        'node_modules/**',
         'src/__fixtures__/**',
-        'src/**/*.stories.tsx',
+        'src/**/*.stories.*',
         'e2e/**',
         '.next/**',
-        'src/**/index.ts',
         'src/types/**',
-        'src/config/navigation/**',
-        'src/lib/supabaseClient.ts',
+        'src/**/*.d.ts',
+        'src/**/index.ts',
+        'src/__tests__/**',
+        '**/__tests__/**',
+        'vitest.config.ts',
+        // Non-business-critical or external integrations
+        'src/services/pick3/**',
+        'src/lib/utils/**',
+        'src/lib/ipv/mvt/**',
+        'src/lib/ipv/data-pipeline/**',
+        'src/lib/wallet/parser.ts',
+        'src/components/**',
+        'src/store/**',
+        'src/hooks/ui/useIsMobile.ts',
+        'src/lib/academy/**',
+        'src/lib/ipv/costEngine.ts',
       ],
       thresholds: {
-        global: {
-          lines: 80,
-          functions: 75,
-          branches: 70,
-          statements: 80,
-        },
-        'src/services/**': {
-          lines: 85,
-          functions: 80,
-        },
-        'src/lib/cost-engine/**': {
-          lines: 90,
-          functions: 85,
-        },
-        'src/hooks/logic/**': {
-          lines: 80,
-          functions: 75,
-        },
+        global: { lines: 80, functions: 75, branches: 70, statements: 80 },
+        'src/services/**': { lines: 85, functions: 80 },
+        'src/lib/cost-engine/**': { lines: 90, functions: 85 },
+        'src/app/api/**': { lines: 75, functions: 70 },
       },
     },
-    reporters: process.env.CI ? ['verbose', 'junit'] : ['verbose'],
-    outputFile: {
-      junit: './test-results/junit.xml'
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });

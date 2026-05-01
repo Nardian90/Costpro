@@ -99,6 +99,7 @@ export default function InventoryCountCard({
                     type="number"
                     value={counted}
                     onChange={(e) => onQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                    aria-label={`Stock físico para ${product.name}`}
                     className="neu-input w-full h-12 text-center font-black text-xl text-primary bg-primary/5 border-primary/20 focus:ring-4 ring-primary/10 transition-all"
                   />
                 </div>

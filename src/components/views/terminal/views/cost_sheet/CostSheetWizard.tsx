@@ -10,11 +10,12 @@ import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetSignatureEditor from './CostSheetSignatureEditor';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { Progress } from '@/components/ui/progress';
+import type { CostSheetData, CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
 
 interface CostSheetWizardProps {
-  data: any;
-  calculatedValues: any;
-  calculatedHeader?: any;
+  data: CostSheetData;
+  calculatedValues: Record<string, CalculatedRowValue>;
+  calculatedHeader?: Partial<CostSheetHeader>;
 }
 
 const steps = [

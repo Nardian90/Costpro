@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'cost_module_expert_state';
 
@@ -22,28 +22,26 @@ const initialState: ExpertModeState = {
   isProblemsOpen: false,
 };
 
-export const useExpertModeState = () => {
-  const [state, setState] = useState<ExpertModeState>(initialState);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
+function loadStoredExpertState(): ExpertModeState {
+  if (typeof window === 'undefined') return initialState;
+  try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setState(parsed);
-      } catch (e) {
-        console.error('Error parsing expert mode state', e);
-      }
-    }
-    setIsLoaded(true);
-  }, []);
+    if (saved) return JSON.parse(saved) as ExpertModeState;
+  } catch (e) {
+    console.error('Error parsing expert mode state', e);
+  }
+  return initialState;
+}
+
+const emptySubscribe = () => () => {};
+
+export const useExpertModeState = () => {
+  const [state, setState] = useState<ExpertModeState>(loadStoredExpertState);
+  const isLoaded = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-  }, [state, isLoaded]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
 
   const toggleSection = useCallback((sectionId: string) => {
     setState(prev => {

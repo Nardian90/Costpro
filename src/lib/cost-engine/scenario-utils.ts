@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import { CostSheetData, ScenarioId } from '@/types/cost-sheet';
+import { CostSheetData, CostSheetRow, ScenarioId } from '@/types/cost-sheet';
 export const mergeScenarioValues = (baseData: CostSheetData, scenarioId: ScenarioId): CostSheetData => {
   const scenario = baseData.scenarios?.find(s => s.id === scenarioId);
   if (!scenario) return baseData;
@@ -7,7 +7,7 @@ export const mergeScenarioValues = (baseData: CostSheetData, scenarioId: Scenari
     if (scenario.header) draft.header = { ...draft.header, ...scenario.header };
     const values = scenario.values;
     draft.sections.forEach(section => {
-      const processRows = (rows: any[]) => {
+      const processRows = (rows: CostSheetRow[]) => {
         rows.forEach(row => {
           if (values[row.id]) {
             const v = values[row.id];

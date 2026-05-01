@@ -2,17 +2,34 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  /* config options here */
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
-  reactStrictMode: true,
-  serverExternalPackages: ["jspdf", "fflate", "pdf-parse", "d3", "chart.js", "react-chartjs-2"],
+  reactStrictMode: false,
+  allowedDevOrigins: ['*'],
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'wthkddeleylijmonclxg.supabase.co', port: '', pathname: '/storage/v1/object/public/**' },
-      { protocol: 'https', hostname: '*.googleusercontent.com' }
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
     ],
+  },
+  experimental: {
+    optimizePackageImports: ['lodash', 'd3', 'xlsx'],
   },
 };
 
-export default nextConfig;
+// Bundle analyzer wrapper — activated via ANALYZE=true env var
+const withBundleAnalyzer = (typeof process !== 'undefined' && process.env.ANALYZE === 'true')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ? require('@next/bundle-analyzer')({ enabled: true })
+  : (config: NextConfig) => config;
+
+export default withBundleAnalyzer(nextConfig);

@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { DarianEditor } from './DarianEditor';
 import { CostSheetCalculator } from './CostSheetCalculator';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
+import type { CostSheetData } from '@/types/cost-sheet';
 
 interface CostSheetSidePanelProps {
   isOpen: boolean;
@@ -14,7 +16,7 @@ interface CostSheetSidePanelProps {
   onClose: () => void;
   onExpand?: () => void;
   mode: 'calculator' | 'ai' | 'both';
-  sheetData: any;
+  sheetData?: CostSheetData;
 }
 
 export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
@@ -28,6 +30,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
   const isMobile = useIsMobile();
   const [isFullView, setIsFullView] = useState(false);
   const [isTriggerExpanded, setIsTriggerExpanded] = useState(false);
+  const panelRef = useFocusTrap(isOpen);
 
   const panelVariants: Variants = {
     closed: {
@@ -219,6 +222,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
 
             {/* Side Panel */}
             <motion.aside
+              ref={panelRef}
               variants={panelVariants}
               initial="closed"
               animate="open"
@@ -231,6 +235,9 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     : (mode === 'both' ? "w-[850px] max-w-[95vw] left-4 top-1/2" : (isFullView ? "w-[85vw] h-[85vh] left-[7.5vw] top-[7.5vh]" : "w-[400px] left-4 top-1/2")),
                 !isMobile && (isFullView || mode === 'both' ? "" : "h-[680px] max-h-[92vh]")
               )}
+              role="dialog"
+              aria-modal="true"
+              aria-label={mode === 'both' ? 'Centro de control multitarea' : (mode === 'calculator' ? 'Calculadora Pro' : 'Asistente Darian')}
             >
               {/* Header */}
               <div className={cn(

@@ -1,3 +1,5 @@
+'use client';
+
 import { debounce } from 'lodash';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';

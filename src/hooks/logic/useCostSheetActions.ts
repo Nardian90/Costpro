@@ -4,11 +4,8 @@ import { useCallback, useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
-import {
-  ExportOptions,
-  CostSheetData,
-  CalculatedRowValue
-} from '@/types/cost-sheet';
+import { CostSheetData, CalculatedRowValue } from '@/types/cost-sheet';
+import { ExportOptions } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
 import {
   ArrowLeft,
   Eye,

@@ -20,7 +20,7 @@ const handler = withAuth(async (req, session) => {
     logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
     // 1. Fetch from Web Sources (Fast)
-    let webResults = [];
+    let webResults: import('@/types/pick3').Pick3Result[] = [];
     try {
         webResults = await Pick3ScraperService.getCleanOfficialResults();
         if (webResults.length > 0) {
@@ -31,7 +31,7 @@ const handler = withAuth(async (req, session) => {
     }
 
     // 2. Fetch from PDF (Source of Truth)
-    let pdfResults = [];
+    let pdfResults: import('@/types/pick3').Pick3Result[] = [];
     try {
         pdfResults = await Pick3PdfService.syncFromPdf();
     } catch (pdfError) {

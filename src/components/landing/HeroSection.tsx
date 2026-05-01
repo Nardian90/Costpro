@@ -211,6 +211,7 @@ function ParticleRain() {
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ opacity: 0.8 }}
+        aria-hidden="true"
       />
     </div>
   );
@@ -283,7 +284,7 @@ export default function HeroSection({
           left: '-8%',
           right: '-8%',
           bottom: '-8%',
-          backgroundImage: `url('/enhanced-bg.jpg')`,
+          backgroundImage: `url('/fondo-landing.webp')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
@@ -562,6 +563,7 @@ export default function HeroSection({
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
                 readOnly
+                aria-label="Buscar funciones"
               />
               <kbd className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] text-white/20 font-mono">
                 ⌘K

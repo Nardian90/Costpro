@@ -19,6 +19,9 @@ type Row = {
   isPercent?: boolean;
   /** @deprecated Use isPercent instead */
   is_percent?: boolean;
+  value?: unknown;
+  um?: string;
+  unit?: string;
 };
 
 type Section = {
@@ -34,7 +37,7 @@ type CostSheetBodyProps = {
 };
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues, forceTable }) => {
-  const renderRow = (row: any, level: number = 0, numbering: string) => {
+  const renderRow = (row: Row, level: number = 0, numbering: string) => {
       const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, calculatedVH: 0, baseTotal: 0, coeficiente: 0 };
       const isZero = Number(calc.total) === 0;
       const hasChildren = row.children && row.children.length > 0;
@@ -68,7 +71,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     )}
                     {((row.isPercent ?? row.is_percent)) && (
                         <span className="ml-2 text-xs font-bold text-muted-foreground bg-muted dark:bg-primary px-1.5 py-0.5 rounded">
-                            {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
+                            {((Number(row.value) || calc.valorHistorico || 0) * 100).toFixed(2)}%
                         </span>
                     )}
                 </td>
@@ -91,7 +94,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     {formatCurrency(calc.total).replace('$', '').trim()}
                 </td>
             </tr>
-            {row.children?.map((child: any, idx: number) => renderRow(child, level + 1, `${numbering}.${idx + 1}`))}
+            {row.children?.map((child: Row, idx: number) => renderRow(child, level + 1, `${numbering}.${idx + 1}`))}
         </React.Fragment>
       );
   };

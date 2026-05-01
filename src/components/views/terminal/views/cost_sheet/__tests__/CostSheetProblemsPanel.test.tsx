@@ -4,8 +4,8 @@ import { describe, it, expect, vi } from 'vitest';
 
 describe('CostSheetProblemsPanel', () => {
   const mockProblems = [
-    { type: 'CRITICAL', message: 'Falta valor base', rowId: 'row-1' },
-    { type: 'WARNING', message: 'Revisar coeficientes', rowId: 'row-2' }
+    { type: 'CRITICAL' as const, message: 'Falta valor base', rowId: 'row-1', code: 'MISSING_REF' as const },
+    { type: 'WARNING' as const, message: 'Revisar coeficientes', rowId: 'row-2', code: 'SEMANTIC_DISCREPANCY' as const }
   ];
 
   it('no renderiza nada si no hay problemas', () => {

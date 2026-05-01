@@ -346,12 +346,12 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
           {/* FIX #014: Terms & Conditions */}
           <motion.p className="text-center text-xs text-muted-foreground/60" variants={itemVariants}>
             Al continuar, aceptas los{' '}
-            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'terminos' })); }}>
+            <button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'terminos' }))}>
               Términos de Servicio
-            </a>{' '}y{' '}
-            <a href="#" className="text-primary hover:underline underline-offset-4" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'privacidad' })); }}>
+            </button>{' '}y{' '}
+            <button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'privacidad' }))}>
               Política de Privacidad
-            </a>
+            </button>
           </motion.p>
           {/* Register Link */}
           <motion.p className="text-center text-sm text-muted-foreground" variants={itemVariants}>

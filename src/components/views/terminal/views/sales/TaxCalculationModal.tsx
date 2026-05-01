@@ -14,8 +14,7 @@ import { Transaction } from '@/types';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
-import jspdf from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 
 interface TaxCalculationModalProps {
   isOpen: boolean;
@@ -44,8 +43,8 @@ export const TaxCalculationModal = ({
     return tax.value;
   };
 
-  const handleExportPDF = () => {
-    const doc = new jspdf();
+  const handleExportPDF = async () => {
+    const doc = await createPDFDocument();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Header
@@ -57,7 +56,7 @@ export const TaxCalculationModal = ({
     doc.text(`Facturas seleccionadas: ${selectedTransactions.length}`, 14, 40);
 
     // Summary Table
-    autoTable(doc, {
+    (doc as any).autoTable({
       startY: 50,
       head: [['Concepto', 'Base de Cálculo', 'Cálculo', 'Total']],
       body: [
@@ -81,7 +80,7 @@ export const TaxCalculationModal = ({
         doc.setFontSize(16);
         doc.text(`Detalle de Impuesto: ${tax.name}`, 14, 20);
 
-        autoTable(doc, {
+        (doc as any).autoTable({
           startY: 30,
           head: [['Concepto', 'Base', 'Tasa', 'Total']],
           body: [
@@ -95,7 +94,7 @@ export const TaxCalculationModal = ({
         if (includeAnnex) {
           doc.setFontSize(12);
           doc.text('Anexo de Facturas (esta sección)', 14, (doc as any).lastAutoTable.finalY + 15);
-          autoTable(doc, {
+          (doc as any).autoTable({
             startY: (doc as any).lastAutoTable.finalY + 20,
             head: [['Referencia', 'Monto']],
             body: selectedTransactions.map(t => [t.id.split('-')[0].toUpperCase(), formatCurrency(t.total_amount)]),
@@ -108,7 +107,7 @@ export const TaxCalculationModal = ({
         doc.setFontSize(12);
         doc.text('Anexo: Detalle de Facturas', 14, (doc as any).lastAutoTable.finalY + 15);
 
-        autoTable(doc, {
+        (doc as any).autoTable({
           startY: (doc as any).lastAutoTable.finalY + 20,
           head: [['Referencia', 'Fecha', 'Monto']],
           body: selectedTransactions.map(t => [

@@ -1,10 +1,9 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export class ReleaseGatePdfExporter {
-  static exportHealthReport(data: any) {
+  static async exportHealthReport(data: any) {
     if (!data || !data.shi || !data.mri) {
       console.error('Invalid health data for export');
       return;
@@ -13,7 +12,7 @@ export class ReleaseGatePdfExporter {
     const { shi, mri, version, timestamp } = data;
 
     try {
-      const doc = new jsPDF();
+      const doc = await createPDFDocument();
       const dateStr = format(new Date(timestamp || new Date()), 'dd/MM/yyyy HH:mm', { locale: es });
 
       // Header

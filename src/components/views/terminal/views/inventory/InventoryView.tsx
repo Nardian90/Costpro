@@ -27,7 +27,7 @@ const PAGE_LIMIT = 20;
 
 const EmptyInventoryComponent = () => (
     <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
-        <Package className="w-16 h-16 mx-auto mb-6 opacity-5" />
+        <Package className="w-16 h-16 mx-auto mb-6 opacity-5" aria-hidden="true" />
         <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Inventario Vacío</p>
         <p className="text-sm text-muted-foreground mt-2">No se encontraron productos. Intenta con otra búsqueda o filtro.</p>
     </div>
@@ -178,7 +178,7 @@ export default function InventoryView() {
                     onChange={setSearchTerm}
                     placeholder="Buscar por nombre o SKU en inventario..."
                     showSettings={false}
-                    aria-label="Buscar productos en el catálogo por nombre o SKU"
+                    aria-label="Buscar productos en el inventario por nombre o código SKU"
                 />
 
                 <CategoryChips
@@ -188,7 +188,7 @@ export default function InventoryView() {
                 />
             </div>
 
-            <div className={cn(isPending && "opacity-50 transition-opacity")}>
+            <div className={cn(isPending && "opacity-50 transition-opacity")} role="list" aria-label="Lista de productos del inventario">
                 <StateRenderer
                     isLoading={isLoading}
                     error={error as Error | null}

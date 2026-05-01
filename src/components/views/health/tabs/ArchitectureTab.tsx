@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraphViewer } from '../components/GraphViewer';
+import { GraphViewer } from '../components/GraphViewerLazy';
 import { JsonViewer } from '../components/JsonViewer';
 import { HealthData } from '../hooks/useHealthData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

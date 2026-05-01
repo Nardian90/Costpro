@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { cn, formatCurrencyCents } from '@/lib/utils';
 import { SC204Metadata, Product } from '@/lib/dexie';
 
@@ -33,7 +34,7 @@ export function SC204Preview({ data, className }: SC204PreviewProps) {
       {/* Header section */}
       <div className="flex justify-between items-start mb-4 border-b-2 border-black pb-2">
         <div className="flex gap-4">
-            {data.logo_url && <img src={data.logo_url} alt="Logo" className="w-12 h-12 object-contain" />}
+            {data.logo_url && <Image src={data.logo_url} alt="Logo de entidad" width={48} height={48} className="w-12 h-12 object-contain" unoptimized />}
             <div>
                 <div className="font-bold">ENTIDAD RECEPTORA: <span className="font-normal border-b border-black inline-block min-w-[150px]">{data.entidad_nombre} ({data.entidad_codigo})</span></div>
                 <div className="font-bold mt-1">ALMACÉN RECEPTOR: <span className="font-normal border-b border-black inline-block min-w-[150px]">{data.almacen_nombre} ({data.almacen_codigo})</span></div>
@@ -101,7 +102,7 @@ export function SC204Preview({ data, className }: SC204PreviewProps) {
             <tr>
                 <td colSpan={5} className="border border-black p-1 font-bold text-right uppercase">Importe Total del Modelo:</td>
                 <td className="border border-black p-1 font-black text-right bg-muted/30">{formatCurrencyCents(data.total_importe_cents)}</td>
-                <td className="border border-black p-1 bg-muted/10"></td>
+                <td className="border border-black p-1 bg-muted/10" aria-hidden="true"></td>
             </tr>
         </tbody>
       </table>

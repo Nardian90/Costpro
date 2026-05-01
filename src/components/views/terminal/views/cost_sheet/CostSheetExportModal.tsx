@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -108,7 +109,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
         <DialogHeader className="p-6 sm:p-8 pb-4 shrink-0 bg-sidebar/50 backdrop-blur-md border-b border-sidebar-border/50">
           <div className="flex items-center gap-4 mb-2">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Download className="w-6 h-6" />
+              <Download className="w-6 h-6" aria-hidden="true" />
             </div>
             <div>
               <DialogTitle className="text-2xl font-black tracking-tight">Exportar Documentos</DialogTitle>
@@ -122,7 +123,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
         <ScrollArea className="flex-1 px-6 sm:px-8 py-6">
             <div className="space-y-8 pb-6">
                 {/* Format selection */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Seleccionar formato de exportación PDF">
                     <button
                         onClick={() => setOptions(prev => ({ ...prev, pdfFormat: 'standard' }))}
                         className={cn(
@@ -131,12 +132,16 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
                                 : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
                         )}
+                        type="button"
+                        role="radio"
+                        aria-checked={options.pdfFormat === 'standard'}
+                        aria-label="Modo Estándar: formato básico y limpio"
                     >
                         <div className={cn(
                             "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
                             options.pdfFormat === 'standard' ? "bg-primary text-primary-foreground" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
                         )}>
-                            <FileText className="w-5 h-5" />
+                            <FileText className="w-5 h-5" aria-hidden="true" />
                         </div>
                         <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Estándar</span>
                         <span className="text-xs text-muted-foreground font-medium">Básico y limpio</span>
@@ -150,12 +155,16 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 ? "bg-amber-500/5 border-amber-500 shadow-lg shadow-amber-500/5"
                                 : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
                         )}
+                        type="button"
+                        role="radio"
+                        aria-checked={options.pdfFormat === 'pro'}
+                        aria-label="Modo Pro: con logo corporativo"
                     >
                         <div className={cn(
                             "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
                             options.pdfFormat === 'pro' ? "bg-amber-500 text-white" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
                         )}>
-                            <ImagePlus className="w-5 h-5" />
+                            <ImagePlus className="w-5 h-5" aria-hidden="true" />
                         </div>
                         <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Pro</span>
                         <span className="text-xs text-muted-foreground font-medium">Con logo corporativo</span>
@@ -176,11 +185,12 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 className="hidden"
                                 accept="image/*"
                                 onChange={handleLogoUpload}
+                                aria-label="Seleccionar archivo de logo corporativo"
                             />
                             {options.logo ? (
                                 <div className="flex items-center gap-4">
                                     <div className="w-16 h-16 rounded-2xl border-2 border-amber-500/20 bg-white p-2 overflow-hidden">
-                                        <img src={options.logo} alt="Logo" className="w-full h-full object-contain" />
+                                        <Image src={options.logo} alt="Logo corporativo de exportación" width={48} height={48} className="w-full h-full object-contain" unoptimized />
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-xs font-bold text-muted-foreground truncate">Logo cargado</p>
@@ -191,7 +201,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                             className="h-7 mt-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10 px-2"
                                             onClick={handleRemoveLogo}
                                         >
-                                            <X className="w-3 h-3 mr-1" />
+                                            <X className="w-3 h-3 mr-1" aria-hidden="true" />
                                             Eliminar
                                         </Button>
                                     </div>
@@ -204,7 +214,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                     className="w-full h-9 text-xs font-bold border-dashed border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
                                     onClick={() => fileInputRef.current?.click()}
                                 >
-                                    <Upload className="w-3.5 h-3.5 mr-2" />
+                                    <Upload className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
                                     Subir Logo
                                 </Button>
                             )}
@@ -221,7 +231,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                     <div className="grid gap-3">
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
                             <div className="flex items-center gap-3">
-                                <FileText className="w-4 h-4 text-muted-foreground" />
+                                <FileText className="w-4 h-4" aria-hidden="true" />
                                 <Label htmlFor="includeFC" className="font-bold text-sm cursor-pointer">Ficha de Costo (FC)</Label>
                             </div>
                             <Checkbox
@@ -233,7 +243,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
                             <div className="flex items-center gap-3">
-                                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+                                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                                 <Label htmlFor="includeAudit" className="font-bold text-sm cursor-pointer">Trazabilidad (Auditoría)</Label>
                             </div>
                             <Checkbox
@@ -254,8 +264,10 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
+                            type="button"
                             className="h-auto p-0 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary"
                             onClick={handleSelectAllAnnexes}
+                            aria-label={options.includeAnnexes.length === annexes.length ? 'Desmarcar todos los anexos' : 'Marcar todos los anexos'}
                         >
                             {options.includeAnnexes.length === annexes.length ? 'Desmarcar Todos' : 'Marcar Todos'}
                         </Button>

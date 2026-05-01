@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { cn, formatDate } from '@/lib/utils';
+import type { CostSheetHeader as CostSheetHeaderType } from '@/types/cost-sheet';
 
 type CostSheetHeaderProps = {
-  header: any;
+  header: Partial<CostSheetHeaderType>;
 };
 
 const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {

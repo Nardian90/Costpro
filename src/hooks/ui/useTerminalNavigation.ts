@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useCallback, useRef } from 'react';
 import { useMotionValue, useTransform } from 'framer-motion';
 import {

@@ -19,7 +19,8 @@ import {
     FileSpreadsheet,
     Download,
     Activity,
-    Edit3
+    Edit3,
+    ListFilter
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -54,13 +55,20 @@ import { CostSheetBanner } from './CostSheetBanner';
 import { SteelStructureCalculator } from './SteelStructureCalculator';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { UpgradeModal } from '@/components/modals/UpgradeModal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast } from 'sonner';
 import { LazyRender } from '@/components/ui/LazyRender';
 import dynamic from 'next/dynamic';
+import { cn } from '@/lib/utils';
+import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
+import { useScenarioStore } from '@/store/scenario-store';
+import type { CostSheetSection, CostSheetAnnex, CostSheetRow, ScenarioId } from '@/types/cost-sheet';
+import type { ValidationError as EngineValidationError } from '@/lib/cost-engine/types';
 
-const DarianEditor = dynamic(() => import('./DarianEditor'), { ssr: false });
+const DarianEditor = dynamic(() => import('./DarianEditor').then(m => ({ default: m.DarianEditor })), { ssr: false });
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
@@ -76,10 +84,7 @@ const CostSheetView = () => {
     validations,
     calculationResult,
     isBlocked,
-    deepValidationErrors,
-    calcV1,
-    calcV2,
-    calcV3
+    deepValidationErrors
   } = useCostSheetCalculator(data);
 
   // ── Extracted Hooks ─────────────────────────────────────────────────
@@ -140,18 +145,34 @@ const CostSheetView = () => {
     effectiveLayoutMode,
     activeSubSectionId,
     setActiveSubSectionId,
-    expandedSections,
-    toggleSection,
-    setHelpContext,
-    isComparisonMode,
-    toggleComparisonMode,
-    getSectionCompletion,
-    updateRowValue,
-    handleScenarioAction,
     groupedSections
   } = viewState;
 
   const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
+
+  // ── Scenario Store ──────────────────────────────────────────────────
+  const {
+    initializeScenarios,
+    isComparisonMode,
+    toggleComparisonMode,
+    updateRowValue: scenarioUpdateRowValue,
+    setPrimaryScenario,
+    createScenario: createScenarioFromStore,
+    deleteScenario
+  } = useScenarioStore();
+
+  const handleScenarioAction = (action: string, scenarioId: ScenarioId) => {
+    switch (action) {
+      case 'setPrimary': setPrimaryScenario(scenarioId); break;
+      case 'duplicate': createScenarioFromStore(scenarioId, 'Copia'); break;
+      case 'delete': deleteScenario(scenarioId); break;
+      case 'exportPdf': handleExportPDF({} as any); break;
+    }
+  };
+
+  const adapterUpdateRowValue = (scenarioId: ScenarioId, rowId: string, field: string, value: number) => {
+    scenarioUpdateRowValue(scenarioId, rowId, field as any, value);
+  };
 
   const isAnnexActive = useMemo(() => {
     return (data?.annexes || []).some(a => a.id === activeSection) || activeSection === 'all-annexes';
@@ -161,28 +182,14 @@ const CostSheetView = () => {
     if (isEditing && data && viewMode === 'expert') initializeScenarios();
   }, [isEditing, data?.id, viewMode, initializeScenarios]);
 
-  const { expandedSections, toggleSection, expandAllSections, setHelpContext, toggleProblems } = expertState;
-
-  const handleScenarioAction = (action: string, id: any) => {
-    switch (action) {
-      case 'setPrimary': setPrimaryScenario(id); break;
-      case 'duplicate': createScenario(id, 'Copia de ' + id); break;
-      case 'exportPdf': handleExportPDF({ includeFC: true, includeAnnexes: [], includeAudit: true, scenarioId: id } as any); break;
-    }
-  };
-
-  const getSectionCompletion = useCallback((section: any) => {
-    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
-    const filled = rows.filter((r: any) => calculatedValues[r.id]?.total !== 0);
-    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
-  }, [calculatedValues]);
+  const { expandAllSections, toggleProblems } = expertState;
 
   useExpertModeKeyboard({
-    toggleAllSections: () => expandAllSections(data.sections.map((s: any) => s.id)),
-    toggleHelp: () => setHelpContext('general'),
+    toggleAllSections: () => expandAllSections(data.sections.map((s: CostSheetSection) => s.id)),
+    toggleHelp: () => expertState.setHelpContext('general'),
     toggleProblems: () => toggleProblems(),
     toggleComparison: () => toggleComparisonMode(),
-    expandSection: (n: number) => data.sections[n-1] && toggleSection(data.sections[n-1].id),
+    expandSection: (n: number) => data.sections[n-1] && expertState.toggleSection(data.sections[n-1].id),
     save: handleExportJSON,
     closePanels: () => {},
     showShortcuts: () => {
@@ -226,21 +233,16 @@ const CostSheetView = () => {
   return (
     <div className="relative min-h-screen pb-32">
       <CostSheetBanner
-        data={data}
-        calculatedHeader={calculatedHeader}
-        isEditing={isEditing}
         viewMode={viewMode}
-        isBlocked={isBlocked}
-        onExport={handleExportPDF}
-        annexes={data?.annexes || []}
+        setViewMode={handleSetViewMode}
       />
 
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4" role="group" aria-label="Seleccionar modo de visualización de la ficha">
                   <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-primary/10 rounded-xl">
+                      <div className="p-2.5 bg-primary/10 rounded-xl" aria-hidden="true">
                           {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}
                           {viewMode === 'reading' && <BookOpen className="w-5 h-5 text-primary" />}
                           {viewMode === 'quick' && <ZapIcon className="w-5 h-5 text-primary" />}
@@ -255,10 +257,12 @@ const CostSheetView = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    type="button"
                     onClick={() => handleSetViewMode('expert')}
+                    aria-label={viewMode === 'assisted' ? 'Volver a Modo Experto desde Modo Asistido' : viewMode === 'reading' ? 'Volver a Modo Experto desde Modo Lectura' : 'Volver a Modo Experto desde Modo Rápido'}
                     className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
                   >
-                      <Table2 className="w-3.5 h-3.5 mr-2" />
+                      <Table2 className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
                       Volver a Modo Todo
                   </Button>
               </div>
@@ -306,7 +310,7 @@ const CostSheetView = () => {
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <div className="px-8 py-10 mb-6 bg-card rounded-[2.5rem] border border-border shadow-sm">
                                 <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
-                                    <ZapIcon className="w-8 h-8" />
+                                    <ZapIcon className="w-8 h-8" aria-hidden="true" />
                                     Ficha: Vista Consolidada
                                 </h2>
                                 <p className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground mt-2 pl-1">Exploración Progresiva Asistida</p>
@@ -315,7 +319,7 @@ const CostSheetView = () => {
                             {/* Header Section (Always Visible in Consolidada) */}
                             <div className="space-y-4">
                                 <div className="px-2 flex items-center gap-2">
-                                    <Edit3 className="w-3 h-3 text-muted-foreground" />
+                                    <Edit3 className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Datos Generales</h3>
                                 </div>
                                 <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
@@ -324,7 +328,7 @@ const CostSheetView = () => {
                             {/* Body Sections (Individual Accordions) */}
                             <div className="space-y-4">
                                 <div className="px-2 flex items-center gap-2">
-                                    <ListFilter className="w-3 h-3 text-muted-foreground" />
+                                    <ListFilter className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Estructura de Costos</h3>
                                 </div>
                                 {isComparisonMode ? (
@@ -332,14 +336,11 @@ const CostSheetView = () => {
                                         sections={data.sections}
                                         scenarios={data.scenarios || []}
                                         scenarioConfig={data.scenarioConfig}
-                                        calcV1={calcV1}
-                                        calcV2={calcV2}
-                                        calcV3={calcV3}
-                                        onUpdateRowValue={updateRowValue}
+                                        onUpdateRowValue={adapterUpdateRowValue}
                                         onScenarioAction={handleScenarioAction}
                                     />
                                 ) : (
-                                    (data?.sections || []).map((section: any) => (
+                                    (data?.sections || []).map((section: CostSheetSection) => (
                                         <ExpertModeAccordion
                                             key={section.id}
                                             id={section.id}
@@ -377,7 +378,7 @@ const CostSheetView = () => {
                             {/* Annexes Container */}
                             <div className="space-y-4">
                                 <div className="px-2 flex items-center gap-2">
-                                    <BookOpen className="w-3 h-3 text-muted-foreground" />
+                                    <BookOpen className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Anexos y Documentación</h3>
                                 </div>
                                 <ExpertModeAccordion
@@ -390,7 +391,7 @@ const CostSheetView = () => {
                                     className="border-primary/20 bg-primary/5"
                                 >
                                     <div className="space-y-4 pt-4">
-                                    {(data?.annexes || []).map((annex: any) => (
+                                    {(data?.annexes || []).map((annex: CostSheetAnnex) => (
                                         <ExpertModeAccordion
                                         key={annex.id}
                                         id={annex.id}
@@ -415,7 +416,7 @@ const CostSheetView = () => {
                             {/* Signatures at the end */}
                             <div className="space-y-4">
                                 <div className="px-2 flex items-center gap-2">
-                                    <Eye className="w-3 h-3 text-muted-foreground" />
+                                    <Eye className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
                                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Pie de Firma</h3>
                                 </div>
                                 <div className="animate-in fade-in duration-700">
@@ -428,7 +429,7 @@ const CostSheetView = () => {
                     {isAnnexActive && (activeSection !== 'all-content' && activeSection !== 'expert-content' && activeSection !== 'main') && (
                         <div className="space-y-12">
                             {activeSection === 'all-annexes' ? (
-                                (data?.annexes || []).map((annex: any) => (
+                                (data?.annexes || []).map((annex: CostSheetAnnex) => (
                                     <LazyRender key={annex.id}>
                                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                             <div className="flex items-center gap-4 px-6 py-4 bg-card rounded-2xl border border-border shadow-sm border-l-4 border-l-primary">
@@ -516,16 +517,18 @@ const CostSheetView = () => {
         <div className="animate-in zoom-in-95 duration-500">
             <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-muted/30 p-3 rounded-2xl gap-3">
                 <div className="flex items-center gap-3 px-2">
-                    <Eye className="w-4 h-4 text-muted-foreground" />
+                    <Eye className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                     <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Vista de Previsualización</span>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
+                    type="button"
                     onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
+                    aria-label="Ir al Editor de ficha en Modo Experto"
                     className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
-                    <Edit className="w-3.5 h-3.5 mr-2" />
+                    <Edit className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
                     Ir al Editor (Modo Todo)
                 </Button>
             </div>
@@ -551,12 +554,14 @@ const CostSheetView = () => {
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
+              type="button"
               onClick={() => setConfirmation({ ...confirmation, isOpen: false })}
               className="flex-1 sm:flex-none"
             >
               Cancelar
             </Button>
             <Button
+              type="button"
               variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
               onClick={() => {
                 confirmation.onConfirm();
@@ -573,8 +578,8 @@ const CostSheetView = () => {
       </BaseModal>
 
       <CostSheetProblemsPanel
-        problems={deepValidationErrors.map((e: any) => ({ ...e, sectionLabel: (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === e.rowId || (r.children && r.children.some((c: any) => c.id === e.rowId))))?.label }))}
-        onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: any = (data.sections as any[]).find(s => s.rows.some((r: any) => r.id === rowId || (r.children && r.children.some((c: any) => c.id === rowId)))); if (section && !expandedSections.includes(section.id)) toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
+        problems={deepValidationErrors.map((e: EngineValidationError) => ({ ...e, sectionLabel: (data.sections as CostSheetSection[]).find(s => s.rows.some((r: CostSheetRow) => r.id === e.rowId || (r.children && r.children.some((c: CostSheetRow) => c.id === e.rowId))))?.label }))}
+        onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: CostSheetSection | undefined = (data.sections as CostSheetSection[]).find(s => s.rows.some((r: CostSheetRow) => r.id === rowId || (r.children && r.children.some((c: CostSheetRow) => c.id === rowId)))); if (section && !expertState.expandedSections.includes(section.id)) expertState.toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
       />
     </div>
   );

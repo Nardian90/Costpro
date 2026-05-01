@@ -49,7 +49,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                 </thead>
                 <tbody className="divide-y divide-border/50 dark:divide-border">
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => {
-                    const isZero = (val: any) => Number(val) === 0;
+                    const isZero = (val: unknown) => Number(val) === 0;
                     return (
                         <tr key={rowIndex} className="h-auto sm:h-8 text-xs hover:bg-muted dark:hover:bg-muted/30 transition-colors">
                         {annex.columns.map((col: CostSheetColumn) => {
@@ -87,7 +87,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                     <tr className="bg-muted/50 font-bold border-t border-border">
                         {(() => {
                             const totalColIndex = totalColumn ? annex.columns.findIndex(c => c.key === totalColumn.key) : annex.columns.length - 1;
-                            const cells = [];
+                            const cells: React.ReactElement[] = [];
 
 
                             // Label cell
@@ -110,7 +110,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                             // Remaining empty cells
                             if (totalColIndex < annex.columns.length - 1) {
                                 for (let i = totalColIndex + 1; i < annex.columns.length; i++) {
-                                    cells.push(<td key={`empty-${i}`} className="p-4"></td>);
+                                    cells.push(<td key={`empty-${i}`} className="p-4" aria-hidden="true"></td>);
                                 }
                             }
 

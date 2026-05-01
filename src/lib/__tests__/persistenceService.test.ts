@@ -122,7 +122,7 @@ describe('PersistenceService', () => {
   it('validateCrossIntegrity should detect desync if movement is missing', async () => {
     const reconciliation = { id: 'R1', transaction_ref: 'TX1', origen_dato: 'AUTO_MATCH' };
     (db.reconciliation_lines.get as any).mockResolvedValue(reconciliation);
-    (db.product_movements.first as any).mockResolvedValue(null);
+    (db.product_movements as any).first.mockResolvedValue(null);
 
     const isValid = await PersistenceService.validateCrossIntegrity('R1');
 

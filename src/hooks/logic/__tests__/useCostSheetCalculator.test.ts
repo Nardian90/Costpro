@@ -54,7 +54,7 @@ describe('useCostSheetCalculator', () => {
           rows: [
             CostSheetRowFactory.create({
               id: 'parent',
-              calculationMethod: 'PRORRATEO',
+              calculationMethod: 'Prorrateo',
               children: [
                 CostSheetRowFactory.create({ id: 'c1', value: 40, calculationMethod: 'ValorFijo' }),
                 CostSheetRowFactory.create({ id: 'c2', value: 60, calculationMethod: 'ValorFijo' })

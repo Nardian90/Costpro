@@ -32,18 +32,20 @@ describe('CostSheetComparisonTable', () => {
 
   it('renderiza las columnas de los escenarios activos', () => {
     const mockScenarios = [
-        { id: 'v1', label: 'Escenario 1', isActive: true, color: 'blue' },
-        { id: 'v2', label: 'Escenario 2', isActive: true, color: 'violet' }
+        { id: 'v1' as const, label: 'Escenario 1', isActive: true, color: 'blue' as const, createdAt: Date.now(), values: {} },
+        { id: 'v2' as const, label: 'Escenario 2', isActive: true, color: 'violet' as const, createdAt: Date.now(), values: {} }
     ];
 
     render(
       <CostSheetComparisonTable
         scenarios={mockScenarios}
-        scenarioConfig={{ activeScenarios: ['v1', 'v2'], primaryScenarioId: 'v1', comparisonBaseId: 'v1' }}
+        scenarioConfig={{ primaryScenarioId: 'v1', comparisonBaseId: 'v1' }}
         sections={[]}
         calcV1={{ calculatedValues: {} }}
         calcV2={{ calculatedValues: {} }}
         calcV3={{ calculatedValues: {} }}
+        onUpdateRowValue={vi.fn()}
+        onScenarioAction={vi.fn()}
       />
     );
 
@@ -54,15 +56,17 @@ describe('CostSheetComparisonTable', () => {
 
   it('muestra la insignia Base Delta en el escenario base', () => {
     const mockScenarios = [
-        { id: 'v1', label: 'Escenario 1', isActive: true, color: 'blue' },
+        { id: 'v1' as const, label: 'Escenario 1', isActive: true, color: 'blue' as const, createdAt: Date.now(), values: {} },
     ];
 
     render(
       <CostSheetComparisonTable
         scenarios={mockScenarios}
-        scenarioConfig={{ activeScenarios: ['v1'], primaryScenarioId: 'v1', comparisonBaseId: 'v1' }}
+        scenarioConfig={{ primaryScenarioId: 'v1', comparisonBaseId: 'v1' }}
         sections={[]}
         calcV1={{ calculatedValues: {} }}
+        onUpdateRowValue={vi.fn()}
+        onScenarioAction={vi.fn()}
       />
     );
 

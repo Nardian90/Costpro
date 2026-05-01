@@ -11,7 +11,7 @@ interface TelemetryItem {
   value: number;
   percent: number;
   color: string;
-  icon: any;
+  icon: React.ElementType;
 }
 
 interface CostSheetMasterRingProps {

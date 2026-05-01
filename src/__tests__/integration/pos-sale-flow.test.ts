@@ -58,7 +58,7 @@ describe('Flujo de venta completo (integración)', () => {
 
     // 2. Procesar la venta
     await act(async () => {
-      await result.current.handleCheckout('EFECTIVO');
+      await result.current.handleCheckout('cash');
     });
 
     // 3. Assert
@@ -81,7 +81,7 @@ describe('Flujo de venta completo (integración)', () => {
     });
 
     await act(async () => {
-      await result.current.handleCheckout('TRANSFERENCIA');
+      await result.current.handleCheckout('transfer');
     });
 
     // El carrito debe mantener sus ítems
@@ -98,7 +98,7 @@ describe('Flujo de venta completo (integración)', () => {
 
     // En usePOSView, si hay productos sin precio, activa un warning
     await act(async () => {
-      await result.current.startCheckout('EFECTIVO');
+      await result.current.startCheckout('cash');
     });
 
     expect(result.current.showPriceWarning).toBe(true);

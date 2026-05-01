@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 'use client';
+import { logger } from '@/lib/logger';
 import { Card } from '@/components/ui/card';
 
 import { syncCatalogFromTransactions } from "@/lib/ipv/identity/registry";
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import { v4 as uuidv4 } from 'uuid';
 import { useColumnMapping } from '@/hooks/useColumnMapping';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
@@ -75,6 +75,7 @@ export function BankIngestion() {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const XLSX = await createWorkbook();
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
@@ -413,6 +414,7 @@ export function BankIngestion() {
                         onChange={handleBackupImport}
                         accept=".json"
                         className="hidden"
+                        aria-label="Importar respaldo de base de datos"
                     />
                 </div>
             </div>

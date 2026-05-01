@@ -2,6 +2,7 @@ import Decimal from 'decimal.js';
 import { createSafeParser } from './parser-factory';
 import {
   FichaJSON,
+  FichaMeta,
   CalculationResult,
   CalculatedRow,
   AuditEntry,
@@ -11,6 +12,29 @@ import {
 } from './types';
 import { translateFormulaFromSpanish, smartTranslate, getFormulaReferenceIssue } from './formula-utils';
 import { ROMAN_MAP } from './constants';
+import type { Values } from 'expr-eval';
+
+interface FormulaContext {
+  VH: number;
+  BASE_TOTAL: number;
+  COEF: number;
+  QUANTITY: number | string;
+  cantidad: number | string;
+  header: FichaMeta;
+  children: number[];
+  hijos: number[];
+  [key: string]: unknown;
+}
+
+interface VHFormulaContext {
+  VH: number;
+  QUANTITY: number | string;
+  cantidad: number | string;
+  header: FichaMeta;
+  children: number[];
+  hijos: number[];
+  [key: string]: unknown;
+}
 
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
@@ -38,7 +62,7 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     }
   };
 
-  const formulaToUse = row.formula || (row as any).totalFormula;
+  const formulaToUse = row.formula || row.totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
     extractFromFormula(formulaToUse);
   }
@@ -95,15 +119,15 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
   // Override REDONDEO with a no-op for dry-run validation (no actual rounding needed)
   parser.functions.REDONDEO = (val: number, _decimals: number = 2) => val;
-  parser.functions.valor = (x: any) => x;
-  parser.functions.SUM_ANEXO = (a: any, c: any) => 0;
-  parser.functions.GET_ANEXO_FILA_DATO = (a: any, r: any, f: any) => 0;
-  parser.functions.GET_ANEXO_DATO = (a: any, c: any, f: any) => 0;
-  parser.functions.GET_FILA_DATO = (s: any, f: any) => 0;
+  parser.functions.valor = (x: unknown) => x;
+  parser.functions.SUM_ANEXO = (a: string, c: string) => 0;
+  parser.functions.GET_ANEXO_FILA_DATO = (a: string, r: number, f: string) => 0;
+  parser.functions.GET_ANEXO_DATO = (a: string, c: string, f: string) => 0;
+  parser.functions.GET_FILA_DATO = (s: string, f: string) => 0;
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
 
-    const formulaToUse = row.formula || (row as any).totalFormula;
+    const formulaToUse = row.formula || row.totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         try {
             const formulaStr = translateFormulaFromSpanish(formulaToUse.startsWith('=') ? formulaToUse.substring(1) : formulaToUse);
@@ -264,7 +288,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     // 1. Templates legitimately reference rows not yet created (e.g. pror targets like 1.1.1)
     // 2. The calculation engine gracefully returns 0 for missing refs
     // 3. CRITICAL would block export for valid templates
-    const formulaToUse = row.formula || (row as any).totalFormula;
+    const formulaToUse = row.formula || row.totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         const refMatches = formulaToUse.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
         for (const match of refMatches) {
@@ -391,7 +415,7 @@ export function calculateFicha(
   });
 
   const parser = createSafeParser();
-  parser.functions.valor = (x: any) => x;
+  parser.functions.valor = (x: unknown) => x;
   // REDONDEO is already registered by createSafeParser with the same Decimal logic
 
   // Use Decimal for high precision in parser functions
@@ -434,7 +458,8 @@ export function calculateFicha(
       const calculated = calculatedRows.get(target.id);
       if (!calculated) return 0;
 
-      return (calculated as any)[field] || 0;
+      const val = (calculated as unknown as Record<string, unknown>)[field];
+      return typeof val === 'number' ? val : (typeof val === 'string' ? parseFloat(val) || 0 : 0);
   };
 
   parser.functions.header = (key: string) => {
@@ -443,7 +468,7 @@ export function calculateFicha(
       return 0;
   };
 
-  parser.functions.ref = (arg: any) => {
+  parser.functions.ref = (arg: string) => {
       const search = String(arg);
       // Priority 1: Classification (Visual Numbering)
       // Priority 2: ID (UUID or template ID)
@@ -459,7 +484,7 @@ export function calculateFicha(
       return val.toNumber();
   };
 
-  parser.functions.vh = (arg: any) => {
+  parser.functions.vh = (arg: string) => {
       const search = String(arg);
       let targets = rowsByClass.get(search);
       if (!targets || targets.length === 0) {
@@ -482,27 +507,27 @@ export function calculateFicha(
       return new Decimal(value || 0).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
   };
 
-  parser.functions.sum = (...args: any[]) => {
-      let flatArgs: any[] = [];
+  parser.functions.sum = (...args: unknown[]) => {
+      let flatArgs: unknown[] = [];
       args.forEach(arg => {
           if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
           else flatArgs.push(arg);
       });
-      return flatArgs.reduce((a, b) => {
-        const numB = typeof b === 'string' ? parseFloat(b) : (b || 0);
+      return flatArgs.reduce((a: Decimal, b) => {
+        const numB = typeof b === 'string' ? parseFloat(b) : (typeof b === 'number' ? b : 0);
         return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
       }, new Decimal(0)).toNumber();
   };
 
-  parser.functions.average = (...args: any[]) => {
-      let flatArgs: any[] = [];
+  parser.functions.average = (...args: unknown[]) => {
+      let flatArgs: unknown[] = [];
       args.forEach(arg => {
           if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
           else flatArgs.push(arg);
       });
       if (flatArgs.length === 0) return 0;
-      const sum = flatArgs.reduce((a, b) => {
-        const numB = typeof b === 'string' ? parseFloat(b) : (b || 0);
+      const sum = flatArgs.reduce((a: Decimal, b) => {
+        const numB = typeof b === 'string' ? parseFloat(b) : (typeof b === 'number' ? b : 0);
         return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
       }, new Decimal(0));
       return sum.div(flatArgs.length).toNumber();
@@ -552,7 +577,7 @@ export function calculateFicha(
       .sort((a, b) => b.priority - a.priority);
 
 const ruleOverride = activeRules[0];
-    let formulaToUse = row.formula || (row as any).totalFormula;
+    let formulaToUse = row.formula || row.totalFormula;
     let formaCalculoToUse = row.formaCalculo;
 
     const isParent = ficha.rows.some(r => r.parentId === row.id);
@@ -683,7 +708,7 @@ const ruleOverride = activeRules[0];
                 });
             }
 
-            const context: any = {
+            const context: FormulaContext = {
                 VH: vh.toNumber(),
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0,
@@ -731,7 +756,7 @@ const ruleOverride = activeRules[0];
                 }
             });
 
-            const result = expr.evaluate(context);
+            const result = expr.evaluate(context as Values);
             if (isNaN(result) || !isFinite(result)) {
                 total = new Decimal(0);
                 note += `Evaluation result was ${result} (NaN/Infinity). Forcing to 0. `;
@@ -740,10 +765,10 @@ const ruleOverride = activeRules[0];
                 total = new Decimal(result);
                 note += `Evaluated: ${formulaToUse}. `;
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             total = new Decimal(0);
             type = 'ERROR';
-            note += `Formula error: ${e.message}`;
+            note += `Formula error: ${e instanceof Error ? e.message : String(e)}`;
         }
         break;
     }
@@ -779,7 +804,7 @@ const ruleOverride = activeRules[0];
             const vhFormulaStr = smartTranslate(vhFormulaStrRaw, knownIds, knownClasses);
             const vhExpr = parser.parse(vhFormulaStr);
 
-            const vhContext: any = {
+            const vhContext: VHFormulaContext = {
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
@@ -800,7 +825,7 @@ const ruleOverride = activeRules[0];
                 vhContext[`Anexo${id}`] = classSum !== undefined ? classSum.toNumber() : 0;
             });
 
-            const vhRaw = vhExpr.evaluate(vhContext);
+            const vhRaw = vhExpr.evaluate(vhContext as Values);
             const vhSafeNum = typeof vhRaw === 'string' ? parseFloat(vhRaw) || 0 : (vhRaw || 0);
             const vhResult = new Decimal(vhSafeNum).toDecimalPlaces(decimals).toNumber();
             if (vhResult !== current.calculatedVH) {

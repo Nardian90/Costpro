@@ -117,6 +117,7 @@ export default function NewsView() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar noticias"
             placeholder="BUSCAR NOTICIAS..."
             className="w-full bg-card border border-border rounded-2xl py-3.5 pl-11 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-widest"
           />

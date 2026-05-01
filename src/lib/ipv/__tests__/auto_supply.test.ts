@@ -43,8 +43,8 @@ vi.mock('../../dexie', () => ({
 
 describe('MatchingEngine - R4 Auto-Supply', () => {
   const products: Product[] = [
-    { cod: 'P1', descripcion: 'Prod 1', um: 'U', precio_cents: 1000, activo: true, stock_inicial_manual: 10, created_at: '' },
-    { cod: 'P2', descripcion: 'Prod 2', um: 'U', precio_cents: 500, activo: true, stock_inicial_manual: 1, created_at: '' },
+    { cod: 'P1', descripcion: 'Prod 1', um: 'U', precio_cents: 1000, activo: true, es_paquete: false, contenido_paquete: 0, prioridad_algoritmo: 5, stock_inicial_manual: 10, created_at: '' },
+    { cod: 'P2', descripcion: 'Prod 2', um: 'U', precio_cents: 500, activo: true, es_paquete: false, contenido_paquete: 0, prioridad_algoritmo: 5, stock_inicial_manual: 1, created_at: '' },
   ];
 
   const rules: MatchingRule[] = [
@@ -58,6 +58,7 @@ describe('MatchingEngine - R4 Auto-Supply', () => {
     const tx: BankTransaction = {
       id: 'tx_excess',
       fecha: '2025-08-01',
+      referencia_corta: '',
       referencia_origen: 'TX_EXCESS',
       importe_cents: 1200,
       tipo: 'Cr',
@@ -87,8 +88,8 @@ describe('MatchingEngine - R4 Auto-Supply', () => {
 
   it('should prioritize low stock in WILDCARDS (R1)', async () => {
     const wildcardProducts: Product[] = [
-        { cod: 'W1', descripcion: 'Wild 1', um: 'U', precio_cents: 100, activo: true, stock_inicial_manual: 10, isWildcardCandidate: true, created_at: '' },
-        { cod: 'W2', descripcion: 'Wild 2', um: 'U', precio_cents: 100, activo: true, stock_inicial_manual: 2, isWildcardCandidate: true, created_at: '' },
+        { cod: 'W1', descripcion: 'Wild 1', um: 'U', precio_cents: 100, activo: true, es_paquete: false, contenido_paquete: 0, prioridad_algoritmo: 5, stock_inicial_manual: 10, isWildcardCandidate: true, created_at: '' },
+        { cod: 'W2', descripcion: 'Wild 2', um: 'U', precio_cents: 100, activo: true, es_paquete: false, contenido_paquete: 0, prioridad_algoritmo: 5, stock_inicial_manual: 2, isWildcardCandidate: true, created_at: '' },
     ];
     const wildcardRules: MatchingRule[] = [
         { id: 'w', tipo: 'WILDCARDS', prioridad: 1, activo: true },
@@ -96,8 +97,8 @@ describe('MatchingEngine - R4 Auto-Supply', () => {
 
     const engine = new MatchingEngine(wildcardProducts, wildcardRules);
     const tx: BankTransaction = {
-        id: 'tx_wild', fecha: '2025-08-01', referencia_origen: 'TX_WILD',
-        importe_cents: 100, tipo: 'Cr', estado_conciliacion: 'PENDIENTE', created_at: '', ingestion_hash: ''
+        id: 'tx_wild', fecha: '2025-08-01', referencia_corta: '', referencia_origen: 'TX_WILD',
+        importe_cents: 100, tipo: 'Cr', estado_conciliacion: 'PENDIENTE', created_at: '', observaciones: '', ingestion_hash: ''
     };
 
     const res = await engine.matchTransaction(tx);

@@ -43,6 +43,7 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
               placeholder="BUSCAR EN EL CEREBRO DEL..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar en el mapa de inteligencia"
               className="pl-10 pr-4 py-2 rounded-xl bg-background/50 border border-border/50 text-xs font-bold focus:outline-none focus:border-primary/50 w-64"
             />
           </div>
@@ -82,7 +83,7 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
           </thead>
           <tbody className="divide-y divide-border/30">
             {filtered.map((c, i) => (
-              <tr key={i} className="hover:bg-primary/5 transition-colors group">
+              <tr key={i} className="hover:bg-primary/5 transition-colors group" aria-label={`Componente: ${c.name || c.id.split('_').pop()}`}>
                 <td className="px-6 py-4">
                   <div className="text-[11px] font-black uppercase">{c.name || c.id.split('_').pop()}</div>
                   <div className="text-[9px] font-bold text-muted-foreground opacity-50 truncate max-w-xs">{c.filePath || c.id}</div>

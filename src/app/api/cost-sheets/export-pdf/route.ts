@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 import { rateLimit } from '@/lib/rate-limit';
 import { mergeScenarioValues } from '@/store/scenario-store';
@@ -37,7 +36,7 @@ const handler = withAuth(async (req, session) => {
     // If scenarioId is provided, we assume result is already calculated for that scenario
     // (passed from frontend after mergeScenarioValues + useCostSheetCalculator)
 
-    const doc = new jsPDF(exportMode === 'comparison' ? 'l' : 'p', 'mm', 'a4');
+    const doc = await createPDFDocument(exportMode === 'comparison' ? 'l' : 'p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const timestamp = new Date().toLocaleString();
@@ -52,7 +51,7 @@ const handler = withAuth(async (req, session) => {
       return isNaN(n) ? val : n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    const addHeader = (pdf: jsPDF, title: string) => {
+    const addHeader = (pdf: any, title: string) => {
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(...primaryColor);
@@ -70,7 +69,7 @@ const handler = withAuth(async (req, session) => {
 
       const activeScenarios = scenarios.filter((s: any) => body.activeScenarioIds.includes(s.id));
 
-      const headRows = [];
+      const headRows: string[][] = [];
       const mainHeader = ['No.', 'Concepto', 'UM'];
       const subHeader = ['', '', ''];
 
@@ -111,7 +110,7 @@ const handler = withAuth(async (req, session) => {
         processRows(section.rows);
       });
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: currentY,
         head: headRows,
         body: tableBody,
@@ -135,7 +134,7 @@ const handler = withAuth(async (req, session) => {
         ['Unidad:', h.unit || '-', 'Cantidad:', h.quantity || '1']
       ];
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: currentY,
         body: headerRows,
         theme: 'plain',
@@ -149,7 +148,7 @@ const handler = withAuth(async (req, session) => {
         r.id, r.label, r.um || r.unit || '-', safeLocale(r.valorHistorico), safeLocale(r.total)
       ]);
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: currentY,
         head: [['No.', 'Concepto', 'UM', 'V. Histórico', 'Total']],
         body: tableData,

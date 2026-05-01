@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import type { CostSheetData, CostSheetAnnex, CostSheetHeader as CostSheetHeaderData, CalculatedRowValue, CostSheetSection } from '@/types/cost-sheet';
 import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
@@ -9,10 +10,10 @@ import CostSheetSignature from './CostSheetSignature';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
 interface CostSheetPreviewProps {
-  data: any;
-  calculatedValues: any;
-  calculatedAnnexes: any;
-  calculatedHeader?: any;
+  data: CostSheetData;
+  calculatedValues: Record<string, CalculatedRowValue>;
+  calculatedAnnexes: CostSheetAnnex[];
+  calculatedHeader?: Partial<CostSheetHeaderData>;
 }
 
 const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>(({ data, calculatedValues, calculatedAnnexes, calculatedHeader }, ref) => {
@@ -31,8 +32,8 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
               </div>
               <SecurityScrollContainer minWidth="600px">
                 <CostSheetBody forceTable={true}
-                    sections={data?.sections || []}
-                    calculatedValues={calculatedValues}
+                    sections={(data?.sections || []) as unknown as Array<{ id: string; label: string; rows: Array<{ id: string; label: string; children?: Array<{ id: string; label: string }>; isPercent?: boolean; is_percent?: boolean }> }>}
+                    calculatedValues={calculatedValues as unknown as Record<string, { valorHistorico: number; calculatedVH?: number; baseTotal: number; coeficiente: number; total: number }>}
                 />
               </SecurityScrollContainer>
             </div>

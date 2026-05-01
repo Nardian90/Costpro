@@ -65,7 +65,7 @@ export const catalogService = {
     const result = await importService.parseAndValidate(file, catalogImportRowSchema, headerAliases);
 
     // Additional business logic: check for duplicate SKUs in the file
-    const productsToUpdate = [];
+    const productsToUpdate: any[] = [];
     const errors = [...result.errors];
     const seenSkus = new Set<string>();
 

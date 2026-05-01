@@ -27,6 +27,7 @@ import { solveForTarget } from '@/lib/cost-engine/solver';
 import { buildEngineFicha } from '@/lib/cost-engine/build-ficha';
 import { calculateFicha } from '@/lib/cost-engine';
 import { CostSheetRow, CostSheetData } from '@/types/cost-sheet';
+import type { CalculatedRow as EngineCalculatedRow } from '@/lib/cost-engine/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -139,10 +140,10 @@ export const CostSheetSummary: React.FC = () => {
           row.valorHistorico = val;
           row.value = val;
           row.formula = undefined;
-          (row as any).totalFormula = undefined;
+          row.totalFormula = undefined;
           row.calculationMethod = 'ValorFijo';
           row.isPercent = false;
-          (row as any).is_percent = false;
+          row.is_percent = false;
           return true;
         }
         if (row.children && findAndModifyRow(row.children, id, val)) return true;
@@ -150,7 +151,7 @@ export const CostSheetSummary: React.FC = () => {
       return false;
     };
 
-    const simulatedData = produce(uiData, (draft: any) => {
+    const simulatedData = produce(uiData, (draft: CostSheetData) => {
       for (const section of draft.sections) {
         if (findAndModifyRow(section.rows, variableRowId, variableValue)) break;
       }
@@ -161,7 +162,7 @@ export const CostSheetSummary: React.FC = () => {
 
     const calcResult = calculateFicha(engineFicha);
     const targetRowResult = calcResult.rows.find(
-      (r: any) => r.id === targetRowId || r.classification === targetRowId
+      (r: EngineCalculatedRow) => r.id === targetRowId || r.classification === targetRowId
     );
     return targetRowResult ? targetRowResult.total : calcResult.summary.grandTotal;
   };
@@ -255,9 +256,9 @@ export const CostSheetSummary: React.FC = () => {
 
         setShowSolverDialog(true);
         toast.success(`Solver completado: ${variableRowLabel} → ${result.toFixed(4)}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Solver error:', e);
-        toast.error(`Error al ejecutar el solver: ${e.message || 'Error desconocido'}`);
+        toast.error(`Error al ejecutar el solver: ${e instanceof Error ? e.message : 'Error desconocido'}`);
         // Reset solver state to prevent stale UI on error
         setSolverResult(null);
         setShowSolverDialog(false);
@@ -406,6 +407,7 @@ export const CostSheetSummary: React.FC = () => {
                       placeholder="Buscar fila..."
                       value={targetSearch}
                       onChange={(e) => setTargetSearch(e.target.value)}
+                      aria-label="Buscar fila"
                     />
                   </div>
                   <ScrollArea className="h-48">
@@ -465,6 +467,7 @@ export const CostSheetSummary: React.FC = () => {
                     placeholder="Buscar variable..."
                     value={variableSearch}
                     onChange={(e) => setVariableSearch(e.target.value)}
+                    aria-label="Buscar variable"
                   />
                 </div>
                 <ScrollArea className="h-48">

@@ -27,7 +27,7 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
         <tbody>
           {products.map((product) => (
             <tr key={product.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors group">
-              <td className="p-4">
+              <td className="p-4" aria-label={`Producto: ${product.name}`}>
                 <div className="flex items-center gap-3">
                   <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
                     <ProductImage

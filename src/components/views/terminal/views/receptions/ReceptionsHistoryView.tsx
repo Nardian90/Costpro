@@ -72,8 +72,9 @@ export default function ReceptionsHistoryView() {
         >
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
               <div>
-                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
+                <label htmlFor="reception-status" className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
                 <select
+                  id="reception-status"
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
@@ -86,18 +87,22 @@ export default function ReceptionsHistoryView() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Desde</label>
+                <label htmlFor="reception-from" className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Desde</label>
                 <input
+                  id="reception-from"
                   type="date"
+                  aria-label="Fecha desde"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
                 />
               </div>
               <div>
-                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Hasta</label>
+                <label htmlFor="reception-to" className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Hasta</label>
                 <input
+                  id="reception-to"
                   type="date"
+                  aria-label="Fecha hasta"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"

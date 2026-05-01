@@ -9,11 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import { Search, Package, Check } from 'lucide-react';
 import { SecondaryButton } from '@/components/ui/atomic';
+import type { Product } from '@/types';
 
 interface ProductInventoryPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (product: any) => void;
+  onSelect: (product: Product) => void;
   storeId?: string | null;
 }
 

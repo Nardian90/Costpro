@@ -6,7 +6,7 @@ export const RESULT_ROW_IDS = [
 ] as const;
 
 export function isResultRow(id: string): boolean {
-  return RESULT_ROW_IDS.includes(id as any);
+  return (RESULT_ROW_IDS as readonly string[]).includes(id);
 }
 
 // Roman numeral mapping (extended to 20)

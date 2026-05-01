@@ -64,11 +64,13 @@ export default function StockHistoryView() {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Desde</label>
+            <label htmlFor="stock-from" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Desde</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
+                id="stock-from"
                 type="date"
+                aria-label="Fecha desde"
                 className="w-full p-2.5 pl-10 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                 value={dateRange.from}
                 onChange={e => onDateRangeChange({ ...dateRange, from: e.target.value })}
@@ -76,11 +78,13 @@ export default function StockHistoryView() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Hasta</label>
+            <label htmlFor="stock-to" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Hasta</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
+                id="stock-to"
                 type="date"
+                aria-label="Fecha hasta"
                 className="w-full p-2.5 pl-10 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                 value={dateRange.to}
                 onChange={e => onDateRangeChange({ ...dateRange, to: e.target.value })}

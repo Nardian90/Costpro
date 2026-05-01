@@ -122,9 +122,10 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
     <BaseModal
       open={isOpen}
       onOpenChange={onClose}
+      aria-label="Crear nueva solicitud de transferencia entre almacenes"
       title={
         <div className="flex items-center gap-3">
-          <Building className="w-6 h-6 text-primary" />
+          <Building className="w-6 h-6 text-primary" aria-hidden="true" />
           Nueva Solicitud de Transferencia
         </div>
       }
@@ -132,17 +133,21 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
       footer={
         <div className="flex justify-end gap-3 w-full">
           <button
+            type="button"
             onClick={onClose}
             className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+            aria-label="Cancelar y cerrar formulario de transferencia"
           >
             Cancelar
           </button>
           <button
+            type="button"
             onClick={handleCreate}
             disabled={hasStockErrors || createTransferMutation.isPending}
+            aria-label="Enviar solicitud de transferencia"
             className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-4 h-4" aria-hidden="true" />
             {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
           </button>
         </div>
@@ -151,10 +156,12 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
-                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
+                <label htmlFor="transfer-destination" className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
                 <select
+                  id="transfer-destination"
                   value={destinationStoreId}
                   onChange={(e) => setDestinationStoreId(e.target.value)}
+                  aria-label="Seleccionar almacén de destino para la transferencia"
                   className="neu-input w-full text-sm"
                 >
                    <option value="">Seleccionar destino...</option>
@@ -164,26 +171,31 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 </select>
              </div>
              <div>
-                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Notas / Observaciones</label>
+                <label htmlFor="transfer-notes" className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Notas / Observaciones</label>
                 <input
+                  id="transfer-notes"
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Ej: Reposición de stock semanal"
+                  aria-label="Notas u observaciones para la transferencia"
                   className="neu-input w-full text-sm"
                 />
              </div>
           </div>
 
           <div className="relative">
-            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Buscar Productos</label>
+            <label htmlFor="transfer-product-search" className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Buscar Productos</label>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <input
+                id="transfer-product-search"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nombre o SKU del producto..."
+                aria-label="Buscar productos por nombre o código SKU para agregar a la transferencia"
+                aria-busy={isSearching}
                 className="neu-input w-full pl-10 text-sm"
               />
             </div>
@@ -191,23 +203,28 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
             {debouncedSearchTerm && (
               <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 max-h-48 overflow-y-auto shadow-2xl">
                 {isSearching ? (
-                  <div className="p-4 text-center text-xs font-bold animate-pulse">Buscando...</div>
+                  <div className="p-4 text-center text-xs font-bold animate-pulse" role="status" aria-label="Buscando productos">Buscando...</div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((p: any) => (
                     <div
                       key={p.id}
+                      role="option"
+                      aria-selected={false}
+                      tabIndex={0}
+                      aria-label={`Agregar ${p.name} (${p.sku}) a la transferencia`}
                       onClick={() => addItem(p)}
+                      onKeyDown={(e) => e.key === 'Enter' && addItem(p)}
                       className="p-3 hover:bg-primary/10 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-0"
                     >
                       <div className="flex flex-col">
                         <span className="text-sm font-bold">{p.name}</span>
                         <span className="text-xs text-muted-foreground font-mono uppercase">{p.sku}</span>
                       </div>
-                      <Plus className="w-4 h-4 text-primary" />
+                      <Plus className="w-4 h-4 text-primary" aria-hidden="true" />
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-xs text-muted-foreground">No se encontraron productos</div>
+                  <div className="p-4 text-center text-xs text-muted-foreground" role="status">No se encontraron productos</div>
                 )}
               </div>
             )}
@@ -230,6 +247,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                           type="number"
                           value={quantity}
                           onChange={(e) => updateQuantity(product.id, parseInt(e.target.value) || 0)}
+                          aria-label={`Cantidad de ${product.name} para transferir. Disponible: ${product.stock_current ?? 0}`}
                           className={cn(
                             "w-20 px-2 py-1 rounded-lg border text-center text-sm font-bold",
                             quantity > (product.stock_current ?? 0)
@@ -248,10 +266,12 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                        </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => removeItem(product.id)}
+                      aria-label={`Quitar ${product.name} de la transferencia`}
                       className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors mt-4"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>

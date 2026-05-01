@@ -311,8 +311,9 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
           <div className="space-y-6 pt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase opacity-60">Fecha</label>
+                <label htmlFor="pick3-date" className="text-[10px] font-black uppercase opacity-60">Fecha</label>
                 <Input
+                  id="pick3-date"
                   type="date"
                   className="font-bold"
                   value={formData.date}
@@ -320,8 +321,9 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase opacity-60">Turno</label>
+                <label htmlFor="pick3-draw-time" className="text-[10px] font-black uppercase opacity-60">Turno</label>
                 <select
+                  id="pick3-draw-time"
                   className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm font-bold"
                   value={formData.draw_time}
                   onChange={e => setFormData({...formData, draw_time: e.target.value as DrawTime})}
@@ -333,7 +335,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
             </div>
 
             <div className="space-y-3">
-               <label className="text-[10px] font-black uppercase opacity-60 text-center block">Resultado (3 Dígitos)</label>
+               <span className="text-[10px] font-black uppercase opacity-60 text-center block">Resultado (3 Dígitos)</span>
                <div className="flex justify-center gap-3">
                   {[0, 1, 2].map(i => (
                     <Input

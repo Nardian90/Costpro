@@ -1,7 +1,7 @@
-import jspdf from 'jspdf';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 
 export const exportToPDF = async (element: HTMLElement, fileName: string) => {
   const toastId = toast.loading("Generando PDF... por favor espere.");
@@ -22,7 +22,7 @@ export const exportToPDF = async (element: HTMLElement, fileName: string) => {
     }
 
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jspdf('p', 'mm', 'a4');
+    const pdf = await createPDFDocument('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const canvasWidth = canvas.width;
@@ -132,9 +132,10 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string) 
   }
 };
 
-export const exportToExcel = (data: any[], columns: string[], columnLabels: Record<string, string>, fileName: string) => {
+export const exportToExcel = async (data: any[], columns: string[], columnLabels: Record<string, string>, fileName: string) => {
   try {
     const toastId = toast.loading("Preparando Excel...");
+    const XLSX = await createWorkbook();
 
     // Filter data to only include selected columns and map headers
     const filteredData = data.map(item => {

@@ -333,6 +333,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         type="number"
                         className="flex-1 h-11 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-foreground text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
                         placeholder="Ej: 1500"
+                        aria-label="Valor numérico"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = (e.target as HTMLInputElement).value;

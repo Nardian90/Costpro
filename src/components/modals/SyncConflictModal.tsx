@@ -107,6 +107,7 @@ export function SyncConflictModal() {
                         value={editingPayload}
                         onChange={(e) => setEditingPayload(e.target.value)}
                         className="text-xs bg-black/20 p-2 rounded w-full h-32 font-mono"
+                        aria-label="Editar payload del conflicto"
                       />
                     ) : (
                       <pre className="text-xs bg-black/20 p-2 rounded overflow-x-auto max-h-32">

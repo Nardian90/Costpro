@@ -16,6 +16,7 @@ import { QueryInspector } from '@/components/ui/QueryInspector';
 import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import InventoryCountCardView from './InventoryCountCardView';
@@ -41,6 +42,7 @@ export default function InventoryCountView() {
     handleInitialSubmit,
     handleFinalSubmit
   } = useInventoryCount();
+  const modalRef = useFocusTrap(isModalOpen);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -133,7 +135,7 @@ export default function InventoryCountView() {
 
       {/* Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+        <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Resumen de auditoría de stock" className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
           <div className="neu-card max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
             <div className="p-6 sm:p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
               <div className="flex items-center gap-3">

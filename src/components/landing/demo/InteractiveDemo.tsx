@@ -86,32 +86,35 @@ export default function InteractiveDemo() {
   }, [isMuted, syncMute]);
 
   /* ── Playback engine ── */
-  const tick = useCallback((timestamp: number) => {
-    if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-    const delta = (timestamp - lastTimeRef.current) / 1000;
-    lastTimeRef.current = timestamp;
+  const tickRef = useRef<(timestamp: number) => void>(() => {});
+  useEffect(() => {
+    tickRef.current = (timestamp: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const delta = (timestamp - lastTimeRef.current) / 1000;
+      lastTimeRef.current = timestamp;
 
-    setElapsed(prev => {
-      const next = prev + delta;
-      if (next >= totalDemoDuration) {
-        setIsPlaying(false);
-        setIsDemoEnded(true);
-        return totalDemoDuration;
-      }
-      // Determine current scene from global elapsed
-      let acc = 0;
-      for (let i = 0; i < scenes.length; i++) {
-        if (next < acc + scenes[i].duration) {
-          setCurrentSceneIdx(i);
-          break;
+      setElapsed(prev => {
+        const next = prev + delta;
+        if (next >= totalDemoDuration) {
+          setIsPlaying(false);
+          setIsDemoEnded(true);
+          return totalDemoDuration;
         }
-        acc += scenes[i].duration;
-      }
-      return next;
-    });
+        // Determine current scene from global elapsed
+        let acc = 0;
+        for (let i = 0; i < scenes.length; i++) {
+          if (next < acc + scenes[i].duration) {
+            setCurrentSceneIdx(i);
+            break;
+          }
+          acc += scenes[i].duration;
+        }
+        return next;
+      });
 
-    rafRef.current = requestAnimationFrame(tick);
-  }, []);
+      rafRef.current = requestAnimationFrame(tickRef.current);
+    };
+  });
 
   const play = useCallback(() => {
     if (elapsed >= totalDemoDuration) {
@@ -123,7 +126,7 @@ export default function InteractiveDemo() {
     setIsPlaying(true);
     setShowOverlay(false);
     lastTimeRef.current = 0;
-    rafRef.current = requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(tickRef.current);
 
     // Start audio
     const audio = getAudio();
@@ -140,7 +143,7 @@ export default function InteractiveDemo() {
       audio.addEventListener('canplaythrough', tryPlay);
       audio.load();
     }
-  }, [elapsed, tick, getAudio, isMuted]);
+  }, [elapsed, getAudio, isMuted]);
 
   const pause = useCallback(() => {
     setIsPlaying(false);
@@ -208,14 +211,12 @@ export default function InteractiveDemo() {
   }, [isPlaying, pause]);
 
   /* ── Scene boundaries for dots ── */
-  const sceneBoundaries = useMemo(() => {
-    let acc = 0;
-    return scenes.map(s => {
-      const start = acc;
-      acc += s.duration;
-      return { start, end: acc };
-    });
-  }, []);
+  const sceneBoundaries = useMemo(() =>
+    scenes.reduce<{ start: number; end: number }[]>((acc, s) => {
+      const start = acc.length > 0 ? acc[acc.length - 1].end : 0;
+      acc.push({ start, end: start + s.duration });
+      return acc;
+    }, []), []);
 
   /* ── Overlay "Ver demo" ── */
   const OverlayContent = useMemo(() => (
@@ -404,7 +405,7 @@ export default function InteractiveDemo() {
             className="px-4 py-3 bg-[#111827]/95 backdrop-blur-sm border-t border-white/[0.06]"
           >
             {/* Progress bar */}
-            <div className="w-full h-1 rounded-full bg-white/[0.06] mb-3 cursor-pointer group relative"
+            <div role="slider" tabIndex={0} aria-label="Progreso de demo" aria-valuenow={Math.round((elapsed / totalDemoDuration) * 100)} aria-valuemin={0} aria-valuemax={100} className="w-full h-1 rounded-full bg-white/[0.06] mb-3 cursor-pointer group relative"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pct = (e.clientX - rect.left) / rect.width;
@@ -420,6 +421,7 @@ export default function InteractiveDemo() {
                   acc += scenes[i].duration;
                 }
               }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
             >
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-[#22c55e] to-emerald-400 shadow-[0_0_6px_rgba(34,197,94,0.4)]"

@@ -238,6 +238,7 @@ export function IncomeReceiptSection() {
                                 accept="image/*"
                                 className="hidden"
                                 onChange={handleLogoUpload}
+                                aria-label="Subir logo corporativo"
                             />
                         </Button>
                     </div>

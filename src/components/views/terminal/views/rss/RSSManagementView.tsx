@@ -110,6 +110,7 @@ export default function RSSManagementView() {
                 value={newFeedName}
                 onChange={(e) => setNewFeedName(e.target.value)}
                 placeholder="NOMBRE (EJ. BBC)"
+                aria-label="Nombre del feed RSS"
                 className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
               />
               <input
@@ -118,6 +119,7 @@ export default function RSSManagementView() {
                 onChange={(e) => setNewFeedUrl(e.target.value)}
                 placeholder="URL DEL FEED RSS..."
                 required
+                aria-label="URL del feed RSS"
                 className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               <button
@@ -155,6 +157,7 @@ export default function RSSManagementView() {
                             <div className="flex justify-center">
                               <button
                                 onClick={() => handleToggleFeed(feed.id, feed.is_active)}
+                                aria-label={feed.is_active ? `Desactivar feed: ${feed.name}` : `Activar feed: ${feed.name}`}
                                 className={cn(
                                   "px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all",
                                   feed.is_active
@@ -194,9 +197,9 @@ export default function RSSManagementView() {
 
             <div className="space-y-8">
               <section>
-                <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 block">
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 block">
                   Palabras Clave de Prioridad
-                </label>
+                </span>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {settings?.priority_keywords.map((kw, i) => (
                     <div
@@ -220,6 +223,7 @@ export default function RSSManagementView() {
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
                     placeholder="NUEVA PALABRA..."
+                    aria-label="Nueva palabra clave de prioridad"
                     className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-xs font-bold uppercase"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
                   />

@@ -42,8 +42,10 @@ const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void 
     <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">No se encontraron productos</p>
     {onClearSearch && (
       <button
+        type="button"
         onClick={onClearSearch}
         className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline"
+        aria-label="Limpiar búsqueda de productos"
       >
         Limpiar búsqueda
       </button>
@@ -52,7 +54,7 @@ const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void 
 );
 
 const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => (
-  <div className={cn(layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")}>
+  <div className={cn(layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")} aria-hidden="true">
     {[...Array(8)].map((_, i) => (
       <Skeleton key={i} className={cn("rounded-2xl", layoutMode === 'grid' ? "h-64" : "h-16")} />
     ))}
@@ -211,15 +213,18 @@ export default function POSView() {
     toast.success('Carrito vaciado');
   };
 
+  const cartCount = getItemCount();
+  const cartTotal = getTotal();
+
   const cartButton = (
     <ActionMenu
       actions={[
         {
           id: 'cart',
-          label: isMobile ? `(${getItemCount()})` : `Caja (${getItemCount()})`,
+          label: isMobile ? `(${cartCount})` : `Caja (${cartCount})`,
           icon: ShoppingCart,
           onClick: () => setShowCart(!showCart),
-          variant: getItemCount() > 0 ? 'primary' : 'outline',
+          variant: cartCount > 0 ? 'primary' : 'outline',
           active: showCart
         }
       ]}
@@ -231,11 +236,11 @@ export default function POSView() {
   const mobileActions: SpeedDialAction[] = [
     {
       id: 'view-cart',
-      label: `Caja (${getItemCount()})`,
+      label: `Caja (${cartCount})`,
       icon: ShoppingCart,
       onClick: () => setShowCart(true),
       category: 'Acción',
-      variant: getItemCount() > 0 ? 'success' : 'primary'
+      variant: cartCount > 0 ? 'success' : 'primary'
     },
     {
       id: 'scan',
@@ -249,7 +254,7 @@ export default function POSView() {
       label: 'Anular Carrito',
       icon: Trash2,
       onClick: () => {
-        if (getItemCount() > 0) {
+        if (cartCount > 0) {
           setShowClearConfirm(true);
         }
       },
@@ -260,6 +265,13 @@ export default function POSView() {
 
   return (
     <div className="space-y-6">
+      {/* Aria-live region for cart status updates */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only" role="status">
+        {cartCount > 0
+          ? `Carrito actualizado: ${cartCount} productos, total ${formatCurrency(cartTotal)}`
+          : 'Carrito vacío'}
+      </div>
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-[clamp(1.875rem,6vw,3rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
@@ -278,7 +290,7 @@ export default function POSView() {
             isMobile ? (
               <Portal>
                 <POSCart
-                  items={items}
+                  items={items as any}
                   onRemoveItem={removeItem}
                   onUpdateQuantity={updateQuantity}
                   onClearCart={() => setShowClearConfirm(true)}
@@ -306,7 +318,7 @@ export default function POSView() {
               </Portal>
             ) : (
               <POSCart
-                items={items}
+                items={items as any}
                 onRemoveItem={removeItem}
                 onUpdateQuantity={updateQuantity}
                 onClearCart={() => setShowClearConfirm(true)}
@@ -348,12 +360,14 @@ export default function POSView() {
           footer={
             <>
               <button
+                type="button"
                 onClick={() => setShowPriceWarning(false)}
                 className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={confirmUnpricedCheckout}
                 className="flex-1 py-2.5 rounded-xl bg-amber-500 text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
               >
@@ -386,12 +400,14 @@ export default function POSView() {
           footer={
             <>
               <button
+                type="button"
                 onClick={() => setShowClearConfirm(false)}
                 className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
               >
                 No, volver
               </button>
               <button
+                type="button"
                 onClick={handleClearCart}
                 className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-destructive/20 active:scale-95 transition-all"
               >
@@ -422,9 +438,12 @@ export default function POSView() {
                   onChange={setSearchTerm}
                   placeholder="Buscar productos..."
                   showSettings={false}
-                  aria-label="Buscar productos en el catálogo por nombre o SKU"
+                  aria-label="Buscar productos por nombre o código de barras"
                   aria-busy={isLoadingProducts}
-                  aria-controls="product-list"
+                  aria-controls="pos-product-list"
+                  aria-autocomplete="list"
+                  role="combobox"
+                  aria-expanded={searchTerm.length > 0 && filteredProducts.length > 0}
                 />
               </div>
             </div>
@@ -437,9 +456,9 @@ export default function POSView() {
           </div>
 
           <div
-            id="product-list"
-            role="list"
-            aria-label="Catálogo de productos"
+            id="pos-product-list"
+            role="listbox"
+            aria-label="Resultados de búsqueda de productos"
             aria-busy={isLoadingProducts}
             className={cn("flex-1 overflow-hidden", isPending && "opacity-50 transition-opacity")}
           >
@@ -458,7 +477,7 @@ export default function POSView() {
                 posLayoutMode === 'grid' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {data.map(product => (
-                      <div key={product.id} role="listitem">
+                      <div key={product.id} role="option" aria-selected={false} aria-label={`${product.name} — ${formatCurrency(product.price)}`}>
                         <ProductCard
                           product={product}
                           onClick={onAddToCart}
@@ -497,10 +516,10 @@ export default function POSView() {
       <SpeedDial actions={mobileActions} />
 
       {/* Resumen pegajoso para móviles */}
-      {isMobile && getItemCount() > 0 && !showCart && (
+      {isMobile && cartCount > 0 && !showCart && (
         <StickyCartSummary
-          itemCount={getItemCount()}
-          total={getTotal()}
+          itemCount={cartCount}
+          total={cartTotal}
           onClick={() => setShowCart(true)}
         />
       )}

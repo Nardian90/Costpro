@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HealthData } from '../hooks/useHealthData';
-import { GraphViewer } from '../components/GraphViewer';
+import { GraphViewer } from '../components/GraphViewerLazy';
 import { Network, Database, Layout, GitPullRequest, Search, ChevronRight, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -64,6 +64,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                   placeholder="FILTRAR ELEMENTOS..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Filtrar elementos del conocimiento"
                   className="w-full bg-background border border-border/50 rounded-2xl px-5 py-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
                 />
                 <Filter className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-30" />

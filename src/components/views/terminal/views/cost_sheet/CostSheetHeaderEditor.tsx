@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import type { CostSheetHeader } from '@/types/cost-sheet';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useExpertModeState } from '@/hooks/ui/useExpertModeState';
 import { cn } from '@/lib/utils';
@@ -24,8 +25,21 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface CostSheetHeaderEditorProps {
-  header: any;
-  calculatedHeader?: any;
+  header: CostSheetHeader;
+  calculatedHeader?: Partial<CostSheetHeader>;
+}
+
+function SectionHeader({ icon: Icon, title, subtitle }: { icon: React.ComponentType<{ className?: string }>, title: string, subtitle: string }) {
+  return (
+    <div className="col-span-full flex items-center gap-4 mb-4 mt-6 first:mt-0">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+      <div className="flex items-center gap-2.5 px-4">
+        <Icon className="w-4 h-4 text-primary" />
+        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">{title}</span>
+      </div>
+      <div className="h-px flex-1 bg-gradient-to-r from-border/50 via-border/50 to-transparent" />
+    </div>
+  );
 }
 
 const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
@@ -51,7 +65,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     readonly?: boolean;
     options?: string[];
     className?: string;
-    icon?: any;
+    icon?: React.ComponentType<{ className?: string }>;
   }) => {
     const isEditing = focusedField === item.id;
     const displayValue = (isEditing || !calculatedHeader)
@@ -96,6 +110,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                 onFocus={() => setFocusedField(item.id)}
                 onBlur={() => setFocusedField(null)}
                 readOnly={item.readonly}
+                aria-label={item.label}
                 className={cn(
                   "w-full px-4 py-2.5 text-sm font-semibold border rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm",
                   item.readonly
@@ -115,17 +130,6 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     );
   };
 
-  const SectionHeader = ({ icon: Icon, title, subtitle }: { icon: any, title: string, subtitle: string }) => (
-    <div className="col-span-full flex items-center gap-4 mb-4 mt-6 first:mt-0">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-      <div className="flex items-center gap-2.5 px-4">
-        <Icon className="w-4 h-4 text-primary" />
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">{title}</span>
-      </div>
-      <div className="h-px flex-1 bg-gradient-to-r from-border/50 via-border/50 to-transparent" />
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div className={cn(
@@ -133,11 +137,15 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
         isOpen ? "ring-1 ring-primary/10 shadow-md" : "hover:border-primary/30"
       )}>
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Configuración General"
           className={cn(
             "w-full px-8 py-6 flex items-center justify-between transition-colors group cursor-pointer",
             isOpen ? "bg-muted/5" : "hover:bg-muted/30"
           )}
           onClick={() => toggleSection('header')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection('header'); } }}
         >
           <div className="flex items-center gap-4">
             <div className={cn(

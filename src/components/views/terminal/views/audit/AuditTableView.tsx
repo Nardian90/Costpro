@@ -28,11 +28,11 @@ export default function AuditTableView({ logs }: AuditTableViewProps) {
           {logs.map((log) => {
             const category = getAuditCategory(log.table_name, log.action);
             return (
-              <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+              <tr key={log.id} className="hover:bg-muted/30 transition-colors" aria-label={`Evento de auditoría: ${log.action}`}>
                 <td className="p-4 whitespace-nowrap font-medium text-xs">
                   {format(new Date(log.created_at), 'dd MMM yyyy, HH:mm:ss', { locale: es })}
                 </td>
-                <td className="p-4">
+                <td className="p-4" aria-label="Usuario del evento">
                   <div className="flex flex-col">
                     <span className="font-bold text-foreground">
                       {log.profile?.full_name || 'Sistema / Desconocido'}

@@ -1,18 +1,17 @@
 import { logger } from '@/lib/logger';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { format } from 'date-fns';
 
 export async function generateLegalPdf(model: any, data: any, options: { skipCopy?: boolean } = {}) {
   const orientation = 'p';
   const unit = 'mm';
   const format_size = data.paper_size === 'A4' ? 'a4' : 'letter';
-  const doc = new jsPDF(orientation, unit, format_size);
+  const doc = await createPDFDocument(orientation as 'p' | 'l', unit as 'mm', format_size);
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  const drawReceipt = (docInstance: jsPDF, receiptData: any, yOffset: number, copyLabel: string) => {
+  const drawReceipt = (docInstance: any, receiptData: any, yOffset: number, copyLabel: string) => {
     // Header Section Box
     docInstance.setDrawColor(0);
     docInstance.setLineWidth(0.5);
@@ -84,7 +83,7 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
       Number(row.amount || row.importe || 0).toFixed(2)
     ]);
 
-    autoTable(docInstance, {
+    (docInstance as any).autoTable({
       startY: yOffset + 63,
       head: [['CONCEPTO', 'IMPORTE ($)']],
       body: tableRows,

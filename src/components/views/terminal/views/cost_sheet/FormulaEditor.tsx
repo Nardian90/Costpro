@@ -178,6 +178,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             placeholder="f(x) = ..."
+            aria-label="Código de fórmula"
           />
         </div>
 
@@ -327,13 +328,15 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               <div className="p-4 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
+                    <label htmlFor="formula-code" className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
                       <Code className="w-3 h-3" />
                       Código de Fórmula
                     </label>
                     <Badge variant="outline" className="text-xs font-mono border-border dark:border-border text-muted-foreground dark:text-muted-foreground">expr-eval enabled</Badge>
                   </div>
                   <textarea
+                    id="formula-code"
+                    aria-label="Código de Fórmula"
                     className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-muted/50 border border-border dark:border-border rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-primary/10 focus:border-primary/50 dark:focus-ring-primary/50 outline-none resize-none transition-all text-foreground dark:text-foreground"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}

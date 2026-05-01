@@ -19,7 +19,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
     const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
-            <td className="p-4" data-label="Producto">
+            <td className="p-4" data-label="Producto" aria-label={`Producto: ${product.name}`}>
                 <div className="flex items-center gap-3">
                     <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
                         <ProductImage
@@ -63,7 +63,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     {isLowStock ? 'Stock Bajo' : 'Normal'}
                 </span>
             </td>
-            <td className="p-4" data-label="Acciones">
+            <td className="p-4" data-label="Acciones" aria-label="Acciones del producto">
                 <div className="flex justify-center">
                     <button
                         onClick={() => onAdjust?.(product)}
@@ -94,7 +94,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
 
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-            <table className="w-full min-w-[1024px] grid-table-inventory">
+            <table className="w-full min-w-[1024px] grid-table-inventory" aria-label="Tabla de productos del inventario">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-xs font-bold">
                         <th className="p-4 pl-[76px]">Producto</th>
@@ -116,7 +116,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         />
                     ))}
                      {isLoading && (
-                        <tr>
+                        <tr aria-label="Cargando productos">
                             <td colSpan={7} className="p-8 text-center">
                                 <div className="flex justify-center py-4">
                                     <CostProLoader size={120} text="CARGANDO" subtext="Buscando existencias..." />

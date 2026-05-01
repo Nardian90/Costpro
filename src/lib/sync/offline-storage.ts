@@ -120,8 +120,8 @@ export const offlineStorage = {
   /**
    * Save an offline snapshot of data (e.g., product list)
    */
-  async saveSnapshot(key: string, data: any): Promise<void> {
-    const snapshots = await localforage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY) || {};
+  async saveSnapshot(key: string, data: unknown): Promise<void> {
+    const snapshots = await localforage.getItem<Record<string, { data: unknown; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY) || {};
     snapshots[key] = {
       data,
       timestamp: Date.now(),
@@ -132,8 +132,8 @@ export const offlineStorage = {
   /**
    * Get an offline snapshot
    */
-  async getSnapshot(key: string): Promise<any | null> {
-    const snapshots = await localforage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY);
+  async getSnapshot(key: string): Promise<unknown | null> {
+    const snapshots = await localforage.getItem<Record<string, { data: unknown; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY);
     return snapshots?.[key]?.data || null;
   },
 

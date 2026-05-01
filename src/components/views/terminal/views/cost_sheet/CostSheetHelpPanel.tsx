@@ -6,6 +6,7 @@ import { X as XIcon, HelpCircle, BookOpen, AlertCircle, Zap, Target } from 'luci
 import { cn } from '@/lib/utils';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { getHelpContent } from '@/lib/cost-engine/help-provider';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 interface CostSheetHelpPanelProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
   contextId,
 }) => {
   const help = contextId ? getHelpContent(contextId) : null;
+  const panelRef = useFocusTrap(isOpen);
 
   return (
     <AnimatePresence>
@@ -35,6 +37,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
 
           {/* Panel */}
           <motion.aside
+            ref={panelRef}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -42,6 +45,9 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
             className={cn(
               "fixed right-0 top-0 h-screen w-80 sm:w-96 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[101] flex flex-col overflow-hidden"
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-label={help ? 'Ayuda contextual de la ficha de costos' : 'Ayuda y guía de fichas de costos'}
           >
             {/* Header */}
             <div className="p-6 border-b border-sidebar-border/50 flex items-center justify-between bg-sidebar/5">

@@ -7,6 +7,7 @@ import { calcularAjusteInventario } from '@/lib/inventory-logic';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import {
   Drawer,
   DrawerContent,
@@ -62,6 +63,7 @@ export default function InventoryAdjustmentModal({
   }, [stockActual, costoTotalActual, ajusteUnidades, ajusteValorUnitario]);
 
   const isMobile = useIsMobile();
+  const modalRef = useFocusTrap(!isMobile && isOpen);
 
   if (!isOpen) return null;
 
@@ -118,8 +120,10 @@ export default function InventoryAdjustmentModal({
           <button
             onClick={onClose}
             className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors"
+            type="button"
+            aria-label="Cerrar ajuste de inventario"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -159,6 +163,7 @@ export default function InventoryAdjustmentModal({
                     type="number"
                     value={ajusteUnidades}
                     onChange={(e) => setAjusteUnidades(parseInt(e.target.value) || 0)}
+                    aria-label="Ajuste de unidades"
                     className="neu-input w-full !pl-14 !pr-4 font-black text-lg h-12"
                     placeholder="Ej: -5, 10..."
                   />
@@ -196,6 +201,8 @@ export default function InventoryAdjustmentModal({
                   <button
                     onClick={() => setAjusteValorUnitario('')}
                     className="text-xs font-bold text-primary hover:underline uppercase"
+                    type="button"
+                    aria-label="Usar costo sugerido"
                   >
                     Usar sugerido
                   </button>
@@ -209,6 +216,7 @@ export default function InventoryAdjustmentModal({
                   step="0.01"
                   value={ajusteValorUnitario}
                   onChange={(e) => setAjusteValorUnitario(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                  aria-label="Costo unitario del ajuste"
                   className={cn(
                       "neu-input w-full !pl-14 !pr-4 font-black text-lg h-12",
                       ajusteValorUnitario === '' ? "text-muted-foreground" : "text-primary"
@@ -238,6 +246,8 @@ export default function InventoryAdjustmentModal({
                     key={r}
                     type="button"
                     onClick={() => setReason(r)}
+                    aria-pressed={reason === r}
+                    aria-label={`Motivo: ${r}`}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-xs font-bold uppercase border transition-all active:scale-95",
                       reason === r ? "bg-primary text-foreground border-primary" : "bg-muted text-muted-foreground border-border"
@@ -253,6 +263,7 @@ export default function InventoryAdjustmentModal({
                   onChange={(e) => setReason(e.target.value)}
                   className="neu-input w-full min-h-[80px] text-sm resize-none p-4"
                   placeholder="Ej: Merma por daño, corrección de inventario, etc..."
+                  aria-label="Motivo del ajuste"
               />
           </div>
         </div>
@@ -307,6 +318,8 @@ export default function InventoryAdjustmentModal({
           onClick={onClose}
           className="neu-btn flex-1 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
+          type="button"
+          aria-label="Cancelar ajuste de inventario"
         >
           Cancelar
         </button>
@@ -314,12 +327,14 @@ export default function InventoryAdjustmentModal({
           onClick={handleConfirm}
           className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
+          type="button"
+          aria-label="Confirmar ajuste de inventario"
         >
           {isProcessing ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           ) : (
             <>
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4" aria-hidden="true" />
               Confirmar
             </>
           )}
@@ -341,7 +356,7 @@ export default function InventoryAdjustmentModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Ajuste de inventario" className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4 overflow-y-auto">
       {ModalContent}
     </div>
   );

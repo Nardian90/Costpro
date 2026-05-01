@@ -10,15 +10,15 @@ import { CostSheetAuditLog } from './CostSheetAuditLog';
 import { ErrorDetailModal } from './ErrorDetailModal';
 
 import { ValidationResult } from '@/lib/cost-engine/validations';
-import { ValidationError } from '@/lib/cost-engine/types';
-import { CostSheetRow } from '@/types/cost-sheet';
+import { ValidationError, AuditEntry } from '@/lib/cost-engine/types';
+import { CostSheetRow, CostSheetData, CostSheetHeader, CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
 interface CostSheetAuditViewProps {
-    data: any;
-    calculatedValues: any;
-    calculatedHeader: any;
-    audits: any[];
+    data: CostSheetData;
+    calculatedValues: Record<string, CalculatedRowValue>;
+    calculatedHeader: CostSheetHeader | null;
+    audits: AuditEntry[];
     validations?: ValidationResult[];
     deepValidationErrors?: ValidationError[];
 }
@@ -37,12 +37,12 @@ const ERROR_CODE_CONFIG: Record<string, { icon: React.ElementType; label: string
 /* ── Row search helpers ── */
 
 interface RowSearchResult {
-    row: any;
+    row: CostSheetRow;
     sectionLabel: string;
     path: (string | number)[];
 }
 
-function findRowById(rowId: string, row: any, path: (string | number)[]): { row: any; path: (string | number)[] } | null {
+function findRowById(rowId: string, row: CostSheetRow, path: (string | number)[]): { row: CostSheetRow; path: (string | number)[] } | null {
     if (row.id === rowId) return { row, path };
     if (row.children) {
         for (let i = 0; i < row.children.length; i++) {
@@ -53,7 +53,7 @@ function findRowById(rowId: string, row: any, path: (string | number)[]): { row:
     return null;
 }
 
-function findRowInSections(rowId: string, sections: any[]): RowSearchResult | null {
+function findRowInSections(rowId: string, sections: CostSheetSection[]): RowSearchResult | null {
     for (const section of sections) {
         for (let i = 0; i < section.rows.length; i++) {
             const found = findRowById(rowId, section.rows[i], ['sections', sections.indexOf(section), 'rows', i]);

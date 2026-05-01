@@ -42,6 +42,7 @@ export const UserHelpGallery: React.FC<UserHelpGalleryProps> = ({ data }) => {
             placeholder="Buscar ayuda, guías o funciones..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar ayuda y guías"
             className="w-full bg-muted/20 border border-border/50 rounded-2xl pl-12 pr-6 py-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:opacity-30"
           />
         </div>

@@ -13,12 +13,21 @@ import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activ
 import { useUIStore } from "@/store";
 import { Button } from '@/components/ui/button';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import type { CostSheetSection, CostSheetAnnex } from '@/types/cost-sheet';
+
+interface SidebarNavItem {
+  id: string;
+  label?: string;
+  title?: string;
+  data?: unknown[];
+  icon?: React.ElementType;
+}
 
 interface CostSheetSidebarNavProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  items: any[];
+  items: SidebarNavItem[];
   activeId: string;
   onSelect: (id: string) => void;
   type: 'sections' | 'annexes';

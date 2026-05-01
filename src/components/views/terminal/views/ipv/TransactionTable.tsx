@@ -1,7 +1,6 @@
 'use client';
 import { parseTransactionMetadata } from '@/lib/ipv/metadata-parser';
 import React, { useState } from 'react';
-import * as XLSX from "xlsx";
 import { FileSpreadsheet, List, LayoutGrid, Info, Search, RotateCcw, Wand2, Plus, Eye, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -187,7 +186,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <TableCell className="font-mono text-[10px] max-w-[120px] truncate hidden lg:table-cell">{tx.referencia_origen}</TableCell>
                           <TableCell className="text-xs">
                             <div className="flex items-center gap-2 group max-w-[150px]">
-                                <div className="truncate font-medium cursor-pointer flex-1 hover:text-primary transition-colors" title={tx.observaciones || "Sin concepto"} onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                                <div role="button" tabIndex={0} className="truncate font-medium cursor-pointer flex-1 hover:text-primary transition-colors" title={tx.observaciones || "Sin concepto"} onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen }); } }}>
                                     {tx.observaciones || "Sin concepto"}
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>

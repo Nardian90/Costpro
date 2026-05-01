@@ -268,8 +268,9 @@ export default function Pick3IntelligenceView() {
                 <CardContent className="px-0 space-y-6">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase ml-1">Modo de Juego</label>
+                         <label htmlFor="pick3-mode" className="text-[10px] font-black uppercase ml-1">Modo de Juego</label>
                          <select
+                            id="pick3-mode"
                             className="w-full h-12 rounded-xl border-border bg-background px-4 text-sm font-black italic uppercase"
                             value={bConfig.mode}
                             onChange={(e) => setBConfig({...bConfig, mode: e.target.value as any})}
@@ -279,9 +280,11 @@ export default function Pick3IntelligenceView() {
                          </select>
                       </div>
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase ml-1">Riesgo por Jugada (%)</label>
+                         <label htmlFor="pick3-risk" className="text-[10px] font-black uppercase ml-1">Riesgo por Jugada (%)</label>
                          <input
+                            id="pick3-risk"
                             type="number" step="0.1"
+                            aria-label="Riesgo por Jugada"
                             value={bConfig.riskFactor}
                             onChange={(e) => setBConfig({...bConfig, riskFactor: parseFloat(e.target.value)})}
                             className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"

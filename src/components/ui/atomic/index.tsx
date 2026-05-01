@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import {
   Building,
   Edit,
@@ -30,8 +31,8 @@ const HorizontalScroll: React.FC<{ children: React.ReactNode; className?: string
 );
 
 // Helper for product images
-export const ProductImage: React.FC<{ src?: string; alt?: string; name?: string; className?: string; forceShow?: boolean }> = ({ src, alt, name, className, forceShow }) => {
-  if (src) return <img src={src} alt={alt || name} className={cn("object-cover", className)} />;
+export const ProductImage: React.FC<{ src?: string; alt?: string; name?: string; className?: string; forceShow?: boolean; width?: number; height?: number }> = ({ src, alt, name, className, forceShow, width = 64, height = 64 }) => {
+  if (src) return <Image src={src} alt={alt || name || 'Product image'} width={width} height={height} className={cn("object-cover", className)} unoptimized />;
   if (forceShow) return <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}><Package className="w-1/3 h-1/3 opacity-20" /></div>;
   return (
     <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}>

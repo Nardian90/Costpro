@@ -14,6 +14,12 @@ interface SearchBarProps {
   className?: string;
   children?: React.ReactNode; // Content for advanced filters
   showSettings?: boolean;
+  'aria-label'?: string;
+  'aria-busy'?: boolean;
+  'aria-controls'?: string;
+  'aria-autocomplete'?: 'inline' | 'list' | 'both' | 'none';
+  'aria-expanded'?: boolean;
+  'role'?: string;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -24,6 +30,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   className,
   children,
   showSettings = true,
+  'aria-label': ariaLabel,
+  'aria-busy': ariaBusy,
+  'aria-controls': ariaControls,
+  'aria-autocomplete': ariaAutocomplete,
+  'aria-expanded': ariaExpanded,
+  'role': role,
 }) => {
   const { theme } = useTheme();
   const [localValue, setLocalValue] = useState(externalValue);
@@ -71,6 +83,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
           value={localValue}
           onChange={handleChange}
           placeholder={placeholder}
+          aria-label={ariaLabel}
+          aria-busy={ariaBusy}
+          aria-controls={ariaControls}
+          aria-autocomplete={ariaAutocomplete}
+          aria-expanded={ariaExpanded}
+          role={role}
           className={cn(
             "w-full pl-12 pr-24 py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
             !isPerformanceTheme(theme) ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
@@ -80,6 +98,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {localValue && (
             <button
+              type="button"
               onClick={handleClear}
               className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-muted"
               aria-label="Limpiar búsqueda"
@@ -90,6 +109,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
           {showSettings && children && (
             <button
+              type="button"
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
                 "p-2.5 transition-all rounded-xl border",

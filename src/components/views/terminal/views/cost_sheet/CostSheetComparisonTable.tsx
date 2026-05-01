@@ -12,6 +12,22 @@ import { Label } from '@/components/ui/label';
 import { MoreVertical, Star, Plus, FileDown, Trash2, HelpCircle, EyeOff, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScenarioStore } from '@/store/scenario-store';
+import type { ScenarioId, CostSheetSection, CostSheetRow, CostSheetScenario, ScenarioConfig, CalculatedRowValue } from '@/types/cost-sheet';
+
+interface ScenarioCalcResult {
+  calculatedValues: Record<string, CalculatedRowValue>;
+}
+
+interface CostSheetComparisonTableProps {
+  sections: CostSheetSection[];
+  scenarios: CostSheetScenario[];
+  scenarioConfig?: ScenarioConfig;
+  calcV1?: ScenarioCalcResult;
+  calcV2?: ScenarioCalcResult;
+  calcV3?: ScenarioCalcResult;
+  onUpdateRowValue: (scenarioId: ScenarioId, rowId: string, field: string, value: number) => void;
+  onScenarioAction: (action: string, scenarioId: ScenarioId) => void;
+}
 
 const TechnicalTooltip = ({ term, description, children }: { term: string, description: string, children: React.ReactNode }) => (
   <TooltipProvider>
@@ -29,13 +45,13 @@ const TechnicalTooltip = ({ term, description, children }: { term: string, descr
   </TooltipProvider>
 );
 
-export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, calcV1, calcV2, calcV3, onUpdateRowValue, onScenarioAction }: any) => {
+export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, calcV1, calcV2, calcV3, onUpdateRowValue, onScenarioAction }: CostSheetComparisonTableProps) => {
   const { activeScenarioIds, setComparisonBase, createScenario, renameScenario } = useScenarioStore();
   const [hideNoDiff, setHideNoDiff] = useState(false);
 
   const primaryId = scenarioConfig?.primaryScenarioId || 'v1';
   const baseId = scenarioConfig?.comparisonBaseId || 'v1';
-  const calcs: any = { v1: calcV1, v2: calcV2, v3: calcV3 };
+  const calcs: Partial<Record<ScenarioId, ScenarioCalcResult>> = { v1: calcV1, v2: calcV2, v3: calcV3 };
 
   const hasDiff = (rowId: string) => {
     return activeScenarioIds.some(sid => {
@@ -46,7 +62,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
     });
   };
 
-  const renderRow = (row: any, level = 0) => {
+  const renderRow = (row: CostSheetRow, level = 0) => {
     if (hideNoDiff && !hasDiff(row.id) && (!row.children || row.children.length === 0)) return null;
 
     return (
@@ -58,7 +74,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
           </TableCell>
           <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 w-[60px] text-center text-[10px] border-r border-border/50 text-muted-foreground font-bold">{row.um || row.unit || '-'}</TableCell>
           {activeScenarioIds.map(sid => {
-            const scenario = scenarios.find((s: any) => s.id === sid);
+            const scenario = scenarios.find((s: CostSheetScenario) => s.id === sid);
             const calculated = calcs[sid]?.calculatedValues?.[row.id] || { total: 0, valorHistorico: 0 };
             const baseTotal = calcs[baseId]?.calculatedValues?.[row.id]?.total ?? 0;
             const diff = calculated.total - baseTotal;
@@ -90,15 +106,15 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             );
           })}
         </TableRow>
-        {row.children?.map((c: any) => renderRow(c, level + 1))}
+        {row.children?.map((c: CostSheetRow) => renderRow(c, level + 1))}
       </React.Fragment>
     );
   };
 
-  const MobileScenarioCards = () => (
+  const renderMobileScenarioCards = () => (
     <div className="space-y-6 md:hidden">
       {activeScenarioIds.map(sid => {
-        const s = scenarios.find((x: any) => x.id === sid);
+        const s = scenarios.find((x: CostSheetScenario) => x.id === sid);
         const isPrimary = sid === primaryId;
         const isBase = sid === baseId;
         return (
@@ -130,10 +146,10 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             </div>
 
             <div className="space-y-2">
-              {sections.map((section: any) => (
+              {sections.map((section: CostSheetSection) => (
                 <div key={section.id} className="space-y-1">
                   <div className="text-[10px] font-black text-muted-foreground uppercase py-2 border-b border-border/50">{section.label}</div>
-                  {section.rows.map((row: any) => (
+                  {section.rows.map((row: CostSheetRow) => (
                     <div key={row.id} className="flex justify-between items-center py-1">
                       <span className="text-[11px] text-muted-foreground">{row.label}</span>
                       <span className="text-xs font-bold">{(calcs[sid]?.calculatedValues?.[row.id]?.total ?? 0).toFixed(2)}</span>
@@ -157,10 +173,10 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                 <HelpCircle className="w-3 h-3 text-muted-foreground/50"/>
             </TechnicalTooltip>
 
-            <Select value={baseId} onValueChange={(v) => setComparisonBase(v as any)}>
+            <Select value={baseId} onValueChange={(v) => setComparisonBase(v as ScenarioId)}>
             <SelectTrigger className="w-40 h-8 text-xs bg-card rounded-xl border-sidebar-border shadow-sm focus:ring-primary"><SelectValue /></SelectTrigger>
             <SelectContent className="rounded-2xl border-sidebar-border shadow-2xl">
-                {scenarios.map((s: any) => (
+                {scenarios.map((s: CostSheetScenario) => (
                 <SelectItem key={s.id} value={s.id}>
                     <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full",
@@ -202,7 +218,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
       </div>
 
       {/* Mobile Card View */}
-      <MobileScenarioCards />
+      {renderMobileScenarioCards()}
 
       {/* Desktop Table View */}
       <div className="hidden md:block relative border border-border/50 rounded-[2.5rem] overflow-hidden bg-card shadow-2xl overflow-x-auto custom-scrollbar">
@@ -211,7 +227,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             <TableRow className="border-b-2 border-border/20">
               <TableHead colSpan={3} className="sticky left-0 z-40 bg-muted border-r border-border/30"></TableHead>
               {activeScenarioIds.map(sid => {
-                const s = scenarios.find((x: any) => x.id === sid);
+                const s = scenarios.find((x: CostSheetScenario) => x.id === sid);
                 const isBase = sid === baseId;
                 const isPrimary = sid === primaryId;
                 return (
@@ -293,14 +309,14 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sections.map((s: any) => (
+            {sections.map((s: CostSheetSection) => (
               <React.Fragment key={s.id}>
                 <TableRow className="bg-muted/40 backdrop-blur-sm border-y border-border/20 hover:bg-muted/60 transition-colors">
                   <TableCell colSpan={20} className="font-black text-[10px] uppercase text-primary/80 py-1.5 px-6 tracking-widest">
                     {s.label}
                   </TableCell>
                 </TableRow>
-                {s.rows.map((r: any) => renderRow(r))}
+                {s.rows.map((r: CostSheetRow) => renderRow(r))}
               </React.Fragment>
             ))}
           </TableBody>
