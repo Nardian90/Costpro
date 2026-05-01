@@ -103,14 +103,14 @@ export const profileSchema = z.object({
       z.string().email(),
     )
     .catch("no-email@costpro.com"),
-  role: userRoleSchema.catch("clerk"),
-  roles: z.array(userRoleSchema).catch([]),
+  role: userRoleSchema.catch("clerk").default("clerk"),
+  roles: z.array(userRoleSchema).catch([]).default([]),
   role_id: resilientUuid,
-  is_active: z.boolean().catch(true),
+  is_active: z.boolean().catch(true).default(true),
   store_id: resilientUuid,
   active_store_id: resilientUuid,
   logo_url: z.string().nullable().optional(),
-  plan: z.string().catch("free"),
+  plan: z.string().catch("free").default("free"),
   reeup: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
   ai_provider: z.string().optional(),
@@ -118,7 +118,7 @@ export const profileSchema = z.object({
   max_stores_limit: z.number().optional(),
   max_users_limit: z.number().optional(),
   created_by: resilientUuid,
-  created_at: z.string().catch(() => new Date().toISOString()),
+  created_at: z.string().catch(() => new Date().toISOString()).default(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
   memberships: z
     .preprocess(
@@ -217,10 +217,7 @@ export const transactionSchema = z.object({
   seller_name: z.string().nullable().optional().catch("Desconocido"),
   total_amount: z.coerce.number().catch(0).default(0),
   status: transactionStatusSchema.catch("pending").default("pending"),
-  created_at: z.preprocess(
-    (val) => val || new Date().toISOString(),
-    z.string(),
-  ),
+  created_at: z.string().catch(() => new Date().toISOString()).default(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
   completed_at: z.string().nullable().optional(),
   cancelled_at: z.string().nullable().optional(),
@@ -253,10 +250,7 @@ export const stockMovementSchema = z.object({
 
 export const receiptSchema = z.object({
   id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
-  created_at: z.preprocess(
-    (val) => val || new Date().toISOString(),
-    z.string(),
-  ),
+  created_at: z.string().catch(() => new Date().toISOString()).default(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
   user_id: optionalResilientUuid,
   status: z
