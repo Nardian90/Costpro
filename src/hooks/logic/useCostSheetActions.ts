@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import {
-  ExportOptions,
   CostSheetData,
   CalculatedRowValue
 } from '@/types/cost-sheet';
@@ -123,20 +122,20 @@ export const useCostSheetActions = ({
   }, [activeSection]);
 
   const handleExportPDF = useCallback(
-    async (options: ExportOptions) => {
+    async (options: any) => {
       const toastId = toast.loading('Generando PDF...');
 
-      const downloadPDF = async (opts: ExportOptions, filename: string) => {
+      const downloadPDF = async (opts: any, filename: string) => {
         try {
-          const response = await fetch('/api/cost-sheets/export-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/cost-sheets/export-pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ data, options: opts, calculatedValues, calculatedHeader, calculationResult })
           });
           if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
             a.download = filename;
             document.body.appendChild(a);
@@ -144,15 +143,11 @@ export const useCostSheetActions = ({
             a.remove();
             return true;
           }
-          const errorMsg = await response.text();
-          console.error('PDF export API error:', errorMsg);
           return false;
-        } catch (fetchError: any) {
-          console.error('PDF export fetch error:', fetchError);
+        } catch (e) {
           return false;
         }
       };
-
       try {
         if (!calculationResult) {
           toast.error('No hay datos de cálculo disponibles para exportar.', { id: toastId });

@@ -9,12 +9,28 @@ import { CostSheetModeDropdown, CostSheetViewMode } from "./CostSheetModeDropdow
 
 interface CostSheetBannerProps {
   viewMode: CostSheetViewMode;
-  setViewMode: (mode: CostSheetViewMode) => void;
+  setViewMode?: (mode: CostSheetViewMode) => void;
   onOpenActions?: () => void;
+  data?: any;
+  calculatedHeader?: any;
+  isEditing?: boolean;
+  isBlocked?: boolean;
+  onExport?: (options: any) => Promise<any>;
+  annexes?: any[];
 }
 
-export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSheetBannerProps) => {
+export const CostSheetBanner = ({
+  viewMode,
+  setViewMode,
+  onOpenActions,
+  data,
+  calculatedHeader
+}: CostSheetBannerProps) => {
   const { setCurrentView } = useUIStore();
+
+  const projectName = calculatedHeader?.name || data?.header?.name || 'Ficha de Costo';
+  const projectCode = calculatedHeader?.code || data?.header?.code || 'FC';
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8 px-2 sticky top-0 z-[40] bg-background/80 backdrop-blur-xl py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:relative border-b border-white/5 sm:border-none -mx-4 sm:mx-0 px-4 sm:px-2">
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
@@ -45,19 +61,20 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
             </div>
             <div className="min-w-0">
               <h1 className="text-[clamp(1.25rem,6vw,1.875rem)] font-black text-foreground tracking-tight leading-tight truncate">
-                FC
+                {projectCode}
               </h1>
               <p className="text-[clamp(0.6rem,3vw,0.75rem)] font-black uppercase tracking-[0.2em] text-primary/60 truncate">
-                COSTPRO
+                {projectName}
               </p>
             </div>
         </div>
-
-
       </div>
 
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
         <div className="flex items-center gap-3 flex-1 sm:flex-none">
+            {setViewMode && (
+              <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
+            )}
             <ThemeToggle />
         </div>
         <div className="hidden lg:flex neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">

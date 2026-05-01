@@ -145,6 +145,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
   }, [scrollY]);
 
   return {
+    filteredNavigation: navigationItems,
     navigationItems,
     getActiveRolesLabel,
     handleSidebarScroll,

@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useEffect, useCallback } from 'react';
 

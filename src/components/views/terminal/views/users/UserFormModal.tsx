@@ -1,5 +1,5 @@
-
 'use client'
+
 
 import React from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';

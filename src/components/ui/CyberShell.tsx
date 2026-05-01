@@ -1,5 +1,5 @@
-// src/components/ui/CyberShell.tsx
 'use client';
+// src/components/ui/CyberShell.tsx
 
 import React from 'react';
 

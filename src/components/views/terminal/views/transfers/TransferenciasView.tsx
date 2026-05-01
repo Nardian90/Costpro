@@ -1,5 +1,5 @@
-// src/components/views/terminal/views/transfers/TransferenciasView.tsx
 'use client';
+// src/components/views/terminal/views/transfers/TransferenciasView.tsx
 
 import { useState } from 'react';
 import { useAuthStore } from '@/store';

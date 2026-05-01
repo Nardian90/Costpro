@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 'use client';
+import { logger } from '@/lib/logger';
 import { Card } from '@/components/ui/card';
 
 import { syncCatalogFromTransactions } from "@/lib/ipv/identity/registry";

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useScenarioStore, mergeScenarioValues } from '@/store/scenario-store';
 import { useCostSheetCalculator } from './useCostSheetCalculator';
@@ -14,17 +14,40 @@ const useScenarioCalcSlot = (data: CostSheetData | null) => {
 
 export const useScenarioCalculator = () => {
   const { data } = useCostSheetStore();
-  const { activeScenarioIds } = useScenarioStore();
-  const dataV1 = useMemo(() => activeScenarioIds.includes('v1') ? mergeScenarioValues(data, 'v1') : null, [data, activeScenarioIds]);
-  const dataV2 = useMemo(() => activeScenarioIds.includes('v2') ? mergeScenarioValues(data, 'v2') : null, [data, activeScenarioIds]);
-  const dataV3 = useMemo(() => activeScenarioIds.includes('v3') ? mergeScenarioValues(data, 'v3') : null, [data, activeScenarioIds]);
+  const scenarioStore = useScenarioStore();
+  const { activeScenarioIds, isComparisonMode, toggleComparisonMode, initializeScenarios, updateRowValue, setPrimaryScenario, createScenario } = scenarioStore;
+
+  const dataV1 = useMemo(() => activeScenarioIds.includes('v1') ? mergeScenarioValues(data!, 'v1') : null, [data, activeScenarioIds]);
+  const dataV2 = useMemo(() => activeScenarioIds.includes('v2') ? mergeScenarioValues(data!, 'v2') : null, [data, activeScenarioIds]);
+  const dataV3 = useMemo(() => activeScenarioIds.includes('v3') ? mergeScenarioValues(data!, 'v3') : null, [data, activeScenarioIds]);
+
   const calcV1 = useScenarioCalcSlot(dataV1);
   const calcV2 = useScenarioCalcSlot(dataV2);
   const calcV3 = useScenarioCalcSlot(dataV3);
+
+  const getSectionCompletion = useCallback((section: any) => {
+    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
+    const filled = rows.filter((r: any) => calcV1.calculatedValues[r.id]?.total !== 0);
+    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
+  }, [calcV1.calculatedValues]);
+
+  const handleScenarioAction = useCallback((action: string, id: any) => {
+    switch (action) {
+      case 'setPrimary': setPrimaryScenario(id); break;
+      case 'duplicate': createScenario(id, 'Copia de ' + id); break;
+    }
+  }, [setPrimaryScenario, createScenario]);
+
   return {
     calcV1: activeScenarioIds.includes('v1') ? calcV1 : null,
     calcV2: activeScenarioIds.includes('v2') ? calcV2 : null,
     calcV3: activeScenarioIds.includes('v3') ? calcV3 : null,
+    isComparisonMode,
+    toggleComparisonMode,
+    initializeScenarios,
+    handleScenarioAction,
+    updateRowValue,
+    getSectionCompletion,
     getDiff: (rowId: string, baseId: ScenarioId, compareId: ScenarioId) => {
        const calcs: any = { v1: calcV1, v2: calcV2, v3: calcV3 };
        const b = calcs[baseId]?.calculatedValues?.[rowId]?.total ?? 0;

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  // Use Web Crypto API instead of Node.js crypto
+  const nonce = btoa(crypto.randomUUID());
+
   const cspHeader = [
     `default-src 'self'`,
     // Scripts: nonce en lugar de unsafe-inline/unsafe-eval

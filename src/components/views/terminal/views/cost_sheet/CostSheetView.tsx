@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import {
     Wand2,
+    ListFilter,
+
     BookOpen,
     Zap as ZapIcon,
     Table2,
@@ -30,8 +32,16 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { useCostSheetActions } from '@/hooks/logic/useCostSheetActions';
 import { useCostSheetViewState } from '@/hooks/logic/useCostSheetViewState';
 import { useExpertModeState } from '@/hooks/ui/useExpertModeState';
+import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
+
+import { useScenarioCalculator } from '@/hooks/logic/useScenarioCalculator';
+
 import { useAutoSave } from '@/hooks/logic/useAutoSave';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { cn } from '@/lib/utils';
+
+import { toast } from 'sonner';
+
 
 import CostSheetNav from './CostSheetNav';
 import CostSheetHeaderEditor from './CostSheetHeaderEditor';
@@ -54,6 +64,8 @@ import { CostSheetBanner } from './CostSheetBanner';
 import { SteelStructureCalculator } from './SteelStructureCalculator';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+
 import { BaseModal } from '@/components/ui/BaseModal';
 import { UpgradeModal } from '@/components/modals/UpgradeModal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -77,14 +89,12 @@ const CostSheetView = () => {
     calculationResult,
     isBlocked,
     deepValidationErrors,
-    calcV1,
-    calcV2,
-    calcV3
   } = useCostSheetCalculator(data);
 
   // ── Extracted Hooks ─────────────────────────────────────────────────
   const viewState = useCostSheetViewState(data, activeSection);
   const expertState = useExpertModeState();
+  const { calcV1, calcV2, calcV3, isComparisonMode, toggleComparisonMode, initializeScenarios, handleScenarioAction, updateRowValue, getSectionCompletion } = useScenarioCalculator();
 
   const {
     confirmation,
@@ -140,14 +150,6 @@ const CostSheetView = () => {
     effectiveLayoutMode,
     activeSubSectionId,
     setActiveSubSectionId,
-    expandedSections,
-    toggleSection,
-    setHelpContext,
-    isComparisonMode,
-    toggleComparisonMode,
-    getSectionCompletion,
-    updateRowValue,
-    handleScenarioAction,
     groupedSections
   } = viewState;
 
@@ -161,21 +163,9 @@ const CostSheetView = () => {
     if (isEditing && data && viewMode === 'expert') initializeScenarios();
   }, [isEditing, data?.id, viewMode, initializeScenarios]);
 
-  const { expandedSections, toggleSection, expandAllSections, setHelpContext, toggleProblems } = expertState;
+  const { expandedSections, expandAllSections, toggleProblems, toggleSection, setHelpContext } = expertState;
 
-  const handleScenarioAction = (action: string, id: any) => {
-    switch (action) {
-      case 'setPrimary': setPrimaryScenario(id); break;
-      case 'duplicate': createScenario(id, 'Copia de ' + id); break;
-      case 'exportPdf': handleExportPDF({ includeFC: true, includeAnnexes: [], includeAudit: true, scenarioId: id } as any); break;
-    }
-  };
 
-  const getSectionCompletion = useCallback((section: any) => {
-    const rows = section.rows.flatMap((r: any) => [r, ...(r.children || [])]);
-    const filled = rows.filter((r: any) => calculatedValues[r.id]?.total !== 0);
-    return rows.length ? Math.round((filled.length / rows.length) * 100) : 0;
-  }, [calculatedValues]);
 
   useExpertModeKeyboard({
     toggleAllSections: () => expandAllSections(data.sections.map((s: any) => s.id)),

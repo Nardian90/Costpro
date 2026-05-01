@@ -1,5 +1,5 @@
-// src/components/views/terminal/views/transfers/TransferDetailsModal.tsx
 'use client';
+// src/components/views/terminal/views/transfers/TransferDetailsModal.tsx
 
 import { useAuthStore } from '@/store';
 import { BaseModal } from '@/components/ui/BaseModal';

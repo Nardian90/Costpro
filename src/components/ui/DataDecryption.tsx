@@ -1,5 +1,5 @@
-// src/components/ui/DataDecryption.tsx
 'use client';
+// src/components/ui/DataDecryption.tsx
 
 import { motion } from 'framer-motion';
 

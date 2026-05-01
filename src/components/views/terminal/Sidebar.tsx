@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
-import { useTerminalNavigation, NavModule } from '@/hooks/ui/useTerminalNavigation';
+import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
 import { cn } from '@/lib/utils';
-import { SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
+import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
 import SidebarFocusMode from './SidebarFocusMode';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -105,15 +105,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
-
-  const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
-    const hasAvailableItems = (m: NavModule): boolean => {
-      if (m.type === 'item') {
-        return navigationItems.some(ni => ni.id === m.id);
-      }
-      return m.children?.some(child => hasAvailableItems(child)) || false;
-    };
+  }, [currentView, onViewChange, onPrefetchView, activeCostSection]);
 
   const renderModule = useCallback((mod: NavModule, depth = 0) => {
     const isExpanded = expandedModules.includes(mod.id);
@@ -293,7 +285,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 exit={{ opacity: 0 }}
                 className={cn("space-y-1 sm:space-y-4", sidebarState === 'rail' && "space-y-2")}
               >
-                {filteredNavigation.map(module => renderModule(module))}
+                {SIDEBAR_STRUCTURE.map(module => renderModule(module))}
               </motion.div>
             )}
           </AnimatePresence>
@@ -378,8 +370,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       </div>
       </div>
     </aside>
-  );
-});
+    );
+  }
+);
 
 Sidebar.displayName = 'Sidebar';
 
