@@ -40,6 +40,7 @@ vi.mock('jspdf', () => ({
       text: vi.fn(),
       line: vi.fn(),
       addPage: vi.fn(),
+      autoTable: vi.fn(),
       setDrawColor: vi.fn(),
       output: vi.fn().mockReturnValue(new ArrayBuffer(8)),
       getNumberOfPages: vi.fn().mockReturnValue(1)
