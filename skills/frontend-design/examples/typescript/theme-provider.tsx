@@ -234,7 +234,7 @@ export function ThemeSelector({ className = '' }: ThemeSelectorProps) {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
-  const themes: { value: Theme; label: string; icon: JSX.Element }[] = [
+  const themes: { value: Theme; label: string; icon: React.ReactNode }[] = [
     {
       value: 'light',
       label: 'Light',
