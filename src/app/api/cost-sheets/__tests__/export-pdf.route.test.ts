@@ -18,24 +18,25 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 // Mock jsPDF and autoTable
-vi.mock('jspdf', () => {
-  const MockJsPDF = vi.fn().mockImplementation(function() {
-    return {
-      internal: { pageSize: { width: 210, height: 297, getWidth: () => 210, getHeight: () => 297 } },
-      setFontSize: vi.fn(),
-      setFont: vi.fn(),
-      setTextColor: vi.fn(),
-      text: vi.fn(),
-      line: vi.fn(),
-      addPage: vi.fn(),
-      output: vi.fn().mockReturnValue(new ArrayBuffer(8)),
-      lastAutoTable: { finalY: 100 }
-    };
-  });
+const MockJsPDF = vi.fn().mockImplementation(function() {
   return {
-    default: MockJsPDF
+    internal: { pageSize: { width: 210, height: 297, getWidth: () => 210, getHeight: () => 297 } },
+    setFontSize: vi.fn(),
+    setFont: vi.fn(),
+    setTextColor: vi.fn(),
+    text: vi.fn(),
+    line: vi.fn(),
+    addPage: vi.fn(),
+    autoTable: vi.fn(),
+    output: vi.fn().mockReturnValue(new ArrayBuffer(8)),
+    lastAutoTable: { finalY: 100 }
   };
 });
+
+vi.mock('jspdf', () => ({
+  jsPDF: MockJsPDF,
+  default: MockJsPDF
+}));
 
 vi.mock('jspdf-autotable', () => ({
   default: vi.fn()
