@@ -34,7 +34,7 @@ describe('POSCart', () => {
     }
   ];
 
-  const defaultProps = {
+  const defaultProps: Record<string, any> = {
     isOpen: true,
     onClose: vi.fn(),
     items: mockItems,
@@ -51,6 +51,8 @@ describe('POSCart', () => {
     prorateGlobalPayment: vi.fn(),
     appliedTaxes: [],
     toggleTax: vi.fn(),
+    setDiscount: vi.fn(),
+    isProcessing: false,
   };
 
   const renderWithProvider = (ui: React.ReactElement) => {
@@ -62,24 +64,24 @@ describe('POSCart', () => {
   };
 
   it('muestra mensaje de carrito vacío cuando no hay ítems', () => {
-    renderWithProvider(<POSCart {...defaultProps} items={[]} />);
+    renderWithProvider(<POSCart {...defaultProps as any} items={[]} />);
     expect(screen.getAllByText(/Carrito Vacío/i).length).toBeGreaterThan(0);
   });
 
   it('muestra los ítems en el carrito', () => {
-    renderWithProvider(<POSCart {...defaultProps} />);
+    renderWithProvider(<POSCart {...defaultProps as any} />);
     expect(screen.getByText('Producto 1')).toBeInTheDocument();
   });
 
   it('llama a onUpdateQuantity al cambiar la cantidad', () => {
-    renderWithProvider(<POSCart {...defaultProps} />);
+    renderWithProvider(<POSCart {...defaultProps as any} />);
     const incrementBtn = screen.getByLabelText(/Aumentar cantidad/i);
     fireEvent.click(incrementBtn);
     expect(defaultProps.onUpdateQuantity).toHaveBeenCalled();
   });
 
   it('el botón CONFIRMAR VENTA llama a onCheckout', () => {
-    renderWithProvider(<POSCart {...defaultProps} />);
+    renderWithProvider(<POSCart {...defaultProps as any} />);
     const processBtn = screen.getByText(/CONFIRMAR VENTA/i);
     fireEvent.click(processBtn);
     expect(defaultProps.onCheckout).toHaveBeenCalled();

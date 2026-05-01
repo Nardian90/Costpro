@@ -68,8 +68,9 @@ export default function SalesHistoryView() {
         >
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <div>
-                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
+                <label htmlFor="sales-status" className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
                 <select
+                  id="sales-status"
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
@@ -153,7 +154,7 @@ export default function SalesHistoryView() {
                            txn.status === 'pending' ? 'Pendiente' : 'Anulado'}
                         </span>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-4 text-center" aria-label="Acciones de la venta">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(txn)}

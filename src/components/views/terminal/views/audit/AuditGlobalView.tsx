@@ -51,7 +51,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-border bg-muted/20">
+        <tr className="border-b border-border bg-muted/20" aria-label="Detalles expandidos del evento">
           <td colSpan={5} className="px-4 py-3">
             <pre className="text-[10px] font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-48">
               {JSON.stringify(entry.metadata, null, 2)}

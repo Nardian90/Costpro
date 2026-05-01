@@ -4,30 +4,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn, isDarkTheme } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { useCostSheetStore, useAuthStore } from '@/store';
+import type { CostSheetData } from '@/types/cost-sheet';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+
+interface AnnexPreviewItem {
+    id?: string;
+    title?: string;
+    data?: unknown[];
+    items?: unknown[];
+}
 
 interface Message {
     role: 'user' | 'assistant';
     content: string;
-    updateData?: any;
+    updateData?: Record<string, unknown>;
     hasSaved?: boolean;
     error?: boolean;
 }
 
 interface DarianEditorProps {
-    sheetData?: any;
+    sheetData?: CostSheetData;
     isFullView?: boolean;
     onToggleFullView?: () => void;
     onSectionChange?: (section: string) => void;
 }
 
-const AnnexPreview = ({ data, isDark }: { data: any, isDark: boolean }) => {
+const AnnexPreview = ({ data, isDark }: { data: Record<string, unknown>; isDark: boolean }) => {
     if (!data || !data.annexes) return null;
     return (
         <div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-                {data.annexes.map((annex: any, idx: number) => {
+                {(data.annexes as AnnexPreviewItem[]).map((annex, idx: number) => {
                     const items = annex.data || annex.items || [];
                     return (
                         <div key={idx} className={cn("p-3 rounded-xl border flex flex-col gap-2", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
@@ -133,20 +141,21 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                 content: clean || "He preparado una propuesta técnica detallada. Puedes revisarla y aplicarla a continuación.",
                 updateData
             }]);
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error);
             console.error("Darian Chat Error:", error);
             setMessages([...newMessages, {
                 role: 'assistant',
-                content: `Error: ${error.message}`,
+                content: `Error: ${errMsg}`,
                 error: true
             }]);
-            toast.error(error.message);
+            toast.error(errMsg);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleApplyUpdate = async (updateData: any, messageIndex: number) => {
+    const handleApplyUpdate = async (updateData: Record<string, unknown>, messageIndex: number) => {
         setIsSaving(true);
         try {
             const response = await fetch('/api/cost-sheets/save', {
@@ -162,8 +171,8 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
             setSheet(result.data);
             setMessages(prev => prev.map((msg, i) => i === messageIndex ? { ...msg, hasSaved: true } : msg));
             toast.success("¡Ficha persistida!");
-        } catch (error: any) {
-            toast.error("Error: " + error.message);
+        } catch (error: unknown) {
+            toast.error("Error: " + (error instanceof Error ? error.message : String(error)));
         } finally {
             setIsSaving(false);
         }
@@ -232,7 +241,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                     <div className={cn("mt-2 w-full p-4 border rounded-2xl space-y-3 bg-primary/5", isDark ? "border-primary/20" : "border-primary/10")}>
                                         <p className="text-[10px] font-bold text-primary uppercase">{msg.hasSaved ? "¡Ficha persistida!" : "Propuesta Lista"}</p>
                                         {!msg.hasSaved ? (
-                                            <button onClick={() => handleApplyUpdate(msg.updateData, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-[10px] rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+                                            <button onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-[10px] rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
                                                 {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aplicar y Guardar"}
                                             </button>
                                         ) : (
@@ -259,6 +268,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            aria-label="Escribir instrucción para generar ficha técnica"
                             className={cn(
                                 "w-full border-none text-sm py-4 pl-6 pr-12 rounded-2xl focus:ring-2 focus:ring-primary/50 shadow-xl transition-all",
                                 isDark ? "bg-[#0D141C] text-white placeholder:text-white/20" : "bg-white text-slate-900 border border-slate-200 shadow-slate-200/50"

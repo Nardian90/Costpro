@@ -41,7 +41,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       let formaCalculo: FormaCalculo = 'FIJO';
       const method = r.calculationMethod || '';
       // Support both isPercent (canonical) and is_percent (deprecated)
-      const isPct = r.isPercent === true || (r as any).is_percent === true;
+      const isPct = r.isPercent === true || r.is_percent === true;
       if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
@@ -105,7 +105,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         name: a.title,
         rows: (a.data || []).map(d => {
           // Try to find a numeric value for the total/importe using keys and common labels
-          const findValue = (row: any, searchKeys: string[], searchLabels: string[]) => {
+          const findValue = (row: Record<string, unknown>, searchKeys: string[], searchLabels: string[]) => {
               // Priority 1: Direct key match with numeric value
               for (const k of searchKeys) {
                   if (typeof row[k] === 'number' && row[k] !== 0) return row[k];

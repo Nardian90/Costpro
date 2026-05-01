@@ -197,7 +197,7 @@ describe('MatchingEngine', () => {
   it('should prevent matching if period is closed', async () => {
     // Setup closed period in mock
     const { db } = await import('../../dexie');
-    (db.period_closures.first as any).mockResolvedValueOnce({ status: 'CLOSED' });
+    (db.period_closures as any).first.mockResolvedValueOnce({ status: 'CLOSED' });
 
     const tx: BankTransaction = {
       id: 'tx_closed',

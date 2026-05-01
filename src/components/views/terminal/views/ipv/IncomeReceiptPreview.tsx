@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { cn, formatCurrencyCents } from '@/lib/utils';
 
 interface IncomeReceiptPreviewProps {
@@ -27,7 +28,7 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
           <div className="flex gap-4 items-start">
             {data.logo_url && (
               <div className="w-16 h-16 flex-shrink-0 border border-black/10 p-1">
-                <img src={data.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                <Image src={data.logo_url} alt="Logo de entidad" width={64} height={64} className="w-full h-full object-contain" unoptimized />
               </div>
             )}
             <div className="space-y-1">

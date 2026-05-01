@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { calculateFicha } from './index';
 import { buildEngineFicha } from './build-ficha';
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
+import { CalculationResult, CalculatedRow } from './types';
 import { produce } from 'immer';
 
 /**
@@ -18,10 +19,10 @@ function applySolverModToUIData(
       row.valorHistorico = value;
       row.value = value;
       row.formula = undefined;
-      (row as any).totalFormula = undefined;
+      row.totalFormula = undefined;
       row.calculationMethod = 'ValorFijo';
       row.isPercent = false;
-      (row as any).is_percent = false; // backward compat
+      row.is_percent = false; // backward compat
       return true;
     }
     if (row.children && applySolverModToUIData(row.children, variableRowId, value)) {
@@ -45,28 +46,28 @@ export function solveCoefficient(
 ): number {
   const { targetRowId } = options;
 
-  const simulateBase = (coef: number): any => {
+  const simulateBase = (coef: number): CalculationResult => {
     const simulatedData = produce(uiData, draft => {
-      const annex = (draft.annexes as any[]).find(a => a.id === annexId);
+      const annex = draft.annexes.find(a => a.id === annexId);
       if (annex) {
         annex.coefficient = coef;
         annex.isAdjustmentActive = true;
       }
     });
-    return calculateFicha(buildEngineFicha(simulatedData as any));
+    return calculateFicha(buildEngineFicha(simulatedData as CostSheetData));
   };
 
   // Step 1: Identify the Target Row (Targeting 14.1 by default)
   const rRef1 = simulateBase(1);
   const rRef2 = simulateBase(1.1);
 
-  const getCandidates = (result: any) => {
+  const getCandidates = (result: CalculationResult) => {
     const ids = ['14.1', '14', '16.1', '16', '13.1', '12.1', '12'];
     const searchIds = targetRowId ? [targetRowId, ...ids] : ids;
 
-    return result.rows.filter((r: any) =>
+    return result.rows.filter((r: CalculatedRow) =>
         searchIds.includes(r.id) || searchIds.includes(r.classification)
-    ).sort((a: any, b: any) => {
+    ).sort((a: CalculatedRow, b: CalculatedRow) => {
         if (targetRowId) {
             if (a.id === targetRowId || a.classification === targetRowId) return -1;
             if (b.id === targetRowId || b.classification === targetRowId) return 1;
@@ -79,10 +80,10 @@ export function solveCoefficient(
 
   const candidates1 = getCandidates(rRef1);
   const candidates2 = getCandidates(rRef2);
-  let resolvedTargetId = null;
+  let resolvedTargetId: string | null = null;
 
   for (const c1 of candidates1) {
-      const c2 = candidates2.find((c: any) => c.id === c1.id);
+      const c2 = candidates2.find((c: CalculatedRow) => c.id === c1.id);
       if (c2 && Math.abs(c1.total - c2.total) > 0.0001) {
           resolvedTargetId = c1.id;
           break;
@@ -92,7 +93,7 @@ export function solveCoefficient(
 
   const simulate = (coef: number): number => {
     const res = simulateBase(coef);
-    const row = res.rows.find((r: any) => r.id === resolvedTargetId || r.classification === resolvedTargetId);
+    const row = res.rows.find((r: CalculatedRow) => r.id === resolvedTargetId || r.classification === resolvedTargetId);
     return row ? row.total : res.summary.grandTotal;
   };
 
@@ -163,19 +164,19 @@ export function solveForTarget(
   let callCount = 0;
 
   const simulate = (val: number): number => {
-    const simulatedData = produce(uiData, (draft: any) => {
+    const simulatedData = produce(uiData, (draft: CostSheetData) => {
       for (const section of draft.sections) {
         if (applySolverModToUIData(section.rows, variableRowId, val)) break;
       }
     });
 
-    const engineFicha = buildEngineFicha(simulatedData as any);
+    const engineFicha = buildEngineFicha(simulatedData as CostSheetData);
     callCount++;
     if (callCount > MAX_SIMULATE_CALLS) return 0;
 
     const result = calculateFicha(engineFicha);
     const row = result.rows.find(
-      (r: any) => r.id === targetRowId || r.classification === targetRowId
+      (r: CalculatedRow) => r.id === targetRowId || r.classification === targetRowId
     );
     return row ? row.total : result.summary.grandTotal;
   };

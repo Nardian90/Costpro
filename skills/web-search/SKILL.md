@@ -1,6 +1,6 @@
 ---
 name: web-search
-description: Implement web search capabilities using the z-ai-web-dev-sdk. Use this skill when the user needs to search the web, retrieve current information, find relevant content, or build applications with real-time web search functionality. Returns structured search results with URLs, snippets, and metadata.
+description: Implement web search capabilities using the z-ai-web-dev-sdk. Use this skill when the user needs to search for real-time information from the web, retrieve up-to-date content beyond the knowledge cutoff, or find the latest news and data. Returns structured search results with URLs, snippets, and metadata.
 license: MIT
 ---
 

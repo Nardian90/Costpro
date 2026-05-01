@@ -8,6 +8,8 @@ import {
   ScenarioRowValues,
   CostSheetData,
   CostSheetScenario,
+  CostSheetSection,
+  CostSheetRow,
   ScenarioConfig
 } from '@/types/cost-sheet';
 import { useCostSheetStore } from './cost-sheet-store';
@@ -24,7 +26,7 @@ interface ScenarioState {
   deleteScenario: (id: ScenarioId) => void;
   renameScenario: (id: ScenarioId, label: string) => void;
   setPrimaryScenario: (id: ScenarioId) => void;
-  updateRowValue: (scenarioId: ScenarioId, rowId: string, field: keyof ScenarioRowValues, value: any) => void;
+  updateRowValue: (scenarioId: ScenarioId, rowId: string, field: keyof ScenarioRowValues, value: number | string | undefined) => void;
   getScenarioValues: (scenarioId: ScenarioId) => ScenarioValues;
   toggleComparisonMode: (enabled?: boolean) => void;
   initializeScenarios: () => void;
@@ -33,9 +35,9 @@ interface ScenarioState {
 /**
  * Helper to find and update a row in the sections tree
  */
-const findAndUpdateRow = (sections: any[], rowId: string, field: string, value: any) => {
+const findAndUpdateRow = (sections: CostSheetSection[], rowId: string, field: string, value: unknown) => {
   for (const section of sections) {
-    const processRows = (rows: any[]): boolean => {
+    const processRows = (rows: CostSheetRow[]): boolean => {
       for (const row of rows) {
         if (row.id === rowId) {
           row[field] = value;
@@ -53,17 +55,17 @@ const findAndUpdateRow = (sections: any[], rowId: string, field: string, value: 
 /**
  * Helper to extract all values from sections into a ScenarioValues map
  */
-const extractValuesFromSections = (sections: any[]): ScenarioValues => {
+const extractValuesFromSections = (sections: CostSheetSection[]): ScenarioValues => {
   const values: ScenarioValues = {};
   sections.forEach(section => {
-    const processRows = (rows: any[]) => {
+    const processRows = (rows: CostSheetRow[]) => {
       rows.forEach(row => {
         values[row.id] = {
           valorHistorico: row.valorHistorico,
-          totalFormula: row.totalFormula,
-          vhFormula: row.vhFormula,
+          totalFormula: row.totalFormula ?? undefined,
+          vhFormula: row.vhFormula ?? undefined,
           coeficiente: row.coeficiente,
-          baseDeCalculoRef: row.baseDeCalculoRef
+          baseDeCalculoRef: row.baseDeCalculoRef ?? undefined
         };
         if (row.children) processRows(row.children);
       });
@@ -113,7 +115,7 @@ export const useScenarioStore = create<ScenarioState>()(
       })),
 
       deactivateScenario: (id: ScenarioId) => set(produce((state) => {
-        state.activeScenarioIds = state.activeScenarioIds.filter((sid: any) => sid !== id);
+        state.activeScenarioIds = state.activeScenarioIds.filter((sid: ScenarioId) => sid !== id);
         if (state.activeScenarioIds.length <= 1) state.isComparisonMode = false;
         if (state.activeScenarioIds.length === 0) {
           state.activeScenarioIds = ['v1'];
@@ -141,7 +143,7 @@ export const useScenarioStore = create<ScenarioState>()(
         }
 
         let sourceValues: ScenarioValues = {};
-        const sourceScenario = scenarios.find((s: any) => s.id === sourceId);
+        const sourceScenario = scenarios.find((s: CostSheetScenario) => s.id === sourceId);
 
         if (sourceScenario) {
           sourceValues = JSON.parse(JSON.stringify(sourceScenario.values));
@@ -150,7 +152,7 @@ export const useScenarioStore = create<ScenarioState>()(
           sourceValues = extractValuesFromSections(data.sections);
         }
 
-        const usedIds = scenarios.map((s: any) => s.id);
+        const usedIds = scenarios.map((s: CostSheetScenario) => s.id);
         const newId = (['v1', 'v2', 'v3'] as ScenarioId[]).find(id => !usedIds.includes(id)) || 'v2';
 
         const colors: Record<ScenarioId, ScenarioColor> = {
@@ -181,7 +183,7 @@ export const useScenarioStore = create<ScenarioState>()(
           return;
         }
 
-        const newScenarios = data.scenarios.filter((s: any) => s.id !== id);
+        const newScenarios = data.scenarios.filter((s: CostSheetScenario) => s.id !== id);
         updateValue(['scenarios'], newScenarios);
         get().deactivateScenario(id);
         toast.success("Escenario eliminado");
@@ -191,7 +193,7 @@ export const useScenarioStore = create<ScenarioState>()(
         const { data, updateValue } = useCostSheetStore.getState();
         if (!data || !data.scenarios) return;
 
-        const newScenarios = data.scenarios.map((s: any) =>
+        const newScenarios = data.scenarios.map((s: CostSheetScenario) =>
           s.id === id ? { ...s, label } : s
         );
         updateValue(['scenarios'], newScenarios);
@@ -201,14 +203,14 @@ export const useScenarioStore = create<ScenarioState>()(
         const { data, updateValues } = useCostSheetStore.getState();
         if (!data) return;
 
-        const scenario = data.scenarios?.find((s: any) => s.id === id);
+        const scenario = data.scenarios?.find((s: CostSheetScenario) => s.id === id);
         if (!scenario) return;
 
         // Apply scenario values to the root sections
         const newSections = produce(data.sections, (draftSections) => {
           const values = scenario.values;
           draftSections.forEach(section => {
-            const processRows = (rows: any[]) => {
+            const processRows = (rows: CostSheetRow[]) => {
               rows.forEach(row => {
                 if (values[row.id]) {
                   const v = values[row.id];
@@ -233,7 +235,7 @@ export const useScenarioStore = create<ScenarioState>()(
         toast.success(`Escenario "${scenario.label}" establecido como principal`);
       },
 
-      updateRowValue: (scenarioId: ScenarioId, rowId: string, field: keyof ScenarioRowValues, value: any) => {
+      updateRowValue: (scenarioId: ScenarioId, rowId: string, field: keyof ScenarioRowValues, value: number | string | undefined) => {
         const { data, updateValue, updateValues } = useCostSheetStore.getState();
         if (!data) return;
 
@@ -243,11 +245,11 @@ export const useScenarioStore = create<ScenarioState>()(
         }
 
         const scenarios = useCostSheetStore.getState().data?.scenarios || [];
-        const sIndex = scenarios.findIndex((s: any) => s.id === scenarioId);
+        const sIndex = scenarios.findIndex((s: CostSheetScenario) => s.id === scenarioId);
 
         if (sIndex === -1) return;
 
-        const updates: any[] = [
+        const updates: { path: (string | number)[]; value: unknown }[] = [
           { path: ['scenarios', sIndex, 'values', rowId, field], value }
         ];
 
@@ -264,7 +266,7 @@ export const useScenarioStore = create<ScenarioState>()(
 
       getScenarioValues: (scenarioId: ScenarioId) => {
         const { data } = useCostSheetStore.getState();
-        return data?.scenarios?.find((s: any) => s.id === scenarioId)?.values || {};
+        return data?.scenarios?.find((s: CostSheetScenario) => s.id === scenarioId)?.values || {};
       }
     }),
     {
@@ -286,7 +288,7 @@ export const mergeScenarioValues = (baseData: CostSheetData, scenarioId: Scenari
     return baseData;
   }
 
-  const scenario = baseData.scenarios?.find((s: any) => s.id === scenarioId);
+  const scenario = baseData.scenarios?.find((s: CostSheetScenario) => s.id === scenarioId);
   if (!scenario) return baseData;
 
   return produce(baseData, (draft) => {
@@ -296,8 +298,8 @@ export const mergeScenarioValues = (baseData: CostSheetData, scenarioId: Scenari
 
     const values = scenario.values;
     draft.sections.forEach(section => {
-      const processRows = (rows: any[]) => {
-        rows.forEach((row: any) => {
+      const processRows = (rows: CostSheetRow[]) => {
+        rows.forEach((row: CostSheetRow) => {
           if (values[row.id]) {
             const v = values[row.id];
             if (v.valorHistorico !== undefined) row.valorHistorico = v.valorHistorico;

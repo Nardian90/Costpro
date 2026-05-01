@@ -42,7 +42,8 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
       <DropdownMenuTrigger asChild>
         <button
           className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-background/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
-          aria-label="Modo de Visualización"
+          aria-label="Seleccionar modo de visualización de la ficha"
+          type="button"
         >
           <div className="relative w-4 h-4 flex items-center justify-center overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
@@ -73,12 +74,14 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
           <DropdownMenuItem
             key={m.id}
             onClick={() => setViewMode(m.id)}
+            role="menuitemradio"
+            aria-checked={viewMode === m.id}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary",
               viewMode === m.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
             )}
           >
-            <m.icon className="w-4 h-4" />
+            <m.icon className="w-4 h-4" aria-hidden="true" />
             <span className="text-xs font-black uppercase tracking-widest">{m.label}</span>
           </DropdownMenuItem>
         ))}

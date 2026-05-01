@@ -1,30 +1,13 @@
-© 2025 Anthropic, PBC. All rights reserved.
+Copyright (c) 2026 Z.ai All rights reserved.
 
-LICENSE: Use of these materials (including all code, prompts, assets, files,
-and other components of this Skill) is governed by your agreement with
-Anthropic regarding use of Anthropic's services. If no separate agreement
-exists, use is governed by Anthropic's Consumer Terms of Service or
-Commercial Terms of Service, as applicable:
-https://www.anthropic.com/legal/consumer-terms
-https://www.anthropic.com/legal/commercial-terms
-Your applicable agreement is referred to as the "Agreement." "Services" are
-as defined in the Agreement.
+Permission is granted for personal, educational, and non-commercial use only.
 
-ADDITIONAL RESTRICTIONS: Notwithstanding anything in the Agreement to the
-contrary, users may not:
+Commercial use is strictly prohibited without prior written permission from the author.
 
-- Extract these materials from the Services or retain copies of these
-  materials outside the Services
-- Reproduce or copy these materials, except for temporary copies created
-  automatically during authorized use of the Services
-- Create derivative works based on these materials
-- Distribute, sublicense, or transfer these materials to any third party
-- Make, offer to sell, sell, or import any inventions embodied in these
-  materials
-- Reverse engineer, decompile, or disassemble these materials
+Unauthorized copying, modification, or distribution of the software for commercial purposes is prohibited.
 
-The receipt, viewing, or possession of these materials does not convey or
-imply any license or right beyond those expressly granted above.
+The author reserves the right to make the final determination of what constitutes "commercial use".
 
-Anthropic retains all right, title, and interest in these materials,
-including all copyrights, patents, and other intellectual property rights.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.

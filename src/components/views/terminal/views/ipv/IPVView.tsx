@@ -23,7 +23,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/dexie';
 import { formatCurrencyCents } from '@/lib/utils';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
-import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
+import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboardLazy';
 import IPVControlPanel from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { IPVHelpDialog } from './IPVHelpDialog';

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target } from 'lucide-react';
 import { solveCoefficient } from '@/lib/cost-engine/solver';
-import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
+import { CostSheetAnnex, CostSheetColumn, CostSheetData } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
 import { exportAnnexToExcel, importAnnexFromExcel } from '@/services/excel-service';
@@ -23,7 +23,7 @@ import { ViewMode } from '@/components/ui/ViewSwitcher';
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
   layoutMode?: ViewMode;
-  calculatedAnnexes?: any[];
+  calculatedAnnexes?: CostSheetAnnex[];
   hideBorder?: boolean;
 }
 
@@ -72,8 +72,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   };
 
 
-  const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeAnnexId);
-  const totalValue = calculatedAnnex ? calculatedAnnex.data.reduce((sum: number, row: any) => {
+  const calculatedAnnex = calculatedAnnexes.find((a: CostSheetAnnex) => a.id === activeAnnexId);
+  const totalValue = calculatedAnnex ? calculatedAnnex.data.reduce((sum: number, row: Record<string, string | number | boolean | undefined>) => {
     const val = [row.total, row.amount, row.depreciation_cost, row.price_total, row.importe].find(v => v !== undefined && v !== null);
     return sum + (parseFloat(String(val ?? 0)) || 0);
   }, 0) : 0;
@@ -108,17 +108,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     return (ADJ_COL_KEYS[adjCol] || []).includes(colKey);
   };
 
-  const handleInputChange = (path: (string | number)[], value: any) => {
+  const handleInputChange = (path: (string | number)[], value: string | number) => {
     // If it is '0' or '0.' it should be treated as string to allow typing decimals
     if (value === '0' || value === '0.') {
-        updateValue(path, !isNaN(Number(value)) && value !== '' ? Number(value) : value);
+        updateValue(path, Number(value));
         return;
     }
     const finalValue = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
     updateValue(path, finalValue);
   };
 
-  const handleProductSelect = (product: any) => {
+  const handleProductSelect = (product: { name: string; unit?: string; price?: number }) => {
     if (targetRowIndex !== null && annexIndex !== -1) {
       updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'description'], product.name);
       updateValue(['annexes', annexIndex, 'data', targetRowIndex, 'um'], product.unit || 'u');
@@ -153,8 +153,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     if (!importTarget) return;
     const { file, annexIndex: idx } = importTarget;
     try {
-      const updatedAnnex = await importAnnexFromExcel(file, data.annexes[idx]);
-      const newData = { ...data } as any;
+      const updatedAnnex = (await importAnnexFromExcel(file, data.annexes[idx])) as unknown as CostSheetAnnex;
+      const newData = { ...data } as CostSheetData;
       newData.annexes[idx] = updatedAnnex;
       setSheet(newData);
     } catch (err) {
@@ -176,6 +176,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                   className="hidden"
                   onChange={handleImport}
                   accept=".xlsx, .xls"
+                  aria-label={`Importar archivo Excel para anexo ${annex.title}`}
                 />
                 <Button
                   variant="outline"
@@ -252,6 +253,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                             <input
                                 type="text"
                                 value={localCoef}
+                                aria-label="Coeficiente"
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     setLocalCoef(val);
@@ -297,6 +299,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                     value={targetPrice}
                                     onChange={(e) => setTargetPrice(e.target.value)}
                                     placeholder="Ej: 25"
+                                    aria-label="Precio de venta objetivo"
                                     className="w-32 h-10 px-2 rounded-xl bg-background border border-primary/40 text-sm font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center placeholder:text-primary/20 shadow-inner"
                                 />
                                 <Target className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40" />
@@ -345,7 +348,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {annex.data.map((row: any, rowIndex: number) => {
+                    {annex.data.map((row: Record<string, string | number | boolean | undefined>, rowIndex: number) => {
                         const isZero = (colKey: string) => Number(row[colKey]) === 0;
                         return (
                         <TableRow key={rowIndex} className="h-auto sm:h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
@@ -528,7 +531,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
        {/* Global suggestions for classification column */}
        <datalist id={`classification-suggestions-${activeAnnexId}`}>
           {classificationSuggestions.map(s => (
-              <option key={s.id} value={`${s.id} - ${s.label}`} />
+              <option key={s.id} value={`${s.id} - ${s.label}`} aria-label={s.label} />
           ))}
        </datalist>
 

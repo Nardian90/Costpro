@@ -252,24 +252,24 @@ export function ContactModal({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Nombre <span className="text-red-400">*</span></label>
-            <input type="text" value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} placeholder="Tu nombre" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Nombre" />
+            <label htmlFor="contact-name" className="text-xs font-semibold text-foreground">Nombre <span className="text-red-400">*</span></label>
+            <input id="contact-name" type="text" value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} placeholder="Tu nombre" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Nombre" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Email <span className="text-red-400">*</span></label>
-            <input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} placeholder="tu@empresa.com" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Email" />
+            <label htmlFor="contact-email" className="text-xs font-semibold text-foreground">Email <span className="text-red-400">*</span></label>
+            <input id="contact-email" type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} placeholder="tu@empresa.com" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Email" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Empresa</label>
-            <input type="text" value={contactForm.company} onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })} placeholder="Nombre de tu empresa" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Empresa" />
+            <label htmlFor="contact-company" className="text-xs font-semibold text-foreground">Empresa</label>
+            <input id="contact-company" type="text" value={contactForm.company} onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })} placeholder="Nombre de tu empresa" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Empresa" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">Teléfono</label>
-            <input type="tel" value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} placeholder="+502 1234 5678" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Teléfono" />
+            <label htmlFor="contact-phone" className="text-xs font-semibold text-foreground">Teléfono</label>
+            <input id="contact-phone" type="tel" value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} placeholder="+502 1234 5678" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all" aria-label="Teléfono" />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs font-semibold text-foreground">Mensaje</label>
-            <textarea value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} placeholder="Cuéntanos sobre tus necesidades..." rows={3} className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all resize-none" aria-label="Mensaje" />
+            <label htmlFor="contact-message" className="text-xs font-semibold text-foreground">Mensaje</label>
+            <textarea id="contact-message" value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} placeholder="Cuéntanos sobre tus necesidades..." rows={3} className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#22c55e]/40 focus:ring-1 focus:ring-[#22c55e]/20 transition-all resize-none" aria-label="Mensaje" />
           </div>
         </div>
         <DialogFooter>

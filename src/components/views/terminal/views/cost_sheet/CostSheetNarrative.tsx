@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FileText, TrendingUp, Info, PieChart as PieIcon, BarChart as BarIcon, Activity, Target } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { SafePieChart } from "@/components/ui/SafePieChart";
+import type { CostSheetData, CostSheetSection, CostSheetHeader, CalculatedRowValue } from '@/types/cost-sheet';
 import {
   BarChart,
   Bar,
@@ -18,9 +19,9 @@ import {
 } from 'recharts';
 
 interface CostSheetNarrativeProps {
-  data: any;
-  calculatedValues?: any;
-  calculatedHeader?: any;
+  data: CostSheetData;
+  calculatedValues?: Record<string, CalculatedRowValue>;
+  calculatedHeader?: Partial<CostSheetHeader>;
 }
 
 function CostSheetNarrative({ data, calculatedValues, calculatedHeader }: CostSheetNarrativeProps) {
@@ -28,8 +29,8 @@ function CostSheetNarrative({ data, calculatedValues, calculatedHeader }: CostSh
   const sections = data?.sections || [];
 
   // Calculate summary stats
-  const totalCosto = sections.reduce((acc: number, s: any) => acc + (Number(s.total_costo) || 0), 0);
-  const totalGasto = sections.reduce((acc: number, s: any) => acc + (Number(s.total_gasto) || 0), 0);
+  const totalCosto = sections.reduce((acc: number, s: CostSheetSection) => acc + (Number((s as unknown as Record<string, unknown>).total_costo) || 0), 0);
+  const totalGasto = sections.reduce((acc: number, s: CostSheetSection) => acc + (Number((s as unknown as Record<string, unknown>).total_gasto) || 0), 0);
   const costoYGastoTotal = totalCosto + totalGasto;
 
   const unitPrice = Number(header?.unit_price) || 0;

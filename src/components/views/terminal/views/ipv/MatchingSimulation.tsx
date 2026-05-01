@@ -182,8 +182,9 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                 </h3>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Monto a Simular ($)</label>
+                        <label htmlFor="sim-target" className="text-xs font-bold uppercase text-muted-foreground">Monto a Simular ($)</label>
                         <Input
+                            id="sim-target"
                             type="number"
                             value={target}
                             onChange={e => setTarget(Number(e.target.value))}
@@ -227,8 +228,9 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                 </p>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Estrategia de Distribución</label>
+                        <label htmlFor="sim-strategy" className="text-xs font-bold uppercase text-muted-foreground">Estrategia de Distribución</label>
                         <select
+                            id="sim-strategy"
                             value={globalStrategy}
                             onChange={(e) => setGlobalStrategy(e.target.value as "MIN_STOCK" | "MAX_VALUE")}
                             className="w-full h-10 rounded-xl border border-input bg-background/50 px-3 py-1 text-sm font-bold uppercase"
@@ -238,8 +240,9 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Meta Mensual ($)</label>
+                        <label htmlFor="sim-global-target" className="text-xs font-bold uppercase text-muted-foreground">Meta Mensual ($)</label>
                         <Input
+                            id="sim-global-target"
                             type="number"
                             value={globalTarget}
                             onChange={e => setGlobalTarget(Number(e.target.value))}

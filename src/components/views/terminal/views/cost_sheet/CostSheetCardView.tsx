@@ -53,8 +53,8 @@ interface RowCardProps {
   calculated: CalculatedRowValue;
   calculatedValues: Record<string, CalculatedRowValue>;
   path: (string | number)[];
-  annexes: any[];
-  suggestions: any;
+  annexes: CostSheetAnnex[];
+  suggestions: { label: string; value: string; description?: string }[];
 }
 
 const RowCard: React.FC<RowCardProps> = memo(({
@@ -75,7 +75,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
   const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
   const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
-    const findSuggested = (rows: any[]): any => {
+    const findSuggested = (rows: CostSheetRow[]): CostSheetRow | null => {
       for (const r of rows) {
         if (r.id === rowId) return r;
         if (r.children) {
@@ -85,7 +85,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
       }
       return null;
     };
-    let suggested = null;
+    let suggested: CostSheetRow | null = null;
     if (reinicioTemplate?.sections) {
       for (const s of reinicioTemplate.sections) {
         suggested = findSuggested(s.rows);
@@ -122,7 +122,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
     setIsExpanded(!isExpanded);
   };
 
-  const handleValueChange = (field: string, val: any) => {
+  const handleValueChange = (field: string, val: string | number | null) => {
     updateValue([...path, field], val);
   };
 
@@ -177,7 +177,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     onKeyDown={(e) => { if (e.key === 'Enter') { handleValueChange('label', (e.target as HTMLInputElement).value); setIsEditingLabel(false); } }}
                  />
                ) : (
-                 <h4 className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)}>
+                 <h4 role="button" tabIndex={0} className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
                     {row.label}
                  </h4>
                )}
@@ -227,8 +227,11 @@ const RowCard: React.FC<RowCardProps> = memo(({
           <div className="space-y-1">
             <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground/60">Histórico / %</p>
             <div
+              role="button"
+              tabIndex={0}
               className="relative cursor-pointer group/vh"
               onClick={() => setIsEditingVH(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingVH(true); } }}
             >
               {isEditingVH ? (
                 <div className="z-20 relative">
@@ -262,8 +265,11 @@ const RowCard: React.FC<RowCardProps> = memo(({
           <div className="space-y-1 text-right">
             <p className="text-xs font-black uppercase tracking-[0.15em] text-primary/60">Total {row.um || row.unit || "CUP"}</p>
             <div
+              role="button"
+              tabIndex={0}
               className="relative cursor-pointer group/total"
               onClick={() => !hasChildren && setIsEditingTotal(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!hasChildren) setIsEditingTotal(true); } }}
             >
               {isEditingTotal ? (
                  <div className="z-20 relative">
@@ -328,7 +334,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                 level={level + 1}
                 index={childIdx}
                 numbering={`${numbering}.${childIdx + 1}`}
-                calculated={calculatedValues?.[child.id] || {} as any}
+                calculated={calculatedValues?.[child.id] || {} as CalculatedRowValue}
                 calculatedValues={calculatedValues}
                 path={[...path, 'children', childIdx]}
                 annexes={annexes}
@@ -353,7 +359,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   hideHeader = false
 }) => {
   const { updateValue, addMainRow, addMainSection, removeMainSection } = useCostSheetStore();
-  const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
+  const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection, index: number } | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (id: string) => {
@@ -366,7 +372,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
 
   // Suggestions for FormulaEditor
   const suggestions = useMemo(() => {
-    const list: any[] = [
+    const list: { label: string; value: string; description: string }[] = [
       ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ];
     sections.forEach(s => {
@@ -475,7 +481,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                           level={0}
                           index={rowIndex}
                           numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
-                          calculated={calculatedValues?.[row.id] || {} as any}
+                          calculated={calculatedValues?.[row.id] || {} as CalculatedRowValue}
                           calculatedValues={calculatedValues}
                           path={['sections', sectionIndex, 'rows', rowIndex]}
                           annexes={annexes}
@@ -504,7 +510,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
       <CostSheetSectionActionsPanel
         isOpen={!!activeSectionForActions}
         onClose={() => setActiveSectionForActions(null)}
-        section={activeSectionForActions?.section}
+        section={activeSectionForActions?.section ?? null}
         onExport={() => activeSectionForActions && exportSectionToExcel(activeSectionForActions.section, calculatedValues)}
         onImport={() => {
             toast.info("Importación desde Excel no disponible en vista de tarjetas");

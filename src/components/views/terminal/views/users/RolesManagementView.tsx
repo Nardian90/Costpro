@@ -86,7 +86,7 @@ export default function RolesManagementView() {
           <tbody>
             {filteredRoles.map((role) => (
               <tr key={role.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                <td className="p-4">
+                <td className="p-4" aria-label={`Rol: ${role.name}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                       <Shield className="w-4 h-4" />
@@ -143,7 +143,7 @@ export default function RolesManagementView() {
               </tr>
             ))}
             {filteredRoles.length === 0 && !isLoading && (
-              <tr>
+              <tr aria-label="Sin resultados">
                 <td colSpan={4} className="p-12 text-center">
                   <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">No se encontraron roles</p>
                 </td>

@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import type { CostSheetAnnex, CostSheetData } from '@/types/cost-sheet';
+import type { CostSheetViewMode } from './CostSheetModeDropdown';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { Save, Bot, Clock } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
@@ -10,13 +12,19 @@ import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+interface AutoSaveVersion {
+  timestamp: number;
+  data: CostSheetData;
+  label: string;
+}
+
 interface CostSheetNavProps {
-  navItems?: any[];
-  annexes?: any[];
+  navItems?: unknown[];
+  annexes?: CostSheetAnnex[];
   activeSection: string;
   setActiveSection: (id: string) => void;
-  viewMode: any;
-  setViewMode: (mode: any) => void;
+  viewMode: CostSheetViewMode;
+  setViewMode: (mode: CostSheetViewMode) => void;
   layoutMode?: ViewMode;
   setLayoutMode?: (mode: ViewMode) => void;
   onOpenActions?: () => void;
@@ -28,8 +36,8 @@ interface CostSheetNavProps {
   isEditing?: boolean;
   lastSavedAt?: number | null;
   isSaving?: boolean;
-  versions?: any[];
-  onRestoreVersion?: (v: any) => void;
+  versions?: AutoSaveVersion[];
+  onRestoreVersion?: (v: AutoSaveVersion) => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -57,10 +65,11 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <button
                     onClick={onSave || (() => {})}
+                    type="button"
                     className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 rounded-xl"
-                    title="Guardar Ficha"
+                    aria-label="Guardar ficha de costo"
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-4 h-4" aria-hidden="true" />
                     <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar'}</span>
                 </button>
             ),
@@ -91,11 +100,11 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <button
                     onClick={() => setActiveSection('ai-chat')}
+                    type="button"
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-primary hover:bg-primary/10 rounded-xl"
-                    title="Darian AI Expert"
-                    aria-label="Asistente Darian AI"
+                    aria-label="Abrir asistente Darian AI"
                 >
-                    <Bot className="w-5 h-5" />
+                    <Bot className="w-5 h-5" aria-hidden="true" />
                 </button>
             ),
             tooltip: "Darian AI Expert"
@@ -117,9 +126,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                         <PopoverTrigger asChild>
                             <button
                                 className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-muted-foreground hover:bg-muted/10 rounded-xl"
-                                title="Historial de Versiones"
+                                aria-label="Historial de versiones autoguardadas"
+                                type="button"
                             >
-                                <Clock className="w-5 h-5" />
+                                <Clock className="w-5 h-5" aria-hidden="true" />
                             </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 p-0 rounded-3xl border-sidebar-border overflow-hidden bg-card" align="end">
@@ -136,6 +146,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                                             key={i}
                                             onClick={() => onRestoreVersion?.(v)}
                                             className="w-full text-left p-3 rounded-2xl hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                                            aria-label={`Restaurar versión: ${v.label || 'Captura automática'}`}
                                         >
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-xs font-bold">{v.label || 'Captura automática'}</span>

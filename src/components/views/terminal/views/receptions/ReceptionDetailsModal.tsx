@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
@@ -46,6 +47,7 @@ export function ReceptionDetailsModal({
     <BaseModal
       open={isOpen}
       onOpenChange={onClose}
+      aria-label={isEditMode ? 'Editar recepción' : 'Detalle de recepción'}
       title={
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -64,6 +66,8 @@ export function ReceptionDetailsModal({
                 onClick={onVoidRequest}
                 disabled={isVoiding}
                 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive hover:underline disabled:opacity-50"
+                type="button"
+                aria-label="Anular recepción"
               >
                 {isVoiding ? 'Anulando...' : 'Anular recepción'}
               </button>
@@ -72,8 +76,10 @@ export function ReceptionDetailsModal({
               <button
                 onClick={onExport}
                 className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                type="button"
+                aria-label="Exportar recepción como archivo CSV"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4" aria-hidden="true" />
                 Exportar CSV
               </button>
             )}
@@ -83,6 +89,8 @@ export function ReceptionDetailsModal({
             <button
               onClick={onClose}
               className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
+              type="button"
+              aria-label={isEditMode ? 'Cancelar edición de recepción' : 'Cerrar detalle de recepción'}
             >
               {isEditMode ? 'Cancelar' : 'Cerrar'}
             </button>
@@ -94,6 +102,8 @@ export function ReceptionDetailsModal({
                 })}
                 disabled={isUpdating}
                 className="px-8 py-3 bg-primary text-white border border-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+                type="button"
+                aria-label="Guardar cambios de la recepción"
               >
                 {isUpdating ? 'Guardando...' : 'Guardar cambios'}
               </button>
@@ -106,7 +116,7 @@ export function ReceptionDetailsModal({
           {isEditMode ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                <label htmlFor="edit-supplier" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                   Proveedor
                 </label>
                 <input
@@ -115,10 +125,11 @@ export function ReceptionDetailsModal({
                   id="edit-supplier"
                   className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                   placeholder="Nombre del proveedor..."
+                  aria-label="Nombre del proveedor"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                <label htmlFor="edit-reference-doc" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                   N° Documento referencia / Factura
                 </label>
                 <input
@@ -127,6 +138,7 @@ export function ReceptionDetailsModal({
                   id="edit-reference-doc"
                   className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                   placeholder="Número de factura o documento..."
+                  aria-label="Número de documento de referencia o factura"
                 />
               </div>
               <p className="text-[10px] text-muted-foreground italic px-1">
@@ -138,14 +150,14 @@ export function ReceptionDetailsModal({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="neu-card !p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  <Hash className="w-3 h-3" /> ID Ref
+                  <Hash className="w-3 h-3" aria-hidden="true" /> ID Ref
                 </div>
                 <div className="font-bold text-xs truncate text-primary">{receipt?.id?.split('-')[0]}</div>
               </div>
 
               <div className="neu-card !p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  <Calendar className="w-3 h-3" /> Fecha
+                  <Calendar className="w-3 h-3" aria-hidden="true" /> Fecha
                 </div>
                 <div className="font-bold text-xs uppercase">
                   {formatDate(receipt?.reception_date)}
@@ -154,21 +166,21 @@ export function ReceptionDetailsModal({
 
               <div className="neu-card !p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  <Building2 className="w-3 h-3" /> Proveedor
+                  <Building2 className="w-3 h-3" aria-hidden="true" /> Proveedor
                 </div>
                 <div className="font-bold text-xs truncate">{receipt?.supplier || 'N/A'}</div>
               </div>
 
                <div className="neu-card !p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  <FileText className="w-3 h-3" /> Factura #
+                  <FileText className="w-3 h-3" aria-hidden="true" /> Factura #
                 </div>
                 <div className="font-bold text-xs truncate">{receipt?.reference_doc || 'N/A'}</div>
               </div>
 
               <div className="neu-card !p-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  <User className="w-3 h-3" /> Recibido por
+                  <User className="w-3 h-3" aria-hidden="true" /> Recibido por
                 </div>
                 <div className="font-bold text-xs truncate text-muted-foreground italic">
                   ID: {receipt?.user_id?.split('-')[0]}
@@ -228,9 +240,9 @@ export function ReceptionDetailsModal({
                             <td className="p-3">
                               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-white/5">
                                 {imageUrl ? (
-                                  <img src={imageUrl} alt={item.products?.name} className="w-full h-full object-cover" />
+                                  <Image src={imageUrl} alt={item.products?.name || 'Imagen de producto'} width={40} height={40} className="w-full h-full object-cover" unoptimized />
                                 ) : (
-                                  <Package className="w-5 h-5 text-muted-foreground/50" />
+                                  <Package className="w-5 h-5 text-muted-foreground/50" aria-hidden="true" />
                                 )}
                               </div>
                             </td>

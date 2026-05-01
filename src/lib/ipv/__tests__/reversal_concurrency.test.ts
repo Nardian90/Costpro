@@ -14,8 +14,12 @@ describe('StockService Reversal & Concurrency', () => {
             descripcion: 'Test Product',
             precio_cents: 1000,
             stock_inicial_manual: 10,
-            activo: 1,
-            um: 'UD'
+            activo: true,
+            um: 'UD',
+            es_paquete: false,
+            contenido_paquete: 0,
+            prioridad_algoritmo: 5,
+            created_at: new Date().toISOString()
         });
     });
 

@@ -7,6 +7,7 @@ import { StockAlert } from '@/hooks/logic/useStockAlerts';
 import { Product } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion, motionSafe } from '@/hooks/ui/useReducedMotion';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 interface StockAlertsPanelProps {
   alerts: StockAlert[];
@@ -16,6 +17,7 @@ interface StockAlertsPanelProps {
 export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const prefersReduced = useReducedMotion();
+  const panelRef = useFocusTrap(isOpen);
 
   const criticalCount = alerts.filter(a => a.severity === 'critical').length;
   const warningCount = alerts.filter(a => a.severity === 'warning').length;
@@ -57,6 +59,7 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
                 exit: { x: '100%' },
                 transition: { type: 'spring', damping: 25, stiffness: 200 } as any
               })}
+              ref={panelRef}
               className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border shadow-xl flex flex-col"
               role="dialog"
               aria-label="Panel de alertas de stock"

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { CostSheetHeader, CostSheetSection, CostSheetRow } from '@/types/cost-sheet';
 import {
   evaluateAnnexExpressionShared,
   evaluateHeaderExpressionShared,
@@ -8,44 +9,57 @@ import {
   assembleFichaJSON,
 } from './shared-mapping';
 
+const mockHeader: CostSheetHeader = {
+  code: 'TEST',
+  name: 'Test',
+  date: '2025-01-01',
+  quantity: 0,
+  currency: 'CUP',
+  category: 'test',
+  type: 'product',
+  unit: 'u',
+};
+
 describe('shared-mapping', () => {
   describe('evaluateAnnexExpressionShared', () => {
     it('returns 0 for null/empty expression', () => {
-      expect(evaluateAnnexExpressionShared(null as any, {}, {}, [])).toBe(0);
-      expect(evaluateAnnexExpressionShared(undefined as any, {}, {}, [])).toBe(0);
-      expect(evaluateAnnexExpressionShared('', {}, {}, [])).toBe(0);
+      expect(evaluateAnnexExpressionShared(null as any, {}, mockHeader, [])).toBe(0);
+      expect(evaluateAnnexExpressionShared(undefined as any, {}, mockHeader, [])).toBe(0);
+      expect(evaluateAnnexExpressionShared('', {}, mockHeader, [])).toBe(0);
     });
     it('returns number directly', () => {
-      expect(evaluateAnnexExpressionShared(42, {}, {}, [])).toBe(42);
+      expect(evaluateAnnexExpressionShared(42 as unknown as string, {}, mockHeader, [])).toBe(42);
     });
     it('parses plain numbers', () => {
-      expect(evaluateAnnexExpressionShared('123.45', {}, {}, [])).toBe(123.45);
+      expect(evaluateAnnexExpressionShared('123.45', {}, mockHeader, [])).toBe(123.45);
     });
     it('evaluates simple arithmetic', () => {
-      expect(evaluateAnnexExpressionShared('=2 + 3', {}, {}, [])).toBe(5);
+      expect(evaluateAnnexExpressionShared('=2 + 3', {}, mockHeader, [])).toBe(5);
     });
     it('replaces row data variables', () => {
       const rowData = { precio: 10, cantidad: 5 };
-      expect(evaluateAnnexExpressionShared('=precio * cantidad', rowData, {}, [])).toBe(50);
+      expect(evaluateAnnexExpressionShared('=precio * cantidad', rowData, mockHeader, [])).toBe(50);
     });
     it('replaces header variables', () => {
-      const header = { quantity: 100 };
+      const header = { ...mockHeader, quantity: 100 };
       expect(evaluateAnnexExpressionShared('=QUANTITY * 2', {}, header, [])).toBe(200);
     });
     it('handles TotalAnexo prefix', () => {
       const annexes = [{
         id: 'I',
+        title: '',
+        columns: [],
         data: [
           { total: 100 },
           { total: 200 },
         ],
       }];
-      const result = evaluateAnnexExpressionShared('=TotalAnexoI', {}, {}, annexes);
+      const result = evaluateAnnexExpressionShared('=TotalAnexoI', {}, mockHeader, annexes);
       expect(result).toBe(300);
     });
     it('collects warnings on evaluation error', () => {
       const warnings: string[] = [];
-      const result = evaluateAnnexExpressionShared('=invalidFn()', {}, {}, [], undefined, warnings);
+      const result = evaluateAnnexExpressionShared('=invalidFn()', {}, mockHeader, [], undefined, warnings);
       expect(result).toBe(0);
       expect(warnings.length).toBeGreaterThan(0);
     });
@@ -53,10 +67,10 @@ describe('shared-mapping', () => {
 
   describe('evaluateHeaderExpressionShared', () => {
     it('returns non-formula strings as-is', () => {
-      expect(evaluateHeaderExpressionShared('Hello', {}, [])).toBe('Hello');
+      expect(evaluateHeaderExpressionShared('Hello', mockHeader, [])).toBe('Hello');
     });
     it('evaluates formula expressions', () => {
-      const header = { price: 5, multiplier: 10 };
+      const header = { ...mockHeader, price: 5, multiplier: 10 };
       const result = evaluateHeaderExpressionShared('=price * multiplier', header, []);
       expect(result).toBe(50);
     });
@@ -64,20 +78,24 @@ describe('shared-mapping', () => {
 
   describe('buildVHSums', () => {
     it('sums children recursively', () => {
-      const sections = [{
+      const sections: CostSheetSection[] = [{
         id: '1',
         rows: [{
           id: '1.1',
+          label: '',
           valorHistorico: 100,
           children: [],
         }, {
           id: '1.2',
+          label: '',
           children: [{
             id: '1.2.1',
+            label: '',
             valorHistorico: 50,
             children: [],
           }, {
             id: '1.2.2',
+            label: '',
             valorHistorico: 30,
             children: [],
           }],
@@ -92,14 +110,16 @@ describe('shared-mapping', () => {
     });
 
     it('respects ValorFijo for parent rows', () => {
-      const sections = [{
+      const sections: CostSheetSection[] = [{
         id: '1',
         rows: [{
           id: '1.1',
+          label: '',
           valorHistorico: 999,
           calculationMethod: 'ValorFijo',
           children: [{
             id: '1.1.1',
+            label: '',
             valorHistorico: 100,
             children: [],
           }],
@@ -223,10 +243,11 @@ describe('shared-mapping', () => {
 
   describe('assembleFichaJSON', () => {
     it('assembles a FichaJSON from components', () => {
-      const header = { code: 'TEST', name: 'Test', currency: 'CUP', quantity: 1 };
+      const header: CostSheetHeader = { ...mockHeader, code: 'TEST', name: 'Test', currency: 'CUP', quantity: 1 };
       const annexes = [{
         id: 'I',
         title: 'Anexo I',
+        columns: [],
         data: [{ classification: '1.1', total: 100 }],
       }];
       const engineRows = [{

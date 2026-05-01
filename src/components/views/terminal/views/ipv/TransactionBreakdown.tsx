@@ -36,7 +36,7 @@ import {
     SelectTrigger,
     SelectValue
 } from '../../../../ui/select';
-import * as XLSX from 'xlsx';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import { format } from 'date-fns';
 
 const ObservationsModal = ({ open, onOpenChange, observations, reference }: { open: boolean, onOpenChange: (open: boolean) => void, observations: string, reference: string }) => (
@@ -126,7 +126,8 @@ export default function TransactionBreakdown() {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await createWorkbook();
     const data = filteredLines.map(l => ({
         "Fecha": l.fecha_operacion,
         "Referencia": l.transaction_ref,
@@ -219,7 +220,7 @@ export default function TransactionBreakdown() {
                     <TableCell>
                       <div className="text-xs font-black text-primary truncate max-w-[150px]">{l.transaction_ref}</div>
                       <div className="flex items-center gap-1 group">
-                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px] cursor-pointer hover:text-primary transition-colors" onClick={() => tx && setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen })}>
+                        <div role="button" tabIndex={0} className="text-[10px] text-muted-foreground truncate max-w-[120px] cursor-pointer hover:text-primary transition-colors" onClick={() => { if (tx) setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen }); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (tx) setObsModal({ open: true, observations: tx.observaciones || "", reference: tx.referencia_origen }); } }}>
                           {tx?.observaciones || "Manual / Global"}
                         </div>
                         {tx && <Info className="w-3 h-3 text-muted-foreground/50" />}
@@ -302,8 +303,9 @@ export default function TransactionBreakdown() {
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-muted-foreground">Transferencia (T)</label>
+                            <label htmlFor="edit-transfer" className="text-[10px] font-black uppercase text-muted-foreground">Transferencia (T)</label>
                             <Input
+                                id="edit-transfer"
                                 type="number"
                                 step="0.01"
                                 value={editTransfer / 100}
@@ -312,8 +314,9 @@ export default function TransactionBreakdown() {
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-muted-foreground">Efectivo (E)</label>
+                            <label htmlFor="edit-cash" className="text-[10px] font-black uppercase text-muted-foreground">Efectivo (E)</label>
                             <Input
+                                id="edit-cash"
                                 type="number"
                                 step="0.01"
                                 value={editCash / 100}
@@ -323,8 +326,8 @@ export default function TransactionBreakdown() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground">Fecha Operación</label>
-                        <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="font-bold" />
+                        <label htmlFor="edit-date" className="text-[10px] font-black uppercase text-muted-foreground">Fecha Operación</label>
+                        <Input id="edit-date" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="font-bold" />
                     </div>
                 </div>
 

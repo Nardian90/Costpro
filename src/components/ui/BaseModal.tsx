@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 interface BaseModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface BaseModalProps {
   contentClassName?: string;
   maxWidth?: string; // e.g., 'sm:max-w-lg', 'sm:max-w-2xl'
   showCloseButton?: boolean;
+  'aria-label'?: string;
 }
 
 /**
@@ -43,10 +45,15 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   contentClassName,
   maxWidth = 'sm:max-w-lg',
   showCloseButton = true,
+  'aria-label': ariaLabel,
 }) => {
+  const trapRef = useFocusTrap(open);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        ref={trapRef}
+        aria-label={ariaLabel}
         className={cn(
           // Layout: Use flexbox instead of grid to manage internal scroll
           "flex flex-col p-0 gap-0 overflow-hidden",

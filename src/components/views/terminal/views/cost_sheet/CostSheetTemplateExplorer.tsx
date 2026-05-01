@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 'use client';
+import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,7 @@ import {
   Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { CostSheetData } from '@/types/cost-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -81,7 +82,7 @@ interface Template {
   description?: string;
   category?: string;
   type: TemplateCategory;
-  data: any;
+  data: CostSheetData;
   updated_at?: string;
   store_id?: string | null;
 }
@@ -234,15 +235,15 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
       if (error) throw error;
       if (data) {
-        setPublicTemplates(data.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          description: t.description,
-          category: t.category,
+        setPublicTemplates(data.map((t: Record<string, unknown>) => ({
+          id: String(t.id),
+          name: String(t.name),
+          description: t.description ? String(t.description) : undefined,
+          category: t.category ? String(t.category) : undefined,
           type: 'public',
-          data: t.data,
-          updated_at: t.created_at,
-          store_id: t.store_id
+          data: t.data as CostSheetData,
+          updated_at: t.created_at ? String(t.created_at) : undefined,
+          store_id: t.store_id ? String(t.store_id) : null
         })));
       }
     } catch (error) {
@@ -272,11 +273,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const handleSelectDirectory = async () => {
     try {
-      const handle = await (window as any).showDirectoryPicker();
+      const handle = await ((window as unknown) as Window & { showDirectoryPicker: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker();
       setLocalDirectory(handle);
       loadPrivateTemplates(handle);
     } catch (error) {
-      if ((error as any).name !== 'AbortError') {
+      if (error instanceof DOMException && error.name !== 'AbortError') {
         console.error('Error picking directory:', error);
         toast.error('No se pudo acceder a la carpeta');
       }
@@ -287,7 +288,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     setIsLoading(true);
     try {
       const templates: Template[] = [];
-      for await (const entry of (directoryHandle as any).values()) {
+      for await (const entry of ((directoryHandle as unknown) as { values(): AsyncIterableIterator<FileSystemDirectoryHandle | FileSystemFileHandle> }).values()) {
         if (entry.kind === 'file' && entry.name.endsWith('.json')) {
           const file = await entry.getFile();
           const text = await file.text();
@@ -631,10 +632,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
           <div className="grid gap-6 py-4">
             <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                <label htmlFor="publish-name" className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
                     Nombre de la Plantilla
                 </label>
                 <Input
+                    id="publish-name"
                     value={publishName}
                     onChange={(e) => setPublishName(e.target.value)}
                     placeholder="Ej: Ficha Base de Carpintería"
@@ -643,10 +645,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                <label htmlFor="publish-description" className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
                     Descripción (Opcional)
                 </label>
                 <Textarea
+                    id="publish-description"
                     value={publishDescription}
                     onChange={(e) => setPublishDescription(e.target.value)}
                     placeholder="Describe para qué sirve este modelo..."
@@ -656,9 +659,9 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
                     Destino de Publicación
-                  </label>
+                  </span>
                   <Info className="w-3 h-3 text-muted-foreground cursor-help" />
               </div>
               <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>

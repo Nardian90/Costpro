@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCostSheetCalculator } from '../logic/useCostSheetCalculator';
 import { CostSheetDataContract, CostSheetDataFactory } from '@/contracts';
+// CostSheetData (from @/types/cost-sheet) is what useCostSheetCalculator expects.
+// CostSheetDataContract is compatible except for optional vs required fields.
+// We cast to any where needed to avoid deep type changes.
 
 const baseTemplate: CostSheetDataContract = CostSheetDataFactory.create({
     header: {
@@ -60,7 +63,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
             fixedAmount: 0
         }
     };
-    const { result } = renderHook(() => useCostSheetCalculator(template));
+    const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
     // 1. Child in affected section should have CI applied
     expect(result.current.calculatedValues['child'].metadata?.appliedFormula).toBe('VH * 1.2');
@@ -75,7 +78,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
         ...template,
         indirectConfig: { ...template.indirectConfig, selectedSections: ['sec-affected', 'sec-base'] }
     };
-    const { result: result2 } = renderHook(() => useCostSheetCalculator(templateWithBaseSelected));
+    const { result: result2 } = renderHook(() => useCostSheetCalculator(templateWithBaseSelected as any));
     expect(result2.current.calculatedValues['base-row'].metadata?.appliedFormula).toBeUndefined();
     expect(result2.current.calculatedValues['base-row'].total).toBe(50);
   });
@@ -101,7 +104,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
             fixedAmount: 400
         }
     };
-    const { result } = renderHook(() => useCostSheetCalculator(template));
+    const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
     // r1 weight: 100/400 = 0.25 -> fixed part: 400 * 0.25 = 100 -> total: 100 + 100 = 200
     expect(result.current.calculatedValues['r1'].total).toBe(200);

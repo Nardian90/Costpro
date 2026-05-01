@@ -87,10 +87,11 @@ export default function RoleForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label htmlFor="role-name" className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Nombre del Rol
           </label>
           <input
+            id="role-name"
             {...register('name')}
             className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             placeholder="Ej: Auditor Externo"
@@ -116,9 +117,9 @@ export default function RoleForm({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-primary" />
-              <label className="text-xs font-black uppercase text-foreground tracking-widest">
+              <span className="text-xs font-black uppercase text-foreground tracking-widest">
                 Permisos de Acceso
-              </label>
+              </span>
             </div>
             <div className="flex items-center gap-2">
                <input

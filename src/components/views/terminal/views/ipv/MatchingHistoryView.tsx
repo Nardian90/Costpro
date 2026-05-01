@@ -174,10 +174,11 @@ export default function MatchingHistoryView() {
       <Card className="border-primary/10">
         <CardContent className="p-4 flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-0 sm:min-w-[200px] space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Referencia</label>
+            <label htmlFor="match-search" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Referencia</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
+                id="match-search"
                 placeholder="Buscar por transaction_ref..."
                 className="pl-9 h-10 rounded-xl"
                 value={searchTerm}
@@ -187,7 +188,7 @@ export default function MatchingHistoryView() {
           </div>
 
           <div className="w-full sm:w-[140px] space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Estado</label>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Estado</span>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-10 rounded-xl">
                 <SelectValue placeholder="Estado" />
@@ -202,7 +203,7 @@ export default function MatchingHistoryView() {
           </div>
 
           <div className="w-full sm:w-[160px] space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Regla Aplicada</label>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Regla Aplicada</span>
             <Select value={ruleFilter} onValueChange={setRuleFilter}>
               <SelectTrigger className="h-10 rounded-xl">
                 <SelectValue placeholder="Regla" />
@@ -217,7 +218,7 @@ export default function MatchingHistoryView() {
           </div>
 
           <div className="w-full sm:w-[140px] space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confianza</label>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Confianza</span>
             <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
               <SelectTrigger className="h-10 rounded-xl">
                 <SelectValue placeholder="Rango" />
@@ -373,7 +374,7 @@ export default function MatchingHistoryView() {
                 )}
 
                 <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pipeline Step-by-Step</label>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pipeline Step-by-Step</span>
                     <div className="space-y-2 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-px before:bg-border">
                         {selectedLog.trace?.map((step, idx) => (
                             <div key={idx} className="relative pl-7 group">

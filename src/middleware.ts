@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  // Edge-compatible nonce generation using Web Crypto API
+  const array = new Uint8Array(18);
+  crypto.getRandomValues(array);
+  const nonce = btoa(String.fromCharCode(...array)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
   const cspHeader = [
     `default-src 'self'`,
-    // Scripts: nonce en lugar de unsafe-inline/unsafe-eval
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://vercel.com https://storage.googleapis.com https://apis.google.com`,
     `worker-src 'self' blob:`,
-    `style-src 'self' 'unsafe-inline'`, // los estilos inline en CSS-in-JS son inevitables con Tailwind
+    `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' blob: data: https://wthkddeleylijmonclxg.supabase.co https://vercel.com https://vercel.live https://*.googleusercontent.com`,
     `font-src 'self' data:`,
     `connect-src 'self' https://wthkddeleylijmonclxg.supabase.co wss://wthkddeleylijmonclxg.supabase.co https://vercel.live https://vercel.com https://storage.googleapis.com https://accounts.google.com`,
@@ -23,7 +25,6 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', cspHeader);
-  // Mantener los otros headers de seguridad que ya estaban en next.config.ts:
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-XSS-Protection', '1; mode=block');

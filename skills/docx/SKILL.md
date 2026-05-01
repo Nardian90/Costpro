@@ -1,197 +1,201 @@
 ---
 name: docx
-description: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+metadata:
+  author: Z.AI
+  version: "1.0"
+description: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When GLM needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
 license: Proprietary. LICENSE.txt has complete terms
 ---
 
-# DOCX creation, editing, and analysis
+# DOCX Creation, Editing, and Analysis
+
+## Quick Setup
+
+```bash
+bash "$SKILL_DIR/setup.sh"    # Interactive environment check + install
+```
 
 ## Overview
 
-A user may ask you to create, edit, or analyze the contents of a .docx file. A .docx file is essentially a ZIP archive containing XML files and other resources that you can read or edit. You have different tools and workflows available for different tasks.
+A .docx file is a ZIP archive containing XML files. This skill provides tools for creating, editing, reading, and reviewing Word documents.
 
-## Workflow Decision Tree
+## Quick Route — Read This First
 
-### Reading/Analyzing Content
-Use "Text extraction" or "Raw XML access" sections below
+**Step 1**: Determine task type → load the corresponding route file
+**Step 2**: Determine business scene → load the corresponding scene file (if applicable)
+**Step 3**: Load `references/design-system.md` for cover recipes, palettes, and chart colors
+**Step 4**: Load `references/common-rules.md` for shared layout, font, and quality rules
+**Step 5**: Execute per route instructions
+**Step 6**: Run the post-generation checklist
 
-### Creating New Document
-Use "Creating a new Word document" workflow
+⚠️ **MANDATORY — Cover Recipe Enforcement (Step 3):**
+When creating a document that needs a cover page, you MUST use one of the 7 validated cover recipes (R1–R7) from `design-system.md`. **Free-form cover code is FORBIDDEN.** The recipe provides the wrapper table, background, layout structure, border settings, and spacing — do not reinvent any of these.
 
-### Editing Existing Document
-- **Your own document + simple changes**
-  Use "Basic OOXML editing" workflow
+Workflow: (1) Call `selectCoverRecipe(docType, industry)` to get recipe + palette → (2) Use the corresponding `buildCoverRX()` function code from `design-system.md` → (3) Pass your `config` (title, subtitle, metaLines, etc.) into the recipe builder. If you skip this and write cover code from scratch, the cover WILL have compatibility issues (blank pages in MS Office, missing borders, overflow, etc.).
 
-- **Someone else's document**
-  Use **"Redlining workflow"** (recommended default)
+### Script Path Setup (MANDATORY before any script call)
 
-- **Legal, academic, business, or government docs**
-  Use **"Redlining workflow"** (required)
-
-## Reading and analyzing content
-
-### Text extraction
-If you just need to read the text contents of a document, you should convert the document to markdown using pandoc. Pandoc provides excellent support for preserving document structure and can show tracked changes:
+All CLI tools live in `scripts/` relative to this skill's directory. Before calling any script, resolve the absolute path once:
 
 ```bash
-# Convert document to markdown with tracked changes
-pandoc --track-changes=all path-to-file.docx -o output.md
-# Options: --track-changes=accept/reject/all
+DOCX_SCRIPTS="<skill_directory>/scripts"   # ← parent directory of this SKILL.md
+
+# Then all commands use $DOCX_SCRIPTS:
+python3 "$DOCX_SCRIPTS/postcheck.py" output.docx
+python3 "$DOCX_SCRIPTS/add_toc_placeholders.py" output.docx --auto
 ```
 
-### Raw XML access
-You need raw XML access for: comments, complex formatting, document structure, embedded media, and metadata. For any of these features, you'll need to unpack a document and read its raw XML contents.
+**For Python imports** (when generation code needs to import skill modules):
 
-#### Unpacking a file
-`python ooxml/scripts/unpack.py <office_file> <output_directory>`
-
-#### Key file structures
-* `word/document.xml` - Main document contents
-* `word/comments.xml` - Comments referenced in document.xml
-* `word/media/` - Embedded images and media files
-* Tracked changes use `<w:ins>` (insertions) and `<w:del>` (deletions) tags
-
-## Creating a new Word document
-
-When creating a new Word document from scratch, use **docx-js**, which allows you to create Word documents using JavaScript/TypeScript.
-
-### Workflow
-1. **MANDATORY - READ ENTIRE FILE**: Read [`docx-js.md`](docx-js.md) (~500 lines) completely from start to finish. **NEVER set any range limits when reading this file.** Read the full file content for detailed syntax, critical formatting rules, and best practices before proceeding with document creation.
-2. Create a JavaScript/TypeScript file using Document, Paragraph, TextRun components (You can assume all dependencies are installed, but if not, refer to the dependencies section below)
-3. Export as .docx using Packer.toBuffer()
-
-## Editing an existing Word document
-
-When editing an existing Word document, use the **Document library** (a Python library for OOXML manipulation). The library automatically handles infrastructure setup and provides methods for document manipulation. For complex scenarios, you can access the underlying DOM directly through the library.
-
-### Workflow
-1. **MANDATORY - READ ENTIRE FILE**: Read [`ooxml.md`](ooxml.md) (~600 lines) completely from start to finish. **NEVER set any range limits when reading this file.** Read the full file content for the Document library API and XML patterns for directly editing document files.
-2. Unpack the document: `python ooxml/scripts/unpack.py <office_file> <output_directory>`
-3. Create and run a Python script using the Document library (see "Document Library" section in ooxml.md)
-4. Pack the final document: `python ooxml/scripts/pack.py <input_directory> <office_file>`
-
-The Document library provides both high-level methods for common operations and direct DOM access for complex scenarios.
-
-## Redlining workflow for document review
-
-This workflow allows you to plan comprehensive tracked changes using markdown before implementing them in OOXML. **CRITICAL**: For complete tracked changes, you must implement ALL changes systematically.
-
-**Batching Strategy**: Group related changes into batches of 3-10 changes. This makes debugging manageable while maintaining efficiency. Test each batch before moving to the next.
-
-**Principle: Minimal, Precise Edits**
-When implementing tracked changes, only mark text that actually changes. Repeating unchanged text makes edits harder to review and appears unprofessional. Break replacements into: [unchanged text] + [deletion] + [insertion] + [unchanged text]. Preserve the original run's RSID for unchanged text by extracting the `<w:r>` element from the original and reusing it.
-
-Example - Changing "30 days" to "60 days" in a sentence:
 ```python
-# BAD - Replaces entire sentence
-'<w:del><w:r><w:delText>The term is 30 days.</w:delText></w:r></w:del><w:ins><w:r><w:t>The term is 60 days.</w:t></w:r></w:ins>'
-
-# GOOD - Only marks what changed, preserves original <w:r> for unchanged text
-'<w:r w:rsidR="00AB12CD"><w:t>The term is </w:t></w:r><w:del><w:r><w:delText>30</w:delText></w:r></w:del><w:ins><w:r><w:t>60</w:t></w:r></w:ins><w:r w:rsidR="00AB12CD"><w:t> days.</w:t></w:r>'
+import sys, os
+DOCX_SCRIPTS = os.path.join("<skill_directory>", "scripts")
+if DOCX_SCRIPTS not in sys.path:
+    sys.path.insert(0, DOCX_SCRIPTS)
 ```
 
-### Tracked changes workflow
+**⚠️ NEVER use bare `python3 scripts/...`** — it only works if cwd happens to be the skill directory. Always use the absolute `$DOCX_SCRIPTS` path.
 
-1. **Get markdown representation**: Convert document to markdown with tracked changes preserved:
-   ```bash
-   pandoc --track-changes=all path-to-file.docx -o current.md
-   ```
+### Task Router
 
-2. **Identify and group changes**: Review the document and identify ALL changes needed, organizing them into logical batches:
+| User Intent | Route | Files to Load |
+|-------------|-------|---------------|
+| Create/write/generate (no attachment) | **Create** | `routes/create.md` + `references/docx-js-core.md` |
+| Edit/modify/revise (has attachment) | **Edit** | `routes/edit.md` + `references/ooxml.md` |
+| Format/layout/font/margin | **Format** | `routes/format.md` |
+| Comment/annotate/review | **Comment** | `routes/comment.md` |
+| Read/analyze/extract | **Read** | `routes/read.md` |
 
-   **Location methods** (for finding changes in XML):
-   - Section/heading numbers (e.g., "Section 3.2", "Article IV")
-   - Paragraph identifiers if numbered
-   - Grep patterns with unique surrounding text
-   - Document structure (e.g., "first paragraph", "signature block")
-   - **DO NOT use markdown line numbers** - they don't map to XML structure
+### Scene Router (Optional — load after route)
 
-   **Batch organization** (group 3-10 related changes per batch):
-   - By section: "Batch 1: Section 2 amendments", "Batch 2: Section 5 updates"
-   - By type: "Batch 1: Date corrections", "Batch 2: Party name changes"
-   - By complexity: Start with simple text replacements, then tackle complex structural changes
-   - Sequential: "Batch 1: Pages 1-3", "Batch 2: Pages 4-6"
+| User Keywords | Scene | File |
+|---------------|-------|------|
+| thesis, academic, research, paper, dissertation, abstract, journal | Academic | `scenes/academic.md` |
+| report, analysis, experiment, testing, survey, review, summary, proposal, feasibility, competitor, industry, operations | Report | `scenes/report.md` |
+| contract, agreement, terms, transfer, NDA, confidential, framework, cooperation, service terms, user agreement, procurement | Contract | `scenes/contract.md` |
+| resume, CV, job application | Resume | `scenes/resume.md` |
+| exam, test, quiz, paper (exam context), lesson plan | Exam | `scenes/exam.md` |
+| official document, notice, letter, reply, minutes, red header, government, issuance | Official | `scenes/official-doc.md` |
+| broadcast script, product copy, livestream, speech, presentation script, video script | Copywriting | `scenes/copywriting.md` |
+| plan, proposal (if not report context) | Report | `scenes/report.md` |
+| policy, regulation, standard, management rules | Official | `scenes/official-doc.md` |
 
-3. **Read documentation and unpack**:
-   - **MANDATORY - READ ENTIRE FILE**: Read [`ooxml.md`](ooxml.md) (~600 lines) completely from start to finish. **NEVER set any range limits when reading this file.** Pay special attention to the "Document Library" and "Tracked Change Patterns" sections.
-   - **Unpack the document**: `python ooxml/scripts/unpack.py <file.docx> <dir>`
-   - **Note the suggested RSID**: The unpack script will suggest an RSID to use for your tracked changes. Copy this RSID for use in step 4b.
+**If no scene matches**, use default design rules from `references/design-system.md` and `references/common-rules.md`.
 
-4. **Implement changes in batches**: Group changes logically (by section, by type, or by proximity) and implement them together in a single script. This approach:
-   - Makes debugging easier (smaller batch = easier to isolate errors)
-   - Allows incremental progress
-   - Maintains efficiency (batch size of 3-10 changes works well)
+## Formatting Standards (Always Apply)
 
-   **Suggested batch groupings:**
-   - By document section (e.g., "Section 3 changes", "Definitions", "Termination clause")
-   - By change type (e.g., "Date changes", "Party name updates", "Legal term replacements")
-   - By proximity (e.g., "Changes on pages 1-3", "Changes in first half of document")
+→ See `references/common-rules.md` for full font profiles, spacing, indent, and layout rules.
 
-   For each batch of related changes:
+**Key rules (quick reference):**
+- **Line spacing**: 1.3x (`line: 312`) — MANDATORY. Exceptions: resume 1.15x, official doc 28pt fixed, copywriting `400`, contract 1.5x
+- **CJK body**: Justified + 2-char indent (`firstLine: 480` SimSun / `420` YaHei)
+- **Tables**: `margins` set, `ShadingType.CLEAR`, `tableHeader: true`, `cantSplit: true`, title `keepNext: true`
+- **Images**: `type` parameter required, preserve aspect ratio via `image-size`, PageBreak inside Paragraph
+- **Full-page Table row**: `rule: "exact"` with 1200 twips safety margin
 
-   **a. Map text to XML**: Grep for text in `word/document.xml` to verify how text is split across `<w:r>` elements.
+## Unit Quick Reference
 
-   **b. Create and run script**: Use `get_node` to find nodes, implement changes, then `doc.save()`. See **"Document Library"** section in ooxml.md for patterns.
+| Unit | Value |
+|------|-------|
+| 1 cm | 567 twips |
+| 1 inch | 1440 twips |
+| 1 pt | 20 half-points |
+| A4 | 11906 × 16838 twips |
 
-   **Note**: Always grep `word/document.xml` immediately before writing a script to get current line numbers and verify text content. Line numbers change after each script run.
+For Chinese font size table and common margins, see `references/common-rules.md`.
 
-5. **Pack the document**: After all batches are complete, convert the unpacked directory back to .docx:
-   ```bash
-   python ooxml/scripts/pack.py unpacked reviewed-document.docx
-   ```
+## Post-Generation — Two-Layer Verification
 
-6. **Final verification**: Do a comprehensive check of the complete document:
-   - Convert final document to markdown:
-     ```bash
-     pandoc --track-changes=all reviewed-document.docx -o verification.md
-     ```
-   - Verify ALL changes were applied correctly:
-     ```bash
-     grep "original phrase" verification.md  # Should NOT find it
-     grep "replacement phrase" verification.md  # Should find it
-     ```
-   - Check that no unintended changes were introduced
+### Layer 1: Manual Checklist (self-check during generation)
 
+#### Basic Format
+- [ ] Line spacing is 1.3x (`line: 312`) or scene-specific override
+- [ ] CJK body has 2-char indent (`firstLine: 480` or `420`)
+- [ ] Tables have margins set
+- [ ] Images preserve aspect ratio via `image-size` — NEVER hardcode both width and height
+- [ ] PageBreak inside Paragraph
+- [ ] ShadingType uses CLEAR
+- [ ] Each numbered list uses unique `reference`
+- [ ] **⚠️ CRITICAL — Quotation marks in JS strings properly escaped.** Chinese curly quotes (`""` `''`) MUST use Unicode escapes (`\u201c` `\u201d` `\u2018` `\u2019`); straight quotes (`"` `'`) use `\"` `\'` or alternate delimiters. **This is the #1 most common code generation bug.** Chinese text frequently contains `""` for emphasis or proper nouns (e.g., "双11", "前低后高", "618") — every occurrence MUST be escaped. Failure to escape produces JS syntax errors that silently break document generation.
+- [ ] ImageRun includes `type` parameter
+- [ ] Header/footer present (unless scene says otherwise)
 
-## Converting Documents to Images
+#### Heading Styles
+- [ ] All body chapter headings use `heading: HeadingLevel.HEADING_X` (never simulate with bold + large font)
+- [ ] Cover title may skip Heading style (not in TOC), but body headings MUST use Heading style
 
-To visually analyze Word documents, convert them to images using a two-step process:
+#### Page Break & Blank Page Prevention
+- [ ] Cover/content in separate sections
+- [ ] Three rules to prevent blank pages:
+  - ① When using section(NEXT_PAGE), previous section must NOT end with PageBreak (double break = blank page)
+  - ② PageBreak paragraph SHOULD contain visible text — **exception**: section-ending empty para + PageBreak is allowed (normal section separator, e.g., after cover page)
+  - ③ No more than 3 consecutive empty paragraphs
+- [ ] Full-page Table row height uses `rule: "exact"` (never `"atLeast"` for tall tables)
+- [ ] No unwanted blank pages (check each section ending)
 
-1. **Convert DOCX to PDF**:
-   ```bash
-   soffice --headless --convert-to pdf document.docx
-   ```
+#### TOC
+→ See `references/toc.md` for the complete TOC reference and checklist.
+- [ ] If TOC title exists → `TableOfContents` element must be present
+- [ ] **⚠️ MANDATORY PageBreak after TableOfContents** — a Paragraph containing PageBreak MUST immediately follow the `TableOfContents` element; without it, TOC and body content will render on the same page. This is the #1 TOC formatting failure — never omit it
+- [ ] `add_toc_placeholders.py --auto` runs after generation; exit code = 0
+- [ ] **TOC MUST be in its own section** — body section sets `page: { pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL } }` so page numbers start from the first body page, not from the TOC pages
+- [ ] **Page number API nesting** — `pageNumbers` MUST be inside `page: {}`, NOT at properties top level (see toc.md § Page Number API)
+- [ ] **3-section page numbering** — Cover (no page#) → Front matter (Roman i,ii,iii, start=1) → Body (Arabic 1,2,3, start=1)
+- [ ] **Post-process footers** — Roman section footer instrText must contain `PAGE \* ROMAN \* MERGEFORMAT`; Arabic section `PAGE \* arabic \* MERGEFORMAT` (WPS ignores pgNumType fmt). **⚠️ NEVER use `\* decimal` in instrText** — `decimal` is a docx-js API enum value (`NumberFormat.DECIMAL`), NOT a valid Word field format switch; using it causes page numbers to render as "1decimal", "2decimal". The correct Word field switch for Arabic numerals is `\* arabic`.
+- [ ] **Remove empty pgNumType** — Post-process to strip `<w:pgNumType/>` from cover section (docx-js emits empty element that confuses WPS)
+- [ ] **⚠️ TOC Refresh Hint MANDATORY** — between `TableOfContents` element and the PageBreak, MUST add an italic gray note paragraph telling users to right-click TOC → "Update Field" to refresh page numbers (see toc.md § TOC Refresh Hint)
 
-2. **Convert PDF pages to JPEG images**:
-   ```bash
-   pdftoppm -jpeg -r 150 document.pdf page
-   ```
-   This creates files like `page-1.jpg`, `page-2.jpg`, etc.
+#### Table Cross-Page
+- [ ] Header rows: `tableHeader: true`
+- [ ] All rows: `cantSplit: true`
+- [ ] Title paragraph: `keepNext: true`
 
-Options:
-- `-r 150`: Sets resolution to 150 DPI (adjust for quality/size balance)
-- `-jpeg`: Output JPEG format (use `-png` for PNG if preferred)
-- `-f N`: First page to convert (e.g., `-f 2` starts from page 2)
-- `-l N`: Last page to convert (e.g., `-l 5` stops at page 5)
-- `page`: Prefix for output files
+#### Cover
+- [ ] **Cover MUST use a validated recipe (R1–R7)** from `design-system.md` — free-form cover code is forbidden
+- [ ] Cover recipe matches document type (per `selectCoverRecipe()` in `design-system.md`)
+- [ ] Cover uses the 16838 outer wrapper table with `allNoBorders` (all recipes provide this)
+- [ ] Cover title uses `calcTitleLayout()` — never hardcoded font size above 40pt
+- [ ] Cover spacing uses `calcCoverSpacing()` — never hardcoded large spacing values
+- [ ] Cover content does not overflow (total height ≤ 15638 twips, Table uses `rule: "exact"`)
+- [ ] Every TextRun on dark/colored background has explicit `color` set (Rule 9 — never rely on default black)
+- [ ] Cover section has no trailing PageBreak or empty paragraphs
+- [ ] Title lines split at semantic boundaries (no mid-word breaks, no single-char orphan lines)
+- [ ] No text-character decorative lines (`───`, `━━━`) — use paragraph borders only
 
-Example for specific range:
+### Layer 2: Automated Post-Check Script
+
 ```bash
-pdftoppm -jpeg -r 150 -f 2 -l 5 document.pdf page  # Converts only pages 2-5
+python3 "$DOCX_SCRIPTS/postcheck.py" output.docx
 ```
 
-## Code Style Guidelines
-**IMPORTANT**: When generating code for DOCX operations:
-- Write concise code
-- Avoid verbose variable names and redundant operations
-- Avoid unnecessary print statements
+Automatically checks 14 business rules: blank pages, **cover overflow (font size/spacing/trailing content)**, line spacing consistency, table margins, table cross-page control (cantSplit/tblHeader), image overflow, image aspect ratio distortion, font fallback, CJK indent, heading hierarchy, ShadingType misuse, TOC quality, document cleanliness (placeholder text/Markdown/HTML residuals), report content quality (abstract presence/heading specificity/vague conclusion detection).
+
+⚠️ **After generating any document, MUST run postcheck.py and fix all ❌ errors.**
+
+## Math Formulas
+
+Formula input uses **LaTeX syntax**, internally converted to docx-js Math objects.
+
+- **Basic formulas** (fractions, sub/superscript, roots, summation) → docx-js Math components
+- **Complex formulas** (3+ nesting, matrices, piecewise functions) → matplotlib PNG fallback
+
+See `references/math-formulas.md`.
+
+## Charts
+
+Default: **matplotlib template library** generates PNG for embedding.
+
+6 ready-to-use templates: bar, line, pie, box, radar, heatmap.
+Colors auto-derived from document palette.accent for style consistency.
+Default palette: Morandi low-saturation (see design-system.md).
+
+See `references/chart-templates.md`.
 
 ## Dependencies
 
-Required dependencies (install if not available):
-
-- **pandoc**: `sudo apt-get install pandoc` (for text extraction)
-- **docx**: `npm install -g docx` (for creating new documents)
-- **LibreOffice**: `sudo apt-get install libreoffice` (for PDF conversion)
-- **Poppler**: `sudo apt-get install poppler-utils` (for pdftoppm to convert PDF to images)
-- **defusedxml**: `pip install defusedxml` (for secure XML parsing)
+- **pandoc**: Text extraction
+- **docx**: `bun add docx` or `npm install docx` (creating)
+- **LibreOffice**: PDF conversion, .doc support
+- **Poppler**: PDF to image (`pdftoppm`)
+- **defusedxml**: Secure XML parsing
+- **python-docx**: Simple comment operations

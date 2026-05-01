@@ -390,11 +390,14 @@ export function CustomerCatalog() {
                                 <span>{cStats.totalTransactions} tx</span>
                               </div>
                               <div
+                                role="button"
+                                tabIndex={0}
                                 className="flex items-center gap-1.5 text-[10px] font-black text-primary cursor-pointer hover:opacity-70"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleSort('amount');
                                 }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleSort('amount'); } }}
                               >
                                 <TrendingUp className="w-3 h-3 shrink-0" />
                                 <span>${(cStats.totalAmountCents / 100).toLocaleString('es-CU', { minimumFractionDigits: 2 })}</span>

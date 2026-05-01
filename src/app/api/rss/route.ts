@@ -58,7 +58,7 @@ const handler = withAuth(async (req, session) => {
 
       // Exchange rate detection (specific for BCC)
       let isExchangeRate = false;
-      let exchangeRateData = undefined;
+      let exchangeRateData: { currency: string; value: number; date: string } | undefined = undefined;
 
       if (item.feedName?.includes('Banco Central') || link.includes('bc.gob.cu')) {
         if (title.toLowerCase().includes('tasas de cambio') || title.toLowerCase().includes('tipo de cambio')) {

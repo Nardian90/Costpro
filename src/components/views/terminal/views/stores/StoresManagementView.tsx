@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Plus, Edit, Trash2, Building, Target, Check, RotateCcw } from 'lucide-react';
 import { cn, getStoreLogoUrl } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -42,11 +43,11 @@ export default function StoresManagementView() {
           />
         </div>
 
-        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Filtrar por nombre o ubicación..." />
+        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Filtrar por nombre o ubicación..." aria-label="Buscar sucursales por nombre o ubicación" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {stores.map((store) => (
-            <div key={store.id} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all flex flex-col shadow-sm">
+            <div key={store.id} role="article" aria-label={`Tienda ${store.name}`} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all flex flex-col shadow-sm">
               {/* Descripción oculta para screen readers */}
               <span id={`store-desc-${store.id}`} className="sr-only">
                 Tienda {store.name}.
@@ -58,7 +59,7 @@ export default function StoresManagementView() {
               <div className="flex items-start justify-between mb-6">
                 <div className="w-14 h-14 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
                   {store.logo_url && getStoreLogoUrl(store.logo_url) ? (
-                    <img src={getStoreLogoUrl(store.logo_url) || ''} alt={store.name} className="w-full h-full object-cover" />
+                    <Image src={getStoreLogoUrl(store.logo_url) || ''} alt={`Logo de ${store.name}`} width={56} height={56} className="w-full h-full object-cover" unoptimized />
                   ) : (
                     <Building className="w-6 h-6 text-muted-foreground opacity-40" />
                   )}
@@ -77,6 +78,7 @@ export default function StoresManagementView() {
               <div className="space-y-2">
                 {activeStoreId !== store.id ? (
                   <button
+                    type="button"
                     onClick={() => handleSetActiveStore(store.id)}
                     aria-label={`Activar ${store.name} como tienda de trabajo`}
                     aria-pressed={false}
@@ -90,7 +92,7 @@ export default function StoresManagementView() {
                   <div
                     role="status"
                     aria-label={`Tienda actual: ${store.name}`}
-                    aria-pressed={true}
+                    aria-current={true}
                     className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -100,6 +102,7 @@ export default function StoresManagementView() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <button
+                    type="button"
                     onClick={() => handleEditStore(store)}
                     aria-label={`Editar configuración de ${store.name}`}
                     className="py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
@@ -109,6 +112,7 @@ export default function StoresManagementView() {
                   </button>
                   {isAdmin && (
                     <button
+                      type="button"
                       onClick={() => handleResetStore(store)}
                       aria-label={`Reiniciar todos los datos de ${store.name}`}
                       className="py-2 rounded-xl border border-border hover:bg-orange-500/10 hover:text-orange-500 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
@@ -119,6 +123,7 @@ export default function StoresManagementView() {
                   )}
                   {isAdmin && (
                     <button
+                      type="button"
                       onClick={() => handleDeleteStore(store)}
                       aria-label={`Eliminar tienda ${store.name}`}
                       aria-describedby={`store-desc-${store.id}`}

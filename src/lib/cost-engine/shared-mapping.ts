@@ -15,6 +15,10 @@ import type { Parser } from 'expr-eval';
 import {
   CostSheetData,
   CostSheetRow,
+  CostSheetHeader,
+  CostSheetSection,
+  CostSheetAnnex,
+  CalculatedRowValue,
 } from '@/types/cost-sheet';
 import {
   FichaJSON,
@@ -23,6 +27,23 @@ import {
   FormaCalculo,
   BaseRef,
 } from './types';
+
+// ─── Local Types ──────────────────────────────────────────────────────────────
+
+interface AnnexDataRow {
+  [key: string]: string | number | boolean | undefined;
+  classification?: string;
+  label?: string;
+  total?: number;
+  amount?: number;
+  importe?: number;
+  depreciation_cost?: number;
+  price_total?: number;
+}
+
+interface CalculatedAnnex extends Omit<CostSheetAnnex, 'data'> {
+  data: AnnexDataRow[];
+}
 
 // ─── Parser Factory ───────────────────────────────────────────────────────────
 
@@ -34,12 +55,12 @@ export function createSharedParser(): Parser {
 
 export function evaluateAnnexExpressionShared(
   expression: string,
-  rowData: any,
-  header: any,
-  calculatedAnnexes: any[],
+  rowData: Record<string, unknown>,
+  header: CostSheetHeader,
+  calculatedAnnexes: CalculatedAnnex[],
   parser?: Parser,
   _warnings?: string[], // ISO 9001 §8.5.2 — error logging for corrective actions
-): any {
+): number {
   const p = parser || createSharedParser();
 
   if (expression === undefined || expression === null || expression === '') return 0;
@@ -57,7 +78,7 @@ export function evaluateAnnexExpressionShared(
     expr = expr.replace(
       /GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/g,
       (_, anexoId, rowIndex, field) => {
-        const targetAnnex = calculatedAnnexes.find((a: any) => a.id === anexoId);
+        const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex || !targetAnnex.data) return '0';
         const index = parseInt(rowIndex) - 1;
         if (index >= 0 && index < targetAnnex.data.length) {
@@ -72,14 +93,14 @@ export function evaluateAnnexExpressionShared(
     expr = expr.replace(
       /GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g,
       (_, anexoId, classification, field) => {
-        const targetAnnex = calculatedAnnexes.find((a: any) => a.id === anexoId);
+        const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
-        const matches = targetAnnex.data.filter((d: any) =>
+        const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
           String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
         );
         if (matches.length > 0) {
           const sum = matches.reduce(
-            (acc: number, d: any) => acc + (parseFloat(d[field]) || 0),
+            (acc: number, d: AnnexDataRow) => acc + (parseFloat(String(d[field])) || 0),
             0,
           );
           return String(sum);
@@ -102,13 +123,13 @@ export function evaluateAnnexExpressionShared(
     // Annex replacements (e.g. AnexoI) with Smart Resolve
     // Also handles TotalAnexo[ID] for explicit total access
     expr = expr.replace(/(Total)?Anexo([IVXLC]+)/g, (_match, totalPrefix: string | undefined, id: string) => {
-      const targetAnnex = calculatedAnnexes.find((a: any) => a.id === id);
+      const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === id);
       if (!targetAnnex) return '0';
 
       // Calculate total (used for fallback or explicit TotalAnexo request)
-      const total = targetAnnex.data.reduce((sum: number, r: any) => {
+      const total = targetAnnex.data.reduce((sum: number, r: AnnexDataRow) => {
         const val = [r.total, r.amount, r.depreciation_cost, r.price_total, r.importe].find(
-          (v: any) => v !== undefined && v !== null,
+          (v: string | number | boolean | undefined) => v !== undefined && v !== null,
         ) ?? 0;
         return sum + (typeof val === 'number' ? val : 0);
       }, 0);
@@ -118,13 +139,13 @@ export function evaluateAnnexExpressionShared(
       // Smart Resolve: if current row has a classification, try to get the specific sum for that class
       const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
       if (rowClass) {
-        const matches = targetAnnex.data.filter((d: any) =>
+        const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
           String(d.classification || d.label || '').split(' - ')[0].trim() === rowClass,
         );
         if (matches.length > 0) {
-          const sum = matches.reduce((acc: number, d: any) => {
+          const sum = matches.reduce((acc: number, d: AnnexDataRow) => {
             const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(
-              (v: any) => v !== undefined && v !== null,
+              (v: string | number | boolean | undefined) => v !== undefined && v !== null,
             ) ?? 0;
             return acc + (typeof val === 'number' ? val : 0);
           }, 0);
@@ -147,12 +168,12 @@ export function evaluateAnnexExpressionShared(
 // ─── Header Expression Evaluation ────────────────────────────────────────────
 
 export function evaluateHeaderExpressionShared(
-  expression: any,
-  header: any,
-  calculatedAnnexes: any[] = [],
-  calculatedValues: { [key: string]: any } = {},
+  expression: string | number | undefined | null,
+  header: CostSheetHeader,
+  calculatedAnnexes: CalculatedAnnex[] = [],
+  calculatedValues: Record<string, CalculatedRowValue> = {},
   parser?: Parser,
-): any {
+): string | number {
   const p = parser || createSharedParser();
 
   if (expression === undefined || expression === null) return '';
@@ -170,7 +191,7 @@ export function evaluateHeaderExpressionShared(
     expr = expr.replace(
       /GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/g,
       (_, anexoId, rowIndex, field) => {
-        const targetAnnex = calculatedAnnexes.find((a: any) => a.id === anexoId);
+        const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex || !targetAnnex.data) return '0';
         const index = parseInt(rowIndex) - 1;
         if (index >= 0 && index < targetAnnex.data.length) {
@@ -185,9 +206,9 @@ export function evaluateHeaderExpressionShared(
     expr = expr.replace(
       /GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g,
       (_, anexoId, classification, field) => {
-        const targetAnnex = calculatedAnnexes.find((a: any) => a.id === anexoId);
+        const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
-        const matches = targetAnnex.data.filter((d: any) =>
+        const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
           String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
         );
         if (matches.length > 0) {
@@ -203,11 +224,11 @@ export function evaluateHeaderExpressionShared(
       /GET_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g,
       (_, search, field) => {
         const val = Object.values(calculatedValues).find(
-          (v: any) => v.metadata?.id === search || v.metadata?.classification === search,
+          (v: CalculatedRowValue) => v.metadata?.id === search || v.metadata?.classification === search,
         );
-        if (val) return String((val as any)[field] || 0);
+        if (val) return String((val as unknown as Record<string, unknown>)[field] || 0);
         const directVal = calculatedValues[search];
-        if (directVal) return String((directVal as any)[field] || 0);
+        if (directVal) return String((directVal as unknown as Record<string, unknown>)[field] || 0);
         return '0';
       },
     );
@@ -216,11 +237,11 @@ export function evaluateHeaderExpressionShared(
     expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, search) => {
       const field = fn === 'ref' ? 'total' : 'calculatedVH';
       const val = Object.values(calculatedValues).find(
-        (v: any) => v.metadata?.id === search || v.metadata?.classification === search,
+        (v: CalculatedRowValue) => v.metadata?.id === search || v.metadata?.classification === search,
       );
-      if (val) return String((val as any)[field] || 0);
+      if (val) return String((val as unknown as Record<string, unknown>)[field] || 0);
       const directVal = calculatedValues[search];
-      if (directVal) return String((directVal as any)[field] || 0);
+      if (directVal) return String((directVal as unknown as Record<string, unknown>)[field] || 0);
       return '0';
     });
 
@@ -274,10 +295,10 @@ const isWorkerCount = (k: string) => k === 'worker_count';
 
 // ─── Pure Annex Calculation ─────────────────────────────────────────────────
 
-export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): any[] {
+export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): CalculatedAnnex[] {
   if (!template || !template.annexes) return [];
   const p = parser || createSharedParser();
-  const results: any[] = [];
+  const results: CalculatedAnnex[] = [];
   // Warnings collector — errors are no longer silently swallowed (ISO 9001 §8.5.2)
   const _annexWarnings: string[] = [];
 
@@ -288,8 +309,8 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
 
     const calculatedAnnex = {
       ...annex,
-      data: (annex.data || []).map((row: any) =>
-        produce(row, (draft: any) => {
+      data: (annex.data || []).map((row: AnnexDataRow) =>
+        produce(row, (draft: AnnexDataRow) => {
           // A. Apply coefficient to base columns (simulation)
           if (coef !== 1) {
             if (adjCol === 'AMBOS') {
@@ -332,8 +353,8 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
             const priceKeys = Object.keys(draft).filter(k => isPrice(k) && typeof draft[k] === 'number');
 
             if (normKeys.length > 0 && priceKeys.length > 0) {
-              const norm = draft[normKeys[0]];
-              const price = draft[priceKeys[0]];
+              const norm = draft[normKeys[0]] as number;
+              const price = draft[priceKeys[0]] as number;
               const newTotal = new Decimal(norm).times(price).toDecimalPlaces(2).toNumber();
               if (newTotal > 0) {
                 draft.total = newTotal;
@@ -345,7 +366,7 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
                   return lower.includes('price') || lower.includes('rate') || lower.includes('tarifa');
                 });
                 if (adjPriceKey) {
-                  draft.total = draft[adjPriceKey];
+                  draft.total = draft[adjPriceKey] as number;
                 }
               }
             } else if (coef !== 1 && typeof draft.total === 'number' && draft.total > 0) {
@@ -381,10 +402,10 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
 
 // ─── Valor Histórico Recursive Calculation ────────────────────────────────────
 
-export function buildVHSums(sections: any[]): Record<string, number> {
+export function buildVHSums(sections: CostSheetSection[]): Record<string, number> {
   const vhSums: Record<string, number> = {};
 
-  const calculateVH = (rows: any[]) => {
+  const calculateVH = (rows: CostSheetRow[]) => {
     (rows || []).forEach(r => {
       if (r.children && r.children.length > 0) {
         calculateVH(r.children);
@@ -392,7 +413,7 @@ export function buildVHSums(sections: any[]): Record<string, number> {
         if (isFixedValue && (r.valorHistorico !== undefined || r.value !== undefined)) {
           vhSums[r.id] = Number(r.value ?? r.valorHistorico ?? 0);
         } else {
-          vhSums[r.id] = r.children.reduce((sum: number, child: any) => {
+          vhSums[r.id] = r.children.reduce((sum: number, child: CostSheetRow) => {
             const val = vhSums[child.id] ?? child.value ?? child.valorHistorico ?? 0;
             return sum + Number(val || 0);
           }, 0);
@@ -405,7 +426,7 @@ export function buildVHSums(sections: any[]): Record<string, number> {
 
   (sections || []).forEach(s => {
     calculateVH(s?.rows);
-    vhSums[s.id] = (s.rows || []).reduce((sum: number, r: any) => sum + (vhSums[r.id] || 0), 0);
+    vhSums[s.id] = (s.rows || []).reduce((sum: number, r: CostSheetRow) => sum + (vhSums[r.id] || 0), 0);
   });
 
   return vhSums;
@@ -414,17 +435,17 @@ export function buildVHSums(sections: any[]): Record<string, number> {
 // ─── Early Header Evaluation ──────────────────────────────────────────────────
 
 export function evaluateEarlyHeader(
-  header: any,
-  calculatedAnnexes: any[],
+  header: CostSheetHeader,
+  calculatedAnnexes: CalculatedAnnex[],
   parser?: Parser,
-): any {
+): CostSheetHeader {
   const earlyHeader = { ...header };
   const p = parser || createSharedParser();
 
   ['name', 'code', 'product_code', 'unit', 'quantity'].forEach(field => {
-    const val = (earlyHeader as any)[field];
+    const val = (earlyHeader as Record<string, unknown>)[field];
     if (typeof val === 'string' && val.startsWith('=')) {
-      (earlyHeader as any)[field] = evaluateHeaderExpressionShared(
+      (earlyHeader as Record<string, unknown>)[field] = evaluateHeaderExpressionShared(
         val, earlyHeader, calculatedAnnexes, {}, p,
       );
     }
@@ -480,7 +501,7 @@ export function buildEngineRows(
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
       // isPercent must NOT override an explicit ValorFijo/FIJO calculationMethod
-      const isPercentRow = r.isPercent === true || (r as any).is_percent === true;
+      const isPercentRow = r.isPercent === true || r.is_percent === true;
       if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
       // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
       if (formula) formaCalculo = 'FORMULA';
@@ -577,8 +598,8 @@ export function buildEngineRows(
 // ─── FichaJSON Assembly ───────────────────────────────────────────────────────
 
 export function assembleFichaJSON(
-  earlyHeader: any,
-  calculatedAnnexes: any[],
+  earlyHeader: CostSheetHeader,
+  calculatedAnnexes: CalculatedAnnex[],
   engineRows: CostRow[],
 ): FichaJSON {
   return {
@@ -592,19 +613,19 @@ export function assembleFichaJSON(
       settings: { allowFormulas: true },
     },
     anexos: (calculatedAnnexes || [])
-      .filter((a: any) => !!a)
-      .map((a: any) => ({
+      .filter((a: CalculatedAnnex) => !!a)
+      .map((a: CalculatedAnnex) => ({
         id: a.id,
         name: a.title,
         rows: (a.data || [])
-          .filter((d: any) => !!d)
-          .map((d: any) => ({
+          .filter((d: AnnexDataRow) => !!d)
+          .map((d: AnnexDataRow) => ({
             ...d,
             // Normalize classification by taking the prefix before ' - '
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
             importe: (() => {
               const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(
-                (v: any) => v !== undefined && v !== null,
+                (v: string | number | boolean | undefined) => v !== undefined && v !== null,
               );
               return parseFloat(String(val ?? 0)) || 0;
             })(),

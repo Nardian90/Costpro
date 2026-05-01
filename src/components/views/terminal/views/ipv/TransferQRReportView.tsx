@@ -11,8 +11,7 @@ import { Search, Download, FileSpreadsheet, UploadCloud, Settings2, Trash2, Eye,
 import { ObservationsModal } from "./ObservationsModal";
 import { toast } from 'sonner';
 import { formatDate, formatCurrency, formatCurrencyCents } from "@/lib/utils";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { MatchingRulesEditor as MappingRulesManager } from './MatchingRulesEditor';
 import { Badge } from "@/components/ui/badge";
@@ -119,8 +118,8 @@ export function TransferQRReportView({ type }: Props) {
         setTransactions(prev => prev.map(t => t.referencia_origen === ref ? { ...t, ...update } : t));
     };
 
-    const handleExportPDF = () => {
-        const doc = new jsPDF('l', 'mm', 'a4');
+    const handleExportPDF = async () => {
+        const doc = await createPDFDocument('l', 'mm', 'a4');
         const title = type === 'TRANSFER' ? 'REPORTE DE TRANSFERENCIAS' : 'REPORTE DE PAGOS QR';
 
         doc.setFontSize(14);
@@ -140,7 +139,7 @@ export function TransferQRReportView({ type }: Props) {
             ''
         ]);
 
-        autoTable(doc, {
+        (doc as any).autoTable({
             head: [['No', 'Fecha', 'CI / Pasaporte', 'Nombres y Apellidos', 'Importe', 'Transferencia', 'Teléfono', 'Firma Cliente', 'Firma Dep.']],
             body: tableData,
             startY: 30,

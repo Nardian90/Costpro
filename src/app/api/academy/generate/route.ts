@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     // Chunking: approx 4000 chars
     const chunkSize = 4000;
-    const chunks = [];
+    const chunks: string[] = [];
     for (let i = 0; i < fullText.length; i += chunkSize) {
       chunks.push(fullText.slice(i, i + chunkSize));
     }

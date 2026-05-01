@@ -1,10 +1,9 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { AuditLog } from '@/types';
 import { format } from 'date-fns';
 
 export async function exportAuditToPdf(logs: AuditLog[]) {
-  const doc = new jsPDF();
+  const doc = await createPDFDocument();
 
   // Header
   doc.setFontSize(20);
@@ -24,7 +23,7 @@ export async function exportAuditToPdf(logs: AuditLog[]) {
     log.store_name || 'Global'
   ]);
 
-  autoTable(doc, {
+  (doc as any).autoTable({
     startY: 45,
     head: [['Fecha', 'Usuario', 'Acción', 'Módulo', 'Sucursal']],
     body: tableData,

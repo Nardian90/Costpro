@@ -55,6 +55,7 @@ export default function AuditFilters({
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Buscar en auditoría"
           />
         </div>
         <button
@@ -74,7 +75,7 @@ export default function AuditFilters({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Categorías */}
             <div className="space-y-3">
-              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Categoría</label>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Categoría</span>
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <button
@@ -95,7 +96,7 @@ export default function AuditFilters({
 
             {/* Rango de Fechas */}
             <div className="space-y-3">
-              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Rango de Fechas</label>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Rango de Fechas</span>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {[
                   { label: 'Hoy', getValue: () => ({ from: format(new Date(), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') }) },
@@ -122,6 +123,7 @@ export default function AuditFilters({
                     className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                     value={dateRange.from}
                     onChange={(e) => onDateRangeChange({ ...dateRange, from: e.target.value })}
+                    aria-label="Fecha desde"
                   />
                 </div>
                 <div className="space-y-1">
@@ -131,6 +133,7 @@ export default function AuditFilters({
                     className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                     value={dateRange.to}
                     onChange={(e) => onDateRangeChange({ ...dateRange, to: e.target.value })}
+                    aria-label="Fecha hasta"
                   />
                 </div>
               </div>
@@ -138,9 +141,10 @@ export default function AuditFilters({
 
             {/* Contexto: Usuario y Tienda */}
             <div className="space-y-3">
-              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Contexto</label>
+              <label htmlFor="audit-context" className="text-xs font-black uppercase text-muted-foreground tracking-widest">Contexto</label>
               <div className="space-y-2">
                 <select
+                  id="audit-context"
                   className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                   value={selectedUser}
                   onChange={(e) => onUserChange(e.target.value)}

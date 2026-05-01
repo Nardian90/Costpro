@@ -71,6 +71,7 @@ export default function HelpView() {
               className="pl-9 pr-8 py-2.5 bg-muted/30 border border-border/40 rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-background outline-none w-36 sm:w-48 lg:w-56 transition-all placeholder:text-muted-foreground/40"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Buscar documentación"
             />
             {searchQuery && (
               <button

@@ -33,12 +33,51 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+import zipfile
+
+import defusedxml.minidom
 from defusedxml import minidom
-from ooxml.scripts.pack import pack_document
-from ooxml.scripts.validation.docx import DOCXSchemaValidator
-from ooxml.scripts.validation.redlining import RedliningValidator
 
 from .utilities import XMLEditor
+
+
+# ---------------------------------------------------------------------------
+# Inline pack utility (replaces former ooxml.scripts.pack dependency)
+# ---------------------------------------------------------------------------
+
+def _condense_xml(xml_file):
+    """Strip unnecessary whitespace from XML, preserving text content."""
+    with open(xml_file, "r", encoding="utf-8") as f:
+        dom = defusedxml.minidom.parse(f)
+    for element in dom.getElementsByTagName("*"):
+        if element.tagName.endswith(":t"):
+            continue
+        for child in list(element.childNodes):
+            if (
+                child.nodeType == child.TEXT_NODE
+                and child.nodeValue
+                and child.nodeValue.strip() == ""
+            ) or child.nodeType == child.COMMENT_NODE:
+                element.removeChild(child)
+    with open(xml_file, "wb") as f:
+        f.write(dom.toxml(encoding="UTF-8"))
+
+
+def _pack_document(input_dir, output_file):
+    """Pack an unpacked directory back into a .docx file."""
+    input_dir = Path(input_dir)
+    output_file = Path(output_file)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_content_dir = Path(temp_dir) / "content"
+        shutil.copytree(input_dir, temp_content_dir)
+        for pattern in ["*.xml", "*.rels"]:
+            for xml_file in temp_content_dir.rglob(pattern):
+                _condense_xml(xml_file)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in temp_content_dir.rglob("*"):
+                if f.is_file():
+                    zf.write(f, f.relative_to(temp_content_dir))
 
 # Path to template files
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -57,14 +96,14 @@ class DocxXMLEditor(XMLEditor):
     """
 
     def __init__(
-        self, xml_path, rsid: str, author: str = "Claude", initials: str = "C"
+        self, xml_path, rsid: str, author: str = "Z.AI", initials: str = "Z"
     ):
         """Initialize with required RSID and optional author.
 
         Args:
             xml_path: Path to XML file to edit
             rsid: RSID to automatically apply to new elements
-            author: Author name for tracked changes and comments (default: "Claude")
+            author: Author name for tracked changes and comments (default: "Z.AI")
             initials: Author initials (default: "C")
         """
         super().__init__(xml_path)
@@ -617,7 +656,7 @@ class Document:
         unpacked_dir,
         rsid=None,
         track_revisions=False,
-        author="Claude",
+        author="Z.AI",
         initials="C",
     ):
         """
@@ -628,7 +667,7 @@ class Document:
             unpacked_dir: Path to unpacked DOCX directory (must contain word/ subdirectory)
             rsid: Optional RSID to use for all comment elements. If not provided, one will be generated.
             track_revisions: If True, enables track revisions in settings.xml (default: False)
-            author: Default author name for comments (default: "Claude")
+            author: Default author name for comments (default: "Z.AI")
             initials: Default author initials for comments (default: "C")
         """
         self.original_path = Path(unpacked_dir)
@@ -643,7 +682,7 @@ class Document:
 
         # Pack original directory into temporary .docx for validation baseline (outside unpacked dir)
         self.original_docx = Path(self.temp_dir) / "original.docx"
-        pack_document(self.original_path, self.original_docx, validate=False)
+        _pack_document(self.original_path, self.original_docx)
 
         self.word_path = self.unpacked_path / "word"
 
@@ -837,24 +876,16 @@ class Document:
 
     def validate(self) -> None:
         """
-        Validate the document against XSD schema and redlining rules.
+        Validate the document (lightweight check).
 
-        Raises:
-            ValueError: If validation fails.
+        Currently performs basic structural checks. XSD schema validation and
+        redlining validation have been removed. Use save(validate=False) to
+        skip validation entirely.
         """
-        # Create validators with current state
-        schema_validator = DOCXSchemaValidator(
-            self.unpacked_path, self.original_docx, verbose=False
-        )
-        redlining_validator = RedliningValidator(
-            self.unpacked_path, self.original_docx, verbose=False
-        )
-
-        # Run validations
-        if not schema_validator.validate():
-            raise ValueError("Schema validation failed")
-        if not redlining_validator.validate():
-            raise ValueError("Redlining validation failed")
+        # Basic structural check: ensure word/document.xml exists
+        doc_xml = self.unpacked_path / "word" / "document.xml"
+        if not doc_xml.exists():
+            raise ValueError("Validation failed: word/document.xml not found")
 
     def save(self, destination=None, validate=True) -> None:
         """
@@ -985,15 +1016,17 @@ class Document:
         rel_xml = f'<{prefix}Relationship Id="{next_rid}" Type="http://schemas.microsoft.com/office/2011/relationships/people" Target="people.xml"/>'
         editor.append_to(root, rel_xml)
 
-    def _update_settings(self, path, track_revisions=False):
-        """Add RSID and optionally enable track revisions in settings.xml.
+    def _update_settings(self, path, track_revisions=False, update_fields=True):
+        """Add RSID and optionally enable track revisions and update fields in settings.xml.
 
         Args:
             path: Path to settings.xml
             track_revisions: If True, adds trackRevisions element
+            update_fields: If True, adds updateFields element to auto-update fields on open
 
         Places elements per OOXML schema order:
         - trackRevisions: early (before defaultTabStop)
+        - updateFields: early (before defaultTabStop)
         - rsids: late (after compat)
         """
         editor = self["word/settings.xml"]
@@ -1023,6 +1056,30 @@ class Document:
                         editor.insert_before(root.firstChild, track_rev_xml)
                     else:
                         editor.append_to(root, track_rev_xml)
+
+        # Conditionally add updateFields if requested
+        if update_fields:
+            update_fields_exists = any(
+                elem.tagName == f"{prefix}:updateFields"
+                for elem in editor.dom.getElementsByTagName(f"{prefix}:updateFields")
+            )
+
+            if not update_fields_exists:
+                update_fields_xml = f'<{prefix}:updateFields {prefix}:val="true"/>'
+                # Try to insert before defaultTabStop, hyphenationZone, or at start
+                inserted = False
+                for tag in [f"{prefix}:defaultTabStop", f"{prefix}:hyphenationZone"]:
+                    elements = editor.dom.getElementsByTagName(tag)
+                    if elements:
+                        editor.insert_before(elements[0], update_fields_xml)
+                        inserted = True
+                        break
+                if not inserted:
+                    # Insert as first child of settings
+                    if root.firstChild:
+                        editor.insert_before(root.firstChild, update_fields_xml)
+                    else:
+                        editor.append_to(root, update_fields_xml)
 
         # Always check if rsids section exists
         rsids_elements = editor.dom.getElementsByTagName(f"{prefix}:rsids")

@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
-import { useTerminalNavigation, NavModule } from '@/hooks/ui/useTerminalNavigation';
+import { NavModule, SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
+import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
 import { cn } from '@/lib/utils';
-import { SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
 import SidebarFocusMode from './SidebarFocusMode';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -35,7 +35,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     setSidebarState,
     isCalculatorOpen,
     setIsCalculatorOpen,
-    activeCostSection
+    activeCostSection,
+    ipvActiveTab,
+    setIpvActiveTab,
+    setActiveCostSection
   } = useUIStore();
   const isMobile = useIsMobile();
   const [sidebarSearch, setSidebarSearch] = useState('');
@@ -43,7 +46,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { filteredNavigation, navigationItems } = useTerminalNavigation(user as any, sidebarSearch);
+  const allNavigation = useFilteredNavigation();
+  const filteredNavigation = useMemo(() => {
+    if (!sidebarSearch) return allNavigation;
+    const searchLower = sidebarSearch.toLowerCase();
+    return allNavigation.filter(mod =>
+      mod.label.toLowerCase().includes(searchLower) ||
+      mod.children?.some(child => child.label.toLowerCase().includes(searchLower))
+    );
+  }, [allNavigation, sidebarSearch]);
 
   const toggleModule = useCallback((moduleId: string, isSubmenu: boolean) => {
     if (sidebarState === 'rail') {
@@ -105,17 +116,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         )}
       </button>
     );
-  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection]);
+  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection, sidebarState, handleNavClick]);
 
-  const renderModule = useCallback(function renderModuleInner(mod: NavModule, depth = 0): React.ReactNode {
-    const hasAvailableItems = (m: NavModule): boolean => {
-      if (m.type === 'item') {
-        return navigationItems.some(ni => ni.id === m.id);
-      }
-      return m.children?.some(child => hasAvailableItems(child)) || false;
-    };
-
-  const renderModule = useCallback((mod: NavModule, depth = 0) => {
+  function renderModule(mod: NavModule, depth = 0): React.ReactNode {
     const isExpanded = expandedModules.includes(mod.id);
     const isRail = sidebarState === 'rail';
 
@@ -182,7 +185,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         </AnimatePresence>
       </div>
     );
-  }, [expandedModules, toggleModule, renderNavItem, sidebarState]);
+  }
 
   const focusedModule = useMemo(() =>
     SIDEBAR_STRUCTURE.find(m => m.id === focusedModuleId),

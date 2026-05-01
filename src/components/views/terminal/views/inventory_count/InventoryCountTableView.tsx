@@ -33,7 +33,7 @@ export default function InventoryCountTableView({
         </thead>
         <tbody className="bg-background/30 backdrop-blur-sm">
           {loading ? (
-            <tr>
+            <tr aria-label="Cargando catálogo">
               <td colSpan={4} className="p-20 text-center">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
@@ -64,6 +64,7 @@ export default function InventoryCountTableView({
                         type="number"
                         value={counted}
                         onChange={(e) => onQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                        aria-label={`Stock físico para ${product.name}`}
                         className="neu-input w-28 h-12 text-center font-black text-xl text-primary bg-primary/5 border-primary/20 transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>

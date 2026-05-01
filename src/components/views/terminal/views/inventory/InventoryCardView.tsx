@@ -40,6 +40,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
                                 key={product.id}
                                 ref={isLast ? lastElementRef : undefined}
                                 layout
+                                role="listitem"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
@@ -87,7 +88,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
 
             {!isLoading && products.length === 0 && (
                  <div className="text-center py-20 text-muted-foreground col-span-full">
-                    <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
+                    <Package className="w-16 h-16 mx-auto mb-4 opacity-10" aria-hidden="true" />
                     <p className="font-black uppercase tracking-[0.2em] text-primary/70">No se encontraron productos.</p>
                     <p className="text-sm">Intenta ajustar tu búsqueda o filtros.</p>
                 </div>

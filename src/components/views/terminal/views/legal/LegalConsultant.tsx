@@ -61,6 +61,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
             <button
               key={res.id}
               onClick={() => setActiveResId(res.id === activeResId ? null : res.id)}
+              aria-label={`Resolución: ${res.title}`}
               className={cn(
                 "w-full text-left p-6 rounded-2xl transition-all border-2 group",
                 activeResId === res.id

@@ -1,4 +1,5 @@
-import { CostSheetData, CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
+import Decimal from 'decimal.js';
+import { CostSheetData, CostSheetRow, CostSheetSection, CostSheetAnnex, CalculatedRowValue, CostSheetHeader } from '@/types/cost-sheet';
 
 // ═══════════════════════════════════════════════════════════════
 // ISO-configurable materiality thresholds (ISA 540)
@@ -54,21 +55,21 @@ export const calculateCostSheetHealth = (
     }
 
     // 1. Parent Sum Validation
-    const checkRowIntegrity = (rows: any[]) => {
+    const checkRowIntegrity = (rows: CostSheetRow[]) => {
         rows.forEach(row => {
             if (row.children && row.children.length > 0) {
                 const parentVal = calculatedValues[row.id]?.total || 0;
-                const childrenSum = row.children.reduce((acc: number, child: any) => {
+                const childrenSum = row.children.reduce((acc: number, child: CostSheetRow) => {
                     return acc + (calculatedValues[child.id]?.total || 0);
                 }, 0);
 
-                const diff = childrenSum - parentVal;
-                if (Math.abs(diff) > MATERIALITY_THRESHOLD) {
+                const diff = new Decimal(childrenSum ?? 0).minus(parentVal ?? 0).toNumber();
+                if (new Decimal(diff ?? 0).abs().gt(MATERIALITY_THRESHOLD)) {
                     results.push({
                         type: 'CRITICAL',
                         category: 'Integridad Estructural',
                         title: `Desfase en ${row.label}`,
-                        message: `La suma de los hijos (${childrenSum.toFixed(2)}) no coincide con el total del padre (${parentVal.toFixed(2)}). Diferencia: ${diff.toFixed(2)}.`,
+                        message: `La suma de los hijos (${new Decimal(childrenSum ?? 0).toDecimalPlaces(2).toFixed(2)}) no coincide con el total del padre (${new Decimal(parentVal ?? 0).toDecimalPlaces(2).toFixed(2)}). Diferencia: ${new Decimal(diff ?? 0).toDecimalPlaces(2).toFixed(2)}.`,
                         rowId: row.id
                     });
                 } else {
@@ -76,7 +77,7 @@ export const calculateCostSheetHealth = (
                         type: 'SUCCESS',
                         category: 'Integridad Estructural',
                         title: `Integridad OK: ${row.label}`,
-                        message: `La suma de los elementos hijos coincide correctamente con el total del padre (${parentVal.toFixed(2)}).`,
+                        message: `La suma de los elementos hijos coincide correctamente con el total del padre (${new Decimal(parentVal ?? 0).toDecimalPlaces(2).toFixed(2)}).`,
                         rowId: row.id
                     });
                 }
@@ -86,7 +87,7 @@ export const calculateCostSheetHealth = (
     };
 
     if (data.sections) {
-        data.sections.forEach((s: any) => checkRowIntegrity(s.rows));
+        data.sections.forEach((s: CostSheetSection) => checkRowIntegrity(s.rows));
     }
 
     // 2. Utility / Cost Validation (13.1 / 12.1 or 13 / 12)
@@ -99,17 +100,17 @@ export const calculateCostSheetHealth = (
 
         // Detect if 13.1 is Price instead of Utility
         if (utilId === '13.1' && utilVal > costVal) {
-            utilVal = utilVal - costVal;
+            utilVal = new Decimal(utilVal ?? 0).minus(costVal ?? 0).toNumber();
         }
 
         if (costVal > 0) {
-            const ratio = utilVal / costVal;
+            const ratio = new Decimal(utilVal ?? 0).div(costVal ?? 1).toNumber();
             if (ratio > CERT_COEFFICIENTS.MAX_PROFIT_RATIO) {
                 results.push({
                     type: 'WARNING',
                     category: 'Rentabilidad',
                     title: 'Utilidad Excesiva',
-                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) supera el límite prudencial del 30%.`,
+                    message: `La relación utilidad/costo (${new Decimal(ratio ?? 0).mul(100).toDecimalPlaces(2).toFixed(2)}%) supera el límite prudencial del 30%.`,
                     value: ratio
                 });
             } else {
@@ -117,7 +118,7 @@ export const calculateCostSheetHealth = (
                     type: 'SUCCESS',
                     category: 'Rentabilidad',
                     title: 'Rentabilidad Validada',
-                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) está dentro del rango prudencial.`,
+                    message: `La relación utilidad/costo (${new Decimal(ratio ?? 0).mul(100).toDecimalPlaces(2).toFixed(2)}%) está dentro del rango prudencial.`,
                     value: ratio
                 });
             }
@@ -132,8 +133,8 @@ export const calculateCostSheetHealth = (
     const s2 = calculatedValues['2']?.total || 0;
 
     if (s2 > 0) {
-        const indirectTotal = g4 + g6 + g7;
-        const coef = indirectTotal / s2;
+        const indirectTotal = new Decimal(g4 ?? 0).plus(g6 ?? 0).plus(g7 ?? 0).toNumber();
+        const coef = new Decimal(indirectTotal ?? 0).div(s2 ?? 1).toNumber();
         const destination = String(calculatedHeader?.destination || calculatedHeader?.destino || '').toLowerCase();
         const limit = (destination === 'servicios' || destination === 'servicio') ? CERT_COEFFICIENTS.INDIRECT_COEF_SERVICES : CERT_COEFFICIENTS.INDIRECT_COEF_PRODUCTION;
 
@@ -142,7 +143,7 @@ export const calculateCostSheetHealth = (
                 type: 'WARNING',
                 category: 'Gastos Indirectos',
                 title: 'Coeficiente de Gastos Indirectos Elevado',
-                message: `El coeficiente (${coef.toFixed(2)}) supera el máximo permitido para ${destination || 'producción'} (${limit.toFixed(2)}).`,
+                message: `El coeficiente (${new Decimal(coef ?? 0).toDecimalPlaces(2).toFixed(2)}) supera el máximo permitido para ${destination || 'producción'} (${new Decimal(limit).toDecimalPlaces(2).toFixed(2)}).`,
                 value: coef
             });
         } else {
@@ -150,7 +151,7 @@ export const calculateCostSheetHealth = (
                 type: 'SUCCESS',
                 category: 'Gastos Indirectos',
                 title: 'Coeficiente de Gastos Indirectos Validado',
-                message: `El coeficiente (${coef.toFixed(2)}) está dentro de los límites permitidos para ${destination || 'producción'} (${limit.toFixed(2)}).`,
+                message: `El coeficiente (${new Decimal(coef ?? 0).toDecimalPlaces(2).toFixed(2)}) está dentro de los límites permitidos para ${destination || 'producción'} (${new Decimal(limit).toDecimalPlaces(2).toFixed(2)}).`,
                 value: coef
             });
         }
@@ -163,14 +164,14 @@ export const calculateCostSheetHealth = (
                 type: 'CRITICAL',
                 category: 'Integridad Matemática',
                 title: 'Valor Negativo Detectado',
-                message: `El concepto con ID ${id} tiene un valor negativo (${val.total.toFixed(2)}), lo cual es inconsistente para una ficha de costo.`,
+                message: `El concepto con ID ${id} tiene un valor negativo (${new Decimal(val.total ?? 0).toDecimalPlaces(2).toFixed(2)}), lo cual es inconsistente para una ficha de costo.`,
                 rowId: id
             });
         }
     });
 
     // 5. Quantity vs Cost Validation
-    const quantity = parseFloat(String(calculatedHeader?.quantity || 0));
+    const quantity = new Decimal(String(calculatedHeader?.quantity || 0) || '0').toNumber();
     const totalCost = calculatedValues['12']?.total || calculatedValues['12.1']?.total || 0;
     if (quantity === 0 && totalCost > 0) {
         results.push({
@@ -183,14 +184,14 @@ export const calculateCostSheetHealth = (
 
     // 6. Annex Reference Integrity
     if (data.annexes && data.sections) {
-        const checkAnnexRefs = (rows: any[]) => {
+        const checkAnnexRefs = (rows: CostSheetRow[]) => {
             rows.forEach(row => {
                 const formula = row.formula || row.totalFormula || '';
                 const annexMatches = formula.match(/Anexo\s*['"]?([^'"]+)['"]?/g);
                 if (annexMatches) {
                     annexMatches.forEach((m: string) => {
                         const id = m.replace(/Anexo\s*['"]?/, '').replace(/['"]?$/, '');
-                        if (!data.annexes.find((a: any) => a.id === id)) {
+                        if (!data.annexes.find((a: CostSheetAnnex) => a.id === id)) {
                             results.push({
                                 type: 'CRITICAL',
                                 category: 'Integridad Matemática',
@@ -204,7 +205,7 @@ export const calculateCostSheetHealth = (
                 if (row.children) checkAnnexRefs(row.children);
             });
         };
-        data.sections.forEach((s: any) => checkAnnexRefs(s.rows));
+        data.sections.forEach((s: CostSheetSection) => checkAnnexRefs(s.rows));
     }
 
     // 7. Standard Format Certification (New)
@@ -212,7 +213,7 @@ export const calculateCostSheetHealth = (
         const standardResults: ValidationResult[] = [];
         const category = 'Formato Estándar Recomendado';
 
-        const findRow = (rows: any[], id: string): any => {
+        const findRow = (rows: CostSheetRow[], id: string): CostSheetRow | null => {
             for (const r of rows) {
                 if (r.id === id) return r;
                 if (r.children) {
@@ -223,7 +224,7 @@ export const calculateCostSheetHealth = (
             return null;
         };
 
-        const allRows: any[] = data.sections.flatMap(s => s.rows);
+        const allRows: CostSheetRow[] = data.sections.flatMap(s => s.rows);
 
         // Rule 1: Section 1 children -> Anexo I
         const sec1 = data.sections.find(s => s.id === '1' || s.label?.startsWith('1.'));
@@ -261,8 +262,8 @@ export const calculateCostSheetHealth = (
             }
             const v21 = calculatedValues['2.1']?.total || 0;
             const v211 = calculatedValues['2.1.1']?.total || 0;
-            const expected211 = Math.round(v21 * CERT_COEFFICIENTS.SECURITY_CONTRIBUTION * 100) / 100;
-            if (Math.abs(v211 - expected211) > CERT_MATERIALITY_THRESHOLD) {
+            const expected211 = new Decimal(v21 ?? 0).mul(CERT_COEFFICIENTS.SECURITY_CONTRIBUTION).toDecimalPlaces(2).toNumber();
+            if (new Decimal(v211 ?? 0).minus(expected211 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
                 standardResults.push({
                     type: 'WARNING',
                     category,
@@ -307,7 +308,7 @@ export const calculateCostSheetHealth = (
         ['4', '6', '7'].forEach(id => {
             const sec = data.sections.find(s => s.id === id || s.label?.startsWith(id + '.'));
             if (sec) {
-                const checkPror = (rows: any[]) => {
+                const checkPror = (rows: CostSheetRow[]) => {
                     rows.forEach(r => {
                         if (r.children && r.children.length > 0) {
                             checkPror(r.children);
@@ -334,11 +335,11 @@ export const calculateCostSheetHealth = (
         const v411 = calculatedValues['4.1.1']?.total || 0;
         const v611 = calculatedValues['6.1.1']?.total || 0;
         const v711 = calculatedValues['7.1.1']?.total || 0;
-        const baseSalario = v21 + v411 + v611 + v711;
+        const baseSalario = new Decimal(v21 ?? 0).plus(v411 ?? 0).plus(v611 ?? 0).plus(v711 ?? 0).toNumber();
 
         const v101 = calculatedValues['10.1']?.total || 0;
-        const expected101 = Math.round(baseSalario * CERT_COEFFICIENTS.SOCIAL_SECURITY_RATE * 100) / 100;
-        if (Math.abs(v101 - expected101) > CERT_MATERIALITY_THRESHOLD) {
+        const expected101 = new Decimal(baseSalario ?? 0).mul(CERT_COEFFICIENTS.SOCIAL_SECURITY_RATE).toDecimalPlaces(2).toNumber();
+        if (new Decimal(v101 ?? 0).minus(expected101 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -349,8 +350,8 @@ export const calculateCostSheetHealth = (
         }
 
         const v102 = calculatedValues['10.2']?.total || 0;
-        const expected102 = Math.round(baseSalario * CERT_COEFFICIENTS.SOCIAL_ASSISTANCE_RATE * 100) / 100;
-        if (Math.abs(v102 - expected102) > CERT_MATERIALITY_THRESHOLD) {
+        const expected102 = new Decimal(baseSalario ?? 0).mul(CERT_COEFFICIENTS.SOCIAL_ASSISTANCE_RATE).toDecimalPlaces(2).toNumber();
+        if (new Decimal(v102 ?? 0).minus(expected102 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -366,8 +367,8 @@ export const calculateCostSheetHealth = (
         const v3 = calculatedValues['3']?.total || 0;
         const v4 = calculatedValues['4']?.total || 0;
         const v51 = calculatedValues['5.1']?.total || 0;
-        const expected51 = v1 + v2 + v3 + v4;
-        if (Math.abs(v51 - expected51) > CERT_MATERIALITY_THRESHOLD) {
+        const expected51 = new Decimal(v1 ?? 0).plus(v2 ?? 0).plus(v3 ?? 0).plus(v4 ?? 0).toNumber();
+        if (new Decimal(v51 ?? 0).minus(expected51 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -384,8 +385,8 @@ export const calculateCostSheetHealth = (
         const v9 = calculatedValues['9']?.total || 0;
         const v10 = calculatedValues['10']?.total || 0;
         const v111 = calculatedValues['11.1']?.total || 0;
-        const expected111 = v6 + v7 + v8 + v9 + v10;
-        if (Math.abs(v111 - expected111) > CERT_MATERIALITY_THRESHOLD) {
+        const expected111 = new Decimal(v6 ?? 0).plus(v7 ?? 0).plus(v8 ?? 0).plus(v9 ?? 0).plus(v10 ?? 0).toNumber();
+        if (new Decimal(v111 ?? 0).minus(expected111 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -397,8 +398,8 @@ export const calculateCostSheetHealth = (
 
         // Rule 8: 12.1 = 5.1 + 11.1
         const v121 = calculatedValues['12.1']?.total || 0;
-        const expected121 = v51 + v111;
-        if (Math.abs(v121 - expected121) > CERT_MATERIALITY_THRESHOLD) {
+        const expected121 = new Decimal(v51 ?? 0).plus(v111 ?? 0).toNumber();
+        if (new Decimal(v121 ?? 0).minus(expected121 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -411,8 +412,8 @@ export const calculateCostSheetHealth = (
         // Rule 9: 13.2 = 12.1 + 13.1
         const v131 = calculatedValues['13.1']?.total || 0;
         const v132 = calculatedValues['13.2']?.total || 0;
-        const expected132 = v121 + v131;
-        if (Math.abs(v132 - expected132) > CERT_MATERIALITY_THRESHOLD) {
+        const expected132 = new Decimal(v121 ?? 0).plus(v131 ?? 0).toNumber();
+        if (new Decimal(v132 ?? 0).minus(expected132 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -424,8 +425,8 @@ export const calculateCostSheetHealth = (
 
         // Rule 10: 13.3 = 13.1 / 0.9 * 0.1
         const v133 = calculatedValues['13.3']?.total || 0;
-        const expected133 = Math.round((v131 / CERT_COEFFICIENTS.TAX_CALCULATION.divisor * CERT_COEFFICIENTS.TAX_CALCULATION.rate) * 100) / 100;
-        if (Math.abs(v133 - expected133) > CERT_MATERIALITY_THRESHOLD) {
+        const expected133 = new Decimal(v131 ?? 0).div(CERT_COEFFICIENTS.TAX_CALCULATION.divisor).mul(CERT_COEFFICIENTS.TAX_CALCULATION.rate).toDecimalPlaces(2).toNumber();
+        if (new Decimal(v133 ?? 0).minus(expected133 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -437,8 +438,8 @@ export const calculateCostSheetHealth = (
 
         // Rule 11: 14.1 = 13.2 + 13.3
         const v141 = calculatedValues['14.1']?.total || 0;
-        const expected141 = v132 + v133;
-        if (Math.abs(v141 - expected141) > CERT_MATERIALITY_THRESHOLD) {
+        const expected141 = new Decimal(v132 ?? 0).plus(v133 ?? 0).toNumber();
+        if (new Decimal(v141 ?? 0).minus(expected141 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -449,10 +450,10 @@ export const calculateCostSheetHealth = (
         }
 
         // Rule 12: 15.1 = 12.1 / cantidad
-        const qty = parseFloat(String(data.header?.quantity || 1));
+        const qty = new Decimal(String(data.header?.quantity || 1) || '0').toNumber();
         const v151 = calculatedValues['15.1']?.total || 0;
-        const expected151 = qty !== 0 ? Math.round((v121 / qty) * 100) / 100 : 0;
-        if (Math.abs(v151 - expected151) > CERT_MATERIALITY_THRESHOLD) {
+        const expected151 = qty !== 0 ? new Decimal(v121 ?? 0).div(qty).toDecimalPlaces(2).toNumber() : 0;
+        if (new Decimal(v151 ?? 0).minus(expected151 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
@@ -464,8 +465,8 @@ export const calculateCostSheetHealth = (
 
         // Rule 13: 16.1 = 14.1 / cantidad
         const v161 = calculatedValues['16.1']?.total || 0;
-        const expected161 = qty !== 0 ? Math.round((v141 / qty) * 100) / 100 : 0;
-        if (Math.abs(v161 - expected161) > CERT_MATERIALITY_THRESHOLD) {
+        const expected161 = qty !== 0 ? new Decimal(v141 ?? 0).div(qty).toDecimalPlaces(2).toNumber() : 0;
+        if (new Decimal(v161 ?? 0).minus(expected161 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,

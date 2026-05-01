@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { normalizeName, similarity } from '../normalization';
 
 describe('Normalization', () => {

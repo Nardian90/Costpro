@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import type { CostSheetSection, CostSheetRow, CostSheetColumn, CostSheetAnnex, CostSheetHeader } from '@/types/cost-sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +12,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 
 interface CostSheetFormProps {
   activeSection: string;
-  calculatedAnnexes?: any[];
+  calculatedAnnexes?: CostSheetAnnex[];
   calculatedValues?: { [key: string]: number };
 }
 
@@ -22,7 +23,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 }) => {
   const { data, updateValue, addRow, removeRow } = useCostSheetStore();
 
-  const handleInputChange = (path: (string | number)[], value: any) => {
+  const handleInputChange = (path: (string | number)[], value: string | number) => {
     const isNumeric = typeof value === 'string' && /^-?\d*\.?\d*$/.test(value) && value !== '';
     updateValue(path, isNumeric ? parseFloat(value) : value);
   };
@@ -56,7 +57,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
               id={`header-${field.id}`}
               className="neu-input w-full"
               type={field.type}
-              value={(data?.header as any)?.[field.id] ?? ''}
+              value={(data?.header)?.[field.id as keyof CostSheetHeader] ?? ''}
               onChange={(e) => handleInputChange(['header', field.id], e.target.value)}
             />
           </div>
@@ -89,14 +90,14 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
   const renderSectionForm = () => {
     const sections = data?.sections ?? [];
-    const section = sections.find((s: any) => s?.id === activeSection);
+    const section = sections.find((s: CostSheetSection) => s?.id === activeSection);
     if (!section) return null;
 
     const rows = section.rows ?? [];
 
     return (
       <div className="space-y-4 sm:space-y-6">
-        {rows.map((row: any, rowIndex: number) => (
+        {rows.map((row: CostSheetRow, rowIndex: number) => (
           <div key={row.id} className="neu-card !p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/5">
             <div className="flex-1">
                 <Label htmlFor={`section-${section.id}-${rowIndex}`} className="font-black text-sm sm:text-base block mb-1">
@@ -137,8 +138,8 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
   const renderAnnexForm = () => {
     const annexes = data?.annexes ?? [];
-    const annex = annexes.find((a: any) => a?.id === activeSection);
-    const calculatedAnnex = (calculatedAnnexes || []).find((a: any) => a?.id === activeSection);
+    const annex = annexes.find((a: CostSheetAnnex) => a?.id === activeSection);
+    const calculatedAnnex = (calculatedAnnexes || []).find((a: CostSheetAnnex) => a?.id === activeSection);
     if (!annex) return null;
 
     const displayData = calculatedAnnex ? (calculatedAnnex.data ?? []) : (annex.data ?? []);
@@ -154,8 +155,10 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             <button
               onClick={() => addRow(annex.id)}
               className="neu-btn-primary h-11 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg"
+              type="button"
+              aria-label={`Añadir fila al anexo ${annex.id}`}
             >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4" aria-hidden="true" />
                 Añadir Fila
             </button>
          </div>
@@ -165,7 +168,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
               <Table className="sm:data-table">
                   <TableHeader className="bg-muted/50 hidden sm:table-header-group">
                       <TableRow className="border-b border-border/50">
-                          {annex.columns.map((col: any) => (
+                          {annex.columns.map((col: CostSheetColumn) => (
                               <TableHead key={col.key} className="font-black py-4 px-4 text-xs uppercase tracking-widest text-muted-foreground">
                                   {col.label}
                               </TableHead>
@@ -174,13 +177,13 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {displayData.map((row: any, rowIndex: number) => (
+                      {displayData.map((row: Record<string, number | string>, rowIndex: number) => (
                           <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
-                              {(annex.columns ?? []).map((col: any) => (
+                              {(annex.columns ?? []).map((col: CostSheetColumn) => (
                                   <TableCell key={col?.key} data-label={col?.label} className="p-3 sm:p-4">
                                       {col?.formula ? (
                                           <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                              {formatCurrency(row?.[col.key] || 0).replace('$', '').trim()}
+                                              {formatCurrency(Number(row?.[col.key]) || 0).replace('$', '').trim()}
                                           </div>
                                       ) : (
                                           <Input
@@ -188,6 +191,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                                               value={data?.annexes?.[annexIndex]?.data?.[rowIndex]?.[col?.key] ?? ''}
                                               onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col?.key], e.target.value)}
                                               className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
+                                              aria-label={`${col?.label || col?.key} de la fila ${rowIndex + 1} del anexo ${annex.id}`}
                                           />
                                       )}
                                   </TableCell>
@@ -214,9 +218,9 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primary drop-shadow-sm">
-                        {formatCurrency(displayData.reduce((acc: number, row: any) => {
-                             const totalCol = annex.columns.find((c:any) => c.formula || c.key === 'amount' || c.key === 'total');
-                             return acc + (row[totalCol?.key || ''] || 0);
+                        {formatCurrency(displayData.reduce((acc: number, row: Record<string, number | string>) => {
+                             const totalCol = annex.columns.find((c: CostSheetColumn) => c.formula || c.key === 'amount' || c.key === 'total');
+                             return acc + (Number(row[totalCol?.key || '']) || 0);
                         }, 0))}
                     </span>
                 </div>
@@ -229,8 +233,8 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   const getActiveContent = () => {
     if (activeSection === 'header') return renderHeaderForm();
     if (activeSection === 'signature') return renderSignatureForm();
-    if ((data?.sections || []).some((s: any) => s.id === activeSection)) return renderSectionForm();
-    if ((data?.annexes || []).some((a: any) => a.id === activeSection)) return renderAnnexForm();
+    if ((data?.sections || []).some((s: CostSheetSection) => s.id === activeSection)) return renderSectionForm();
+    if ((data?.annexes || []).some((a: CostSheetAnnex) => a.id === activeSection)) return renderAnnexForm();
     return <p className="text-center py-12 text-muted-foreground italic">Selecciona una sección para comenzar a editar.</p>;
   };
 

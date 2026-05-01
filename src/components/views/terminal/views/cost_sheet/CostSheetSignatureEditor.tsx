@@ -30,10 +30,11 @@ const CostSheetSignatureEditor = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="space-y-3">
-          <label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
+          <label htmlFor="signature-prepared-by" className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
             Elaborado por (Nombre y Cargo)
           </label>
           <Input
+            id="signature-prepared-by"
             value={signature?.prepared_by || ''}
             onChange={(e) => handleChange('prepared_by', e.target.value)}
             className="neu-input h-12 text-lg font-bold"
@@ -42,10 +43,11 @@ const CostSheetSignatureEditor = () => {
         </div>
 
         <div className="space-y-3">
-          <label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
+          <label htmlFor="signature-approved-by" className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
             Aprobado por (Nombre y Cargo)
           </label>
           <Input
+            id="signature-approved-by"
             value={signature?.approved_by || ''}
             onChange={(e) => handleChange('approved_by', e.target.value)}
             className="neu-input h-12 text-lg font-bold"

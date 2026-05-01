@@ -238,8 +238,9 @@ export default function SettingsView() {
               <div className="p-6 rounded-2xl border-2 border-primary/30 bg-primary/5 animate-in slide-in-from-top-4 duration-300">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Proveedor</label>
+                    <label htmlFor="settings-provider" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Proveedor</label>
                     <select
+                      id="settings-provider"
                       value={newKey.provider}
                       onChange={(e) => setNewKey({ ...newKey, provider: e.target.value })}
                       className="w-full h-11 bg-background border-border rounded-xl px-4 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
@@ -252,9 +253,11 @@ export default function SettingsView() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Etiqueta (Ej: Personal, Pro)</label>
+                    <label htmlFor="settings-label" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Etiqueta (Ej: Personal, Pro)</label>
                     <input
+                      id="settings-label"
                       type="text"
+                      aria-label="Etiqueta de la llave"
                       value={newKey.label}
                       onChange={(e) => setNewKey({ ...newKey, label: e.target.value })}
                       className="w-full h-11 bg-background border-border rounded-xl px-4 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
@@ -263,10 +266,12 @@ export default function SettingsView() {
                   </div>
                 </div>
                 <div className="space-y-2 mb-6">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">API Key</label>
+                  <label htmlFor="settings-api-key" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">API Key</label>
                   <div className="relative">
                     <input
+                      id="settings-api-key"
                       type="password"
+                      aria-label="API Key"
                       value={newKey.api_key}
                       onChange={(e) => setNewKey({ ...newKey, api_key: e.target.value })}
                       className="w-full h-11 bg-background border-border rounded-xl px-4 pr-10 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
@@ -312,10 +317,11 @@ export default function SettingsView() {
                             {key.provider}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" aria-label="Etiqueta">
                           {editingKeyId === key.id ? (
                             <input
                               type="text"
+                              aria-label="Editar etiqueta"
                               defaultValue={key.label}
                               onBlur={(e) => handleUpdateKey(key.id, { label: e.target.value })}
                               onKeyDown={(e) => e.key === 'Enter' && handleUpdateKey(key.id, { label: (e.target as HTMLInputElement).value })}
@@ -326,7 +332,7 @@ export default function SettingsView() {
                             <span className="text-xs font-bold uppercase tracking-tight">{key.label}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" aria-label="Estado">
                           <div className="flex justify-center">
                             <button
                               onClick={() => handleToggleKeyStatus(key)}
@@ -339,7 +345,7 @@ export default function SettingsView() {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" aria-label="Acciones">
                           <div className="flex justify-end items-center gap-3">
                             <button
                               onClick={() => setEditingKeyId(key.id)}

@@ -51,6 +51,8 @@ describe('STOCK_LIMIT Rule Invariants', () => {
         prioridad_algoritmo: 1,
         activo: true,
         stock_inicial_manual: 0,
+        es_paquete: false,
+        contenido_paquete: 0,
         id_grupo: 'G1', // Fixed: must have id_grupo
         created_at: ''
     },
@@ -62,6 +64,7 @@ describe('STOCK_LIMIT Rule Invariants', () => {
         prioridad_algoritmo: 1,
         activo: true,
         stock_inicial_manual: 0,
+        es_paquete: true,
         id_grupo: 'G1',
         cod_hijo: 'PROD1',
         contenido_paquete: 10,

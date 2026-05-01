@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics, WalletSummary } from './types';
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
@@ -140,7 +141,7 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
                     const service = parts[1].trim();
                     const operation = parts[2].trim().toUpperCase();
                     const amountStr = parts[3].replace(',', '.').trim();
-                    const amount = parseFloat(amountStr);
+                    const amount = new Decimal(amountStr || '0').toNumber();
                     const currency = parts[4].trim();
                     const transactionId = parts[5].trim();
 
@@ -171,14 +172,14 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
     const patterns = [
       {
         regex: /Transferencia fue completada.*?Monto:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Transferencia', counterparty: 'Enviada' })
+        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Transferencia', counterparty: 'Enviada' })
       },
       {
         regex: /le ha realizado una transferencia.*?de\s+([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
-        map: (m: any) => {
+        map: (m: RegExpMatchArray) => {
             const phoneMatch = sms.content.match(/telefono\s+(\d+)/i);
             return {
-                amount: parseFloat(m[1].replace(',', '.')),
+                amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(),
                 currency: m[2],
                 transactionId: m[3],
                 date: m[4],
@@ -190,15 +191,15 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
       },
       {
         regex: /Recarga se realizo con exito.*?Monto Pagado:\s*([\d,.]+)\s*(\w+).*?Id transaccion:\s+([A-Z0-9]+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
+        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
       },
       {
         regex: /Pago de la factura.*?fue completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion:\s+([A-Z0-9]+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
+        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
       },
       {
         regex: /pago del impuesto.*?completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion Banco:\s+([A-Z0-9]+)/i,
-        map: (m: any) => ({ amount: parseFloat(m[1].replace(',', '.')), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Impuesto', counterparty: 'ONAT' })
+        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Impuesto', counterparty: 'ONAT' })
       }
     ];
 
@@ -287,7 +288,7 @@ export function calculateLedger(raw: RawSms[], consolidated: ConsolidatedTransac
         if (match) {
           balances.push({
             date: formatDateFromSms(sms.date),
-            amount: parseFloat(match[3].replace(',', '.'))
+            amount: new Decimal(match[3]?.replace(',', '.') || '0').toNumber()
           });
         }
       }
@@ -310,17 +311,17 @@ export function calculateLedger(raw: RawSms[], consolidated: ConsolidatedTransac
       });
 
       periodTxs.forEach(t => {
-        if (t.operation === 'CR') theoreticalBalance += t.amount;
-        else theoreticalBalance -= t.amount;
+        if (t.operation === 'CR') theoreticalBalance = new Decimal(theoreticalBalance).plus(t.amount).toNumber();
+        else theoreticalBalance = new Decimal(theoreticalBalance).minus(t.amount).toNumber();
       });
 
-      if (Math.abs(theoreticalBalance - currentBalanceReport.amount) > 0.01) {
+      if (new Decimal(theoreticalBalance ?? 0).minus(currentBalanceReport.amount ?? 0).abs().gt(0.01)) {
         const diff = currentBalanceReport.amount - theoreticalBalance;
         ledger.push({
           date: currentBalanceReport.date,
           service: 'AJUSTE',
           operation: diff > 0 ? 'CR' : 'DB',
-          amount: Math.abs(diff),
+          amount: new Decimal(diff).abs().toNumber(),
           currency: 'CUP',
           transactionId: `ADJ-${Date.now()}-${i}`,
           bank: bank,
@@ -346,22 +347,22 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
   const monthly: Record<string, { income: number; expenses: number }> = {};
 
   transactions.forEach(tx => {
-    if (tx.nature === 'CR') summary.total_income += tx.amount;
-    else summary.total_expenses += tx.amount;
+    if (tx.nature === 'CR') summary.total_income = new Decimal(summary.total_income).plus(tx.amount).toNumber();
+    else summary.total_expenses = new Decimal(summary.total_expenses).plus(tx.amount).toNumber();
 
     if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0 };
-    if (tx.nature === 'CR') banks[tx.bank].income += tx.amount;
-    else banks[tx.bank].expenses += tx.amount;
+    if (tx.nature === 'CR') banks[tx.bank].income = new Decimal(banks[tx.bank].income).plus(tx.amount).toNumber();
+    else banks[tx.bank].expenses = new Decimal(banks[tx.bank].expenses).plus(tx.amount).toNumber();
 
     const month = tx.date.substring(0, 7);
     if (!monthly[month]) monthly[month] = { income: 0, expenses: 0 };
-    if (tx.nature === 'CR') monthly[month].income += tx.amount;
-    else monthly[month].expenses += tx.amount;
+    if (tx.nature === 'CR') monthly[month].income = new Decimal(monthly[month].income).plus(tx.amount).toNumber();
+    else monthly[month].expenses = new Decimal(monthly[month].expenses).plus(tx.amount).toNumber();
 
-    categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
+    categories[tx.category] = new Decimal(categories[tx.category] || 0).plus(tx.amount).toNumber();
   });
 
-  summary.balance = summary.total_income - summary.total_expenses;
+  summary.balance = new Decimal(summary.total_income).minus(summary.total_expenses).toNumber();
 
   return {
     summary,

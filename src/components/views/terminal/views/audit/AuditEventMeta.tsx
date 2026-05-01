@@ -20,7 +20,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
   const renderDiff = () => {
     if (!oldData || !newData) return null;
 
-    const changes = [];
+    const changes: React.ReactNode[] = [];
     const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
 
     const labelMap: Record<string, string> = {

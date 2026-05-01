@@ -141,7 +141,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
     const handleSave = useCallback(() => {
         if (!rowPath.length || !currentRow) return;
 
-        const updates: { path: (string | number)[]; value: any }[] = [];
+        const updates: { path: (string | number)[]; value: string }[] = [];
         const originalTotal = currentRow.totalFormula ?? '';
         const originalVh = currentRow.vhFormula ?? '';
 
@@ -251,10 +251,11 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         {/* Total Formula Tab */}
                         <TabsContent value="total" className="p-4 space-y-3 mt-0">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label htmlFor="error-total-formula" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     Fórmula Actual (editable)
                                 </label>
                                 <Textarea
+                                    id="error-total-formula"
                                     value={editedTotalFormula}
                                     onChange={(e) => setEditedTotalFormula(e.target.value)}
                                     placeholder="Sin fórmula definida"
@@ -304,10 +305,11 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         {/* VH Formula Tab */}
                         <TabsContent value="vh" className="p-4 space-y-3 mt-0">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label htmlFor="error-vh-formula" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     Fórmula VH Actual (editable)
                                 </label>
                                 <Textarea
+                                    id="error-vh-formula"
                                     value={editedVhFormula}
                                     onChange={(e) => setEditedVhFormula(e.target.value)}
                                     placeholder="Sin fórmula VH definida"

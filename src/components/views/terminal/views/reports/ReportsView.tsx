@@ -123,7 +123,7 @@ export default function ReportsView() {
         return;
       }
 
-      exportToExcel(
+      await exportToExcel(
         data,
         config.columns || [],
         COLUMN_LABELS,

@@ -37,7 +37,7 @@ import {
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { importCatalogProducts } from '@/lib/ipv/importUtils';
 import ActionMenu, { Action } from "@/components/ui/ActionMenu";
-import * as XLSX from 'xlsx';
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import {
   Tooltip,
   TooltipContent,
@@ -511,7 +511,8 @@ export function CatalogTable() {
         }
     });
   };
-const handleExportCatalog = () => {
+const handleExportCatalog = async () => {
+    const XLSX = await createWorkbook();
     const exportData = products && products.length > 0
         ? products.map(p => ({
             'cod': p.cod,
@@ -572,6 +573,7 @@ const handleExportCatalog = () => {
     reader.onload = async (e) => {
         try {
             const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const XLSX = await createWorkbook();
             const workbook = XLSX.read(data, { type: 'array' });
             const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]) as any[];
 
@@ -644,7 +646,7 @@ const handleExportCatalog = () => {
                   <TooltipTrigger asChild><Button variant="outline" size="icon" className="rounded-full h-10 w-10"><HelpCircle className="w-4 h-4" /></Button></TooltipTrigger>
                   <TooltipContent className="max-w-xs p-4 bg-popover text-popover-foreground border shadow-xl"><p className="font-bold text-primary mb-2">Ayuda de Columnas:</p><ul className="text-xs space-y-1 list-disc pl-4 uppercase font-bold"><li><strong>cod:</strong> Identificador único.</li><li><strong>Precio:</strong> Valor unitario en centavos.</li><li><strong>Prioridad:</strong> 1-5.</li><li><strong>Stock Inicial:</strong> Punto de partida.</li></ul></TooltipContent>
               </Tooltip>
-              <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" />
+              <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" aria-label="Importar catálogo desde archivo Excel" />
           </div>
         </div>
         {layoutMode === 'table' ? (
@@ -652,7 +654,7 @@ const handleExportCatalog = () => {
               <Table className="data-table">
               <TableHeader>
                   <TableRow>
-                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} /></TableHead>
+                  <TableHead className="w-8"><input type="checkbox" onChange={(e) => { if (e.target.checked) setSelectedProductIds(paginatedResult.map(p => p.cod)); else setSelectedProductIds([]); }} checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0} aria-label="Seleccionar todos los productos" /></TableHead>
                   <TableHead className="sticky top-0 left-0 bg-background z-30"><SortButton column="cod" label="Código" /></TableHead>
                   <TableHead className="sticky top-0 left-[100px] bg-background z-30"><SortButton column="descripcion" label="Descripción" /></TableHead>
                   <TableHead className="sticky top-0 bg-background z-20">UM</TableHead>
@@ -722,7 +724,7 @@ const handleExportCatalog = () => {
                       const isSelected = selectedProductIds.includes(p.cod);
                       return (
                       <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
-                          <TableCell><input type="checkbox" checked={isSelected} onChange={(e) => { if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]); else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod)); }} /></TableCell>
+                          <TableCell><input type="checkbox" checked={isSelected} onChange={(e) => { if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]); else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod)); }} aria-label={`Seleccionar ${p.descripcion}`} /></TableCell>
                           <TableCell className="sticky left-0 bg-background z-10 font-mono text-xs font-bold text-primary">
                               <div className="flex flex-col">
                                   <div className="flex items-center gap-1">

@@ -1,5 +1,5 @@
 import { StockService } from '../../../../../lib/ipv/StockService';
-import * as XLSX from "xlsx";
+import { createWorkbook } from '@/lib/export/lazy-excel';
 import { FileSpreadsheet } from "lucide-react";
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -51,7 +51,8 @@ export default function MovementsView() {
     m.referencia_transaccion?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await createWorkbook();
     const data = filteredMovements?.map(m => ({
         "Fecha": m.fecha,
         "Producto Origen": m.producto_origen_cod,

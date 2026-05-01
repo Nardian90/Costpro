@@ -83,9 +83,7 @@ describe('IPV Invariants', () => {
         unit_factor: 10,
         unit_level: 'BOX',
         stock_inicial_manual: 1,
-        created_at: '',
-        id_grupo: 'GRP1',
-        cod_hijo: 'PROD1'
+        created_at: ''
     }
   ];
 
@@ -100,6 +98,7 @@ describe('IPV Invariants', () => {
     const tx: BankTransaction = {
       id: 'tx1',
       fecha: '2025-01-01',
+      referencia_corta: '',
       referencia_origen: 'REF1',
       observaciones: 'TEST',
       importe_cents: 500,
@@ -119,6 +118,7 @@ describe('IPV Invariants', () => {
     const tx: BankTransaction = {
       id: 'tx2',
       fecha: '2025-01-01',
+      referencia_corta: '',
       referencia_origen: 'REF2',
       observaciones: 'PAGO PROD1', // Forces HARD_REF to PROD1
       importe_cents: 1500, // 15 units of PROD1
@@ -137,8 +137,8 @@ describe('IPV Invariants', () => {
     expect(result.movements.length).toBeGreaterThan(0);
     const decomposition = result.movements.find(m => m.tipo === 'DECOMPOSITION');
     expect(decomposition).toBeDefined();
-    expect(decomposition.producto_origen_cod).toBe('BOX1');
-    expect(decomposition.producto_destino_cod).toBe('PROD1');
+    expect(decomposition!.producto_origen_cod).toBe('BOX1');
+    expect(decomposition!.producto_destino_cod).toBe('PROD1');
   });
 
   it('Cache Collision: should not reuse cache if catalog changes', async () => {
@@ -146,6 +146,7 @@ describe('IPV Invariants', () => {
      const tx: BankTransaction = {
         id: 'tx1',
         fecha: '2025-01-01',
+        referencia_corta: '',
         referencia_origen: 'REF1',
         observaciones: 'TEST',
         importe_cents: 1000,

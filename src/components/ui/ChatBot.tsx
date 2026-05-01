@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
 'use client';
+import { logger } from '@/lib/logger';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -267,7 +267,7 @@ export function ChatBot() {
                   >
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</label>
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</span>
                         <div className="grid grid-cols-3 gap-2">
                           {['gemini', 'gpt', 'qwen'].map((p) => (
                             <button
@@ -287,10 +287,12 @@ export function ChatBot() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
+                        <label htmlFor="chatbot-api-key" className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
                         <div className="relative">
                           <input
+                            id="chatbot-api-key"
                             type="password"
+                            aria-label="API KEY Personal"
                             value={tempApiKey}
                             onChange={(e) => setTempApiKey(e.target.value)}
                             onCopy={(e) => e.preventDefault()}
@@ -387,6 +389,7 @@ export function ChatBot() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     disabled={!isConfigured}
+                    aria-label="Escribir mensaje al asistente"
                     placeholder={isConfigured ? "Navega, crea, busca..." : "Configura tu IA para comenzar"}
                     className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 h-11"
                   />

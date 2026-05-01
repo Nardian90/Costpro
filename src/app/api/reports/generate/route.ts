@@ -1,7 +1,6 @@
 import { reportsGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { ReportType } from '@/types';
 import { format } from 'date-fns';
@@ -117,11 +116,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Generate PDF
-    const doc = new jsPDF({
-      orientation: (body as any).orientation || 'portrait',
-      unit: 'mm',
-      format: (body as any).format || 'a4'
-    });
+    const doc = await createPDFDocument(
+      (body as any).orientation || 'portrait',
+      'mm',
+      (body as any).format || 'a4'
+    );
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
@@ -200,7 +199,7 @@ export async function POST(req: NextRequest) {
         processRows(section.rows);
       });
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: yPos + 5,
         head: [mainHeaders],
         body: mainRows,
@@ -240,7 +239,7 @@ export async function POST(req: NextRequest) {
           return val || '-';
         }));
 
-        autoTable(doc, {
+        (doc as any).autoTable({
           startY: finalY + 2,
           head: [headers],
           body: data,
@@ -292,7 +291,7 @@ export async function POST(req: NextRequest) {
 
       const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: 50,
         head: [displayHeaders],
         body: tableData,

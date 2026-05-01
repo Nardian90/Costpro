@@ -30,6 +30,8 @@ describe('Integrated IPV Matching Flow', () => {
       precio_cents: 250,
       prioridad_algoritmo: 1,
       activo: true,
+      es_paquete: false,
+      contenido_paquete: 0,
       stock_inicial_manual: 100,
       created_at: new Date().toISOString(),
       isWildcardCandidate: true
@@ -73,7 +75,7 @@ describe('Integrated IPV Matching Flow', () => {
             await db.reconciliation_lines.bulkAdd(res.lines);
         }
         await db.bank_statements.update(res.transactionId, {
-            estado_conciliacion: res.status,
+            estado_conciliacion: res.status === 'OVERPAYMENT' ? 'COMPLETO' : res.status as 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'NO_PROCESAR',
             applied_rules: res.appliedRules
         });
     }

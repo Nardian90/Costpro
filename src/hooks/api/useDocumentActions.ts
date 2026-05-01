@@ -1,5 +1,5 @@
+'use client';
 import { logger } from '@/lib/logger';
-'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';

@@ -85,6 +85,7 @@ export default function LegalView() {
             placeholder="BUSCAR RESOLUCIÓN O MODELO..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Buscar resolución o modelo legal"
             className="w-full h-14 bg-background border-2 border-primary/10 rounded-2xl pl-12 pr-4 text-sm font-bold focus:outline-none focus:border-primary transition-all uppercase tracking-wider shadow-sm"
           />
         </div>

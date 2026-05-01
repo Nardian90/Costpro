@@ -80,11 +80,13 @@ export const CreateProductModal = () => {
     >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase tracking-widest ml-1">Nombre</label>
+            <label htmlFor="product-name" className="text-xs font-black uppercase tracking-widest ml-1">Nombre</label>
             <input
+              id="product-name"
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              aria-label="Nombre del producto"
               className="neu-input w-full font-bold"
               placeholder="Ej: Camiseta Algodón"
             />
@@ -92,12 +94,14 @@ export const CreateProductModal = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
+              <label htmlFor="product-sku" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>SKU</span>
                 <span className="text-xs text-primary/70 italic">Único en tienda</span>
               </label>
               <input
+                id="product-sku"
                 type="text"
+                aria-label="SKU del producto"
                 value={form.sku}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 className="neu-input w-full"
@@ -105,9 +109,11 @@ export const CreateProductModal = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase tracking-widest ml-1">Categoría</label>
+              <label htmlFor="product-category" className="text-xs font-black uppercase tracking-widest ml-1">Categoría</label>
               <input
+                id="product-category"
                 type="text"
+                aria-label="Categoría del producto"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="neu-input w-full"
@@ -118,12 +124,14 @@ export const CreateProductModal = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
+              <label htmlFor="product-cost" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                  <span>Costo</span>
                  <span className="text-xs text-primary/70 italic">Prioridad</span>
               </label>
               <input
+                id="product-cost"
                 type="number"
+                aria-label="Costo del producto"
                 value={form.cost_price || ''}
                 onChange={(e) => setForm({ ...form, cost_price: parseFloat(e.target.value) || 0 })}
                 className="neu-input w-full font-bold text-primary"
@@ -131,11 +139,13 @@ export const CreateProductModal = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase tracking-widest ml-1">
+              <label htmlFor="product-price" className="text-xs font-black uppercase tracking-widest ml-1">
                 Precio <span className="text-xs opacity-50 lowercase font-normal">(opcional)</span>
               </label>
               <input
+                id="product-price"
                 type="number"
+                aria-label="Precio de venta"
                 value={form.price || ''}
                 onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
                 className="neu-input w-full font-bold"
@@ -145,8 +155,10 @@ export const CreateProductModal = () => {
           </div>
 
           <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase tracking-widest ml-1">Descripción</label>
+              <label htmlFor="product-description" className="text-xs font-black uppercase tracking-widest ml-1">Descripción</label>
               <textarea
+                id="product-description"
+                aria-label="Descripción del producto"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="neu-input w-full min-h-[80px] text-sm"

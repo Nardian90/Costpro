@@ -1,5 +1,4 @@
 'use client';
-import * as XLSX from 'xlsx';
 import React, { useState } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -29,8 +28,7 @@ import { formatCurrencyCents, formatDate } from '@/lib/utils';
 import { IPVPreviewModal } from './IPVPreviewModal';
 import { StockService } from '@/lib/ipv/StockService';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import {
@@ -192,14 +190,14 @@ export function IPVReportView() {
 
   const exportPDF = async (report: DailyIPVReport, includeDetails: boolean = false) => {
     try {
-      const doc = new jsPDF();
+      const doc = await createPDFDocument();
       const pageWidth = doc.internal.pageSize.width;
       doc.setFontSize(10);
       doc.text('CostPro IPV Engine v3.0', 14, 15);
       doc.setFontSize(18);
       doc.text('REPORTE IPV DIARIO', pageWidth / 2, 25, { align: 'center' });
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: 35,
         head: [['Concepto', 'Monto']],
         body: [
@@ -215,7 +213,7 @@ export function IPVReportView() {
         f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.venta_cantidad_qty, formatCurrencyCents(f.precio_unitario_cents), formatCurrencyCents(f.importe_cents), f.existencia_final_qty
       ]);
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: (doc as any).lastAutoTable.finalY + 10,
         head: [['Cod', 'Producto', 'UM', 'Inicial', 'Entrada', 'Venta', 'Precio', 'Importe', 'Final']],
         body: tableData,

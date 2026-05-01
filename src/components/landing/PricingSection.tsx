@@ -39,10 +39,11 @@ function PricingCalculator({ visible }: { visible: boolean }) {
           {/* Products slider */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-medium text-white/60">Número de productos</label>
+              <label htmlFor="savings-products" className="text-[11px] font-medium text-white/60">Número de productos</label>
               <span className="text-[11px] font-bold text-[#22c55e] tabular-nums">{products}</span>
             </div>
             <input
+              id="savings-products"
               type="range"
               min={1}
               max={1000}
@@ -56,10 +57,11 @@ function PricingCalculator({ visible }: { visible: boolean }) {
           {/* Branches slider */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-medium text-white/60">Sucursales</label>
+              <label htmlFor="savings-branches" className="text-[11px] font-medium text-white/60">Sucursales</label>
               <span className="text-[11px] font-bold text-[#22c55e] tabular-nums">{branches}</span>
             </div>
             <input
+              id="savings-branches"
               type="range"
               min={1}
               max={10}

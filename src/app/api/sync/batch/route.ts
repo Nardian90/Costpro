@@ -18,7 +18,7 @@ const handler = withAuth(async (req, session) => {
     const body = await req.json();
     const batch = syncBatchSchema.parse(body);
 
-    const results = [];
+    const results: any[] = [];
 
     for (const op of batch.operations) {
       // 1. Check idempotency

@@ -77,7 +77,7 @@ export function parseObservations(obs: string): ParsedObservation {
  * Enriches a batch of transactions with identity data from the registry.
  */
 export async function enrichTransactions(transactions: any[]): Promise<any[]> {
-  const enriched = [];
+  const enriched: any[] = [];
   for (const tx of transactions) {
     const parsed = parseObservations(tx.observaciones || '');
     const identity = await resolveIdentity(

@@ -4,11 +4,17 @@ import { AlertCircle, AlertTriangle, Info, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import type { ValidationError } from '@/lib/cost-engine/types';
 
-export const CostSheetProblemsPanel = ({ problems, onGoTo }: any) => {
+interface CostSheetProblemsPanelProps {
+  problems: ValidationError[];
+  onGoTo?: (rowId: string) => void;
+}
+
+export const CostSheetProblemsPanel = ({ problems, onGoTo }: CostSheetProblemsPanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
   if (!problems?.length) return null;
-  const critical = problems.filter((p: any) => p.type === 'CRITICAL').length;
+  const critical = problems.filter((p) => p.type === 'CRITICAL').length;
   return (
     <>
       <Button onClick={() => setIsOpen(true)} className={cn("fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl z-50", critical > 0 ? "bg-red-500 hover:bg-red-600" : "bg-amber-500 hover:bg-amber-600")}>
@@ -22,12 +28,12 @@ export const CostSheetProblemsPanel = ({ problems, onGoTo }: any) => {
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}><X className="w-4 h-4"/></Button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {problems.map((p: any, i: number) => (
+              {problems.map((p, i: number) => (
                 <div key={i} className={cn("p-2 rounded-lg border text-xs flex gap-2", p.type === 'CRITICAL' ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200")}>
                   {p.type === 'CRITICAL' ? <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
                   <div className="flex-1">
                     <p>{p.message}</p>
-                    {p.rowId && <Button variant="link" className="p-0 h-auto text-[10px]" onClick={() => { onGoTo(p.rowId); setIsOpen(false); }}>Ir a fila <ArrowRight className="w-2 h-2 ml-1"/></Button>}
+                    {p.rowId && onGoTo && <Button variant="link" className="p-0 h-auto text-[10px]" onClick={() => { onGoTo(p.rowId); setIsOpen(false); }}>Ir a fila <ArrowRight className="w-2 h-2 ml-1"/></Button>}
                   </div>
                 </div>
               ))}

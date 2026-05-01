@@ -39,7 +39,7 @@ export const CostRowSchema = z.object({
 export const AnexoRowSchema = z.object({
   classification: z.string(),
   importe: z.number(),
-}).catchall(z.any());
+}).catchall(z.union([z.string(), z.number(), z.boolean(), z.undefined()]));
 
 export const AnexoSchema = z.object({
   id: z.string(),

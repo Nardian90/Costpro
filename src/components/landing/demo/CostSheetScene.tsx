@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { costSheetIngredients, costSheetLabor, costSheetEvents } from './demoData';
 
@@ -36,13 +35,14 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
   const tab = elapsed >= 23 ? 'labor' : elapsed >= 4.5 ? 'ingredients' : null;
 
   // Which cell has the green active-border
-  const active = useMemo(() => {
-    for (const e of EV) {
-      if (e.action === 'autocomplete' && elapsed >= e.time) {
-        const r = e.payload.row as number, nx = ev(`input-qty-${r}`);
-        if (nx && elapsed < nx.time) return { r, f: 'name' };
-      }
+  let active: { r: number; f: string } | null = null;
+  for (const e of EV) {
+    if (e.action === 'autocomplete' && elapsed >= e.time) {
+      const r = e.payload.row as number, nx = ev(`input-qty-${r}`);
+      if (nx && elapsed < nx.time) { active = { r, f: 'name' }; break; }
     }
+  }
+  if (!active) {
     for (const e of EV) {
       if (e.action !== 'type') continue;
       const t = e.payload.target as string;
@@ -50,14 +50,13 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
       const d = ((e.payload.text as string).length * (e.payload.speed as number)) / 1000;
       if (elapsed >= e.time && elapsed < e.time + d + 0.2) {
         const m = t.match(/input-(name|qty|price)-(\d)/);
-        if (m) return { r: +m[2], f: m[1] };
+        if (m) { active = { r: +m[2], f: m[1] }; break; }
       }
     }
-    return null;
-  }, [elapsed]);
+  }
 
   // Ingredient rows derived from events
-  const rows = useMemo(() => costSheetIngredients.map((ing, i) => {
+  const rows = costSheetIngredients.map((ing, i) => {
     const ne = ev(`input-name-${i}`), qe = ev(`input-qty-${i}`), pe = ev(`input-price-${i}`), te = ev(`total-${i}`);
     const ac = acEv(i), acT = ac?.time ?? 99;
     const partial = typingText(elapsed, ne?.time ?? 99, (ne?.payload.text as string) ?? '', (ne?.payload.speed as number) ?? 100);
@@ -71,17 +70,17 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
       visible: elapsed >= (ne?.time ?? 99),
       nameFocused: (() => { const n = ev(`input-name-${i}`); return n && elapsed >= n.time && elapsed < (ev(`input-qty-${i}`)?.time ?? 99) - 0.05; })(),
     };
-  }), [elapsed]);
+  });
 
-  const labRows = useMemo(() => costSheetLabor.map((l, i) => ({
+  const labRows = costSheetLabor.map((l, i) => ({
     ...l, visible: elapsed >= (ev(`labor-row-${i}`)?.time ?? 99), total: l.hours * l.rate * l.count,
-  })), [elapsed]);
+  }));
 
   const subMP = countUp(elapsed, 21, 3.92), subLab = countUp(elapsed, 26, 862.4, 1);
   const costo = countUp(elapsed, 29, 4.78, 0.8), precio = countUp(elapsed, 30, 12, 0.8);
 
-  const pills = useMemo(() => EV.filter((e) => e.action === 'micro-validate' && elapsed >= e.time)
-    .map((e) => ({ type: e.payload.type as string, text: e.payload.text as string })), [elapsed]);
+  const pills = EV.filter((e) => e.action === 'micro-validate' && elapsed >= e.time)
+    .map((e) => ({ type: e.payload.type as string, text: e.payload.text as string }));
 
   const opacity = elapsed >= 35 ? Math.max(0, 1 - (elapsed - 35)) : 1;
   const al = (i: number, f: string) => active?.r === i && active.f === f;

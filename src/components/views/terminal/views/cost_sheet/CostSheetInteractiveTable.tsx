@@ -82,7 +82,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
   const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
     // Basic implementation: Find the row in the default template (reinicio)
-    const findSuggested = (rows: any[]): any => {
+    const findSuggested = (rows: RowData[]): RowData | null => {
       for (const r of rows) {
         if (r.id === rowId) return r;
         if (r.children) {
@@ -93,7 +93,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
       return null;
     };
 
-    let suggested = null;
+    let suggested: RowData | null = null;
     if (reinicioTemplate?.sections) {
       for (const s of reinicioTemplate.sections) {
         suggested = findSuggested(s.rows);
@@ -118,7 +118,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
   const handleToggle = () => setIsExpanded(!isExpanded);
 
-  const handleValueChange = (field: string, val: any) => {
+  const handleValueChange = (field: string, val: string | number | boolean | null) => {
     updateValue([...path, field], val);
   };
 
@@ -171,17 +171,18 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         <TableCell data-label="Concepto" style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
-              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
-                <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
+              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0" type="button" aria-label={isExpanded ? `Contraer sección de ${row.label}` : `Expandir sección de ${row.label}`}>
+                <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} aria-hidden="true" />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
+            {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" aria-hidden="true" />}
 
             {isEditingLabel ? (
                 <Input
                     autoFocus
                     className="h-7 text-xs sm:text-sm py-0"
                     defaultValue={row.label}
+                    aria-label={`Nombre del concepto ${row.label}`}
                     onBlur={(e) => {
                         handleValueChange('label', e.target.value);
                         setIsEditingLabel(false);
@@ -194,7 +195,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     }}
                 />
             ) : (
-                <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
+                <span role="button" tabIndex={0} className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
                     {row.label}
                 </span>
             )}
@@ -204,50 +205,55 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={() => reorderMainRow(path, 'up')}
-                    title="Mover arriba"
+                    aria-label={`Mover ${row.label} hacia arriba`}
                 >
-                    <ChevronUp className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <ChevronUp className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={() => reorderMainRow(path, 'down')}
-                    title="Mover abajo"
+                    aria-label={`Mover ${row.label} hacia abajo`}
                 >
-                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
                     onClick={() => applySuggestedFormula(row.id, path)}
-                    title="Aplicar fórmula sugerida"
+                    aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
-                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
                     onClick={() => addMainRow([...path, 'children'])}
-                    title="Añadir hijo"
+                    aria-label={`Añadir fila hija a ${row.label}`}
                 >
-                    <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Plus className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteTarget(path);
                     }}
-                    title="Eliminar fila"
+                    aria-label={`Eliminar concepto ${row.label}`}
                 >
-                    <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
             </div>
           </div>
@@ -264,6 +270,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     autoFocus
                     className="h-6 text-[10px] px-1 py-0 text-center font-mono"
                     defaultValue={row.um || row.unit || "Pesos"}
+                    aria-label={`Unidad de medida de ${row.label}`}
                     onBlur={(e) => {
                         handleValueChange("um", e.target.value);
                         setIsEditingUM(false);
@@ -308,9 +315,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                 ? formatAccounting(safeCalculated.calculatedVH ?? row.valorHistorico ?? 0)
                                 : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(safeCalculated.calculatedVH ?? row.value ?? 0))))}
                         readOnly={true}
+                        aria-label={`Valor histórico de ${row.label}${isRowPercent ? ' en porcentaje' : ''}`}
                         />
-                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {isRowPercent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>}
+                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" aria-hidden="true" />}
+                        {isRowPercent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground" aria-hidden="true">%</span>}
                     </div>
                 )}
             </div>
@@ -336,9 +344,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                  )}>
                     {formatAccounting(safeCalculated.total)}
                  </span>
-                 {criticalErrors.length > 0 && <XCircle className="w-3 h-3 text-destructive shrink-0" />}
-                 {warningErrors.length > 0 && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
-                 {hasEngineWarnings && <Sparkles className="w-3 h-3 text-primary/40 animate-pulse shrink-0" />}
+                 {criticalErrors.length > 0 && <XCircle className="w-3 h-3 text-destructive shrink-0" aria-hidden="true" />}
+                 {warningErrors.length > 0 && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" aria-hidden="true" />}
+                 {hasEngineWarnings && <Sparkles className="w-3 h-3 text-primary/40 animate-pulse shrink-0" aria-hidden="true" />}
              </div>
           )}
         </TableCell>
@@ -349,44 +357,52 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-6 w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={() => reorderMainRow(path, 'up')}
+                    aria-label={`Mover ${row.label} hacia arriba`}
                 >
-                    <ChevronUp className="h-3.5 w-3.5" />
+                    <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-6 w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     onClick={() => reorderMainRow(path, 'down')}
-                    title="Mover abajo"
+                    aria-label={`Mover ${row.label} hacia abajo`}
                 >
-                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
                     onClick={() => applySuggestedFormula(row.id, path)}
-                    title="Aplicar fórmula sugerida"
+                    aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
-                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-6 w-6 text-primary hover:bg-primary/10"
                     onClick={() => addMainRow([...path, 'children'])}
+                    aria-label={`Añadir fila hija a ${row.label}`}
                 >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="h-6 w-6 text-destructive hover:bg-destructive/10"
                     onClick={() => setDeleteTarget(path)}
+                    aria-label={`Eliminar concepto ${row.label}`}
                 >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
            </div>
         </TableCell>
@@ -428,7 +444,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             level={level + 1}
             index={childIdx}
             numbering={`${numbering}.${childIdx + 1}`}
-            calculated={calculatedValues?.[child.id] || {} as any}
+            calculated={calculatedValues?.[child.id] || {} as CalculatedRowValue}
             calculatedValues={calculatedValues}
             path={[...path, 'children', childIdx]}
             annexes={annexes}
@@ -462,7 +478,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
-  const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
+  const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection, index: number } | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (sectionId: string) => {
@@ -487,7 +503,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
 
   // Suggestions for FormulaEditor
   const suggestions = useMemo(() => {
-    const list: any[] = [
+    const list: { label: string; value: string; description?: string }[] = [
       ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ];
     sections.forEach(s => {
@@ -546,12 +562,14 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                         toast.success(`Plantilla ${tpl} cargada`);
                                     }
                                 }}
+                                type="button"
+                                aria-label={`Cargar plantilla ${tpl}`}
                               >
                                   <div className="flex items-center gap-3">
-                                      <Sparkles className="w-4 h-4 text-primary" />
+                                      <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
                                       <span className="text-xs font-bold uppercase tracking-widest">{tpl}</span>
                                   </div>
-                                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden="true" />
                               </button>
                           </div>
                       ))}
@@ -570,12 +588,13 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   }
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+    <div data-testid="cost-sheet-interactive-table" className="space-y-6" role="grid" aria-label="Tabla interactiva de ficha de costo">
         <input
             type="file"
             ref={sectionInputRef}
             className="hidden"
             accept=".xlsx,.xls"
+            aria-label="Importar sección desde archivo Excel"
             onChange={(e) => {
                 if (importingSectionIndex !== null) {
                     handleImportSectionExcel(e, importingSectionIndex);
@@ -602,14 +621,16 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
                     {!hideHeader && (
                         <div className="flex items-center justify-between py-1 px-4 bg-primary/5 border-y border-border/20 border-l-2 border-primary/20">
-                            <div className="flex items-center gap-3 cursor-pointer group/header" onClick={() => toggleSection(section.id)}>
+                            <div role="button" tabIndex={0} className="flex items-center gap-3 cursor-pointer group/header" onClick={() => toggleSection(section.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section.id); } }}>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        type="button"
                                         className="h-6 w-6 p-0 hover:bg-primary/10 text-primary transition-all"
+                                        aria-label={collapsedSections[section.id] ? `Expandir sección ${section.label}` : `Contraer sección ${section.label}`}
                                     >
-                                        <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsedSections[section.id] && "rotate-90")} />
+                                        <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsedSections[section.id] && "rotate-90")} aria-hidden="true" />
                                     </Button>
                                     <div className="w-1 h-4 bg-primary/40 rounded-full group-hover/header:bg-primary transition-colors" />
                                 </div>
@@ -618,17 +639,19 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     value={section.label}
                                     onClick={(e) => e.stopPropagation()}
                                     onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                                    aria-label={`Nombre de la sección ${section.label}`}
                                 />
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button
                                     size="sm"
                                     variant="ghost"
+                                    type="button"
                                     className="h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
                                     onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
-                                    title="Acciones de Sección"
+                                    aria-label={`Acciones de la sección ${section.label}`}
                                 >
-                                    <Settings2 className="w-4 h-4" />
+                                    <Settings2 className="w-4 h-4" aria-hidden="true" />
                                 </Button>
                             </div>
                         </div>
@@ -668,7 +691,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                         level={0}
                                         index={rowIndex}
                                         numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
-                                        calculated={calculatedValues?.[row.id] || {} as any}
+                                        calculated={calculatedValues?.[row.id] || {} as CalculatedRowValue}
                                         calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
                                         annexes={annexes}
@@ -691,7 +714,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
         <CostSheetSectionActionsPanel
             isOpen={!!activeSectionForActions}
             onClose={() => setActiveSectionForActions(null)}
-            section={activeSectionForActions?.section}
+            section={activeSectionForActions?.section ?? null}
             onExport={() => activeSectionForActions && exportSectionToExcel(activeSectionForActions.section, calculatedValues)}
             onImport={() => {
                 if (activeSectionForActions) {

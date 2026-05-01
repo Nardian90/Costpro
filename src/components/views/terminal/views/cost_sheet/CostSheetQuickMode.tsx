@@ -25,7 +25,7 @@ interface QuickRow {
 interface CostSheetQuickModeProps {
   onGenerate: (rows: QuickRow[]) => void;
   mapping: { targetColumn: 'sale_price' | 'total_cost', modificationRow: string };
-  onMappingChange: (mapping: any) => void;
+  onMappingChange: (mapping: { targetColumn: 'sale_price' | 'total_cost'; modificationRow: string }) => void;
 }
 
 export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
@@ -52,7 +52,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
     setRows(newRows);
   };
 
-  const updateRow = (index: number, field: keyof QuickRow, value: any) => {
+  const updateRow = (index: number, field: keyof QuickRow, value: QuickRow[keyof QuickRow]) => {
     const newRows = [...rows];
     newRows[index] = { ...newRows[index], [field]: value };
     setRows(newRows);
@@ -78,10 +78,10 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
             <h2 className="text-xl font-black tracking-tight text-amber-600 uppercase">Configuración de Generación</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Columna Objetivo</label>
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Columna Objetivo</span>
                 <Select
                   value={mapping.targetColumn}
-                  onValueChange={(val) => onMappingChange({ ...mapping, targetColumn: val as any })}
+                  onValueChange={(val) => onMappingChange({ ...mapping, targetColumn: val as 'sale_price' | 'total_cost' })}
                 >
                   <SelectTrigger className="h-10 rounded-xl border-amber-500/20 bg-background/50 text-xs font-bold">
                     <SelectValue placeholder="Objetivo" />
@@ -93,10 +93,11 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Fila que Cambiará</label>
+                <label htmlFor="cost-modification-row" className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Fila que Cambiará</label>
                 <div className="relative">
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500" />
                   <Input
+                    id="cost-modification-row"
                     className="h-10 pl-9 rounded-xl border-amber-500/20 bg-background/50 text-xs font-bold"
                     placeholder="Ej. 13.1"
                     value={mapping.modificationRow}
@@ -126,7 +127,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-24">Cantidad</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32">Costo Unit.</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32 text-amber-600">Precio Venta</th>
-                <th className="px-6 py-4 w-12"></th>
+                <th className="px-6 py-4 w-12">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">

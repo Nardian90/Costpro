@@ -14,6 +14,7 @@ import { APP_DISPLAY_VERSION } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import ViewSwitcher, { ViewMode as LayoutViewMode } from '@/components/ui/ViewSwitcher';
 import { CostSheetViewMode } from './CostSheetModeDropdown';
+import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 interface ActionItem {
   id: string;
@@ -122,6 +123,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   onExpertGenerate
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const panelRef = useFocusTrap(isOpen);
 
   const hasMatchingActions = (labels: string[]) => {
     if (!searchTerm) return true;
@@ -150,7 +152,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
     return acc;
   }, {} as Record<string, ActionItem>);
 
-  const renderActionButton = (id: string, label: string, icon: React.ElementType, onClick?: () => void, variant?: any, isActive?: boolean) => {
+  const renderActionButton = (id: string, label: string, icon: React.ElementType, onClick?: () => void, variant?: ActionItem['variant'], isActive?: boolean) => {
     const action = actionMap[id];
     const finalOnClick = onClick || (action ? action.onClick : () => {});
     const Icon = icon || (action ? action.icon : Settings);
@@ -190,6 +192,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
           {/* Panel */}
           <motion.aside
+            ref={panelRef}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -197,6 +200,9 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             className={cn(
               "fixed right-0 top-0 h-screen w-80 bg-sidebar/90 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[100] flex flex-col overflow-hidden"
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Panel de control de ficha de costos"
           >
             {/* Header */}
             <div className="p-6 border-b border-sidebar-border/50 flex items-center justify-between bg-sidebar/5">
@@ -227,6 +233,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="BUSCAR ACCIÓN..."
+                  aria-label="Buscar acción"
                   className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
                 />
               </div>

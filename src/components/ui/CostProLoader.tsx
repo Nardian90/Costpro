@@ -40,8 +40,18 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const id = React.useId().replace(/:/g, '');
 
   /* ── Splash state (fullScreen only) ── */
+  const [isReturning] = useState(() =>
+    typeof window !== 'undefined' ? !!localStorage.getItem('costpro-visited') : false
+  );
   const [phase, setPhase] = useState<'line' | 'logo' | 'hold' | 'out'>(
-    fullScreen ? 'line' : 'logo'
+    () => {
+      if (!fullScreen) return 'logo';
+      if (typeof window !== 'undefined' && localStorage.getItem('costpro-visited')) return 'logo';
+      if (typeof window !== 'undefined' && !localStorage.getItem('costpro-visited')) {
+        localStorage.setItem('costpro-visited', 'true');
+      }
+      return 'line';
+    }
   );
   const [dismissed, setDismissed] = useState(false);
 
@@ -59,17 +69,10 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 
     let timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Check returning visitor
-    const isReturning = typeof window !== 'undefined' && localStorage.getItem('costpro-visited');
-    if (typeof window !== 'undefined' && !isReturning) {
-      localStorage.setItem('costpro-visited', 'true');
-    }
-
     const totalMs = isReturning ? SPLASH_RETURN_MS : SPLASH_FIRST_MS;
 
     if (isReturning) {
-      // Returning: skip line animation, go straight to logo
-      setPhase('logo');
+      // Returning: skip line animation, go straight to logo (already set via initial state)
       timers.push(setTimeout(dismiss, totalMs));
     } else {
       // First visit: line (0-800ms) → logo (800-1200ms) → hold (1200-1800ms) → out

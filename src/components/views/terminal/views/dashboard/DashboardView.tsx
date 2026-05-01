@@ -36,10 +36,7 @@ export default function DashboardView() {
   const { user } = useAuthStore();
   const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager';
 
-  if (isAdminOrManager) {
-    return <MultiStoreDashboardView />;
-  }
-
+  // All hooks must be called unconditionally (rules-of-hooks)
   const {
     summary,
     kpis,
@@ -55,6 +52,10 @@ export default function DashboardView() {
     isLoading: isLoadingProducts,
     error: productsError
   } = useProducts(user?.storeId);
+
+  if (isAdminOrManager) {
+    return <MultiStoreDashboardView />;
+  }
 
   const products = productsData || [];
 

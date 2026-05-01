@@ -160,11 +160,13 @@ export default function CashClosureView() {
 
           <div className="space-y-6">
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Efectivo Físico</label>
+              <label htmlFor="cash-declared" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Efectivo Físico</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
                 <input
+                  id="cash-declared"
                   type="number"
+                  aria-label="Efectivo Físico"
                   value={declaredCash || ''}
                   onChange={(e) => setDeclaredCash(Number(e.target.value))}
                   className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none"
@@ -174,11 +176,13 @@ export default function CashClosureView() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Transferencias / Otros</label>
+              <label htmlFor="cash-vouchers" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Transferencias / Otros</label>
               <div className="relative">
                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
                 <input
+                  id="cash-vouchers"
                   type="number"
+                  aria-label="Transferencias / Otros"
                   value={declaredVouchers || ''}
                   onChange={(e) => setDeclaredVouchers(Number(e.target.value))}
                   className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none"
@@ -188,8 +192,10 @@ export default function CashClosureView() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Observaciones</label>
+              <label htmlFor="cash-notes" className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Observaciones</label>
               <textarea
+                id="cash-notes"
+                aria-label="Observaciones del cierre"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full p-4 rounded-xl border border-border bg-background text-sm font-medium resize-none h-24 focus:ring-1 focus:ring-primary outline-none"
@@ -262,9 +268,9 @@ export default function CashClosureView() {
                       {formatCurrency(Number(closure.difference) || 0)}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4" aria-label="Ver detalles del cierre">
                     <div className="flex justify-center">
-                      <button className="w-11 h-11 flex items-center justify-center rounded-xl border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
+                      <button aria-label="Ver detalles" className="w-11 h-11 flex items-center justify-center rounded-xl border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>

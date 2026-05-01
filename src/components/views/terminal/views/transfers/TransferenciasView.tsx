@@ -67,16 +67,30 @@ export default function TransferenciasView() {
     { id: 'incoming', label: 'Entrantes', icon: ArrowDownLeft }
   ] as const;
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const tabIds = tabs.map(t => t.id);
+    const currentIndex = tabIds.indexOf(activeTab);
     if (e.key === 'ArrowRight') {
-      const next = (currentIndex + 1) % tabs.length;
-      setActiveTab(tabs[next].id);
-      document.getElementById(`tab-${tabs[next].id}`)?.focus();
+      const next = (currentIndex + 1) % tabIds.length;
+      setActiveTab(tabIds[next] as 'outgoing' | 'incoming');
+      document.getElementById(`tab-${tabIds[next]}`)?.focus();
+      e.preventDefault();
     }
     if (e.key === 'ArrowLeft') {
-      const prev = (currentIndex - 1 + tabs.length) % tabs.length;
-      setActiveTab(tabs[prev].id);
-      document.getElementById(`tab-${tabs[prev].id}`)?.focus();
+      const prev = (currentIndex - 1 + tabIds.length) % tabIds.length;
+      setActiveTab(tabIds[prev] as 'outgoing' | 'incoming');
+      document.getElementById(`tab-${tabIds[prev]}`)?.focus();
+      e.preventDefault();
+    }
+    if (e.key === 'Home') {
+      setActiveTab(tabIds[0] as 'outgoing' | 'incoming');
+      document.getElementById(`tab-${tabIds[0]}`)?.focus();
+      e.preventDefault();
+    }
+    if (e.key === 'End') {
+      setActiveTab(tabIds[tabIds.length - 1] as 'outgoing' | 'incoming');
+      document.getElementById(`tab-${tabIds[tabIds.length - 1]}`)?.focus();
+      e.preventDefault();
     }
   };
 
@@ -105,11 +119,14 @@ export default function TransferenciasView() {
 
       <div
         role="tablist"
+        tabIndex={0}
         aria-label="Filtrar transferencias por dirección"
         className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit"
+        onKeyDown={handleTabKeyDown}
       >
         {tabs.map((tab, idx) => (
           <button
+            type="button"
             key={tab.id}
             id={`tab-${tab.id}`}
             role="tab"
@@ -117,7 +134,7 @@ export default function TransferenciasView() {
             aria-controls={`panel-${tab.id}`}
             tabIndex={activeTab === tab.id ? 0 : -1}
             onClick={() => setActiveTab(tab.id)}
-            onKeyDown={(e) => handleTabKeyDown(e, idx)}
+            aria-label={`Transferencias ${tab.label.toLowerCase()}`}
             className={cn(
               "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
               activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg scale-105" : "hover:bg-white/5 text-muted-foreground"

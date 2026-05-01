@@ -40,6 +40,7 @@ export interface CostRow {
   baseCalculo?: BaseRef | null;
   coeficiente?: number | null;      // decimal (ej 0.2)
   formula?: string | null;          // expresión segura para FORMULA
+  totalFormula?: string | null;     // UI total formula override
   fuente?: string;                  // texto explicativo
   metadata?: Record<string, any>;   // audit rules, base legal, etc.
 }

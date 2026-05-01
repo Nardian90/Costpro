@@ -99,8 +99,8 @@ export default function UsersManagementView() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="p-4">
+                <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors" aria-label={`Usuario: ${u.full_name}`}>
+                  <td className="p-4" aria-label="Datos del usuario">
                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary text-foreground flex items-center justify-center font-black text-xs">
                           {u.full_name?.charAt(0)}
@@ -112,7 +112,7 @@ export default function UsersManagementView() {
                   <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
                   </td>
-                  <td className="p-4 text-center">
+                  <td className="p-4 text-center" aria-label="Días activos">
                     <div className="flex flex-col items-center">
                       <span className="text-xs font-black text-primary">
                         {u.created_at ? Math.floor((new Date().getTime() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
@@ -211,7 +211,7 @@ export default function UsersManagementView() {
                 </tr>
               ))}
               {users.length === 0 && (
-                <tr>
+                <tr aria-label="Sin resultados de usuarios">
                   <td colSpan={8} className="p-12 text-center py-20">
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios

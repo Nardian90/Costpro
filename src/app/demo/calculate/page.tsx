@@ -111,7 +111,7 @@ export default function CostEngineDemo() {
             <p className="text-muted-foreground">Motor declarativo JSON-first</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <input type="file" id="json-upload" className="hidden" accept=".json" onChange={handleFileImport} />
+          <input type="file" id="json-upload" className="hidden" accept=".json" onChange={handleFileImport} aria-label="Cargar archivo JSON" />
           <Button variant="outline" size="sm" onClick={() => document.getElementById('json-upload')?.click()}>
             Cargar Plantilla
           </Button>
@@ -132,12 +132,12 @@ export default function CostEngineDemo() {
           <CardHeader><CardTitle>Metadatos</CardTitle></CardHeader>
           <CardContent className="space-y-4">
              <div>
-                <label className="text-xs font-medium uppercase text-muted-foreground">ID</label>
-                <Input value={ficha.meta.id} readOnly className="bg-muted" />
+                <label htmlFor="ficha-id" className="text-xs font-medium uppercase text-muted-foreground">ID</label>
+                <Input id="ficha-id" value={ficha.meta.id} readOnly className="bg-muted" />
              </div>
              <div>
-                <label className="text-xs font-medium uppercase text-muted-foreground">Nombre</label>
-                <Input value={ficha.meta.name} onChange={e => setFicha({...ficha, meta: {...ficha.meta, name: e.target.value}})} />
+                <label htmlFor="ficha-name" className="text-xs font-medium uppercase text-muted-foreground">Nombre</label>
+                <Input id="ficha-name" value={ficha.meta.name} onChange={e => setFicha({...ficha, meta: {...ficha.meta, name: e.target.value}})} />
              </div>
              <div className="flex items-center space-x-2 pt-2">
                 <input
@@ -145,6 +145,7 @@ export default function CostEngineDemo() {
                     id="autosave"
                     checked={isAutoSaveEnabled}
                     onChange={e => setIsAutoSaveEnabled(e.target.checked)}
+                    aria-label="Activar auto-guardado local"
                 />
                 <label htmlFor="autosave" className="text-sm font-medium">Auto-guardado local</label>
              </div>
