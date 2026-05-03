@@ -100,6 +100,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
         )}
         style={{ backgroundColor: 'var(--background)' }}
       >
+        {/* safe: static CSS keyframe animations using React.useId(), no user input */}
         <style dangerouslySetInnerHTML={{ __html: `
           /* ── Netflix Line: expand from center (scaleX — GPU accelerated) ── */
           @keyframes cp-line-expand-${id} {
@@ -192,6 +193,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
      ══════════════════════════════════════════════════════ */
   return (
     <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
+      {/* safe: static CSS keyframe animations using React.useId(), no user input */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes cp-dot-pulse-${id} {
           0%, 100% { opacity: 1; transform: scale(1); }

@@ -3,6 +3,7 @@ import { Bot, SendHorizontal, Loader2, Sparkles, ExternalLink, RefreshCw } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, isDarkTheme } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useCostSheetStore, useAuthStore } from '@/store';
 import type { CostSheetData } from '@/types/cost-sheet';
 import { useTheme } from 'next-themes';
@@ -233,7 +234,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                     msg.error && "border-destructive/50 bg-destructive/10 text-destructive font-bold"
                                 )}>
                                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        <ReactMarkdown>{sanitizeHtml(msg.content)}</ReactMarkdown>
                                     </div>
                                     {msg.updateData && <AnnexPreview data={msg.updateData} isDark={isDark} />}
                                 </div>

@@ -11,6 +11,10 @@ const { mockExistsSync, mockReadFileSync, mockReaddirSync, mockStatSync } = vi.h
   mockStatSync: vi.fn(),
 }));
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('fs', () => ({
   default: {
     existsSync: mockExistsSync,

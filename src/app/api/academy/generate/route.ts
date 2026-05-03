@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import fs from 'fs';
 import path from 'path';
 
@@ -17,10 +19,14 @@ function getSupabaseAdmin() {
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes for processing PDFs and AI
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+    const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     const rawBody = await req.json();
     const parsed = academyGenerateSchema.safeParse(rawBody);
@@ -164,3 +170,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withTracing(postHandler, 'POST /api/academy/generate');

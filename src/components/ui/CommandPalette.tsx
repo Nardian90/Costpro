@@ -8,6 +8,7 @@ import Fuse from 'fuse.js';
 import { useUIStore } from '@/store';
 import { useAuthStore } from '@/store';
 import { SYSTEM_ACTIONS, Action, getActionsForUser } from '@/config/actions';
+import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import { cn } from '@/lib/utils';
 
 export const CommandPalette = () => {
@@ -29,7 +30,7 @@ export const CommandPalette = () => {
       setSelectedIndex(0);
     });
   }, [query]);
-  const { setCurrentView, setActiveCostSection } = useUIStore();
+  const { setCurrentView, setActiveCostSection, setIpvActiveTab } = useUIStore();
   const { user } = useAuthStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -85,11 +86,15 @@ export const CommandPalette = () => {
   }, [isOpen]);
 
   const handleSelect = (action: Action) => {
-    const costSheetSubViews = ["templates", "header", "open-sections", "open-annexes", "signature", "expert-content", "view-kpis", "view-expert", "view-assisted", "view-reading", "gen-quick", "gen-expert", "tool-import", "tool-save", "tool-export-excel", "tool-export-pdf", "res-help", "res-system-help", "res-academy"];
+    const route = getNavigationRoute(action.route as string);
 
-    if (costSheetSubViews.includes(action.route as string)) {
-      setCurrentView('cost-sheets');
-      setActiveCostSection(action.route as string);
+    if (route && route.type === 'module') {
+      setCurrentView(route.view as any);
+      if (route.view === 'ipv') {
+        setIpvActiveTab(route.tab);
+      } else if (route.view === 'cost-sheets') {
+        setActiveCostSection(route.tab);
+      }
     } else {
       setCurrentView(action.route);
     }

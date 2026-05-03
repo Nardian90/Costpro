@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { Cookie } from 'lucide-react';
 
 export type FooterLinkId =
@@ -54,6 +55,8 @@ export default function FooterSection({
   onLinkClick,
   footerStats,
 }: FooterSectionProps) {
+  const router = useRouter();
+
   // Start counter animations when footer comes into view
   useEffect(() => {
     if (footerInView) {
@@ -132,8 +135,8 @@ export default function FooterSection({
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-white/90">Legal</h4>
             <ul className="space-y-2">
-              <FooterLink label="Privacidad" onClick={() => onLinkClick?.('privacidad')} />
-              <FooterLink label="Términos" onClick={() => onLinkClick?.('terminos')} />
+              <FooterLink label="Política de Privacidad" onClick={() => router.push('/privacy')} />
+              <FooterLink label="Términos y Condiciones" onClick={() => router.push('/terms')} />
               <FooterLink label="Cookies" onClick={handleReopenCookieSettings} />
               <FooterLink label="Seguridad" onClick={() => onLinkClick?.('seguridad')} />
               <FooterLink label="SLA" onClick={() => onLinkClick?.('sla')} />

@@ -4,6 +4,10 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
 }));

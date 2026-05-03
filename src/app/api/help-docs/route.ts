@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,7 +20,11 @@ interface FileEntry {
   title: string;
 }
 
-export async function GET(request: Request) {
+async function getHandler(request: NextRequest) {
+  const clientId = request.headers.get('x-forwarded-for') || 'anonymous';
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   const { searchParams } = new URL(request.url);
   const filePath = searchParams.get('path');
   const searchQuery = searchParams.get('search');
@@ -134,3 +140,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const GET = withTracing(getHandler, 'GET /api/help-docs');

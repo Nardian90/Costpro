@@ -3,6 +3,7 @@ import { withAuth } from '@/lib/auth-middleware';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { calculateFicha, validateFicha } from '@/lib/cost-engine';
 import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
 
 const handler = withAuth(async (req, session) => {
@@ -54,6 +55,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/cost-sheets/calculate');

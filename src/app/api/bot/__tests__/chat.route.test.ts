@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server';
 import { POST } from '../chat/route';
 import { vi, describe, it, expect } from 'vitest';
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));

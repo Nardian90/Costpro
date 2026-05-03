@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
 import { Pick3PdfService } from '@/services/pick3/Pick3PdfService';
 import { Pick3Storage } from '@/services/pick3/storage';
@@ -10,6 +12,9 @@ export const runtime = 'nodejs';
 
 
 const handler = withAuth(async (req, session) => {
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
 
   try {
     const url = new URL(req.url);
@@ -63,6 +68,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/pick3/sync');

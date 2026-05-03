@@ -16,13 +16,14 @@ import {
 import { useUIStore, ViewType } from '@/store';
 import { useAuthStore } from '@/store';
 import { getActionsForUser, Action } from '@/config/actions';
+import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import { useDashboardView } from './useDashboardView';
 import { useProducts } from '@/hooks/api/useProducts';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 export default function OCCView() {
-  const { setCurrentView, setActiveCostSection } = useUIStore();
+  const { setCurrentView, setActiveCostSection, setIpvActiveTab } = useUIStore();
   const { user } = useAuthStore();
   const { kpis, isLoading } = useDashboardView();
   const { data: products = [] } = useProducts(user?.activeStoreId);
@@ -83,13 +84,17 @@ export default function OCCView() {
   }, [kpis, criticalAlerts]);
 
   const handleAction = (action: Action) => {
-    const costSheetSubViews = ["templates", "header", "open-sections", "open-annexes", "signature", "expert-content", "view-kpis", "view-expert", "view-assisted", "view-reading", "gen-quick", "gen-expert", "tool-import", "tool-save", "tool-export-excel", "tool-export-pdf", "res-help", "res-system-help", "res-academy"];
+    const route = getNavigationRoute(action.route);
 
-    if (costSheetSubViews.includes(action.route as string)) {
-      setCurrentView('cost-sheets');
-      setActiveCostSection(action.route as string);
+    if (route && route.type === 'module') {
+      setCurrentView(route.view as ViewType);
+      if (route.view === 'ipv') {
+        setIpvActiveTab(route.tab);
+      } else if (route.view === 'cost-sheets') {
+        setActiveCostSection(route.tab);
+      }
     } else {
-      setCurrentView(action.route);
+      setCurrentView(action.route as ViewType);
     }
 
     // Update recents

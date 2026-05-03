@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -246,7 +247,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           ),
         }}
       >
-        {content}
+        {sanitizeHtml(content)}
       </ReactMarkdown>
     </article>
   );

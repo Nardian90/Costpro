@@ -4,6 +4,7 @@ import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 import { rateLimit } from '@/lib/rate-limit';
 import { mergeScenarioValues } from '@/store/scenario-store';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
@@ -172,6 +173,8 @@ const handler = withAuth(async (req, session) => {
   }
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/cost-sheets/export-pdf');

@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   const session = await getServerSession(req);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const userId = session.user.id;
   const today = new Date().toISOString().split('T')[0];
@@ -40,3 +46,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withTracing(getHandler, 'GET /api/academy/review');

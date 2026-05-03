@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -8,6 +11,12 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   allowedDevOrigins: ['*'],
+  serverExternalPackages: [
+    '@opentelemetry/api',
+    '@opentelemetry/sdk-node',
+    '@opentelemetry/auto-instrumentations-node',
+    '@opentelemetry/exporter-trace-otlp-http',
+  ],
   images: {
     remotePatterns: [
       {
@@ -32,4 +41,4 @@ const withBundleAnalyzer = (typeof process !== 'undefined' && process.env.ANALYZ
   ? require('@next/bundle-analyzer')({ enabled: true })
   : (config: NextConfig) => config;
 
-export default withBundleAnalyzer(nextConfig);
+export default withBundleAnalyzer(withNextIntl(nextConfig));

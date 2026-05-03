@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import Parser from 'rss-parser';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { RSSNewsItem } from '@/types';
@@ -11,6 +13,10 @@ export const revalidate = 3600;
 const parser = new Parser();
 
 const handler = withAuth(async (req, session) => {
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
+
   try {
     const supabase = getSupabaseAuthClient(session.token);
 
@@ -105,6 +111,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const GET = withTracing(getHandler, 'GET /api/rss');

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import { logsSchema, zodError } from '@/validation/api-schemas';
 import fs from 'fs';
 import path from 'path';
@@ -11,6 +13,9 @@ export const dynamic = 'force-dynamic';
  */
 
 const handler = withAuth(async (req, session) => {
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
 
   try {
     const rawBody = await req.json();
@@ -38,6 +43,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/logs');

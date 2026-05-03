@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/store';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import { useTranslations } from 'next-intl';
 
 // ── Lazy-loaded to reduce initial compilation memory ──
 const CyberShell = dynamic(() => import('@/components/ui/CyberShell'), { ssr: false });
@@ -17,6 +18,7 @@ export default function HomePage() {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [splashDismissed, setSplashDismissed] = useState(false);
+  const t = useTranslations('splash');
 
   // Listen for splash dismiss event from CostProLoader
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function HomePage() {
   // CostProLoader handles its own auto-dismiss (first visit ~3.5s, returning ~500ms)
   if (!splashDismissed) {
     return (
-      <CostProLoader fullScreen text="Gestión Empresarial" subtext="Inicializando sistema" />
+      <CostProLoader fullScreen text={t('main')} subtext={t('initializing')} />
     );
   }
 
@@ -69,7 +71,7 @@ export default function HomePage() {
     return (
       <Suspense fallback={
         <div className="min-h-screen w-full flex items-center justify-center bg-background">
-          <CostProLoader text="Gestión Empresarial" subtext="Cargando..." showText showSubtext />
+          <CostProLoader text={t('main')} subtext={t('loadingApp')} showText showSubtext />
         </div>
       }>
         <LandingPage />
@@ -80,7 +82,7 @@ export default function HomePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <CostProLoader text="Gestión Empresarial" subtext="Cargando terminal..." showText showSubtext />
+        <CostProLoader text={t('main')} subtext={t('loadingTerminal')} showText showSubtext />
       </div>
     }>
       <CyberShell>

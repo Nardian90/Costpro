@@ -7,11 +7,17 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { COLUMN_LABELS } from '@/contracts/reports';
 import { getServerSession } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
-export async function POST(req: NextRequest) {
+async function generateReportHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+    const { allowed } = await rateLimit(clientId);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     const rawBody = await req.json();
     const parsed = reportsGenerateSchema.safeParse(rawBody);
@@ -359,10 +365,13 @@ export async function POST(req: NextRequest) {
       run_id: runData.id
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Error interno al generar reporte';
     console.error('Report generation error:', error);
     return NextResponse.json({
-      error: error.message || 'Error interno al generar reporte'
+      error: msg
     }, { status: 500 });
   }
 }
+
+export const POST = withTracing(generateReportHandler, 'POST /api/reports/generate');

@@ -19,18 +19,5 @@
 			header_up X-Forwarded-Proto {scheme}
 			header_up X-Real-IP {remote_host}
 		}
-
-		header {
-			# Enable HSTS
-			Strict-Transport-Security "max-age=31536000;"
-			# Disable content type sniffing
-			X-Content-Type-Options "nosniff"
-			# Prevent clickjacking
-			X-Frame-Options "DENY"
-			# Control referrer information
-			Referrer-Policy "strict-origin-when-cross-origin"
-			# Basic Permissions Policy
-			Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		}
 	}
 }

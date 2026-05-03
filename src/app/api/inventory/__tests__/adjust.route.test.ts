@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { POST } from '../adjust/route';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+vi.mock('@/lib/observability', () => ({
+  withTracing: (handler: any) => handler,
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));

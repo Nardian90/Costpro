@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
+import { rateLimit } from '@/lib/rate-limit';
 import { resetPasswordSchema, zodError } from '@/validation/api-schemas';
+import { withTracing } from '@/lib/observability';
 
 
 function getSupabaseAdmin() {
@@ -13,6 +15,9 @@ function getSupabaseAdmin() {
 
 
 const handler = withRole('admin', async (req, session) => {
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -71,6 +76,8 @@ const handler = withRole('admin', async (req, session) => {
   }
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/users/reset-password');

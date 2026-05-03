@@ -3,8 +3,10 @@ import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { inventoryAdjustSchema, zodError } from '@/validation/api-schemas';
 import { AdjustInventoryResponse } from "@/types/inventory";
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   const session = await getServerSession(request);
 
   if (!session || !session.token) {
@@ -13,6 +15,10 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   }
+
+  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const userId = session.user.id;
 
@@ -86,3 +92,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withTracing(postHandler, 'POST /api/inventory/adjust');
