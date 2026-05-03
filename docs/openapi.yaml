@@ -1,0 +1,1746 @@
+openapi: "3.0.3"
+info:
+  title: CostPro Enterprise API
+  version: "1.0.0"
+  description: |
+    Comprehensive REST API for the CostPro Enterprise cost management platform.
+
+    Rate Limits:
+    - Standard endpoints: 30 requests/minute
+    - AI endpoints (bot/chat, cost-sheets/ai/chat, academy/generate): 10 requests/minute
+    - Cost Engine (cost-sheets/calculate): 60 requests/minute
+
+    Authentication:
+    Most endpoints require a valid session (cookie or Bearer JWT token).
+    User management endpoints require admin or encargado role.
+  contact:
+    name: CostPro Enterprise Support
+    email: support@costpro.app
+  license:
+    name: Proprietary
+
+servers:
+  - url: /
+    description: Current server (gateway proxied)
+
+tags:
+  - name: System
+    description: Health checks, help docs, and system diagnostics
+  - name: AI
+    description: AI-powered chat and Darian cost sheet assistant
+  - name: CostSheets
+    description: Cost sheet calculation, import/export, and persistence
+  - name: Academy
+    description: AI-generated learning cards and spaced repetition
+  - name: Inventory
+    description: Product inventory management and stock adjustments
+  - name: Reports
+    description: PDF report generation for business data
+  - name: Users
+    description: User management (admin only)
+  - name: Sync
+    description: Batch data synchronization with idempotency
+  - name: Other
+    description: Logging, RSS feeds, Pick3, and intelligence data
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from NextAuth session
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth session cookie
+    cronAuth:
+      type: http
+      scheme: bearer
+      description: CRON_SECRET for scheduled jobs (e.g., Pick3 sync)
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+    ValidationError:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          type: string
+          example: Validation failed
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              message:
+                type: string
+    Pagination:
+      type: object
+      properties:
+        totalItems:
+          type: integer
+        currentPage:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ─── User Schemas ─────────────────────────────────────────────
+    ManagedCreateUserRequest:
+      type: object
+      required: [p_email, p_full_name, p_role]
+      properties:
+        p_email:
+          type: string
+          format: email
+        p_password:
+          type: string
+          minLength: 8
+        p_full_name:
+          type: string
+          minLength: 1
+        p_role:
+          type: string
+          enum: [admin, encargado, usuario, manager, clerk, warehouse, costo, superadmin]
+        p_store_id:
+          type: string
+          format: uuid
+          nullable: true
+        p_memberships:
+          type: array
+        p_max_stores:
+          type: integer
+        p_max_users:
+          type: integer
+
+    ToggleUserStatusRequest:
+      type: object
+      required: [user_id, is_active]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+
+    DeleteUserRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+
+    ResetPasswordRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        new_password:
+          type: string
+          minLength: 8
+        send_reset_email:
+          type: boolean
+          default: true
+
+    # ─── Inventory Schemas ────────────────────────────────────────
+    InventoryAdjustRequest:
+      type: object
+      required: [productId, storeId, quantity, movementType, version]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        storeId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: -9999
+          maximum: 99999
+        movementType:
+          type: string
+          enum: [add, subtract, set]
+        version:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          maxLength: 500
+
+    InventoryAdjustmentsRequest:
+      type: object
+      required: [storeId, items]
+      properties:
+        storeId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+              movement_type:
+                type: string
+                enum: [add, subtract, set]
+              reason:
+                type: string
+                maxLength: 500
+
+    InventoryItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+        version:
+          type: integer
+
+    InventoryMovement:
+      type: object
+      properties:
+        movementId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        quantityChange:
+          type: number
+        movementType:
+          type: string
+          enum: [sale, reception, adjustment, transfer]
+
+    AdjustInventoryResponse:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        newQuantity:
+          type: number
+        newVersion:
+          type: integer
+
+    # ─── Cost Sheet Schemas ───────────────────────────────────────
+    CostSheetSaveRequest:
+      type: object
+      required: [updateData]
+      properties:
+        updateData:
+          type: object
+          description: Update data with header, annexes, scenarios
+        currentData:
+          type: object
+          description: Current cost sheet data (optional)
+
+    AIChatRequest:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            required: [role, content]
+            properties:
+              role:
+                type: string
+                enum: [user, assistant, system]
+              content:
+                type: string
+                maxLength: 8000
+        aiProvider:
+          type: string
+          maxLength: 50
+        sheetData:
+          type: object
+          nullable: true
+        aiApiKey:
+          type: string
+
+    # ─── Academy Schemas ──────────────────────────────────────────
+    AcademyGenerateRequest:
+      type: object
+      required: [filename, aiProvider]
+      properties:
+        filename:
+          type: string
+          minLength: 1
+          maxLength: 200
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 3
+        aiProvider:
+          type: string
+          minLength: 1
+          maxLength: 50
+        aiApiKey:
+          type: string
+
+    AcademyReviewRequest:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 5
+
+    # ─── Report Schemas ───────────────────────────────────────────
+    ReportsGenerateRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [cost-sheet, inventory, sales, transfer, cash, profit, kardex, purchases, audit]
+        format:
+          type: string
+          enum: [a4, letter, legal]
+          default: a4
+        orientation:
+          type: string
+          enum: [portrait, landscape]
+          default: portrait
+        data:
+          type: object
+        options:
+          type: object
+
+    # ─── Log Schemas ──────────────────────────────────────────────
+    LogEntry:
+      type: object
+      properties:
+        context:
+          type: string
+          maxLength: 100
+        error:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
+              maxLength: 1000
+            stack:
+              type: string
+              maxLength: 5000
+            code:
+              type: string
+              maxLength: 50
+
+    # ─── Bot Chat Schema ─────────────────────────────────────────
+    BotChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 4000
+        messages:
+          type: array
+        conversationId:
+          type: string
+          format: uuid
+        context:
+          type: object
+        aiProvider:
+          type: string
+        aiApiKey:
+          type: string
+        storeId:
+          type: string
+          format: uuid
+
+paths:
+  # ════════════════════════════════════════════════════════════════
+  # SYSTEM
+  # ════════════════════════════════════════════════════════════════
+
+  /api:
+    get:
+      tags: [System]
+      operationId: rootHello
+      summary: Root endpoint
+      description: Returns a hello message. Rate limited to 30 req/min for anonymous users.
+      security: []
+      responses:
+        "200":
+          description: Hello message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hello, world!
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+
+  /api/health:
+    get:
+      tags: [System]
+      operationId: healthCheck
+      summary: Health check
+      description: Returns service health status including uptime, version, and response time. No authentication required.
+      security: []
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: costpro-enterprise
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  uptime:
+                    type: number
+                    description: Seconds since startup
+                  responseTime:
+                    type: number
+                    description: Response time in ms
+
+  /api/help-docs:
+    get:
+      tags: [System]
+      operationId: getHelpDocs
+      summary: Browse and search help documentation
+      description: |
+        Returns the help documentation structure. Three modes:
+        - No params: Returns the full directory listing
+        - search=<query>: Searches markdown files (min 3 chars)
+        - path=<relative>: Returns the content of a specific file
+      security: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Documentation structure, search results, or file content
+        "403":
+          description: Unauthorized path
+        "404":
+          description: File not found
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/system-health:
+    get:
+      tags: [System]
+      operationId: getSystemHealth
+      summary: Get system health metrics (SHI & MRI)
+      description: Returns System Health Index (SHI) and Market Readiness Index (MRI) with detailed infrastructure metrics.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Health metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shi:
+                    type: object
+                  mri:
+                    type: object
+                  auditAlerts:
+                    type: integer
+                  lastAudit:
+                    type: string
+                  version:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/system-health/knowledge:
+    get:
+      tags: [System]
+      operationId: getKnowledgeHealth
+      summary: Get knowledge base health
+      description: Returns the knowledge graph, system architecture, and pipeline state.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Knowledge base data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  knowledgeGraph:
+                    type: object
+                  systemArchitecture:
+                    type: object
+                  pipelineState:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # AI
+  # ════════════════════════════════════════════════════════════════
+
+  /api/bot/chat:
+    post:
+      tags: [AI]
+      operationId: botChat
+      summary: Chat with AI bot
+      description: Send a message to the AI bot and receive a response. Rate limited to 10 req/min.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotChatRequest"
+            example:
+              messages:
+                - role: user
+                  content: "¿Cómo creo una ficha de costo?"
+              aiProvider: gemini
+      responses:
+        "200":
+          description: AI bot response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  metadata:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "502":
+          description: Bad Gateway - Upstream AI service error
+
+  /api/cost-sheets/ai/chat:
+    post:
+      tags: [AI, CostSheets]
+      operationId: aiCostSheetChat
+      summary: Chat with Darian AI (Cost Sheet Assistant)
+      description: |
+        AI-powered cost sheet assistant called "Darian". Generates professional
+        cost sheet proposals following Cuban regulations (Res. 148/2023).
+        Rate limit: 10 req/min. Provider whitelist: openai, anthropic, google, claude, gpt, gemini.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AIChatRequest"
+            example:
+              messages:
+                - role: user
+                  content: "Genera una ficha de costo para producción de zapatos"
+              sheetData:
+                header:
+                  name: Zapatos Deportivos
+                  code: FC-001
+              aiProvider: gemini
+      responses:
+        "200":
+          description: Darian AI response with cost sheet proposal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "502":
+          description: Bad Gateway - Upstream AI service error
+
+  # ════════════════════════════════════════════════════════════════
+  # COST SHEETS
+  # ════════════════════════════════════════════════════════════════
+
+  /api/cost-sheets/calculate:
+    post:
+      tags: [CostSheets]
+      operationId: calculateCostSheet
+      summary: Calculate cost sheet
+      description: |
+        Validates and calculates a complete cost sheet (Ficha de Costo).
+        1. Schema validation 2. Semantic validation 3. Full calculation.
+        Rate limit: 60 req/min.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: FichaJSONSchema validated cost sheet data
+              properties:
+                meta:
+                  type: object
+                sections:
+                  type: array
+                annexes:
+                  type: array
+      responses:
+        "200":
+          description: Calculation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  rows:
+                    type: array
+                  calculatedAnnexes:
+                    type: array
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: false
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/cost-sheets/export-pdf:
+    post:
+      tags: [CostSheets]
+      operationId: exportCostSheetPdf
+      summary: Export cost sheet as PDF
+      description: |
+        Generates a professional PDF for a cost sheet.
+        Modes: single (standard) or comparison (side-by-side scenarios).
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result:
+                  type: object
+                  description: Calculation result with rows, header, metadata
+                exportOptions:
+                  type: object
+                  properties:
+                    pdfFormat:
+                      type: string
+                      enum: [standard, pro]
+                scenarioId:
+                  type: string
+                exportMode:
+                  type: string
+                  enum: [single, comparison]
+                comparisonData:
+                  type: object
+      responses:
+        "200":
+          description: PDF document
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/cost-sheets/import-anexo:
+    post:
+      tags: [CostSheets]
+      operationId: importAnexo
+      summary: Import annex data from CSV/Excel
+      description: Uploads a CSV or Excel file with annex data. Normalizes rows by classification.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, anexoId]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                anexoId:
+                  type: string
+      responses:
+        "200":
+          description: Imported data with summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  anexoId:
+                    type: string
+                  summary:
+                    type: object
+                    properties:
+                      rowCount:
+                        type: integer
+                      sumByClassification:
+                        type: object
+                        additionalProperties:
+                          type: number
+                      totalImporte:
+                        type: number
+                  rows:
+                    type: array
+        "400":
+          description: Missing file/anexoId or unsupported format
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/cost-sheets/import-json:
+    post:
+      tags: [CostSheets]
+      operationId: importCostSheetJson
+      summary: Import and validate cost sheet JSON
+      description: Validates a cost sheet JSON against FichaJSONSchema.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Validated cost sheet data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  ficha:
+                    type: object
+        "400":
+          description: Validation errors
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/cost-sheets/save:
+    post:
+      tags: [CostSheets]
+      operationId: saveCostSheet
+      summary: Save cost sheet to database
+      description: |
+        Saves a cost sheet with AI-generated updates to the database.
+        Merges updateData, applies AI annex updates, runs calculation, persists to Supabase.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CostSheetSaveRequest"
+      responses:
+        "200":
+          description: Cost sheet saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  message:
+                    type: string
+                  id:
+                    type: string
+                    format: uuid
+                  data:
+                    type: object
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # ACADEMY
+  # ════════════════════════════════════════════════════════════════
+
+  /api/academy/generate:
+    post:
+      tags: [Academy]
+      operationId: generateLearningCards
+      summary: Generate AI learning cards from manual
+      description: |
+        Generates educational flashcards from a manual PDF (pre-indexed as .txt).
+        Rate limit: 10 req/min. Timeout: 120 seconds.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademyGenerateRequest"
+            example:
+              filename: "Resolucion 148-2023.pdf"
+              limit: 3
+              aiProvider: gemini
+      responses:
+        "200":
+          description: Generated learning cards count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Manual text file not found
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/academy/review:
+    get:
+      tags: [Academy]
+      operationId: getAcademyReview
+      summary: Get cards due for review
+      description: Returns learning cards due for spaced repetition review and new cards (max 10).
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Due and new cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  due:
+                    type: array
+                    items:
+                      type: object
+                  "new":
+                    type: array
+                    items:
+                      type: object
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/academy/review/{cardId}:
+    post:
+      tags: [Academy]
+      operationId: reviewLearningCard
+      summary: Submit card review score (SM2 algorithm)
+      description: Records a review score (0-5) using the SM-2 spaced repetition algorithm.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademyReviewRequest"
+            example:
+              score: 4
+      responses:
+        "200":
+          description: Review recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: object
+                    properties:
+                      ease_factor:
+                        type: number
+                      interval_days:
+                        type: integer
+                      repetitions:
+                        type: integer
+                  newMastery:
+                    type: number
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # INVENTORY
+  # ════════════════════════════════════════════════════════════════
+
+  /api/inventory:
+    get:
+      tags: [Inventory]
+      operationId: listInventory
+      summary: List inventory items (paginated)
+      description: Returns paginated inventory items with product SKU and name.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sku
+          in: query
+          schema:
+            type: string
+        - name: storeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Paginated inventory list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InventoryItem"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/inventory/products:
+    get:
+      tags: [Inventory]
+      operationId: getInventoryProducts
+      summary: Get products for POS
+      description: Returns mapped products for POS using the user's active store.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: POS-ready product list with stock data
+          content:
+            application/json:
+              schema:
+                type: array
+        "400":
+          description: User not assigned to a store
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/inventory/adjust:
+    post:
+      tags: [Inventory]
+      operationId: adjustInventory
+      summary: Adjust single product inventory
+      description: |
+        Registers a stock movement with optimistic concurrency control.
+        409: Version mismatch. 400: Insufficient stock.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryAdjustRequest"
+            example:
+              productId: "550e8400-e29b-41d4-a716-446655440000"
+              storeId: "660e8400-e29b-41d4-a716-446655440001"
+              quantity: 10
+              movementType: add
+              version: 5
+              reason: Stock receipt
+      responses:
+        "200":
+          description: Adjustment applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdjustInventoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Conflict - Version mismatch
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/inventory/adjustments:
+    post:
+      tags: [Inventory]
+      operationId: batchInventoryAdjustments
+      summary: Batch inventory adjustment
+      description: Processes multiple inventory adjustments at once via RPC.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryAdjustmentsRequest"
+      responses:
+        "200":
+          description: Batch adjustment processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  saleId:
+                    type: string
+                    format: uuid
+                  saleItems:
+                    type: array
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/inventory/{productId}/history:
+    get:
+      tags: [Inventory]
+      operationId: getProductStockHistory
+      summary: Get product stock movement history
+      description: Returns paginated stock movement ledger for a specific product.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: storeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Paginated stock movement history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InventoryMovement"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "400":
+          description: Missing productId
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # REPORTS
+  # ════════════════════════════════════════════════════════════════
+
+  /api/reports/generate:
+    post:
+      tags: [Reports]
+      operationId: generateReport
+      summary: Generate PDF report
+      description: |
+        Generates a PDF report for various data types.
+        Types: cost-sheet, inventory, sales, transfer, cash, profit, kardex, purchases, audit.
+        Returns the public URL of the generated PDF.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportsGenerateRequest"
+            example:
+              type: sales
+              format: a4
+              orientation: landscape
+              from: "2025-01-01"
+              to: "2025-01-31"
+              name: Reporte de Ventas Enero
+      responses:
+        "200":
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  url:
+                    type: string
+                    format: uri
+                  run_id:
+                    type: string
+                    format: uuid
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # USERS
+  # ════════════════════════════════════════════════════════════════
+
+  /api/users/managed-create:
+    post:
+      tags: [Users]
+      operationId: managedCreateUser
+      summary: Create a new user (admin only)
+      description: |
+        Creates a new user with specified role. Admin can create any role.
+        Encargado can create non-admin users. Recovery email sent if no password.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManagedCreateUserRequest"
+            example:
+              p_email: newuser@example.com
+              p_full_name: Juan Pérez
+              p_role: encargado
+              p_store_id: "660e8400-e29b-41d4-a716-446655440001"
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  user_id:
+                    type: string
+                    format: uuid
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/users/toggle-status:
+    post:
+      tags: [Users]
+      operationId: toggleUserStatus
+      summary: Activate or deactivate a user
+      description: Requires admin, encargado, superadmin, or manager role.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleUserStatusRequest"
+      responses:
+        "200":
+          description: Status toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/users/delete:
+    post:
+      tags: [Users]
+      operationId: deleteUser
+      summary: Delete a user (admin only)
+      description: Permanently deletes a user. Calls managed_delete_user RPC for safety checks.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteUserRequest"
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/users/reset-password:
+    post:
+      tags: [Users]
+      operationId: resetUserPassword
+      summary: Reset user password (admin only)
+      description: Sends a password recovery email to the target user.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: Recovery email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    const: true
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: User not found
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # SYNC
+  # ════════════════════════════════════════════════════════════════
+
+  /api/sync/batch:
+    post:
+      tags: [Sync]
+      operationId: batchSync
+      summary: Batch sync operations with idempotency
+      description: |
+        Processes multiple sync operations (sale, reception, adjustment, transfer).
+        Uses idempotency keys to prevent duplicate processing.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operations]
+              properties:
+                operations:
+                  type: array
+                  items:
+                    type: object
+                    required: [idempotencyKey, entity, operationType, payload]
+                    properties:
+                      idempotencyKey:
+                        type: string
+                      entity:
+                        type: string
+                        enum: [sale, reception, adjustment, transfer]
+                      operationType:
+                        type: string
+                      payload:
+                        type: object
+      responses:
+        "200":
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        idempotencyKey:
+                          type: string
+                        status:
+                          type: string
+                          enum: [ok, conflict, error]
+                        serverId:
+                          type: string
+                        error:
+                          type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ════════════════════════════════════════════════════════════════
+  # OTHER
+  # ════════════════════════════════════════════════════════════════
+
+  /api/logs:
+    post:
+      tags: [Other]
+      operationId: logClientError
+      summary: Log client-side errors
+      description: Receives client-side error logs. Always returns 200.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogEntry"
+      responses:
+        "200":
+          description: Log received (always 200)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/pick3/sync:
+    post:
+      tags: [Other]
+      operationId: syncPick3
+      summary: Sync Pick3 lottery results
+      description: Synchronizes Pick3 lottery results from web and PDF sources. Supports cron auth.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - cronAuth: []
+      parameters:
+        - name: full
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Sync results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  web_count:
+                    type: integer
+                  pdf_count:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/rss:
+    get:
+      tags: [Other]
+      operationId: getRssFeeds
+      summary: Fetch and parse RSS news feeds
+      description: |
+        Fetches active RSS feeds, parses them, and returns sorted news items.
+        Prioritizes items matching keywords. Detects exchange rate data from BCC.
+        Cached for 60 minutes.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: RSS news items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        link:
+                          type: string
+                          format: uri
+                        pubDate:
+                          type: string
+                          format: date-time
+                        content:
+                          type: string
+                        feedName:
+                          type: string
+                        isPriority:
+                          type: boolean
+                        isExchangeRate:
+                          type: boolean
+                        exchangeRateData:
+                          type: object
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/intelligence:
+    get:
+      tags: [Other]
+      operationId: getIntelligence
+      summary: Get system intelligence data
+      description: Returns comprehensive system intelligence including architecture, knowledge graph, audit, and health.
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Intelligence data bundle
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audit:
+                    type: object
+                  metrics:
+                    type: object
+                  graph:
+                    type: object
+                  system:
+                    type: object
+                  knowledgeGraph:
+                    type: object
+                  healthSummary:
+                    type: object
+                    properties:
+                      timestamp:
+                        type: string
+                        format: date-time
+                      integrityScore:
+                        type: integer
+                      status:
+                        type: string
+                        enum: [STABLE, DEGRADED, CRITICAL]
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+responses:
+  BadRequest:
+    description: Bad Request - Validation error or invalid input
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
+
+  Unauthorized:
+    description: Unauthorized - Missing or invalid authentication
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
+
+  Forbidden:
+    description: Forbidden - Insufficient permissions
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
+
+  RateLimitExceeded:
+    description: Too Many Requests - Rate limit exceeded
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
+
+  InternalServerError:
+    description: Internal Server Error
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
