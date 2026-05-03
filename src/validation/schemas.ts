@@ -211,7 +211,7 @@ export const cartItemSchema = z.object({
 });
 
 export const transactionSchema = z.object({
-  id: z.string().regex(uuidRegex).or(z.string()),
+  id: z.string().regex(uuidRegex).or(z.string()).catch("").default(""),
   store_id: optionalResilientUuid,
   seller_id: optionalResilientUuid,
   seller_name: z.string().nullable().optional().catch("Desconocido"),
