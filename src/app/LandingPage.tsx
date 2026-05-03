@@ -749,35 +749,7 @@ export default function LandingPage() {
         onShortcuts={() => setShowShortcutsModal(true)}
       />
 
-      {/* ─── Cookie Consent Banner ─── */}
-      <AnimatePresence>
-        {showCookieBanner && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
-          >
-            <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-white/90 dark:bg-[#111827]/90 border border-gray-200 dark:border-white/[0.06] shadow-2xl shadow-black/10 backdrop-blur-xl">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/15 flex items-center justify-center relative">
-                <div className="w-5 h-5 rounded-full bg-[#22c55e]/20 border border-[#22c55e]/25 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-[#22c55e]">🍪</span>
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-background border-2 border-[#22c55e]/15" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Utilizamos cookies</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Para mejorar tu experiencia y personalizar el contenido. Al continuar, aceptas nuestra política de privacidad.</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={handleRejectCookies} className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg border border-border hover:bg-muted transition-colors">Rechazar</button>
-                <button onClick={handleAcceptCookies} className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] rounded-lg shadow-lg shadow-green-500/20 transition-all">Aceptar</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ─── Cookie consent is now handled globally by <CookieConsent /> in layout.tsx ─── */}
 
       {/* ─── Mobile Navigation Drawer ─── */}
       <AnimatePresence>

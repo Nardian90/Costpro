@@ -8,7 +8,12 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { SyncProvider } from "@/components/providers/SyncProvider";
 import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
+import { CookieConsent } from '@/components/CookieConsent';
 import { headers } from 'next/headers';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, getLocale } from 'next-intl/server';
+import { LocaleProvider } from '@/components/providers/LocaleProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,19 +85,23 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? '';
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html lang="es" suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
+    <html lang={locale} suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
       <head>
         {/* ── Theme flash prevention: inline style block (NOT inline style attributes) ──
              This ensures CSS vars are controlled by class selectors, so next-themes
              can toggle them by adding/removing 'dark' class. Inline style attributes
              would override CSS rules and prevent theme switching. */}
+        {/* safe: static CSS variables, no user input */}
         <style
           nonce={nonce}
           dangerouslySetInnerHTML={{
           __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#000000;--foreground:#ffffff;color-scheme:dark}`,
         }} />
+        {/* safe: static theme-detection script, no user input */}
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{
@@ -101,6 +110,7 @@ export default async function RootLayout({
         />
         {/* FIX #012: Supabase preconnect uses environment variable */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co'} />
+        {/* safe: static structured data, no user input */}
         <script
           nonce={nonce}
           type="application/ld+json"
@@ -120,25 +130,32 @@ export default async function RootLayout({
         suppressHydrationWarning
         translate="no"
       >
-        <a href="#main-content" className="skip-to-content">
-          Saltar al contenido principal
-        </a>
-        <ThemeProvider
-          attribute="class" enableSystem
-          defaultTheme="dark"
-          disableTransitionOnChange
-          themes={['light', 'dark', 'auto']}
-        >
-          <IntelligentThemeHandler />
-          <QueryProvider>
-            <SyncProvider>
-              <GlobalSessionManager />
-              <main id="main-content">{children}</main>
-              <Toaster position="top-right" richColors />
-              <ServiceWorkerRegister />
-            </SyncProvider>
-          </QueryProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <LocaleProvider>
+            <a href="#main-content" className="skip-to-content">
+              {locale === 'es' ? 'Saltar al contenido principal' : 'Skip to main content'}
+            </a>
+            <ErrorBoundary>
+              <ThemeProvider
+                attribute="class" enableSystem
+                defaultTheme="dark"
+                disableTransitionOnChange
+                themes={['light', 'dark', 'auto']}
+              >
+                <IntelligentThemeHandler />
+                <QueryProvider>
+                  <SyncProvider>
+                    <GlobalSessionManager />
+                    <main id="main-content">{children}</main>
+                    <Toaster position="top-right" richColors />
+                    <ServiceWorkerRegister />
+                    <CookieConsent />
+                  </SyncProvider>
+                </QueryProvider>
+              </ThemeProvider>
+            </ErrorBoundary>
+          </LocaleProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

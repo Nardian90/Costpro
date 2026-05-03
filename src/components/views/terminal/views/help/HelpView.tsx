@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Search, X, Eye, EyeOff, BookOpen, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, X, Eye, EyeOff, BookOpen, Sparkles, Shield } from 'lucide-react';
 import { useUIStore } from '@/store';
 import HelpLayout from './HelpLayout';
 import HelpSidebar from './HelpSidebar';
 import HelpContent from './HelpContent';
+import { AccessibilityStatement } from './AccessibilityStatement';
 import { useHelpContent } from './hooks/useHelpContent';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 export default function HelpView() {
   const { setCurrentView } = useUIStore();
+  const [showAccessibility, setShowAccessibility] = useState(false);
   const {
     structure,
     loading,
@@ -45,8 +47,10 @@ export default function HelpView() {
         <HelpSidebar
           structure={structure}
           toc={toc}
-          onSelect={loadDocument}
+          onSelect={(path) => { setShowAccessibility(false); loadDocument(path); }}
           activePath={currentDoc?.path}
+          isAccessibilityActive={showAccessibility}
+          onSelectAccessibility={() => setShowAccessibility(true)}
         />
       }
       isReadingMode={isReadingMode}
@@ -101,16 +105,22 @@ export default function HelpView() {
       </div>
 
       {/* ── Content ── */}
-      <HelpContent
-        doc={currentDoc}
-        loading={loading}
-        searchQuery={searchQuery}
-        searchResults={searchResults}
-        glossary={glossary}
-        onSelectResult={loadDocument}
-        onClearSearch={() => setSearchQuery('')}
-        onSearch={setSearchQuery}
-      />
+      {showAccessibility ? (
+        <div className="px-6 md:px-10 xl:px-14">
+          <AccessibilityStatement />
+        </div>
+      ) : (
+        <HelpContent
+          doc={currentDoc}
+          loading={loading}
+          searchQuery={searchQuery}
+          searchResults={searchResults}
+          glossary={glossary}
+          onSelectResult={(path) => { setShowAccessibility(false); loadDocument(path); }}
+          onClearSearch={() => setSearchQuery('')}
+          onSearch={setSearchQuery}
+        />
+      )}
     </HelpLayout>
   );
 }

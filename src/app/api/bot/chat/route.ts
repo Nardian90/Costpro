@@ -2,16 +2,22 @@ import { botChatSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-export async function POST(req: NextRequest) {
+async function botChatHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
+
+    const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+    const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     let body;
     try {
@@ -67,11 +73,14 @@ export async function POST(req: NextRequest) {
       }, { status: 502 });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('[BotChat] Global Error:', error);
     return NextResponse.json({
       error: 'Error interno',
-      details: error.message
+      details: msg
     }, { status: 500 });
   }
 }
+
+export const POST = withTracing(botChatHandler, 'POST /api/bot/chat');

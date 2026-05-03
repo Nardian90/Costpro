@@ -47,6 +47,8 @@ interface HelpSidebarProps {
   toc: any[];
   onSelect: (path: string) => void;
   activePath: string | undefined;
+  isAccessibilityActive: boolean;
+  onSelectAccessibility: () => void;
 }
 
 /**
@@ -85,7 +87,7 @@ interface Category {
   files: { path: string; name: string }[];
 }
 
-export default function HelpSidebar({ structure, toc, onSelect, activePath }: HelpSidebarProps) {
+export default function HelpSidebar({ structure, toc, onSelect, activePath, isAccessibilityActive, onSelectAccessibility }: HelpSidebarProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     manual: true,
     costos: false,
@@ -299,6 +301,30 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath }: He
             </div>
           </div>
         )}
+      </div>
+
+      {/* Accessibility link */}
+      <div className="px-3 py-2 border-t border-border/30">
+        <button
+          onClick={onSelectAccessibility}
+          className={cn(
+            "w-full text-left px-3 py-2.5 rounded-xl text-[11px] font-medium transition-all duration-200 flex items-center gap-2.5",
+            "hover:bg-accent/40",
+            isAccessibilityActive
+              ? "bg-primary/8 text-primary font-bold pl-4 border-l-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          aria-current={isAccessibilityActive ? 'page' : undefined}
+        >
+          <Shield className={cn(
+            "w-3.5 h-3.5 shrink-0 transition-colors",
+            isAccessibilityActive ? "text-primary" : "text-muted-foreground/30"
+          )} />
+          <span>Accesibilidad</span>
+          {isAccessibilityActive && (
+            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+          )}
+        </button>
       </div>
 
       {/* Bottom branding */}

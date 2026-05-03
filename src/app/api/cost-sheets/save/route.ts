@@ -7,10 +7,11 @@ import { buildEngineFicha } from '@/lib/cost-engine/build-ficha';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 import { costSheetSaveSchema, zodError } from '@/validation/api-schemas';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+async function saveCostSheetHandler(req: NextRequest) {
   try {
     // Rate limiting
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -208,8 +209,11 @@ export async function POST(req: NextRequest) {
       data: exportData
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('[SaveCostSheet] Error:', error);
     return NextResponse.json({ error: "Error interno al guardar la ficha de costo" }, { status: 500 });
   }
 }
+
+export const POST = withTracing(saveCostSheetHandler, 'POST /api/cost-sheets/save');

@@ -29,31 +29,50 @@ export function useAnimatedCounter(target: number, duration = 2000) {
   return { count, hasStarted, completed, start };
 }
 
-/* ── Cookie Consent Hook ── */
+/* ── Cookie Consent Hook ──
+ *  Uses the centralized consent utility from @/lib/consent.
+ *  Communicates with the global CookieConsent component via custom events:
+ *    - 'cookie-consent-updated'  → fired after saving/clearing consent
+ *    - 'reopen-cookie-consent'   → fired to request the banner re-open
+ */
+import { shouldShowConsentBanner, saveConsent, clearConsent } from '@/lib/consent';
+
 export function useCookieConsent() {
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return false; // Banner managed by global CookieConsent component in layout
+  });
 
   useEffect(() => {
-    const hasConsented = typeof window !== 'undefined' && localStorage.getItem('costpro-cookie-consent');
-    if (!hasConsented) {
+    if (shouldShowConsentBanner()) {
       const timer = setTimeout(() => setShowCookieBanner(true), 3000);
       return () => clearTimeout(timer);
     }
   }, []);
 
+  // Listen for consent changes made by the global CookieConsent component
+  useEffect(() => {
+    const handleUpdated = () => setShowCookieBanner(false);
+    window.addEventListener('cookie-consent-updated', handleUpdated);
+    return () => window.removeEventListener('cookie-consent-updated', handleUpdated);
+  }, []);
+
   const handleAcceptCookies = useCallback(() => {
-    localStorage.setItem('costpro-cookie-consent', 'accepted');
+    saveConsent({ essential: true, analytics: true, functional: true, marketing: true });
     setShowCookieBanner(false);
+    window.dispatchEvent(new Event('cookie-consent-updated'));
   }, []);
 
   const handleRejectCookies = useCallback(() => {
-    localStorage.setItem('costpro-cookie-consent', 'rejected');
+    saveConsent({ essential: true, analytics: false, functional: true, marketing: false });
     setShowCookieBanner(false);
+    window.dispatchEvent(new Event('cookie-consent-updated'));
   }, []);
 
   const handleReopenCookieSettings = useCallback(() => {
+    clearConsent();
     setShowCookieBanner(true);
-    localStorage.removeItem('costpro-cookie-consent');
+    window.dispatchEvent(new CustomEvent('reopen-cookie-consent'));
   }, []);
 
   return { showCookieBanner, handleAcceptCookies, handleRejectCookies, handleReopenCookieSettings };

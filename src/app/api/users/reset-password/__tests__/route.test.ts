@@ -9,6 +9,10 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 
 let mockSession: any = null;
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('@/lib/auth-middleware', () => ({
   withRole: (_role: string, handler: any) => async (req: NextRequest) => {
     if (!mockSession) {

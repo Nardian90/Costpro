@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import { NavModule, SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
+import { isSidebarItemActive } from '@/config/navigation/navigation-map';
 import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
 import { cn } from '@/lib/utils';
 import SidebarFocusMode from './SidebarFocusMode';
@@ -72,7 +73,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   }, [onViewChange]);
 
   const renderNavItem = useCallback((item: any, depth = 0) => {
-    const isActive = currentView === item.id || (currentView === 'cost-sheets' && activeCostSection === item.id);
+    const isActive = isSidebarItemActive(item.id, currentView, ipvActiveTab, activeCostSection);
     const isRail = sidebarState === 'rail';
 
     if (isRail && depth === 0) {
@@ -83,6 +84,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               <button
                 onClick={() => handleNavClick(item.id as ViewType)}
                 onMouseEnter={() => onPrefetchView(item.id as ViewType)}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
                   isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
@@ -104,6 +106,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         key={item.id}
         onClick={() => handleNavClick(item.id as ViewType)}
         onMouseEnter={() => onPrefetchView(item.id as ViewType)}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
           "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
           isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
@@ -247,7 +250,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             {isMobile && (
                <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                aria-label="Cerrar menú lateral"
                >
                  <X className="w-4 h-4" />
                </button>

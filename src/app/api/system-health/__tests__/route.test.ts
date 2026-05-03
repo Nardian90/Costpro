@@ -2,6 +2,10 @@ import { NextRequest } from 'next/server';
 import { GET } from '../route';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
 vi.mock('@/lib/auth-middleware', () => ({
   withAuth: (handler: any) => async (req: NextRequest) => {
     const authHeader = req.headers.get('Authorization');

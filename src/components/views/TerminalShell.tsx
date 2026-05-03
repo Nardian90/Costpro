@@ -21,10 +21,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BuildingIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import ChunkErrorBoundary from '@/components/ui/ChunkErrorBoundary';
 import MobileSafeContainer from '@/components/ui/MobileSafeContainer';
+import { useKeyboardShortcuts } from '@/hooks/ui/useKeyboardShortcuts';
+import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
+import { NavigationBreadcrumb } from '@/components/ui/NavigationBreadcrumb';
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
@@ -47,6 +51,14 @@ const SettingsView = dynamic(() => import('@/components/views/terminal/views/set
 const HelpView = dynamic(() => import('@/components/views/terminal/views/help/HelpView'), { ssr: false });
 const ProductReceptionView = dynamic(() => import('@/components/views/terminal/views/inventory/ProductReceptionView'), { ssr: false });
 const TransferenciasView = dynamic(() => import('@/components/views/terminal/views/transfers/TransferenciasView'), { ssr: false });
+const InventoryCountView = dynamic(() => import('@/components/views/terminal/views/inventory_count/InventoryCountView'), { ssr: false });
+const CashClosureView = dynamic(() => import('@/components/views/terminal/views/cash_closure/CashClosureView'), { ssr: false });
+const StockHistoryView = dynamic(() => import('@/components/views/terminal/views/stock_history/StockHistoryView'), { ssr: false });
+const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/NewsView'), { ssr: false });
+const RSSManagementView = dynamic(() => import('@/components/views/terminal/views/rss/RSSManagementView'), { ssr: false });
+const WikiView = dynamic(() => import('@/components/views/terminal/views/wiki/WikiView'), { ssr: false });
+const HealthView = dynamic(() => import('@/components/views/health/HealthView'), { ssr: false });
+const ReceptionsHistoryView = dynamic(() => import('@/components/views/terminal/views/receptions/ReceptionsHistoryView'), { ssr: false });
 
 const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
@@ -60,6 +72,7 @@ export default function TerminalShell() {
     currentView,
     setCurrentView,
     setActiveCostSection,
+    setIpvActiveTab,
     sidebarState,
     setSidebarState,
     toggleSidebar: globalToggleSidebar
@@ -69,7 +82,16 @@ export default function TerminalShell() {
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
   const [sidebarSearch, setSidebarSearch] = useState('');
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const nav = useTerminalNavigation(user as any, sidebarSearch);
+
+  useKeyboardShortcuts();
+
+  useEffect(() => {
+    const handler = () => setShowKeyboardHelp(prev => !prev);
+    window.addEventListener('toggle-keyboard-help', handler);
+    return () => window.removeEventListener('toggle-keyboard-help', handler);
+  }, []);
 
   const { data: allStores = [] } = useStores(
     user?.id || '',
@@ -118,12 +140,16 @@ export default function TerminalShell() {
   const isBlockingRequired = user.role !== 'admin' && user.role !== 'costo' && !user.activeStoreId;
 
   const handleViewChange = (view: ViewType) => {
-    const costSheetSubViews = ["templates", "header", "open-sections", "open-annexes", "signature", "expert-content", "view-kpis", "view-expert", "view-assisted", "view-reading", "gen-quick", "gen-expert", "tool-import", "tool-save", "tool-export-excel", "tool-export-pdf", "res-help", "res-system-help", "res-academy"];
+    const route = getNavigationRoute(view as string);
 
-    if (costSheetSubViews.includes(view as string)) {
+    if (route && route.type === 'module') {
       startTransition(() => {
-        setCurrentView('cost-sheets');
-        setActiveCostSection(view as string);
+        setCurrentView(route.view as ViewType);
+        if (route.view === 'ipv') {
+          setIpvActiveTab(route.tab);
+        } else if (route.view === 'cost-sheets') {
+          setActiveCostSection(route.tab);
+        }
       });
     } else {
       startTransition(() => {
@@ -182,14 +208,33 @@ export default function TerminalShell() {
         case 'help': return <HelpView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
         case 'transferencias': return <TransferenciasView />;
-        case 'health': return <div>Health View Placeholder</div>;
-        case 'cash': return <div>Cash View Placeholder</div>;
-        case 'history': return <div>History View Placeholder</div>;
-        case 'inventory_count': return <div>Inventory Count Placeholder</div>;
-        case 'news': return <div>News Placeholder</div>;
-        case 'rss_management': return <div>RSS Management Placeholder</div>;
-        case 'wiki': return <div>Wiki Placeholder</div>;
-        default: return <div>Default View Placeholder: {view}</div>;
+        case 'inventory_count': return <InventoryCountView />;
+        case 'cash': return <CashClosureView />;
+        case 'history': return <StockHistoryView />;
+        case 'news': return <NewsView />;
+        case 'rss_management': return <RSSManagementView />;
+        case 'wiki': return <WikiView />;
+        case 'health': return <HealthView />;
+        case 'reception_list': return <ReceptionsHistoryView />;
+        default: return (
+          <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+              <span className="text-2xl font-black text-muted-foreground">?</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black uppercase tracking-tight">Módulo No Disponible</h3>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                La vista <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{String(view)}</code> no está implementada aún.
+              </p>
+            </div>
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
+            >
+              Ir al Dashboard
+            </button>
+          </div>
+        );
     }
   };
 
@@ -227,6 +272,13 @@ export default function TerminalShell() {
 
   return (
     <div className="h-screen flex bg-background text-foreground max-w-full overflow-hidden">
+      {/* Skip Navigation — WCAG 2.4.1 */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-6 focus:py-3 focus:bg-primary focus:text-primary-foreground focus:font-bold focus:rounded-xl focus:text-xs focus:uppercase focus:tracking-widest focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+      >
+        Saltar al contenido
+      </a>
       <Sidebar
         onViewChange={handleViewChange}
         onLogout={handleLogout}
@@ -263,6 +315,8 @@ export default function TerminalShell() {
             }
           }}
         />
+
+        <NavigationBreadcrumb className="px-3 sm:px-4 pt-3 pb-0" />
 
         <div className={cn(
           "relative flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
@@ -317,6 +371,7 @@ export default function TerminalShell() {
 
       <CreateProductModal />
       <CommandPalette />
+      <KeyboardShortcutsModal open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
       {currentView !== 'pos' && currentView !== 'help' && <ChatBot />}
       {currentView !== "pos" && <FloatingCalculator />}
     </div>

@@ -2,8 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { getServerSession } from "@/lib/auth";
 import { InventoryMovement } from "@/types/inventory";
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
-export async function GET(
+async function getHandler(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
@@ -15,6 +17,10 @@ export async function GET(
       { status: 401 }
     );
   }
+
+  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const { productId } = await params;
   const { searchParams } = new URL(request.url);
@@ -76,3 +82,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withTracing(getHandler as any, 'GET /api/inventory/[productId]/history');

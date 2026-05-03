@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FileQuestion, Home, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 /* ------------------------------------------------------------------ */
 /*  CSS-only particles floating upward (same pattern as SplashScreen) */
@@ -18,6 +19,8 @@ const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 export default function NotFound() {
+  const t = useTranslations('notFound');
+
   return (
     <div
       className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden"
@@ -114,7 +117,7 @@ export default function NotFound() {
           transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
           className="mb-3 text-2xl font-bold text-white sm:text-3xl"
         >
-          Página no encontrada
+          {t('title')}
         </motion.h2>
 
         {/* Description */}
@@ -124,7 +127,7 @@ export default function NotFound() {
           transition={{ delay: 0.55, duration: 0.6, ease: 'easeOut' }}
           className="mb-8 max-w-md text-base text-slate-400 sm:text-lg"
         >
-          Lo sentimos, la página que buscas no existe o ha sido movida.
+          {t('description')}
         </motion.p>
 
         {/* Buttons */}
@@ -143,7 +146,7 @@ export default function NotFound() {
             }}
           >
             <Home size={18} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
-            Volver al inicio
+            {t('goHome')}
           </Link>
 
           {/* Ghost button */}
@@ -152,7 +155,7 @@ export default function NotFound() {
             className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-white/40 hover:bg-white/10 hover:text-white sm:text-base"
           >
             <LogIn size={18} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-            Ir al login
+            {t('goLogin')}
           </Link>
         </motion.div>
       </div>

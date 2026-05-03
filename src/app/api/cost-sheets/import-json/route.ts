@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
 
 const handler = withAuth(async (req, session) => {
@@ -40,6 +41,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const POST = withTracing(postHandler, 'POST /api/cost-sheets/import-json');

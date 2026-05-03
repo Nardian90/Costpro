@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 import { calculateMRI, DEFAULT_MRI_DATA } from '@/lib/release_gate/mri-engine';
 import { calculateSHI } from '@/lib/observability/health-engine';
 import fs from 'fs';
@@ -9,6 +11,9 @@ export const dynamic = 'force-dynamic';
 
 
 const handler = withAuth(async (req, session) => {
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
 
   try {
     const readJson = (relPath: string) => {
@@ -68,6 +73,8 @@ const handler = withAuth(async (req, session) => {
 
 });
 
-export async function GET(req: NextRequest) {
+async function getHandler(req: NextRequest) {
   return handler(req);
 }
+
+export const GET = withTracing(getHandler, 'GET /api/system-health');

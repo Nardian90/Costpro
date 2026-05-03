@@ -3,11 +3,12 @@ import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { aiChatSchema, zodError } from '@/validation/api-schemas';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
   try {
     // Rate limiting (stricter for AI chat)
     const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
@@ -110,3 +111,5 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 }
+
+export const POST = withTracing(postHandler, 'POST /api/cost-sheets/ai/chat');

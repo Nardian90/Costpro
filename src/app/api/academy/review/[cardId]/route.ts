@@ -3,15 +3,21 @@ import { supabase } from '@/lib/supabaseClient';
 import { calculateSM2 } from '@/lib/academy/sm2';
 import { academyReviewSchema, zodError } from '@/validation/api-schemas';
 import { getServerSession } from "@/lib/auth";
+import { rateLimit } from '@/lib/rate-limit';
+import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
-export async function POST(
+async function postHandler(
   req: NextRequest,
   { params }: { params: Promise<{ cardId: string }> }
 ) {
   const session = await getServerSession(req);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const { allowed } = await rateLimit(clientId);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const userId = session.user.id;
   const rawBody = await req.json();
@@ -75,3 +81,5 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withTracing(postHandler as any, 'POST /api/academy/review/[cardId]');
