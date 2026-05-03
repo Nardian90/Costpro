@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Command, X, ArrowRight, Sparkles } from 'lucide-react';
 import Fuse from 'fuse.js';
-import { useUIStore } from '@/store';
+import { useUIStore, type ViewType } from '@/store';
 import { useAuthStore } from '@/store';
 import { SYSTEM_ACTIONS, Action, getActionsForUser } from '@/config/actions';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
@@ -96,7 +96,7 @@ export const CommandPalette = () => {
         setActiveCostSection(route.tab);
       }
     } else {
-      setCurrentView(action.route);
+      setCurrentView(action.route as ViewType);
     }
 
     setIsOpen(false);
