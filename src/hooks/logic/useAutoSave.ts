@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { announce } from '@/components/ui/AriaLiveRegion';
 export const useAutoSave = (enabled = true) => {
   const { data, setSheet } = useCostSheetStore();
   const [versions, setVersions] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export const useAutoSave = (enabled = true) => {
     setLastSavedAt(Date.now());
     lastHash.current = JSON.stringify(data);
     setTimeout(() => setIsSaving(false), 1000);
+    announce(`${label}: versión guardada`, 'polite');
   }, [data]);
   useEffect(() => {
     if (!enabled || !data) return;

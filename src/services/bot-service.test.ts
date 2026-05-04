@@ -16,7 +16,7 @@ describe('botService', () => {
     mockProvider = {
       getResponse: vi.fn(),
     };
-    vi.mocked(getLLMProvider).mockReturnValue(mockProvider);
+    (getLLMProvider as any).mockReturnValue(mockProvider);
 
     mockSupabase = {
       from: vi.fn(() => ({

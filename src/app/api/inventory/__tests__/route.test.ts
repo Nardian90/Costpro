@@ -29,7 +29,7 @@ describe('GET /api/inventory', () => {
   describe('autenticación', () => {
     it('retorna 401 si no hay sesión activa', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+      (getServerSession as any).mockResolvedValueOnce(null);
 
       const req = makeRequest();
       const res = await GET(req);
@@ -38,7 +38,7 @@ describe('GET /api/inventory', () => {
 
     it('retorna 401 si session.token es undefined', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      vi.mocked(getServerSession).mockResolvedValueOnce({ token: undefined } as any);
+      (getServerSession as any).mockResolvedValueOnce({ token: undefined } as any);
 
       const req = makeRequest();
       const res = await GET(req);
@@ -51,7 +51,7 @@ describe('GET /api/inventory', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockRange = vi.fn().mockResolvedValue({ data: [], error: null, count: 0 });
       const mockSelect = vi.fn().mockReturnThis();
@@ -60,7 +60,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 
@@ -74,7 +74,7 @@ describe('GET /api/inventory', () => {
        const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockRange = vi.fn().mockResolvedValue({ data: [], error: null, count: 0 });
       const mockSelect = vi.fn().mockReturnThis();
@@ -83,7 +83,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 
@@ -99,7 +99,7 @@ describe('GET /api/inventory', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockEq = vi.fn().mockReturnThis();
       const mockRange = vi.fn().mockResolvedValue({ data: [], error: null, count: 0 });
@@ -110,7 +110,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 
@@ -124,7 +124,7 @@ describe('GET /api/inventory', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockIlike = vi.fn().mockReturnThis();
       const mockRange = vi.fn().mockResolvedValue({ data: [], error: null, count: 0 });
@@ -135,7 +135,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 
@@ -151,7 +151,7 @@ describe('GET /api/inventory', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockData = [
         { product_id: 'p1', quantity: 10, version: 1, products: { sku: 'S1', name: 'N1' } }
@@ -163,7 +163,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 
@@ -192,7 +192,7 @@ describe('GET /api/inventory', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
 
       const mockRange = vi.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' }, count: null });
       const mockSelect = vi.fn().mockReturnThis();
@@ -201,7 +201,7 @@ describe('GET /api/inventory', () => {
         range: mockRange
       });
 
-      vi.mocked(getSupabaseAuthClient).mockReturnValue({
+      (getSupabaseAuthClient as any).mockReturnValue({
         from: mockFrom
       } as any);
 

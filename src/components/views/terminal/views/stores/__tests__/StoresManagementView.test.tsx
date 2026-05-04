@@ -25,8 +25,8 @@ describe('StoresManagementView', () => {
   ];
 
   beforeEach(() => {
-    vi.mocked(useAuthStore).mockReturnValue({ user: mockUser } as any);
-    vi.mocked(useStoresView).mockReturnValue({
+    (useAuthStore as any).mockReturnValue({ user: mockUser } as any);
+    (useStoresView as any).mockReturnValue({
       searchTerm: '',
       setSearchTerm: vi.fn(),
       stores: mockStores,
@@ -66,8 +66,8 @@ describe('StoresManagementView', () => {
 
   it('llama a handleSetActiveStore al hacer click en Seleccionar Tienda', () => {
     const mockSetActive = vi.fn();
-    vi.mocked(useStoresView).mockReturnValue({
-      ...vi.mocked(useStoresView)(),
+    (useStoresView as any).mockReturnValue({
+      ...(useStoresView as any)(),
       handleSetActiveStore: mockSetActive
     } as any);
 

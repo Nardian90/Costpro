@@ -10,8 +10,8 @@ vi.mock('@/store', () => ({
 }));
 
 // Mock createPortal to render into a div instead of document.body for easier testing
-vi.mock('react-dom', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+vi.mock('react-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-dom')>('react-dom');
   return {
     ...actual,
     createPortal: (node: any) => node,

@@ -2,18 +2,19 @@ import { renderHook, act } from '@testing-library/react';
 import { usePWA } from '../usePWA';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// @vitest-environment jsdom
+
 describe('usePWA', () => {
   beforeEach(() => {
-    vi.stubGlobal('window', {
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      matchMedia: vi.fn().mockReturnValue({ matches: false }),
-      open: vi.fn(),
-    });
+    // Mock window methods via vi.spyOn (works in jsdom)
+    vi.spyOn(window, 'addEventListener').mockImplementation(vi.fn());
+    vi.spyOn(window, 'removeEventListener').mockImplementation(vi.fn());
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as any);
+    vi.spyOn(window, 'open').mockImplementation(vi.fn());
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should initialize with isInstallable as false', () => {
@@ -23,12 +24,8 @@ describe('usePWA', () => {
 
   it('should set isInstallable to true when beforeinstallprompt event is fired', () => {
     let eventHandler: any;
-    vi.stubGlobal('window', {
-      addEventListener: vi.fn((event, handler) => {
-        if (event === 'beforeinstallprompt') eventHandler = handler;
-      }),
-      removeEventListener: vi.fn(),
-      matchMedia: vi.fn().mockReturnValue({ matches: false }),
+    (window.addEventListener as any).mockImplementation((event: string, handler: any) => {
+      if (event === 'beforeinstallprompt') eventHandler = handler;
     });
 
     const { result } = renderHook(() => usePWA());
@@ -45,12 +42,8 @@ describe('usePWA', () => {
     const mockPrompt = vi.fn();
     const mockUserChoice = Promise.resolve({ outcome: 'accepted' });
 
-    vi.stubGlobal('window', {
-      addEventListener: vi.fn((event, handler) => {
-        if (event === 'beforeinstallprompt') eventHandler = handler;
-      }),
-      removeEventListener: vi.fn(),
-      matchMedia: vi.fn().mockReturnValue({ matches: false }),
+    (window.addEventListener as any).mockImplementation((event: string, handler: any) => {
+      if (event === 'beforeinstallprompt') eventHandler = handler;
     });
 
     const { result } = renderHook(() => usePWA());
@@ -73,12 +66,7 @@ describe('usePWA', () => {
 
   it('should return false and not redirect if deferredPrompt is null', async () => {
     const mockOpen = vi.fn();
-    vi.stubGlobal('window', {
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      matchMedia: vi.fn().mockReturnValue({ matches: false }),
-      open: mockOpen,
-    });
+    (window.open as any).mockImplementation(mockOpen);
 
     const { result } = renderHook(() => usePWA());
 

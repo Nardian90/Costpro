@@ -55,9 +55,9 @@ describe('MultiStoreDashboardView', () => {
   ];
 
   beforeEach(() => {
-    vi.mocked(useAuthStore).mockReturnValue({ user: mockUser } as any);
-    vi.mocked(useStores).mockReturnValue({ data: mockStores, isLoading: false } as any);
-    vi.mocked(useMultiStoreDashboard).mockReturnValue({ data: mockKPIs, isLoading: false, refetch: vi.fn() } as any);
+    (useAuthStore as any).mockReturnValue({ user: mockUser } as any);
+    (useStores as any).mockReturnValue({ data: mockStores, isLoading: false } as any);
+    (useMultiStoreDashboard as any).mockReturnValue({ data: mockKPIs, isLoading: false, refetch: vi.fn() } as any);
   });
 
   it('renderiza el título y los KPIs globales', () => {
@@ -90,7 +90,7 @@ describe('MultiStoreDashboardView', () => {
 
   it('llama a refetch al hacer click en el botón de actualizar', () => {
     const mockRefetch = vi.fn();
-    vi.mocked(useMultiStoreDashboard).mockReturnValue({ data: mockKPIs, isLoading: false, refetch: mockRefetch } as any);
+    (useMultiStoreDashboard as any).mockReturnValue({ data: mockKPIs, isLoading: false, refetch: mockRefetch } as any);
 
     render(<MultiStoreDashboardView />);
     fireEvent.click(screen.getByRole('button', { name: /Actualizar datos del tablero/i }));

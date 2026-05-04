@@ -65,6 +65,8 @@ import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { useScenarioStore } from '@/store/scenario-store';
+import { useScenarioCalculator } from '@/hooks/logic/useScenarioCalculator';
+import ScenarioManagerSheet from './ScenarioManagerSheet';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow, ScenarioId } from '@/types/cost-sheet';
 import type { ValidationError as EngineValidationError } from '@/lib/cost-engine/types';
 
@@ -95,6 +97,9 @@ const CostSheetView = () => {
     confirmation,
     setConfirmation,
     askConfirmation,
+    viewMode: actionsViewMode,
+    isEditing: actionsIsEditing,
+    setIsEditing: actionsSetIsEditing,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,
@@ -136,10 +141,7 @@ const CostSheetView = () => {
   });
 
   const {
-    viewMode,
     setViewMode,
-    isEditing,
-    setIsEditing,
     layoutMode,
     setLayoutMode,
     effectiveLayoutMode,
@@ -147,6 +149,11 @@ const CostSheetView = () => {
     setActiveSubSectionId,
     groupedSections
   } = viewState;
+
+  // ── Single source of truth for viewMode & isEditing (from actions, synced by sidebar/effects)
+  const viewMode = actionsViewMode;
+  const isEditing = actionsIsEditing;
+  const setIsEditing = actionsSetIsEditing;
 
   const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
 
@@ -160,6 +167,12 @@ const CostSheetView = () => {
     createScenario: createScenarioFromStore,
     deleteScenario
   } = useScenarioStore();
+
+  // ── Scenario Calculator ────────────────────────────────────────────
+  const { calcV1, calcV2, calcV3 } = useScenarioCalculator();
+
+  // ── Scenario Manager Sheet ──────────────────────────────────────────
+  const [isScenarioSheetOpen, setIsScenarioSheetOpen] = useState(false);
 
   const handleScenarioAction = (action: string, scenarioId: ScenarioId) => {
     switch (action) {
@@ -281,6 +294,7 @@ const CostSheetView = () => {
                         layoutMode={layoutMode}
                         setLayoutMode={setLayoutMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
+                        onOpenScenarios={() => setIsScenarioSheetOpen(true)}
                         onImport={handleImportJSON}
                         onSave={handleExportJSON}
                         onExportExcel={handleExportExcel}
@@ -336,6 +350,9 @@ const CostSheetView = () => {
                                         sections={data.sections}
                                         scenarios={data.scenarios || []}
                                         scenarioConfig={data.scenarioConfig}
+                                        calcV1={calcV1}
+                                        calcV2={calcV2}
+                                        calcV3={calcV3}
                                         onUpdateRowValue={adapterUpdateRowValue}
                                         onScenarioAction={handleScenarioAction}
                                     />
@@ -524,7 +541,7 @@ const CostSheetView = () => {
                     variant="ghost"
                     size="sm"
                     type="button"
-                    onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
+                    onClick={() => { handleSetViewMode('expert'); }}
                     aria-label="Ir al Editor de ficha en Modo Experto"
                     className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
@@ -546,6 +563,7 @@ const CostSheetView = () => {
       )}
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
+      <ScenarioManagerSheet open={isScenarioSheetOpen} onOpenChange={setIsScenarioSheetOpen} />
       <BaseModal
         open={confirmation.isOpen}
         onOpenChange={(open) => setConfirmation({ ...confirmation, isOpen: open })}

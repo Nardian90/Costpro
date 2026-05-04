@@ -22,9 +22,9 @@ export const useScenarioCalculator = () => {
   const calcV2 = useScenarioCalcSlot(dataV2);
   const calcV3 = useScenarioCalcSlot(dataV3);
   return {
-    calcV1: activeScenarioIds.includes('v1') ? calcV1 : null,
-    calcV2: activeScenarioIds.includes('v2') ? calcV2 : null,
-    calcV3: activeScenarioIds.includes('v3') ? calcV3 : null,
+    calcV1: activeScenarioIds.includes('v1') ? calcV1 : undefined,
+    calcV2: activeScenarioIds.includes('v2') ? calcV2 : undefined,
+    calcV3: activeScenarioIds.includes('v3') ? calcV3 : undefined,
     getDiff: (rowId: string, baseId: ScenarioId, compareId: ScenarioId) => {
        const calcs: any = { v1: calcV1, v2: calcV2, v3: calcV3 };
        const b = calcs[baseId]?.calculatedValues?.[rowId]?.total ?? 0;

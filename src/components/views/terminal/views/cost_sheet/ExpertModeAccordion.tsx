@@ -5,6 +5,7 @@ import { HelpCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/ui/useReducedMotion';
 
 interface ExpertModeAccordionProps {
   id: string;
@@ -33,6 +34,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
 }) => {
   const panelId = `panel-${id}`;
   const headerId = `header-${id}`;
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div id={`accordion-${id}`} className={cn(
@@ -95,7 +97,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
         <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${completionPercent}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: "easeOut" }}
             className={cn(
                 "h-full transition-colors duration-500",
                 completionPercent < 30 ? "bg-red-500" : completionPercent < 70 ? "bg-amber-500" : "bg-green-500"

@@ -33,8 +33,63 @@ import { useCreateSale } from '@/hooks/api/useTransactions';
 import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
 // Modales y utilidades extra
-const PriceSelectorModal = ({ isOpen, onClose, product, onSelect }: any) => null;
-const BarcodeScanner = ({ isOpen, onClose, onScan }: any) => null;
+function PriceSelectorModal({ isOpen, onClose, product, onSelect }: any) {
+  if (!isOpen || !product?.product_variants) return null;
+  return (
+    <BaseModal open={isOpen} onOpenChange={onClose} title={`${product.name} — Variantes`} maxWidth="sm:max-w-md">
+      <div className="space-y-3">
+        {product.product_variants.map((v: any) => (
+          <button
+            key={v.id}
+            onClick={() => onSelect(v)}
+            className="w-full p-4 rounded-xl border border-border hover:bg-primary/5 hover:border-primary/30 transition-all text-left flex justify-between items-center"
+          >
+            <div>
+              <span className="font-bold text-sm uppercase">{v.name}</span>
+              {v.sku && <span className="text-xs text-muted-foreground ml-2 font-mono">{v.sku}</span>}
+            </div>
+            <span className="font-black text-primary">${v.price}</span>
+          </button>
+        ))}
+        {product.product_variants.length === 0 && (
+          <p className="text-center text-muted-foreground text-sm py-8">Sin variantes disponibles</p>
+        )}
+      </div>
+    </BaseModal>
+  );
+}
+
+function BarcodeScanner({ isOpen, onClose, onScan }: any) {
+  const [sku, setSku] = useState('');
+  if (!isOpen) return null;
+  return (
+    <BaseModal open={isOpen} onOpenChange={onClose} title="Escanear / Buscar SKU" maxWidth="sm:max-w-sm">
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="barcode-sku" className="text-xs font-black uppercase tracking-widest ml-1">Código SKU</label>
+          <input
+            id="barcode-sku"
+            type="text"
+            value={sku}
+            onChange={e => setSku(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && sku.trim()) { onScan(sku.trim()); setSku(''); onClose(); }}}
+            placeholder="Ej: SKU-001"
+            className="neu-input w-full font-bold font-mono"
+            autoFocus
+            aria-label="Código SKU del producto"
+          />
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors">Cancelar</button>
+          <button
+            onClick={() => { if (sku.trim()) { onScan(sku.trim()); setSku(''); onClose(); }}}
+            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+          >Buscar</button>
+        </div>
+      </div>
+    </BaseModal>
+  );
+}
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-2xl bg-muted/5">
