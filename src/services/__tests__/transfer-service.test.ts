@@ -2,16 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { transferService } from '../transfer-service';
 
 // Mock de supabase
-const mocks = vi.hoisted(() => {
-  const m = {
-    from: vi.fn(),
-    rpc: vi.fn(),
-    auth: {
-      signOut: vi.fn().mockResolvedValue({ error: null }),
-    }
-  };
-  return m;
-});
+const mocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  rpc: vi.fn(),
+  auth: {
+    signOut: vi.fn().mockResolvedValue({ error: null }),
+  }
+}));
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: mocks

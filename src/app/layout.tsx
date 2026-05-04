@@ -11,6 +11,7 @@ import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
 import { CookieConsent } from '@/components/CookieConsent';
 import { headers } from 'next/headers';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AriaLiveRegion } from '@/components/ui/AriaLiveRegion';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
@@ -148,6 +149,7 @@ export default async function RootLayout({
                     <GlobalSessionManager />
                     <main id="main-content">{children}</main>
                     <Toaster position="top-right" richColors />
+                    <AriaLiveRegion />
                     <ServiceWorkerRegister />
                     <CookieConsent />
                   </SyncProvider>

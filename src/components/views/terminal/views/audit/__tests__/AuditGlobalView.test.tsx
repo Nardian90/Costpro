@@ -46,9 +46,9 @@ describe('AuditGlobalView', () => {
   ];
 
   beforeEach(() => {
-    vi.mocked(useAuthStore).mockReturnValue({ user: mockUser } as any);
-    vi.mocked(useStores).mockReturnValue({ data: mockStores, isLoading: false } as any);
-    vi.mocked(useAuditLogs).mockReturnValue({
+    (useAuthStore as any).mockReturnValue({ user: mockUser } as any);
+    (useStores as any).mockReturnValue({ data: mockStores, isLoading: false } as any);
+    (useAuditLogs as any).mockReturnValue({
       data: { pages: [{ logs: mockLogs, total: 1 }] },
       isLoading: false,
       fetchNextPage: vi.fn(),

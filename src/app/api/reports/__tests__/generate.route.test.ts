@@ -73,7 +73,7 @@ describe('POST /api/reports/generate', () => {
 
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+    (getServerSession as any).mockResolvedValueOnce(null);
 
     const req = new NextRequest('http://localhost/api/reports/generate', {
         method: 'POST',
@@ -85,7 +85,7 @@ describe('POST /api/reports/generate', () => {
 
   it('genera reporte exitosamente', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    vi.mocked(getServerSession).mockResolvedValueOnce({
+    (getServerSession as any).mockResolvedValueOnce({
       user: { id: 'u1' },
       token: 'valid-token'
     } as unknown as Awaited<ReturnType<typeof getServerSession>>);

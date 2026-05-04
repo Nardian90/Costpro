@@ -2,22 +2,21 @@ import { renderHook, act } from '@testing-library/react';
 import { useExpertModeState } from '../useExpertModeState';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// @vitest-environment jsdom
+
 describe('useExpertModeState', () => {
   const STORAGE_KEY = 'cost_module_expert_state';
 
   beforeEach(() => {
-    // Clear localStorage before each test
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-    });
+    // Mock localStorage via Storage.prototype (works in jsdom)
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(vi.fn());
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(vi.fn());
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn());
+    vi.spyOn(Storage.prototype, 'clear').mockImplementation(vi.fn());
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should initialize with default state when localStorage is empty', () => {
@@ -39,7 +38,7 @@ describe('useExpertModeState', () => {
       isHelpOpen: true,
     };
 
-    vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(savedState));
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(savedState));
 
     const { result } = renderHook(() => useExpertModeState());
 
@@ -128,7 +127,7 @@ describe('useExpertModeState', () => {
 
     expect(localStorage.setItem).toHaveBeenCalledWith(
       STORAGE_KEY,
-      expect.stringContaining('\"expandedSections\":[\"header\"]')
+      expect.stringContaining('"expandedSections":["header"]')
     );
   });
 });

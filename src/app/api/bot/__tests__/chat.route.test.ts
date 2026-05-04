@@ -19,7 +19,7 @@ vi.mock('@/lib/ai/orchestrator', () => ({
 describe('POST /api/bot/chat', () => {
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+    (getServerSession as any).mockResolvedValueOnce(null);
     const req = new NextRequest('http://localhost/api/bot/chat', { method: 'POST' });
     const res = await POST(req);
     expect(res.status).toBe(401);
@@ -27,7 +27,7 @@ describe('POST /api/bot/chat', () => {
 
   it('retorna respuesta del bot', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'u1' } } as any);
+    (getServerSession as any).mockResolvedValueOnce({ user: { id: 'u1' } } as any);
 
     const req = new NextRequest('http://localhost/api/bot/chat', {
       method: 'POST',

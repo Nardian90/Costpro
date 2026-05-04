@@ -29,13 +29,13 @@ describe('CreateTransferModal', () => {
   const mockProduct = { id: 'p1', name: 'Producto Test', sku: 'SKU1', stock_current: 10 };
 
   beforeEach(() => {
-    vi.mocked(useAuthStore).mockReturnValue({ user: mockUser } as any);
-    vi.mocked(useTransferableStores).mockReturnValue({ data: mockStores } as any);
-    vi.mocked(useInventory).mockReturnValue({
+    (useAuthStore as any).mockReturnValue({ user: mockUser } as any);
+    (useTransferableStores as any).mockReturnValue({ data: mockStores } as any);
+    (useInventory as any).mockReturnValue({
       data: { pages: [{ products: [mockProduct] }] },
       isFetching: false
     } as any);
-    vi.mocked(useCreateTransfer).mockReturnValue({
+    (useCreateTransfer as any).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false
     } as any);

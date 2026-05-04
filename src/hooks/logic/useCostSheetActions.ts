@@ -20,6 +20,7 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { announce } from '@/components/ui/AriaLiveRegion';
 import { usageService } from '@/services/usage-service';
 import { exportToCSV } from '@/services/export-service';
 import { formatDistanceToNow } from 'date-fns';
@@ -165,15 +166,18 @@ export const useCostSheetActions = ({
           const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
           if (success) {
             toast.success('PDF consolidado generado con éxito', { id: toastId });
+            announce('PDF consolidado generado con éxito', 'polite');
             if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
           } else {
             throw new Error('El servidor no pudo generar el PDF.');
           }
         } else {
           toast.success('PDF generado con éxito', { id: toastId });
+          announce('PDF generado con éxito', 'polite');
         }
       } catch (error: any) {
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
+        announce(`Error al generar PDF: ${error.message}`, 'assertive');
       }
     },
     [calculationResult, data, calculatedValues, calculatedHeader, user]
@@ -201,8 +205,10 @@ export const useCostSheetActions = ({
           const json = JSON.parse(text);
           setSheet(json);
           toast.success('Ficha cargada correctamente');
+          announce('Ficha de costos cargada correctamente', 'polite');
         } catch (err) {
           toast.error('Error al cargar el archivo JSON');
+          announce('Error al cargar archivo JSON', 'assertive');
         }
       }
     };
@@ -228,6 +234,7 @@ export const useCostSheetActions = ({
     a.click();
     a.remove();
     toast.success('JSON exportado correctamente');
+    announce('JSON exportado correctamente', 'polite');
   }, [data, calculatedHeader, calculatedValues]);
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
@@ -253,6 +260,9 @@ export const useCostSheetActions = ({
     confirmation,
     setConfirmation,
     askConfirmation,
+    viewMode,
+    isEditing,
+    setIsEditing,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,

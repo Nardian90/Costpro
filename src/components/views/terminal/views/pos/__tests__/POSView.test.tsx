@@ -50,26 +50,26 @@ describe('POSView', () => {
   const mockUser = { id: '550e8400-e29b-41d4-a716-446655440002', activeStoreId: '550e8400-e29b-41d4-a716-446655440001' };
 
   beforeEach(() => {
-    vi.mocked(storeModule.useAuthStore).mockReturnValue({ user: mockUser } as any);
-    vi.mocked(storeModule.useUIStore).mockReturnValue({
+    (storeModule.useAuthStore as any).mockReturnValue({ user: mockUser } as any);
+    (storeModule.useUIStore as any).mockReturnValue({
       viewQueries: { pos: '' },
       currentView: 'pos',
       showQueries: false,
       setViewQuery: vi.fn(),
     } as any);
 
-    vi.mocked(productsApi.useProducts).mockReturnValue({
+    (productsApi.useProducts as any).mockReturnValue({
         data: [mockProduct],
         isLoading: false,
         error: null,
     } as any);
 
-    vi.mocked(taxesApi.useTaxes).mockReturnValue({
+    (taxesApi.useTaxes as any).mockReturnValue({
         data: [],
         isLoading: false,
     } as any);
 
-    vi.mocked(cartModule.useCartStore).mockReturnValue({
+    (cartModule.useCartStore as any).mockReturnValue({
       items: [],
       addItem: vi.fn(),
       removeItem: vi.fn(),
@@ -89,11 +89,11 @@ describe('POSView', () => {
       prorateGlobalPayment: vi.fn(),
     } as any);
 
-    vi.mocked(transactionsApi.useCreateSale).mockReturnValue({
+    (transactionsApi.useCreateSale as any).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
     } as any);
-    vi.mocked(mobileHook.useIsMobile).mockReturnValue(false);
+    (mobileHook.useIsMobile as any).mockReturnValue(false);
   });
 
   it('renderiza la lista de productos', async () => {

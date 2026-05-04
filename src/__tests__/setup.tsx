@@ -68,17 +68,17 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Framer Motion
-vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+vi.mock('framer-motion', async () => {
+  const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');
   return {
     ...actual,
     AnimatePresence: ({ children }: any) => <>{children}</>,
     motion: {
-      ...actual.motion,
-      div: React.forwardRef(({ children, ...props }: any, ref) => (
+      ...(actual as any).motion,
+      div: React.forwardRef(({ children, ...props }: any, ref: any) => (
         <div {...props} ref={ref}>{children}</div>
       )),
-      button: React.forwardRef(({ children, ...props }: any, ref) => (
+      button: React.forwardRef(({ children, ...props }: any, ref: any) => (
         <button {...props} ref={ref}>{children}</button>
       )),
     },
