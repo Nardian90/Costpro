@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:coverage:ci": "vitest run --coverage --reporter=json"
+    "test:coverage:ci": "vitest run --coverage --reporter=json",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
