@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import { useCostSheetCalculator } from '../useCostSheetCalculator';
 import { CostSheetDataContract, CostSheetDataFactory, CostSheetRowFactory, CostSheetSectionFactory } from '@/contracts';
+
+// Mock del store de Zustand
+vi.mock('@/store/cost-sheet-store', () => ({
+  useCostSheetStore: (cb: any) => cb({ _hasHydrated: true })
+}));
 
 const createBaseTemplate = (): CostSheetDataContract => CostSheetDataFactory.create({
     header: {
@@ -26,101 +31,123 @@ const createBaseTemplate = (): CostSheetDataContract => CostSheetDataFactory.cre
 });
 
 describe('useCostSheetCalculator', () => {
-  describe('cálculo de totales', () => {
-    it('calcula el total de una fila con formula simple', () => {
-      const template = createBaseTemplate();
-      template.sections = [
-        CostSheetSectionFactory.create({
-          id: 's1',
-          rows: [
-            CostSheetRowFactory.create({
-              id: 'r1',
-              calculationMethod: 'ValorFijo',
-              value: 10,
-            })
-          ]
-        })
-      ];
+  it('calcula el total de una fila con formula simple', async () => {
+    const template = createBaseTemplate();
+    template.sections = [
+      CostSheetSectionFactory.create({
+        id: 's1',
+        rows: [
+          CostSheetRowFactory.create({
+            id: 'r1',
+            calculationMethod: 'ValorFijo',
+            value: 10,
+          })
+        ]
+      })
+    ];
 
-      const { result } = renderHook(() => useCostSheetCalculator(template));
-      expect(result.current.calculatedValues['r1'].total).toBe(10);
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+
+    act(() => {
+      vi.advanceTimersByTime(200);
     });
 
-    it('calcula totales de sección sumando filas hijas', () => {
-      const template = createBaseTemplate();
-      template.sections = [
-        CostSheetSectionFactory.create({
-          id: 's1',
-          rows: [
-            CostSheetRowFactory.create({
-              id: 'parent',
-              calculationMethod: 'Prorrateo',
-              children: [
-                CostSheetRowFactory.create({ id: 'c1', value: 40, calculationMethod: 'ValorFijo' }),
-                CostSheetRowFactory.create({ id: 'c2', value: 60, calculationMethod: 'ValorFijo' })
-              ]
-            })
-          ]
-        })
-      ];
-
-      const { result } = renderHook(() => useCostSheetCalculator(template));
-      expect(result.current.calculatedValues['parent'].total).toBe(100);
-    });
-
-    it('detecta dependencias circulares', () => {
-       const template = createBaseTemplate();
-       template.sections = [
-         CostSheetSectionFactory.create({
-           id: 's1',
-           rows: [
-             CostSheetRowFactory.create({ id: 'r1', calculationMethod: 'FORMULA', totalFormula: 'ref("r2") + 1' }),
-             CostSheetRowFactory.create({ id: 'r2', calculationMethod: 'FORMULA', totalFormula: 'ref("r1") + 1' })
-           ]
-         })
-       ];
-
-       const { result } = renderHook(() => useCostSheetCalculator(template));
-       expect(result.current.audits.some(a => a.type === 'CYCLE_DETECTED')).toBe(true);
-    });
+    expect(result.current.calculatedValues['r1']?.total).toBe(10);
+    vi.useRealTimers();
   });
 
-  describe('Propagación de Indirectos', () => {
-    it('aplica coeficiente correctamente con propagación recursiva', () => {
-        const template = createBaseTemplate();
-        template.sections = [
-            {
-                id: 'sec-affected',
-                label: 'Affected Section',
-                rows: [
-                    CostSheetRowFactory.create({
-                        id: 'parent',
-                        children: [
-                            CostSheetRowFactory.create({ id: 'child', value: 100, calculationMethod: 'ValorFijo' })
-                        ]
-                    })
-                ]
-            },
-            {
-                id: 'sec-base',
-                label: 'Base Section',
-                rows: [
-                    CostSheetRowFactory.create({ id: 'base-row', value: 50, calculationMethod: 'ValorFijo' })
-                ]
-            }
-        ];
-        template.indirectConfig = {
-            mode: 'coefficient',
-            selectedSections: ['sec-affected'],
-            baseSection: 'sec-base',
-            coefficient: 1.20,
-            fixedAmount: 0
-        };
+  it('calcula totales de sección sumando filas hijas', async () => {
+    const template = createBaseTemplate();
+    template.sections = [
+      CostSheetSectionFactory.create({
+        id: 's1',
+        rows: [
+          CostSheetRowFactory.create({
+            id: 'parent',
+            children: [
+              CostSheetRowFactory.create({ id: 'c1', value: 40, calculationMethod: 'ValorFijo' }),
+              CostSheetRowFactory.create({ id: 'c2', value: 60, calculationMethod: 'ValorFijo' })
+            ]
+          })
+        ]
+      })
+    ];
 
-        const { result } = renderHook(() => useCostSheetCalculator(template));
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useCostSheetCalculator(template));
 
-        expect(result.current.calculatedValues['child'].total).toBe(120);
-        expect(result.current.calculatedValues['parent'].total).toBe(120);
+    act(() => {
+      vi.advanceTimersByTime(200);
     });
+
+    expect(result.current.calculatedValues['parent']?.total).toBe(100);
+    vi.useRealTimers();
+  });
+
+  it('detecta dependencias circulares', async () => {
+     const template = createBaseTemplate();
+     template.sections = [
+       CostSheetSectionFactory.create({
+         id: 's1',
+         rows: [
+           CostSheetRowFactory.create({ id: 'r1', calculationMethod: 'FORMULA', totalFormula: 'ref("r2") + 1' }),
+           CostSheetRowFactory.create({ id: 'r2', calculationMethod: 'FORMULA', totalFormula: 'ref("r1") + 1' })
+         ]
+       })
+     ];
+
+     vi.useFakeTimers();
+     const { result } = renderHook(() => useCostSheetCalculator(template));
+
+     act(() => {
+       vi.advanceTimersByTime(200);
+     });
+
+     expect(result.current.audits.some(a => a.type === 'CYCLE_DETECTED')).toBe(true);
+     vi.useRealTimers();
+  });
+
+  it('aplica coeficiente correctamente con propagación recursiva', async () => {
+      const template = createBaseTemplate();
+      template.sections = [
+          {
+              id: 'sec-affected',
+              label: 'Affected Section',
+              rows: [
+                  CostSheetRowFactory.create({
+                      id: 'parent',
+                      children: [
+                          CostSheetRowFactory.create({ id: 'child', value: 100, calculationMethod: 'ValorFijo' })
+                      ]
+                  })
+              ]
+          },
+          {
+              id: 'sec-base',
+              label: 'Base Section',
+              rows: [
+                  CostSheetRowFactory.create({ id: 'base-row', value: 50, calculationMethod: 'ValorFijo' })
+              ]
+          }
+      ];
+      template.indirectConfig = {
+          mode: 'coefficient',
+          selectedSections: ['sec-affected'],
+          baseSection: 'sec-base',
+          coefficient: 1.20,
+          fixedAmount: 0
+      };
+
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useCostSheetCalculator(template));
+
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
+      expect(result.current.calculatedValues['child']?.total).toBe(120);
+      expect(result.current.calculatedValues['parent']?.total).toBe(120);
+      vi.useRealTimers();
   });
 });

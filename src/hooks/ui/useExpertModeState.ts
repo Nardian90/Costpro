@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore, useRef } from 'react';
 
 const STORAGE_KEY = 'cost_module_expert_state';
 
@@ -27,7 +27,7 @@ function subscribe(callback: () => void) {
   return () => window.removeEventListener('storage', callback);
 }
 
-function getSnapshot(): ExpertModeState {
+function getRawSnapshot(): ExpertModeState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved) as ExpertModeState;
@@ -42,14 +42,24 @@ function getServerSnapshot(): ExpertModeState {
 }
 
 function setStoredState(updater: (prev: ExpertModeState) => ExpertModeState) {
-  const prev = getSnapshot();
+  const prev = getRawSnapshot();
   const next = updater(prev);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   window.dispatchEvent(new StorageEvent('storage'));
 }
 
 export const useExpertModeState = () => {
-  // FIX-RCT-125: Use useSyncExternalStore to prevent hydration mismatch and cascading renders
+  const lastStateRef = useRef<ExpertModeState>(initialState);
+
+  // FIX-RCT-125: Use useSyncExternalStore with reference stability to prevent infinite re-renders
+  const getSnapshot = useCallback(() => {
+    const next = getRawSnapshot();
+    if (JSON.stringify(next) !== JSON.stringify(lastStateRef.current)) {
+      lastStateRef.current = next;
+    }
+    return lastStateRef.current;
+  }, []);
+
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const isLoaded = useSyncExternalStore(

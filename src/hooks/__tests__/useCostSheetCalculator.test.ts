@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import { useCostSheetCalculator } from '../logic/useCostSheetCalculator';
 import { CostSheetDataContract, CostSheetDataFactory } from '@/contracts';
-// CostSheetData (from @/types/cost-sheet) is what useCostSheetCalculator expects.
-// CostSheetDataContract is compatible except for optional vs required fields.
-// We cast to any where needed to avoid deep type changes.
+
+// Mock del store de Zustand
+vi.mock('@/store/cost-sheet-store', () => ({
+  useCostSheetStore: (cb: any) => cb({ _hasHydrated: true })
+}));
 
 const baseTemplate: CostSheetDataContract = CostSheetDataFactory.create({
     header: {
@@ -29,7 +31,7 @@ const baseTemplate: CostSheetDataContract = CostSheetDataFactory.create({
 });
 
 describe('useCostSheetCalculator - Indirect Costs Complete', () => {
-  it('should apply coefficient correctly with recursive propagation and parent safety', () => {
+  it('should apply coefficient correctly with recursive propagation and parent safety', async () => {
     const template: CostSheetDataContract = {
         ...baseTemplate,
         sections: [
@@ -63,15 +65,21 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
             fixedAmount: 0
         }
     };
+
+    vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     // 1. Child in affected section should have CI applied
-    expect(result.current.calculatedValues['child'].metadata?.appliedFormula).toBe('VH * 1.2');
-    expect(result.current.calculatedValues['child'].total).toBe(120);
+    expect(result.current.calculatedValues['child']?.metadata?.appliedFormula).toBe('VH * 1.2');
+    expect(result.current.calculatedValues['child']?.total).toBe(120);
 
     // 2. Parent in affected section should sum children but NOT apply CI to itself
-    expect(result.current.calculatedValues['parent'].metadata?.appliedFormula).toBe('sum(children)');
-    expect(result.current.calculatedValues['parent'].total).toBe(120);
+    expect(result.current.calculatedValues['parent']?.metadata?.appliedFormula).toBe('sum(children)');
+    expect(result.current.calculatedValues['parent']?.total).toBe(120);
 
     // 3. Row in base section should NOT have CI applied even if it was selected (safeguard)
     const templateWithBaseSelected = {
@@ -79,11 +87,17 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
         indirectConfig: { ...template.indirectConfig, selectedSections: ['sec-affected', 'sec-base'] }
     };
     const { result: result2 } = renderHook(() => useCostSheetCalculator(templateWithBaseSelected as any));
-    expect(result2.current.calculatedValues['base-row'].metadata?.appliedFormula).toBeUndefined();
-    expect(result2.current.calculatedValues['base-row'].total).toBe(50);
+
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    expect(result2.current.calculatedValues['base-row']?.metadata?.appliedFormula).toBeUndefined();
+    expect(result2.current.calculatedValues['base-row']?.total).toBe(50);
+    vi.useRealTimers();
   });
 
-  it('should apply fixed amount mode correctly', () => {
+  it('should apply fixed amount mode correctly', async () => {
     const template: CostSheetDataContract = {
         ...baseTemplate,
         sections: [
@@ -104,12 +118,19 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
             fixedAmount: 400
         }
     };
+
+    vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
     // r1 weight: 100/400 = 0.25 -> fixed part: 400 * 0.25 = 100 -> total: 100 + 100 = 200
-    expect(result.current.calculatedValues['r1'].total).toBe(200);
+    expect(result.current.calculatedValues['r1']?.total).toBe(200);
 
     // r2 weight: 300/400 = 0.75 -> fixed part: 400 * 0.75 = 300 -> total: 300 + 300 = 600
-    expect(result.current.calculatedValues['r2'].total).toBe(600);
+    expect(result.current.calculatedValues['r2']?.total).toBe(600);
+    vi.useRealTimers();
   });
 });

@@ -4,11 +4,17 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // ── Mocks (hoisted) ─────────────────────────────────────────────────────────
 
-const { mockExistsSync, mockReadFileSync, mockReaddirSync, mockStatSync } = vi.hoisted(() => ({
+const { mockExistsSync, mockReadFileSync, mockReaddirSync, mockStatSync, mockGetServerSession } = vi.hoisted(() => ({
   mockExistsSync: vi.fn(),
   mockReadFileSync: vi.fn(),
   mockReaddirSync: vi.fn(),
   mockStatSync: vi.fn(),
+  mockGetServerSession: vi.fn(),
+}));
+
+vi.mock('@/lib/auth', () => ({
+  __esModule: true,
+  getServerSession: mockGetServerSession,
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
@@ -40,6 +46,7 @@ describe('GET /api/help-docs', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(process, 'cwd').mockReturnValue('/mock');
+    mockGetServerSession.mockResolvedValue({ user: { id: 'u1' } });
   });
 
   afterEach(() => {
