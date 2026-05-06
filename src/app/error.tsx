@@ -1,8 +1,10 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
-// FIX-INF-014: Custom error page for server-side rendering errors
+// FIX-SENTRY-002: Route-level error boundary — captures exceptions to Sentry
 export default function Error({
   error,
   reset,
@@ -11,30 +13,35 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('[ErrorPage] Unhandled error:', error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="max-w-md w-full text-center space-y-4">
-        <div className="text-6xl">⚠️</div>
+        <div className="text-6xl" role="img" aria-label="Error">⚠️</div>
         <h1 className="text-2xl font-bold text-foreground">Algo salió mal</h1>
         <p className="text-muted-foreground">
           {error.message || 'Ha ocurrido un error inesperado.'}
         </p>
+
+        {/* Error Details (hidden in production) */}
+        {process.env.NODE_ENV === 'development' && error.digest && (
+          <p className="text-xs text-muted-foreground">
+            Digest: {error.digest}
+          </p>
+        )}
+
         <div className="flex gap-3 justify-center">
-          <button
-            onClick={reset}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-          >
+          <Button onClick={reset} className="px-6">
             Reintentar
-          </button>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="px-4 py-2 border border-border rounded-lg hover:bg-muted"
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => (window.location.href = '/')}
           >
             Ir al inicio
-          </button>
+          </Button>
         </div>
       </div>
     </div>

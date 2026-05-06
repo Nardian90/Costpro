@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 
 
 const handler = withAuth(async (req, session) => {
+
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+  }
 
   try {
     // Rate limiting

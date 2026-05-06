@@ -49,7 +49,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
 
       {/* Desktop sidebar */}
       <aside className="w-16 lg:w-48 shrink-0 flex-col border-r bg-muted/30 hidden sm:flex">
-        <nav className="flex-1 space-y-2 p-4">
+        <nav aria-label="Navegación lateral" className="flex-1 space-y-2 p-4">
           {items.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;

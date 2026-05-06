@@ -3,11 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAcademyStore } from '@/store/useAcademyStore';
 import { useAuthStore } from '@/store';
 import { Flashcard } from './Flashcard';
-import { MasteryDashboard } from './MasteryDashboard';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Brain, Library, BarChart3, RefreshCw, Zap } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { toast } from 'sonner';
+
+const MasteryDashboard = dynamic(() => import('./MasteryDashboard').then(m => ({ default: m.MasteryDashboard })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+});
 
 export default function AcademyView() {
   const { user } = useAuthStore();

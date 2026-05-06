@@ -175,8 +175,11 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ data }) => {
                           <div className="text-[10px] font-black uppercase tracking-widest truncate">{phaseName}</div>
                           {isActive && <div className="text-[8px] font-bold uppercase tracking-[0.2em] mt-1 opacity-70 animate-pulse text-white">Procesando Núcleo...</div>}
                        </div>
-                       {isCompleted && <Zap className="w-4 h-4 text-emerald-500 animate-in zoom-in duration-1000" />}
-                       {isActive && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
+                       <span className="sr-only">
+                         {isActive ? 'En progreso' : isCompleted ? 'Completada' : 'Pendiente'}
+                       </span>
+                       {isCompleted && <Zap className="w-4 h-4 text-emerald-500 animate-in zoom-in duration-1000" aria-hidden="true" />}
+                       {isActive && <RefreshCw className="w-4 h-4 animate-spin text-white" aria-hidden="true" />}
                     </div>
                  );
               })}

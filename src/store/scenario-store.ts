@@ -19,6 +19,7 @@ interface ScenarioState {
   activeScenarioIds: ScenarioId[];
   isComparisonMode: boolean;
   isParallelMode: boolean;
+  isFlatMode: boolean;
 
   activateScenario: (id: ScenarioId) => void;
   deactivateScenario: (id: ScenarioId) => void;
@@ -31,6 +32,7 @@ interface ScenarioState {
   getScenarioValues: (scenarioId: ScenarioId) => ScenarioValues;
   toggleComparisonMode: (enabled?: boolean) => void;
   toggleParallelMode: (enabled?: boolean) => void;
+  setFlatMode: (enabled: boolean) => void;
   initializeScenarios: () => void;
 }
 
@@ -83,6 +85,7 @@ export const useScenarioStore = create<ScenarioState>()(
       activeScenarioIds: ['v1'],
       isComparisonMode: false,
       isParallelMode: false,
+      isFlatMode: false,
 
       initializeScenarios: () => {
         const { data, updateValues } = useCostSheetStore.getState();
@@ -137,9 +140,17 @@ export const useScenarioStore = create<ScenarioState>()(
         return {
           isParallelMode: willBeParallel,
           // Turning on parallel mode implicitly activates comparison mode
-          isComparisonMode: willBeParallel || state.isComparisonMode
+          isComparisonMode: willBeParallel || state.isComparisonMode,
+          // Turning on parallel mode disables flat mode
+          ...(willBeParallel ? { isFlatMode: false } : {})
         };
       }),
+
+      setFlatMode: (enabled: boolean) => set((state) => ({
+        isFlatMode: enabled,
+        // Turning on flat mode disables parallel and comparison modes
+        ...(enabled ? { isParallelMode: false, isComparisonMode: false } : {})
+      })),
 
       setComparisonBase: (id: ScenarioId) => {
         const { data, updateValue } = useCostSheetStore.getState();
@@ -289,7 +300,8 @@ export const useScenarioStore = create<ScenarioState>()(
       partialize: (state) => ({
         activeScenarioIds: state.activeScenarioIds,
         isComparisonMode: state.isComparisonMode,
-        isParallelMode: state.isParallelMode
+        isParallelMode: state.isParallelMode,
+        isFlatMode: state.isFlatMode
       })
     }
   )

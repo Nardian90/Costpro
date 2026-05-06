@@ -69,8 +69,8 @@ export default function IPVScene({ elapsed }: IPVSceneProps) {
 
         {/* Header bar */}
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-white/[0.02]">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[10px] text-white/40 font-medium tracking-wider">CostPro — IPV Inteligente</span>
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+          <span className="text-[10px] text-white/40 font-medium tracking-wider flex items-center gap-2">CostPro — IPV Inteligente <span className="sr-only">En línea</span></span>
           <div className="ml-auto flex gap-1.5"><div className="w-2 h-2 rounded-full bg-white/10" /><div className="w-2 h-2 rounded-full bg-white/10" /></div>
         </div>
 
@@ -105,8 +105,9 @@ export default function IPVScene({ elapsed }: IPVSceneProps) {
                 className="rounded-lg border border-red-500/25 bg-red-500/5 p-2.5 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" aria-hidden="true" />
                     <span className="text-[11px] font-semibold text-white/85">{ipvTopClients[0].name}</span>
+                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest">Riesgo</span>
                   </div>
                   <span className="text-xs font-bold text-red-400 tabular-nums">${ipvTopClients[0].amount.toLocaleString()}</span>
                 </div>
@@ -209,7 +210,7 @@ export default function IPVScene({ elapsed }: IPVSceneProps) {
                     className="rounded-md border border-green-500/10 bg-green-500/[0.03] px-2.5 py-1.5 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" aria-hidden="true" />
                         <span className="text-[10px] text-white/70 font-medium">{c.name}</span>
                       </div>
                       <span className="text-[10px] text-green-400/80 font-medium tabular-nums">${c.amount.toLocaleString()}</span>

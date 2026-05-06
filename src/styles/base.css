@@ -146,10 +146,20 @@
     outline-offset: 2px;
   }
 
-  /* ── Toast close touch target ── */
+    /* ── Toast close touch target ── */
   [data-slot="toast-close"] {
     min-height: 36px;
     min-width: 36px;
+  }
+
+  /* ── Touch targets — universal, opt-in via .touch-target ── */
+  .touch-target,
+  .touch-target a,
+  .touch-target button,
+  .touch-target select,
+  .touch-target [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
@@ -168,21 +178,6 @@
   .space-y-12 h2,
   .space-y-4 h2 {
     font-size: clamp(18px, 4vw, 24px) !important;
-  }
-
-  /* Touch targets */
-  button, select, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  [data-slot="input"],
-  [data-slot="select-trigger"],
-  [data-slot="textarea"],
-  .neu-input,
-  .neu-btn,
-  .neu-btn-primary {
-    min-height: 44px !important;
   }
 
   /* Reduce large padding */
@@ -220,10 +215,7 @@
 
 /* ── Small screens ── */
 @media (max-width: 420px) {
-  button, select, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
+  /* Touch targets handled universally via .touch-target in @layer base */
 }
 
 /* ── Reduced Motion ── */

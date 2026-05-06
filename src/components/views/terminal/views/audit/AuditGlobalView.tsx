@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Shield, Filter, Download, ChevronDown, Search, Eye } from 'lucide-react';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -8,6 +8,7 @@ import { useStores } from '@/hooks/api/useStores';
 import { useAuditLogs, AUDIT_ACTION_LABELS, AuditLogEntry } from '@/hooks/api/useAuditLogs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateRenderer } from '@/components/ui/StateRenderer';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 function AuditRow({ entry }: { entry: AuditLogEntry }) {
   const [expanded, setExpanded] = useState(false);
@@ -126,6 +127,16 @@ export default function AuditGlobalView() {
     URL.revokeObjectURL(url);
   };
 
+  // Virtual scrolling
+  const parentRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const rowVirtualizer = useVirtualizer({
+    count: filteredLogs.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+  });
+
   return (
     <div className="p-4 sm:p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -217,11 +228,12 @@ export default function AuditGlobalView() {
         emptyMessage="No se encontraron registros de auditoría con los filtros aplicados."
         data={filteredLogs}
       >
-        {(logs: AuditLogEntry[]) => (
+        {() => (
           <div className="rounded-2xl border border-border overflow-hidden">
+            {/* Sticky header */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm" aria-label="Historial de auditoría">
-                <thead className="bg-muted/40">
+                <thead className="bg-muted/40 sticky top-0 z-10">
                   <tr>
                     {['Fecha/Hora', 'Acción', 'Usuario', 'Registro ID', 'Detalles'].map(col => (
                       <th
@@ -234,12 +246,35 @@ export default function AuditGlobalView() {
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {logs.map((log: AuditLogEntry) => (
-                    <AuditRow key={log.id} entry={log} />
-                  ))}
-                </tbody>
               </table>
+            </div>
+            {/* Virtualized body */}
+            <div ref={parentRef} className="overflow-auto" style={{ maxHeight: '500px' }}>
+              <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const log = filteredLogs[virtualRow.index];
+                  return (
+                    <div
+                      key={virtualRow.key}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <table className="w-full text-sm">
+                        <tbody>
+                          <AuditRow entry={log} />
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

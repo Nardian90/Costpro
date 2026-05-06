@@ -784,7 +784,7 @@ export default function LandingPage() {
                   <X className="w-4 h-4 text-white/60" />
                 </button>
               </div>
-              <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+              <nav aria-label="Navegación principal" className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
                 {sectionLabels.map((label, idx) => (
                   <button
                     key={sectionIds[idx]}
