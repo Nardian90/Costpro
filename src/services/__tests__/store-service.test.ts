@@ -40,6 +40,7 @@ describe('storeService', () => {
     };
 
     mocks.from.mockReturnValue(chain);
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
   });
 
   describe('getStores', () => {
@@ -104,9 +105,9 @@ describe('storeService', () => {
 
   describe('resetStore', () => {
     it('realiza snapshot antes del reset', async () => {
+      // Mock success for everything
       mocks.rpc.mockResolvedValueOnce({ error: null });
-      // Para los insert de auditoría
-      chain.then.mockResolvedValue({ error: null });
+      chain.then.mockImplementation((resolve: any) => resolve({ data: null, error: null }));
 
       await storeService.resetStore('s1');
 
