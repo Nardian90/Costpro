@@ -60,7 +60,6 @@ describe('AuditGlobalView', () => {
   it('renderiza el título y la tabla de auditoría', () => {
     render(<AuditGlobalView />);
     expect(screen.getByText('Auditoría Global')).toBeInTheDocument();
-    // Usamos getAllByText porque el select también tiene la opción
     expect(screen.getAllByText('Venta Confirmada').length).toBeGreaterThan(0);
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
   });

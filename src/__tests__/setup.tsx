@@ -54,17 +54,36 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+class IntersectionObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+global.IntersectionObserver = IntersectionObserverMock as any;
 
 // ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+global.ResizeObserver = ResizeObserverMock as any;
+
+// Global mock for @tanstack/react-virtual
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: vi.fn().mockImplementation((options) => ({
+    getVirtualItems: () => Array.from({ length: options.count }, (_, i) => ({
+      index: i,
+      key: i,
+      start: i * (typeof options.estimateSize === 'function' ? options.estimateSize() : 50),
+      size: (typeof options.estimateSize === 'function' ? options.estimateSize() : 50),
+      measureElement: (el: any) => {},
+    })),
+    getTotalSize: () => options.count * (typeof options.estimateSize === 'function' ? options.estimateSize() : 50),
+    measureElement: (el: any) => {},
+    scrollToIndex: vi.fn(),
+    scrollToOffset: vi.fn(),
+  })),
 }));
 
 // Framer Motion
@@ -89,4 +108,5 @@ vi.mock('framer-motion', async (importOriginal) => {
 afterEach(() => {
   localStorage.clear();
   sessionStorage.clear();
+  vi.clearAllMocks();
 });

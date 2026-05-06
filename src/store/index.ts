@@ -57,12 +57,12 @@ export const useUIStore = create<UIState>()(
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
       activeCostSection: 'templates',
-      setCurrentView: (view) => set((state) => ({
+      setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
         currentView: view
       })),
-      setSidebarState: (sidebarState) => set({ sidebarState }),
-      toggleSidebar: () => set((state) => {
+      setSidebarState: (sidebarState: SidebarState) => set({ sidebarState }),
+      toggleSidebar: () => set((state: UIState) => {
         const next: Record<SidebarState, SidebarState> = {
           'expanded': 'rail',
           'rail': 'closed',
@@ -70,22 +70,22 @@ export const useUIStore = create<UIState>()(
         };
         return { sidebarState: next[state.sidebarState] };
       }),
-      setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
-      setThemePreference: (themePreference) => set({ themePreference }),
-      setConnectivity: (connectivity) => set({ connectivity }),
-      setLastQuery: (sql, view) => set((state) => ({
+      setIsCalculatorOpen: (open: boolean) => set({ isCalculatorOpen: open }),
+      setThemePreference: (themePreference: 'light' | 'dark' | 'auto') => set({ themePreference }),
+      setConnectivity: (connectivity: '3g' | '4g') => set({ connectivity }),
+      setLastQuery: (sql: string, view?: string) => set((state: UIState) => ({
         viewQueries: { ...state.viewQueries, [view || state.currentView]: sql }
       })),
-      setShowQueries: (showQueries) => set({ showQueries }),
-      setIsCreateProductModalOpen: (isCreateProductModalOpen) => set({ isCreateProductModalOpen }),
-      setInitialProductName: (initialProductName) => set({ initialProductName }),
-      setIsChatBotOpen: (isChatBotOpen) => set({ isChatBotOpen }),
-      setIpvActiveTab: (ipvActiveTab) => set({ ipvActiveTab }),
-      setActiveCostSection: (activeCostSection) => set({ activeCostSection }),
+      setShowQueries: (showQueries: boolean) => set({ showQueries }),
+      setIsCreateProductModalOpen: (isCreateProductModalOpen: boolean) => set({ isCreateProductModalOpen }),
+      setInitialProductName: (initialProductName: string) => set({ initialProductName }),
+      setIsChatBotOpen: (isChatBotOpen: boolean) => set({ isChatBotOpen }),
+      setIpvActiveTab: (ipvActiveTab: string) => set({ ipvActiveTab }),
+      setActiveCostSection: (activeCostSection: string) => set({ activeCostSection }),
     }),
     {
       name: 'costpro-ui-storage',
-      version: 2, // Increment version due to sidebarOpen -> sidebarState change
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           return {
@@ -121,14 +121,14 @@ export const useAuthStore = create<AuthState>()((set) => ({
   loading: true,
   isMocked: false,
   status: 'loading',
-  setUser: (user) => set({ user }),
-  setToken: (token) => set({ token }),
-  setLoading: (loading) => set({ loading }),
-  setStatus: (status) => set({ status }),
-  setIsMocked: (isMocked) => set({ isMocked }),
-  updateUser: (data) => set((state) => ({
+  setUser: (user: UserContract | null) => set({ user }),
+  setToken: (token: string | null) => set({ token }),
+  setLoading: (loading: boolean) => set({ loading }),
+  setStatus: (status: any) => set({ status }),
+  setIsMocked: (isMocked: boolean) => set({ isMocked }),
+  updateUser: (data: Partial<UserContract>) => set((state: AuthState) => ({
     user: state.user ? { ...state.user, ...data } : null
   })),
-  login: (user, token, status = 'authenticated_valid', isMocked = false) => set({ user, token, status, loading: false, isMocked }),
+  login: (user: UserContract, token: string, status: any = 'authenticated_valid', isMocked: boolean = false) => set({ user, token, status, loading: false, isMocked }),
   logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false, loading: false }),
 }));

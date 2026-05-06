@@ -4,10 +4,9 @@ import { useAuthStore } from '@/store';
 import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { safeNavigate } from '@/lib/navigation';
 import { mapProfileToContract } from '@/contracts/user';
 import { userService } from '@/services/user-service';
-import type { UserRole, User, Profile } from '@/types';
+import type { Profile, UserRole } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
 const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
@@ -18,16 +17,16 @@ const PROFILE_FETCH_TIMEOUT = 30 * 1000; // 30 seconds — profile fetch can be 
  * This hook should be used ONCE in a central component (e.g., TerminalView).
  */
 export function useSessionManager() {
-    const { login, logout, user, setLoading, setStatus: setAuthStatus } = useAuthStore();
+    const { login, logout, setLoading, setStatus: setAuthStatus } = useAuthStore();
     const { isOnline, isCheckingSession, lastChecked, setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
     const router = useRouter();
 
     const checkSession = useCallback(async (force = false) => {
         const now = Date.now();
-        const currentState = useAuthStore.getState();
+        const { isMocked, user: currentUser, token: currentToken } = useAuthStore.getState();
 
         // Bypass session check if we are in mock mode
-        if (currentState.isMocked) {
+        if (isMocked) {
             setAuthStatus('authenticated_valid');
             setLoading(false);
             return;
@@ -65,10 +64,9 @@ export function useSessionManager() {
                 } catch (err: any) {
                     logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED/TIMEOUT:', { data: err.message })
                     // On timeout or error, try to continue with session user data if we already have a user
-                    const existingUser = useAuthStore.getState().user;
-                    if (existingUser) {
+                    if (currentUser) {
                         // Keep existing user data, just update the token
-                        login(existingUser, session.access_token, 'authenticated_valid');
+                        login(currentUser, session.access_token, 'authenticated_valid');
                         setStatus('stable');
                         return;
                     }
@@ -81,8 +79,7 @@ export function useSessionManager() {
                 if (profileData) {
                     const userContractData = mapProfileToContract(profileData);
 
-                    const currentState = useAuthStore.getState();
-                    if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
+                    if (session.access_token !== currentToken || JSON.stringify(userContractData) !== JSON.stringify(currentUser)) {
                         login(userContractData, session.access_token, 'authenticated_valid');
                     } else {
                         setAuthStatus('authenticated_valid');
@@ -108,7 +105,7 @@ export function useSessionManager() {
         } finally {
             setSessionStatus(false);
         }
-    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, user, setLoading]);
+    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, setLoading]);
 
     // Effect for online/offline listeners
     useEffect(() => {
@@ -146,9 +143,10 @@ export function useSessionManager() {
                 setLoading(false);
                 window.location.reload();
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                if(session?.access_token && user) {
+                const { user: currentUser } = useAuthStore.getState();
+                if(session?.access_token && currentUser) {
                     // Update the token in the store without a full profile refetch
-                    login(user, session.access_token);
+                    login(currentUser, session.access_token);
                 } else {
                      // If there is no user data, force a full session check.
                     checkSession(true)
@@ -157,7 +155,7 @@ export function useSessionManager() {
         });
 
         return () => subscription.unsubscribe();
-    }, [login, logout, router, user, checkSession, setLoading]);
+    }, [login, logout, checkSession, setLoading]);
 
     // Initial check on mount
     useEffect(() => {
