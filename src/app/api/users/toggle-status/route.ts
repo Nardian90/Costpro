@@ -105,7 +105,7 @@ const handler = withRole('admin', async (req, session) => {
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

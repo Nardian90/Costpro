@@ -54,7 +54,7 @@ async function productsHandler(request: NextRequest) {
     if (error) {
       return NextResponse.json(
         // FIX-SEC-019: Hide error details in production
-        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? error.message : undefined },
+        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? error.message : undefined },
         { status: 500 }
       );
     }
@@ -64,7 +64,7 @@ async function productsHandler(request: NextRequest) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       // FIX-SEC-019: Hide error details in production
-      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
+      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? errorMessage : undefined },
       { status: 500 }
     );
   }
