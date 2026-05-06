@@ -168,7 +168,7 @@ async function retentionHandler(request: NextRequest, _session: AuthenticatedSes
       // FIX-SEC-019: Hide error details in production
       {
         error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? message : undefined,
+        message: process.env.NODE_ENV !== 'production' ? message : undefined,
       },
       { status: 500 }
     );
