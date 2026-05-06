@@ -54,12 +54,6 @@ const withSentry = withSentryConfig(nextConfig, {
     disable: process.env.NODE_ENV === 'development',
   },
 
-  // Suppress source map uploading logs during builds
-  hideSourceMaps: true,
-
-  // Hides the "Sentry" warning banner in the build output
-  disableSentryStaticResourceWarning: true,
-
   // Wider patterns for source maps
   widenClientFileUpload: true,
 
@@ -67,7 +61,7 @@ const withSentry = withSentryConfig(nextConfig, {
   tunnelRoute: undefined,
 
   // Disable automatic middleware wrapping to prevent Edge Runtime issues on Vercel
-  automaticVercelMonitorsIntegration: false,
+  automaticVercelMonitors: false,
 });
 
 export default withBundleAnalyzer(withNextIntl(withSentry));

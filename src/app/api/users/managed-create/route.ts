@@ -28,16 +28,12 @@ const handler = withRole('admin', async (req, session) => {
   // FIX-SEC-023: CSRF origin validation
   if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   try {
     const supabaseAdmin = getSupabaseAdmin();
-
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
 
     // 2. Fetch requester role
     const { data: requesterProfile, error: profileError } = await supabaseAdmin

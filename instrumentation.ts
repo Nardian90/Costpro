@@ -31,14 +31,16 @@ export async function register() {
     }
   }
 
-  // FIX-INF-023: Process-level error handlers (Node.js only — inside register to avoid Edge)
+  // FIX-INF-023: Process-level error handlers (Node.js only — already guarded above)
   try {
-    process.on('unhandledRejection', (reason) => {
-      console.error('[Process] Unhandled rejection:', reason);
-    });
-    process.on('uncaughtException', (error) => {
-      console.error('[Process] Uncaught exception:', error);
-    });
+    if (typeof process !== 'undefined' && typeof process.on === 'function') {
+      process.on('unhandledRejection', (reason) => {
+        console.error('[Process] Unhandled rejection:', reason);
+      });
+      process.on('uncaughtException', (error) => {
+        console.error('[Process] Uncaught exception:', error);
+      });
+    }
   } catch {
     // process.on not available in this runtime
   }

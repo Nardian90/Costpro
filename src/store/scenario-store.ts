@@ -297,6 +297,9 @@ export const useScenarioStore = create<ScenarioState>()(
     }),
     {
       name: 'scenario-ui-storage',
+      // FIX-RCT-140: Add version to prevent stale localStorage data from
+      // overwriting current state (which could reset isFlatMode to false)
+      version: 1,
       partialize: (state) => ({
         activeScenarioIds: state.activeScenarioIds,
         isComparisonMode: state.isComparisonMode,

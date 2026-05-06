@@ -43,6 +43,8 @@ export class MatchingEngine {
   private products: Product[];
   private rules: MatchingRule[];
   private stockMap: Map<string, number> = new Map();
+  // BUG-009 FIX: Track committed stock separately from temp stock
+  private committedStockMap: Map<string, number> = new Map();
   private useStockLimit: boolean = false;
   private allowNegativeStock: boolean = true;
   private pendingMovements: ProductMovement[] = [];
@@ -59,7 +61,10 @@ export class MatchingEngine {
         this.allowNegativeStock = true;
     }
 
-    products.forEach(p => this.stockMap.set(p.cod, p.stock_inicial_manual || 0));
+    products.forEach(p => {
+      this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
+      this.committedStockMap.set(p.cod, p.stock_inicial_manual || 0);
+    });
   }
 
   async matchTransaction(transaction: BankTransaction, currentReconciledCents: number = 0): Promise<MatchingResult> {
@@ -202,8 +207,10 @@ export class MatchingEngine {
         }
     }
 
-    // Rollback temp stock
-    this.products.forEach(p => this.stockMap.set(p.cod, p.stock_inicial_manual || 0));
+    // BUG-009 FIX: Rollback temp stock to committed state (not initial)
+    this.products.forEach(p =>
+      this.stockMap.set(p.cod, this.committedStockMap.get(p.cod) || 0)
+    );
     this.pendingMovements = this.pendingMovements.filter(m => m.referencia_transaccion !== 'TEMP');
 
     const lines: ReconciliationLine[] = [];
@@ -222,12 +229,20 @@ export class MatchingEngine {
         line.adjustment_type = item.adjustment_type;
         lines.push(line);
         this.updateVirtualStock(item.product.cod, item.qty, transaction.referencia_origen);
+        // BUG-009 FIX: Update committed stock so next tx sees the deduction
+        this.committedStockMap.set(
+          item.product.cod,
+          (this.committedStockMap.get(item.product.cod) || 0) - item.qty
+        );
         remainingTransfer -= covered;
     }
 
     let status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE' | 'OVERPAYMENT' = 'PENDIENTE';
     if (lines.length > 0) {
-        if (remainingForIdentification <= 100 || (remainingForIdentification / targetCents) <= 0.05) {
+        // BUG-010 FIX: Use remainingTransfer (actual monetary coverage) for status
+        const monetaryCoverage = targetCents - remainingTransfer;
+        const coverageRatio = targetCents > 0 ? monetaryCoverage / targetCents : 0;
+        if (remainingTransfer <= 100 || coverageRatio >= 0.95) {
             status = 'COMPLETO';
         } else {
             status = 'PARCIAL';
@@ -242,7 +257,8 @@ export class MatchingEngine {
       movements: [...this.pendingMovements],
       trace,
       appliedRules,
-      matchingConfidence: status === 'COMPLETO' ? 100 : 0,
+      // BUG-010 FIX: Confidence based on actual coverage ratio
+      matchingConfidence: lines.length > 0 ? Math.round(Math.min(100, (targetCents - remainingTransfer) / targetCents * 100)) : 0,
       logs
     };
     this.pendingMovements = [];

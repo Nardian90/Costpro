@@ -49,11 +49,8 @@ Sentry.init({
       maskAllInputs: true,
       blockAllMedia: true,
     }),
-    // Browser tracing
-    Sentry.browserTracingIntegration({
-      // Set tracePropagationTargets to match your domain and subdomains
-      tracePropagationTargets: ['localhost', /^\//],
-    }),
+    // Browser tracing (tracePropagationTargets removed in Sentry v10 — defaults to same-origin only)
+    Sentry.browserTracingIntegration(),
   ],
 
   tunnel: '/api/monitoring',

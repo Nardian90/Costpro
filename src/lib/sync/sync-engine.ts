@@ -8,9 +8,18 @@ export class SyncEngine {
   private isSyncing = false;
   private syncInterval: ReturnType<typeof setInterval> | null = null;
   private onlineHandler: () => void;
+  private sessionToken: string | null = null;
 
   constructor() {
     this.onlineHandler = () => this.processQueue();
+  }
+
+  /**
+   * Stores the auth token for authenticated sync requests.
+   * Must be called after login or session restore.
+   */
+  setToken(token: string | null): void {
+    this.sessionToken = token;
   }
 
   /**
@@ -114,9 +123,14 @@ export class SyncEngine {
       throw new Error(`Unknown operation type: ${operation.entity}`);
     }
 
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (this.sessionToken) {
+      headers['Authorization'] = `Bearer ${this.sessionToken}`;
+    }
+
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(operation.payload),
     });
 

@@ -16,7 +16,7 @@ async function postHandler(request: NextRequest) {
     );
   }
 
-  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
+  const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 

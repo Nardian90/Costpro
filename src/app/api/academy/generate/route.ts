@@ -24,7 +24,8 @@ async function postHandler(req: NextRequest) {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+    // BUG-016 FIX: Use session.user.id for rate limiting (same as BUG-004 fix)
+    const clientId = session.user.id;
     const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
     if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
@@ -156,14 +157,14 @@ async function postHandler(req: NextRequest) {
         answer: q.answer,
         difficulty: q.difficulty,
         category: q.category,
-        source: filename
+        source: safeName
       })))
       .select();
 
     if (error) throw error;
 
     return NextResponse.json({
-      message: `Generadas ${insertedData?.length || 0} tarjetas desde ${filename}`,
+      message: `Generadas ${insertedData?.length || 0} tarjetas desde ${safeName}`,
       count: insertedData?.length || 0
     });
 

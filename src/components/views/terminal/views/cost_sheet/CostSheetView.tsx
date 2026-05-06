@@ -85,7 +85,8 @@ const CostSheetView = () => {
   const { activeCostSection: activeSection } = useUIStore();
 
   // ── Data & Calculations ─────────────────────────────────────────────
-  const { data } = useCostSheetStore();
+  // FIX-RCT-140: Use selector to only re-render when data actually changes
+  const data = useCostSheetStore((s) => s.data);
   const {
     calculatedValues,
     calculatedHeader,
@@ -161,19 +162,20 @@ const CostSheetView = () => {
   const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
 
   // ── Scenario Store ──────────────────────────────────────────────────
-  const {
-    initializeScenarios,
-    isComparisonMode,
-    isParallelMode,
-    isFlatMode,
-    toggleComparisonMode,
-    toggleParallelMode,
-    setFlatMode,
-    updateRowValue: scenarioUpdateRowValue,
-    setPrimaryScenario,
-    createScenario: createScenarioFromStore,
-    deleteScenario
-  } = useScenarioStore();
+  // FIX-RCT-140: Use selectors to only re-render when specific fields change.
+  // Previously, useScenarioStore() without selector subscribed to ALL state changes,
+  // causing excessive re-renders when any scenario store field changed.
+  const isFlatMode = useScenarioStore((s) => s.isFlatMode);
+  const isComparisonMode = useScenarioStore((s) => s.isComparisonMode);
+  const isParallelMode = useScenarioStore((s) => s.isParallelMode);
+  const initializeScenarios = useScenarioStore((s) => s.initializeScenarios);
+  const toggleComparisonMode = useScenarioStore((s) => s.toggleComparisonMode);
+  const toggleParallelMode = useScenarioStore((s) => s.toggleParallelMode);
+  const setFlatMode = useScenarioStore((s) => s.setFlatMode);
+  const scenarioUpdateRowValue = useScenarioStore((s) => s.updateRowValue);
+  const setPrimaryScenario = useScenarioStore((s) => s.setPrimaryScenario);
+  const createScenarioFromStore = useScenarioStore((s) => s.createScenario);
+  const deleteScenario = useScenarioStore((s) => s.deleteScenario);
 
   // ── Scenario Calculator ─────────────────────────────────────────────
   const { calcV1, calcV2, calcV3 } = useScenarioCalculator();
@@ -195,21 +197,23 @@ const CostSheetView = () => {
     return (data?.annexes || []).some(a => a.id === activeSection) || activeSection === 'all-annexes';
   }, [data?.annexes, activeSection]);
 
-  // FIX: Prevent initializeScenarios cascade — only run once per data.id
+  // FIX-RCT-140: Prevent initializeScenarios cascade — only run once per data.id.
+  // Removed viewMode and initializeScenarios from deps to prevent re-triggering
+  // when unrelated state changes. Uses refs for stable access.
   const initializedRef = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (isEditing && data && viewMode === 'expert' && data?.id && initializedRef.current !== data?.id) {
+    if (isEditing && data && data?.id && initializedRef.current !== data?.id) {
       initializedRef.current = data?.id;
-      // Small delay to let persist rehydration settle before modifying store
+      // Delay to let persist rehydration settle before modifying store
       const timer = setTimeout(() => {
         const currentData = useCostSheetStore.getState().data;
         if (!currentData?.scenarios || currentData.scenarios.length === 0) {
-          initializeScenarios();
+          useScenarioStore.getState().initializeScenarios();
         }
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isEditing, data?.id, viewMode, initializeScenarios]);
+  }, [isEditing, data?.id]);
 
   const { expandAllSections, toggleProblems } = expertState;
 

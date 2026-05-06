@@ -31,6 +31,23 @@ export class SimulationEngine {
     // Streak distribution could be more complex, here we simplify to hit probability per draw
     const dailyReturns = backtest.equityCurve.map((val, i, arr) => i === 0 ? 0 : (val - arr[i-1]) / (arr[i-1] || 1));
 
+    // BUG-011 FIX: Guard against empty/insufficient equityCurve data
+    if (!dailyReturns || dailyReturns.length < 2) {
+      return {
+        id: `MC-${Math.random().toString(36).substring(7)}`,
+        timestamp: Date.now(),
+        config,
+        equityCurve: [],
+        totalBets: 0,
+        totalWins: 0,
+        finalCapital: config.budget,
+        roi: 0,
+        maxDrawdown: 0,
+        probabilityOfRuin: 0,
+        expectedRecoveryTime: undefined
+      };
+    }
+
     for (let s = 0; s < SCENARIOS; s++) {
       let currentCapital = config.budget;
       let peak = currentCapital;

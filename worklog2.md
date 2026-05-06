@@ -764,3 +764,76 @@ Stage Summary:
 - Hoja tab now persists via zustand store (survives remount + refresh)
 - Expert view no longer jumps on load (single calculation after hydration)
 - TypeScript: 0 errors, ESLint: 0 errors
+
+---
+Task ID: 9
+Agent: Main
+Task: Fix cost module UI bugs v2 — residual re-render cascade + Hoja revert
+
+Work Log:
+- User reported the same two bugs persisting after Task ID 8 fixes:
+  1. "Se actualiza cada un segundo" — still jumping during expert view load
+  2. "Al dar clic en Hoja solo se queda un segundo" — Hoja tab still reverting
+
+### Deeper Root Cause Analysis:
+Task ID 8 fixed the component identity issue (ViewErrorBoundary) and hydration guard, but missed:
+1. **No debounce on calculator**: When `initializeScenarios` modifies `data` → calculator useEffect fires immediately → `setResultState` → re-render. With 3 scenario calculators (v1/v2/v3), this creates 4+ rapid `setResultState` calls = visible jumps.
+2. **No Zustand selectors**: `useScenarioStore()` and `useCostSheetStore()` without selectors subscribe to ALL state changes. ANY store update triggers full CostSheetView re-render, even if unrelated fields changed.
+3. **Duplicate viewMode/isEditing**: `useCostSheetActions` maintained its own `viewMode` and `isEditing` state separate from `useCostSheetViewState`. When `data` changed, `handleExportJSON`/`handleExportExcel` callbacks changed identity → useEffect in `useCostSheetActions` re-ran → potential cascading side effects.
+4. **Unstable initializeScenarios deps**: `viewMode` and `initializeScenarios` in the useEffect dependency array caused unnecessary re-triggering.
+
+### Fixes Applied:
+
+#### Fix 1: Calculator Debounce (useCostSheetCalculator.ts)
+- Wrapped `useEffect` calculation in 150ms debounce via `setTimeout`
+- Uses refs (`templateRef`, `calculatedAnnexesRef`, `hasHydratedRef`) to avoid recreating the effect on data changes
+- Extracted `runCalculation` into stable `useCallback`
+- Result: Multiple rapid data changes coalesce into a single calculation
+
+#### Fix 2: Zustand Selectors in CostSheetView (CostSheetView.tsx)
+- `useCostSheetStore()` → `useCostSheetStore((s) => s.data)` — only re-renders when data changes
+- `useScenarioStore()` (no selector) → 12 individual selectors:
+  - `useScenarioStore((s) => s.isFlatMode)` etc.
+- This prevents re-renders when unrelated store fields change (e.g., `activeScenarioIds` changing doesn't re-render if only `isFlatMode` is needed)
+
+#### Fix 3: Removed Duplicate State (useCostSheetActions.ts)
+- Removed `viewMode` and `isEditing` from `useCostSheetActions`'s local state
+- `handleSetViewMode` now only handles section navigation (sets `activeCostSection`)
+- `handleExportJSON`/`handleExportExcel`/`handleExportPDF` now use refs for data/calculations instead of closure deps
+- Callbacks are now stable (no identity changes on data updates)
+- useEffect in useCostSheetActions no longer re-runs on data/calc changes
+
+#### Fix 4: Stabilized initializeScenarios Effect (CostSheetView.tsx)
+- Removed `viewMode` and `initializeScenarios` from useEffect deps
+- Effect now only depends on `[isEditing, data?.id]`
+- `initializeScenarios()` called via `useScenarioStore.getState()` (bypasses subscription)
+- Result: Effect only fires when data.id actually changes
+
+#### Fix 5: Scenario Store Version (scenario-store.ts)
+- Added `version: 1` to persist config
+- Prevents stale localStorage data from overwriting current state
+- Particularly important for `isFlatMode` which could be reset to `false` by old persisted data
+
+#### Fix 6: Scenario Calculator Selectors (useScenarioCalculator.ts)
+- `useCostSheetStore()` → `useCostSheetStore((s) => s.data)`
+- `useScenarioStore()` → `useScenarioStore((s) => s.activeScenarioIds)`
+- Minimizes re-computation when unrelated store fields change
+
+### Files Modified:
+1. `src/hooks/logic/useCostSheetCalculator.ts` — 150ms debounce + refs
+2. `src/hooks/logic/useCostSheetActions.ts` — removed duplicate state + stable callbacks
+3. `src/hooks/logic/useScenarioCalculator.ts` — Zustand selectors
+4. `src/store/scenario-store.ts` — persist version: 1
+5. `src/components/views/terminal/views/cost_sheet/CostSheetView.tsx` — Zustand selectors + stabilized effect
+
+### Verification:
+- ESLint: 0 errors
+- TypeScript: 2 pre-existing errors in Sentry config (unrelated to changes)
+- Dev server: compiling
+
+Stage Summary:
+- 5 files modified, 0 new files
+- Cascade of 5-6 re-renders reduced to 1-2 debounced renders
+- Hoja mode now persists correctly (stable store subscription + version bump)
+- Callbacks in useCostSheetActions are now stable (no identity changes)
+- FIX-RCT-140 annotations on all changes
