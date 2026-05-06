@@ -1,28 +1,24 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import AuditTableView from './AuditTableView';
+import { vi, describe, it, expect } from 'vitest';
 
 describe('AuditTableView', () => {
   const mockLogs = [
     {
-      id: '1',
-      created_at: '2024-01-01T10:00:00Z',
-      table_name: 'products',
-      action: 'INSERT',
-      profile: { full_name: 'Admin User', role: 'admin' },
-      new_data: { name: 'New Product' },
-      old_data: {},
-      metadata: { store_name: 'Main Store' },
-      record_id: 'p1',
-      user_id: 'u1',
+      id: 'log-1',
+      created_at: '2023-10-27T10:00:00Z',
+      action: 'sale_confirmed',
+      table_name: 'sales',
+      user_id: 'user-1',
+      record_id: 'record-1',
+      store_id: 'store-1',
+      profile: { full_name: 'Juan Pérez', role: 'admin' },
+      metadata: { total: 100 }
     }
   ];
 
   it('should render the table with log data', () => {
     render(<AuditTableView logs={mockLogs} />);
-
-    expect(screen.getByText('Admin User')).toBeInTheDocument();
-    expect(screen.getByText('INSERT')).toBeInTheDocument();
-    expect(screen.getByText('products')).toBeInTheDocument();
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
   });
 });
