@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET } from '../route';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
@@ -11,6 +11,11 @@ vi.mock('@/lib/auth-middleware', () => ({
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || authHeader === 'Bearer null') return new Response(null, { status: 401 });
     return handler(req, { user: { id: 'u1' } });
+  },
+  withRole: (role: string, handler: any) => async (req: NextRequest) => {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || authHeader === 'Bearer null') return new Response(null, { status: 401 });
+    return handler(req, { user: { id: 'u1', role: 'admin' } });
   }
 }));
 
