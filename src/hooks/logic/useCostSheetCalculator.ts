@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   CostSheetData,
@@ -178,7 +177,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       setResultState(prev => ({ ...prev, error: e as Error }));
       console.error("Error in unified cost calculator:", e);
     }
-  }, []);
+  }, [sharedParser]);
 
   // 2. Run the declarative Engine for the main rows — DEBOUNCED
   useEffect(() => {

@@ -31,7 +31,7 @@ describe('Templates Verification', () => {
         vi.useFakeTimers();
         const { result } = renderHook(() => useCostSheetCalculator(template));
 
-        act(() => {
+        await act(async () => {
           vi.advanceTimersByTime(200);
         });
 
@@ -46,7 +46,7 @@ describe('Templates Verification', () => {
         vi.useFakeTimers();
         const { result } = renderHook(() => useCostSheetCalculator(juiceTemplate));
 
-        act(() => {
+        await act(async () => {
           vi.advanceTimersByTime(200);
         });
 
@@ -63,7 +63,7 @@ describe('Templates Verification', () => {
         vi.useFakeTimers();
         const { result } = renderHook(() => useCostSheetCalculator(industrialTemplate));
 
-        act(() => {
+        await act(async () => {
           vi.advanceTimersByTime(200);
         });
 
