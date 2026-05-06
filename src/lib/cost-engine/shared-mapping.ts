@@ -380,7 +380,8 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
             if (!col.formula && isNumericColumn(col.key)) {
               const val = draft[col.key];
               if (typeof val === 'string' && val.length > 0 && val.startsWith('=')) {
-                draft[col.key] = evaluateAnnexExpressionShared(val, row, template.header, results, p, _annexWarnings);
+                // BUG-012 FIX: Use draft (post-coefficient) not row (pre-coefficient)
+                draft[col.key] = evaluateAnnexExpressionShared(val, draft as unknown as Record<string, unknown>, template.header, results, p, _annexWarnings);
               }
             }
           }
@@ -568,7 +569,10 @@ export function buildEngineRows(
       engineRows.push({
         id: r.id,
         parentId: parentId,
-        classification: r.id || currentNumbering, // Use r.id for canonical ref() lookup
+        // BUG-015 FIX: Use positional numbering for UUID-based rows so ref() can find them
+        classification: /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(r.id || '')
+          ? currentNumbering
+          : (r.id || currentNumbering),
         label: r.label,
         um: r.um || r.unit,
         type,

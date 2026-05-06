@@ -51,7 +51,9 @@ export function calculateIPVMetrics(
   bankTransactions.forEach(tx => {
     // FIX-LOG-011: Handle comma-formatted strings
     const raw = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
-    const amount = parseFloat(raw) || 0;
+    const rawCents = parseFloat(raw) || 0;
+    // BUG-005 FIX: Convert centavos → pesos (same as reconciliation lines)
+    const amount = rawCents / 100;
     if (tx.tipo === 'Cr') {
       bankCredits += amount;
       const parsed = parseObservations(tx.observaciones || '');
@@ -63,7 +65,7 @@ export function calculateIPVMetrics(
   });
 
   const totalSales = cashSales + transferSales;
-  const expectedCredits = transferSales * 100;
+  const expectedCredits = transferSales;
   const healthPercent = expectedCredits === 0
     ? 100
     : Math.min(100, Math.max(0, (bankCredits / expectedCredits) * 100));
@@ -92,7 +94,8 @@ export function getDailySalesHistory(
       history[date] = { date, cash: 0, transfer: 0, debits: 0 };
     }
     const rawHist = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
-    const amount = Math.abs(parseFloat(rawHist) || 0);
+    // BUG-005 FIX: Convert centavos → pesos for consistent units
+    const amount = Math.abs((parseFloat(rawHist) || 0) / 100);
     if (tx.tipo === 'Db') {
       history[date].debits += amount;
     }
@@ -142,7 +145,8 @@ export function getTopPayers(bankTransactions: BankTransaction[]): PayerMetric[]
       const parsed = parseObservations(tx.observaciones || '');
       const name = parsed.payer || 'OTROS/DESCONOCIDO';
       const rawPayer = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
-      const amount = parseFloat(rawPayer) || 0;
+      // BUG-005 FIX: Convert centavos → pesos for consistent units
+      const amount = (parseFloat(rawPayer) || 0) / 100;
 
       if (!payers[name]) {
         payers[name] = { amount: 0, count: 0 };

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   CostSheetData,
   CalculatedRowValue
@@ -17,10 +17,16 @@ import {
 } from '@/lib/cost-engine/shared-mapping';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 
-// Shared parser instance (created once, reused across all evaluations)
-const sharedParser = createSharedParser();
+// BUG-006 FIX: Parser instance is now created per hook instance via useRef
+// to prevent race conditions when multiple cost sheets are open simultaneously.
+// Previously sharedParser was a module-level singleton that could be overwritten.
 
 export const useCostSheetCalculator = (template: CostSheetData) => {
+  // BUG-006 FIX: Create a parser per hook instance
+  const parserRef = useRef<ReturnType<typeof createSharedParser> | null>(null);
+  if (!parserRef.current) parserRef.current = createSharedParser();
+  const sharedParser = parserRef.current;
+
   const hasHydrated = useCostSheetStore((s) => s._hasHydrated);
 
   const [resultState, setResultState] = useState<{
@@ -48,7 +54,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   // 1. Calculate Annexes first (internal formulas) — delegates to shared pure function
   const calculatedAnnexes = useMemo(() => {
     return calculateAnnexesPure(template, sharedParser);
-  }, [template?.annexes, template?.header]);
+  }, [template?.annexes, template?.header, template?.sections]);
 
   const annexTotals = useMemo(() => {
     const totals: { [key: string]: number } = {};
@@ -62,25 +68,36 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     return totals;
   }, [calculatedAnnexes]);
 
-  // 2. Run the declarative Engine for the main rows
-  useEffect(() => {
-    // FIX: Skip calculation until persist rehydration completes to prevent
-    // cascading re-renders (template → calc → initScenarios → template → calc)
-    if (!hasHydrated) return;
+  // FIX-RCT-140: Debounce calculation to prevent cascading re-renders.
+  // Without this, initializeScenarios → data change → calc → setResultState → re-render
+  // creates 5-6 rapid successive renders causing visual "jumps" (brincos).
+  const templateRef = useRef(template);
+  const calculatedAnnexesRef = useRef(calculatedAnnexes);
+  const hasHydratedRef = useRef(hasHydrated);
+  const pendingCalcRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep refs in sync without triggering the effect
+  useEffect(() => { templateRef.current = template; });
+  useEffect(() => { calculatedAnnexesRef.current = calculatedAnnexes; });
+  useEffect(() => { hasHydratedRef.current = hasHydrated; });
+
+  const runCalculation = useCallback(() => {
+    const currentTemplate = templateRef.current;
+    const currentAnnexes = calculatedAnnexesRef.current;
 
     try {
-      if (!template || !template.header || !template.sections) {
+      if (!currentTemplate || !currentTemplate.header || !currentTemplate.sections) {
           return;
       }
 
       // --- Calculate Early Header ---
-      const earlyHeader = { ...template.header };
+      const earlyHeader = { ...currentTemplate.header };
 
       // Evaluate early formulas first (name, code, product_code, unit, quantity)
       ['name', 'code', 'product_code', 'unit', 'quantity'].forEach(field => {
           const val = (earlyHeader as any)[field];
           if (typeof val === 'string' && val.startsWith('=')) {
-              (earlyHeader as any)[field] = evaluateHeaderExpressionShared(val, earlyHeader, calculatedAnnexes, {}, sharedParser);
+              (earlyHeader as any)[field] = evaluateHeaderExpressionShared(val, earlyHeader, currentAnnexes, {}, sharedParser);
           }
       });
 
@@ -92,9 +109,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       }
 
       // Build FichaJSON using shared mapping functions
-      const vhSums = buildVHSums(template.sections);
-      const engineRows = buildEngineRows(template, vhSums);
-      const ficha: FichaJSON = assembleFichaJSON(earlyHeader, calculatedAnnexes, engineRows);
+      const vhSums = buildVHSums(currentTemplate.sections);
+      const engineRows = buildEngineRows(currentTemplate, vhSums);
+      const ficha: FichaJSON = assembleFichaJSON(earlyHeader, currentAnnexes, engineRows);
 
       // Execute Engine
       const result = calculateFicha(ficha, { actor: 'ui-hook' });
@@ -131,7 +148,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       // --- Calculate Late Header ---
       const finalHeader = { ...earlyHeader };
       if (typeof finalHeader.sale_price === 'string' && String(finalHeader.sale_price).startsWith('=')) {
-          finalHeader.sale_price = evaluateHeaderExpressionShared(finalHeader.sale_price, finalHeader, calculatedAnnexes, newCalculatedValues, sharedParser);
+          finalHeader.sale_price = evaluateHeaderExpressionShared(finalHeader.sale_price, finalHeader, currentAnnexes, newCalculatedValues, sharedParser);
       }
 
       // Ensure the calculation result contains the final calculated header for export purposes
@@ -144,7 +161,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       };
 
       // Calculate health validations
-      const health = calculateCostSheetHealth(template, newCalculatedValues, finalHeader);
+      const health = calculateCostSheetHealth(currentTemplate, newCalculatedValues, finalHeader);
 
       setResultState({
           calculatedValues: newCalculatedValues,
@@ -161,7 +178,26 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       setResultState(prev => ({ ...prev, error: e as Error }));
       console.error("Error in unified cost calculator:", e);
     }
-  }, [template, calculatedAnnexes, hasHydrated]);
+  }, []);
+
+  // 2. Run the declarative Engine for the main rows — DEBOUNCED
+  useEffect(() => {
+    // FIX: Skip calculation until persist rehydration completes to prevent
+    // cascading re-renders (template → calc → initScenarios → template → calc)
+    if (!hasHydrated) return;
+
+    // Debounce: if another data change comes within 150ms, cancel the previous calc
+    if (pendingCalcRef.current) {
+      clearTimeout(pendingCalcRef.current);
+    }
+    pendingCalcRef.current = setTimeout(runCalculation, 150);
+
+    return () => {
+      if (pendingCalcRef.current) {
+        clearTimeout(pendingCalcRef.current);
+      }
+    };
+  }, [template, calculatedAnnexes, hasHydrated, runCalculation]);
 
   return {
       calculatedValues: resultState.calculatedValues,

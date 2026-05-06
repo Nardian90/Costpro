@@ -163,8 +163,13 @@ export function solveForTarget(
   const MAX_SIMULATE_CALLS = 500;
   let callCount = 0;
 
+  let limitReached = false;
+
   const simulate = (val: number): number => {
-    if (callCount >= MAX_SIMULATE_CALLS) return 0;
+    if (callCount >= MAX_SIMULATE_CALLS) {
+      limitReached = true;
+      return NaN;
+    }
     callCount++;
 
     const simulatedData = produce(uiData, (draft: CostSheetData) => {
@@ -190,6 +195,10 @@ export function solveForTarget(
   const guess = (targetValue - y0) / slope;
   if (!isFinite(guess)) return 0;
 
+  if (limitReached) {
+    logger.warn('COST_SHEET', '[SOLVER] CALL_LIMIT_EXCEEDED', { MAX_SIMULATE_CALLS, targetRowId, variableRowId });
+    return 0;
+  }
   return bisectRoot(guess, targetValue, simulate);
 }
 
@@ -212,7 +221,7 @@ function bisectRoot(initial: number, target: number, simulate: (v: number) => nu
       const fTestHi = simulate(testHi) - target;
 
       if (fLo * fTestLo <= 0) { lo = testLo; fLo = fTestLo; break; }
-      if (fLo * fTestHi <= 0) { hi = testHi; fHi = fTestHi; break; }
+      if (fHi * fTestHi <= 0) { hi = testHi; fHi = fTestHi; break; }
       lo = testLo; fLo = fTestLo;
       hi = testHi; fHi = fTestHi;
       expansion++;

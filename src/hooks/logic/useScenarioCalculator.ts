@@ -14,8 +14,11 @@ const useScenarioCalcSlot = (data: CostSheetData | null) => {
 };
 
 export const useScenarioCalculator = () => {
-  const { data } = useCostSheetStore();
-  const { activeScenarioIds } = useScenarioStore();
+  // FIX-RCT-140: Use selectors instead of full store subscriptions.
+  // This prevents unnecessary re-computations when unrelated store fields change.
+  const data = useCostSheetStore((s) => s.data);
+  const activeScenarioIds = useScenarioStore((s) => s.activeScenarioIds);
+
   const dataV1 = useMemo(() => activeScenarioIds.includes('v1') ? mergeScenarioValues(data, 'v1') : null, [data, activeScenarioIds]);
   const dataV2 = useMemo(() => activeScenarioIds.includes('v2') ? mergeScenarioValues(data, 'v2') : null, [data, activeScenarioIds]);
   const dataV3 = useMemo(() => activeScenarioIds.includes('v3') ? mergeScenarioValues(data, 'v3') : null, [data, activeScenarioIds]);
