@@ -22,12 +22,22 @@ const initialState: ExpertModeState = {
   isProblemsOpen: false,
 };
 
+const listeners = new Set<() => void>();
+
 function subscribe(callback: () => void) {
-  window.addEventListener('storage', callback);
-  return () => window.removeEventListener('storage', callback);
+  listeners.add(callback);
+  // Cross-tab sync
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY) callback();
+  });
+  return () => {
+    listeners.delete(callback);
+    window.removeEventListener('storage', callback);
+  };
 }
 
 function getRawSnapshot(): ExpertModeState {
+  if (typeof window === 'undefined') return initialState;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved) as ExpertModeState;
@@ -45,7 +55,7 @@ function setStoredState(updater: (prev: ExpertModeState) => ExpertModeState) {
   const prev = getRawSnapshot();
   const next = updater(prev);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  window.dispatchEvent(new StorageEvent('storage'));
+  listeners.forEach(l => l());
 }
 
 export const useExpertModeState = () => {
@@ -54,7 +64,9 @@ export const useExpertModeState = () => {
   // FIX-RCT-125: Use useSyncExternalStore with reference stability to prevent infinite re-renders
   const getSnapshot = useCallback(() => {
     const next = getRawSnapshot();
-    if (JSON.stringify(next) !== JSON.stringify(lastStateRef.current)) {
+    // deep equal check to preserve reference
+    const isSame = JSON.stringify(next) === JSON.stringify(lastStateRef.current);
+    if (!isSame) {
       lastStateRef.current = next;
     }
     return lastStateRef.current;
