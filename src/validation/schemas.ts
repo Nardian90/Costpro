@@ -506,7 +506,7 @@ export const scenarioRowValuesSchema = z.object({
   vhFormula: z.string().optional(),
   coeficiente: z.number().optional(),
   baseDeCalculoRef: z.string().optional(),
-}).catchall(z.any());
+});
 
 export const costSheetScenarioSchema = z.object({
   id: scenarioIdSchema,
@@ -515,12 +515,12 @@ export const costSheetScenarioSchema = z.object({
   createdAt: z.number(),
   values: z.record(z.string(), scenarioRowValuesSchema),
   header: z.record(z.string(), z.any()).optional(),
-}).catchall(z.any());
+});
 
 export const scenarioConfigSchema = z.object({
   primaryScenarioId: scenarioIdSchema,
   comparisonBaseId: scenarioIdSchema,
-}).catchall(z.any());
+});
 
 // ============================================
 // Cost Sheet
@@ -548,8 +548,7 @@ export const costSheetHeaderSchema = z
       .default(0),
     sale_price: z.union([z.number(), z.string()]).optional().default(0),
     client: z.string().optional().default(""),
-  })
-  .catchall(z.any());
+  });
 
 export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
   z
@@ -568,8 +567,7 @@ export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
       isPercent: z.boolean().optional(),
       is_percent: z.boolean().optional(),
       children: z.array(costSheetRowSchema).optional(),
-    })
-    .catchall(z.any()),
+    }),
 );
 
 export const costSheetSectionSchema = z.object({
@@ -585,8 +583,7 @@ export const costSheetColumnSchema = z
     title: z.string().optional(),
     formula: z.string().optional(),
     type: z.enum(["number", "string", "formula", "text"]).optional(),
-  })
-  .catchall(z.any());
+  });
 
 export const costSheetAnnexSchema = z
   .object({
@@ -596,15 +593,13 @@ export const costSheetAnnexSchema = z
     adjustmentColumn: z.string().optional().default("PRECIO UNITARIO"),
     columns: z.array(costSheetColumnSchema),
     data: z.array(z.record(z.string(), z.any())),
-  })
-  .catchall(z.any());
+  });
 
 export const costSheetSignatureSchema = z
   .object({
     prepared_by: z.string(),
     approved_by: z.string(),
-  })
-  .catchall(z.any());
+  });
 
 export const costSheetDataSchema = z
   .object({
@@ -614,8 +609,7 @@ export const costSheetDataSchema = z
     signature: costSheetSignatureSchema,
     scenarioConfig: scenarioConfigSchema.optional(),
     scenarios: z.array(costSheetScenarioSchema).optional(),
-  })
-  .catchall(z.any());
+  });
 
 // ============================================
 // Import Schemas

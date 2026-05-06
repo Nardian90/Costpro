@@ -177,7 +177,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     onKeyDown={(e) => { if (e.key === 'Enter') { handleValueChange('label', (e.target as HTMLInputElement).value); setIsEditingLabel(false); } }}
                  />
                ) : (
-                 <h4 role="button" tabIndex={0} className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
+                 <h4 role="button" tabIndex={0} aria-label={`Editar nombre del concepto: ${row.label}`} className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
                     {row.label}
                  </h4>
                )}
@@ -229,6 +229,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
             <div
               role="button"
               tabIndex={0}
+              aria-label={`Editar valor histórico de ${row.label}`}
               className="relative cursor-pointer group/vh"
               onClick={() => setIsEditingVH(true)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingVH(true); } }}
@@ -267,6 +268,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
             <div
               role="button"
               tabIndex={0}
+              aria-label={`Editar total de ${row.label}`}
               className="relative cursor-pointer group/total"
               onClick={() => !hasChildren && setIsEditingTotal(true)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!hasChildren) setIsEditingTotal(true); } }}
@@ -444,8 +446,9 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                     <button
                       onClick={() => toggleSection(section.id)}
                       className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
+                      aria-label={collapsedSections[section.id] ? `Expandir sección ${section.label}` : `Contraer sección ${section.label}`}
                     >
-                      <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} />
+                      <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} aria-hidden="true" />
                     </button>
                     <Input
                       className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"

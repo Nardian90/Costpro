@@ -182,20 +182,21 @@ export default function ExecutiveDemoView() {
                <div className="space-y-6">
                  <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest">
                     <span className="flex items-center gap-2">
-                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
                        Lote de 100 Fichas de Costo
                     </span>
-                    <span>{processedCount} / 100</span>
+                    <span aria-live="polite">{processedCount} / 100</span>
                  </div>
-                 <Progress value={progress} className="h-4 rounded-full bg-primary/10" />
+                 <Progress value={progress} className="h-4 rounded-full bg-primary/10" aria-label={`Progreso: ${Math.round(progress)}%`} />
 
-                 <div className="grid grid-cols-10 gap-2">
+                 <div className="grid grid-cols-10 gap-2" role="img" aria-label={`Cuadrícula de progreso: ${validCount} procesadas correctamente, ${errorsCount} con error, ${100 - processedCount} pendientes`}>
                    {Array.from({ length: 100 }).map((_, i) => {
                      const isProcessed = i < processedCount;
                      const isError = isProcessed && products[i]?.status === 'error';
                      return (
                        <motion.div
                          key={i}
+                         role="presentation"
                          initial={{ opacity: 0.2 }}
                          animate={{
                            opacity: isProcessed ? 1 : 0.2,

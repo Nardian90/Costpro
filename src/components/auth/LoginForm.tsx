@@ -75,17 +75,25 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
 
   // FIX #010: Rate limiting — cooldown timer
   useEffect(() => {
-    if (cooldownUntil <= 0) return;
+    if (cooldownUntil <= 0) {
+      setCooldownRemaining(0);
+      return;
+    }
+    setCooldownRemaining(Math.ceil((cooldownUntil - Date.now()) / 1000));
     const timer = setInterval(() => {
       const remaining = cooldownUntil - Date.now();
       if (remaining <= 0) {
         setCooldownUntil(0);
+        setCooldownRemaining(0);
         // FIX-BUG-RCT-005: Use functional update to avoid stale closure
         setFailedAttempts(() => 0);
         clearInterval(timer);
+      } else {
+        setCooldownRemaining(Math.ceil(remaining / 1000));
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -170,8 +178,8 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
     } catch (err: any) {
       setFailedAttempts(prev => prev + 1);
       if (failedAttempts >= 2) {
-        setCooldownUntil(Date.now() + 30000); // 30s cooldown
-        toast.error('Demasiados intentos', { description: 'Por seguridad, espera 30 segundos antes de intentar de nuevo.' });
+        setCooldownUntil(Date.now() + 10000); // 10s cooldown
+        toast.error('Demasiados intentos', { description: 'Por seguridad, espera 10 segundos antes de intentar de nuevo.' });
       }
       setError(err.message || 'Error al iniciar sesión');
       toast.error(err.message || 'Error al iniciar sesión');
@@ -312,9 +320,9 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
                 </>
               )}
             </Button>
-            {cooldownUntil > 0 && (
-              <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2">
-                Espera {Math.ceil((cooldownUntil - Date.now()) / 1000)}s antes de intentar de nuevo
+            {cooldownRemaining > 0 && (
+              <p className="text-xs text-center text-amber-600 dark:text-amber-400 mt-2" aria-live="polite">
+                Puedes intentar de nuevo en {cooldownRemaining}s
               </p>
             )}
           </motion.form>

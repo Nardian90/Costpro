@@ -3,6 +3,7 @@ import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { inventoryAdjustmentsSchema, zodError } from '@/validation/api-schemas';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 
 async function postHandler(request: NextRequest) {
@@ -13,6 +14,10 @@ async function postHandler(request: NextRequest) {
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
     );
+  }
+
+  if (!validateOrigin(request)) {
+    return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
   }
 
   const clientId = request.headers.get('x-forwarded-for') || session.user.id;

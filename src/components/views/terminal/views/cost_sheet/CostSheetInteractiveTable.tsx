@@ -198,7 +198,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     }}
                 />
             ) : (
-                <span role="button" tabIndex={0} className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
+                <span role="button" tabIndex={0} aria-label={`Editar nombre del concepto: ${row.label}`} className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
                     {row.label}
                 </span>
             )}
@@ -627,7 +627,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
                     {!hideHeader && (
                         <div className="flex items-center justify-between py-1 px-4 bg-primary/5 border-y border-border/20 border-l-2 border-primary/20">
-                            <div role="button" tabIndex={0} className="flex items-center gap-3 cursor-pointer group/header" onClick={() => toggleSection(section.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section.id); } }}>
+                            <div role="button" tabIndex={0} className="flex items-center gap-3 cursor-pointer group/header" onClick={() => toggleSection(section.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section.id); } }} aria-label={collapsedSections[section.id] ? `Expandir sección ${section.label}` : `Contraer sección ${section.label}`}>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="ghost"

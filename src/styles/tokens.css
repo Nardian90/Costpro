@@ -304,7 +304,7 @@
   --lp-bg-subtle: #050505;
   --lp-text: #ffffff;
   --lp-text-muted: #a1a1aa;
-  --lp-text-dim: #52525b;
+  --lp-text-dim: #8a8a8f;
   --lp-border: rgba(255, 255, 255, 0.08);
   --lp-border-hover: rgba(34, 197, 94, 0.3);
   --lp-glass-bg: rgba(255, 255, 255, 0.03);
@@ -323,7 +323,7 @@
   --lp-bg-subtle: #f8fafc;
   --lp-text: #0f172a;
   --lp-text-muted: #475569;
-  --lp-text-dim: #94a3b8;
+  --lp-text-dim: #737373;
   --lp-border: rgba(0, 0, 0, 0.08);
   --lp-border-hover: rgba(21, 128, 61, 0.3);
   --lp-glass-bg: rgba(0, 0, 0, 0.02);

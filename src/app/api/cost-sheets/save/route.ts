@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase as anonSupabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { calculateFicha } from '@/lib/cost-engine';
 import { buildEngineFicha } from '@/lib/cost-engine/build-ficha';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
@@ -17,6 +18,10 @@ async function saveCostSheetHandler(req: NextRequest) {
     if (!session) {
       console.error('[SaveCostSheet] No session found');
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
     }
 
     // Rate limiting after auth — use authenticated user ID instead of IP

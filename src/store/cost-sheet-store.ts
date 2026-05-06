@@ -21,6 +21,7 @@ export interface UpdateValuePayload {
 
 interface CostSheetState {
   data: CostSheetDataContract;
+  _hasHydrated: boolean;
   updateValue: (path: (string | number)[], value: any) => void;
   updateValues: (updates: UpdateValuePayload[]) => void;
   reorderRow: (annexId: string, rowIndex: number, direction: 'up' | 'down') => void;
@@ -43,6 +44,7 @@ export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
       data: reinicioTemplate as CostSheetDataContract,
+      _hasHydrated: false,
       updateValue: (path: (string | number)[], value: any) =>
         set(
           produce((draft: CostSheetState) => {
@@ -300,10 +302,19 @@ export const useCostSheetStore = create<CostSheetState>()(
     }),
     {
       name: 'cost-sheet-storage',
-      version: 2,
+      version: 3,
+      onRehydrateStorage: () => {
+        return (state) => {
+          useCostSheetStore.setState({ _hasHydrated: true });
+        };
+      },
     }
   )
 );
+
+// Selector to check hydration without subscribing to data changes
+export const useCostSheetHydrated = () =>
+  useCostSheetStore((s) => s._hasHydrated);
 
 if (typeof window !== 'undefined' && ((globalThis as any).process?.env?.NODE_ENV) === 'development') {
   (window as any).useCostSheetStore = useCostSheetStore;

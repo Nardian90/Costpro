@@ -50,13 +50,13 @@ import CostSheetMassiveGenerator from './CostSheetMassiveGenerator';
 import CostSheetQuickMode from './CostSheetQuickMode';
 import CostSheetPreview from './CostSheetPreview';
 import CostSheetWizard from './CostSheetWizard';
-import CostSheetNarrative from './CostSheetNarrative';
-import { CostSheetProblemsPanel } from './CostSheetProblemsPanel';
-import { CostSheetComparisonTable } from './CostSheetComparisonTable';
 import CostSheetParallelExpert from './CostSheetParallelExpert';
 import CostSheetFlatTable from './CostSheetFlatTable';
 import { CostSheetBanner } from './CostSheetBanner';
 import { SteelStructureCalculator } from './SteelStructureCalculator';
+
+import { CostSheetProblemsPanel } from './CostSheetProblemsPanel';
+import { CostSheetComparisonTable } from './CostSheetComparisonTable';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,10 +75,14 @@ import type { ValidationError as EngineValidationError } from '@/lib/cost-engine
 
 const DarianEditor = dynamic(() => import('./DarianEditor').then(m => ({ default: m.DarianEditor })), { ssr: false });
 
+const CostSheetNarrative = dynamic(() => import('./CostSheetNarrative'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+});
+
 const CostSheetView = () => {
   const isMobile = useIsMobile();
   const { activeCostSection: activeSection } = useUIStore();
-  const [isFlatMode, setIsFlatMode] = React.useState(false);
 
   // ── Data & Calculations ─────────────────────────────────────────────
   const { data } = useCostSheetStore();
@@ -161,8 +165,10 @@ const CostSheetView = () => {
     initializeScenarios,
     isComparisonMode,
     isParallelMode,
+    isFlatMode,
     toggleComparisonMode,
     toggleParallelMode,
+    setFlatMode,
     updateRowValue: scenarioUpdateRowValue,
     setPrimaryScenario,
     createScenario: createScenarioFromStore,
@@ -189,8 +195,20 @@ const CostSheetView = () => {
     return (data?.annexes || []).some(a => a.id === activeSection) || activeSection === 'all-annexes';
   }, [data?.annexes, activeSection]);
 
-  useEffect(() => {
-    if (isEditing && data && viewMode === 'expert') initializeScenarios();
+  // FIX: Prevent initializeScenarios cascade — only run once per data.id
+  const initializedRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (isEditing && data && viewMode === 'expert' && data?.id && initializedRef.current !== data?.id) {
+      initializedRef.current = data?.id;
+      // Small delay to let persist rehydration settle before modifying store
+      const timer = setTimeout(() => {
+        const currentData = useCostSheetStore.getState().data;
+        if (!currentData?.scenarios || currentData.scenarios.length === 0) {
+          initializeScenarios();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
   }, [isEditing, data?.id, viewMode, initializeScenarios]);
 
   const { expandAllSections, toggleProblems } = expertState;
@@ -348,7 +366,7 @@ const CostSheetView = () => {
                                         <div className="flex items-center bg-muted/40 rounded-lg p-0.5 border border-border/40">
                                             <button
                                                 type="button"
-                                                onClick={() => setIsFlatMode(false)}
+                                                onClick={() => setFlatMode(false)}
                                                 className={cn(
                                                     "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
                                                     !isFlatMode
@@ -363,7 +381,7 @@ const CostSheetView = () => {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => { setIsFlatMode(true); toggleParallelMode(false); toggleComparisonMode(false); }}
+                                                onClick={() => setFlatMode(true)}
                                                 className={cn(
                                                     "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
                                                     isFlatMode

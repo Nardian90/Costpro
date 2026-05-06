@@ -100,7 +100,7 @@ export const Header = ({
                       )}
                       disabled={storesToShow.length <= 1}
                     >
-                      <BuildingIcon className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
+                      <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
 
                       <span className="text-[10px] sm:text-xs font-black uppercase truncate tracking-tight">
                         {activeStoreName}
@@ -133,11 +133,11 @@ export const Header = ({
                             )}
                           >
                             <div className="flex items-center gap-3 truncate">
-                              <BuildingIcon className={cn("w-4 h-4 shrink-0", user?.activeStoreId === s.id ? "text-primary" : "text-muted-foreground/40")} />
+                              <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", user?.activeStoreId === s.id ? "text-primary" : "text-muted-foreground/40")} />
                               <span className="text-xs font-black uppercase tracking-tight truncate">{s.name}</span>
                             </div>
                             {user?.activeStoreId === s.id && (
-                              <Check className="w-4 h-4 text-primary shrink-0" />
+                              <Check aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
                             )}
                           </DropdownMenuItem>
                         ))}
@@ -190,14 +190,14 @@ export const Header = ({
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-primary/10 focus:text-primary min-h-[44px]"
                 onClick={() => onViewChange('settings')}
               >
-                <User className="w-4 h-4 text-muted-foreground" />
+                <User aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs font-semibold">Mi Perfil</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-primary/10 focus:text-primary min-h-[44px]"
                 onClick={() => onViewChange('settings')}
               >
-                <Settings className="w-4 h-4 text-muted-foreground" />
+                <Settings aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs font-semibold">Configuración</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -205,7 +205,7 @@ export const Header = ({
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-danger/10 focus:text-danger min-h-[44px] text-danger"
                 onClick={() => onViewChange('dashboard')}
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut aria-hidden="true" className="w-4 h-4" />
                 <span className="text-xs font-semibold">Cerrar Sesión</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

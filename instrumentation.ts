@@ -2,7 +2,7 @@
  * Next.js Instrumentation Hook
  *
  * This file is automatically loaded by Next.js at startup (before the server begins
- * handling requests). It initializes OpenTelemetry tracing for the Node.js runtime.
+ * handling requests). It initializes Sentry + OpenTelemetry tracing for the Node.js runtime.
  *
  * IMPORTANT: This file MUST be at the project root (not inside src/).
  * See: https://nextjs.org/docs/app/api-reference/config/instrumentation
@@ -21,6 +21,28 @@ export async function register() {
     return;
   }
 
+  // Initialize Sentry in server runtime
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    try {
+      await import('./sentry.server.config');
+    } catch (err) {
+      // Sentry is optional — never crash the app if it fails
+      console.error('[Instrumentation] Failed to initialize Sentry server:', err);
+    }
+  }
+
+  // FIX-INF-023: Process-level error handlers (Node.js only — inside register to avoid Edge)
+  try {
+    process.on('unhandledRejection', (reason) => {
+      console.error('[Process] Unhandled rejection:', reason);
+    });
+    process.on('uncaughtException', (error) => {
+      console.error('[Process] Uncaught exception:', error);
+    });
+  } catch {
+    // process.on not available in this runtime
+  }
+
   // Opt-in: only initialize when explicitly enabled or in production
   const otelEnabled = process.env.OTEL_ENABLED === 'true' || process.env.NODE_ENV === 'production';
   if (!otelEnabled) {
@@ -35,14 +57,4 @@ export async function register() {
     // Tracing is optional — never crash the app if it fails
     console.error('[Instrumentation] Failed to initialize OpenTelemetry:', err);
   }
-}
-
-// FIX-INF-023: Process-level error handlers for uncaught exceptions
-if (typeof process !== 'undefined') {
-  process.on('unhandledRejection', (reason) => {
-    console.error('[Process] Unhandled rejection:', reason);
-  });
-  process.on('uncaughtException', (error) => {
-    console.error('[Process] Uncaught exception:', error);
-  });
 }

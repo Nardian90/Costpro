@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getServerSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 import { promises as fs } from 'fs';
@@ -74,10 +75,15 @@ async function writeIncidentsFile(data: IncidentFile): Promise<void> {
 
 // ── POST handler ──
 async function postHandler(request: NextRequest) {
-  // Rate limiting: 5 requests per minute, identified by IP
-  // FIX-SEC-014: TODO — Rate limit by user ID after auth is added (currently IP-only)
-  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous';
-  const rlResult = await rateLimit(`incidents:${clientIp}`, {
+  // FIX-SEC-014: Authentication required — only authenticated users can create incidents
+  const session = await getServerSession(request);
+  if (!session || !session.token) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  // Rate limiting: 5 requests per minute, identified by user ID (FIX-SEC-014 resolved)
+  const clientId = session.user.id;
+  const rlResult = await rateLimit(`incidents:${clientId}`, {
     windowMs: 60_000,
     maxRequests: 5,
   });
@@ -138,7 +144,7 @@ async function postHandler(request: NextRequest) {
     resolution: null,
     timeline: [
       {
-        event: 'Incident created via /api/legal/incidents',
+        event: `Incident created via /api/legal/incidents by user ${session.user.id}`,
         timestamp,
       },
     ],

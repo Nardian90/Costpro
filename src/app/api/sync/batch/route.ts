@@ -4,11 +4,16 @@ import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { syncBatchSchema } from '@/validation/schemas';
 import { withAuth } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
 const handler = withAuth(async (req, session) => {
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+  }
+
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });

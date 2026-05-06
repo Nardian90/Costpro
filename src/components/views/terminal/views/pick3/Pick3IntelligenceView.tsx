@@ -22,14 +22,22 @@ import { cn } from '@/lib/utils';
 import { Pick3Engine } from '@/services/pick3/Pick3Engine';
 import { Pick3Storage } from '@/services/pick3/storage';
 import { Pick3Result, AdvancedAnalysis, IntelligencePlay, BettingConfig, Pick3Profile, Pick3LedgerEntry } from '@/types/pick3';
-import { Pick3Visuals } from './Pick3Visuals';
+import dynamic from 'next/dynamic';
 import { Pick3HistorySection } from './Pick3HistorySection';
 import { Pick3ControlPanel } from './Pick3ControlPanel';
 import { Pick3StrategySection } from './Pick3StrategySection';
 import { Pick3OnboardingWizard } from './Pick3OnboardingWizard';
 import { BankrollDashboard } from './BankrollDashboard';
 import { BetEntryDialog } from './BetEntryDialog';
-import { Pick3SimulationDashboard } from './Pick3SimulationDashboard';
+
+const Pick3Visuals = dynamic(() => import('./Pick3Visuals').then(m => ({ default: m.Pick3Visuals })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+});
+const Pick3SimulationDashboard = dynamic(() => import('./Pick3SimulationDashboard').then(m => ({ default: m.Pick3SimulationDashboard })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+});
 import { Pick3HeroCard } from './Pick3HeroCard';
 import { Pick3HelpSection } from './Pick3HelpSection';
 import { BacktestEngine, ModelValidationResult } from '@/services/pick3/backtest.engine';

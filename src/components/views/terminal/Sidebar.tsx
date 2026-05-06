@@ -299,6 +299,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         <nav
           id="sidebar-nav"
           role="menubar"
+          aria-label="Navegación del menú principal"
           aria-orientation="vertical"
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >

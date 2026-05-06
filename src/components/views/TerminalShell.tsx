@@ -25,11 +25,33 @@ import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import ChunkErrorBoundary from '@/components/ui/ChunkErrorBoundary';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileSafeContainer from '@/components/ui/MobileSafeContainer';
 import { useKeyboardShortcuts } from '@/hooks/ui/useKeyboardShortcuts';
 import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
 import { NavigationBreadcrumb } from '@/components/ui/NavigationBreadcrumb';
+
+// FIX: ViewErrorBoundary defined at MODULE level — prevents unmount/remount
+// on every TerminalShell re-render (was defined inside renderView, causing
+// React to treat it as a new component type each time, destroying child state).
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; viewName: string }) {
+  return (
+    <ErrorBoundary
+      fallback={
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center space-y-3">
+            <p className="text-destructive font-medium">Error al cargar {viewName}</p>
+            <button onClick={() => window.location.reload()} className="text-sm text-primary hover:underline">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      }
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
@@ -187,26 +209,6 @@ export default function TerminalShell() {
   };
 
   const renderView = (view: ViewType) => {
-    // FIX-LOG-028: Per-view error boundary to prevent one bad view from crashing the entire terminal
-    function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; viewName: string }) {
-      return (
-        <ErrorBoundary
-          fallback={
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center space-y-3">
-                <p className="text-destructive font-medium">Error al cargar {viewName}</p>
-                <button onClick={() => window.location.reload()} className="text-sm text-primary hover:underline">
-                  Reintentar
-                </button>
-              </div>
-            </div>
-          }
-        >
-          {children}
-        </ErrorBoundary>
-      );
-    }
-
     switch (view) {
         case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Pick3 Intelligence"><Pick3IntelligenceView /></ViewErrorBoundary>;

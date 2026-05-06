@@ -1,11 +1,11 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
   typescript: {
     ignoreBuildErrors: false, // FIX-INF-017
   },
@@ -41,4 +41,33 @@ const withBundleAnalyzer = (typeof process !== 'undefined' && process.env.ANALYZ
   ? require('@next/bundle-analyzer')({ enabled: true })
   : (config: NextConfig) => config;
 
-export default withBundleAnalyzer(withNextIntl(nextConfig));
+// Sentry wrapper — https://docs.sentry.io/platforms/javascript/guides/nextjs/
+const withSentry = withSentryConfig(nextConfig, {
+  org: "costpro",
+  project: "costpro-enterprise",
+
+  // Only print logs for uploading source maps in production builds
+  silent: true,
+
+  // Upload source maps for better stack traces (disabled in dev)
+  sourcemaps: {
+    disable: process.env.NODE_ENV === 'development',
+  },
+
+  // Suppress source map uploading logs during builds
+  hideSourceMaps: true,
+
+  // Hides the "Sentry" warning banner in the build output
+  disableSentryStaticResourceWarning: true,
+
+  // Wider patterns for source maps
+  widenClientFileUpload: true,
+
+  // Disable automatic tunnel route creation (we handle it manually via /api/monitoring)
+  tunnelRoute: undefined,
+
+  // Disable automatic middleware wrapping to prevent Edge Runtime issues on Vercel
+  automaticVercelMonitorsIntegration: false,
+});
+
+export default withBundleAnalyzer(withNextIntl(withSentry));

@@ -15,11 +15,14 @@ import {
   buildEngineRows,
   assembleFichaJSON,
 } from '@/lib/cost-engine/shared-mapping';
+import { useCostSheetStore } from '@/store/cost-sheet-store';
 
 // Shared parser instance (created once, reused across all evaluations)
 const sharedParser = createSharedParser();
 
 export const useCostSheetCalculator = (template: CostSheetData) => {
+  const hasHydrated = useCostSheetStore((s) => s._hasHydrated);
+
   const [resultState, setResultState] = useState<{
       calculatedValues: { [key: string]: CalculatedRowValue };
       calculatedHeader: any | null;
@@ -61,6 +64,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
   // 2. Run the declarative Engine for the main rows
   useEffect(() => {
+    // FIX: Skip calculation until persist rehydration completes to prevent
+    // cascading re-renders (template → calc → initScenarios → template → calc)
+    if (!hasHydrated) return;
+
     try {
       if (!template || !template.header || !template.sections) {
           return;
@@ -105,7 +112,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               baseTotal: r.baseTotal || 0,
               baseValorHistorico: r.baseHist || 0,
               coeficiente: r.formaCalculo === 'PRORRATEO'
-                ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
+                ? (Math.abs(r.baseHist ?? 0) > 0.0001 ? (r.valorHistorico || 0) / (r.baseHist ?? 1) : 0)
                 : (r.coeficiente || 0),
               fuente: r.fuente,
               metadata: { ...(r.metadata || {}), appliedFormula: r.formula },
@@ -154,7 +161,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       setResultState(prev => ({ ...prev, error: e as Error }));
       console.error("Error in unified cost calculator:", e);
     }
-  }, [template, calculatedAnnexes]);
+  }, [template, calculatedAnnexes, hasHydrated]);
 
   return {
       calculatedValues: resultState.calculatedValues,

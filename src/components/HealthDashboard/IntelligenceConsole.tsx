@@ -35,11 +35,16 @@ export const IntelligenceConsole: React.FC<IntelligenceConsoleProps> = ({
               alert.level === 'warn' ? "bg-amber-500/5 border-amber-500/20 text-amber-600" :
               "bg-blue-500/5 border-blue-500/20 text-blue-500"
             )}>
-               <div className={cn(
-                 "w-2 h-2 rounded-full",
-                 alert.level === 'error' ? "bg-rose-500 animate-pulse" :
-                 alert.level === 'warn' ? "bg-amber-500" : "bg-blue-500"
-               )} />
+               <div className="flex items-center gap-2">
+                 <div className={cn(
+                   "w-2 h-2 rounded-full",
+                   alert.level === 'error' ? "bg-rose-500 animate-pulse" :
+                   alert.level === 'warn' ? "bg-amber-500" : "bg-blue-500"
+                 )} />
+                 <span className="text-[9px] font-black uppercase tracking-widest opacity-60">
+                   {alert.level === 'error' ? 'Error' : alert.level === 'warn' ? 'Advertencia' : 'Info'}
+                 </span>
+               </div>
                <div className="flex-1">
                  <div className="text-xs font-black uppercase tracking-tight">{alert.message}</div>
                  <div className="text-[9px] opacity-50 font-bold uppercase">{alert.timestamp}</div>

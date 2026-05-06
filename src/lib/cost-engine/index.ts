@@ -864,8 +864,8 @@ const ruleOverride = activeRules[0];
             });
             current.total = finalTotal;
             current.fuente = fuente;
-            current.baseTotal = baseTotal.toNumber();
-            current.baseHist = baseHist.toNumber();
+            current.baseTotal = baseTotal.toDecimalPlaces(decimals).toNumber();
+            current.baseHist = baseHist.toDecimalPlaces(decimals).toNumber();
         }
       }
     });
