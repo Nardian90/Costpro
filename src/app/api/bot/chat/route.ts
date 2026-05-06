@@ -71,7 +71,7 @@ async function botChatHandler(req: NextRequest) {
       return NextResponse.json({
         error: isQuota ? 'Límite de IA alcanzado' : 'Error de comunicación con la IA',
         // FIX-SEC-021: Hide AI error details in production
-        details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? errorMsg : undefined
+        details: process.env.NODE_ENV !== 'production' ? errorMsg : undefined
       }, { status: 502 });
     }
 
@@ -80,7 +80,7 @@ async function botChatHandler(req: NextRequest) {
     console.error('[BotChat] Global Error:', error);
     return NextResponse.json({
       error: 'Error interno',
-      details: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? msg : 'Error interno del servidor'
+      details: process.env.NODE_ENV !== 'production' ? msg : 'Error interno del servidor'
     }, { status: 500 });
   }
 }
