@@ -110,7 +110,10 @@ export const profileSchema = z.object({
   store_id: resilientUuid,
   active_store_id: resilientUuid,
   logo_url: z.string().nullable().optional(),
-  plan: z.string().catch("free"),
+  plan: z.preprocess(
+    (val) => (typeof val === 'object' && val !== null ? (val as any).name || "free" : val),
+    z.string()
+  ).catch("free"),
   reeup: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
   ai_provider: z.string().optional(),
