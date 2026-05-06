@@ -69,7 +69,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(200);
     });
 
@@ -88,7 +88,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
     };
     const { result: result2 } = renderHook(() => useCostSheetCalculator(templateWithBaseSelected as any));
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(200);
     });
 
@@ -122,7 +122,7 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template as any));
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(200);
     });
 

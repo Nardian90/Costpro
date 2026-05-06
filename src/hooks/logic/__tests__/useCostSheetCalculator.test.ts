@@ -49,7 +49,7 @@ describe('useCostSheetCalculator', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template));
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(200);
     });
 
@@ -77,7 +77,7 @@ describe('useCostSheetCalculator', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useCostSheetCalculator(template));
 
-    act(() => {
+    await act(async () => {
       vi.advanceTimersByTime(200);
     });
 
@@ -100,7 +100,7 @@ describe('useCostSheetCalculator', () => {
      vi.useFakeTimers();
      const { result } = renderHook(() => useCostSheetCalculator(template));
 
-     act(() => {
+     await act(async () => {
        vi.advanceTimersByTime(200);
      });
 
@@ -142,7 +142,7 @@ describe('useCostSheetCalculator', () => {
       vi.useFakeTimers();
       const { result } = renderHook(() => useCostSheetCalculator(template));
 
-      act(() => {
+      await act(async () => {
         vi.advanceTimersByTime(200);
       });
 
