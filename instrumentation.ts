@@ -9,17 +9,21 @@
  *
  * The instrumentation hook does NOT run in Edge Runtime — we check NEXT_RUNTIME
  * to avoid importing Node.js-only packages in Edge contexts.
- *
- * OpenTelemetry SDK is only initialized when OTEL_ENABLED=true env var is set.
- * In development with Turbopack, OTel SDK packages may not resolve correctly
- * (they use Node.js-specific module resolution), so tracing is opt-in.
  */
 
 export async function register() {
-  // Only initialize tracing in Node.js runtime (not Edge)
+  // Only initialize tracing and process handlers in Node.js runtime (not Edge)
   if (process.env.NEXT_RUNTIME === 'edge') {
     return;
   }
+
+  // FIX-INF-023: Process-level error handlers for uncaught exceptions
+  process.on('unhandledRejection', (reason) => {
+    console.error('[Process] Unhandled rejection:', reason);
+  });
+  process.on('uncaughtException', (error) => {
+    console.error('[Process] Uncaught exception:', error);
+  });
 
   // Opt-in: only initialize when explicitly enabled or in production
   const otelEnabled = process.env.OTEL_ENABLED === 'true' || process.env.NODE_ENV === 'production';
@@ -35,14 +39,4 @@ export async function register() {
     // Tracing is optional — never crash the app if it fails
     console.error('[Instrumentation] Failed to initialize OpenTelemetry:', err);
   }
-}
-
-// FIX-INF-023: Process-level error handlers for uncaught exceptions
-if (typeof process !== 'undefined') {
-  process.on('unhandledRejection', (reason) => {
-    console.error('[Process] Unhandled rejection:', reason);
-  });
-  process.on('uncaughtException', (error) => {
-    console.error('[Process] Uncaught exception:', error);
-  });
 }

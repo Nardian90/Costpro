@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore, useRef } from 'react';
 
 const STORAGE_KEY = 'cost_module_expert_state';
 
@@ -23,11 +23,13 @@ const initialState: ExpertModeState = {
 };
 
 function subscribe(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
   window.addEventListener('storage', callback);
   return () => window.removeEventListener('storage', callback);
 }
 
 function getSnapshot(): ExpertModeState {
+  if (typeof window === 'undefined') return initialState;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved) as ExpertModeState;
@@ -49,8 +51,29 @@ function setStoredState(updater: (prev: ExpertModeState) => ExpertModeState) {
 }
 
 export const useExpertModeState = () => {
+  // Use a ref to cache the snapshot and avoid infinite loops with useSyncExternalStore
+  const lastSnapshotRef = useRef<ExpertModeState>(initialState);
+  const lastRawRef = useRef<string | null>(null);
+
+  const getCachedSnapshot = useCallback(() => {
+    if (typeof window === 'undefined') return initialState;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === lastRawRef.current) {
+      return lastSnapshotRef.current;
+    }
+
+    try {
+      const parsed = raw ? JSON.parse(raw) : initialState;
+      lastRawRef.current = raw;
+      lastSnapshotRef.current = parsed;
+      return parsed;
+    } catch (e) {
+      return initialState;
+    }
+  }, []);
+
   // FIX-RCT-125: Use useSyncExternalStore to prevent hydration mismatch and cascading renders
-  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const state = useSyncExternalStore(subscribe, getCachedSnapshot, getServerSnapshot);
 
   const isLoaded = useSyncExternalStore(
     () => () => {},

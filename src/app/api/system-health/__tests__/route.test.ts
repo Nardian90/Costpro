@@ -7,10 +7,10 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (handler: any) => async (req: NextRequest) => {
+  withRole: (role: string, handler: any) => async (req: NextRequest) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || authHeader === 'Bearer null') return new Response(null, { status: 401 });
-    return handler(req, { user: { id: 'u1' } });
+    return handler(req, { user: { id: 'u1', role: 'admin' } });
   }
 }));
 

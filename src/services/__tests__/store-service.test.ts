@@ -36,7 +36,10 @@ describe('storeService', () => {
       eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
-      then: vi.fn((resolve) => resolve({ data: null, error: null })),
+      // Implement then as a regular function that returns a Promise to avoid hanging
+      then: vi.fn(function(resolve, reject) {
+        return Promise.resolve({ data: null, error: null }).then(resolve, reject);
+      }),
     };
 
     mocks.from.mockReturnValue(chain);
@@ -106,7 +109,7 @@ describe('storeService', () => {
     it('realiza snapshot antes del reset', async () => {
       mocks.rpc.mockResolvedValueOnce({ error: null });
       // Para los insert de auditoría
-      chain.then.mockResolvedValue({ error: null });
+      chain.then.mockImplementation((resolve: any) => resolve({ error: null }));
 
       await storeService.resetStore('s1');
 
@@ -122,6 +125,9 @@ describe('storeService', () => {
 
     it('maneja error en RPC', async () => {
         mocks.rpc.mockResolvedValueOnce({ error: new Error('RPC Failed') });
+        // Para los insert de auditoría
+        chain.then.mockImplementation((resolve: any) => resolve({ error: null }));
+
         await expect(storeService.resetStore('s1')).rejects.toThrow('RPC Failed');
     });
   });

@@ -243,7 +243,7 @@ describe('GET /api/rss', () => {
 
       expect(res.status).toBe(500);
       const json = await res.json();
-      expect(json.error).toBe('Database connection failed');
+      expect(json.error).toBe('Error interno del servidor');
     });
   });
 });

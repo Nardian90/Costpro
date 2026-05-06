@@ -15,6 +15,10 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
 }));
 
+vi.mock('@/lib/auth', () => ({
+  getServerSession: vi.fn().mockResolvedValue({ user: { id: 'u1' }, token: 't1' }),
+}));
+
 vi.mock('fs', () => ({
   default: {
     existsSync: mockExistsSync,

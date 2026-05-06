@@ -1,17 +1,22 @@
-// FIX-INF-003: CORS not configured at middleware — all API routes are same-origin only by design.
-// Add CORS headers here if external integrations need cross-origin access.
-// FIX-INF-004: Auth is enforced per-route via withAuth/withRole HOFs.
-// Consider adding a middleware-level route check as defense-in-depth.
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Edge-compatible nonce generation using Web Crypto API
-  const array = new Uint8Array(18);
-  crypto.getRandomValues(array);
-  const nonce = btoa(String.fromCharCode(...array)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  let nonce = '';
+  try {
+    // Edge-compatible nonce generation using Web Crypto API
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    // Use Array.from to avoid issues with spreading Uint8Array in some environments
+    nonce = btoa(String.fromCharCode(...Array.from(array)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } catch (e) {
+    // Fallback to randomUUID if Web Crypto fails
+    nonce = crypto.randomUUID();
+  }
 
-  // FIX-INF-001: Use env var instead of hardcoded Supabase URL in CSP
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseWs = supabaseUrl.replace('https://', 'wss://');
 
