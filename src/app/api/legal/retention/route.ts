@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { withRole, type AuthenticatedSession } from '@/lib/auth-middleware';
 import {
   getRetentionPolicies,
   checkRetentionPolicy,
@@ -50,7 +51,8 @@ function processPolicy(category: string): ProcessedResult {
 
 // ── Route Handler ──────────────────────────────────────
 
-async function retentionHandler(request: NextRequest): Promise<Response> {
+// FIX-BUG-SEC-001: Replaced manual Bearer check with withRole('admin') for proper auth + RBAC
+async function retentionHandler(request: NextRequest, _session: AuthenticatedSession): Promise<Response> {
   // Rate limiting: 30 requests per minute
   const rlResult = await rateLimit('retention-api', {
     windowMs: 60_000,
@@ -74,33 +76,7 @@ async function retentionHandler(request: NextRequest): Promise<Response> {
     );
   }
 
-  // Authorization: Bearer token required (admin role expected)
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return NextResponse.json(
-      {
-        error: 'Unauthorized',
-        message: 'Se requiere header Authorization: Bearer <token>',
-      },
-      { status: 401 }
-    );
-  }
 
-  const token = authHeader.replace('Bearer ', '').trim();
-  if (!token) {
-    return NextResponse.json(
-      {
-        error: 'Unauthorized',
-        message: 'Token vacío o inválido',
-      },
-      { status: 401 }
-    );
-  }
-
-  // In production, validate the token against the auth system and check admin role.
-  // For this endpoint, the token validation is a placeholder — actual auth is handled
-  // by withRole() in the auth-middleware when Supabase is configured.
-  // The endpoint is designed to be called by admin cron jobs or authenticated admin sessions.
 
   // Parse request body
   let body: { category?: string };
@@ -189,9 +165,10 @@ async function retentionHandler(request: NextRequest): Promise<Response> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
+      // FIX-SEC-019: Hide error details in production
       {
         error: 'Internal Server Error',
-        message,
+        message: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     );
@@ -200,4 +177,7 @@ async function retentionHandler(request: NextRequest): Promise<Response> {
 
 // ── Export with tracing ────────────────────────────────
 
-export const POST = withTracing(retentionHandler, 'POST /api/legal/retention');
+export const POST = withTracing(
+  withRole('admin', retentionHandler),
+  'POST /api/legal/retention'
+);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CostProLoaderProps {
@@ -40,20 +40,29 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const id = React.useId().replace(/:/g, '');
 
   /* ── Splash state (fullScreen only) ── */
-  const [isReturning] = useState(() =>
-    typeof window !== 'undefined' ? !!localStorage.getItem('costpro-visited') : false
+  // FIX-BUG-RCT-003: Use useSyncExternalStore to read localStorage without hydration mismatch
+  const isReturning = useSyncExternalStore(
+    () => () => {},
+    () => !!localStorage.getItem('costpro-visited'),
+    () => false
   );
   const [phase, setPhase] = useState<'line' | 'logo' | 'hold' | 'out'>(
     () => {
       if (!fullScreen) return 'logo';
-      if (typeof window !== 'undefined' && localStorage.getItem('costpro-visited')) return 'logo';
-      if (typeof window !== 'undefined' && !localStorage.getItem('costpro-visited')) {
-        localStorage.setItem('costpro-visited', 'true');
-      }
       return 'line';
     }
   );
   const [dismissed, setDismissed] = useState(false);
+
+  // FIX-BUG-RCT-003: Derive effective phase — skip 'line' when returning visitor detected client-side
+  const effectivePhase = (phase === 'line' && isReturning) ? 'logo' : phase;
+
+  // Mark first visit in localStorage (client-side only)
+  useEffect(() => {
+    if (fullScreen && !localStorage.getItem('costpro-visited')) {
+      localStorage.setItem('costpro-visited', 'true');
+    }
+  }, [fullScreen]);
 
   const dismiss = useCallback(() => {
     setPhase('out');
@@ -72,7 +81,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     const totalMs = isReturning ? SPLASH_RETURN_MS : SPLASH_FIRST_MS;
 
     if (isReturning) {
-      // Returning: skip line animation, go straight to logo (already set via initial state)
+      // Returning: skip line animation, go straight to logo (already set via effectivePhase)
       timers.push(setTimeout(dismiss, totalMs));
     } else {
       // First visit: line (0-800ms) → logo (800-1200ms) → hold (1200-1800ms) → out
@@ -82,7 +91,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     }
 
     return () => timers.forEach(clearTimeout);
-  }, [fullScreen, dismissed, dismiss]);
+  }, [fullScreen, dismissed, dismiss, isReturning]);
 
   if (dismissed && !fullScreen) return null;
   if (dismissed && fullScreen) return null;
@@ -155,7 +164,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           {/* Logo text — always in DOM so it reserves space; invisible during line phase */}
           <div
             className={cn(
-              phase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
+              effectivePhase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
             )}
             style={{ transition: 'opacity 0.15s ease' }}
           >
@@ -176,7 +185,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
             <div
               className={cn(
                 'h-[5px] w-[300px] rounded-full',
-                phase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
+                effectivePhase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
               )}
               style={{
                 backgroundColor: 'var(--primary)',

@@ -20,7 +20,6 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { announce } from '@/components/ui/AriaLiveRegion';
 import { usageService } from '@/services/usage-service';
 import { exportToCSV } from '@/services/export-service';
 import { formatDistanceToNow } from 'date-fns';
@@ -102,25 +101,7 @@ export const useCostSheetActions = ({
     [handleSetActiveSection, setIsEditing, setViewMode]
   );
 
-  useEffect(() => {
-    if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
-    else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
-    else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
-    else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
-    else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
-    else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
-    else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
-    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
-    else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
-    else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
-    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
-    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
-  }, [activeSection]);
-
-  const handleExportPDF = useCallback(
+  const handleExportPDF = useCallback(  
     async (options: ExportOptions) => {
       const toastId = toast.loading('Generando PDF...');
 
@@ -166,18 +147,15 @@ export const useCostSheetActions = ({
           const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
           if (success) {
             toast.success('PDF consolidado generado con éxito', { id: toastId });
-            announce('PDF consolidado generado con éxito', 'polite');
             if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
           } else {
             throw new Error('El servidor no pudo generar el PDF.');
           }
         } else {
           toast.success('PDF generado con éxito', { id: toastId });
-          announce('PDF generado con éxito', 'polite');
         }
       } catch (error: any) {
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
-        announce(`Error al generar PDF: ${error.message}`, 'assertive');
       }
     },
     [calculationResult, data, calculatedValues, calculatedHeader, user]
@@ -205,10 +183,8 @@ export const useCostSheetActions = ({
           const json = JSON.parse(text);
           setSheet(json);
           toast.success('Ficha cargada correctamente');
-          announce('Ficha de costos cargada correctamente', 'polite');
         } catch (err) {
           toast.error('Error al cargar el archivo JSON');
-          announce('Error al cargar archivo JSON', 'assertive');
         }
       }
     };
@@ -234,8 +210,26 @@ export const useCostSheetActions = ({
     a.click();
     a.remove();
     toast.success('JSON exportado correctamente');
-    announce('JSON exportado correctamente', 'polite');
   }, [data, calculatedHeader, calculatedValues]);
+
+  // FIX-RCT-100/101: Moved useEffect after all callback declarations to satisfy deps
+  useEffect(() => {
+    if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
+    else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
+    else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
+    else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
+    else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
+    else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); setViewMode('expert'); }
+    else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
+  }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleExportExcel, setCurrentView]); // FIX-RCT-100/101: Add all referenced stable callbacks to deps
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
     setQuickModeProducts(rows.map(r => ({
@@ -260,9 +254,6 @@ export const useCostSheetActions = ({
     confirmation,
     setConfirmation,
     askConfirmation,
-    viewMode,
-    isEditing,
-    setIsEditing,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,

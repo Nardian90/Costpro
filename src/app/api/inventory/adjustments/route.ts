@@ -21,7 +21,12 @@ async function postHandler(request: NextRequest) {
 
   const userId = session.user.id;
 
-  const rawBody = await request.json();
+  let rawBody;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
+  }
   const parsed = inventoryAdjustmentsSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(zodError(parsed.error), { status: 400 });
@@ -39,10 +44,13 @@ async function postHandler(request: NextRequest) {
 
     if (rpcError) {
       return NextResponse.json(
-        { error: "Internal Server Error", message: rpcError.message },
+        // FIX-SEC-019: Hide error details in production
+        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? rpcError.message : undefined },
         { status: 500 }
       );
     }
+
+    if (!saleId) return NextResponse.json({ message: "Ajuste procesado", saleId: null }, { status: 200 });
 
     const { data: saleItems, error: itemsError } = await authClient
       .from("sale_items")
@@ -51,7 +59,8 @@ async function postHandler(request: NextRequest) {
 
     if (itemsError) {
       return NextResponse.json(
-        { error: "Internal Server Error", message: itemsError.message },
+        // FIX-SEC-019: Hide error details in production
+        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? itemsError.message : undefined },
         { status: 500 }
       );
     }
@@ -64,7 +73,8 @@ async function postHandler(request: NextRequest) {
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal Server Error", message: errorMessage },
+      // FIX-SEC-019: Hide error details in production
+      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
       { status: 500 }
     );
   }

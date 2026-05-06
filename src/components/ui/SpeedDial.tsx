@@ -73,6 +73,8 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
         <motion.button
           layout
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Cerrar menú de acciones" : "Abrir menú de acciones"} /* FIX-ACC-004 */
+          aria-expanded={isOpen} /* FIX-ACC-004 */
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 neu-raised hover:neu-raised-hover",
             isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-primary"

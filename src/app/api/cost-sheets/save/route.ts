@@ -13,8 +13,14 @@ export const runtime = 'nodejs';
 
 async function saveCostSheetHandler(req: NextRequest) {
   try {
-    // Rate limiting
-    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    const session = await getServerSession(req);
+    if (!session) {
+      console.error('[SaveCostSheet] No session found');
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Rate limiting after auth — use authenticated user ID instead of IP
+    const clientId = session.user.id;
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
 
     if (!allowed) {
@@ -27,12 +33,6 @@ async function saveCostSheetHandler(req: NextRequest) {
           'Retry-After': String(Math.ceil((resetAt.getTime() - Date.now()) / 1000)),
         },
       });
-    }
-
-    const session = await getServerSession(req);
-    if (!session) {
-      console.error('[SaveCostSheet] No session found');
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const rawBody = await req.json();

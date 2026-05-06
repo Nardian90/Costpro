@@ -24,7 +24,7 @@ export function useHealthIndex(pollingInterval: number = 30000) {
     fetchData();
     const interval = setInterval(fetchData, pollingInterval);
     return () => clearInterval(interval);
-  }, [pollingInterval]);
+  }, [pollingInterval]); // FIX-RCT-103: fetchData reads from getState() — stable reference, no dep needed
 
   return { data, loading, error, refetch: fetchData };
 }

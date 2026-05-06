@@ -14,12 +14,9 @@ const handler = withAuth(async (req, session) => {
   if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
 
   try {
+    // FIX-BUG-LOG-008: Removed redundant supabase.auth.getUser() call;
+    // withAuth already validates the session and provides session.user.id.
     const supabase = getSupabaseAuthClient(session.token);
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const body = await req.json();
     const batch = syncBatchSchema.parse(body);
@@ -72,7 +69,7 @@ const handler = withAuth(async (req, session) => {
         // 3. Record success in sync_log
         await supabase.from('sync_log').upsert({
           idempotency_key: op.idempotencyKey,
-          user_id: user.id,
+          user_id: session.user.id,
           entity: op.entity,
           operation_type: op.operationType,
           status: 'ok',
@@ -95,11 +92,12 @@ const handler = withAuth(async (req, session) => {
         // Record failure/conflict in sync_log
         await supabase.from('sync_log').upsert({
           idempotency_key: op.idempotencyKey,
-          user_id: user.id,
+          user_id: session.user.id,
           entity: op.entity,
           operation_type: op.operationType,
           status,
-          response_data: { error: err.message, code: err.code },
+          // FIX-SEC-022: Hide internal error details in sync responses
+          response_data: { error: process.env.NODE_ENV === 'development' ? err.message : 'Error de sincronización' },
           store_id: op.payload.p_store_id || null,
         });
 
@@ -121,7 +119,8 @@ const handler = withAuth(async (req, session) => {
         results.push({
           idempotencyKey: op.idempotencyKey,
           status,
-          error: err.message,
+          // FIX-SEC-022: Hide internal error details in sync responses
+          error: process.env.NODE_ENV === 'development' ? err.message : 'Error de sincronización',
           serverData,
         });
       }
@@ -130,7 +129,7 @@ const handler = withAuth(async (req, session) => {
     return NextResponse.json({ results });
   } catch (err: any) {
     console.error('Batch sync error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? err.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

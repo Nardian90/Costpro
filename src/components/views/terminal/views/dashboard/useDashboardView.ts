@@ -39,7 +39,7 @@ export function useDashboardView() {
   }, [timeRange, selectedDate]);
 
   const { data: dashboardData, isLoading: isLoadingData } = useDashboardData(
-    user?.activeStoreId,
+    user?.storeId,
     user?.role === 'admin',
     dateFrom,
     dateTo

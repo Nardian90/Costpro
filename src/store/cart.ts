@@ -10,7 +10,8 @@ export interface CartItem {
   product_id: string;
   variant_id: string | null;
   product: Product;
-  variant: any | null;
+  // FIX-LOG-024: Proper type instead of any
+  variant: Record<string, unknown> | null;
   quantity: number;
   price: number;
   cost: number;
@@ -66,7 +67,8 @@ const calculateItemSubtotal = (item: CartItem) => {
       : item.discount_type === "fixed"
         ? discountValue
         : 0;
-  return item.quantity * (item.price - unitDiscount);
+  const effectivePrice = Math.max(0, item.price - unitDiscount);
+  return item.quantity * effectivePrice;
 };
 
 export const useCartStore = create<CartState>()(
@@ -84,6 +86,7 @@ export const useCartStore = create<CartState>()(
                 i.product_id === item.product_id &&
                 i.variant_id === item.variant_id,
             );
+            // FIX-LOG-019: NOTE — Single-terminal POS assumes stock doesn't change between render and mutation
             if (existingItem) {
               const newQuantity = existingItem.quantity + item.quantity;
               if (newQuantity > existingItem.product.stock_current) {
@@ -149,10 +152,9 @@ export const useCartStore = create<CartState>()(
               const totalPayment = cash + transfer;
               if (totalPayment > 0) {
                 const ratio = item.subtotal / totalPayment;
-                item.cash_paid = Number((cash * ratio).toFixed(2));
-                item.transfer_paid = Number(
-                  (item.subtotal - item.cash_paid).toFixed(2),
-                );
+                // FIX-LOG-020: Prevent floating-point drift
+                item.cash_paid = Math.round(cash * ratio * 100) / 100;
+                item.transfer_paid = Math.round((item.subtotal - item.cash_paid) * 100) / 100;
               } else {
                 item.cash_paid = item.subtotal;
                 item.transfer_paid = 0;
@@ -286,7 +288,8 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((acc, item) => acc + item.quantity, 0);
       },
 
-      setCart: (_saleId, items) => set({ items }),
+      // FIX-RCT-115: Added type annotations for clarity; _saleId is intentionally unused
+      setCart: (_saleId: string, items: CartItem[]) => set({ items }),
     }),
     {
       name: "pos-cart-storage",

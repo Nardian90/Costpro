@@ -55,7 +55,7 @@ describe('POST /api/cost-sheets/calculate', () => {
     it('retorna 429 cuando el cliente excedió el límite', async () => {
       const { rateLimit } = await import('@/lib/rate-limit');
       const resetAt = new Date(Date.now() + 30000);
-      (rateLimit as any).mockResolvedValueOnce({
+      vi.mocked(rateLimit).mockResolvedValueOnce({
         allowed: false, remaining: 0, resetAt
       });
 
@@ -103,7 +103,7 @@ describe('POST /api/cost-sheets/calculate', () => {
 
     it('retorna 400 si la validación semántica falla', async () => {
       const { validateFicha } = await import('@/lib/cost-engine');
-      (validateFicha as any).mockReturnValueOnce({ valid: false, errors: ['Error semántico'] } as any);
+      vi.mocked(validateFicha).mockReturnValueOnce({ valid: false, errors: ['Error semántico'] } as any);
 
       const req = makeAuthenticatedRequest('/api/cost-sheets/calculate', {
         method: 'POST',
@@ -119,7 +119,7 @@ describe('POST /api/cost-sheets/calculate', () => {
 
     it('retorna 500 si calculateFicha lanza excepción inesperada', async () => {
       const { calculateFicha } = await import('@/lib/cost-engine');
-      (calculateFicha as any).mockImplementationOnce(() => { throw new Error('Crash'); });
+      vi.mocked(calculateFicha).mockImplementationOnce(() => { throw new Error('Crash'); });
 
       const req = makeAuthenticatedRequest('/api/cost-sheets/calculate', {
         method: 'POST',

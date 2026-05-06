@@ -72,19 +72,22 @@ export const storeService = {
   async resetStore(storeId: string) {
     logger.info('DATABASE', 'RESET_STORE_INITIATED', { storeId });
 
-    // Snapshot de auditoría ANTES de borrar (fire-and-forget, no bloquea)
-    supabase.from('audit_logs').insert({
-      action: 'store_reset_initiated',
-      table_name: 'stores',
-      record_id: storeId,
-      store_id: storeId,
-      metadata: {
-        initiated_at: new Date().toISOString(),
-        warning: 'Full store data reset initiated by admin — all historical data will be deleted'
-      }
-    }).then(({ error }) => {
-      if (error) logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_FAILED', { storeId, error });
-    });
+    // FIX-BUG-SEC-008: Await audit log insert to catch failures instead of fire-and-forget
+    try {
+      const { error: auditError } = await supabase.from('audit_logs').insert({
+        action: 'store_reset_initiated',
+        table_name: 'stores',
+        record_id: storeId,
+        store_id: storeId,
+        metadata: {
+          initiated_at: new Date().toISOString(),
+          warning: 'Full store data reset initiated by admin — all historical data will be deleted'
+        }
+      });
+      if (auditError) logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_FAILED', { storeId, error: auditError });
+    } catch (auditErr) {
+      logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_EXCEPTION', { storeId, error: auditErr });
+    }
 
     // Ejecutar el reset
     const { error } = await supabase.rpc('reset_store_data', {
@@ -96,15 +99,18 @@ export const storeService = {
       throw error;
     }
 
-    // Confirmar completación en audit_logs
-    supabase.from('audit_logs').insert({
-      action: 'store_reset_completed',
-      table_name: 'stores',
-      record_id: storeId,
-      store_id: storeId,
-      metadata: { completed_at: new Date().toISOString() }
-    }).then(({ error: e }) => {
-      if (e) logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId });
-    });
+    // FIX-BUG-SEC-008: Await audit log insert to catch failures instead of fire-and-forget
+    try {
+      const { error: auditError } = await supabase.from('audit_logs').insert({
+        action: 'store_reset_completed',
+        table_name: 'stores',
+        record_id: storeId,
+        store_id: storeId,
+        metadata: { completed_at: new Date().toISOString() }
+      });
+      if (auditError) logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId, error: auditError });
+    } catch (auditErr) {
+      logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_EXCEPTION', { storeId, error: auditErr });
+    }
   }
 };

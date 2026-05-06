@@ -83,7 +83,14 @@ export const userService = {
     }
 
     // Fetch memberships separately
-    let memberships: any[] = [];
+    // FIX-LOG-009: Proper typed interface instead of any[]
+    interface UserMembership {
+      store_id: string;
+      role: string;
+      status?: string;
+      [key: string]: unknown;
+    }
+    let memberships: UserMembership[] = [];
     try {
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('user_store_memberships')
@@ -100,7 +107,8 @@ export const userService = {
     // Correctly typed object including memberships
     const profileData = {
       ...profileDataRaw,
-      role: profileDataRaw.role || 'clerk', // Default fallback
+      // FIX-LOG-010: Warn when role is null instead of silently downgrading
+      role: profileDataRaw.role || (() => { console.warn('[UserService] User role is null for', userId, '— defaulting to clerk'); return 'clerk'; })(),
       memberships
     } as Profile;
 

@@ -25,6 +25,7 @@ import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import ChunkErrorBoundary from '@/components/ui/ChunkErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import MobileSafeContainer from '@/components/ui/MobileSafeContainer';
 import { useKeyboardShortcuts } from '@/hooks/ui/useKeyboardShortcuts';
 import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
@@ -186,36 +187,57 @@ export default function TerminalShell() {
   };
 
   const renderView = (view: ViewType) => {
+    // FIX-LOG-028: Per-view error boundary to prevent one bad view from crashing the entire terminal
+    function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; viewName: string }) {
+      return (
+        <ErrorBoundary
+          fallback={
+            <div className="flex-1 flex items-center justify-center p-8">
+              <div className="text-center space-y-3">
+                <p className="text-destructive font-medium">Error al cargar {viewName}</p>
+                <button onClick={() => window.location.reload()} className="text-sm text-primary hover:underline">
+                  Reintentar
+                </button>
+              </div>
+            </div>
+          }
+        >
+          {children}
+        </ErrorBoundary>
+      );
+    }
+
     switch (view) {
-        case 'dashboard': return <DashboardView />;
-        case 'pick3-intelligence': return <Pick3IntelligenceView />;
-        case 'wallet': return <WalletView />;
-        case 'pos': return <POSView />;
-        case 'sales': return <SalesHistoryView />;
-        case 'users': return <UsersManagementView />;
-        case 'roles': return <RolesManagementView />;
-        case 'stores': return <StoresManagementView />;
-        case 'audit': return <AuditGlobalView />;
-        case 'inventory': return <InventoryView />;
-        case 'catalog': return <CatalogView />;
-        case 'cost-sheets': return <CostSheetView />;
-        case 'reports': return <ReportsView />;
-        case 'ipv': return <IPVView />;
-        case 'academy': return <AcademyView />;
-        case 'inventory_adjustments': return <InventoryAdjustmentsView />;
-        case 'legal': return <LegalView />;
-        case 'settings': return <SettingsView />;
-        case 'help': return <HelpView />;
-        case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
-        case 'transferencias': return <TransferenciasView />;
-        case 'inventory_count': return <InventoryCountView />;
-        case 'cash': return <CashClosureView />;
-        case 'history': return <StockHistoryView />;
-        case 'news': return <NewsView />;
-        case 'rss_management': return <RSSManagementView />;
-        case 'wiki': return <WikiView />;
-        case 'health': return <HealthView />;
-        case 'reception_list': return <ReceptionsHistoryView />;
+        case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
+        case 'pick3-intelligence': return <ViewErrorBoundary viewName="Pick3 Intelligence"><Pick3IntelligenceView /></ViewErrorBoundary>;
+        case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
+        case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
+        case 'sales': return <ViewErrorBoundary viewName="Ventas"><SalesHistoryView /></ViewErrorBoundary>;
+        case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
+        case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
+        case 'stores': return <ViewErrorBoundary viewName="Tiendas"><StoresManagementView /></ViewErrorBoundary>;
+        case 'audit': return <ViewErrorBoundary viewName="Auditoría"><AuditGlobalView /></ViewErrorBoundary>;
+        case 'inventory': return <ViewErrorBoundary viewName="Inventario"><InventoryView /></ViewErrorBoundary>;
+        case 'catalog': return <ViewErrorBoundary viewName="Catálogo"><CatalogView /></ViewErrorBoundary>;
+        case 'cost-sheets': return <ViewErrorBoundary viewName="Hojas de Costo"><CostSheetView /></ViewErrorBoundary>;
+        case 'reports': return <ViewErrorBoundary viewName="Reportes"><ReportsView /></ViewErrorBoundary>;
+        case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
+        case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
+        case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
+        case 'legal': return <ViewErrorBoundary viewName="Legal"><LegalView /></ViewErrorBoundary>;
+        case 'settings': return <ViewErrorBoundary viewName="Configuración"><SettingsView /></ViewErrorBoundary>;
+        case 'help': return <ViewErrorBoundary viewName="Ayuda"><HelpView /></ViewErrorBoundary>;
+        case 'recepcion': return <ViewErrorBoundary viewName="Recepción"><ProductReceptionView onCancel={() => setCurrentView('inventory')} /></ViewErrorBoundary>;
+        case 'transferencias': return <ViewErrorBoundary viewName="Transferencias"><TransferenciasView /></ViewErrorBoundary>;
+        case 'inventory_count': return <ViewErrorBoundary viewName="Conteo de Inventario"><InventoryCountView /></ViewErrorBoundary>;
+        case 'cash': return <ViewErrorBoundary viewName="Cierre de Caja"><CashClosureView /></ViewErrorBoundary>;
+        case 'history': return <ViewErrorBoundary viewName="Historial de Stock"><StockHistoryView /></ViewErrorBoundary>;
+        case 'news': return <ViewErrorBoundary viewName="Noticias"><NewsView /></ViewErrorBoundary>;
+        case 'rss_management': return <ViewErrorBoundary viewName="Gestión RSS"><RSSManagementView /></ViewErrorBoundary>;
+        case 'wiki': return <ViewErrorBoundary viewName="Wiki"><WikiView /></ViewErrorBoundary>;
+        case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
+        case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
+        case 'occ': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         default: return (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
@@ -360,6 +382,7 @@ export default function TerminalShell() {
         {sidebarState !== 'closed' && isMobile && (
           <motion.div
             className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-30"
+            aria-hidden="true" /* FIX-ACC-009 */
             onClick={() => setSidebarState('closed')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

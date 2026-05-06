@@ -19,14 +19,15 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
   const [loading, setLoading] = useState(false);
 
   const handleComplete = async () => {
+    // FIX-BUG-LOG-003: Validate input BEFORE setLoading so the spinner doesn't flash on invalid input
+    const amount = Math.round(parseFloat(bankroll) * 100); // Convert to cents
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Por favor, ingresa un monto válido");
+      return;
+    }
+
     setLoading(true);
     try {
-      const amount = Math.round(parseFloat(bankroll) * 100); // Convert to cents
-      if (isNaN(amount) || amount <= 0) {
-        toast.error("Por favor, ingresa un monto válido");
-        return;
-      }
-
       // 1. Create/Update profile
       const { error: profileError } = await supabase
         .from('pick3_profiles')

@@ -7,6 +7,10 @@ export const cashService = {
     const params = getSalesSinceLastClosureParamsSchema.parse({ p_store_id: storeId });
     const { data, error } = await supabase.rpc('get_sales_since_last_closure', params);
     if (error) throw error;
+    // FIX-LOG-001: Guard against empty/missing RPC result
+    if (!data || data.length === 0) {
+      return { total_sales: 0, total_cash: 0, total_transfer: 0, last_closure_at: '' };
+    }
     return data[0] as {
       total_sales: number;
       total_cash: number;

@@ -59,22 +59,35 @@ export function BankIngestion() {
     for (const file of acceptedFiles) {
       const extension = file.name.split('.').pop()?.toLowerCase();
       if (extension === 'csv') {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: async (results) => {
-            if (results.data.length > 0) {
-              const headers = Object.keys(results.data[0] as object).map(h => h.toLowerCase());
-              const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
-              if (isCatalog) await processCatalogData(results.data);
-              else await processBankData(results.data);
-            }
-          }
+        // FIX-BUG-LOG-018: Wrap Papa.parse in Promise to properly await async operations
+        await new Promise<void>((resolve, reject) => {
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              // FIX-BUG-LOG-013: Validate that data[0] is a non-empty object before accessing keys
+              if (results.data.length > 0 && results.data[0] && typeof results.data[0] === 'object' && Object.keys(results.data[0]).length > 0) {
+                const headers = Object.keys(results.data[0] as object).map(h => h.toLowerCase());
+                const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
+                const processPromise = isCatalog ? processCatalogData(results.data) : processBankData(results.data);
+                processPromise.then(resolve).catch(reject);
+              } else {
+                toast.error('El archivo CSV está vacío o no tiene encabezados válidos.');
+                resolve();
+              }
+            },
+            error: (err) => reject(new Error(err.message)),
+          });
         });
       } else if (extension === 'xlsx' || extension === 'xls') {
         const reader = new FileReader();
         reader.onload = async (e) => {
-          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          // FIX-BUG-LOG-017: Null check for e.target?.result before creating Uint8Array
+          if (!e.target?.result) {
+            toast.error('Error al leer el archivo.');
+            return;
+          }
+          const data = new Uint8Array(e.target.result as ArrayBuffer);
           const XLSX = await createWorkbook();
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -86,11 +99,18 @@ export function BankIngestion() {
               else await processBankData(jsonData);
           }
         };
+        // FIX-BUG-LOG-017: Add FileReader onerror handler
+        reader.onerror = () => { toast.error('Error al leer el archivo.'); };
         reader.readAsArrayBuffer(file);
       } else if (extension === 'txt') {
         const reader = new FileReader();
         reader.onload = async (e) => {
-          const text = e.target?.result as string;
+          // FIX-BUG-LOG-017: Null check for e.target?.result
+          if (!e.target?.result) {
+            toast.error('Error al leer el archivo.');
+            return;
+          }
+          const text = e.target.result as string;
           const result = await parseBandecTxt(text);
           if (result.transactions.length > 0) {
             // Save balances to consolidated_accounts if available
@@ -116,6 +136,8 @@ export function BankIngestion() {
             await processBankData(result.transactions);
           } else toast.error('No se encontraron transacciones');
         };
+        // FIX-BUG-LOG-017: Add FileReader onerror handler
+        reader.onerror = () => { toast.error('Error al leer el archivo.'); };
         reader.readAsText(file);
       }
     }
@@ -287,7 +309,7 @@ export function BankIngestion() {
                   raw_data: row,
                   created_at: new Date().toISOString()
               });
-          } catch (e) {}
+          } catch (e) { console.error('[BankIngestion] Failed to persist ingestion error:', e); }
           errorsCount++;
       }
     }

@@ -20,8 +20,9 @@ async function getHandler(request: NextRequest) {
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
+  // FIX-SEC-007/008: Clamp pagination parameters to prevent abuse
+  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10) || 20));
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const sku = searchParams.get("sku");
   const storeId = searchParams.get("storeId");
 
@@ -58,15 +59,16 @@ async function getHandler(request: NextRequest) {
     if (error) {
       console.error("Supabase query error:", error);
       return NextResponse.json(
-        { error: "Internal Server Error", message: error.message },
+        // FIX-SEC-019: Hide error details in production
+      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? error.message : undefined },
         { status: 500 }
       );
     }
 
-    const formattedData: InventoryItem[] = data.map((item: any) => ({
+    const formattedData: InventoryItem[] = (data || []).map((item: any) => ({
       productId: item.product_id,
-      sku: item.products.sku,
-      name: item.products.name,
+      sku: item.products?.sku ?? 'N/A',
+      name: item.products?.name ?? 'Sin nombre',
       quantity: item.quantity,
       version: item.version,
     }));

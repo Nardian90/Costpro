@@ -24,7 +24,8 @@ const handler = withAuth(async (req, session) => {
 
     const knowledgeGraph = readJson('knowledge/knowledge_graph.json');
     const systemArchitecture = readJson('public/system_architecture.json');
-    const pipelineState = readJson('docs/automation/pipeline_state.yaml'); // Note: this is actually YAML, but keeping for compatibility
+    // NOTE: YAML parsing requires js-yaml library. Currently returns empty state.
+    const pipelineState = {};
 
     return NextResponse.json({
       knowledgeGraph,

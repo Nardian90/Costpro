@@ -85,7 +85,7 @@ describe('POST /api/cost-sheets/import-json', () => {
   describe('rate limiting', () => {
     it('retorna 429 si se excede el rate limit', async () => {
       const { rateLimit } = await import('@/lib/rate-limit');
-      (rateLimit as any).mockResolvedValueOnce({
+      vi.mocked(rateLimit).mockResolvedValueOnce({
         allowed: false,
         remaining: 0,
         resetAt: new Date(Date.now() + 60000),

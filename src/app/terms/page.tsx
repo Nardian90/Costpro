@@ -18,7 +18,7 @@ export default function TermsPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Términos y Condiciones</h1>
-            <p className="text-sm text-muted-foreground">Última actualización: {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-sm text-muted-foreground">Última actualización: {'15 de enero de 2025'}</p>
           </div>
         </div>
 

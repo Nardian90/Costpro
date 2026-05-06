@@ -20,6 +20,7 @@ interface AcademyState {
   dueCards: (AcademyCard & { progress?: UserProgress })[];
   newCards: AcademyCard[];
   loading: boolean;
+  fetchInProgress: boolean;
   error: string | null;
   fetchDailyCards: () => Promise<void>;
   evaluateCard: (cardId: string, score: number) => Promise<void>;
@@ -30,10 +31,13 @@ export const useAcademyStore = create<AcademyState>((set, get) => ({
   dueCards: [],
   newCards: [],
   loading: false,
+  fetchInProgress: false,
   error: null,
 
   fetchDailyCards: async () => {
-    set({ loading: true, error: null });
+    // FIX: Guard against concurrent fetch calls that can return stale data
+    if (get().fetchInProgress) return;
+    set({ fetchInProgress: true, loading: true, error: null });
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -63,10 +67,14 @@ export const useAcademyStore = create<AcademyState>((set, get) => ({
       });
     } catch (e: any) {
       set({ error: e.message, loading: false });
+    } finally {
+      set({ fetchInProgress: false });
     }
   },
 
   evaluateCard: async (cardId, score) => {
+    // FIX-RCT-114: Save card reference before optimistic removal for rollback on error
+    const card = get().dueCards.find(c => c.id === cardId) || get().newCards.find(c => c.id === cardId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -91,6 +99,13 @@ export const useAcademyStore = create<AcademyState>((set, get) => ({
       }));
     } catch (e: any) {
       console.error('Error evaluating card:', e);
+      // FIX-RCT-114: Restore card on error
+      if (card) {
+        set(state => ({
+          dueCards: state.dueCards.find(c => c.id === cardId) ? state.dueCards : [...state.dueCards, card],
+          newCards: state.newCards.find(c => c.id === cardId) ? state.newCards : [...state.newCards, card],
+        }));
+      }
     }
   },
 

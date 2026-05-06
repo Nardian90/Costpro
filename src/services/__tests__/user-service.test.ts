@@ -2,12 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { userService } from '../user-service';
 
 // Mock de supabase
-const mocks = vi.hoisted(() => ({
-  from: vi.fn(),
-  auth: {
-    signOut: vi.fn().mockResolvedValue({ error: null }),
-  }
-}));
+const mocks = vi.hoisted(() => {
+  const m = {
+    from: vi.fn(),
+    auth: {
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+    }
+  };
+  return m;
+});
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: mocks

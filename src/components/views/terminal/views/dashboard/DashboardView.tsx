@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import MultiStoreDashboardView from './MultiStoreDashboardView';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
@@ -51,7 +52,7 @@ export default function DashboardView() {
     data: productsData,
     isLoading: isLoadingProducts,
     error: productsError
-  } = useProducts(user?.activeStoreId);
+  } = useProducts(user?.storeId);
 
   if (isAdminOrManager) {
     return <MultiStoreDashboardView />;
@@ -87,7 +88,7 @@ export default function DashboardView() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <button className="flex items-center gap-2 py-2 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
+                <button aria-label="Seleccionar fecha" /* FIX-ACC-015 */ className="flex items-center gap-2 py-2 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {timeRange === 'day'
                     ? formatDate(selectedDate)
@@ -166,10 +167,15 @@ export default function DashboardView() {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => setCurrentView('reports')} className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all enhanced-card">
-                  <FileDown className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reporte</span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button disabled aria-disabled="true" title="Próximamente disponible" /* FIX-ACC-019 */ className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm opacity-50 cursor-not-allowed active:scale-[0.98] transition-all enhanced-card">
+                      <FileDown className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reporte</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Próximamente disponible</TooltipContent>
+                </Tooltip>
                 <button
                   onClick={() => setCurrentView('settings')}
                   className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all enhanced-card"

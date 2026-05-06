@@ -386,7 +386,7 @@ export default function HeroSection({
                 key={`${link.href}-${idx}`}
                 href={link.href}
                 onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/40 hover:text-white/80 transition-colors duration-200"
+                className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
               >
                 {link.label}
               </a>
@@ -476,11 +476,11 @@ export default function HeroSection({
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-6 max-w-lg"
           >
-            <p className="text-base sm:text-lg text-white/30 leading-relaxed">
+            <p className="text-base sm:text-lg text-white/50 leading-relaxed" /* FIX-ACC-013 */>
               <TypewriterText
                 text="Gestiona costos, inventario y ventas — todo en una plataforma."
                 start={heroInView}
-                className="text-base sm:text-lg text-white/30 leading-relaxed"
+                className="text-base sm:text-lg text-white/50 leading-relaxed"
               />
             </p>
           </motion.div>

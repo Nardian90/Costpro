@@ -24,8 +24,8 @@ vi.mock('@/hooks/api/useTransactions', () => ({
 
 const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
-vi.mock('@/store', async () => {
-  const actual = await vi.importActual<typeof import('@/store')>('@/store');
+vi.mock('@/store', async (importOriginal) => {
+  const actual = await importOriginal<any>();
   return {
     ...actual,
     useAuthStore: vi.fn(() => ({
@@ -40,7 +40,7 @@ describe('Flujo de venta completo (integración)', () => {
     vi.clearAllMocks();
 
     // Default mock implementation
-    (transactionsHooks.useCreateSale as any).mockReturnValue({
+    vi.mocked(transactionsHooks.useCreateSale).mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue('sale-123'),
       isPending: false
     } as any);
@@ -68,7 +68,7 @@ describe('Flujo de venta completo (integración)', () => {
   });
 
   it('venta fallida: el carrito NO se limpia si el endpoint falla', async () => {
-    (transactionsHooks.useCreateSale as any).mockReturnValue({
+    vi.mocked(transactionsHooks.useCreateSale).mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue(new Error('Server Error')),
       isPending: false
     } as any);

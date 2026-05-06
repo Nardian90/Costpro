@@ -78,7 +78,10 @@ export const CommandPalette = () => {
       requestAnimationFrame(() => {
         setQuery('');
         setSelectedIndex(0);
-        const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+        // FIX-BUG-RCT-002: Wrap localStorage in SSR guard
+        const recent = typeof window !== 'undefined'
+          ? JSON.parse(localStorage.getItem('recent_actions') || '[]')
+          : [];
         setRecentActions(recent);
         setTimeout(() => inputRef.current?.focus(), 100);
       });
@@ -101,8 +104,10 @@ export const CommandPalette = () => {
 
     setIsOpen(false);
 
-    // Tracking recent actions (Phase 2 enhancement)
-    const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+    // FIX-BUG-RCT-002: Wrap localStorage in SSR guard
+    const recent = typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('recent_actions') || '[]')
+      : [];
     const updated = [action.id, ...recent.filter((id: string) => id !== action.id)].slice(0, 5);
     localStorage.setItem('recent_actions', JSON.stringify(updated));
   };
@@ -139,6 +144,7 @@ export const CommandPalette = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-background/80 backdrop-blur-md"
+            aria-hidden="true" /* FIX-ACC-008 */
             onClick={() => setIsOpen(false)}
           />
 

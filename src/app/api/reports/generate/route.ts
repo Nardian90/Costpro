@@ -221,7 +221,7 @@ async function generateReportHandler(req: NextRequest) {
       });
 
       // Annexes
-      let finalY = (doc as any).lastAutoTable.finalY + 10;
+      let finalY = (doc as any).lastAutoTable?.finalY ?? 50 + 10;
 
       calcAnnexes.forEach((annex: any) => {
         if (finalY > doc.internal.pageSize.getHeight() - 40) {
@@ -254,7 +254,7 @@ async function generateReportHandler(req: NextRequest) {
           styles: { fontSize: 6, cellPadding: 1 },
         });
 
-        finalY = (doc as any).lastAutoTable.finalY + 10;
+        finalY = (doc as any).lastAutoTable?.finalY ?? 50 + 10;
       });
 
       // Signatures
@@ -305,7 +305,7 @@ async function generateReportHandler(req: NextRequest) {
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
         styles: { fontSize: 8, cellPadding: 2 },
         margin: { top: 50 },
-        didDrawPage: (data) => {
+        didDrawPage: (_data: Record<string, unknown>) => {
           // Footer
           const str = `Página ${doc.getNumberOfPages()}`;
           doc.setFontSize(8);

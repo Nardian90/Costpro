@@ -75,7 +75,14 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
   }, [totals, setValue]);
 
   async function fetchProfiles() {
-    const { data } = await supabase.from('profiles').select('id, full_name').eq('is_active', true);
+    // FIX-BUG-LOG-011: Added error handling for Supabase query
+    const { data, error } = await supabase.from('profiles').select('id, full_name').eq('is_active', true);
+    if (error) {
+      console.error('Error fetching profiles:', error);
+      toast.error('Error al cargar los perfiles de usuario');
+      setProfiles([]);
+      return;
+    }
     setProfiles(data || []);
   }
 

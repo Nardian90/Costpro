@@ -60,8 +60,13 @@ export function useDeleteRole() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Basic check: Cannot delete role if in use (Handled by FK in DB, but good to check)
-      const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role_id', id);
+      // FIX-BUG-LOG-015: Destructure error from count query and check before proceeding;
+      // a failed query returns null count, which would bypass the guard.
+      const { count, error: countError } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role_id', id);
+      if (countError) {
+        logger.error('DATABASE', 'CHECK_ROLE_USAGE_FAILED', { error: countError, roleId: id });
+        throw new Error('Error al verificar si el rol está en uso. Inténtalo de nuevo.');
+      }
       if (count && count > 0) {
         throw new Error('No se puede eliminar un rol que está siendo utilizado por usuarios.');
       }

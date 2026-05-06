@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 interface Message {
+  id?: string; // FIX-RCT-120: Optional id for stable keys
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   tool_calls?: any[];
@@ -83,8 +84,14 @@ export function ChatBot() {
   const handleSend = async () => {
     if (!input.trim() || isLoading || !user) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage].slice(-10);
+    // FIX-RCT-120: Add stable id to user message
+    const userMessage: Message = { role: 'user', content: input, id: crypto.randomUUID() };
+    const pendingMessages = [...messages, userMessage];
+    // FIX-BUG-LOG-004: Increased truncation limit to 20 and warn user when truncation happens
+    if (pendingMessages.length > 20) {
+      toast.info('El historial de chat ha sido truncado a los últimos 20 mensajes para mantener el contexto.');
+    }
+    const newMessages = pendingMessages.slice(-20);
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
@@ -120,9 +127,8 @@ export function ChatBot() {
       const data = await response.json();
       setMessages([...newMessages, { role: 'assistant', content: data.text }]);
 
-      if (data.metadata?.actions) {
-        data.metadata.actions.forEach(handleAction);
-      }
+      // FIX-BUG-LOG-005: Use optional chaining to prevent crash on undefined metadata
+      data.metadata?.actions?.forEach(handleAction);
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -182,7 +188,7 @@ export function ChatBot() {
     if (abortController) {
       abortController.abort();
     }
-    setMessages([]);
+    // FIX-BUG-LOG-006: Removed setMessages([]) so messages persist when chat is closed and reopened
     setInput('');
     setIsLoading(false);
     setIsOpen(false);
@@ -199,6 +205,8 @@ export function ChatBot() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0, opacity: 0, y: 20 }}
             onClick={() => setIsOpen(true)}
+            aria-label="Abrir chat con Darian" /* FIX-ACC-001 */
+            aria-expanded={isOpen}
             className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 transition-transform group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -214,6 +222,8 @@ export function ChatBot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            role="dialog" /* FIX-ACC-007 */
+            aria-label="Chat con Darian" /* FIX-ACC-007 */
             className="w-[calc(100vw-2rem)] sm:w-[380px] h-[calc(100vh-4rem)] sm:h-[600px] max-h-[600px] bg-background border border-border shadow-2xl rounded-[32px] flex flex-col overflow-hidden relative"
           >
             {/* Header */}
@@ -222,6 +232,7 @@ export function ChatBot() {
 
               <button
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                aria-label="Configuración de IA" /* FIX-ACC-002 */
                 className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95"
                 title="Configuración de IA"
                 type="button"
@@ -255,7 +266,7 @@ export function ChatBot() {
             </div>
 
             {/* Messages or Settings */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20 relative">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20 relative" aria-live="polite" aria-atomic="false" /* FIX-ACC-011 */>
               <AnimatePresence mode="wait">
                 {isSettingsOpen ? (
                   <motion.div
@@ -357,7 +368,7 @@ export function ChatBot() {
                       </div>
                     )}
                     {messages.map((msg, i) => (
-                      <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div key={msg.id || i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium shadow-sm break-words ${
                           msg.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-tr-none'

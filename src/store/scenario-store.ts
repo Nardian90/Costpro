@@ -12,12 +12,13 @@ import {
   CostSheetRow,
   ScenarioConfig
 } from '@/types/cost-sheet';
-import { useCostSheetStore } from './cost-sheet-store';
+import { useCostSheetStore, type UpdateValuePayload } from './cost-sheet-store';
 import { toast } from 'sonner';
 
 interface ScenarioState {
   activeScenarioIds: ScenarioId[];
   isComparisonMode: boolean;
+  isParallelMode: boolean;
 
   activateScenario: (id: ScenarioId) => void;
   deactivateScenario: (id: ScenarioId) => void;
@@ -29,6 +30,7 @@ interface ScenarioState {
   updateRowValue: (scenarioId: ScenarioId, rowId: string, field: keyof ScenarioRowValues, value: number | string | undefined) => void;
   getScenarioValues: (scenarioId: ScenarioId) => ScenarioValues;
   toggleComparisonMode: (enabled?: boolean) => void;
+  toggleParallelMode: (enabled?: boolean) => void;
   initializeScenarios: () => void;
 }
 
@@ -80,6 +82,7 @@ export const useScenarioStore = create<ScenarioState>()(
     (set, get) => ({
       activeScenarioIds: ['v1'],
       isComparisonMode: false,
+      isParallelMode: false,
 
       initializeScenarios: () => {
         const { data, updateValues } = useCostSheetStore.getState();
@@ -124,8 +127,19 @@ export const useScenarioStore = create<ScenarioState>()(
       })),
 
       toggleComparisonMode: (enabled?: boolean) => set((state) => ({
-        isComparisonMode: enabled !== undefined ? enabled : !state.isComparisonMode
+        isComparisonMode: enabled !== undefined ? enabled : !state.isComparisonMode,
+        // When turning off comparison, also turn off parallel
+        ...(enabled === false ? { isParallelMode: false } : {})
       })),
+
+      toggleParallelMode: (enabled?: boolean) => set((state) => {
+        const willBeParallel = enabled !== undefined ? enabled : !state.isParallelMode;
+        return {
+          isParallelMode: willBeParallel,
+          // Turning on parallel mode implicitly activates comparison mode
+          isComparisonMode: willBeParallel || state.isComparisonMode
+        };
+      }),
 
       setComparisonBase: (id: ScenarioId) => {
         const { data, updateValue } = useCostSheetStore.getState();
@@ -249,13 +263,14 @@ export const useScenarioStore = create<ScenarioState>()(
 
         if (sIndex === -1) return;
 
-        const updates: { path: (string | number)[]; value: unknown }[] = [
+        const updates: UpdateValuePayload[] = [
           { path: ['scenarios', sIndex, 'values', rowId, field], value }
         ];
 
         // 2. If it's the primary scenario, also update the root sections
-        if (data.scenarioConfig?.primaryScenarioId === scenarioId) {
-          const newSections = produce(data.sections, (draft) => {
+        const latestData = useCostSheetStore.getState().data;
+        if (latestData?.scenarioConfig?.primaryScenarioId === scenarioId) {
+          const newSections = produce(latestData.sections, (draft) => {
             findAndUpdateRow(draft, rowId, field, value);
           });
           updates.push({ path: ['sections'], value: newSections });
@@ -273,7 +288,8 @@ export const useScenarioStore = create<ScenarioState>()(
       name: 'scenario-ui-storage',
       partialize: (state) => ({
         activeScenarioIds: state.activeScenarioIds,
-        isComparisonMode: state.isComparisonMode
+        isComparisonMode: state.isComparisonMode,
+        isParallelMode: state.isParallelMode
       })
     }
   )

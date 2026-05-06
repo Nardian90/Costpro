@@ -43,7 +43,8 @@ async function getHandler(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Review fetch error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // FIX-SEC-019: Hide error details in production
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 }
 

@@ -58,7 +58,7 @@ describe('POST /api/inventory/adjustments', () => {
   describe('autenticación', () => {
     it('retorna 401 si no hay sesión activa', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(null);
+      vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
       const req = makeAuthRequest(validBody);
       const res = await POST(req);
@@ -67,7 +67,7 @@ describe('POST /api/inventory/adjustments', () => {
 
     it('retorna 401 si session.token es undefined', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce({ token: undefined } as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce({ token: undefined } as any);
 
       const req = makeAuthRequest(validBody);
       const res = await POST(req);
@@ -78,7 +78,7 @@ describe('POST /api/inventory/adjustments', () => {
   describe('validación Zod', () => {
     it('retorna 400 con storeId que no es UUID', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const res = await POST(
         makeAuthRequest({ ...validBody, storeId: 'no-uuid' })
@@ -91,7 +91,7 @@ describe('POST /api/inventory/adjustments', () => {
 
     it('retorna 400 con items vacío', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const res = await POST(
         makeAuthRequest({ storeId: VALID_STORE_ID, items: [] })
@@ -101,7 +101,7 @@ describe('POST /api/inventory/adjustments', () => {
 
     it('retorna 400 con product_id que no es UUID en un item', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const res = await POST(
         makeAuthRequest({
@@ -118,7 +118,7 @@ describe('POST /api/inventory/adjustments', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const mockSaleItems = [{ id: 'si-1', product_id: VALID_PRODUCT_ID, quantity: 10 }];
 
@@ -127,7 +127,7 @@ describe('POST /api/inventory/adjustments', () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
-      (getSupabaseAuthClient as any).mockReturnValue({
+      vi.mocked(getSupabaseAuthClient).mockReturnValue({
         from: mockFrom,
         rpc: vi.fn().mockResolvedValue({ data: 'sale-001', error: null }),
       } as any);
@@ -144,7 +144,7 @@ describe('POST /api/inventory/adjustments', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const mockRpc = vi.fn().mockResolvedValue({ data: 'sale-002', error: null });
 
@@ -152,7 +152,7 @@ describe('POST /api/inventory/adjustments', () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
-      (getSupabaseAuthClient as any).mockReturnValue({
+      vi.mocked(getSupabaseAuthClient).mockReturnValue({
         from: mockFrom,
         rpc: mockRpc,
       } as any);
@@ -172,9 +172,9 @@ describe('POST /api/inventory/adjustments', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
-      (getSupabaseAuthClient as any).mockReturnValue({
+      vi.mocked(getSupabaseAuthClient).mockReturnValue({
         from: vi.fn(),
         rpc: vi.fn().mockResolvedValue({
           data: null,
@@ -190,13 +190,13 @@ describe('POST /api/inventory/adjustments', () => {
       const { getServerSession } = await import('@/lib/auth');
       const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const mockEq = vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
-      (getSupabaseAuthClient as any).mockReturnValue({
+      vi.mocked(getSupabaseAuthClient).mockReturnValue({
         from: mockFrom,
         rpc: vi.fn().mockResolvedValue({ data: 'sale-003', error: null }),
       } as any);

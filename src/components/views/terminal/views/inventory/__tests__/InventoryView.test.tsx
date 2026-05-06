@@ -45,14 +45,14 @@ describe('InventoryView', () => {
     const mockUser = { id: 'u1', activeStoreId: '550e8400-e29b-41d4-a716-446655440001' };
 
     beforeEach(() => {
-        (storeModule.useAuthStore as any).mockReturnValue({ user: mockUser } as any);
-        (storeModule.useUIStore as any).mockReturnValue({
+        vi.mocked(storeModule.useAuthStore).mockReturnValue({ user: mockUser } as any);
+        vi.mocked(storeModule.useUIStore).mockReturnValue({
           viewQueries: { inventory: '' },
           currentView: 'inventory',
           showQueries: false
         } as any);
 
-        (inventoryApi.useInventory as any).mockReturnValue({
+        vi.mocked(inventoryApi.useInventory).mockReturnValue({
             data: { pages: [{ products: [mockProduct], total: 1 }] },
             isLoading: false,
             isError: false,
@@ -62,17 +62,17 @@ describe('InventoryView', () => {
             isFetchingNextPage: false,
         } as any);
 
-        (inventoryApi.useAdjustStock as any).mockReturnValue({
+        vi.mocked(inventoryApi.useAdjustStock).mockReturnValue({
             mutateAsync: vi.fn(),
             isPending: false,
         } as any);
 
-        (stockAlertsHook.useStockAlerts as any).mockReturnValue({
+        vi.mocked(stockAlertsHook.useStockAlerts).mockReturnValue({
             alerts: [],
             criticalCount: 0,
             warningCount: 0,
         } as any);
-        (mobileHook.useIsMobile as any).mockReturnValue(false);
+        vi.mocked(mobileHook.useIsMobile).mockReturnValue(false);
     });
 
     it('renderiza la lista de inventario', async () => {

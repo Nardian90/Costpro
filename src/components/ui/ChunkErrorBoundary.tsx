@@ -36,17 +36,8 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
   }
 
   static getDerivedStateFromError(error: Error): Partial<ChunkErrorBoundaryState> {
-    // Only catch chunk loading errors
-    const isChunkError =
-      error?.message?.includes('Failed to load chunk') ||
-      error?.message?.includes('ChunkLoadError') ||
-      error?.message?.includes('Loading chunk') ||
-      error?.message?.includes('Failed to fetch dynamically imported module') ||
-      error?.name === 'ChunkLoadError';
-
-    if (isChunkError) {
-      return { hasError: true, error, isRetrying: false };
-    }
+    // FIX-LOG-027: Catch all errors, not just chunk errors, for lazy-loaded components
+    if (error) { return { hasError: true, error, isRetrying: false }; }
 
     // Let other errors propagate
     return {};

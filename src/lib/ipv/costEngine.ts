@@ -71,6 +71,10 @@ export function calculateCosts(
       });
     });
   } else if (config.type === 'TARGET_PROFIT') {
+    // FIX-LOG-018: Guard against division by zero when total ventas is 0
+    if (totalVentaGlobalCents === 0) {
+      return []; // No cost distribution possible with zero sales
+    }
     const costoTotalPermitidoCents = totalVentaGlobalCents - config.value;
 
     units.forEach(u => {
@@ -113,6 +117,11 @@ export function validateMargins(receipts: IntelligentReceipt[], products: Produc
     const ventaUnitarioNivelCents = product.precio_cents * factor;
     const costoUnitarioNivelCents = r.costo_unitario_cents;
 
+    // FIX-LOG-002: Guard against division by zero when precio venta is 0
+    if (ventaUnitarioNivelCents === 0) {
+      results.push({ isValid: false, type: 'ERROR', message: 'El precio de venta es 0 — no se puede calcular margen' });
+      return;
+    }
     const margenCents = ventaUnitarioNivelCents - costoUnitarioNivelCents;
     const margenPercent = margenCents / ventaUnitarioNivelCents;
 
@@ -123,10 +132,12 @@ export function validateMargins(receipts: IntelligentReceipt[], products: Produc
         message: `Margen negativo en ${product.descripcion} (${r.level}): ${margenCents / 100} Pesos`
       });
     } else if (margenPercent < 0.10) {
+      // FIX-LOG-003: Round to avoid floating-point display artifacts
+      const displayPercent = Math.round(margenPercent * 1000) / 10;
       results.push({
         isValid: true,
         type: 'WARNING',
-        message: `Margen bajo (<10%) en ${product.descripcion}: ${(margenPercent * 100).toFixed(1)}%`
+        message: `Margen bajo (<10%) en ${product.descripcion}: ${displayPercent}%`
       });
     }
   });

@@ -74,7 +74,7 @@ export class MatchingEngine {
         if (closure && closure.status === 'CLOSED') {
             return { transactionId: transaction.referencia_origen, status: 'PENDIENTE', lines: [], movements: [], trace: [{ pass: 0, rule: 'CUT_OFF', status: 'FAIL', reason: 'Periodo cerrado', timestamp: Date.now() }], appliedRules: [], matchingConfidence: 0, logs: [`Error: El periodo ${period} está cerrado. No se permite conciliación.`] };
         }
-    } catch (e) {}
+    } catch (e) { console.error('[IPV Engine] Failed to check period closure:', e); }
 
     const targetCents = transaction.importe_cents - currentReconciledCents;
     const trace: MatchingTrace[] = [];
@@ -265,7 +265,7 @@ export class MatchingEngine {
             created_at: new Date().toISOString(),
             duration_ms: duration
         });
-    } catch (e) {}
+    } catch (e) { console.error('[IPV Engine] Audit log write failed:', e); }
   }
 
   async distributeGlobalGoal(target: number, current: number, dates: string[], options?: any): Promise<ReconciliationLine[]> {

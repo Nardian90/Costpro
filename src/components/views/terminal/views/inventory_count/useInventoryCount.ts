@@ -44,7 +44,7 @@ export function useInventoryCount() {
     if (user) {
       fetchProducts();
     }
-  }, [user]);
+  }, [user]); // FIX-RCT-130: fetchProducts reads token from auth store getState()
 
   const filteredProducts = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
@@ -63,7 +63,9 @@ export function useInventoryCount() {
       const totalDecomposed = shortage.decomposition.reduce((acc, dec) => {
         if (!dec.variantId) return acc + dec.quantity; // Base product counts as 1:1
         const variant = shortage.variants.find(v => v.id === dec.variantId);
-        const factor = variant?.conversion_factor || 1;
+        // FIX-BUG-UX-003: Guard against zero or negative conversion_factor
+        if (!variant || !variant.conversion_factor || variant.conversion_factor <= 0) return acc + dec.quantity;
+        const factor = variant.conversion_factor;
         return acc + (dec.quantity * factor);
       }, 0);
       return totalDecomposed === Math.abs(shortage.diff);
@@ -113,6 +115,8 @@ export function useInventoryCount() {
     const decomposition: DecomposedItem[] = [];
 
     for (const variant of sortedVariants) {
+      // FIX-BUG-UX-003: Guard against zero or negative conversion_factor (defense in depth)
+      if (!variant.conversion_factor || variant.conversion_factor <= 0) continue;
       if (remaining >= variant.conversion_factor) {
         const count = Math.floor(remaining / variant.conversion_factor);
         decomposition.push({
@@ -180,7 +184,7 @@ export function useInventoryCount() {
             const variant = product.product_variants?.find(v => v.id === dec.variantId);
             addItem({
               product_id: product.id, variant_id: dec.variantId, product: product,
-              variant: variant || null,
+              variant: (variant || null) as Record<string, unknown> | null,
               quantity: dec.quantity,
               price: variant ? variant.price : product.price,
               cost: product.cost_price,

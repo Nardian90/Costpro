@@ -9,26 +9,13 @@ import { createClient } from '@supabase/supabase-js';
 
 export type ProviderType = 'gemini' | 'gpt' | 'qwen' | 'deepseek' | 'kimi';
 
-/**
- * Normaliza una API Key. Si no empieza con prefijos estándar, intenta revertirla.
- * Esto implementa la lógica de "protección por reversión" solicitada.
- */
+// FIX-INF-008: normalizeApiKey — direct validation, no obfuscation/reversal
 function normalizeApiKey(key: string | undefined): string {
   if (!key) return '';
   const trimmed = key.trim();
-
-  // Prefijos conocidos
-  if (trimmed.startsWith('AIza') || trimmed.startsWith('sk-')) {
-    return trimmed;
-  }
-
-  // Intentar reversión
-  const reversed = trimmed.split('').reverse().join('');
-  if (reversed.startsWith('AIza') || reversed.startsWith('sk-')) {
-    return reversed;
-  }
-
-  return trimmed;
+  // Direct validation — no obfuscation
+  if (trimmed.startsWith('AIza') || trimmed.startsWith('sk-')) return trimmed;
+  return trimmed; // Return as-is for other key formats
 }
 
 // Create a minimal client to fetch keys if needed

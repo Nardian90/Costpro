@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit } from '@/lib/rate-limit';
+import { getServerSession } from '@/lib/auth';
 import { withTracing } from '@/lib/observability';
 
 async function getHandler(_request: NextRequest) {
-  const clientId = 'anonymous';
-  const { allowed } = await rateLimit(clientId);
-  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  // FIX-SEC-005: Remove service discovery endpoint — require auth
+  const session = await getServerSession(_request);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  return NextResponse.json({ message: "Hello, world!" });
+  return NextResponse.json({ status: 'ok', service: 'costpro-enterprise' });
 }
 
 export const GET = withTracing(getHandler, 'GET /api');

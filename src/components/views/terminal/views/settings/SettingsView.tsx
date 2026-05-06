@@ -49,10 +49,11 @@ export default function SettingsView() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+      if (error) { toast.error('Error al cargar llaves de AI: ' + error.message); return; }
       setAiKeys(data || []);
     } catch (error: any) {
-      toast.error('Error al cargar llaves de AI');
+      toast.error('Error inesperado al cargar llaves de AI');
     } finally {
       setIsLoadingKeys(false);
     }
@@ -70,25 +71,27 @@ export default function SettingsView() {
         .insert([{ ...newKey, user_id: user?.id }])
         .select();
 
-      if (error) throw error;
+      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+      if (error) { toast.error('Error al guardar la llave: ' + error.message); return; }
 
       setAiKeys([data[0], ...aiKeys]);
       setNewKey({ provider: 'gemini', label: '', api_key: '' });
       setIsAddingKey(false);
       toast.success('Llave agregada correctamente');
     } catch (error: any) {
-      toast.error('Error al guardar la llave');
+      toast.error('Error inesperado al guardar la llave');
     }
   };
 
   const handleDeleteKey = async (id: string) => {
     try {
       const { error } = await supabase.from('ai_api_keys').delete().eq('id', id);
-      if (error) throw error;
+      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+      if (error) { toast.error('Error al eliminar la llave: ' + error.message); return; }
       setAiKeys(aiKeys.filter(k => k.id !== id));
       toast.success('Llave eliminada');
     } catch (error: any) {
-      toast.error('Error al eliminar');
+      toast.error('Error inesperado al eliminar');
     }
   };
 
@@ -99,11 +102,12 @@ export default function SettingsView() {
         .update({ is_active: !key.is_active })
         .eq('id', key.id);
 
-      if (error) throw error;
-      setAiKeys(aiKeys.map(k => k.id === key.id ? { ...k, is_active: !k.is_active } : k));
+      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+      if (error) { toast.error('Error al actualizar estado: ' + error.message); return; }
+      setAiKeys(aiKeys.map(k => k.id === key.id ? { ...k, is_active: !key.is_active } : k));
       toast.success('Estado actualizado');
     } catch (error: any) {
-      toast.error('Error al actualizar estado');
+      toast.error('Error inesperado al actualizar estado');
     }
   };
 
@@ -114,12 +118,13 @@ export default function SettingsView() {
         .update(updatedFields)
         .eq('id', id);
 
-      if (error) throw error;
+      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+      if (error) { toast.error('Error al actualizar la llave: ' + error.message); return; }
       setAiKeys(aiKeys.map(k => k.id === id ? { ...k, ...updatedFields } : k));
       setEditingKeyId(null);
       toast.success('Llave actualizada');
     } catch (error: any) {
-      toast.error('Error al actualizar');
+      toast.error('Error inesperado al actualizar');
     }
   };
 
@@ -405,12 +410,10 @@ export default function SettingsView() {
                         .update({ is_active: !tax.is_active })
                         .eq('id', tax.id);
 
-                      if (error) {
-                        toast.error('Error al actualizar impuesto');
-                      } else {
-                        toast.success('Impuesto actualizado');
-                        queryClient.invalidateQueries({ queryKey: ['tax-configurations'] });
-                      }
+                      // FIX-BUG-LOG-016: Explicit error check with toast and early return
+                      if (error) { toast.error('Error al actualizar impuesto: ' + error.message); return; }
+                      toast.success('Impuesto actualizado');
+                      queryClient.invalidateQueries({ queryKey: ['tax-configurations'] });
                     }}
                     className={cn(
                       "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",

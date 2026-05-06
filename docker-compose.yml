@@ -12,6 +12,12 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
+      # FIX-INF-030: Uncomment as needed
+      # UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      # UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+      # DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      # OTEL_ENABLED: "false"
+      # NODE_ENV: production
     restart: unless-stopped
     deploy:
       resources:

@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { offlineStorage } from '@/lib/sync/offline-storage';
 import { syncBatchSchema, syncBatchResponseSchema } from '@/validation/schemas';
 import { useAuthStore } from '@/store';
@@ -14,6 +14,8 @@ export function useSync() {
   const [queueSize, setQueueSize] = useState(0);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  // FIX-RCT-110: Store timeout ID to clear on unmount
+  const retryTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const updateQueueSize = useCallback(async () => {
     const pending = await offlineStorage.getPendingOperations();
@@ -111,7 +113,9 @@ export function useSync() {
 
       // Continue if there are more items
       if (pending.length > batchSize) {
-        setTimeout(processQueue, 1000);
+        // FIX-RCT-110: Clear previous timer before scheduling
+        if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = setTimeout(processQueue, 1000);
       }
     } catch (err) {
       console.error('Sync error:', err);
@@ -128,9 +132,14 @@ export function useSync() {
       const finalDelay = delay + jitter;
 
       logger.info('DATABASE', `Retrying sync in ${Math.round(finalDelay)}ms (attempt ${nextAttempt})`);
-      setTimeout(processQueue, finalDelay);
+      // FIX-RCT-110: Clear previous timer before scheduling
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = setTimeout(processQueue, finalDelay);
     }
   }, [queueSize, status, user?.id, updateQueueSize, retryAttempt]);
+
+  // FIX-RCT-110: Cleanup timeout on unmount
+  useEffect(() => () => { if (retryTimerRef.current) clearTimeout(retryTimerRef.current); }, []);
 
   const addToQueue = useCallback(async (entity: string, operationType: 'CREATE' | 'UPDATE' | 'DELETE', payload: any) => {
     const op = await offlineStorage.addToQueue({

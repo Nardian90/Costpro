@@ -24,7 +24,11 @@ const handler = withAuth(async (req, session) => {
       });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido (JSON malformado)' }, { status: 400 });
+    }
+
     const validation = FichaJSONSchema.safeParse(body);
 
     if (!validation.success) {
@@ -36,7 +40,7 @@ const handler = withAuth(async (req, session) => {
 
     return NextResponse.json({ ok: true, ficha: validation.data });
   } catch (error: any) {
-    return NextResponse.json({ ok: false, errors: [error.message] }, { status: 500 });
+    return NextResponse.json({ ok: false, errors: [process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor'] }, { status: 500 });
   }
 
 });

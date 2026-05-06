@@ -29,7 +29,7 @@ export const CostSheetProblemsPanel = ({ problems, onGoTo }: CostSheetProblemsPa
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {problems.map((p, i: number) => (
-                <div key={i} className={cn("p-2 rounded-lg border text-xs flex gap-2", p.type === 'CRITICAL' ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200")}>
+                <div key={i} className={cn("p-2 rounded-lg border text-xs flex gap-2", p.type === 'CRITICAL' ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50" : "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50")}>
                   {p.type === 'CRITICAL' ? <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
                   <div className="flex-1">
                     <p>{p.message}</p>

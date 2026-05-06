@@ -5,7 +5,7 @@ import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
-import fs from 'fs';
+import fs, { readdirSync } from 'fs';
 import path from 'path';
 
 // Supabase Admin client for server-side operations
@@ -38,19 +38,20 @@ async function postHandler(req: NextRequest) {
     // Load PDF text content from pre-indexed docs/manuals (simulated logic for MVP)
     const manualsDir = path.join(process.cwd(), 'docs/manuals');
     const baseName = filename.replace('.pdf', '');
-    const txtPath = path.join(manualsDir, baseName + '.txt');
+    const safeName = path.basename(baseName).replace(/[^a-zA-Z0-9_\-]/g, '_'); // FIX-SEC-009
+    const txtPath = path.join(manualsDir, safeName + '.txt');
 
     if (!fs.existsSync(txtPath)) {
-        return NextResponse.json({ error: `Manual text file not found: ${baseName}.txt` }, { status: 404 });
+        return NextResponse.json({ error: `Manual text file not found: ${safeName}.txt` }, { status: 404 });
     }
 
     let fullText = fs.readFileSync(txtPath, 'utf8');
 
     // Companion JSON logic
     const jsonPaths = [
-        path.join(manualsDir, baseName + '.json'),
-        path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),
-        path.join(manualsDir, baseName.replace(/^Res/, 'Res ') + '.json')
+        path.join(manualsDir, safeName + '.json'),
+        path.join(manualsDir, safeName.replace(/^Res/, '') + '.json'),
+        path.join(manualsDir, safeName.replace(/^Res/, 'Res ') + '.json')
     ];
 
     let jsonFound = false;
@@ -136,7 +137,8 @@ async function postHandler(req: NextRequest) {
         console.error('Error in AI call or parsing:', e.message);
         // If it's a model/key error, we should probably stop and report it
         if (e.message.includes('API Key') || e.message.includes('Modelo') || e.message.includes('Permisos')) {
-           return NextResponse.json({ error: e.message }, { status: 500 });
+           // FIX-SEC-019: Hide error details in production
+           return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? e.message : 'Error interno del servidor' }, { status: 500 });
         }
       }
     }
@@ -167,8 +169,31 @@ async function postHandler(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Generation error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // FIX-SEC-019: Hide error details in production
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 export const POST = withTracing(postHandler, 'POST /api/academy/generate');
+
+async function getHandler(req: NextRequest) {
+  try {
+    const session = await getServerSession(req);
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const manualsDir = path.join(process.cwd(), 'docs', 'manuals');
+    let files: string[] = [];
+    try {
+      files = readdirSync(manualsDir)
+        .filter(f => f.endsWith('.txt') || f.endsWith('.json'))
+        .map(f => f.replace(/\.(txt|json)$/, ''));
+    } catch {
+      // Directory doesn't exist yet
+    }
+    return NextResponse.json({ files });
+  } catch (error) {
+    return NextResponse.json({ error: 'Error listing manuals' }, { status: 500 });
+  }
+}
+
+export const GET = withTracing(getHandler, 'GET /api/academy/generate');

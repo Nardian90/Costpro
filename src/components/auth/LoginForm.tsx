@@ -83,7 +83,8 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
       const remaining = cooldownUntil - Date.now();
       if (remaining <= 0) {
         setCooldownUntil(0);
-        setFailedAttempts(0);
+        // FIX-BUG-RCT-005: Use functional update to avoid stale closure
+        setFailedAttempts(() => 0);
         clearInterval(timer);
       }
     }, 1000);
@@ -255,6 +256,7 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
+                  aria-describedby="email"
                   className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                 >
                   ¿Olvidaste tu contraseña?

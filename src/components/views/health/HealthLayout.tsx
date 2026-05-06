@@ -60,12 +60,13 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
                 <span className="text-[9px] font-black uppercase tracking-widest">Umbral de Confianza</span>
                 <span className="text-xs font-black text-primary">{(data?.pipelineState?.confidenceThreshold || 90)}% PRECISIÓN</span>
              </div>
-             <button className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-300">
+             {/* Placeholder — search functionality not yet implemented */}
+             <button disabled aria-label="Buscar" title="Próximamente" className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground opacity-50 cursor-not-allowed">
                 <Search className="w-5 h-5 sm:w-6 sm:h-6" />
              </button>
-             <button className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-300 relative group">
-                <Bell className="w-5 h-5 sm:w-6 sm:h-6 group-hover:animate-bounce" />
-                <div className="absolute top-4 right-4 sm:top-5 sm:right-5 w-2.5 h-2.5 rounded-full bg-primary border-4 border-background" />
+             {/* Placeholder — notifications not yet implemented */}
+             <button disabled aria-label="Notificaciones" title="Próximamente" className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[28px] bg-muted/20 border border-border/50 flex items-center justify-center text-muted-foreground opacity-50 cursor-not-allowed">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
              </button>
              <button
                onClick={onRefresh}

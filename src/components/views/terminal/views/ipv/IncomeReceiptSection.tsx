@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Product, type IPVSettings, ReconciliationLine } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
@@ -23,9 +23,13 @@ import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
+const noopSubscribe = () => () => {};
+
 export function IncomeReceiptSection() {
-  const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
-  const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const clientTodayISO = useSyncExternalStore(noopSubscribe, () => format(new Date(), 'yyyy-MM-dd'), () => '');
+  const clientWeekAgoISO = useSyncExternalStore(noopSubscribe, () => format(subDays(new Date(), 7), 'yyyy-MM-dd'), () => '');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedReceiptIndex, setSelectedReceiptIndex] = useState(0);
 
   const products = useLiveQuery(() => db.products.toArray());
@@ -250,8 +254,8 @@ export function IncomeReceiptSection() {
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Rango de Datos</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-10 rounded-xl bg-background/50 text-xs" />
-                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-10 rounded-xl bg-background/50 text-xs" />
+                        <Input type="date" value={dateFrom || clientWeekAgoISO} onChange={(e) => setDateFrom(e.target.value)} className="h-10 rounded-xl bg-background/50 text-xs" />
+                        <Input type="date" value={dateTo || clientTodayISO} onChange={(e) => setDateTo(e.target.value)} className="h-10 rounded-xl bg-background/50 text-xs" />
                     </div>
                 </div>
             </div>

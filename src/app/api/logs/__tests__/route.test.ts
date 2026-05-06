@@ -49,7 +49,7 @@ describe('POST /api/logs', () => {
   });
 
   it('ignora silenciosamente si falla fs (retorna 200)', async () => {
-    (fs.appendFileSync as any).mockImplementationOnce(() => { throw new Error('No write perms'); });
+    vi.mocked(fs.appendFileSync).mockImplementationOnce(() => { throw new Error('No write perms'); });
     const req = makeRequest({ context: 'TEST', error: { message: 'err' } });
     const res = await POST(req);
     expect(res.status).toBe(200);

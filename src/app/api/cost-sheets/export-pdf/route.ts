@@ -21,7 +21,8 @@ function safeParseNum(val: unknown): number {
 
 const handler = withAuth(async (req, session) => {
   try {
-    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    // FIX-SEC-015: Rate-limit by user ID after auth, not by IP before auth
+    const clientId = session.user.id;
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
 
     if (!allowed) {
@@ -29,6 +30,10 @@ const handler = withAuth(async (req, session) => {
     }
 
     const body = await req.json();
+    // FIX-SEC-006: Basic body shape validation
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
+    }
     let result = body.result || body;
     const exportOptions = body.exportOptions || {};
     const scenarioId = body.scenarioId;
@@ -68,7 +73,7 @@ const handler = withAuth(async (req, session) => {
       const { sections, scenarios, calcs, baseId } = body.comparisonData;
       let currentY = addHeader(doc, "COMPARATIVA DE ESCENARIOS");
 
-      const activeScenarios = scenarios.filter((s: any) => body.activeScenarioIds.includes(s.id));
+      const activeScenarios = scenarios.filter((s: any) => (body.activeScenarioIds || []).includes(s.id));
 
       const headRows: string[][] = [];
       const mainHeader = ['No.', 'Concepto', 'UM'];
@@ -142,7 +147,7 @@ const handler = withAuth(async (req, session) => {
         styles: { fontSize: 8, cellPadding: 1 },
       });
 
-      currentY = (doc as any).lastAutoTable.finalY + 10;
+      currentY = (doc as any).lastAutoTable?.finalY ?? 50 + 10;
 
       const rows = result.rows || [];
       const tableData = rows.map((r: any) => [
@@ -169,7 +174,7 @@ const handler = withAuth(async (req, session) => {
 
   } catch (error: any) {
     console.error('PDF Export Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

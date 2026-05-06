@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
 import { Pick3Result, DrawTime } from '@/types/pick3';
 import {
   Card, CardContent, CardHeader, CardTitle
@@ -28,12 +28,15 @@ import { DataIntegrityService, GapInfo } from '@/services/pick3/DataIntegritySer
 import { Pick3Storage } from '@/services/pick3/storage';
 import { toast } from 'sonner';
 
+const noopSubscribe = () => () => {};
+
 interface Pick3HistorySectionProps {
   history: Pick3Result[];
   onRefresh: () => void;
 }
 
 export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionProps) {
+  const clientTodayISO = useSyncExternalStore(noopSubscribe, () => format(new Date(), 'yyyy-MM-dd'), () => '');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [displayLimit, setDisplayLimit] = useState(20);
@@ -44,7 +47,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
 
   // Form State
   const [formData, setFormData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: '',
     draw_time: 'midday' as DrawTime,
     result: ['', '', '']
   });
@@ -316,7 +319,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                   id="pick3-date"
                   type="date"
                   className="font-bold"
-                  value={formData.date}
+                  value={formData.date || clientTodayISO}
                   onChange={e => setFormData({...formData, date: e.target.value})}
                 />
               </div>

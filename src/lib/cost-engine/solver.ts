@@ -164,6 +164,9 @@ export function solveForTarget(
   let callCount = 0;
 
   const simulate = (val: number): number => {
+    if (callCount >= MAX_SIMULATE_CALLS) return 0;
+    callCount++;
+
     const simulatedData = produce(uiData, (draft: CostSheetData) => {
       for (const section of draft.sections) {
         if (applySolverModToUIData(section.rows, variableRowId, val)) break;
@@ -171,8 +174,6 @@ export function solveForTarget(
     });
 
     const engineFicha = buildEngineFicha(simulatedData as CostSheetData);
-    callCount++;
-    if (callCount > MAX_SIMULATE_CALLS) return 0;
 
     const result = calculateFicha(engineFicha);
     const row = result.rows.find(

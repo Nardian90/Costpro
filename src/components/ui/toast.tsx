@@ -84,6 +84,7 @@ const ToastClose = React.forwardRef<
     {...props}
   >
     <X className="h-4 w-4" />
+    <span className="sr-only">Cerrar</span>{/* FIX-ACC-012 */}
   </ToastPrimitives.Close>
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName

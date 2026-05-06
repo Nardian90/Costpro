@@ -56,7 +56,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ data }) => {
                      </div>
                      <h3 className="text-sm font-black uppercase tracking-[0.3em]">Cola de Revisión de Integridad</h3>
                   </div>
-                  <button className="px-5 py-2 rounded-xl bg-muted/30 border border-border/50 text-[9px] font-black uppercase tracking-widest hover:bg-muted/50 transition-all flex items-center gap-2">
+                  <button disabled title="Próximamente" aria-label="Filtrar críticos" className="px-5 py-2 rounded-xl bg-muted/30 border border-border/50 text-[9px] font-black uppercase tracking-widest opacity-50 cursor-not-allowed flex items-center gap-2">
                      <Filter className="w-3 h-3" />
                      Filtrar Críticos
                   </button>

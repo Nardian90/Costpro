@@ -240,7 +240,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
               <span className="text-sm font-black italic text-primary">{stats.links}</span>
               <span className="text-[7px] font-black uppercase tracking-widest text-primary opacity-60">Enlaces</span>
            </div>
-           <button className="w-12 h-12 rounded-2xl bg-muted/30 border border-border/50 flex items-center justify-center hover:bg-muted/50 transition-all">
+           <button disabled title="Próximamente" aria-label="Maximizar gráfico" className="w-12 h-12 rounded-2xl bg-muted/30 border border-border/50 flex items-center justify-center opacity-50 cursor-not-allowed">
               <Maximize2 className="w-5 h-5 text-muted-foreground" />
            </button>
         </div>

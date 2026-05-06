@@ -38,7 +38,7 @@ describe('POST /api/cost-sheets/ai/chat', () => {
 
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    (getServerSession as any).mockResolvedValueOnce(null);
+    vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
     const req = makeRequest({ messages: [] }, null);
     const res = await POST(req);
@@ -48,7 +48,7 @@ describe('POST /api/cost-sheets/ai/chat', () => {
   describe('rate limiting (10 req/min)', () => {
     it('retorna 429 al exceder 10 requests por minuto', async () => {
       const { rateLimit } = await import('@/lib/rate-limit');
-      (rateLimit as any).mockResolvedValueOnce({
+      vi.mocked(rateLimit).mockResolvedValueOnce({
         allowed: false, remaining: 0, resetAt: new Date(Date.now() + 60000)
       });
 
@@ -62,7 +62,7 @@ describe('POST /api/cost-sheets/ai/chat', () => {
   describe('validación de proveedor', () => {
     it('retorna 400 si el proveedor no está en la whitelist', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const req = makeRequest({ messages: [{ role: 'user', content: 'test' }], aiProvider: 'hacky-provider' });
       const res = await POST(req);
@@ -74,7 +74,7 @@ describe('POST /api/cost-sheets/ai/chat', () => {
   describe('respuesta exitosa', () => {
     it('retorna el mensaje del asistente con status 200', async () => {
       const { getServerSession } = await import('@/lib/auth');
-      (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+      vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
       const req = makeRequest({ messages: [{ role: 'user', content: 'hola' }], aiProvider: 'openai' });
       const res = await POST(req);
@@ -89,8 +89,8 @@ describe('POST /api/cost-sheets/ai/chat', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getLLMProviderWithUserKey } = await import('@/lib/ai/orchestrator');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
-    (getLLMProviderWithUserKey as any).mockResolvedValueOnce({
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getLLMProviderWithUserKey).mockResolvedValueOnce({
       getResponse: vi.fn().mockRejectedValue(new Error('AI Service Down'))
     } as any);
 

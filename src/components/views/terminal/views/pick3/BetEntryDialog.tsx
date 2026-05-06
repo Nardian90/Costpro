@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { Pick3Result } from '@/types/pick3';
 import { AlertTriangle, TrendingUp, TrendingDown, Target } from 'lucide-react';
 
+const noopSubscribe = () => () => {};
+
 interface BetEntryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,7 +21,8 @@ interface BetEntryDialogProps {
 }
 
 export function BetEntryDialog({ open, onOpenChange, userId, onSuccess, history }: BetEntryDialogProps) {
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const clientTodayISO = useSyncExternalStore(noopSubscribe, () => new Date().toISOString().split('T')[0], () => '');
+  const [date, setDate] = useState<string>('');
   const [time, setTime] = useState<'midday' | 'evening'>('midday');
   const [combination, setCombination] = useState<string>("");
   const [amount, setAmount] = useState<string>("1");
@@ -103,7 +106,7 @@ export function BetEntryDialog({ open, onOpenChange, userId, onSuccess, history 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase">Fecha</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-xl font-bold" />
+              <Input type="date" value={date || clientTodayISO} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-xl font-bold" />
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase">Turno</Label>

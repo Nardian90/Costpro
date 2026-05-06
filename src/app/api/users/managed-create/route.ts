@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { managedCreateUserSchema, zodError } from '@/validation/api-schemas';
+import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
 import { withTracing } from '@/lib/observability';
 import crypto from 'crypto';
 
@@ -24,6 +25,9 @@ function getSupabaseAdmin() {
 }
 
 const handler = withRole('admin', async (req, session) => {
+  // FIX-SEC-023: CSRF origin validation
+  if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
@@ -139,7 +143,7 @@ const handler = withRole('admin', async (req, session) => {
     });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

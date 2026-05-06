@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { BaseModal } from '@/components/ui/BaseModal';
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
 import { useAuthStore } from '@/store';
@@ -17,14 +16,14 @@ export default function CashClosureView() {
     isLoading: isLoadingClosures,
     refetch: refetchClosures,
     isRefetching: isRefetchingClosures
-  } = useCashClosures(user?.activeStoreId, user?.role === 'admin');
+  } = useCashClosures(user?.storeId, user?.role === 'admin');
 
   const {
     data: salesData,
     isLoading: isLoadingSales,
     refetch: refetchSales,
     isRefetching: isRefetchingSales
-  } = useSalesSinceLastClosure(user?.activeStoreId);
+  } = useSalesSinceLastClosure(user?.storeId);
 
   const createClosure = useCreateCashClosure();
   const updateClosure = useUpdateCashClosure();
@@ -32,13 +31,10 @@ export default function CashClosureView() {
   const [declaredCash, setDeclaredCash] = useState<number>(0);
   const [declaredVouchers, setDeclaredVouchers] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
-  const [selectedClosureId, setSelectedClosureId] = useState<string | null>(null);
 
   const cashClosures = cashClosuresData || [];
   const pendingClosure = cashClosures.find(c => c.status === 'pendiente');
   const finalizedClosures = cashClosures.filter(c => c.status === 'cerrado');
-
-  const selectedClosure = finalizedClosures.find(c => c.id === selectedClosureId) || null;
 
   const summaryItems = [
     { label: 'Ventas Totales Esperadas', value: salesData?.total_sales || 0, color: 'text-foreground' },
@@ -72,7 +68,7 @@ export default function CashClosureView() {
   const canClose = ['admin', 'manager', 'encargado'].includes(user?.role || '');
 
   const handleProcessClosure = async () => {
-    if (!user?.activeStoreId) return;
+    if (!user?.storeId) return;
 
     if (pendingClosure) {
       // If user is manager/admin, they finalize. If clerk, they update declaration.
@@ -94,7 +90,7 @@ export default function CashClosureView() {
     } else {
       // Create declaration (Operator flow)
       createClosure.mutate({
-        store_id: user.activeStoreId,
+        store_id: user.storeId,
         user_id: user.id,
         declared_cash: declaredCash,
         declared_vouchers: declaredVouchers,
@@ -143,7 +139,6 @@ export default function CashClosureView() {
   ];
 
   return (
-    <>
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
@@ -275,7 +270,7 @@ export default function CashClosureView() {
                   </td>
                   <td className="p-4" aria-label="Ver detalles del cierre">
                     <div className="flex justify-center">
-                      <button aria-label="Ver detalles" onClick={() => setSelectedClosureId(closure.id)} className="w-11 h-11 flex items-center justify-center rounded-xl border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 text-foreground">
+                      <button disabled title="Detalle no disponible" aria-label="Ver detalles" className="w-11 h-11 flex items-center justify-center rounded-xl border border-border opacity-50 cursor-not-allowed text-foreground">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
@@ -294,53 +289,5 @@ export default function CashClosureView() {
         </div>
       </div>
     </div>
-
-    {/* Closure Details Modal */}
-    <BaseModal
-        open={!!selectedClosure}
-        onOpenChange={(open) => { if (!open) setSelectedClosureId(null); }}
-        title="Detalles del Cierre"
-        maxWidth="sm:max-w-md"
-      >
-        {selectedClosure && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-xl bg-muted/30">
-              <span className="text-xs font-black uppercase text-muted-foreground">Fecha</span>
-              <span className="text-sm font-bold">{formatDate(selectedClosure.created_at)} {formatTime(selectedClosure.created_at)}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-xl bg-muted/30">
-              <span className="text-xs font-black uppercase text-muted-foreground">Operador</span>
-              <span className="text-sm font-bold uppercase">{selectedClosure.profile?.full_name || '—'}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-xl bg-muted/30">
-              <span className="text-xs font-black uppercase text-muted-foreground">Efectivo Declarado</span>
-              <span className="text-sm font-black text-primary">{formatCurrency(Number(selectedClosure.declared_cash) || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-xl bg-muted/30">
-              <span className="text-xs font-black uppercase text-muted-foreground">Vouchers</span>
-              <span className="text-sm font-black text-primary">{formatCurrency(Number(selectedClosure.declared_vouchers) || 0)}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-xl bg-muted/30">
-              <span className="text-xs font-black uppercase text-muted-foreground">Monto Sistema</span>
-              <span className="text-sm font-black">{formatCurrency(Number(selectedClosure.system_expected_total) || Number(selectedClosure.system_total) || 0)}</span>
-            </div>
-            <div className={cn(
-              "flex justify-between items-center p-4 rounded-xl font-black",
-              (Number(selectedClosure.difference) || 0) === 0 ? "bg-green-500/10 text-green-600" :
-              (Number(selectedClosure.difference) || 0) < 0 ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-600"
-            )}>
-              <span className="text-xs uppercase">Diferencia</span>
-              <span className="text-lg">{formatCurrency(Number(selectedClosure.difference) || 0)}</span>
-            </div>
-            {selectedClosure.notes && (
-              <div className="p-3 rounded-xl bg-muted/30">
-                <span className="text-xs font-black uppercase text-muted-foreground block mb-1">Notas</span>
-                <span className="text-sm">{selectedClosure.notes}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </BaseModal>
-    </>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAPISpec } from '@/lib/api-docs/openapi-spec';
 import { withTracing } from '@/lib/observability';
+import { getServerSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,10 @@ export const dynamic = 'force-dynamic';
  * Content-Type: application/json
  */
 async function getHandler(_request: NextRequest) {
+  // FIX-SEC-004: Restrict API docs to authenticated users
+  const session = await getServerSession(_request);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     const spec = createOpenAPISpec();
 
