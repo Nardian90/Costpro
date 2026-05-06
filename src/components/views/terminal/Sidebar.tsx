@@ -136,6 +136,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             <TooltipTrigger asChild>
               <button
                 onClick={() => toggleModule(mod.id, true)}
+                aria-label={mod.label} /* FIX-ACC-010 */
+                aria-expanded={isExpanded} /* FIX-ACC-010 */
                 className="w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2 text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
@@ -202,10 +204,25 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
   }, [sidebarState]);
 
+  // FIX-UX-002: Focus first interactive element when sidebar opens on mobile
+  useEffect(() => {
+    if (sidebarState === 'expanded' && isMobile) {
+      const timer = setTimeout(() => {
+        const sidebar = document.querySelector('[data-sidebar]');
+        if (sidebar) {
+          const firstButton = sidebar.querySelector('button, a, [tabindex]');
+          (firstButton as HTMLElement)?.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [sidebarState, isMobile]);
+
   return (
     <aside
       role="navigation"
       aria-label="Barra lateral de navegación"
+      data-sidebar
       className={cn(
         "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden enhanced-sidebar-edge",
         sidebarWidthClass

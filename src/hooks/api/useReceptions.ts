@@ -35,9 +35,8 @@ export async function prefetchReceptions(queryClient: QueryClient, storeId: stri
       if (!isAdmin && cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
       }
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
-
+      // FIX-LOG-014: Use withTableLogging for consistent logging pattern
+      const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }));
       return await validateRPCArrayResponse(data, receiptSchema, 'receipts');
     },
     staleTime: 30 * 1000,

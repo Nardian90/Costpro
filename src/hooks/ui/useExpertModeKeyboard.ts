@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface KeyboardActions {
   toggleAllSections: () => void;
@@ -12,10 +12,17 @@ interface KeyboardActions {
 }
 
 export const useExpertModeKeyboard = (actions: KeyboardActions, enabled = true) => {
+  // FIX: Use ref to hold latest actions so useEffect doesn't tear down/re-attach
+  // the listener on every render when the caller passes an inline object
+  const actionsRef = useRef(actions);
+  useEffect(() => { actionsRef.current = actions; });
+
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const a = actionsRef.current;
+
       // Don't trigger if user is typing in an input
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
         if (!(e.key === 's' && (e.ctrlKey || e.metaKey)) && e.key !== 'Escape') {
@@ -27,23 +34,23 @@ export const useExpertModeKeyboard = (actions: KeyboardActions, enabled = true) 
         switch (e.key.toLowerCase()) {
           case 'e':
             e.preventDefault();
-            actions.toggleAllSections();
+            a.toggleAllSections();
             break;
           case 'h':
             e.preventDefault();
-            actions.toggleHelp();
+            a.toggleHelp();
             break;
           case 'p':
             e.preventDefault();
-            actions.toggleProblems();
+            a.toggleProblems();
             break;
           case 'c':
             e.preventDefault();
-            actions.toggleComparison();
+            a.toggleComparison();
             break;
           case '?':
             e.preventDefault();
-            actions.showShortcuts();
+            a.showShortcuts();
             break;
         }
 
@@ -51,22 +58,22 @@ export const useExpertModeKeyboard = (actions: KeyboardActions, enabled = true) 
         const num = parseInt(e.key);
         if (!isNaN(num) && num >= 1 && num <= 9) {
           e.preventDefault();
-          actions.expandSection(num);
+          a.expandSection(num);
         }
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        actions.save();
+        a.save();
       }
 
       if (e.key === 'Escape') {
         e.preventDefault();
-        actions.closePanels();
+        a.closePanels();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled, actions]);
+  }, [enabled]);
 };

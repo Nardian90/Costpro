@@ -82,9 +82,9 @@ export function StoreModals({
 
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('stores')
-                .getPublicUrl(filePath);
+            // FIX-BUG-LOG-012: Safe destructuring to prevent crash if data is null
+            const result = supabase.storage.from('stores').getPublicUrl(filePath);
+            const publicUrl = result.data?.publicUrl ?? '';
 
             setLogoUrl(publicUrl);
             toast.success('Logo subido correctamente');
@@ -98,6 +98,11 @@ export function StoreModals({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // FIX-LOG-016: Programmatic form validation before API call
+        if (!name || name.trim().length < 2) {
+          toast.error('El nombre debe tener al menos 2 caracteres');
+          return;
+        }
         onSubmit(mode, {
             name,
             address,

@@ -1,12 +1,12 @@
 import { Pick3Result } from '@/types/pick3';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
-import { exec } from 'child_process';
+import { execFile } from 'child_process'; // FIX-SEC-010
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 
-const execAsync = promisify(exec);
+const execAsync = promisify(execFile); // FIX-SEC-010
 
 export class Pick3PdfService {
   private static readonly PDF_URL = 'https://files.floridalottery.com/exptkt/p3.pdf';
@@ -31,7 +31,7 @@ export class Pick3PdfService {
 
       const auditPath = '/tmp/PICK3_PDF_AUDIT.json';
       logger.info('PICK3', `Executing Python robust parser with URL: ${this.PDF_URL}`);
-      const { stdout, stderr } = await execAsync(`python3 ${this.PARSER_SCRIPT} "${this.PDF_URL}" "${auditPath}"`);
+      const { stdout, stderr } = await execAsync('python3', [this.PARSER_SCRIPT, this.PDF_URL, auditPath]); // FIX-SEC-010
 
 
       if (stderr && !stderr.includes('UserWarning')) {

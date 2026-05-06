@@ -24,10 +24,8 @@ async function postHandler(request: NextRequest) {
 
   try {
     const rawBody = await request.json();
-    // console.log('[API ADJUST] Body:', JSON.stringify(rawBody));
     const parsed = inventoryAdjustSchema.safeParse(rawBody);
     if (!parsed.success) {
-      // console.log('[API ADJUST] Validation failed:', JSON.stringify(parsed.error.issues));
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
     const { productId, quantity, movementType, version, storeId, reason } = parsed.data;
@@ -72,7 +70,8 @@ async function postHandler(request: NextRequest) {
         );
       }
       return NextResponse.json(
-        { error: "Internal Server Error", message: error.message },
+        // FIX-SEC-019: Hide error details in production
+        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? error.message : undefined },
         { status: 500 }
       );
     }
@@ -87,7 +86,8 @@ async function postHandler(request: NextRequest) {
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal Server Error", message: errorMessage },
+      // FIX-SEC-019: Hide error details in production
+      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Package } from 'lucide-react';
@@ -28,6 +28,11 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
         });
         if (node) observer.current.observe(node);
     }, [isLoading, hasMore, loadMore]);
+
+    // FIX-RCT-111: Disconnect observer on unmount to prevent leaks
+    useEffect(() => {
+        return () => { observer.current?.disconnect(); };
+    }, []);
 
     return (
         <div className="space-y-4">

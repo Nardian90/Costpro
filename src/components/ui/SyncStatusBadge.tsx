@@ -1,12 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 import { RefreshCw, Wifi, WifiOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const subscribeOnline = (callback: () => void) => {
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+};
+
 export function SyncStatusBadge() {
   const { status, queueSize, processQueue } = useSyncContext();
+  const isOnline = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
 
   const getStatusConfig = () => {
     switch (status) {
@@ -61,7 +71,7 @@ export function SyncStatusBadge() {
   return (
     <button
       onClick={() => processQueue()}
-      disabled={status === 'syncing' || !navigator.onLine}
+      disabled={status === 'syncing' || !isOnline}
       className={cn(
         "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all",
         config.className,

@@ -65,7 +65,17 @@ export const catalogService = {
     const result = await importService.parseAndValidate(file, catalogImportRowSchema, headerAliases);
 
     // Additional business logic: check for duplicate SKUs in the file
-    const productsToUpdate: any[] = [];
+    // FIX-LOG-008: Proper typed interface instead of any[]
+    interface CatalogImportProduct {
+      sku: string;
+      name: string;
+      cost_price: number;
+      price: number;
+      store_id: string;
+      image_url: string;
+      [key: string]: unknown; // allow extra fields
+    }
+    const productsToUpdate: CatalogImportProduct[] = [];
     const errors = [...result.errors];
     const seenSkus = new Set<string>();
 

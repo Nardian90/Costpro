@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth-middleware';
+import { withRole } from '@/lib/auth-middleware'; // FIX-SEC-018: Changed from withAuth
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 import { calculateMRI, DEFAULT_MRI_DATA } from '@/lib/release_gate/mri-engine';
@@ -10,7 +10,8 @@ import path from 'path';
 export const dynamic = 'force-dynamic';
 
 
-const handler = withAuth(async (req, session) => {
+// FIX-SEC-018: Restrict to admin role only
+const handler = withRole('admin', async (req, session) => {
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });

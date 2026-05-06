@@ -115,7 +115,13 @@ export default function UsersManagementView() {
                   <td className="p-4 text-center" aria-label="Días activos">
                     <div className="flex flex-col items-center">
                       <span className="text-xs font-black text-primary">
-                        {u.created_at ? Math.floor((new Date().getTime() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
+                        {(() => {
+                          // FIX-BUG-UX-001: Guard against invalid Date from created_at
+                          const created = new Date(u.created_at);
+                          return u.created_at && !isNaN(created.getTime())
+                            ? Math.floor((Date.now() - created.getTime()) / 86400000)
+                            : 0;
+                        })()}
                       </span>
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
                     </div>

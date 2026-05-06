@@ -36,3 +36,13 @@ export async function register() {
     console.error('[Instrumentation] Failed to initialize OpenTelemetry:', err);
   }
 }
+
+// FIX-INF-023: Process-level error handlers for uncaught exceptions
+if (typeof process !== 'undefined') {
+  process.on('unhandledRejection', (reason) => {
+    console.error('[Process] Unhandled rejection:', reason);
+  });
+  process.on('uncaughtException', (error) => {
+    console.error('[Process] Uncaught exception:', error);
+  });
+}

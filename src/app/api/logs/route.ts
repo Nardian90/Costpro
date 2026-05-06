@@ -1,50 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth-middleware';
-import { rateLimit } from '@/lib/rate-limit';
+import { getServerSession } from '@/lib/auth';
 import { withTracing } from '@/lib/observability';
-import { logsSchema, zodError } from '@/validation/api-schemas';
-import fs from 'fs';
-import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Endpoint for receiving and persisting client-side logs in production.
+ * Endpoint for receiving client-side logs in production.
+ * Accepts two payload formats:
+ *   1. Structured: { context, error: { message, stack, code } }
+ *   2. Flat:       { level, context, message, stack, data? }
+ * Auth is optional — errors from unauthenticated contexts (e.g. ErrorBoundary)
+ * are still logged to avoid silent failures.
  */
 
-const handler = withAuth(async (req, session) => {
-  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
-  const { allowed } = await rateLimit(clientId);
-  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
-
-  try {
-    const rawBody = await req.json();
-    const parsed = logsSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
-    }
-    const { context, error } = parsed.data;
-    const logEntry = `[${new Date().toISOString()}] [${context}] ${JSON.stringify(error)}\n`;
-
-    try {
-      const filePath = path.join(/*turbopackIgnore: true*/process.cwd(), 'docs/logs/ERROR_LOGS.md');
-      fs.appendFileSync(filePath, logEntry);
-    } catch (fsError) {
-      console.error('[API LOGS] Failed to write to file (expected in some serverless envs):', fsError);
-      console.error(logEntry);
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error('[API LOGS CRITICAL ERROR]', err);
-    // NEVER return 500 to avoid blocking the client flow
-    return NextResponse.json({ success: false, error: 'Silently ignored' }, { status: 200 });
-  }
-
-});
-
 async function postHandler(req: NextRequest) {
-  return handler(req);
+  try {
+    // Best-effort auth — don't block logging if no session
+    let userId = 'anonymous';
+    try {
+      const session = await getServerSession(req);
+      if (session) userId = session.user.id;
+    } catch {
+      // Auth failed, proceed with anonymous logging
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ ok: true });
+    }
+
+    const level = (body.level as string) || 'info';
+    const context = (body.context as string) || 'unknown';
+
+    // Format 1: Nested error object (rpc-validator, QueryProvider)
+    const nestedError = body.error as Record<string, unknown> | undefined;
+    const message = (nestedError?.message as string) || (body.message as string) || 'No message';
+    const stack = (nestedError?.stack as string) || (body.stack as string) || '';
+    const data = body.data || body.variables;
+
+    // Server-side logging — in production, integrate with external log service
+    const dataStr = data ? JSON.stringify(data).slice(0, 200) : '';
+    console.log(
+      `[ClientLog] ${level.toUpperCase()} [${context}] user=${userId} ${message}${stack ? '\n  ' + String(stack).slice(0, 500) : ''}${dataStr ? '\n  data: ' + dataStr : ''}`
+    );
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    // Silently succeed to avoid client error loops
+    return NextResponse.json({ ok: true });
+  }
 }
 
 export const POST = withTracing(postHandler, 'POST /api/logs');

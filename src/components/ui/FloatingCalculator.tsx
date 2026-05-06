@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react'; // FIX-ACC-006
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
@@ -82,6 +82,15 @@ export const FloatingCalculator: React.FC = () => {
     setIsCalculatorOpen(false);
   };
 
+  // FIX-ACC-006: Escape key handler to close calculator dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isCalculatorOpen) closeCalculator();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCalculatorOpen, closeCalculator]);
+
   if (!isMounted) return null;
 
   const isDark = isDarkTheme(resolvedTheme);
@@ -134,6 +143,9 @@ export const FloatingCalculator: React.FC = () => {
             initial="closed"
             animate="open"
             exit="closed"
+            role="dialog" /* FIX-ACC-006 */
+            aria-label="Calculadora CostPro"
+            aria-modal="true"
             className={cn(
               "absolute top-24 right-4 sm:right-12 w-[280px] sm:w-[320px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
               isDark
@@ -161,7 +173,9 @@ export const FloatingCalculator: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button" /* FIX-ACC-020 */
                 onClick={closeCalculator}
+                aria-label="Cerrar calculadora" /* FIX-ACC-003 */
                 className={cn(
                   "hover:rotate-90 transition-transform p-1.5 rounded-full",
                   isDark ? "hover:bg-white/10" : "hover:bg-black/5"
@@ -268,6 +282,7 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
 
   return (
     <motion.button
+      type="button" /* FIX-ACC-020 */
       variants={variants}
       whileTap={{ scale: 0.9, transition: { type: "spring", stiffness: 400, damping: 10 } }}
       onClick={onClick}

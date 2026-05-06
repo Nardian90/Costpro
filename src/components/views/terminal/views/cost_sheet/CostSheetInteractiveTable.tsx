@@ -192,6 +192,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             handleValueChange('label', (e.target as HTMLInputElement).value);
                             setIsEditingLabel(false);
                         }
+                        if (e.key === 'Escape') {
+                            setIsEditingLabel(false);
+                        }
                     }}
                 />
             ) : (
@@ -278,6 +281,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             handleValueChange("um", (e.target as HTMLInputElement).value);
+                            setIsEditingUM(false);
+                        }
+                        if (e.key === 'Escape') {
                             setIsEditingUM(false);
                         }
                     }}

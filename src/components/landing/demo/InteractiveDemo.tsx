@@ -39,13 +39,15 @@ export default function InteractiveDemo() {
   const [currentSceneIdx, setCurrentSceneIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [showOverlay, setShowOverlay] = useState(true);
-  const [isMuted, setIsMuted] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('costpro-demo-muted') === 'true';
-    }
-    return false;
-  });
+  // FIX-RCT-126: Initialize as false to avoid SSR hydration mismatch; sync from localStorage in useEffect
+  const [isMuted, setIsMuted] = useState(false);
   const [isDemoEnded, setIsDemoEnded] = useState(false);
+
+  // FIX-RCT-126: Sync muted state from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem('costpro-demo-muted');
+    if (stored === 'true') setIsMuted(true); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
 
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);

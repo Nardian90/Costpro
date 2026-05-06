@@ -20,6 +20,7 @@ interface SafePieChartProps {
   showTooltip?: boolean;
   showLegend?: boolean;
   className?: string;
+  title?: string; // FIX-ACC-016
 }
 
 export const SafePieChart: React.FC<SafePieChartProps> = ({
@@ -30,10 +31,11 @@ export const SafePieChart: React.FC<SafePieChartProps> = ({
   outerRadius = 90,
   showTooltip = true,
   showLegend = false,
-  className
+  className,
+  title // FIX-ACC-016
 }) => {
   return (
-    <div className={cn("w-full relative overflow-visible chart-container", className)} style={{ height }}>
+    <div className={cn("w-full relative overflow-visible chart-container", className)} style={{ height }} aria-label={title || 'Gráfico circular'} /* FIX-ACC-016 */>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <Pie

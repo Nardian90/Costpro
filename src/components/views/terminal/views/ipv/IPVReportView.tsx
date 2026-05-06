@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type DailyIPVReport, ReconciliationLine } from '@/lib/dexie';
@@ -37,7 +37,14 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+const noopSubscribe = () => () => {};
+const getTodayISO = () => new Date().toISOString().split('T')[0];
+const getTodayMonth = () => new Date().getMonth() + 1;
+
 export function IPVReportView() {
+  const clientTodayISO = useSyncExternalStore(noopSubscribe, getTodayISO, () => '');
+  const clientTodayMonth = useSyncExternalStore(noopSubscribe, getTodayMonth, () => 1);
+
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
     title: string;
@@ -56,10 +63,11 @@ export function IPVReportView() {
   };
 
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
-  const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
+  const [selectedMonth, setSelectedMonth] = React.useState(0);
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
-  const [dateFrom, setDateFrom] = React.useState(new Date().toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = React.useState(new Date().toISOString().split('T')[0]);
+  const [dateFrom, setDateFrom] = React.useState('');
+  const [dateTo, setDateTo] = React.useState('');
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [loadingMessage, setLoadingMessage] = React.useState('');
   const [previewReport, setPreviewReport] = React.useState<DailyIPVReport | null>(null);
@@ -238,7 +246,7 @@ export function IPVReportView() {
           <h3 className="font-black uppercase text-sm tracking-widest text-primary flex items-center gap-2"><Calendar className="w-4 h-4" />Cierres de Almacén</h3>
           <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1 bg-background border rounded-xl px-2 h-10">
-                  <select value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-transparent text-[10px] font-black uppercase focus:outline-none">
+                  <select value={selectedMonth || clientTodayMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))} className="bg-transparent text-[10px] font-black uppercase focus:outline-none">
                       {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('es', { month: 'long' }).toUpperCase()}</option>)}
                   </select>
                   <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-transparent text-[10px] font-black uppercase focus:outline-none">

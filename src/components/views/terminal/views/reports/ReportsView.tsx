@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useSyncExternalStore } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, Play, Save, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
@@ -15,16 +15,19 @@ import { AuditLogsModal } from './AuditLogsModal';
 import { ReportType, ReportDefinition } from '@/types';
 import { COLUMN_LABELS } from '@/contracts/reports';
 
+const noopSubscribe = () => () => {};
+
 export default function ReportsView() {
   const { user } = useAuthStore();
+  const clientTodayISO = useSyncExternalStore(noopSubscribe, () => new Date().toISOString().split('T')[0], () => '');
   const [isGenerating, setIsGenerating] = useState(false);
   const [config, setConfig] = useState<Partial<ReportDefinition>>({
     name: 'Nuevo Reporte',
     type: 'sales',
     filters: {},
     date_range: {
-      from: new Date().toISOString().split('T')[0],
-      to: new Date().toISOString().split('T')[0],
+      from: '',
+      to: '',
     },
     columns: ['id', 'created_at', 'total_amount', 'status', 'payment_method'],
     layout: { orientation: 'portrait', format: 'a4' }

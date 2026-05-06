@@ -45,7 +45,7 @@ describe('POST /api/cost-sheets/save', () => {
 
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    (getServerSession as any).mockResolvedValueOnce(null);
+    vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
     const req = makeRequest({}, null);
     const res = await POST(req);
@@ -54,7 +54,7 @@ describe('POST /api/cost-sheets/save', () => {
 
   it('retorna 400 si el body no tiene updateData', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const req = makeRequest({ currentData: {} });
     const res = await POST(req);
@@ -65,7 +65,7 @@ describe('POST /api/cost-sheets/save', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: { id: 'sheet-123' },
@@ -75,7 +75,7 @@ describe('POST /api/cost-sheets/save', () => {
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       from: mockFrom
     } as any);
 
@@ -100,14 +100,14 @@ describe('POST /api/cost-sheets/save', () => {
      const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockSingle = vi.fn().mockResolvedValue({ data: { id: 'sheet-1' }, error: null });
     const mockSelect = vi.fn().mockReturnValue({ single: mockSingle });
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
 
-    (getSupabaseAuthClient as any).mockReturnValue({ from: mockFrom } as any);
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({ from: mockFrom } as any);
 
     const updateData = {
       header: { name: 'Multi Scenario' },
@@ -127,7 +127,7 @@ describe('POST /api/cost-sheets/save', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockSingle = vi.fn().mockResolvedValue({
       data: null,
@@ -137,7 +137,7 @@ describe('POST /api/cost-sheets/save', () => {
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       from: mockFrom
     } as any);
 

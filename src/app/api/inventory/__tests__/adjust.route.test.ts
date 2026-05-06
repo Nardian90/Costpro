@@ -42,7 +42,7 @@ describe('POST /api/inventory/adjust', () => {
 
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    (getServerSession as any).mockResolvedValueOnce(null);
+    vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
     const req = makeRequest({});
     const res = await POST(req);
@@ -53,14 +53,14 @@ describe('POST /api/inventory/adjust', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockRpc = vi.fn().mockResolvedValue({
       data: { new_quantity: 15, new_version: 2 },
       error: null
     });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       rpc: mockRpc
     } as any);
 
@@ -86,7 +86,7 @@ describe('POST /api/inventory/adjust', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockRpc = vi.fn().mockResolvedValue({
       data: null,
@@ -105,7 +105,7 @@ describe('POST /api/inventory/adjust', () => {
       single: mockSingle
     });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       rpc: mockRpc,
       from: mockFrom
     } as any);
@@ -130,14 +130,14 @@ describe('POST /api/inventory/adjust', () => {
      const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockRpc = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'ERR_INSUFFICIENT_STOCK' }
     });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       rpc: mockRpc
     } as any);
 
@@ -158,14 +158,14 @@ describe('POST /api/inventory/adjust', () => {
     const { getServerSession } = await import('@/lib/auth');
     const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
 
-    (getServerSession as any).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession as any);
 
     const mockRpc = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'Other DB Error' }
     });
 
-    (getSupabaseAuthClient as any).mockReturnValue({
+    vi.mocked(getSupabaseAuthClient).mockReturnValue({
       rpc: mockRpc
     } as any);
 

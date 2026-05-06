@@ -48,6 +48,7 @@ export const NavigationBreadcrumb: React.FC<NavigationBreadcrumbProps> = ({ clas
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
           >
             <Home className="w-3 h-3" />
+            <span className="sr-only sm:hidden">Inicio</span>
             <span className="hidden sm:inline">Inicio</span>
           </BreadcrumbLink>
         </BreadcrumbItem>

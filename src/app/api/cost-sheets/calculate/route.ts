@@ -9,8 +9,8 @@ import { withTracing } from '@/lib/observability';
 const handler = withAuth(async (req, session) => {
 
   try {
-    // Rate limiting
-    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    // FIX-SEC-015: Rate-limit by user ID after auth, not by IP before auth
+    const clientId = session.user.id;
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 60 });
 
     if (!allowed) {

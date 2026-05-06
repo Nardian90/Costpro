@@ -96,8 +96,13 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
     }));
 
     try {
+      // FIX-LOG-015: Guard against null user/activeStoreId instead of non-null assertion
+      if (!user?.activeStoreId) {
+        toast.error('No hay tienda activa');
+        return;
+      }
       await createTransferMutation.mutateAsync({
-        origin_store_id: user!.activeStoreId!,
+        origin_store_id: user.activeStoreId,
         destination_store_id: destinationStoreId,
         items,
         notes

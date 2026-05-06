@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   /* config options here */
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // FIX-INF-017
   },
-  reactStrictMode: false,
-  allowedDevOrigins: ['*'],
+  reactStrictMode: true, // FIX-INF-018
+  allowedDevOrigins: ['http://localhost:3000'], // FIX-INF-009
   serverExternalPackages: [
     '@opentelemetry/api',
     '@opentelemetry/sdk-node',

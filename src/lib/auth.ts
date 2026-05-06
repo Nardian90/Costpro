@@ -21,12 +21,8 @@ export async function getServerSession(request: NextRequest) {
       }
     }
 
-    // 2. Fallback to getSession
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (!sessionError && session?.user) {
-      return { user: session.user, token: session.access_token };
-    }
+    // FIX-SEC-024: getSession() fallback removed — only Bearer token auth is allowed
+    console.warn('[getServerSession] getSession fallback removed for security (SEC-024)');
   } catch (err: any) {
     console.error('[getServerSession] Critical error:', err.message);
   }

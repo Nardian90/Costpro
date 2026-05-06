@@ -4,7 +4,7 @@ import React from 'react';
 import type { CostSheetAnnex, CostSheetData } from '@/types/cost-sheet';
 import type { CostSheetViewMode } from './CostSheetModeDropdown';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Save, Bot, Clock, ArrowLeftRight } from 'lucide-react';
+import { Save, Bot, Clock } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -28,7 +28,6 @@ interface CostSheetNavProps {
   layoutMode?: ViewMode;
   setLayoutMode?: (mode: ViewMode) => void;
   onOpenActions?: () => void;
-  onOpenScenarios?: () => void;
   onImport?: () => void;
   onSave?: () => void;
   onExportExcel?: () => void;
@@ -46,7 +45,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onExportExcel,
   onExportPdf,
   onImport,
-  onOpenScenarios,
   setActiveSection,
   topOffset,
   layoutMode,
@@ -112,25 +110,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             tooltip: "Darian AI Expert"
         },
 
-        // 4. Escenarios (Gestión de escenarios)
-        {
-            id: 'scenarios-action',
-            label: 'Escenarios',
-            onClick: onOpenScenarios || (() => {}),
-            component: (
-                <button
-                    onClick={onOpenScenarios || (() => {})}
-                    type="button"
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-primary hover:bg-primary/10 rounded-xl"
-                    aria-label="Gestionar escenarios de costo"
-                >
-                    <ArrowLeftRight className="w-5 h-5" aria-hidden="true" />
-                </button>
-            ),
-            tooltip: "Gestión de Escenarios"
-        },
-
-        // 5. Historial / Auto-save status
+        // 4. Historial / Auto-save status
         {
             id: 'history-popover',
             label: 'Historial',
@@ -190,7 +170,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     ];
 
     return actions;
-  }, [onSave, onExportExcel, onExportPdf, onImport, onOpenScenarios, setActiveSection, isSaving, lastSavedAt, versions, onRestoreVersion]);
+  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection, isSaving, lastSavedAt, versions, onRestoreVersion]);
 
   return (
     <div className="mb-0 flex items-center gap-3">

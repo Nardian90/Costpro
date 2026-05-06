@@ -47,7 +47,7 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
               className="pl-10 pr-4 py-2 rounded-xl bg-background/50 border border-border/50 text-xs font-bold focus:outline-none focus:border-primary/50 w-64"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase hover:scale-105 transition-transform">
+          <button disabled title="Próximamente" aria-label="Exportar a Excel" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase opacity-50 cursor-not-allowed">
             <FileDown className="w-4 h-4" />
             EXCEL
           </button>

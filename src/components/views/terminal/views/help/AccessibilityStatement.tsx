@@ -4,6 +4,8 @@ import React from 'react';
 import { Shield, Eye, Keyboard, AlertTriangle, Mail } from 'lucide-react';
 
 export const AccessibilityStatement: React.FC = () => {
+  const currentDate = '15 de enero de 2025';
+
   return (
     <div className="space-y-8 py-6">
       {/* Header */}
@@ -92,7 +94,7 @@ export const AccessibilityStatement: React.FC = () => {
 
         <section>
           <h3 className="text-sm font-black uppercase tracking-wider text-foreground mb-2">Fecha de evaluación</h3>
-          <p>{new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p>{currentDate}</p>
           <p className="mt-1 text-xs">Método: Auditoría interna automatizada con verificación manual. Herramientas: ESLint a11y, grep analysis.</p>
         </section>
 

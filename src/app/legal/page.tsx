@@ -12,11 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function LegalPage() {
-  const lastUpdated = new Date().toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const lastUpdated = '15 de enero de 2025';
 
   return (
     <div className="min-h-screen bg-background">

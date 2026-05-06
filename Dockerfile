@@ -1,11 +1,13 @@
 # ── Stage 1: Dependencies ──
+# FIX-INF-032: Bun 1.x is actively maintained; pin to specific minor if reproducibility issues arise
 FROM oven/bun:1 AS deps
 WORKDIR /app
-COPY package.json bun.lockb* ./
+COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile --production=false
 
 # ── Stage 2: Build ──
 FROM oven/bun:1 AS builder
+# FIX-INF-032: Bun 1.x is actively maintained; pin to specific minor if reproducibility issues arise
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

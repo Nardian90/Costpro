@@ -229,7 +229,6 @@ export function CatalogTable() {
         setEditForm({});
         toast.success('Producto guardado correctamente');
     } catch (error) {
-        console.error(error);
         toast.error('Error al guardar el producto');
     }
   };
@@ -460,7 +459,6 @@ export function CatalogTable() {
             await db.products.bulkPut(systemProducts);
             toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });
         } catch (error) {
-            console.error(error);
             toast.error('Error al sincronizar con el sistema', { id: 'sync-catalog' });
         } finally {
             setIsSyncing(false);
@@ -506,7 +504,6 @@ export function CatalogTable() {
 
             toast.success('Sincronización completa: Catálogo, Conciliaciones e IPV alineados.', { id: loadingToast });
         } catch (error) {
-            console.error(error);
             toast.error('Error al actualizar los datos', { id: loadingToast });
         }
     });
@@ -596,7 +593,6 @@ const handleExportCatalog = async () => {
             }
         } catch (error) {
             toast.error('Error al procesar el archivo Excel');
-            console.error(error);
         }
     };
     reader.readAsArrayBuffer(file);

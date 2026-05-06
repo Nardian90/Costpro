@@ -12,7 +12,7 @@ interface UpgradeModalProps {
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, action = "esta acción" }) => {
   const whatsappNumber = "+53 53183215";
   const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
-  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\\D/g, '')}?text=${message}`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`;
 
   return (
     <BaseModal

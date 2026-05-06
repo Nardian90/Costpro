@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'cost_module_expert_state';
 
@@ -22,8 +22,12 @@ const initialState: ExpertModeState = {
   isProblemsOpen: false,
 };
 
-function loadStoredExpertState(): ExpertModeState {
-  if (typeof window === 'undefined') return initialState;
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+function getSnapshot(): ExpertModeState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved) as ExpertModeState;
@@ -33,58 +37,65 @@ function loadStoredExpertState(): ExpertModeState {
   return initialState;
 }
 
-const emptySubscribe = () => () => {};
+function getServerSnapshot(): ExpertModeState {
+  return initialState;
+}
+
+function setStoredState(updater: (prev: ExpertModeState) => ExpertModeState) {
+  const prev = getSnapshot();
+  const next = updater(prev);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new StorageEvent('storage'));
+}
 
 export const useExpertModeState = () => {
-  const [state, setState] = useState<ExpertModeState>(loadStoredExpertState);
-  const isLoaded = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  // FIX-RCT-125: Use useSyncExternalStore to prevent hydration mismatch and cascading renders
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+  const isLoaded = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const toggleSection = useCallback((sectionId: string) => {
-    setState(prev => {
-      const isExpanded = prev.expandedSections.includes(sectionId);
-      return {
-        ...prev,
-        expandedSections: isExpanded
-          ? prev.expandedSections.filter(id => id !== sectionId)
-          : [...prev.expandedSections, sectionId]
-      };
-    });
+    setStoredState(prev => ({
+      ...prev,
+      expandedSections: prev.expandedSections.includes(sectionId)
+        ? prev.expandedSections.filter(id => id !== sectionId)
+        : [...prev.expandedSections, sectionId]
+    }));
   }, []);
 
   const expandAllSections = useCallback((sectionIds: string[]) => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       expandedSections: sectionIds
     }));
   }, []);
 
   const collapseAllSections = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      expandedSections: []
+    setStoredState(() => ({
+      ...initialState,
     }));
   }, []);
 
   const setActiveAnnex = useCallback((annexId: string | null) => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       activeAnnexId: annexId === prev.activeAnnexId ? null : annexId
     }));
   }, []);
 
   const toggleAnnexesRoot = useCallback(() => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       isAnnexesRootExpanded: !prev.isAnnexesRootExpanded
     }));
   }, []);
 
   const setHelpContext = useCallback((context: string | null, open: boolean = true) => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       helpContext: context,
       isHelpOpen: open
@@ -92,14 +103,14 @@ export const useExpertModeState = () => {
   }, []);
 
   const closeHelp = useCallback(() => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       isHelpOpen: false
     }));
   }, []);
 
   const toggleProblems = useCallback((open?: boolean) => {
-    setState(prev => ({
+    setStoredState(prev => ({
       ...prev,
       isProblemsOpen: open !== undefined ? open : !prev.isProblemsOpen
     }));

@@ -201,16 +201,19 @@ export default function AcademyView() {
 }
 
 function ManualsList({ onSelect }: { onSelect: (filename: string) => Promise<void> }) {
+    const { token } = useAuthStore();
     const [manuals, setManuals] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('/api/academy/generate')
+        fetch('/api/academy/generate', {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
             .then(res => res.json())
             .then(data => setManuals(data.files || []))
             .finally(() => setLoading(false));
-    }, []);
+    }, [token]);
 
     const handleGenerate = async (file: string) => {
         setProcessing(file);

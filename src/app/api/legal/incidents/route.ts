@@ -4,6 +4,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { randomUUID } from 'node:crypto';
 
 // ── Zod schema for request body ──
 const incidentSchema = z.object({
@@ -43,7 +44,8 @@ function generateIncidentId(): string {
   const dateStr = now.getFullYear().toString() +
     String(now.getMonth() + 1).padStart(2, '0') +
     String(now.getDate()).padStart(2, '0');
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  // FIX-BUG-SEC-006: Use cryptographically secure randomUUID instead of Math.random
+  const random = randomUUID().slice(0, 8).toUpperCase();
   return `INC-${dateStr}-${random}`;
 }
 
@@ -73,6 +75,7 @@ async function writeIncidentsFile(data: IncidentFile): Promise<void> {
 // ── POST handler ──
 async function postHandler(request: NextRequest) {
   // Rate limiting: 5 requests per minute, identified by IP
+  // FIX-SEC-014: TODO — Rate limit by user ID after auth is added (currently IP-only)
   const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous';
   const rlResult = await rateLimit(`incidents:${clientIp}`, {
     windowMs: 60_000,

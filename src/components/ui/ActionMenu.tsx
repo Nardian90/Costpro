@@ -132,7 +132,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         )}>
           <button
             onClick={() => scrollBy(-200)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
+            className="w-11 h-11 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -146,7 +146,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         )}>
           <button
             onClick={() => scrollBy(200)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
+            className="w-11 h-11 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-5 h-5" />

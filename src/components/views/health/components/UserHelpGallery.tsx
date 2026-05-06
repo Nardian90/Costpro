@@ -92,7 +92,7 @@ export const UserHelpGallery: React.FC<UserHelpGalleryProps> = ({ data }) => {
 
             <div className="mt-8 pt-6 border-t border-border/50 flex items-center justify-between">
                <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">ID: {item.id}</span>
-               <button className="text-[9px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+               <button disabled title="Próximamente" aria-label="Ver guía detallada" className="text-[9px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 cursor-not-allowed">
                   Ver guía detallada
                </button>
             </div>

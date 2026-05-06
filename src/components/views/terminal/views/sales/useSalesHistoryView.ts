@@ -21,7 +21,7 @@ export function useSalesHistoryView() {
     const duplicateDocumentMutation = useDuplicateDocument();
 
     // Data Fetching
-    const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
+    const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.storeId, user?.role === 'admin');
 
     const filteredTransactions = useMemo(() => {
         return transactionsData.filter(t =>

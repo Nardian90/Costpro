@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useTransition } from 'react';
+import React, { useState, useMemo, useTransition, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import {
   ShoppingCart,
   Search,
@@ -32,64 +33,114 @@ import { QueryInspector } from '@/components/ui/QueryInspector';
 import { useCreateSale } from '@/hooks/api/useTransactions';
 import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
-// Modales y utilidades extra
-function PriceSelectorModal({ isOpen, onClose, product, onSelect }: any) {
-  if (!isOpen || !product?.product_variants) return null;
+// PriceSelectorModal: Shows product variants for selection when a product has multiple options
+const PriceSelectorModal = ({ isOpen, onClose, product, onSelect }: {
+  isOpen: boolean;
+  onClose: () => void;
+  product: Product | null;
+  onSelect: (variant: any) => void;
+}) => {
+  if (!isOpen || !product) return null;
+  const variants = product.product_variants || [];
+
   return (
-    <BaseModal open={isOpen} onOpenChange={onClose} title={`${product.name} — Variantes`} maxWidth="sm:max-w-md">
-      <div className="space-y-3">
-        {product.product_variants.map((v: any) => (
-          <button
-            key={v.id}
-            onClick={() => onSelect(v)}
-            className="w-full p-4 rounded-xl border border-border hover:bg-primary/5 hover:border-primary/30 transition-all text-left flex justify-between items-center"
-          >
-            <div>
-              <span className="font-bold text-sm uppercase">{v.name}</span>
-              {v.sku && <span className="text-xs text-muted-foreground ml-2 font-mono">{v.sku}</span>}
-            </div>
-            <span className="font-black text-primary">${v.price}</span>
-          </button>
-        ))}
-        {product.product_variants.length === 0 && (
-          <p className="text-center text-muted-foreground text-sm py-8">Sin variantes disponibles</p>
-        )}
-      </div>
+    <BaseModal
+      open={isOpen}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      title={`Seleccionar Variante — ${product.name}`}
+      description="Elige una presentación para añadir al carrito"
+      maxWidth="sm:max-w-md"
+    >
+      {variants.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">No hay variantes disponibles</p>
+      ) : (
+        <div className="space-y-2 max-h-80 overflow-y-auto">
+          {variants.map((variant) => (
+            <button
+              key={variant.id}
+              type="button"
+              onClick={() => onSelect(variant)}
+              className="w-full flex items-center justify-between p-4 rounded-xl border border-border hover:bg-muted/50 hover:border-primary/30 active:scale-[0.99] transition-all text-left"
+              aria-label={`${variant.name} — ${formatCurrency(variant.price)}`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{variant.name}</p>
+                {variant.sku && (
+                  <p className="text-xs text-muted-foreground mt-0.5">SKU: {variant.sku}</p>
+                )}
+              </div>
+              <span className="font-black text-sm text-primary ml-4 whitespace-nowrap">
+                {formatCurrency(variant.price)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </BaseModal>
   );
-}
+};
 
-function BarcodeScanner({ isOpen, onClose, onScan }: any) {
-  const [sku, setSku] = useState('');
-  if (!isOpen) return null;
+// BarcodeScanner: Simple SKU input dialog for typing/pasting barcodes
+const BarcodeScanner = ({ isOpen, onClose, onScan }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onScan: (value: string) => void;
+}) => {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = inputValue.trim();
+    if (trimmed) {
+      onScan(trimmed);
+      setInputValue('');
+      onClose();
+    }
+  };
+
   return (
-    <BaseModal open={isOpen} onOpenChange={onClose} title="Escanear / Buscar SKU" maxWidth="sm:max-w-sm">
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <label htmlFor="barcode-sku" className="text-xs font-black uppercase tracking-widest ml-1">Código SKU</label>
+    <BaseModal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setInputValue('');
+          onClose();
+        }
+      }}
+      title={
+        <div className="flex items-center gap-2">
+          <QrCode className="w-5 h-5" /> Escanear / Buscar SKU
+        </div>
+      }
+      description="Ingresa o pega un código de barras o SKU para buscar el producto"
+      maxWidth="sm:max-w-md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="barcode-input" className="sr-only">Código de barras o SKU</label>
           <input
-            id="barcode-sku"
+            id="barcode-input"
             type="text"
-            value={sku}
-            onChange={e => setSku(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && sku.trim()) { onScan(sku.trim()); setSku(''); onClose(); }}}
-            placeholder="Ej: SKU-001"
-            className="neu-input w-full font-bold font-mono"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Ej: 7501234567890"
             autoFocus
-            aria-label="Código SKU del producto"
+            autoComplete="off"
+            aria-label="Código de barras o SKU"
+            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground text-sm font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
           />
         </div>
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors">Cancelar</button>
-          <button
-            onClick={() => { if (sku.trim()) { onScan(sku.trim()); setSku(''); onClose(); }}}
-            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-          >Buscar</button>
-        </div>
-      </div>
+        <button
+          type="submit"
+          disabled={!inputValue.trim()}
+          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Buscar Producto
+        </button>
+      </form>
     </BaseModal>
   );
-}
+};
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-2xl bg-muted/5">
@@ -132,7 +183,7 @@ export default function POSView() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [lastSale, setLastSale] = useState<any>(null);
 
-  // Cart Store
+  // FIX: Use useShallow to avoid re-renders on unrelated store changes
   const {
     items,
     addItem,
@@ -151,7 +202,25 @@ export default function POSView() {
     updateItemDiscount,
     updateItemPayment,
     prorateGlobalPayment
-  } = useCartStore();
+  } = useCartStore(useShallow(state => ({
+    items: state.items,
+    addItem: state.addItem,
+    removeItem: state.removeItem,
+    updateQuantity: state.updateQuantity,
+    clearCart: state.clearCart,
+    getItemCount: state.getItemCount,
+    getSubtotal: state.getSubtotal,
+    getDiscountAmount: state.getDiscountAmount,
+    getTaxAmount: state.getTaxAmount,
+    getTotal: state.getTotal,
+    discount: state.discount,
+    setDiscount: state.setDiscount,
+    appliedTaxes: state.appliedTaxes,
+    toggleTax: state.toggleTax,
+    updateItemDiscount: state.updateItemDiscount,
+    updateItemPayment: state.updateItemPayment,
+    prorateGlobalPayment: state.prorateGlobalPayment,
+  })));
 
   // API
   const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
@@ -262,6 +331,9 @@ export default function POSView() {
     }
   };
 
+  // FIX-RCT-129: Extract shared close handler to useCallback
+  const handleCloseCart = useCallback(() => setShowCart(false), []);
+
   const handleClearCart = () => {
     clearCart();
     setShowClearConfirm(false);
@@ -362,12 +434,12 @@ export default function POSView() {
                   prorateGlobalPayment={prorateGlobalPayment}
                   isProcessing={isProcessingSale}
                   onCheckout={startCheckout as any}
-                  onClose={() => setShowCart(false)}
+                  onClose={handleCloseCart}
                   lastSale={lastSale}
                   isMobile={isMobile}
                   onClearLastSale={() => {
                     setLastSale(null);
-                    setShowCart(false);
+                    handleCloseCart();
                   }}
                 />
               </Portal>
@@ -390,12 +462,12 @@ export default function POSView() {
                   prorateGlobalPayment={prorateGlobalPayment}
                 isProcessing={isProcessingSale}
                 onCheckout={startCheckout as any}
-                onClose={() => setShowCart(false)}
+                onClose={handleCloseCart}
                 lastSale={lastSale}
                 isMobile={isMobile}
                 onClearLastSale={() => {
                   setLastSale(null);
-                  setShowCart(false);
+                  handleCloseCart();
                 }}
               />
             )

@@ -49,7 +49,9 @@ export function calculateIPVMetrics(
   });
 
   bankTransactions.forEach(tx => {
-    const amount = Number(tx.importe_cents || 0);
+    // FIX-LOG-011: Handle comma-formatted strings
+    const raw = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
+    const amount = parseFloat(raw) || 0;
     if (tx.tipo === 'Cr') {
       bankCredits += amount;
       const parsed = parseObservations(tx.observaciones || '');
@@ -89,7 +91,8 @@ export function getDailySalesHistory(
     if (!history[date]) {
       history[date] = { date, cash: 0, transfer: 0, debits: 0 };
     }
-    const amount = Math.abs(Number(tx.importe_cents || 0));
+    const rawHist = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
+    const amount = Math.abs(parseFloat(rawHist) || 0);
     if (tx.tipo === 'Db') {
       history[date].debits += amount;
     }
@@ -138,7 +141,8 @@ export function getTopPayers(bankTransactions: BankTransaction[]): PayerMetric[]
     .forEach(tx => {
       const parsed = parseObservations(tx.observaciones || '');
       const name = parsed.payer || 'OTROS/DESCONOCIDO';
-      const amount = Number(tx.importe_cents || 0);
+      const rawPayer = String(tx.importe_cents || 0).replace(/[^\d.-]/g, '');
+      const amount = parseFloat(rawPayer) || 0;
 
       if (!payers[name]) {
         payers[name] = { amount: 0, count: 0 };

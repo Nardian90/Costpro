@@ -11,10 +11,10 @@ import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
 import { CookieConsent } from '@/components/CookieConsent';
 import { headers } from 'next/headers';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { AriaLiveRegion } from '@/components/ui/AriaLiveRegion';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
+import { MotionPreferencesProvider } from '@/lib/motion-config';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,8 +109,8 @@ export default async function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
-        {/* FIX #012: Supabase preconnect uses environment variable */}
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co'} />
+        {/* FIX-INF-005: Supabase preconnect — no hardcoded fallback */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
         {/* safe: static structured data, no user input */}
         <script
           nonce={nonce}
@@ -145,14 +145,15 @@ export default async function RootLayout({
               >
                 <IntelligentThemeHandler />
                 <QueryProvider>
-                  <SyncProvider>
-                    <GlobalSessionManager />
-                    <main id="main-content">{children}</main>
-                    <Toaster position="top-right" richColors />
-                    <AriaLiveRegion />
-                    <ServiceWorkerRegister />
-                    <CookieConsent />
-                  </SyncProvider>
+                  <MotionPreferencesProvider>
+                    <SyncProvider>
+                      <GlobalSessionManager />
+                      <main id="main-content">{children}</main>
+                      <Toaster position="top-right" richColors />
+                      <ServiceWorkerRegister />
+                      <CookieConsent />
+                    </SyncProvider>
+                  </MotionPreferencesProvider>
                 </QueryProvider>
               </ThemeProvider>
             </ErrorBoundary>

@@ -49,7 +49,7 @@ export function useComponentHealth(pollingInterval: number = 60000) {
     fetchData();
     const interval = setInterval(fetchData, pollingInterval);
     return () => clearInterval(interval);
-  }, [pollingInterval]);
+  }, [pollingInterval]); // FIX-RCT-104: fetchData reads from getState() — stable reference, no dep needed
 
   return { components, loading, error, refetch: fetchData };
 }

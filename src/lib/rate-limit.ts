@@ -6,15 +6,25 @@ const isUpstashConfigured =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// Rate limiter distribuido (producción)
-let upstashLimiter: Ratelimit | null = null;
-if (isUpstashConfigured) {
-  upstashLimiter = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(30, '60 s'),
-    analytics: false,
-    prefix: 'costpro_rl',
-  });
+// FIX-BUG-SEC-007: Cache of Upstash limiters keyed by `${maxRequests}_${windowSec}`
+// so that caller-supplied params are honored instead of using a single fixed limiter.
+const upstashLimiterCache = new Map<string, Ratelimit>();
+
+function getUpstashLimiter(maxRequests: number, windowSec: number): Ratelimit | null {
+  if (!isUpstashConfigured) return null;
+
+  const key = `${maxRequests}_${windowSec}`;
+  let limiter = upstashLimiterCache.get(key);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowSec} s`),
+      analytics: false,
+      prefix: 'costpro_rl',
+    });
+    upstashLimiterCache.set(key, limiter);
+  }
+  return limiter;
 }
 
 // Fallback en memoria (solo para desarrollo local sin Upstash)
@@ -23,14 +33,7 @@ interface MemEntry {
   resetTime: number;
 }
 const memStore = new Map<string, MemEntry>();
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of memStore) {
-      if (now > entry.resetTime) memStore.delete(key);
-    }
-  }, 60_000);
-}
+// FIX-RCT-106: Removed global setInterval leak — cleanup is now lazy inside rateLimit()
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -47,8 +50,20 @@ export async function rateLimit(
   options: { windowMs?: number; maxRequests?: number } = {}
 ): Promise<RateLimitResult> {
   const { windowMs = 60_000, maxRequests = 30 } = options;
+  const windowSec = Math.ceil(windowMs / 1000);
+
+  // FIX-RCT-106: Lazy cleanup — remove expired entries on each call
+  // FIX-SEC-016: LRU-style cleanup at 10K entries prevents OOM; for production use Upstash Redis
+  if (memStore.size > 10000) {
+    const now = Date.now();
+    for (const [key, entry] of memStore) {
+      if (now > entry.resetTime) memStore.delete(key);
+    }
+  }
 
   // Producción: Upstash Redis (distribuido, persiste entre invocaciones serverless)
+  // FIX-BUG-SEC-007: Look up/create limiter based on caller params instead of using a single fixed instance
+  const upstashLimiter = getUpstashLimiter(maxRequests, windowSec);
   if (upstashLimiter) {
     const { success, remaining, reset } = await upstashLimiter.limit(identifier);
     return {

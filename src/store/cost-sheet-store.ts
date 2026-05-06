@@ -13,9 +13,10 @@ import exampleTemplate from '@/lib/data/costpro-ejemplo';
 import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
 
-interface UpdateValuePayload {
+export interface UpdateValuePayload {
   path: (string | number)[];
-  value: any;
+  // FIX-LOG-023: Proper union type instead of any
+  value: string | number | boolean | null | undefined | object;
 }
 
 interface CostSheetState {
@@ -173,7 +174,7 @@ export const useCostSheetStore = create<CostSheetState>()(
             );
             if (annex) {
               const newRow: any = {};
-              if (annex.data.length > 0) {
+              if (annex.data?.length > 0) {
                 const firstRow = annex.data[0];
                 Object.keys(firstRow).forEach((key) => {
                   const column = annex.columns.find((c) => c.key === key);

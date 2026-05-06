@@ -53,7 +53,8 @@ async function botChatHandler(req: NextRequest) {
         text: response.text,
         metadata: {
           provider: response.metadata?.model || aiProvider || 'gemini',
-          actions: response.tool_calls ? [] : undefined // BotContext actions handling is done in botService usually
+          // FIX-BUG-LOG-009: Use nullish coalescing so actions is always an array (undefined gets stripped by JSON.stringify)
+          actions: response.tool_calls ?? []
         },
         timestamp: new Date().toISOString()
       });
@@ -69,7 +70,8 @@ async function botChatHandler(req: NextRequest) {
 
       return NextResponse.json({
         error: isQuota ? 'Límite de IA alcanzado' : 'Error de comunicación con la IA',
-        details: errorMsg
+        // FIX-SEC-021: Hide AI error details in production
+        details: process.env.NODE_ENV === 'development' ? errorMsg : undefined
       }, { status: 502 });
     }
 
@@ -78,7 +80,7 @@ async function botChatHandler(req: NextRequest) {
     console.error('[BotChat] Global Error:', error);
     return NextResponse.json({
       error: 'Error interno',
-      details: msg
+      details: process.env.NODE_ENV === 'development' ? msg : 'Error interno del servidor'
     }, { status: 500 });
   }
 }

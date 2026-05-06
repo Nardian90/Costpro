@@ -183,7 +183,7 @@ export default function IPVView() {
                         `Guardando lotes: ${processedPercent}% (${offset + results.length}/${total})`
                     );
                 } catch (err) {
-                    console.error('Error saving partial results:', err);
+                    if (process.env.NODE_ENV === 'development') console.error('Error saving partial results:', err);
                 }
             }
             else if (type === 'BATCH_COMPLETE') {
@@ -249,7 +249,6 @@ export default function IPVView() {
                         `⚠️ ${partialCount} parciales | ❌ ${pendingCount} pendientes`
                     );
                 } catch (dbError) {
-                    console.error('Error saving matching results:', dbError);
                     toast.error(`❌ Error guardando en BD: ${dbError instanceof Error ? dbError.message : 'Unknown'}`);
                 }
 
@@ -260,7 +259,6 @@ export default function IPVView() {
                 }, 500);
             }
             else if (type === 'ERROR') {
-                console.error('Worker error:', event.data.error);
                 toast.error(`Error en matching: ${event.data.error}`);
                 worker.terminate();
                 setIsMatching(false);
@@ -268,7 +266,6 @@ export default function IPVView() {
         };
 
         worker.onerror = (error) => {
-            console.error('Worker error event:', error);
             toast.error(`Error en el hilo del motor: ${error.message}`);
             worker.terminate();
             setIsMatching(false);
@@ -283,7 +280,6 @@ export default function IPVView() {
         });
 
     } catch (e: any) {
-        console.error('Matching error:', e);
         toast.error(`Error durante el matching: ${e.message}`);
         setIsMatching(false);
     }

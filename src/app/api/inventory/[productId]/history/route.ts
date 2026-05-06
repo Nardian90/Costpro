@@ -24,8 +24,9 @@ async function getHandler(
 
   const { productId } = await params;
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
+  // FIX-SEC-007/008: Clamp pagination parameters to prevent abuse
+  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10) || 20));
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const storeId = searchParams.get("storeId");
 
   if (!productId) {
@@ -50,7 +51,8 @@ async function getHandler(
 
     if (error) {
       return NextResponse.json(
-        { error: "Internal Server Error", message: error.message },
+        // FIX-SEC-019: Hide error details in production
+        { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? error.message : undefined },
         { status: 500 }
       );
     }
@@ -77,7 +79,8 @@ async function getHandler(
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal Server Error", message: errorMessage },
+      // FIX-SEC-019: Hide error details in production
+      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
       { status: 500 }
     );
   }

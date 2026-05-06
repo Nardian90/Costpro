@@ -1,6 +1,6 @@
 'use client';
 import { parseTransactionMetadata } from '@/lib/ipv/metadata-parser';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileSpreadsheet, List, LayoutGrid, Info, Search, RotateCcw, Wand2, Plus, Eye, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -40,6 +40,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [searchTerm, setSearchTerm] = useState('');
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
+  // FIX-BUG-UX-002: Reset typeFilter when kpiFilter changes from parent to prevent filter state desync
+  useEffect(() => { setTypeFilter('ALL'); }, [kpiFilter]); // eslint-disable-line react-hooks/set-state-in-effect -- Legitimate: must reset local filter when parent-driven filter changes
   const [showExcluded, setShowExcluded] = useState(true);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});

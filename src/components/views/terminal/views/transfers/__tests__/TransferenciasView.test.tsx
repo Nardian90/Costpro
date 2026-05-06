@@ -34,44 +34,44 @@ describe('TransferenciasView', () => {
     const mockUser = { id: 'u1', activeStoreId: 's1' };
 
     beforeEach(() => {
-        (storeModule.useAuthStore as any).mockReturnValue({ user: mockUser } as any);
-        (storeModule.useUIStore as any).mockReturnValue({
+        vi.mocked(storeModule.useAuthStore).mockReturnValue({ user: mockUser } as any);
+        vi.mocked(storeModule.useUIStore).mockReturnValue({
           viewQueries: { transferencias: '' },
           currentView: 'transferencias',
           showQueries: false
         } as any);
 
-        (transfersApi.useIncomingTransfers as any).mockReturnValue({
+        vi.mocked(transfersApi.useIncomingTransfers).mockReturnValue({
             data: [],
             isLoading: false,
             error: null,
             refetch: vi.fn(),
         } as any);
-        (transfersApi.useOutgoingTransfers as any).mockReturnValue({
+        vi.mocked(transfersApi.useOutgoingTransfers).mockReturnValue({
             data: [mockTransfer],
             isLoading: false,
             error: null,
             refetch: vi.fn(),
         } as any);
-        (transfersApi.useTransferableStores as any).mockReturnValue({
+        vi.mocked(transfersApi.useTransferableStores).mockReturnValue({
             data: [],
             isLoading: false,
         } as any);
-        (transfersApi.useCreateTransfer as any).mockReturnValue({
+        vi.mocked(transfersApi.useCreateTransfer).mockReturnValue({
             mutateAsync: vi.fn(),
             isPending: false,
         } as any);
-        (transfersApi.useTransferDetails as any).mockReturnValue({
+        vi.mocked(transfersApi.useTransferDetails).mockReturnValue({
             data: mockTransfer,
             isLoading: false,
             error: null,
         } as any);
-        (transfersApi.useConfirmTransfer as any).mockReturnValue({
+        vi.mocked(transfersApi.useConfirmTransfer).mockReturnValue({
             mutateAsync: vi.fn(),
             isPending: false,
         } as any);
 
-        (inventoryApi.useInventory as any).mockReturnValue({
+        vi.mocked(inventoryApi.useInventory).mockReturnValue({
             data: { pages: [] },
             isFetching: false,
         } as any);

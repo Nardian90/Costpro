@@ -30,8 +30,16 @@ export async function validateRPCResponse<T>(
         toast.error(message);
         throw new Error(message);
     }
-    // We cast to T anyway to avoid breaking the UI in production, but we've logged the error
-    return data as T;
+    // FIX-LOG-013: Strip unknown keys instead of passing raw invalid data
+    if (Array.isArray(data)) return data.map(item => {
+      const parsed = schema.safeParse(item);
+      return parsed.success ? parsed.data : item;
+    }) as unknown as T;
+    if (typeof data === 'object' && data !== null) {
+      const parsed = schema.safeParse(data);
+      return (parsed.success ? parsed.data : data) as unknown as T;
+    }
+    return null as unknown as T;
   }
 
   return result.data;

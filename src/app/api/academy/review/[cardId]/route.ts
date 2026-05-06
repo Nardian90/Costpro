@@ -20,7 +20,12 @@ async function postHandler(
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const userId = session.user.id;
-  const rawBody = await req.json();
+  let rawBody;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
+  }
   const parsed = academyReviewSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(zodError(parsed.error), { status: 400 });
@@ -78,7 +83,8 @@ async function postHandler(
     return NextResponse.json({ success: true, result, newMastery });
   } catch (error: any) {
     console.error('Evaluation error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // FIX-SEC-019: Hide error details in production
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 }
 

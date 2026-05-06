@@ -100,7 +100,7 @@ export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: stri
   </button>
 );
 
-export const SearchInput: React.FC<any> = ({ value, onChange, placeholder, className, ...props }) => (
+export const SearchInput: React.FC<any> = ({ value, onChange, placeholder, ariaLabel, className, ...props }) => (
   <div className={cn("relative group", className)}>
     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
     <input
@@ -108,12 +108,14 @@ export const SearchInput: React.FC<any> = ({ value, onChange, placeholder, class
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      aria-label={ariaLabel || placeholder || 'Buscar'}
       className="w-full bg-muted/20 border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
       {...props}
     />
     {value && (
       <button
         onClick={() => onChange('')}
+        aria-label="Limpiar búsqueda"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
       >
         <X className="w-3.5 h-3.5" />
@@ -280,6 +282,7 @@ export const ProductCard: React.FC<any> = ({
                 onClick={() => onEdit?.(product)}
                 className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-foreground transition-all active:scale-90 shadow-sm"
                 title="Adjuntar Imagen"
+                aria-label="Adjuntar imagen"
               >
                 <Camera className="w-4 h-4" />
               </button>

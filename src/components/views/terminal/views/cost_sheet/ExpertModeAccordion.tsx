@@ -5,7 +5,6 @@ import { HelpCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/ui/useReducedMotion';
 
 interface ExpertModeAccordionProps {
   id: string;
@@ -34,7 +33,6 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
 }) => {
   const panelId = `panel-${id}`;
   const headerId = `header-${id}`;
-  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div id={`accordion-${id}`} className={cn(
@@ -88,7 +86,17 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
-          {!icon && <ChevronRight className={cn("w-5 h-5 text-muted-foreground/30 transition-transform duration-300 cursor-pointer", isExpanded && "rotate-90")} onClick={onToggle} />}
+          {!icon && (
+            <button
+              type="button"
+              tabIndex={0}
+              aria-label={`Expandir o contraer ${title}`}
+              className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
+              onClick={onToggle}
+            >
+              <ChevronRight className={cn("w-5 h-5 text-muted-foreground/30 transition-transform duration-300", isExpanded && "rotate-90")} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -97,7 +105,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
         <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${completionPercent}%` }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className={cn(
                 "h-full transition-colors duration-500",
                 completionPercent < 30 ? "bg-red-500" : completionPercent < 70 ? "bg-amber-500" : "bg-green-500"

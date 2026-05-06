@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { resetPasswordSchema, zodError } from '@/validation/api-schemas';
+import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
 import { withTracing } from '@/lib/observability';
 
 
@@ -15,6 +16,9 @@ function getSupabaseAdmin() {
 
 
 const handler = withRole('admin', async (req, session) => {
+  // FIX-SEC-023: CSRF origin validation
+  if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
@@ -55,6 +59,11 @@ const handler = withRole('admin', async (req, session) => {
     }
     const { user_id } = parsed.data;
 
+    // FIX-SEC-025: Prevent admin from resetting their own password via admin endpoint
+    const targetUserId = user_id;
+    if (targetUserId === session.user.id) {
+      return NextResponse.json({ error: 'No puedes restablecer tu propia contraseña desde aquí' }, { status: 400 });
+    }
 
     const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user_id);
     if (getUserError || !targetUser.user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
@@ -72,7 +81,7 @@ const handler = withRole('admin', async (req, session) => {
     });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

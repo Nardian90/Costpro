@@ -12,7 +12,9 @@
  * The barrel export (index.ts) does NOT re-export anything from this file.
  */
 
-let sdk: ReturnType<typeof import('@opentelemetry/sdk-node').default> | null = null;
+/** Minimal SDK interface — only methods used after dynamic import */
+interface TracingSDK { start(): void }
+let sdk: TracingSDK | null = null;
 
 /**
  * Initialize OpenTelemetry tracing. Safe to call multiple times (idempotent).

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore, useCartStore } from "@/store";
+import { useShallow } from 'zustand/react/shallow';
 import { useProducts } from "@/hooks/api/useProducts";
 import { useCreateSale } from "@/hooks/api/useTransactions";
 import { PaymentMethod } from "@/types";
@@ -33,7 +34,25 @@ export function usePOSView() {
     updateItemDiscount,
     updateItemPayment,
     prorateGlobalPayment,
-  } = useCartStore();
+  } = useCartStore(useShallow(state => ({
+    items: state.items,
+    addItem: state.addItem,
+    removeItem: state.removeItem,
+    updateQuantity: state.updateQuantity,
+    clearCart: state.clearCart,
+    getTotal: state.getTotal,
+    getSubtotal: state.getSubtotal,
+    getDiscountAmount: state.getDiscountAmount,
+    getTaxAmount: state.getTaxAmount,
+    getItemCount: state.getItemCount,
+    discount: state.discount,
+    setDiscount: state.setDiscount,
+    appliedTaxes: state.appliedTaxes,
+    toggleTax: state.toggleTax,
+    updateItemDiscount: state.updateItemDiscount,
+    updateItemPayment: state.updateItemPayment,
+    prorateGlobalPayment: state.prorateGlobalPayment,
+  })));
 
   const [searchTerm, setSearchTerm] = useState("");
   const [posLayoutMode, setPosLayoutMode] = useState<"grid" | "table">("grid");

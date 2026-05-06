@@ -115,6 +115,18 @@
   transform-style: flat !important;
 }
 
+/* ── FIX-UX-013: Disable infinite animations in performance mode (catch-all) ── */
+.mode-performance .floating-orb-sm,
+.mode-performance .floating-orb,
+.mode-performance [class*="animate-"],
+.mode-performance [class*="animation-"] {
+  animation: none !important;
+}
+
+.mode-performance .border-gradient-animate {
+  animation: none !important;
+}
+
 .mode-performance .costpro-brand-3d {
   text-shadow: none !important;
 }

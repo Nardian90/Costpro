@@ -22,7 +22,7 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 describe('CostSheetComparisonTable', () => {
   beforeEach(() => {
-    (useScenarioStore as any).mockReturnValue({
+    vi.mocked(useScenarioStore).mockReturnValue({
       activeScenarioIds: ['v1', 'v2'],
       setComparisonBase: vi.fn(),
       createScenario: vi.fn(),

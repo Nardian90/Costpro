@@ -182,7 +182,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, []) // FIX-RCT-105: setState has stable identity — no dep needed
 
   return {
     ...state,

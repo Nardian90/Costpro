@@ -108,6 +108,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Log error for monitoring (in production, send to Sentry/error tracking)
     console.error('[ErrorBoundary] Uncaught error:', error);
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+    // FIX-INF-016: Also send to observability stack
+    try {
+      fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: 'error',
+          context: 'ErrorBoundary',
+          message: error?.message || String(error),
+          stack: error?.stack,
+        }),
+      }).catch(() => { /* silently fail — don't loop */ });
+    } catch { /* ignore */ }
   }
 
   handleReload = () => {

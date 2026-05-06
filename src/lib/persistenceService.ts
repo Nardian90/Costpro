@@ -32,7 +32,7 @@ export class PersistenceService {
                     const delay = Math.pow(2, i) * INITIAL_BACKOFF;
                     await new Promise(resolve => setTimeout(resolve, delay));
                     if (!db.isOpen()) {
-                        try { await db.open(); } catch (e) {}
+                        try { await db.open(); } catch (e) { console.warn('[Persistence] Failed to reopen DB:', e); }
                     }
                     continue;
                 }
@@ -158,6 +158,6 @@ export class PersistenceService {
                 entity,
                 metadata
             });
-        } catch (e) {}
+        } catch (e) { console.warn('[Audit] Failed to write audit log:', e); }
     }
 }

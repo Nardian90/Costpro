@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { getServerSession } from '@/lib/auth'; // FIX-SEC-002
 import fs from 'fs';
 import path from 'path';
 
@@ -21,7 +22,11 @@ interface FileEntry {
 }
 
 async function getHandler(request: NextRequest) {
-  const clientId = request.headers.get('x-forwarded-for') || 'anonymous';
+  // FIX-SEC-002: Add authentication check
+  const session = await getServerSession(request);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
@@ -34,13 +39,14 @@ async function getHandler(request: NextRequest) {
       const results: SearchResult[] = [];
       const query = searchQuery.toLowerCase();
 
-      const walk = (dir: string) => {
+      const walk = (dir: string, depth = 0, maxDepth = 10) => {
+        if (depth >= maxDepth) return [];
         const files = fs.readdirSync(dir);
         files.forEach(file => {
           const fullPath = path.join(dir, file);
           const stats = fs.statSync(fullPath);
           if (stats.isDirectory()) {
-            walk(fullPath);
+            walk(fullPath, depth + 1, maxDepth);
           } else if (file.endsWith('.md')) {
             const content = fs.readFileSync(fullPath, 'utf8');
             if (content.toLowerCase().includes(query)) {

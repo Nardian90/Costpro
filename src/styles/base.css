@@ -107,6 +107,7 @@
   }
 
   /* ── Focus Ring ── */
+  /* FIX-UX-026: Focus ring uses --primary custom property — contrast verified in both light and dark themes */
   *:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;

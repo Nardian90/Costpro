@@ -114,8 +114,8 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Documento de Clase {currentDoc.type}</p>
                  </div>
               </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-background border border-border/50 text-[9px] font-black uppercase tracking-widest hover:border-primary/50 transition-all group">
-                 <ExternalLink className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
+              <button disabled title="Próximamente" aria-label="Imprimir documento" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-background border border-border/50 text-[9px] font-black uppercase tracking-widest opacity-50 cursor-not-allowed">
+                 <ExternalLink className="w-3 h-3 text-primary" />
                  Imprimir Documento
               </button>
            </div>

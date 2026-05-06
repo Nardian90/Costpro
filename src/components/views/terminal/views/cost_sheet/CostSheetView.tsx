@@ -20,7 +20,9 @@ import {
     Download,
     Activity,
     Edit3,
-    ListFilter
+    ListFilter,
+    LayoutGrid,
+    TableProperties
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -51,6 +53,8 @@ import CostSheetWizard from './CostSheetWizard';
 import CostSheetNarrative from './CostSheetNarrative';
 import { CostSheetProblemsPanel } from './CostSheetProblemsPanel';
 import { CostSheetComparisonTable } from './CostSheetComparisonTable';
+import CostSheetParallelExpert from './CostSheetParallelExpert';
+import CostSheetFlatTable from './CostSheetFlatTable';
 import { CostSheetBanner } from './CostSheetBanner';
 import { SteelStructureCalculator } from './SteelStructureCalculator';
 
@@ -66,7 +70,6 @@ import { cn } from '@/lib/utils';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { useScenarioStore } from '@/store/scenario-store';
 import { useScenarioCalculator } from '@/hooks/logic/useScenarioCalculator';
-import ScenarioManagerSheet from './ScenarioManagerSheet';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow, ScenarioId } from '@/types/cost-sheet';
 import type { ValidationError as EngineValidationError } from '@/lib/cost-engine/types';
 
@@ -75,6 +78,7 @@ const DarianEditor = dynamic(() => import('./DarianEditor').then(m => ({ default
 const CostSheetView = () => {
   const isMobile = useIsMobile();
   const { activeCostSection: activeSection } = useUIStore();
+  const [isFlatMode, setIsFlatMode] = React.useState(false);
 
   // ── Data & Calculations ─────────────────────────────────────────────
   const { data } = useCostSheetStore();
@@ -97,9 +101,6 @@ const CostSheetView = () => {
     confirmation,
     setConfirmation,
     askConfirmation,
-    viewMode: actionsViewMode,
-    isEditing: actionsIsEditing,
-    setIsEditing: actionsSetIsEditing,
     handleSetActiveSection,
     handleSetViewMode,
     handleExportPDF,
@@ -141,7 +142,10 @@ const CostSheetView = () => {
   });
 
   const {
+    viewMode,
     setViewMode,
+    isEditing,
+    setIsEditing,
     layoutMode,
     setLayoutMode,
     effectiveLayoutMode,
@@ -150,29 +154,23 @@ const CostSheetView = () => {
     groupedSections
   } = viewState;
 
-  // ── Single source of truth for viewMode & isEditing (from actions, synced by sidebar/effects)
-  const viewMode = actionsViewMode;
-  const isEditing = actionsIsEditing;
-  const setIsEditing = actionsSetIsEditing;
-
   const { versions, restoreVersion, lastSavedAt, isSaving } = useAutoSave(isEditing && viewMode === 'expert');
 
   // ── Scenario Store ──────────────────────────────────────────────────
   const {
     initializeScenarios,
     isComparisonMode,
+    isParallelMode,
     toggleComparisonMode,
+    toggleParallelMode,
     updateRowValue: scenarioUpdateRowValue,
     setPrimaryScenario,
     createScenario: createScenarioFromStore,
     deleteScenario
   } = useScenarioStore();
 
-  // ── Scenario Calculator ────────────────────────────────────────────
+  // ── Scenario Calculator ─────────────────────────────────────────────
   const { calcV1, calcV2, calcV3 } = useScenarioCalculator();
-
-  // ── Scenario Manager Sheet ──────────────────────────────────────────
-  const [isScenarioSheetOpen, setIsScenarioSheetOpen] = useState(false);
 
   const handleScenarioAction = (action: string, scenarioId: ScenarioId) => {
     switch (action) {
@@ -294,7 +292,6 @@ const CostSheetView = () => {
                         layoutMode={layoutMode}
                         setLayoutMode={setLayoutMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
-                        onOpenScenarios={() => setIsScenarioSheetOpen(true)}
                         onImport={handleImportJSON}
                         onSave={handleExportJSON}
                         onExportExcel={handleExportExcel}
@@ -339,20 +336,115 @@ const CostSheetView = () => {
                                 <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                             </div>
 
-                            {/* Body Sections (Individual Accordions) */}
+                            {/* Body Sections (Individual Accordions or Flat Table) */}
                             <div className="space-y-4">
-                                <div className="px-2 flex items-center gap-2">
-                                    <ListFilter className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
-                                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Estructura de Costos</h3>
+                                <div className="px-2 flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="flex items-center gap-2">
+                                        <ListFilter className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
+                                        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Estructura de Costos</h3>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        {/* Axis 1: Format toggle */}
+                                        <div className="flex items-center bg-muted/40 rounded-lg p-0.5 border border-border/40">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsFlatMode(false)}
+                                                className={cn(
+                                                    "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
+                                                    !isFlatMode
+                                                        ? "bg-card text-foreground shadow-sm border border-border/60"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                )}
+                                                aria-label="Vista por secciones"
+                                                aria-pressed={!isFlatMode}
+                                            >
+                                                <ListFilter className="w-3 h-3" />
+                                                <span className="hidden sm:inline">Secciones</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsFlatMode(true); toggleParallelMode(false); toggleComparisonMode(false); }}
+                                                className={cn(
+                                                    "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
+                                                    isFlatMode
+                                                        ? "bg-card text-foreground shadow-sm border border-border/60"
+                                                        : "text-muted-foreground hover:text-foreground"
+                                                )}
+                                                aria-label="Vista hoja de cálculo"
+                                                aria-pressed={isFlatMode}
+                                            >
+                                                <TableProperties className="w-3 h-3" />
+                                                <span className="hidden sm:inline">Hoja</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Axis 2: Scenario toggle (only when not flat) */}
+                                        {!isFlatMode && (
+                                            <div className="flex items-center bg-muted/40 rounded-lg p-0.5 border border-border/40">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (isParallelMode) toggleParallelMode(false);
+                                                        toggleComparisonMode();
+                                                    }}
+                                                    className={cn(
+                                                        "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
+                                                        isComparisonMode && !isParallelMode
+                                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    )}
+                                                    aria-label="Modo comparación"
+                                                    aria-pressed={isComparisonMode && !isParallelMode}
+                                                >
+                                                    <GitCompare className="w-3 h-3" />
+                                                    <span className="hidden sm:inline">Comparar</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleParallelMode()}
+                                                    className={cn(
+                                                        "flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all",
+                                                        isParallelMode
+                                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                                            : "text-muted-foreground hover:text-foreground"
+                                                    )}
+                                                    aria-label="Modo paralelo"
+                                                    aria-pressed={isParallelMode}
+                                                >
+                                                    <LayoutGrid className="w-3 h-3" />
+                                                    <span className="hidden sm:inline">Paralelo</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                {isComparisonMode ? (
+
+                                {/* ── View Router ──────────────────────────────────── */}
+                                {isFlatMode ? (
+                                    <CostSheetFlatTable
+                                        sections={data.sections}
+                                        calculatedValues={calculatedValues}
+                                        annexes={data?.annexes || []}
+                                    />
+                                ) : isParallelMode ? (
+                                    <CostSheetParallelExpert
+                                        sections={data.sections}
+                                        scenarios={data.scenarios || []}
+                                        scenarioConfig={data.scenarioConfig}
+                                        calcV1={calcV1 ?? undefined}
+                                        calcV2={calcV2 ?? undefined}
+                                        calcV3={calcV3 ?? undefined}
+                                        onUpdateRowValue={adapterUpdateRowValue}
+                                        onScenarioAction={handleScenarioAction}
+                                    />
+                                ) : isComparisonMode ? (
                                     <CostSheetComparisonTable
                                         sections={data.sections}
                                         scenarios={data.scenarios || []}
                                         scenarioConfig={data.scenarioConfig}
-                                        calcV1={calcV1}
-                                        calcV2={calcV2}
-                                        calcV3={calcV3}
+                                        calcV1={calcV1 ?? undefined}
+                                        calcV2={calcV2 ?? undefined}
+                                        calcV3={calcV3 ?? undefined}
                                         onUpdateRowValue={adapterUpdateRowValue}
                                         onScenarioAction={handleScenarioAction}
                                     />
@@ -541,7 +633,7 @@ const CostSheetView = () => {
                     variant="ghost"
                     size="sm"
                     type="button"
-                    onClick={() => { handleSetViewMode('expert'); }}
+                    onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
                     aria-label="Ir al Editor de ficha en Modo Experto"
                     className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
@@ -563,7 +655,6 @@ const CostSheetView = () => {
       )}
 
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
-      <ScenarioManagerSheet open={isScenarioSheetOpen} onOpenChange={setIsScenarioSheetOpen} />
       <BaseModal
         open={confirmation.isOpen}
         onOpenChange={(open) => setConfirmation({ ...confirmation, isOpen: open })}
