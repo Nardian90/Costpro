@@ -139,7 +139,7 @@ async function postHandler(req: NextRequest) {
         // If it's a model/key error, we should probably stop and report it
         if (e.message.includes('API Key') || e.message.includes('Modelo') || e.message.includes('Permisos')) {
            // FIX-SEC-019: Hide error details in production
-           return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? e.message : 'Error interno del servidor' }, { status: 500 });
+           return NextResponse.json({ error: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? e.message : 'Error interno del servidor' }, { status: 500 });
         }
       }
     }
@@ -171,7 +171,7 @@ async function postHandler(req: NextRequest) {
   } catch (error: any) {
     console.error('Generation error:', error);
     // FIX-SEC-019: Hide error details in production
-    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 }
 
