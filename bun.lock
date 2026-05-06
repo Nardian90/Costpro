@@ -79,7 +79,7 @@
         "html5-qrcode": "^2.3.8",
         "immer": "^11.1.4",
         "input-otp": "^1.4.2",
-        "isomorphic-dompurify": "^3.11.0",
+        "isomorphic-dompurify": "3.12.0",
         "js-yaml": "^4.1.1",
         "jsbarcode": "^3.12.3",
         "jspdf": "^4.2.1",
@@ -110,7 +110,7 @@
         "tailwind-merge": "^3.3.1",
         "tailwindcss-animate": "^1.0.7",
         "three": "^0.184.0",
-        "uuid": "^14.0.0",
+        "uuid": "14.0.0",
         "vaul": "^1.1.2",
         "workbox-window": "^7.4.0",
         "xlsx": "^0.18.5",
@@ -1872,7 +1872,7 @@
 
     "isexe": ["isexe@2.0.0", "https://registry.npmjs.com/isexe/-/isexe-2.0.0.tgz", {}, "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="],
 
-    "isomorphic-dompurify": ["isomorphic-dompurify@3.11.0", "", { "dependencies": { "dompurify": "^3.4.1", "jsdom": "^29.1.0" } }, "sha512-il0sNhLnfawc6vKoMqnZX1JXzEzw0pP3DZWg7mM7VJNJ8cq6DCxeAjEcfjTazyBF8dkUn+rBsBPS5NQs4ZaI3g=="],
+    "isomorphic-dompurify": ["isomorphic-dompurify@3.12.0", "", { "dependencies": { "dompurify": "^3.4.2", "jsdom": "^29.1.1" } }, "sha512-8n+j+6ypTHvriJwFOQ2qusQ6bzGjZVcR3jbe1pBpLcGI1dn4WIl0ctLBngqE5QttquQBAlKXwJeTMw+X7x7qKw=="],
 
     "isomorphic.js": ["isomorphic.js@0.2.5", "https://registry.npmjs.com/isomorphic.js/-/isomorphic.js-0.2.5.tgz", {}, "sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw=="],
 
