@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { withTracing } from '@/lib/observability';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Endpoint for receiving client-side logs in production.
- * Accepts two payload formats:
- *   1. Structured: { context, error: { message, stack, code } }
- *   2. Flat:       { level, context, message, stack, data? }
- * Auth is optional — errors from unauthenticated contexts (e.g. ErrorBoundary)
- * are still logged to avoid silent failures.
- */
+function sanitizeLogField(val: unknown, maxLen = 200): string {
+    return String(val ?? '')
+        .replace(/[\r\n\t]/g, ' ')  // eliminates newline injection
+        .replace(/[^\x20-\x7E]/g, '') // only printable ASCII
+        .slice(0, maxLen);
+}
 
 async function postHandler(req: NextRequest) {
   try {
-    // Best-effort auth — don't block logging if no session
+    // 1. Rate limit by IP (anonymous) with low limit - BUG-027
+    const clientId = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anon-log';
+    const { allowed } = await rateLimit(`log:${clientId}`, { windowMs: 60_000, maxRequests: 20 });
+    if (!allowed) return NextResponse.json({ ok: true }); // silent to not break ErrorBoundary
+
+    // Best-effort auth
     let userId = 'anonymous';
     try {
       const session = await getServerSession(req);
       if (session) userId = session.user.id;
     } catch {
-      // Auth failed, proceed with anonymous logging
+      // Auth failed, proceed with anonymous
     }
 
     let body: Record<string, unknown>;
@@ -31,24 +35,25 @@ async function postHandler(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const level = (body.level as string) || 'info';
-    const context = (body.context as string) || 'unknown';
+    const level = sanitizeLogField(body.level, 10) || 'info';
+    const context = sanitizeLogField(body.context, 50) || 'unknown';
 
-    // Format 1: Nested error object (rpc-validator, QueryProvider)
     const nestedError = body.error as Record<string, unknown> | undefined;
-    const message = (nestedError?.message as string) || (body.message as string) || 'No message';
-    const stack = (nestedError?.stack as string) || (body.stack as string) || '';
+    const message = sanitizeLogField((nestedError?.message as string) || (body.message as string) || 'No message', 200);
+    const stack = sanitizeLogField((nestedError?.stack as string) || (body.stack as string) || '', 300);
     const data = body.data || body.variables;
 
-    // Server-side logging — in production, integrate with external log service
-    const dataStr = data ? JSON.stringify(data).slice(0, 200) : '';
+    const dataStr = data ? JSON.stringify(data).replace(/[\r\n\t]/g, ' ').slice(0, 200) : '';
+
+    // BUG-027: Sanitized logging
     console.log(
-      `[ClientLog] ${level.toUpperCase()} [${context}] user=${userId} ${message}${stack ? '\n  ' + String(stack).slice(0, 500) : ''}${dataStr ? '\n  data: ' + dataStr : ''}`
+      `[ClientLog] ${level.toUpperCase()} [${context}] user=${userId} ${message}` +
+      `${stack ? ' stack: ' + stack : ''}` +
+      `${dataStr ? ' data: ' + dataStr : ''}`
     );
 
     return NextResponse.json({ ok: true });
   } catch {
-    // Silently succeed to avoid client error loops
     return NextResponse.json({ ok: true });
   }
 }

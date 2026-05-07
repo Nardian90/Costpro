@@ -9,26 +9,23 @@ test.describe('Import', () => {
   });
 
   test('import-json: rejects invalid JSON → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
-    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) { test.skip(true, 'Auth headers missing'); return; }
     const response = await request.post('/api/cost-sheets/import-json', {
-      headers: { ...(headers || {}), 'Content-Type': 'text/plain', 'Authorization': headers?.Authorization || '' },
+      headers: { ...headers_val, 'Content-Type': 'text/plain' },
       data: 'not json'
     });
     expect(response.status()).toBe(400);
   });
 
   test('import-json: validates with FichaJSONSchema', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) {
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
     const response = await request.post('/api/cost-sheets/import-json', {
-      headers,
+      headers: headers_val,
       data: { header: {}, sections: 'not-an-array' }
     });
     expect(response.status()).toBe(400);
@@ -37,13 +34,13 @@ test.describe('Import', () => {
   });
 
   test('import-json: accepts valid sheet', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) {
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
     const response = await request.post('/api/cost-sheets/import-json', {
-      headers,
+      headers: headers_val,
       data: MINIMAL_COST_SHEET
     });
     expect(response.status()).toBe(200);
@@ -56,27 +53,26 @@ test.describe('Import', () => {
   });
 
   test('import-anexo: rejects without file → 400', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) {
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
     const response = await request.post('/api/cost-sheets/import-anexo', {
-      headers,
+      headers: headers_val,
       data: {}
     });
     expect(response.status()).toBe(400);
   });
 
   test('import-anexo: rejects unsupported format', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) {
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
-    // Submitting a fake text file
     const response = await request.post('/api/cost-sheets/import-anexo', {
-      headers,
+      headers: headers_val,
       multipart: {
         file: {
           name: 'test.txt',
@@ -90,14 +86,14 @@ test.describe('Import', () => {
   });
 
   test('import-anexo: accepts valid CSV', async ({ request }) => {
-    const headers = getAuthHeaders('user');
-    if (!headers) {
+    const headers_val = getAuthHeaders('user');
+    if (!headers_val) {
       test.skip(true, 'E2E_TEST_USER_TOKEN not configured');
       return;
     }
     const csvContent = 'classification,importe\nMaterial,100\nLabor,200';
     const response = await request.post('/api/cost-sheets/import-anexo', {
-      headers,
+      headers: headers_val,
       multipart: {
         file: {
           name: 'test.csv',

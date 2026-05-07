@@ -1,75 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth-middleware';
-import { rateLimit } from '@/lib/rate-limit';
+import { getServerSession } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { withTracing } from '@/lib/observability';
 import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
-import { Pick3PdfService } from '@/services/pick3/Pick3PdfService';
-import { Pick3Storage } from '@/services/pick3/storage';
-import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
 
+const isDev = process.env.NODE_ENV === 'development';
 
-const handler = withAuth(async (req, session) => {
-  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
-  const { allowed } = await rateLimit(clientId);
-  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
+async function postHandler(req: NextRequest) {
+  const session = await getServerSession(req);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const forceFull = searchParams.get('full') === 'true';
+  const authHeader = req.headers.get('Authorization');
+  const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
+
+  if (forceFull && !isCron) {
+    return NextResponse.json(
+      { error: 'La sincronización completa solo puede ser iniciada por el sistema' },
+      { status: 403 }
+    );
+  }
+
+  logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
   try {
-    const url = new URL(req.url);
-    const forceFull = url.searchParams.get('full') === 'true';
-    const authHeader = req.headers.get('Authorization');
-    const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
-
-    logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
-
-    // 1. Fetch from Web Sources (Fast)
-    let webResults: import('@/types/pick3').Pick3Result[] = [];
-    try {
-        webResults = await Pick3ScraperService.getCleanOfficialResults();
-        if (webResults.length > 0) {
-            await Pick3Storage.saveHistory(webResults);
-        }
-    } catch (webError) {
-        logger.error('PICK3', 'Web sync failed, continuing to PDF', { error: webError });
-    }
-
-    // 2. Fetch from PDF (Source of Truth)
-    let pdfResults: import('@/types/pick3').Pick3Result[] = [];
-    try {
-        pdfResults = await Pick3PdfService.syncFromPdf();
-    } catch (pdfError) {
-        const errorMsg = pdfError instanceof Error ? pdfError.message : String(pdfError);
-        logger.error('PICK3', 'PDF sync failed', { error: errorMsg });
-
-        if (webResults.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: `Error crítico: Fallaron todas las fuentes de sincronización. PDF Error: ${errorMsg}`
-            }, { status: 500 });
-        }
-    }
+    const results = await Pick3ScraperService.scrapeLatestResults();
 
     return NextResponse.json({
       success: true,
-      web_count: webResults.length,
-      pdf_count: pdfResults.length,
-      timestamp: new Date().toISOString()
+      data: results
     });
-  } catch (error) {
-    logger.error('PICK3', 'Sync API failed with critical error', { error });
+  } catch (error: any) {
+    logger.error("PICK3", "Sync failed", { error: String(error?.message || error) } as Record<string, any>);
+
     return NextResponse.json({
       success: false,
-      message: 'Error interno del servidor durante la sincronización.',
-      error: String(error)
+      message: isDev
+        ? `Error interno del servidor durante la sincronización: ${error instanceof Error ? error.message : String(error)}`
+        : 'Error interno del servidor durante la sincronización.',
+      ...(isDev && { error: String(error) })
     }, { status: 500 });
   }
-
-});
-
-async function postHandler(req: NextRequest) {
-  return handler(req);
 }
 
 export const POST = withTracing(postHandler, 'POST /api/pick3/sync');

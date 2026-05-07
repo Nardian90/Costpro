@@ -6,99 +6,91 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { mapProfileToContract } from '@/contracts/user';
 import { userService } from '@/services/user-service';
-import type { Profile, UserRole } from '@/types';
+import type { Profile } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
 const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
-const PROFILE_FETCH_TIMEOUT = 30 * 1000; // 30 seconds — profile fetch can be slower
+const PROFILE_FETCH_TIMEOUT = 30 * 1000; // 30 seconds
 
-/**
- * Manages Supabase session, syncs with Zustand, and handles online/offline state.
- * This hook should be used ONCE in a central component (e.g., TerminalView).
- */
 export function useSessionManager() {
     const { login, logout, setLoading, setStatus: setAuthStatus } = useAuthStore();
     const { isOnline, isCheckingSession, lastChecked, setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
-    const router = useRouter();
 
     const checkSession = useCallback(async (force = false) => {
         const now = Date.now();
         const { isMocked, user: currentUser, token: currentToken } = useAuthStore.getState();
 
-        // Bypass session check if we are in mock mode
         if (isMocked) {
             setAuthStatus('authenticated_valid');
             setLoading(false);
             return;
         }
 
-        // Prevent check if offline, another check is in progress, or within throttle period (unless forced)
         if (!isOnline || isCheckingSession || (!force && now - lastChecked < SESSION_CHECK_THROTTLE)) {
-            // ESSENTIAL: If we're not checking and loading is stuck, clear it.
-            if (!isCheckingSession) {
-                setLoading(false);
-            }
+            if (!isCheckingSession) setLoading(false);
             return;
         }
 
         setSessionStatus(true);
 
         try {
-            const { data, error } = await Promise.race([
-                supabase.auth.getSession(),
+            // BUG-035: Use getSession() to get the token, then validate with getUser()
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                setAuthStatus('unauthenticated');
+                setLoading(false);
+                return;
+            }
+
+            // Validate token against server
+            const { data: { user }, error: userError } = await Promise.race([
+                supabase.auth.getUser(session.access_token),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Session check timeout')), SESSION_CHECK_TIMEOUT))
-            ]) as { data: { session: any; }; error: Error | null; };
+            ]) as any;
 
-            if (error) throw error;
+            if (userError || !user) {
+                logout();
+                setLoading(false);
+                return;
+            }
 
-            const { session } = data;
-
-            if (session?.user) {
-                let profileData: Profile | null = null;
-
-                try {
-                    profileData = await Promise.race([
-                        userService.getUserProfile(session.user.id),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT))
-                    ]) as Profile | null;
-                } catch (err: any) {
-                    logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED/TIMEOUT:', { data: err.message })
-                    // On timeout or error, try to continue with session user data if we already have a user
-                    if (currentUser) {
-                        // Keep existing user data, just update the token
-                        login(currentUser, session.access_token, 'authenticated_valid');
-                        setStatus('stable');
-                        return;
-                    }
-                    // No existing user — mark invalid but don't block
-                    setAuthStatus('authenticated_invalid_profile');
-                    setLoading(false);
+            let profileData: Profile | null = null;
+            try {
+                profileData = await Promise.race([
+                    userService.getUserProfile(user.id),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT))
+                ]) as Profile | null;
+            } catch (err: any) {
+                logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED', { data: err.message });
+                // BUG-039: Fallback with stale marker and retry
+                if (currentUser) {
+                    login(currentUser, session.access_token, 'authenticated_stale_profile' as any);
+                    setStatus('stable');
+                    setTimeout(() => checkSession(true), 30000);
                     return;
                 }
+                setAuthStatus('authenticated_invalid_profile');
+                setLoading(false);
+                return;
+            }
 
-                if (profileData) {
-                    const userContractData = mapProfileToContract(profileData);
-
-                    if (session.access_token !== currentToken || JSON.stringify(userContractData) !== JSON.stringify(currentUser)) {
-                        login(userContractData, session.access_token, 'authenticated_valid');
-                    } else {
-                        setAuthStatus('authenticated_valid');
-                        setLoading(false);
-                    }
-                    setStatus('stable');
+            if (profileData) {
+                const userContractData = mapProfileToContract(profileData);
+                if (session.access_token !== currentToken || JSON.stringify(userContractData) !== JSON.stringify(currentUser)) {
+                    login(userContractData, session.access_token, 'authenticated_valid');
                 } else {
-                    // User inactive or not found - force logout
-                    await supabase.auth.signOut();
-                    logout();
+                    setAuthStatus('authenticated_valid');
                     setLoading(false);
                 }
+                setStatus('stable');
             } else {
-                // No session - set status to unauthenticated
-                setAuthStatus('unauthenticated');
+                await supabase.auth.signOut();
+                logout();
                 setLoading(false);
             }
         } catch (error: any) {
-            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: `Session check failed: ${error.message}` });
+            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: error.message });
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
             setLoading(false);
             setStatus('error');
@@ -107,35 +99,20 @@ export function useSessionManager() {
         }
     }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, setLoading]);
 
-    // Effect for online/offline listeners
     useEffect(() => {
-        const handleOnline = () => {
-            setOnlineStatus(true);
-            checkSession(true); // Force re-check on reconnection
-        };
+        const handleOnline = () => { setOnlineStatus(true); checkSession(true); };
         const handleOffline = () => setOnlineStatus(false);
-
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
+        return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     }, [setOnlineStatus, checkSession]);
 
-    // Effect for tab visibility
     useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                checkSession(); // Throttled check
-            }
-        };
+        const handleVisibilityChange = () => { if (document.visibilityState === 'visible') checkSession(); };
         window.addEventListener('visibilitychange', handleVisibilityChange);
         return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [checkSession]);
 
-    // Effect for Supabase auth state changes
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
@@ -144,33 +121,22 @@ export function useSessionManager() {
                 window.location.reload();
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 const { user: currentUser } = useAuthStore.getState();
-                if(session?.access_token && currentUser) {
-                    // Update the token in the store without a full profile refetch
+                if (session?.access_token && currentUser) {
                     login(currentUser, session.access_token);
                 } else {
-                     // If there is no user data, force a full session check.
-                    checkSession(true)
+                    checkSession(true);
                 }
             }
         });
-
         return () => subscription.unsubscribe();
     }, [login, logout, checkSession, setLoading]);
 
-    // Initial check on mount
-    useEffect(() => {
-        checkSession(true);
-    }, [checkSession]);
+    useEffect(() => { checkSession(true); }, [checkSession]);
 
-    // Fallback safety: If loading is still true after 5 seconds, clear it.
     useEffect(() => {
         const timer = setTimeout(() => {
-            const { loading, setLoading } = useAuthStore.getState();
-            if (loading) {
-                logger.warn('DATABASE', '[SESSIONMANAGER]_EMERGENCY_LOADING_CLEAR_TRIGGERED')
-                setLoading(false);
-            }
+            if (useAuthStore.getState().loading) setLoading(false);
         }, 5000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [setLoading]);
 }
