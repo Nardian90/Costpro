@@ -35,7 +35,7 @@ export class Pick3ScraperService {
         source.status = 'syncing';
         this.syncState.activeSourceId = source.id;
 
-        logger.info('PICK3', );
+        logger.info('PICK3', 'Attempting sync');
 
         try {
           let results: Pick3Result[] = [];
@@ -56,7 +56,7 @@ export class Pick3ScraperService {
 
             allResults = this.deduplicate([...allResults, ...results]);
 
-            logger.info('PICK3', );
+            logger.info('PICK3', 'Attempting sync');
 
             if (allResults.length >= 60) {
               break;
