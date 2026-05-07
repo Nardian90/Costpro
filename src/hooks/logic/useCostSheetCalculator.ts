@@ -101,9 +101,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       });
 
       // 2. Automatic % Capacidad (Quantity / Nivel Prod) - AFTER quantity formula is evaluated
-      const qVal = parseFloat(String(earlyHeader.quantity));
-      const pVal = parseFloat(String(earlyHeader.production_level));
-      if (!isNaN(qVal) && !isNaN(pVal) && pVal !== 0) {
+      const qVal = parseFloat(String(earlyHeader.quantity || 0));
+      const pVal = parseFloat(String(earlyHeader.production_level || 0));
+      if (!isNaN(qVal) && !isNaN(pVal) && pVal > 0) {
           earlyHeader.capacity_utilization = Number(((qVal / pVal) * 100).toFixed(2));
       }
 

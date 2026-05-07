@@ -412,15 +412,15 @@ export function buildVHSums(sections: CostSheetSection[]): Record<string, number
         calculateVH(r.children);
         const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
         if (isFixedValue && (r.valorHistorico !== undefined || r.value !== undefined)) {
-          vhSums[r.id] = Number(r.value ?? r.valorHistorico ?? 0);
+          vhSums[r.id] = parseFloat(String(r.value ?? r.valorHistorico ?? 0)) || 0;
         } else {
           vhSums[r.id] = r.children.reduce((sum: number, child: CostSheetRow) => {
             const val = vhSums[child.id] ?? child.value ?? child.valorHistorico ?? 0;
-            return sum + Number(val || 0);
+            return sum + parseFloat(String(val || 0)) || 0;
           }, 0);
         }
       } else {
-        vhSums[r.id] = Number(r.value ?? r.valorHistorico ?? 0);
+        vhSums[r.id] = parseFloat(String(r.value ?? r.valorHistorico ?? 0)) || 0;
       }
     });
   };

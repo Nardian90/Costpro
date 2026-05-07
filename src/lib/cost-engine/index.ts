@@ -36,6 +36,12 @@ interface VHFormulaContext {
   [key: string]: unknown;
 }
 
+
+
+const safeDecimal = (val: any) => {
+    const n = parseFloat(String(val));
+    return new Decimal(isNaN(n) ? 0 : n);
+};
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
 
@@ -346,7 +352,7 @@ export function calculateFicha(
     const classMap = new Map<string, Decimal>();
     anexo.rows.forEach((row) => {
       const current = classMap.get(row.classification) || new Decimal(0);
-      classMap.set(row.classification, current.plus(new Decimal(row.importe || 0)).toDecimalPlaces(decimals));
+      classMap.set(row.classification, current.plus(safeDecimal(row.importe)).toDecimalPlaces(decimals));
     });
     annexSumMap.set(anexo.id, classMap);
   });
@@ -479,7 +485,7 @@ export function calculateFicha(
 
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.total || 0));
+          return acc.plus(safeDecimal(calculated?.total));
       }, new Decimal(0));
       return val.toNumber();
   };
@@ -515,7 +521,7 @@ export function calculateFicha(
       });
       return flatArgs.reduce((a: Decimal, b) => {
         const numB = typeof b === 'string' ? parseFloat(b) : (typeof b === 'number' ? b : 0);
-        return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
+        return a.plus(safeDecimal(numB));
       }, new Decimal(0)).toNumber();
   };
 
@@ -528,7 +534,7 @@ export function calculateFicha(
       if (flatArgs.length === 0) return 0;
       const sum = flatArgs.reduce((a: Decimal, b) => {
         const numB = typeof b === 'string' ? parseFloat(b) : (typeof b === 'number' ? b : 0);
-        return a.plus(new Decimal(isNaN(numB) ? 0 : numB));
+        return a.plus(safeDecimal(numB));
       }, new Decimal(0));
       return sum.div(flatArgs.length).toNumber();
   };
@@ -653,7 +659,7 @@ const ruleOverride = activeRules[0];
 
             targets.forEach(t => {
                 const calculated = currentRows.get(t.id);
-                baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
+                baseTotalValue = baseTotalValue.plus(safeDecimal(calculated?.total));
                 baseHistValue = baseHistValue.plus(new Decimal(t.valorHistorico || 0));
             });
             baseRefName = `Fila:${base.classification}`;
@@ -704,7 +710,7 @@ const ruleOverride = activeRules[0];
                 }
                 targets.forEach(t => {
                     const calculated = currentRows.get(t.id);
-                    baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
+                    baseTotalValue = baseTotalValue.plus(safeDecimal(calculated?.total));
                 });
             }
 
@@ -887,7 +893,7 @@ const ruleOverride = activeRules[0];
   let totalTaxD = new Decimal(0);
 
   calculatedRows.forEach(row => {
-    const val = new Decimal(row.total);
+    const val = safeDecimal(row.total);
     if (row.type === 'COST') totalCostD = totalCostD.plus(val);
     else if (row.type === 'MARGIN') totalMarginD = totalMarginD.plus(val);
     else if (row.type === 'TAX') totalTaxD = totalTaxD.plus(val);

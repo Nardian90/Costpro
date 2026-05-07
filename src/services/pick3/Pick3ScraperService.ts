@@ -24,63 +24,64 @@ export class Pick3ScraperService {
     if (this.syncState.isSyncing) return [];
 
     this.syncState.isSyncing = true;
-    this.syncState.lastGlobalSync = new Date().toISOString();
-
-    // Reset statuses
-    this.syncState.sources = this.syncState.sources.map(s => ({ ...s, status: 'pending', error: undefined }));
-
     let allResults: Pick3Result[] = [];
+    try {
+      this.syncState.lastGlobalSync = new Date().toISOString();
 
-    for (const source of this.syncState.sources) {
-      source.status = 'syncing';
-      this.syncState.activeSourceId = source.id;
+      // Reset statuses
+      this.syncState.sources = this.syncState.sources.map(s => ({ ...s, status: 'pending', error: undefined }));
 
-      logger.info('PICK3', `Attempting sync with source: ${source.name}`);
+      for (const source of this.syncState.sources) {
+        source.status = 'syncing';
+        this.syncState.activeSourceId = source.id;
 
-      try {
-        let results: Pick3Result[] = [];
+        logger.info('PICK3', 'Attempting sync');
 
-        if (source.id === 'official') {
-          results = await this.scrapeOfficial();
-        } else if (source.id === 'lotteryusa') {
-          results = await this.scrapeLotteryUSA();
-        } else if (source.id === 'lotterypost') {
-          results = await this.scrapeLotteryPost();
-        } else if (source.id === 'usatoday') {
-          results = await this.scrapeUSAToday();
-        }
+        try {
+          let results: Pick3Result[] = [];
 
-        if (results.length > 0) {
-          source.status = 'success';
-          source.lastSync = new Date().toISOString();
-
-          allResults = this.deduplicate([...allResults, ...results]);
-
-          logger.info('PICK3', `Sync successful with ${source.name}. Found ${results.length} results.`);
-
-          if (allResults.length >= 60) {
-            break;
+          if (source.id === 'official') {
+            results = await this.scrapeOfficial();
+          } else if (source.id === 'lotteryusa') {
+            results = await this.scrapeLotteryUSA();
+          } else if (source.id === 'lotterypost') {
+            results = await this.scrapeLotteryPost();
+          } else if (source.id === 'usatoday') {
+            results = await this.scrapeUSAToday();
           }
-        } else {
-          throw new Error('No results found');
+
+          if (results.length > 0) {
+            source.status = 'success';
+            source.lastSync = new Date().toISOString();
+
+            allResults = this.deduplicate([...allResults, ...results]);
+
+            logger.info('PICK3', 'Sync successful');
+
+            if (allResults.length >= 60) {
+              break;
+            }
+          } else {
+            throw new Error('No results found');
+          }
+        } catch (error: any) {
+          source.status = 'error';
+          source.error = error.message || 'Unknown error';
+          logger.error('PICK3', `Failed sync with ${source.name}`, { error });
         }
-      } catch (error: any) {
-        source.status = 'error';
-        source.error = error.message || 'Unknown error';
-        logger.error('PICK3', `Failed sync with ${source.name}`, { error });
       }
-    }
 
-    if (allResults.length > 0) {
-      try {
-        await Pick3Storage.saveHistory(allResults);
-      } catch (storageError: any) {
-        logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
+      if (allResults.length > 0) {
+        try {
+          await Pick3Storage.saveHistory(allResults);
+        } catch (storageError: any) {
+          logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
+        }
       }
+    } finally {
+      this.syncState.isSyncing = false;
+      this.syncState.activeSourceId = undefined;
     }
-
-    this.syncState.isSyncing = false;
-    this.syncState.activeSourceId = undefined;
 
     if (allResults.length === 0) {
       logger.warn('PICK3', 'All sources failed, using local cache or seed data');
