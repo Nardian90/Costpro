@@ -176,11 +176,16 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
       toast.success(`¡Bienvenido, ${userData.fullName}!`);
       safeNavigate.push(router, '/');
     } catch (err: any) {
-      setFailedAttempts(prev => prev + 1);
-      if (failedAttempts >= 2) {
-        setCooldownUntil(Date.now() + 10000); // 10s cooldown
-        toast.error('Demasiados intentos', { description: 'Por seguridad, espera 10 segundos antes de intentar de nuevo.' });
-      }
+      setFailedAttempts(prev => {
+        const next = prev + 1;
+        if (next >= 3) {
+          setCooldownUntil(Date.now() + 30000);
+          toast.error("Demasiados intentos", {
+            description: "Por seguridad, espera 30 segundos."
+          });
+        }
+        return next;
+      });
       setError(err.message || 'Error al iniciar sesión');
       toast.error(err.message || 'Error al iniciar sesión');
     } finally {

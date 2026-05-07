@@ -5,6 +5,7 @@ import { withTracing } from '@/lib/observability';
 import Parser from 'rss-parser';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { RSSNewsItem } from '@/types';
+import { isPrivateIP } from '@/lib/network-utils';
 
 // Cache results for 60 minutes
 export const dynamic = "force-dynamic";
@@ -12,8 +13,24 @@ export const revalidate = 3600;
 
 const parser = new Parser();
 
+function isSafeURL(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    // Only allow HTTP/HTTPS
+    if (!['http:', 'https:'].includes(url.protocol)) return false;
+
+    const hostname = url.hostname.toLowerCase();
+    if (isPrivateIP(hostname)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const handler = withAuth(async (req, session) => {
-  const clientId = req.headers.get('x-forwarded-for') || session.user.id;
+  // BUG-028/Pattern 1: Use session.user.id for rate limiting.
+  const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
 
@@ -35,6 +52,10 @@ const handler = withAuth(async (req, session) => {
     // 2. Fetch and parse feeds
     const feedPromises = feeds.map(async (feed) => {
       try {
+        if (!isSafeURL(feed.url)) {
+          console.warn(`RSS: URL bloqueada por política SSRF: ${feed.url}`);
+          return [];
+        }
         const parsedFeed = await parser.parseURL(feed.url);
         return parsedFeed.items.map((item) => ({
           ...item,

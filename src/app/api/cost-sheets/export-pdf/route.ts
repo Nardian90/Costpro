@@ -3,59 +3,54 @@ import { withAuth } from '@/lib/auth-middleware';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 import { rateLimit } from '@/lib/rate-limit';
-import { mergeScenarioValues } from '@/store/scenario-store';
 import { withTracing } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
-function safeParseNum(val: unknown): number {
-  if (typeof val === 'number') return isNaN(val) ? 0 : val;
-  if (val === null || val === undefined) return 0;
-  const str = String(val).trim();
-  const direct = parseFloat(str);
-  if (!isNaN(direct)) return direct;
-  const normalized = str.replace(/\./g, '').replace(/,/g, '.');
-  const parsed = parseFloat(normalized);
-  return isNaN(parsed) ? 0 : parsed;
+const MAX_SECTIONS = 50;
+const MAX_ROWS_PER_SECTION = 200;
+const MAX_SCENARIOS = 5;
+
+function validateComparisonData(data: any): { ok: boolean; error?: string } {
+    if (!data || typeof data !== 'object') return { ok: false, error: 'comparisonData inválido' };
+    if (!Array.isArray(data.sections)) return { ok: false, error: 'sections debe ser array' };
+    if (data.sections.length > MAX_SECTIONS) return { ok: false, error: `Máximo ${MAX_SECTIONS} secciones` };
+    if (Array.isArray(data.scenarios) && data.scenarios.length > MAX_SCENARIOS)
+        return { ok: false, error: `Máximo ${MAX_SCENARIOS} escenarios en comparativa` };
+    for (const section of data.sections) {
+        if (Array.isArray(section.rows) && section.rows.length > MAX_ROWS_PER_SECTION)
+            return { ok: false, error: `Máximo ${MAX_ROWS_PER_SECTION} filas por sección` };
+    }
+    return { ok: true };
 }
+
+function safeLocale(val: any) {
+  const n = parseFloat(String(val));
+  return isNaN(n) ? val : n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
 const handler = withAuth(async (req, session) => {
   try {
-    // FIX-SEC-015: Rate-limit by user ID after auth, not by IP before auth
     const clientId = session.user.id;
-    const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
-
-    if (!allowed) {
-      return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
-    }
+    const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
+    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     const body = await req.json();
-    // FIX-SEC-006: Basic body shape validation
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
     }
-    let result = body.result || body;
-    const exportOptions = body.exportOptions || {};
-    const scenarioId = body.scenarioId;
-    const exportMode = body.exportMode || 'single';
 
-    // If scenarioId is provided, we assume result is already calculated for that scenario
-    // (passed from frontend after mergeScenarioValues + useCostSheetCalculator)
+    const exportMode = body.exportMode || 'single';
+    if (exportMode === 'comparison' && body.comparisonData) {
+        const validation = validateComparisonData(body.comparisonData);
+        if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
 
     const doc = await createPDFDocument(exportMode === 'comparison' ? 'l' : 'p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
     const timestamp = new Date().toLocaleString();
-
-    const isPro = exportOptions.pdfFormat === 'pro';
-    const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0];
-
-    const parser = createSafeParser();
-
-    const safeLocale = (val: any) => {
-      const n = parseFloat(String(val));
-      return isNaN(n) ? val : n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+    const exportOptions = body.exportOptions || {};
+    const primaryColor: [number, number, number] = exportOptions.pdfFormat === 'pro' ? [26, 82, 118] : [0, 0, 0];
 
     const addHeader = (pdf: any, title: string) => {
       pdf.setFontSize(14);
@@ -72,45 +67,36 @@ const handler = withAuth(async (req, session) => {
     if (exportMode === 'comparison' && body.comparisonData) {
       const { sections, scenarios, calcs, baseId } = body.comparisonData;
       let currentY = addHeader(doc, "COMPARATIVA DE ESCENARIOS");
-
       const activeScenarios = scenarios.filter((s: any) => (body.activeScenarioIds || []).includes(s.id));
-
-      const headRows: string[][] = [];
-      const mainHeader = ['No.', 'Concepto', 'UM'];
-      const subHeader = ['', '', ''];
+      const headRows: string[][] = [['No.', 'Concepto', 'UM'], ['', '', '']];
 
       activeScenarios.forEach((s: any) => {
-        const isBase = s.id === baseId;
-        mainHeader.push(s.label, '');
-        subHeader.push('VH', 'TOTAL');
-        if (!isBase) {
-          mainHeader.push('DIFF', '');
-          subHeader.push('ABS', '%');
+        headRows[0].push(s.label, '');
+        headRows[1].push('VH', 'TOTAL');
+        if (s.id !== baseId) {
+          headRows[0].push('DIFF', '');
+          headRows[1].push('ABS', '%');
         }
       });
-      headRows.push(mainHeader, subHeader);
 
       const tableBody: any[] = [];
       sections.forEach((section: any) => {
-        tableBody.push([{ content: section.label, colSpan: mainHeader.length, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
-
-        const processRows = (rows: any[]) => {
+        tableBody.push([{ content: section.label, colSpan: headRows[0].length, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+        const processRows = (rows: any[], depth = 0) => {
+          if (depth > 5) return; // Prevent excessive recursion
           rows.forEach(row => {
             const rowData = [row.id, row.label, row.um || row.unit || '-'];
-
             activeScenarios.forEach((s: any) => {
               const calc = calcs[s.id]?.calculatedValues?.[row.id] || { total: 0, valorHistorico: 0 };
               rowData.push(safeLocale(calc.valorHistorico), safeLocale(calc.total));
-
               if (s.id !== baseId) {
                 const baseCalc = calcs[baseId]?.calculatedValues?.[row.id] || { total: 0 };
                 const diff = calc.total - baseCalc.total;
-                const percent = baseCalc.total !== 0 ? (diff / baseCalc.total) * 100 : 0;
-                rowData.push(safeLocale(diff), `${percent.toFixed(1)}%`);
+                rowData.push(safeLocale(diff), `${baseCalc.total !== 0 ? ((diff / baseCalc.total) * 100).toFixed(1) : '0.0'}%`);
               }
             });
             tableBody.push(rowData);
-            if (row.children) processRows(row.children);
+            if (row.children) processRows(row.children, depth + 1);
           });
         };
         processRows(section.rows);
@@ -123,37 +109,14 @@ const handler = withAuth(async (req, session) => {
         theme: 'grid',
         styles: { fontSize: 6, cellPadding: 1 },
         headStyles: { fillColor: primaryColor, textColor: 255, halign: 'center' },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 40 }
-        }
       });
-
     } else {
-      // Logic for single scenario (already present in the system, but we ensure it works with result passed)
-      let currentY = addHeader(doc, scenarioId ? `ESCENARIO: ${result.scenarioLabel || scenarioId}` : "FICHA DE COSTO");
-
-      const h = result.metadata?.header || result.header || {};
-      const headerRows = [
-        ['Código:', h.code || '-', 'Producto:', h.name || '-'],
-        ['Entidad:', h.company || '-', 'Fecha:', h.date || '-'],
-        ['Unidad:', h.unit || '-', 'Cantidad:', h.quantity || '1']
-      ];
-
-      (doc as any).autoTable({
-        startY: currentY,
-        body: headerRows,
-        theme: 'plain',
-        styles: { fontSize: 8, cellPadding: 1 },
-      });
-
-      currentY = (doc as any).lastAutoTable?.finalY ?? 50 + 10;
-
+      const result = body.result || body;
+      let currentY = addHeader(doc, "FICHA DE COSTO");
       const rows = result.rows || [];
       const tableData = rows.map((r: any) => [
         r.id, r.label, r.um || r.unit || '-', safeLocale(r.valorHistorico), safeLocale(r.total)
       ]);
-
       (doc as any).autoTable({
         startY: currentY,
         head: [['No.', 'Concepto', 'UM', 'V. Histórico', 'Total']],
@@ -171,15 +134,10 @@ const handler = withAuth(async (req, session) => {
         'Content-Disposition': 'attachment; filename="ficha-costo.pdf"'
       }
     });
-
   } catch (error: any) {
     console.error('PDF Export Error:', error);
     return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 
-async function postHandler(req: NextRequest) {
-  return handler(req);
-}
-
-export const POST = withTracing(postHandler, 'POST /api/cost-sheets/export-pdf');
+export const POST = withTracing((req: NextRequest) => handler(req), 'POST /api/cost-sheets/export-pdf');

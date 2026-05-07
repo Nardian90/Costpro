@@ -1,40 +1,46 @@
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-// FIX-INF-007: Throw in production if Supabase credentials are missing
-if (!supabaseUrl || !supabaseAnonKey) {
-  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
-    throw new Error('Missing Supabase environment variables');
+// Skip check during build or tests
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (process.env.NEXT_PHASE !== 'phase-production-build' && process.env.NODE_ENV !== 'test') {
+    logger.warn('DATABASE', 'SUPABASE_CLIENT_CONFIG_MISSING', { url: !!process.env.NEXT_PUBLIC_SUPABASE_URL, key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY });
   }
-  logger.warn('DATABASE', 'ENV_MISSING', { detail: 'Supabase credentials not configured — using placeholders' }); // FIX-INF-007
 }
-const url = supabaseUrl || 'https://placeholder.supabase.co';
-const key = supabaseAnonKey || 'placeholder-key-required';
-
-// Initialize the Supabase client.
-// No fallback credentials — env vars are required for security compliance (OWASP ASVS 2.8.1).
-export const supabase: SupabaseClient = createClient(
-  url,
-  key
-);
 
 /**
- * Creates an authenticated Supabase client for use in server-side routes.
- * @param token The user's access token (JWT)
+ * Singleton instance for CLIENT-SIDE use only.
  */
-export const getSupabaseAuthClient = (token: string) => {
-  return createClient(
-    url, // FIX-INF-007
-    key, // FIX-INF-007
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+export const supabase: SupabaseClient = createClient(url, key);
+
+/**
+ * BUG-037: Factory for request-scoped instances in SSR/API routes.
+ */
+export function createServerClient() {
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  });
+}
+
+/**
+ * Helper to get a Supabase client with a specific user token
+ */
+export function getSupabaseAuthClient(token: string) {
+  return createClient(url, key, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     },
-  );
-};
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    },
+  });
+}
