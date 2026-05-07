@@ -106,7 +106,7 @@ export function usePOSView() {
       }
     }
 
-        const item: CartItem = {
+    const item: CartItem = {
       product_id: product.id,
       variant_id: variant ? variant.id : null,
       product: product,
@@ -117,6 +117,8 @@ export function usePOSView() {
       subtotal: price,
       discount_type: null,
       discount_value: 0,
+      cash_paid: price,
+      transfer_paid: 0,
     };
     addItem(item);
     toast.success(

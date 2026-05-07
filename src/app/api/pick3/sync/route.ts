@@ -19,7 +19,6 @@ async function postHandler(req: NextRequest) {
   const authHeader = req.headers.get('Authorization');
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
 
-  // BUG-030: Authorization guard for full sync
   if (forceFull && !isCron) {
     return NextResponse.json(
       { error: 'La sincronización completa solo puede ser iniciada por el sistema' },
@@ -30,16 +29,15 @@ async function postHandler(req: NextRequest) {
   logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
   try {
-    const results = await Pick3ScraperService.sync({ full: forceFull });
+    const results = await Pick3ScraperService.scrapeLatestResults();
 
     return NextResponse.json({
       success: true,
       data: results
     });
-  } catch (error) {
-    logger.error('PICK3', 'Sync failed', error);
+  } catch (error: any) {
+    logger.error("PICK3", "Sync failed", { error: String(error?.message || error) } as Record<string, any>);
 
-    // BUG-025: Environment guard for error details
     return NextResponse.json({
       success: false,
       message: isDev
