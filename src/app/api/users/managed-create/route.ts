@@ -139,7 +139,7 @@ const handler = withRole('admin', async (req, session) => {
     });
 
   } catch (error: any) {
-    return NextResponse.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

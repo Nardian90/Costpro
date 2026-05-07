@@ -28,7 +28,7 @@ test.describe('Landing Page', () => {
     await waitForLandingPage(page);
 
     // Primary CTA "Comenzar Gratis" should be visible
-    const primaryCTA = page.getByRole('button', { name: /comenzar gratis/i });
+    const primaryCTA = page.getByRole('button', { name: /comenzar gratis/i }).first().first();
     await expect(primaryCTA).toBeVisible({ timeout: 10000 });
 
     // Secondary CTA "Ver Demo" should also be present
