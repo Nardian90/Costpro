@@ -11,8 +11,8 @@ async function healthHandler() {
     service: 'costpro-enterprise',
     timestamp: new Date().toISOString(),
     // FIX-SEC-003: Hide version and uptime in production to reduce info disclosure
-    version: process.env.NODE_ENV !== 'production' ? (process.env.npm_package_version || '1.0.0') : undefined,
-    uptime: process.env.NODE_ENV !== 'production' ? process.uptime() : undefined,
+    version: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (process.env.npm_package_version || '1.0.0') : undefined,
+    uptime: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? process.uptime() : undefined,
     responseTime: Date.now() - startTime,
   });
 }

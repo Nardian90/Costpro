@@ -6,7 +6,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // FIX-INF-007: Throw in production if Supabase credentials are missing
 if (!supabaseUrl || !supabaseAnonKey) {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
     throw new Error('Missing Supabase environment variables');
   }
   logger.warn('DATABASE', 'ENV_MISSING', { detail: 'Supabase credentials not configured — using placeholders' }); // FIX-INF-007

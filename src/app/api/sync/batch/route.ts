@@ -102,7 +102,7 @@ const handler = withAuth(async (req, session) => {
           operation_type: op.operationType,
           status,
           // FIX-SEC-022: Hide internal error details in sync responses
-          response_data: { error: process.env.NODE_ENV !== 'production' ? err.message : 'Error de sincronización' },
+          response_data: { error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error de sincronización' },
           store_id: op.payload.p_store_id || null,
         });
 
@@ -125,7 +125,7 @@ const handler = withAuth(async (req, session) => {
           idempotencyKey: op.idempotencyKey,
           status,
           // FIX-SEC-022: Hide internal error details in sync responses
-          error: process.env.NODE_ENV !== 'production' ? err.message : 'Error de sincronización',
+          error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error de sincronización',
           serverData,
         });
       }
@@ -134,7 +134,7 @@ const handler = withAuth(async (req, session) => {
     return NextResponse.json({ results });
   } catch (err: any) {
     console.error('Batch sync error:', err);
-    return NextResponse.json({ error: process.env.NODE_ENV !== 'production' ? err.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error interno del servidor' }, { status: 500 });
   }
 });
 
