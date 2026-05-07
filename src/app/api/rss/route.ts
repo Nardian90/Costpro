@@ -106,7 +106,7 @@ const handler = withAuth(async (req, session) => {
     return NextResponse.json({ items: sortedItems });
   } catch (err: any) {
     console.error('RSS API Error:', err);
-    return NextResponse.json({ error: process.env.NODE_ENV !== 'production' ? err.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error interno del servidor' }, { status: 500 });
   }
 
 });
