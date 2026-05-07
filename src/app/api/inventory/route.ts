@@ -60,7 +60,7 @@ async function getHandler(request: NextRequest) {
       console.error("Supabase query error:", error);
       return NextResponse.json(
         // FIX-SEC-019: Hide error details in production
-      { error: "Internal Server Error", message: process.env.NODE_ENV === 'development' ? error.message : undefined },
+      { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : undefined },
         { status: 500 }
       );
     }
