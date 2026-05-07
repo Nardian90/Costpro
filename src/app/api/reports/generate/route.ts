@@ -9,11 +9,11 @@ import { COLUMN_LABELS } from '@/contracts/reports';
 import { getServerSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { withRole, AuthenticatedSession } from '@/lib/auth-middleware';
+import { canManageStore } from '@/lib/roles';
 
-async function generateReportHandler(req: NextRequest) {
+async function generateReportHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const clientId = req.headers.get('x-forwarded-for') || session.user.id;
     const { allowed } = await rateLimit(clientId);
@@ -33,6 +33,10 @@ async function generateReportHandler(req: NextRequest) {
       columns,
       name
     } = (body as any);
+
+    if (store_id && !canManageStore(session.user as any, store_id)) {
+      return NextResponse.json({ error: 'Prohibido', message: 'No tiene permisos para acceder a esta tienda' }, { status: 403 });
+    }
 
     const supabase = getSupabaseAuthClient(session.token);
 
@@ -89,7 +93,7 @@ async function generateReportHandler(req: NextRequest) {
         data = Object.keys(grouped).map(date => ({
             date,
             total_sales: grouped[date],
-            estimated_profit: grouped[date] * 0.3 // Simplified for MVP
+            estimated_profit: null, profit_note: 'Margen no calculado — requiere configuración de costos'
         }));
         break;
 
@@ -374,4 +378,4 @@ async function generateReportHandler(req: NextRequest) {
   }
 }
 
-export const POST = withTracing(generateReportHandler, 'POST /api/reports/generate');
+export const POST = withTracing(withRole('manager', generateReportHandler), 'POST /api/reports/generate');

@@ -1,4 +1,3 @@
-'use client';
 
 /**
  * Loads jsPDF and autoTable only when needed for export.

@@ -74,7 +74,13 @@ const handler = withRole('admin', async (req, session) => {
 
     // Delete from auth.users
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
-    if (authError) console.error('Auth deletion failed:', authError);
+    if (authError) {
+      console.error('Auth deletion failed after profile delete:', authError);
+      return NextResponse.json({
+        error: 'El perfil fue eliminado pero hubo un error al revocar credenciales. Contacte soporte.',
+        partial: true
+      }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, message: 'Usuario eliminado correctamente' });
 
