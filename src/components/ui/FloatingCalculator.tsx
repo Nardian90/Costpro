@@ -61,6 +61,9 @@ export const FloatingCalculator: React.FC = () => {
       const sanitized = fullEquation.replace(/[^-0-9+*/.]/g, '');
       // Use Function constructor instead of eval for slightly better practice
       const result = new Function(`return ${sanitized}`)();
+      if (result === undefined || result === null || isNaN(result)) {
+        throw new Error('Invalid result');
+      }
       const resultStr = String(Number(result.toFixed(8)));
       setDisplay(resultStr.length > 15 ? result.toExponential(4) : resultStr);
       setEquation('');

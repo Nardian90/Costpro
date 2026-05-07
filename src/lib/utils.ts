@@ -94,10 +94,11 @@ export const EXCEL_CURRENCY_FORMAT = '#,##0.00';
  * Example: 2100 -> 2,100.00
  */
 export const formatAccounting = (amount: number): string => {
+  const safeAmount = (typeof amount !== 'number' || isNaN(amount)) ? 0 : amount;
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(safeAmount);
 };
 
 /**

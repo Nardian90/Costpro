@@ -24,6 +24,7 @@ export class Pick3ScraperService {
     if (this.syncState.isSyncing) return [];
 
     this.syncState.isSyncing = true;
+    try {
     this.syncState.lastGlobalSync = new Date().toISOString();
 
     // Reset statuses
@@ -79,8 +80,10 @@ export class Pick3ScraperService {
       }
     }
 
-    this.syncState.isSyncing = false;
+        } finally {
+      this.syncState.isSyncing = false;
     this.syncState.activeSourceId = undefined;
+    }
 
     if (allResults.length === 0) {
       logger.warn('PICK3', 'All sources failed, using local cache or seed data');

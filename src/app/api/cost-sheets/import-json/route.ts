@@ -14,7 +14,7 @@ const handler = withAuth(async (req, session) => {
 
   try {
     // Rate limiting
-    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    const clientId = session.user.id;
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
 
     if (!allowed) {
