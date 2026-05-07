@@ -521,7 +521,7 @@ export default function HeroSection({
             </button>
 
             {/* Secondary CTA — "Ver Demo" */}
-            <button
+            <button aria-label="Ver demo de CostPro"
               onClick={() => {
                 if (setLoginDefaultTab) setLoginDefaultTab('login');
                 setShowLoginModal(true);
@@ -529,7 +529,7 @@ export default function HeroSection({
               className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300"
               style={{ minWidth: '140px' }}
             >
-              Iniciar Sesión
+              Ver Demo
             </button>
           </motion.div>
 
