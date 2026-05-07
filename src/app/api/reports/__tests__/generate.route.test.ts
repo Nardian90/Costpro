@@ -8,7 +8,7 @@ vi.mock('@/lib/rate-limit', () => ({
 
 vi.mock('@/lib/auth-middleware', () => ({
   withRole: vi.fn().mockImplementation((role, handler) => {
-    return async (req, session) => {
+    return async (req: any, session: any) => {
        const { getServerSession } = await import('@/lib/auth');
        const s = await getServerSession(req);
        if (!s) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -17,7 +17,7 @@ vi.mock('@/lib/auth-middleware', () => ({
     };
   }),
   withAuth: vi.fn().mockImplementation((handler) => {
-    return async (req, session) => {
+    return async (req: any, session: any) => {
        const { getServerSession } = await import('@/lib/auth');
        const s = await getServerSession(req);
        if (!s) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
