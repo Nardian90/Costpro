@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { withTracing } from '@/lib/observability';
-import { scraper } from '@/lib/pick3/scraper';
+import { Pick3ScraperService } from '@/services/pick3/Pick3ScraperService';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ async function postHandler(req: NextRequest) {
   logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
 
   try {
-    const results = await scraper.sync({ full: forceFull });
+    const results = await Pick3ScraperService.sync({ full: forceFull });
 
     return NextResponse.json({
       success: true,

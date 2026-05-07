@@ -42,8 +42,6 @@ test.describe('Cost Engine', () => {
       expect(typeof body.solverResult).toBe('number');
       expect(isFinite(body.solverResult)).toBe(true);
       expect(body.solverResult).not.toBe(0);
-      // BUG-002: bisectRoot error in bracket expansion
-      // BUG-003: simulate() returning 0 after max calls
     } else {
       console.warn(`Goal Seek endpoint returned ${response.status()}`);
     }
@@ -68,6 +66,8 @@ test.describe('Cost Engine', () => {
   test('rejects malformed JSON', async ({ request }) => {
     const headers = getAuthHeaders('user');
     if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const response = await request.post('/api/cost-sheets/calculate', {
+      headers,
       data: 'plain text not json'
     });
     expect(response.status()).toBe(400);
