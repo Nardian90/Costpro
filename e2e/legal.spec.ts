@@ -15,6 +15,10 @@ test.describe('Legal', () => {
 
   test('incidents: validates required fields → 400', async ({ request }) => {
     const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const headers = getAuthHeaders('user');
     const h = headers || {};
 
     const r1 = await request.post('/api/legal/incidents', { headers: h, data: { description: 'test', severity: 'low' } });
@@ -29,6 +33,10 @@ test.describe('Legal', () => {
 
   test('incidents: rejects title > 200 chars → 400', async ({ request }) => {
     const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const headers = getAuthHeaders('user');
     const response = await request.post('/api/legal/incidents', {
       headers: headers || {},
       data: { title: 'x'.repeat(201), description: 'valid description long enough', severity: 'low' }
@@ -37,6 +45,10 @@ test.describe('Legal', () => {
   });
 
   test('incidents: description minimum 10 chars', async ({ request }) => {
+    const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
+    const headers = getAuthHeaders('user');
+    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
     const headers = getAuthHeaders('user');
     const response = await request.post('/api/legal/incidents', {
       headers: headers || {},

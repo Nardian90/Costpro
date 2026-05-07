@@ -194,14 +194,16 @@ describe('POST /api/users/delete', () => {
       expect(json.error).toMatch(/perfil/i);
     });
 
-    it('continúa con 200 aunque Auth deleteUser falle (no bloquea la respuesta)', async () => {
+    it('retorna 500 si Auth deleteUser falla después de borrar el perfil', async () => {
       mockSupabaseAdmin.auth.admin.deleteUser.mockResolvedValueOnce({
         error: { message: 'Auth service unavailable' },
       });
 
       const res = await POST(makeAuthRequest({ user_id: VALID_USER_ID }));
-      // The response should still be 200 because RPC succeeded
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
+      const json = await res.json();
+      expect(json.partial).toBe(true);
+      expect(json.error).toMatch(/credenciales/i);
     });
   });
 });

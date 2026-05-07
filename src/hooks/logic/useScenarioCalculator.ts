@@ -36,8 +36,10 @@ export const useScenarioCalculator = () => {
          [key: string]: unknown;
        }
        const calcs: Record<string, CalcResult | null> = { v1: calcV1 as CalcResult | null, v2: calcV2 as CalcResult | null, v3: calcV3 as CalcResult | null };
-       const b = calcs[baseId]?.calculatedValues?.[rowId]?.total ?? 0;
-       const c = calcs[compareId]?.calculatedValues?.[rowId]?.total ?? 0;
+       const valB = calcs[baseId]?.calculatedValues?.[rowId]?.total;
+       const valC = calcs[compareId]?.calculatedValues?.[rowId]?.total;
+       const b = (typeof valB === 'number' && !isNaN(valB)) ? valB : 0;
+       const c = (typeof valC === 'number' && !isNaN(valC)) ? valC : 0;
        const abs = c - b;
        // FIX-LOG-021: Cap percentDiff to prevent misleading display
        return { absoluteDiff: abs, percentDiff: b !== 0 ? Math.min(99999, Math.max(-99999, (abs/b)*100)) : 0, direction: abs < -0.01 ? 'better' : abs > 0.01 ? 'worse' : 'equal' };

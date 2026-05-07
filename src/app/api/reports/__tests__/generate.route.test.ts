@@ -6,6 +6,32 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
 }));
 
+vi.mock('@/lib/auth-middleware', () => ({
+  withRole: vi.fn().mockImplementation((role, handler) => {
+    return async (req: any, session: any) => {
+       const { getServerSession } = await import('@/lib/auth');
+       const s = await getServerSession(req);
+       if (!s) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [] }, token: 'token' };
+       return handler(req, mockSession);
+    };
+  }),
+  withAuth: vi.fn().mockImplementation((handler) => {
+    return async (req: any, session: any) => {
+       const { getServerSession } = await import('@/lib/auth');
+       const s = await getServerSession(req);
+       if (!s) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [] }, token: 'token' };
+       return handler(req, mockSession);
+    };
+  }),
+}));
+
+vi.mock('@/lib/roles', () => ({
+  canManageStore: vi.fn().mockReturnValue(true),
+  hasRole: vi.fn().mockReturnValue(true),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
