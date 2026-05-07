@@ -56,7 +56,7 @@ export class Pick3ScraperService {
 
             allResults = this.deduplicate([...allResults, ...results]);
 
-            logger.info('PICK3', 'Attempting sync');
+            logger.info('PICK3', 'Sync successful');
 
             if (allResults.length >= 60) {
               break;
