@@ -14,7 +14,8 @@ async function productsHandler(request: NextRequest) {
     );
   }
 
-  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
+  // BUG-028/Pattern 1: Use session.user.id for rate limiting.
+  const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
@@ -36,13 +37,25 @@ async function productsHandler(request: NextRequest) {
       );
     }
 
-    const effectiveStoreId = profile?.active_store_id || profile?.store_id;
+    let effectiveStoreId = profile?.active_store_id || profile?.store_id;
 
-    if (!effectiveStoreId && profile?.role !== 'admin') {
-      return NextResponse.json(
-        { error: "Bad Request", message: "User is not assigned to a store." },
-        { status: 400 }
-      );
+    // BUG-031: Handle admins with no assigned store.
+    if (!effectiveStoreId) {
+      if (profile?.role !== 'admin') {
+        return NextResponse.json(
+          { error: "Bad Request", message: "User is not assigned to a store." },
+          { status: 400 }
+        );
+      }
+
+      const requestedStoreId = request.nextUrl.searchParams.get('storeId');
+      if (!requestedStoreId) {
+        return NextResponse.json(
+          { error: "Bad Request", message: "Admin must specify ?storeId= to query inventory." },
+          { status: 400 }
+        );
+      }
+      effectiveStoreId = requestedStoreId;
     }
 
     // Use the unified get_products_for_pos RPC to ensure consistent logic
@@ -53,7 +66,6 @@ async function productsHandler(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        // FIX-SEC-019: Hide error details in production
         { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : undefined },
         { status: 500 }
       );
@@ -63,7 +75,6 @@ async function productsHandler(request: NextRequest) {
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      // FIX-SEC-019: Hide error details in production
       { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errorMessage : undefined },
       { status: 500 }
     );

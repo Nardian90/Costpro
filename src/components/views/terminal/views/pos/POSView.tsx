@@ -306,7 +306,7 @@ export default function POSView() {
         p_discount_value: getDiscountAmount(),
         p_items: items.map(i => ({
           product_id: i.product_id,
-          variant_id: i.variant_id,
+          variant_id: i.variant_id!,
           quantity: i.quantity,
           price: i.price,
           cost: i.cost,
