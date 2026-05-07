@@ -11,9 +11,6 @@ test.describe('Import', () => {
   test('import-json: rejects invalid JSON → 400', async ({ request }) => {
     const headers = getAuthHeaders('user');
     if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
-    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
     const response = await request.post('/api/cost-sheets/import-json', {
       headers: { ...(headers || {}), 'Content-Type': 'text/plain', 'Authorization': headers?.Authorization || '' },
       data: 'not json'

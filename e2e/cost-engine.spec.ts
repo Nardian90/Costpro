@@ -68,9 +68,6 @@ test.describe('Cost Engine', () => {
   test('rejects malformed JSON', async ({ request }) => {
     const headers = getAuthHeaders('user');
     if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
-    if (!headers) { test.skip(true, 'Auth headers missing'); return; }
-    const headers = getAuthHeaders('user');
     const response = await request.post('/api/cost-sheets/calculate', {
       headers: {
         ...(headers || {}),
