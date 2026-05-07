@@ -9,7 +9,7 @@ vi.mock('@/lib/auth-middleware', () => ({
     if (!authHeader || authHeader === 'Bearer null') {
       return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 });
     }
-    return handler(req, { user: { id: 'user-1' }, token: 'valid-token' });
+    return handler(req, { user: { id: 'user-1' }, token: 'valid-token' } as any);
   }
 }));
 

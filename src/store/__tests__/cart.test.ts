@@ -4,7 +4,7 @@ import { useCartStore } from '../cart';
 const mockProduct = {
   id: '550e8400-e29b-41d4-a716-446655440000',
   name: 'Test Product',
-  price: 100,
+
   cost_price: 50,
   stock_current: 10,
   cost_average: 50,
@@ -19,7 +19,7 @@ const mockCartItem = {
   product: mockProduct,
   variant: null,
   quantity: 2,
-  price: 100,
+
   cost: 50,
   subtotal: 200,
 };

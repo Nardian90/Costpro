@@ -20,8 +20,9 @@ async function postHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
   }
 
-  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
-  const { allowed } = await rateLimit(clientId);
+  // BUG-028: Use session.user.id for rate limiting.
+  const clientId = session.user.id;
+  const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const userId = session.user.id;
@@ -49,7 +50,6 @@ async function postHandler(request: NextRequest) {
 
     if (rpcError) {
       return NextResponse.json(
-        // FIX-SEC-019: Hide error details in production
         { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? rpcError.message : undefined },
         { status: 500 }
       );
@@ -64,7 +64,6 @@ async function postHandler(request: NextRequest) {
 
     if (itemsError) {
       return NextResponse.json(
-        // FIX-SEC-019: Hide error details in production
         { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? itemsError.message : undefined },
         { status: 500 }
       );
@@ -78,7 +77,6 @@ async function postHandler(request: NextRequest) {
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      // FIX-SEC-019: Hide error details in production
       { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errorMessage : undefined },
       { status: 500 }
     );

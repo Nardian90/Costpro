@@ -4,7 +4,7 @@ import { useCartStore } from '../cart';
 const mockProduct = {
   id: 'prod-1',
   name: 'Product 1',
-  price: 100,
+
   cost_price: 50,
   stock_current: 10,
   sku: 'sku-1'
@@ -23,7 +23,7 @@ describe('Cart Store - Advanced Features', () => {
       product: mockProduct as any,
       variant: null,
       quantity: 2,
-      price: 100,
+
       cost: 50,
       discount_type: null,
       discount_value: 0,
@@ -48,7 +48,7 @@ describe('Cart Store - Advanced Features', () => {
       product: mockProduct as any,
       variant: null,
       quantity: 2,
-      price: 100,
+
       cost: 50,
       discount_type: null,
       discount_value: 0,
@@ -78,10 +78,10 @@ describe('Cart Store - Advanced Features', () => {
         store.addItem({
             product_id: p.id,
             variant_id: null,
-            product: { ...mockProduct, id: p.id, name: p.name, price: p.price, stock_current: 10 } as any,
+            product: { ...mockProduct, id: p.id, name: p.name, price_base: p.price, stock_current: 10 } as any,
             variant: null,
             quantity: 1,
-            price: p.price,
+            price_base: p.price,
             cost: 20,
             discount_type: null,
             discount_value: 0,

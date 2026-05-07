@@ -1,74 +1,56 @@
-"use client";
-
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { produce } from "immer";
-import { Product, TaxConfiguration, PaymentMethod } from "@/types";
 import { toast } from "sonner";
+import { Product, ProductVariant } from "@/types";
 
 export interface CartItem {
   product_id: string;
-  variant_id: string | null;
-  product: Product;
-  // FIX-LOG-024: Proper type instead of any
-  variant: Record<string, unknown> | null;
+  variant_id?: string | null;
   quantity: number;
+  product: Product;
+  variant?: ProductVariant | null;
   price: number;
   cost: number;
-  discount_type?: "percentage" | "fixed" | null;
-  discount_value?: number;
+  subtotal: number;
+  discount_type: "percentage" | "fixed" | null;
+  discount_value: number;
   cash_paid?: number;
   transfer_paid?: number;
-  subtotal: number;
 }
 
 interface CartState {
   items: CartItem[];
-  discount: { type: "fixed" | "percentage"; value: number } | null;
-  appliedTaxes: TaxConfiguration[];
-  addItem: (item: CartItem) => void;
-  removeItem: (productId: string, variantId: string | null) => void;
-  updateQuantity: (
-    productId: string,
-    variantId: string | null,
-    quantity: number,
-  ) => void;
-  updateItemDiscount: (
-    productId: string,
-    variantId: string | null,
-    type: "percentage" | "fixed" | null,
-    value: number,
-  ) => void;
-  updateItemPayment: (
-    productId: string,
-    variantId: string | null,
-    cashPaid: number,
-    transferPaid: number,
-  ) => void;
+  discount: { type: "percentage" | "fixed"; value: number } | null;
+  appliedTaxes: any[];
+  sessionUserId: string | null;
+  lastUpdated: number;
+  addItem: (product: any, variant?: ProductVariant | null) => void;
+  removeItem: (productId: string, variantId?: string | null) => void;
+  updateQuantity: (productId: string, variantId: string | null | undefined, quantity: number) => void;
+  updateItemDiscount: (productId: string, variantId: string | null | undefined, type: "percentage" | "fixed" | null, value: number) => void;
+  updateItemPayment: (productId: string, variantId: string | null | undefined, cashPaid: number, transferPaid: number) => void;
   prorateGlobalPayment: (totalCash: number, totalTransfer: number) => void;
-  setDiscount: (
-    discount: { type: "fixed" | "percentage"; value: number } | null,
-  ) => void;
-  toggleTax: (tax: TaxConfiguration) => void;
+  setDiscount: (discount: { type: "percentage" | "fixed"; value: number } | null) => void;
+  toggleTax: (tax: any) => void;
   getSubtotal: () => number;
   getDiscountAmount: () => number;
   getTaxAmount: () => number;
   getTotal: () => number;
-  getItemCount: () => number;
   clearCart: () => void;
-  setCart: (saleId: string, items: CartItem[]) => void;
+  getItemCount: () => number;
+  setCart: (_saleId: string, items: CartItem[]) => void;
+  setSessionUserId: (userId: string | null) => void;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
-  const discountValue = item.discount_value ?? 0;
-  const unitDiscount =
-    item.discount_type === "percentage"
-      ? (item.price * discountValue) / 100
-      : item.discount_type === "fixed"
-        ? discountValue
-        : 0;
-  const effectivePrice = Math.max(0, item.price - unitDiscount);
-  return item.quantity * effectivePrice;
+  const price = item.price ?? 0;
+  const quantity = item.quantity ?? 0;
+  const base = price * quantity;
+
+  if (!item.discount_type || item.discount_value <= 0) return base;
+  if (item.discount_type === "percentage") return base * (1 - item.discount_value / 100);
+  return Math.max(0, (price - item.discount_value) * quantity);
 };
 
 export const useCartStore = create<CartState>()(
@@ -77,40 +59,61 @@ export const useCartStore = create<CartState>()(
       items: [],
       discount: null,
       appliedTaxes: [],
+      sessionUserId: null,
+      lastUpdated: Date.now(),
 
-      addItem: (item) =>
+      setSessionUserId: (sessionUserId) => set({ sessionUserId, lastUpdated: Date.now() }),
+
+      addItem: (productInput, variant) =>
         set(
           produce((state: CartState) => {
-            const existingItem = state.items.find(
-              (i) =>
-                i.product_id === item.product_id &&
-                i.variant_id === item.variant_id,
+            const product = productInput.product || (productInput.id ? productInput : null);
+            const productId = product?.id || productInput.product_id;
+            const incomingQuantity = productInput.quantity || 1;
+
+            if (!productId) return;
+
+            const existing = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variant?.id || null) || (!i.variant_id && !variant?.id)),
             );
-            // FIX-LOG-019: NOTE — Single-terminal POS assumes stock doesn't change between render and mutation
-            if (existingItem) {
-              const newQuantity = existingItem.quantity + item.quantity;
-              if (newQuantity > existingItem.product.stock_current) {
-                toast.error(
-                  `No puedes agregar más ${existingItem.product.name}, stock máximo alcanzado.`,
-                );
+
+            if (existing) {
+              const stock = product?.stock_current ?? product?.stock ?? 999999;
+              if (existing.quantity + incomingQuantity > stock) {
+                toast.warning(`No hay suficiente stock para ${product?.name || 'producto'}.`);
                 return;
               }
-              existingItem.quantity = newQuantity;
+              existing.quantity += incomingQuantity;
+              existing.subtotal = calculateItemSubtotal(existing);
+              existing.cash_paid = existing.subtotal;
+              existing.transfer_paid = 0;
             } else {
-              state.items.push({
-                ...item,
-                discount_type: null,
-                discount_value: 0,
-                cash_paid: item.price * item.quantity,
+              const stock = product?.stock_current ?? product?.stock ?? 999999;
+              if (stock <= 0) {
+                toast.error(`Producto ${product?.name || 'producto'} sin existencias.`);
+                return;
+              }
+              const price = product?.price ?? productInput.price ?? 0;
+              const cost = product?.cost_price ?? product?.cost_average ?? productInput.cost ?? 0;
+              const newItem: CartItem = {
+                product_id: productId,
+                variant_id: variant?.id || null,
+                quantity: incomingQuantity,
+                product: product as Product,
+                variant: variant || null,
+                price,
+                cost,
+                subtotal: 0,
+                discount_type: productInput.discount_type || null,
+                discount_value: productInput.discount_value || 0,
+                cash_paid: 0,
                 transfer_paid: 0,
-                subtotal: item.price * item.quantity,
-              });
+              };
+              newItem.subtotal = calculateItemSubtotal(newItem);
+              newItem.cash_paid = newItem.subtotal;
+              state.items.push(newItem);
             }
-
-            // Re-calculate all items
-            state.items.forEach((i) => {
-              i.subtotal = calculateItemSubtotal(i);
-            });
+            state.lastUpdated = Date.now();
           }),
         ),
 
@@ -119,8 +122,9 @@ export const useCartStore = create<CartState>()(
           produce((state: CartState) => {
             state.items = state.items.filter(
               (i) =>
-                !(i.product_id === productId && i.variant_id === variantId),
+                !(i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId))),
             );
+            state.lastUpdated = Date.now();
           }),
         ),
 
@@ -128,37 +132,28 @@ export const useCartStore = create<CartState>()(
         set(
           produce((state: CartState) => {
             const item = state.items.find(
-              (i) => i.product_id === productId && i.variant_id === variantId,
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
-              if (quantity > item.product.stock_current) {
+              const stock = item.product?.stock_current ?? (item.product as any)?.stock ?? 999999;
+              if (quantity > stock) {
                 toast.warning(
-                  `Stock máximo para ${item.product.name} es ${item.product.stock_current}.`,
+                  `Stock máximo para ${item.product?.name || 'producto'} es ${stock}.`,
                 );
-                item.quantity = item.product.stock_current;
+                item.quantity = stock;
               } else if (quantity > 0) {
                 item.quantity = quantity;
               } else {
                 state.items = state.items.filter(
                   (i) =>
-                    !(i.product_id === productId && i.variant_id === variantId),
+                    !(i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId))),
                 );
                 return;
               }
               item.subtotal = calculateItemSubtotal(item);
-              // Adjust payment
-              const cash = item.cash_paid ?? 0;
-              const transfer = item.transfer_paid ?? 0;
-              const totalPayment = cash + transfer;
-              if (totalPayment > 0) {
-                const ratio = item.subtotal / totalPayment;
-                // FIX-LOG-020: Prevent floating-point drift
-                item.cash_paid = Math.round(cash * ratio * 100) / 100;
-                item.transfer_paid = Math.round((item.subtotal - item.cash_paid) * 100) / 100;
-              } else {
-                item.cash_paid = item.subtotal;
-                item.transfer_paid = 0;
-              }
+              item.cash_paid = item.subtotal;
+              item.transfer_paid = 0;
+              state.lastUpdated = Date.now();
             }
           }),
         ),
@@ -167,15 +162,15 @@ export const useCartStore = create<CartState>()(
         set(
           produce((state: CartState) => {
             const item = state.items.find(
-              (i) => i.product_id === productId && i.variant_id === variantId,
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
               item.discount_type = type;
               item.discount_value = value;
               item.subtotal = calculateItemSubtotal(item);
-              // Reset payment
               item.cash_paid = item.subtotal;
               item.transfer_paid = 0;
+              state.lastUpdated = Date.now();
             }
           }),
         ),
@@ -184,11 +179,12 @@ export const useCartStore = create<CartState>()(
         set(
           produce((state: CartState) => {
             const item = state.items.find(
-              (i) => i.product_id === productId && i.variant_id === variantId,
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
               item.cash_paid = cashPaid;
               item.transfer_paid = transferPaid;
+              state.lastUpdated = Date.now();
             }
           }),
         ),
@@ -222,10 +218,11 @@ export const useCartStore = create<CartState>()(
                 remainingTransfer -= itemTransfer;
               }
             });
+            state.lastUpdated = Date.now();
           }),
         ),
 
-      setDiscount: (discount) => set({ discount }),
+      setDiscount: (discount) => set({ discount, lastUpdated: Date.now() }),
 
       toggleTax: (tax) =>
         set(
@@ -236,11 +233,13 @@ export const useCartStore = create<CartState>()(
             } else {
               state.appliedTaxes.push(tax);
             }
+            state.lastUpdated = Date.now();
           }),
         ),
 
       getSubtotal: () => {
-        return get().items.reduce((acc, item) => acc + item.subtotal, 0);
+        const subtotal = get().items.reduce((acc, item) => acc + (item.subtotal || 0), 0);
+        return Number(subtotal.toFixed(2));
       },
 
       getDiscountAmount: () => {
@@ -249,7 +248,7 @@ export const useCartStore = create<CartState>()(
         if (!discount || discount.value <= 0) return 0;
 
         if (discount.type === "percentage") {
-          return (subtotal * discount.value) / 100;
+          return Number(((subtotal * discount.value) / 100).toFixed(2));
         }
         return discount.value;
       },
@@ -260,7 +259,7 @@ export const useCartStore = create<CartState>()(
         const baseAmount = Math.max(0, subtotal - discountAmount);
         const { appliedTaxes } = get();
 
-        return appliedTaxes.reduce((totalTax, tax) => {
+        const tax = appliedTaxes.reduce((totalTax, tax) => {
           let taxValue = 0;
           if (tax.type === "percentage") {
             const taxableAmount = Math.max(
@@ -273,27 +272,35 @@ export const useCartStore = create<CartState>()(
           }
           return totalTax + taxValue;
         }, 0);
+        return Number(tax.toFixed(2));
       },
 
       getTotal: () => {
         const subtotal = get().getSubtotal();
         const discountAmount = get().getDiscountAmount();
         const taxAmount = get().getTaxAmount();
-        return Math.max(0, subtotal - discountAmount + taxAmount);
+        return Number(Math.max(0, subtotal - discountAmount + taxAmount).toFixed(2));
       },
 
-      clearCart: () => set({ items: [], discount: null, appliedTaxes: [] }),
+      clearCart: () => set({ items: [], discount: null, appliedTaxes: [], lastUpdated: Date.now() }),
 
       getItemCount: () => {
-        return get().items.reduce((acc, item) => acc + item.quantity, 0);
+        return get().items.reduce((acc, item) => acc + (item.quantity || 0), 0);
       },
 
-      // FIX-RCT-115: Added type annotations for clarity; _saleId is intentionally unused
-      setCart: (_saleId: string, items: CartItem[]) => set({ items }),
+      setCart: (_saleId, items) => set({ items, lastUpdated: Date.now() }),
     }),
     {
       name: "pos-cart-storage",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.lastUpdated && Date.now() - state.lastUpdated > 8 * 60 * 60 * 1000) {
+          state.items = [];
+          state.discount = null;
+          state.appliedTaxes = [];
+          state.lastUpdated = Date.now();
+        }
+      }
     },
   ),
 );
