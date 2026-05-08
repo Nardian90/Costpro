@@ -33,7 +33,8 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (['14', '12', '5', '14.1'].includes(r.id)) type = 'TOTAL';
 
       // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
-      let formula = r.totalFormula || r.formula;
+      let formula = (r.totalFormula || r.formula) ?? '';
+      if (formula === 'undefined' || formula === 'null') formula = '';
       const isParent = r.children && r.children.length > 0;
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
       if (isParent && !isFixedValue) formula = 'sum(children)';
