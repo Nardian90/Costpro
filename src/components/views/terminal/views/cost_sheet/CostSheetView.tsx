@@ -486,8 +486,8 @@ const CostSheetView = () => {
                                                     sections={[section]}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
-                                                    activeSubSectionId="all"
-                                                    setActiveSubSectionId={() => {}}
+                                                    activeSubSectionId={activeSubSectionId}
+                                                    setActiveSubSectionId={setActiveSubSectionId}
                                                     hideHeader={true}
                                                 />
                                             ) : (
@@ -495,8 +495,8 @@ const CostSheetView = () => {
                                                     sections={[section]}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
-                                                    activeSubSectionId="all"
-                                                    setActiveSubSectionId={() => {}}
+                                                    activeSubSectionId={activeSubSectionId}
+                                                    setActiveSubSectionId={setActiveSubSectionId}
                                                     hideHeader={true}
                                                 />
                                             )}
