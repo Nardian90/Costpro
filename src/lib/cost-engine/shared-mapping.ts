@@ -279,6 +279,17 @@ function isNumericColumn(key: string): boolean {
   );
 }
 
+function coerceNumeric(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace(',', '.');
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 const isPrice = (k: string) => {
   const lower = k.toLowerCase();
   return k === 'price_unit' || k === 'rate' || k === 'price' || k === 'precio' ||
@@ -349,29 +360,36 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
 
           // A2. Auto-recalculate total from norm * price when coefficient changed or total is 0/missing
           if (coef !== 1 || draft.total === 0 || draft.total === undefined || draft.total === null) {
-            const normKeys = Object.keys(draft).filter(k => isNorm(k) && typeof draft[k] === 'number');
-            const priceKeys = Object.keys(draft).filter(k => isPrice(k) && typeof draft[k] === 'number');
+            const normKeys = Object.keys(draft).filter(k => isNorm(k) && coerceNumeric(draft[k]) !== null);
+            const priceKeys = Object.keys(draft).filter(k => isPrice(k) && coerceNumeric(draft[k]) !== null);
 
             if (normKeys.length > 0 && priceKeys.length > 0) {
-              const norm = draft[normKeys[0]] as number;
-              const price = draft[priceKeys[0]] as number;
-              const newTotal = new Decimal(norm).times(price).toDecimalPlaces(2).toNumber();
+              const norm = coerceNumeric(draft[normKeys[0]]);
+              const price = coerceNumeric(draft[priceKeys[0]]);
+              const newTotal = norm !== null && price !== null
+                ? new Decimal(norm).times(price).toDecimalPlaces(2).toNumber()
+                : 0;
               if (newTotal > 0) {
                 draft.total = newTotal;
               }
             } else if (priceKeys.length > 0 && coef !== 1) {
-              if (typeof draft.total === 'number' && draft.total > 0) {
+              const currentTotal = coerceNumeric(draft.total);
+              if (currentTotal !== null && currentTotal > 0) {
                 const adjPriceKey = priceKeys.find(k => {
                   const lower = k.toLowerCase();
                   return lower.includes('price') || lower.includes('rate') || lower.includes('tarifa');
                 });
                 if (adjPriceKey) {
-                  draft.total = draft[adjPriceKey] as number;
+                  const newTotal = coerceNumeric(draft[adjPriceKey]);
+                  if (newTotal !== null) draft.total = newTotal;
                 }
               }
-            } else if (coef !== 1 && typeof draft.total === 'number' && draft.total > 0) {
+            } else if (coef !== 1) {
+              const currentTotal = coerceNumeric(draft.total);
+              if (currentTotal !== null && currentTotal > 0) {
               // Fallback: no norm/price columns found, multiply total directly by coefficient
-              draft.total = draft.total * coef;
+              draft.total = currentTotal * coef;
+              }
             }
           }
 
