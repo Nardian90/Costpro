@@ -404,7 +404,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
+              initialValue={row.formula || row.totalFormula || String(safeCalculated.total ?? 0)}
               onSave={handleTotalSave}
               onCancel={() => setIsEditingTotal(false)}
               suggestions={suggestions}
