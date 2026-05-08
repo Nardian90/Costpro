@@ -532,7 +532,7 @@ const template: any = {
           "um": "ml",
           "consumption_norm": 80,
           "price": 0.9125,
-          "total": 0
+          "total": 73
         },
         {
           "no": 0,
@@ -542,17 +542,17 @@ const template: any = {
           "um": "L",
           "consumption_norm": 105,
           "price": 5,
-          "total": 0
+          "total": 525
         },
         {
           "no": 0,
-          "classification": "1..1.3 - - Energía",
+          "classification": "1.1.3 - - Energía",
           "code": 0,
           "description": "Energia",
           "um": "Kw",
           "consumption_norm": 1,
           "price": 7,
-          "total": 0
+          "total": 7
         }
       ]
     },
