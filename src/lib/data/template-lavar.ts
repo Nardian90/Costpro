@@ -465,7 +465,7 @@ const template: any = {
           "id": "15.1",
           "label": "Costo y gasto UNITARIO",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12.1') / quantity",
+          "totalFormula": "ref('12.1') / cantidad",
           "formula": "ref('12.1') / cantidad"
         }
       ]
@@ -478,7 +478,7 @@ const template: any = {
           "id": "16.1",
           "label": "VENTA UNITARIA",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('14.1') / quantity",
+          "totalFormula": "ref('14.1') / cantidad",
           "formula": "=ref('14.1') / cantidad"
         }
       ]
@@ -546,7 +546,7 @@ const template: any = {
         },
         {
           "no": 0,
-          "classification": "1..1.3 - - Energía",
+          "classification": "1.3 - - Energía",
           "code": 0,
           "description": "Energia",
           "um": "Kw",

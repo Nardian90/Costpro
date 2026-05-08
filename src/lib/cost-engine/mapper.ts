@@ -49,7 +49,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (formula && !isFixedValue) formaCalculo = 'FORMULA';
 
       let baseCalculo: BaseRef | null = null;
-      const baseRefId = r.baseDeCalculoRef || r.base_ref;
+      const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
       if (baseRefId) {
           const isAnnex = (data.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
           if (isAnnex) {
@@ -106,9 +106,14 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         rows: (a.data || []).map(d => {
           // Try to find a numeric value for the total/importe using keys and common labels
           const findValue = (row: Record<string, unknown>, searchKeys: string[], searchLabels: string[]) => {
-              // Priority 1: Direct key match with numeric value
+              // Priority 1: Direct key match with numeric value (or string representing a number)
               for (const k of searchKeys) {
-                  if (typeof row[k] === 'number' && row[k] !== 0) return row[k];
+                  const val = row[k];
+                  if (typeof val === 'number' && val !== 0) return val;
+                  if (typeof val === 'string' && val.trim() !== '') {
+                      const num = parseFloat(val);
+                      if (!isNaN(num) && num !== 0) return num;
+                  }
               }
               // Priority 2: Case-insensitive search in keys/labels if we had column metadata (omitted for now)
               return undefined;
@@ -136,7 +141,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
 
           return {
             ...d,
-            classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
+            classification: String(d.classification || d.label || '').split(/[ -]/)[0].trim(),
             importe: (baseVal || 0) * coef
           };
         })
