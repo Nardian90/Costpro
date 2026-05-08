@@ -337,7 +337,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || row.totalFormula || String(safeCalculated.total ?? 0)}
+              initialValue={(row.formula ?? row.totalFormula ?? '')}
               onSave={handleTotalSave}
               onCancel={() => { setPendingTotalValue(null); setIsEditingTotal(false); }}
               onPendingChange={setPendingTotalValue}

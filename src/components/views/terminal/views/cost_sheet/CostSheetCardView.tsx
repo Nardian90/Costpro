@@ -276,7 +276,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
               {isEditingTotal ? (
                  <div className="z-20 relative">
                     <FormulaEditor
-                      initialValue={row.formula || row.totalFormula || String(safeCalculated.total ?? 0)}
+                      initialValue={(row.formula ?? row.totalFormula ?? '')}
                       onSave={handleTotalSave}
                       onCancel={() => setIsEditingTotal(false)}
                       suggestions={suggestions}
