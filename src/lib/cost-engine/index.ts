@@ -44,6 +44,8 @@ const safeDecimal = (val: any) => {
     const n = parseFloat(String(val));
     return new Decimal(isNaN(n) ? 0 : n);
 };
+const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
 
