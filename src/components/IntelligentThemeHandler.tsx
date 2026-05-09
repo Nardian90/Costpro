@@ -118,13 +118,7 @@ export function toggleUIMode(): UIMode {
   html.classList.remove('mode-performance', 'mode-enhanced');
   html.classList.add(`mode-${next}`);
   
-  // Respect prefers-reduced-motion: don't allow enhanced if user prefers reduced motion
-  if (next === 'enhanced' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    html.classList.remove('mode-enhanced');
-    html.classList.add('mode-performance');
-    localStorage.setItem(MODE_KEY, 'performance');
-    return 'performance';
-  }
+  // Respect manual override over prefers-reduced-motion
   
   localStorage.setItem(MODE_KEY, next);
   return next;
@@ -133,6 +127,8 @@ export function toggleUIMode(): UIMode {
 /** Utility: Get current mode */
 export function getCurrentUIMode(): UIMode {
   if (typeof window === 'undefined') return 'enhanced';
+  const stored = localStorage.getItem(MODE_KEY) as UIMode | null;
+  if (stored) return stored;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'performance';
-  return (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
+  return 'enhanced';
 }

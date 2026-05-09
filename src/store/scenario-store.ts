@@ -66,8 +66,8 @@ const extractValuesFromSections = (sections: CostSheetSection[]): ScenarioValues
       rows.forEach(row => {
         values[row.id] = {
           valorHistorico: row.valorHistorico,
-          totalFormula: row.totalFormula ?? undefined,
-          vhFormula: row.vhFormula ?? undefined,
+          totalFormula: (row.totalFormula === 'undefined' ? '' : row.totalFormula) ?? undefined,
+          vhFormula: (row.vhFormula === 'undefined' ? '' : row.vhFormula) ?? undefined,
           coeficiente: row.coeficiente,
           baseDeCalculoRef: row.baseDeCalculoRef ?? undefined
         };
@@ -240,8 +240,8 @@ export const useScenarioStore = create<ScenarioState>()(
                 if (values[row.id]) {
                   const v = values[row.id];
                   if (v.valorHistorico !== undefined) row.valorHistorico = v.valorHistorico;
-                  if (v.totalFormula !== undefined) row.totalFormula = v.totalFormula;
-                  if (v.vhFormula !== undefined) row.vhFormula = v.vhFormula;
+                  if (v.totalFormula !== undefined) row.totalFormula = v.totalFormula === 'undefined' ? '' : v.totalFormula;
+                  if (v.vhFormula !== undefined) row.vhFormula = v.vhFormula === 'undefined' ? '' : v.vhFormula;
                   if (v.coeficiente !== undefined) row.coeficiente = v.coeficiente;
                   if (v.baseDeCalculoRef !== undefined) row.baseDeCalculoRef = v.baseDeCalculoRef;
                 }

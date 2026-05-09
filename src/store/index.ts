@@ -86,6 +86,10 @@ export const useUIStore = create<UIState>()(
     {
       name: 'costpro-ui-storage',
       version: 2,
+      partialize: (state) => {
+        const { currentView, ...rest } = state;
+        return rest;
+      },
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           return {

@@ -20,6 +20,7 @@ interface FormulaContext {
   COEF: number;
   QUANTITY: number | string;
   cantidad: number | string;
+  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -30,6 +31,7 @@ interface VHFormulaContext {
   VH: number;
   QUANTITY: number | string;
   cantidad: number | string;
+  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -720,6 +722,7 @@ const ruleOverride = activeRules[0];
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
+                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -814,6 +817,7 @@ const ruleOverride = activeRules[0];
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
+                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
