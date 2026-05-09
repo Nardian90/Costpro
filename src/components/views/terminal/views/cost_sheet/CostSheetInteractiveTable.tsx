@@ -137,9 +137,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     if (val.startsWith('=')) {
         handleValueChange('formula', val);
         handleValueChange('totalFormula', val);
+        handleValueChange('calculationMethod', 'FORMULA');
     } else {
         handleValueChange('formula', null);
         handleValueChange('totalFormula', null);
+        handleValueChange('calculationMethod', 'FIJO');
+        handleValueChange('valorHistorico', parseFloat(val) || 0);
         handleValueChange('total', parseFloat(val) || 0);
     }
     setIsEditingTotal(false);

@@ -75,7 +75,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
         um: r.um || r.unit,
         type,
         formaCalculo,
-        valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
+        valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.total ?? r.value,
         vhFormula: r.vhFormula,
         baseCalculo,
         coeficiente: isPct ? (r.value ?? r.valorHistorico) : r.coeficiente,

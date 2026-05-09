@@ -738,7 +738,7 @@ const ruleOverride = activeRules[0];
                 const prefixSum = getAnnexSumForPrefix(anexo.id, row.classification);
 
                 // Smart Resolve: if prefix matches exist, use them, otherwise 0 (formulas can use TotalAnexo explicitly)
-                const valueToUse = prefixSum.gte(0) ? prefixSum.toNumber() : 0;
+                const valueToUse = prefixSum.gte(0) ? prefixSum.toNumber() : totalVal;
 
                 const variations = new Set([
                     anexo.id,
