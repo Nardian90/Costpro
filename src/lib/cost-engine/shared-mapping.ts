@@ -96,7 +96,7 @@ export function evaluateAnnexExpressionShared(
         const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === classification,
         );
         if (matches.length > 0) {
           const sum = matches.reduce(
@@ -131,29 +131,29 @@ export function evaluateAnnexExpressionShared(
         const val = [r.total, r.amount, r.depreciation_cost, r.price_total, r.importe].find(
           (v: string | number | boolean | undefined) => v !== undefined && v !== null,
         ) ?? 0;
-        return sum + (typeof val === 'number' ? val : 0);
+        return sum + (typeof val === 'number' ? val : (parseFloat(String(val)) || 0));
       }, 0);
 
       if (totalPrefix) return String(total);
 
       // Smart Resolve: if current row has a classification, try to get the specific sum for that class
-      const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
+      const rowClass = String(rowData.classification || '').split(/[ -]/)[0].trim();
       if (rowClass) {
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === rowClass,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === rowClass,
         );
         if (matches.length > 0) {
           const sum = matches.reduce((acc: number, d: AnnexDataRow) => {
             const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(
               (v: string | number | boolean | undefined) => v !== undefined && v !== null,
             ) ?? 0;
-            return acc + (typeof val === 'number' ? val : 0);
+            return acc + (typeof val === 'number' ? val : (parseFloat(String(val)) || 0));
           }, 0);
           return String(sum);
         }
       }
 
-      return '0';
+      return String(total);
     });
 
     return p.evaluate(expr);
@@ -209,7 +209,7 @@ export function evaluateHeaderExpressionShared(
         const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === classification,
         );
         if (matches.length > 0) {
           const val = matches[0][field];
@@ -491,7 +491,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH')) {
+      if (isParent && !isFixedValue && (!formula || formula === 'VH')) {
           formula = 'sum(children)';
       }
 
@@ -626,7 +626,7 @@ export function assembleFichaJSON(
           .map((d: AnnexDataRow) => ({
             ...d,
             // Normalize classification by taking the prefix before ' - '
-            classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
+            classification: String(d.classification || d.label || '').split(/[ -]/)[0].trim(),
             importe: (() => {
               const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(
                 (v: string | number | boolean | undefined) => v !== undefined && v !== null,
