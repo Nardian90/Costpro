@@ -1,7 +1,7 @@
-import { logger } from '@/lib/logger';
+import { logger } from '../../lib/logger';
 import { calculateFicha } from './index';
 import { buildEngineFicha } from './build-ficha';
-import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
+import { CostSheetData, CostSheetRow } from '../../types/cost-sheet';
 import { CalculationResult, CalculatedRow } from './types';
 import { produce } from 'immer';
 

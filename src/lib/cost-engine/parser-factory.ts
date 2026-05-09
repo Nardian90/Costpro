@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '../../lib/logger';
 import { Parser, type Expression } from 'expr-eval';
 import Decimal from 'decimal.js';
 

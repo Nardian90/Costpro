@@ -59,6 +59,7 @@ export interface CostSheetColumn {
   title?: string;
   formula?: string;
   type?: 'number' | 'string' | 'formula' | 'text';
+  isCalculated?: boolean;
 }
 
 export interface CostSheetAnnex {
@@ -70,6 +71,12 @@ export interface CostSheetAnnex {
   columns: CostSheetColumn[];
   data: any[];
 }
+
+export interface CalculatedAnnex extends CostSheetAnnex {
+    // Calculated version of the annex
+}
+
+export type AnnexDataRow = Record<string, any>;
 
 export interface CostSheetSignature {
   prepared_by: string;

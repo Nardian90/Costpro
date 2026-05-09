@@ -134,24 +134,18 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   };
 
   const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
+    if (val.startsWith("=")) {
+        handleValueChange("formula", val);
+        handleValueChange("totalFormula", val);
     } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+        handleValueChange("formula", null);
+        handleValueChange("totalFormula", null);
+        handleValueChange("calculationMethod", "FIJO");
+        handleValueChange("valorHistorico", parseFloat(val) || 0);
+        handleValueChange("total", parseFloat(val) || 0);
     }
     setIsEditingTotal(false);
   };
-
-  const hasChildren = row.children && row.children.length > 0;
-
-  const isRowPercent = row.isPercent ?? row.is_percent;
-  const isResult = isResultRow(String(row.id)) || isRowPercent;
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
-
-  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
