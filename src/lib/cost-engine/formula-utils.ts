@@ -90,7 +90,12 @@ export function translateFormulaFromSpanish(formula: string): string {
  * FIX: Only replaces standalone numbers (not adjacent to operators like *, +, -, /, (, ))
  * FIX: Handles nested ref/ref() by protecting from inside out
  */
-export function smartTranslate(formula: string, knownIds: Set<string>, knownClasses: Set<string>): string {
+export function smartTranslate(
+  formula: string,
+  knownIds: Set<string>,
+  knownClasses: Set<string>,
+  knownAnnexes: Set<string> = new Set()
+): string {
   if (!formula) return '0';
 
   // Pre-translate keywords and normalize vh/ref calls
@@ -105,6 +110,22 @@ export function smartTranslate(formula: string, knownIds: Set<string>, knownClas
 
   // Generate a letter-based placeholder key (avoids digits that the token regex could match)
   const phKey = (i: number) => `__PH${String.fromCharCode(65 + (i % 26))}${i >= 26 ? Math.floor(i / 26) : ''}__`;
+
+  // FIX: Identify Annex references in formula (e.g. AnexoI * 0.1)
+  if (knownAnnexes.size > 0) {
+    const sortedAnnexes = Array.from(knownAnnexes).sort((a, b) => b.length - a.length);
+    const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+    const idTokenRegex = /\b([a-zA-Z0-9]+)\b/g;
+    translated = translated.replace(idTokenRegex, (match, id) => {
+      const normId = normalize(id);
+      const found = sortedAnnexes.find(a => {
+          const na = normalize(a);
+          return na === normId || `anexo${na}` === normId;
+      });
+      if (found) return `SUM_ANEXO('${found}')`;
+      return match;
+    });
+  }
 
   // FIX: Protect from inside out to handle nested calls like ref(ref('x'))
   // Keep replacing until no more nested calls remain
@@ -143,7 +164,7 @@ export function smartTranslate(formula: string, knownIds: Set<string>, knownClas
 
   // Restore placeholders (from last to first to avoid index collision)
   for (let i = placeholders.length - 1; i >= 0; i--) {
-    translated = translated.replaceAll(phKey(i), placeholders[i]);
+    translated = translated.replace(new RegExp(phKey(i), 'g'), placeholders[i]);
   }
 
   return translated;

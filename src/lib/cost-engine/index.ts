@@ -46,23 +46,23 @@ const safeDecimal = (val: any) => {
 };
 const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
-export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
+export function extractDependencies(row: CostRow, allRows: CostRow[], knownAnnexes: Set<string> = new Set()): string[] {
   const deps: string[] = [];
 
   const extractFromFormula = (formula: string) => {
     if (!formula) return;
     const knownIds = new Set(allRows.map(r => r.id));
     const knownClasses = new Set(allRows.map(r => r.classification));
-    const translated = smartTranslate(formula, knownIds, knownClasses);
+    const translated = smartTranslate(formula, knownIds, knownClasses, knownAnnexes);
 
     // Extract ref('...')
     const refMatches = translated.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
-    for (const match of refMatches) {
+    for (const match of Array.from(refMatches)) {
         deps.push(match[1]);
     }
     // Extract vh('...')
     const vhMatches = translated.matchAll(/vh\(['"]([^'"]+)['"]\)/g);
-    for (const match of vhMatches) {
+    for (const match of Array.from(vhMatches)) {
         deps.push(match[1]);
     }
     // Extract children/hijos
@@ -88,7 +88,7 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
   return deps;
 }
 
-export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
+export function validateFicha(ficha: FichaJSON, knownAnnexes: Set<string> = new Set()): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
   const errors: string[] = [];
   const validationErrors: ValidationError[] = [];
   const knownIds = new Set(ficha.rows.map(r => r.id));
@@ -124,52 +124,27 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   });
 
   // 1. Dependency Graph & Cycle Detection
+  const visited = new Set<string>();
+  const recStack = new Set<string>();
   const adj = new Map<string, string[]>();
   const parser = createSafeParser();
 
   // Override REDONDEO with a no-op for dry-run validation (no actual rounding needed)
   parser.functions.REDONDEO = (val: number, _decimals: number = 2) => val;
   parser.functions.valor = (x: unknown) => x;
-  parser.functions.SUM_ANEXO = (a: string, c: string) => 0;
-  parser.functions.GET_ANEXO_FILA_DATO = (a: string, r: number, f: string) => 0;
-  parser.functions.GET_ANEXO_DATO = (a: string, c: string, f: string) => 0;
-  parser.functions.GET_FILA_DATO = (s: string, f: string) => 0;
-  ficha.rows.forEach((row) => {
-    const deps = extractDependencies(row, ficha.rows);
+  parser.functions.SUM_ANEXO = () => 0;
 
-    const formulaToUse = row.formula || row.totalFormula;
-  if (row.formaCalculo === 'FORMULA' && formulaToUse) {
-        try {
-            const formulaStr = translateFormulaFromSpanish(formulaToUse.startsWith('=') ? formulaToUse.substring(1) : formulaToUse);
-            parser.parse(formulaStr);
-
-            // check for trivial formulas
-            if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
-                validationErrors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
-            }
-        } catch (e) {
-            validationErrors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
-        }
-    }
-
-    adj.set(row.id, deps);
-  });
-
-  // DFS for Cycle Detection
-  const visited = new Set<string>();
-  const recStack = new Set<string>();
-
-  const getAncestors = (rowId: string): Set<string> => {
+    const getAncestors = (rowId: string): Set<string> => {
     const ancestors = new Set<string>();
-    let curr = rowMap.get(rowId);
-    while (curr && curr.parentId) {
-      ancestors.add(curr.parentId);
-      curr = rowMap.get(curr.parentId);
+    let current = rowMap.get(rowId);
+    while (current?.parentId) {
+      ancestors.add(current.parentId);
+      current = rowMap.get(current.parentId);
     }
     return ancestors;
   };
 
-  function hasCycle(u: string): boolean {
+function hasCycle(u: string): boolean {
     visited.add(u);
     recStack.add(u);
 
@@ -301,7 +276,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     const formulaToUse = row.formula || row.totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         const refMatches = formulaToUse.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
-        for (const match of refMatches) {
+        for (const match of Array.from(refMatches)) {
             const refId = match[1];
             if (!ids.has(refId) && !classifications.has(refId)) {
                 const msg = `Referencia en fórmula no resuelta: ${refId}`;
@@ -346,9 +321,10 @@ export function calculateFicha(
   const damping = new Decimal(dampingValue);
   const knownIds = new Set(ficha.rows.map(r => r.id));
   const knownClasses = new Set(ficha.rows.map(r => r.classification));
+  const knownAnnexes = new Set(ficha.anexos.map(a => a.id));
 
   // 0. Pre-validate
-  const { validationErrors } = validateFicha(ficha);
+  const { validationErrors } = validateFicha(ficha, knownAnnexes);
 
   // 1. Prepare maps for O(1) lookup
   const annexSumMap = new Map<string, Map<string, Decimal>>();
@@ -356,7 +332,9 @@ export function calculateFicha(
     const classMap = new Map<string, Decimal>();
     anexo.rows.forEach((row) => {
       const current = classMap.get(row.classification) || new Decimal(0);
-      classMap.set(row.classification, current.plus(safeDecimal(row.importe)).toDecimalPlaces(decimals));
+      // FIX: Check multiple possible total field names in annex rows
+      const val = [row.total, row.amount, row.depreciation_cost, row.price_total, row.importe, row.value, row.cost].find(v => v !== undefined && v !== null) ?? 0;
+      classMap.set(row.classification, current.plus(safeDecimal(val)).toDecimalPlaces(decimals));
     });
     annexSumMap.set(anexo.id, classMap);
   });
@@ -394,7 +372,7 @@ export function calculateFicha(
 
     const row = ficha.rows.find(r => r.id === uId);
     if (row) {
-      const deps = extractDependencies(row, ficha.rows);
+      const deps = extractDependencies(row, ficha.rows, knownAnnexes);
       for (const dId of deps) {
         let targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
         if (targets.length === 0) targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
@@ -429,8 +407,13 @@ export function calculateFicha(
   // REDONDEO is already registered by createSafeParser with the same Decimal logic
 
   // Use Decimal for high precision in parser functions
-  parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
-    return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
+  parser.functions.SUM_ANEXO = (anexoId: string, classification?: string) => {
+    const normId = normalize(anexoId);
+    const realId = Array.from(annexSumMap.keys()).find(k => normalize(k) === normId) || anexoId;
+    if (classification) {
+      return annexSumMap.get(realId)?.get(classification)?.toNumber() || 0;
+    }
+    return annexTotals.get(realId) || 0;
   };
 
   /**
@@ -701,7 +684,7 @@ const ruleOverride = activeRules[0];
               ? formulaToUse!.trim().substring(1)
               : formulaToUse;
 
-            const formulaStr = smartTranslate(formulaStrRaw || '0', knownIds, knownClasses);
+            const formulaStr = smartTranslate(formulaStrRaw || '0', knownIds, knownClasses, knownAnnexes);
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
@@ -812,7 +795,7 @@ const ruleOverride = activeRules[0];
             const vhFormulaStrRaw = vhFormulaToUse.trim().startsWith('=')
               ? vhFormulaToUse.trim().substring(1)
               : vhFormulaToUse;
-            const vhFormulaStr = smartTranslate(vhFormulaStrRaw, knownIds, knownClasses);
+            const vhFormulaStr = smartTranslate(vhFormulaStrRaw, knownIds, knownClasses, knownAnnexes);
             const vhExpr = parser.parse(vhFormulaStr);
 
             const vhContext: VHFormulaContext = {

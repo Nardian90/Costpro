@@ -1,7 +1,11 @@
+import { calculateAnnexesPure } from './shared-mapping';
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from './types';
 
 export function mapUIToFicha(data: CostSheetData): FichaJSON {
+  // ISO 9001: Ensure annex internal formulas are resolved before engine processing
+  const calculatedAnnexes = calculateAnnexesPure(data);
+  const dataWithCalculatedAnnexes = { ...data, annexes: calculatedAnnexes };
   const header = data.header;
   const engineRows: CostRow[] = [];
 
@@ -19,7 +23,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
           }
       });
   };
-  (data.sections || []).forEach(s => calculateVH(s.rows));
+  (dataWithCalculatedAnnexes.sections || []).forEach(s => calculateVH(s.rows));
 
   const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string, parentId: string | null = null) => {
     (uiRows || []).forEach((r, rowIdx) => {
@@ -52,7 +56,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       let baseCalculo: BaseRef | null = null;
       const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
       if (baseRefId) {
-          const isAnnex = (data.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
+          const isAnnex = (dataWithCalculatedAnnexes.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
           if (isAnnex) {
               baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
               if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
@@ -87,7 +91,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
     });
   };
-  (data.sections || []).forEach((s, sIdx) => flatten(s.rows, sIdx, undefined, null));
+  (dataWithCalculatedAnnexes.sections || []).forEach((s, sIdx) => flatten(s.rows, sIdx, undefined, null));
 
   return {
     meta: {
@@ -99,7 +103,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       quantity: header?.quantity || 0,
       settings: { allowFormulas: true }
     },
-    anexos: (data.annexes || []).map(a => {
+    anexos: (dataWithCalculatedAnnexes.annexes || []).map(a => {
       const coef = !!a.isAdjustmentActive ? (a.coefficient ?? 1) : 1;
       return {
         id: a.id,
