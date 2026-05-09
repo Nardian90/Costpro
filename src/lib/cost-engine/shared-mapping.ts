@@ -134,13 +134,13 @@ export function evaluateAnnexExpressionShared(
         return sum + (typeof val === 'number' ? val : (parseFloat(String(val)) || 0));
       }, 0);
 
-      if (totalPrefix) return String(total);
+      if (totalPrefix) return "0";
 
       // Smart Resolve: if current row has a classification, try to get the specific sum for that class
       const rowClass = String(rowData.classification || '').split(/[ -]/)[0].trim();
       if (rowClass) {
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === rowClass,
+          (String(d.classification || d.label || '').split(/[ -]/)[0].trim() === rowClass || String(d.classification || d.label || '').split(/[ -]/)[0].trim().startsWith(rowClass + '.')),
         );
         if (matches.length > 0) {
           const sum = matches.reduce((acc: number, d: AnnexDataRow) => {
@@ -153,7 +153,7 @@ export function evaluateAnnexExpressionShared(
         }
       }
 
-      return String(total);
+      return "0";
     });
 
     return p.evaluate(expr);
@@ -491,7 +491,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && !isFixedValue && (!formula || formula === 'VH')) {
+      if (isParent && (!formula || formula === 'VH')) {
           formula = 'sum(children)';
       }
 
