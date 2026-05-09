@@ -134,7 +134,7 @@ export function evaluateAnnexExpressionShared(
         return sum + (typeof val === 'number' ? val : (parseFloat(String(val)) || 0));
       }, 0);
 
-      if (totalPrefix) return "0";
+      if (totalPrefix) return String(total);
 
       // Smart Resolve: if current row has a classification, try to get the specific sum for that class
       const rowClass = String(rowData.classification || '').split(/[ -]/)[0].trim();
@@ -153,7 +153,7 @@ export function evaluateAnnexExpressionShared(
         }
       }
 
-      return "0";
+      return rowData.classification ? "0" : String(total);
     });
 
     return p.evaluate(expr);
