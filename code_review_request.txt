@@ -1,0 +1,9 @@
+I have implemented a fix for the bug where the "Total" column in the Cost module shows 0 when the formula is a shorthand annex reference like "AnexoI".
+
+Changes:
+- Modified `src/lib/cost-engine/shared-mapping.ts`: Added regex detection for "AnexoI", "AnexoII", etc. in `buildEngineRows`. If detected, it sets `formaCalculo` to `'IMPORTAR_ANEXO'` and `baseCalculo` to the corresponding annex ID, clearing the formula to prevent the math parser from trying to evaluate it.
+- Created `src/lib/cost-engine/__tests__/annex-shorthand.test.ts`: Added unit tests covering shorthand detection, case-insensitivity, and ensuring it doesn't match when part of a larger formula.
+
+Verification:
+- Ran the new unit tests: All passed.
+- Ran all tests in `src/lib/cost-engine`: All passed (80 tests).

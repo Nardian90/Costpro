@@ -505,10 +505,24 @@ export function buildEngineRows(
       const isPercentRow = r.isPercent === true || r.is_percent === true;
       if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
       // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
-      if (formula) formaCalculo = 'FORMULA';
-
       // Base Calculation mapping
       let baseCalculo: BaseRef | null = null;
+
+      // Detect shorthand annex references like "AnexoI", "AnexoII", "AnexoIII", etc.
+      // These are NOT math formulas — they are direct imports from the named Annex.
+      const ANEXO_SHORTHAND_REGEX = /^Anexo([IVXLC]+)$/i;
+      const annexShorthandMatch = formula ? ANEXO_SHORTHAND_REGEX.exec(formula.trim()) : null;
+
+      if (annexShorthandMatch) {
+        const romanId = annexShorthandMatch[1].toUpperCase(); // e.g. "I", "II", "III"
+        baseCalculo = { type: 'ANEXO', anexoId: romanId };
+        formaCalculo = 'IMPORTAR_ANEXO';
+        formula = undefined; // Clear formula so the engine doesn't try to evaluate it
+      }
+
+      // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
+      if (formula) formaCalculo = 'FORMULA';
+
       const baseRefId = r.baseDeCalculoRef || r.base_ref;
       if (baseRefId) {
         // Check if it's an Annex ID (match explicit annexes or Roman numerals)
