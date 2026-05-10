@@ -62,12 +62,12 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
 
       switch (intent.kind) {
         case 'EMPTY':
-          if (isParent && !isFixedValue) {
+          if (isParent) {
             formaCalculo = 'FORMULA';
             formula = 'sum(children)';
-          }
-          if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo')
+          } else if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo') {
             formaCalculo = 'IMPORTAR_ANEXO';
+          }
           break;
         case 'ANEXO_REF':
           formaCalculo = 'IMPORTAR_ANEXO';

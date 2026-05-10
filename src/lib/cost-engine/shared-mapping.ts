@@ -520,13 +520,12 @@ export function buildEngineRows(
       // ── PASO 4: Aplicar intent de la fórmula ──────────────────────────────────
       switch (intent.kind) {
         case 'EMPTY':
-          // No formula — check if parent (auto sum) or fixed
-          if (isParent && !isFixedValue) {
+          // No formula — check if parent (auto sum)
+          if (isParent) {
             formaCalculo = 'FORMULA';
             formula = 'sum(children)';
-          }
-          // If baseCalculo points to an annex with no formula, it's an import
-          if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo') {
+          } else if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo') {
+            // If baseCalculo points to an annex with no formula, it's an import
             formaCalculo = 'IMPORTAR_ANEXO';
           }
           break;
