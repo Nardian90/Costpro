@@ -1,3 +1,4 @@
+import { classifyFormula } from "./formula-classifier";
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from './types';
 
@@ -32,39 +33,58 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
       if (r.id === '13.2') type = 'TAX';
       if (['14', '12', '5', '14.1'].includes(r.id)) type = 'TOTAL';
 
-      // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
-      let formula = (r.totalFormula || r.formula) ?? '';
-      if (formula === 'undefined' || formula === 'null') formula = '';
-      const isParent = r.children && r.children.length > 0;
-      const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && !isFixedValue) formula = 'sum(children)';
+      const rawFormula = r.totalFormula || r.formula;
+      const intent = classifyFormula(rawFormula);
 
       let formaCalculo: FormaCalculo = 'FIJO';
+      let baseCalculo: BaseRef | null = null;
+      let formula: string | undefined = undefined;
+
       const method = r.calculationMethod || '';
-      // Support both isPercent (canonical) and is_percent (deprecated)
+      const isParent = !!(r.children && r.children.length > 0);
+      const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(method);
       const isPct = r.isPercent === true || r.is_percent === true;
+
       if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-      if (isPct && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
-      if (formula && !isFixedValue) formaCalculo = 'FORMULA';
+      if (isPct && !isFixedValue) formaCalculo = 'COEFICIENTE';
 
-      let baseCalculo: BaseRef | null = null;
       const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
       if (baseRefId) {
-          const isAnnex = (data.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
-          if (isAnnex) {
-              baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
-              if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-                  formaCalculo = 'IMPORTAR_ANEXO';
-              }
-          } else {
-              baseCalculo = { type: 'FILA', classification: baseRefId };
-          }
+        const isAnnex =
+          (data.annexes || []).some((a: { id: string }) => a.id === baseRefId) ||
+          /^[IVXLCDM]+$/i.test(baseRefId);
+        baseCalculo = isAnnex
+          ? { type: 'ANEXO', anexoId: baseRefId.toUpperCase() }
+          : { type: 'FILA', classification: baseRefId };
       }
 
-      if (formula?.trim() === '=sum(children)' || formula?.trim() === 'sum(children)') {
+      switch (intent.kind) {
+        case 'EMPTY':
+          if (isParent && !isFixedValue) {
+            formaCalculo = 'FORMULA';
+            formula = 'sum(children)';
+          }
+          if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo')
+            formaCalculo = 'IMPORTAR_ANEXO';
+          break;
+        case 'ANEXO_REF':
+          formaCalculo = 'IMPORTAR_ANEXO';
+          baseCalculo = { type: 'ANEXO', anexoId: intent.anexoId };
+          break;
+        case 'SUM_CHILDREN':
+          formaCalculo = 'FORMULA';
           formula = 'sum(children)';
+          break;
+        case 'MATH':
+        case 'PERCENTAGE':
+        case 'VH_RATIO':
+          formula = intent.expression;
+          if (!isFixedValue) {
+            formaCalculo = 'FORMULA';
+          }
+          break;
       }
 
       engineRows.push({

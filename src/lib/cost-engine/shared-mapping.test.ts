@@ -267,4 +267,64 @@ describe('shared-mapping', () => {
       expect(result.rows[0].id).toBe('1');
     });
   });
+
+  describe('buildEngineRows — AnexoI shorthand', () => {
+    const mockHeader = {
+      code: 'T1', name: 'Test', date: '2026-01-01',
+      quantity: 1, currency: 'CUP', category: 'G', type: 'E', unit: 'u',
+    };
+    const mockAnnex = {
+      id: 'I', title: 'AnexoI', coefficient: 1,
+      isAdjustmentActive: false, adjustmentColumn: '',
+      columns: [],
+      data: [{ classification: '1.1', importe: 605, total: 605 }],
+    };
+    const mockTemplate = {
+      header: mockHeader,
+      annexes: [mockAnnex],
+      sections: [{
+        id: 's1',
+        rows: [{
+          id: '1',
+          label: 'GASTO MATERIAL',
+          calculationMethod: 'FORMULA',
+          totalFormula: '=SUMA(hijos)',
+          children: [{
+            id: '1.1',
+            label: 'Insumos',
+            calculationMethod: 'FORMULA',
+            totalFormula: 'AnexoI',
+            baseRef: 'I',
+          }],
+        }],
+      }],
+      signature: { prepared_by: '', approved_by: '' },
+      indirectConfig: undefined,
+    };
+
+    it('classifies AnexoI as IMPORTAR_ANEXO, not FORMULA', () => {
+      const vhSums = buildVHSums(mockTemplate.sections as any);
+      const rows = buildEngineRows(mockTemplate as any, vhSums);
+      const row11 = rows.find(r => r.id === '1.1');
+      expect(row11).toBeDefined();
+      expect(row11!.formaCalculo).toBe('IMPORTAR_ANEXO');
+      expect(row11!.baseCalculo).toEqual({ type: 'ANEXO', anexoId: 'I' });
+      expect(row11!.formula).toBeUndefined();
+    });
+
+    it('reads baseRef field (not just baseDeCalculoRef)', () => {
+      const vhSums = buildVHSums(mockTemplate.sections as any);
+      const rows = buildEngineRows(mockTemplate as any, vhSums);
+      const row11 = rows.find(r => r.id === '1.1');
+      expect(row11!.baseCalculo?.type).toBe('ANEXO');
+    });
+
+    it('parent row with =SUMA(hijos) maps to sum(children)', () => {
+      const vhSums = buildVHSums(mockTemplate.sections as any);
+      const rows = buildEngineRows(mockTemplate as any, vhSums);
+      const row1 = rows.find(r => r.id === '1');
+      expect(row1!.formaCalculo).toBe('FORMULA');
+      expect(row1!.formula).toBe('sum(children)');
+    });
+  });
 });

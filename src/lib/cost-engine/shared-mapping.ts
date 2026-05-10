@@ -20,6 +20,7 @@ import {
   CostSheetAnnex,
   CalculatedRowValue,
 } from '@/types/cost-sheet';
+import { classifyFormula } from "./formula-classifier";
 import {
   FichaJSON,
   CostRow,
@@ -482,52 +483,75 @@ export function buildEngineRows(
       if (r.id === '13.2' || r.id === '13.3') type = 'TAX';
       if (['14', '14.1', '12', '12.1', '5'].includes(r.id)) type = 'TOTAL';
 
-      // Map calculation method
-      // Prefer totalFormula (row total calculation) over formula (often VH-specific or legacy)
-      let formula = r.totalFormula || r.formula;
-      const isParent = r.children && r.children.length > 0;
+      // ── PASO 1: Clasificar la fórmula ANTES de actuar ─────────────────────────
+      const rawFormula = r.totalFormula || r.formula;
+      const intent = classifyFormula(rawFormula);
 
-
-      // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
-      // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
-      const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH')) {
-          formula = 'sum(children)';
-      }
-
-      // Map formaCalculo
+      // ── PASO 2: Determinar formaCalculo y baseCalculo según la intención ───────
       let formaCalculo: FormaCalculo = 'FIJO';
+      let baseCalculo: BaseRef | null = null;
+      let formula: string | undefined = undefined;
+      const isParent = !!(r.children && r.children.length > 0);
+      const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
+
+      // Explicit calculationMethod overrides everything except ANEXO_REF
       const method = r.calculationMethod || '';
       if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
       if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-      // isPercent must NOT override an explicit ValorFijo/FIJO calculationMethod
-      const isPercentRow = r.isPercent === true || r.is_percent === true;
-      if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
-      // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
-      if (formula) formaCalculo = 'FORMULA';
 
-      // Base Calculation mapping
-      let baseCalculo: BaseRef | null = null;
-      const baseRefId = r.baseDeCalculoRef || r.base_ref;
+      const isPercentRow = r.isPercent === true || r.is_percent === true;
+      if (isPercentRow && !isFixedValue) formaCalculo = 'COEFICIENTE';
+
+      // ── PASO 3: Manejar baseRef / baseDeCalculoRef / base_ref (todos los alias) ─
+      const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
       if (baseRefId) {
-        // Check if it's an Annex ID (match explicit annexes or Roman numerals)
         const isAnnex =
-          (template.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
+          (template.annexes || []).some((a: { id: string }) => a.id === baseRefId) ||
+          /^[IVXLCDM]+$/i.test(baseRefId);
+
         if (isAnnex) {
-          baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
-          // If pointing to annex without specific formula, it's an import
-          if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-            formaCalculo = 'IMPORTAR_ANEXO';
-          }
+          baseCalculo = { type: 'ANEXO', anexoId: baseRefId.toUpperCase() };
         } else {
           baseCalculo = { type: 'FILA', classification: baseRefId };
         }
       }
 
-      // Normalize =sum(children) formula
-      if (formula?.trim() === '=sum(children)' || formula?.trim() === 'sum(children)') {
-        formula = 'sum(children)';
+      // ── PASO 4: Aplicar intent de la fórmula ──────────────────────────────────
+      switch (intent.kind) {
+        case 'EMPTY':
+          // No formula — check if parent (auto sum) or fixed
+          if (isParent && !isFixedValue) {
+            formaCalculo = 'FORMULA';
+            formula = 'sum(children)';
+          }
+          // If baseCalculo points to an annex with no formula, it's an import
+          if (baseCalculo?.type === 'ANEXO' && !isFixedValue && method !== 'Prorrateo') {
+            formaCalculo = 'IMPORTAR_ANEXO';
+          }
+          break;
+
+        case 'ANEXO_REF':
+          // e.g. totalFormula = "AnexoI" → import from Annex I filtered by row classification
+          formaCalculo = 'IMPORTAR_ANEXO';
+          // Override baseCalculo with the explicit annex from the formula
+          baseCalculo = { type: 'ANEXO', anexoId: intent.anexoId };
+          formula = undefined; // Do NOT pass to math parser
+          break;
+
+        case 'SUM_CHILDREN':
+          formaCalculo = 'FORMULA';
+          formula = 'sum(children)';
+          break;
+
+        case 'MATH':
+        case 'PERCENTAGE':
+        case 'VH_RATIO':
+          formula = intent.expression;
+          if (!isFixedValue) {
+            formaCalculo = 'FORMULA';
+          }
+          break;
       }
 
       // Apply Indirect Configuration (Coefficient or Fixed)
