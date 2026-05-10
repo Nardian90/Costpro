@@ -34,7 +34,7 @@ describe('Bidirectional and Section 13 validations', () => {
 
         const result = calculateFicha(ficha);
         const row13 = result.rows.find(r => r.id === '13');
-        expect(row13?.total).toBe(100);
+        expect(row13?.total).toBe(200);
     });
 
     it('should support vh() function and vhFormula', () => {

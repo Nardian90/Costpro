@@ -30,15 +30,30 @@ export function getFormulaReferenceIssue(name: string): string | null {
 
 export function createSafeParser(): Parser {
   const parser = new Parser();
-  parser.functions.REDONDEO = (val: number, decimals: number = 2) =>
-    new Decimal(val || 0).toDecimalPlaces(decimals).toNumber();
+
+  parser.functions.REDONDEO = (val: any, decimals: any = 2) =>
+    new Decimal(val || 0).toDecimalPlaces(Number(decimals)).toNumber();
   parser.functions.round = parser.functions.REDONDEO;
-  parser.functions.ROUND2 = (val: number) => new Decimal(val || 0).toDecimalPlaces(2).toNumber();
-  parser.functions.SUMA = (...args: number[]) => args.reduce((a, b) => new Decimal(a || 0).add(b || 0).toNumber(), 0);
+  parser.functions.ROUND2 = (val: any) => new Decimal(val || 0).toDecimalPlaces(2).toNumber();
+  parser.functions.round2 = parser.functions.ROUND2;
+
+  parser.functions.SUMA = (...args: any[]) => args.reduce((a, b) => new Decimal(a || 0).add(new Decimal(b || 0)).toNumber(), 0);
   parser.functions.SUM = parser.functions.SUMA;
+  parser.functions.sum = parser.functions.SUMA;
+
   parser.functions.SI = (cond: unknown, t: unknown, f: unknown) => cond ? t : f;
   parser.functions.IF = parser.functions.SI;
+  parser.functions.if = parser.functions.SI;
+
   parser.functions.valor = (x: any) => x;
+  parser.functions.pct = (val: any, p: any) => new Decimal(val || 0).times(new Decimal(p || 0)).dividedBy(100).toNumber();
+
+  parser.functions.average = (...args: any[]) => {
+      if (args.length === 0) return 0;
+      const sum = args.reduce((a, b) => new Decimal(a || 0).add(new Decimal(b || 0)).toNumber(), 0);
+      return new Decimal(sum).dividedBy(args.length).toNumber();
+  };
+
   return parser;
 }
 
@@ -77,10 +92,12 @@ export function smartTranslate(
   formula: string,
   knownIds: Set<string>,
   knownClasses: Set<string>,
-  knownAnnexes: Set<string> = new Set()
+  knownAnnexes: string[] = []
 ): string {
   if (!formula) return '0';
-  let translated = translateFormulaFromSpanish(formula);
+  let translated = formula.trim();
+  if (translated.startsWith('=')) translated = translated.substring(1);
+  translated = translateFormulaFromSpanish(translated);
 
   translated = translated.replace(/pror\s*\(\s*vh\s*\(\s*['"]?([^'"]+)['"]?\s*\)\s*\)/gi, (match, id) => {
     return `(VH / vh('${id.trim()}')) * ref('${id.trim()}')`;
@@ -89,26 +106,12 @@ export function smartTranslate(
   const placeholders: string[] = [];
   const phKey = (i: number) => `__PH${String.fromCharCode(65 + (i % 26))}${i >= 26 ? Math.floor(i / 26) : ''}__`;
 
-  if (knownAnnexes.size > 0) {
-    const sortedAnnexes = Array.from(knownAnnexes).sort((a, b) => b.length - a.length);
-    const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
-    const idTokenRegex = /\b([a-zA-Z0-9]+)\b/g;
-    translated = translated.replace(idTokenRegex, (match, id) => {
-      const normId = normalize(id);
-      const found = sortedAnnexes.find(a => {
-          const na = normalize(a);
-          return na === normId || `anexo${na}` === normId;
-      });
-      if (found) return `SUM_ANEXO('${found}')`;
-      return match;
-    });
-  }
-
+  // Protect calls
   let prevLength = 0;
   while (translated.length !== prevLength) {
     prevLength = translated.length;
     translated = translated.replace(
-      /\b(ref|vh)\s*\('([^']+?)'\)/gi,
+      /\b(ref|vh|SUM_ANEXO|round|REDONDEO|ROUND2|round2|pct|sum|average|IF|SI|if|valor)\s*\(([^)]+)\)/gi,
       (match) => {
         if (match.includes('__PH')) return match;
         placeholders.push(match);
@@ -117,13 +120,9 @@ export function smartTranslate(
     );
   }
 
-  translated = translated.replace(/\bvalor\s*\(([^)]+)\)/gi, (_match, content) => {
-    if (content.includes('__PH')) return _match;
-    placeholders.push(content);
-    return `valor(${phKey(placeholders.length - 1)})`;
-  });
-
-  const tokenRegex = /(?<![*/+\-\.\(d])(\d+(?:\.\d+)?)(?![*/+\-\.\)d])/g;
+  // Handle bare IDs/Classes (numeric only identifiers)
+  // We only translate tokens that are purely digits and dots to avoid clashing with identifiers like "A1"
+  const tokenRegex = /(?<![a-zA-Z0-9_.])(\d+(?:\.\d+)?)(?![a-zA-Z0-9_.])/g;
   translated = translated.replace(tokenRegex, (match) => {
     if (knownIds.has(match) || knownClasses.has(match)) {
       return `ref('${match}')`;
@@ -131,6 +130,7 @@ export function smartTranslate(
     return match;
   });
 
+  // Restore placeholders
   for (let i = placeholders.length - 1; i >= 0; i--) {
     translated = translated.replace(new RegExp(phKey(i), 'g'), placeholders[i]);
   }
@@ -142,15 +142,34 @@ export function evaluateAnnexExpressionShared(
     row: Record<string, any>,
     header: any,
     annexes: any[],
-    parser: Parser,
-    warnings: any[]
+    parser?: Parser,
+    warnings?: any[]
 ): any {
     try {
-        const formula = expression.startsWith('=') ? expression.substring(1) : expression;
-        const expr = parser.parse(formula);
-        const context = { ...row, header };
+        if (expression === null || expression === undefined) return 0;
+        const p = parser || createSharedParser();
+        let formula = String(expression).trim();
+        if (formula.startsWith('=')) formula = formula.substring(1);
+        if (!isNaN(Number(formula)) && formula !== '') return Number(formula);
+
+        const expr = p.parse(formula);
+        const context: any = { ...row, header, QUANTITY: Number(header?.quantity || 0) };
+
+        if (annexes) {
+            annexes.forEach(a => {
+                let sum = new Decimal(0);
+                (a.data || []).forEach((r: any) => {
+                   const val = [r.importe, r.total, r.amount, r.value, r.cost].find(v => typeof v === 'number' && !isNaN(v)) ?? 0;
+                   sum = sum.plus(new Decimal(Number(val) || 0));
+                });
+                context[`TotalAnexo${a.id}`] = sum.toNumber();
+                context[`Total${a.id}`] = sum.toNumber();
+            });
+        }
+
         return expr.evaluate(context);
     } catch (e) {
+        if (warnings) warnings.push(String(e));
         return 0;
     }
 }
@@ -160,11 +179,13 @@ export function evaluateHeaderExpressionShared(
     header: any,
     annexes: any[],
     meta: any,
-    parser: Parser
+    parser?: Parser
 ): any {
     try {
-        const formula = expression.startsWith('=') ? expression.substring(1) : expression;
-        const expr = parser.parse(formula);
+        if (!expression || typeof expression !== 'string' || !expression.startsWith('=')) return expression;
+        const p = parser || createSharedParser();
+        const formula = expression.substring(1);
+        const expr = p.parse(formula);
         const context = { ...header, ...meta };
         return expr.evaluate(context);
     } catch (e) {

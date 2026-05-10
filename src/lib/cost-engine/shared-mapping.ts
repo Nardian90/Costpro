@@ -12,12 +12,17 @@ import {
   RowSemanticType,
   FormaCalculo,
   BaseRef,
-  Anexo
+  Anexo,
+  AnexoRow
 } from './types';
 import Decimal from 'decimal.js';
 import { Parser } from 'expr-eval';
 import { produce } from 'immer';
-import { createSharedParser, evaluateAnnexExpressionShared, evaluateHeaderExpressionShared } from './formula-utils';
+import {
+    createSharedParser,
+    evaluateAnnexExpressionShared,
+    evaluateHeaderExpressionShared
+} from './formula-utils';
 
 export const ROMAN_MAP: Record<number, string> = {
   1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V',
@@ -35,7 +40,7 @@ export function safeDecimal(val: any): Decimal {
 
 export function normalize(str: string): string {
   if (!str) return '';
-  return str.replace(/\s+/g, '').toLowerCase();
+  return String(str).replace(/\s+/g, '').toLowerCase();
 }
 
 /**
@@ -75,42 +80,87 @@ export function calculateAnnexesShared(
   (template.annexes || []).forEach((annex) => {
     const calculatedAnnex: CalculatedAnnex = {
       ...annex,
-      data: (annex.data || []).map((row) =>
-        produce(row, (draft: any) => {
-          if (row.coefficient !== undefined && row.coefficient !== 1) {
-            annex.columns.forEach((col) => {
-              if (col.isCalculated && typeof draft[col.key] === 'number') {
-                draft[col.key] = new Decimal(draft[col.key]).times(row.coefficient).toDecimalPlaces(decimals).toNumber();
-              }
+      data: (annex.data || (annex as any).rows || []).map((row: any) => {
+        const draft = { ...row };
+        const effectiveCoef = row.coefficient ?? (annex.isAdjustmentActive ? (annex.coefficient ?? 1) : 1);
+
+        const totalKeys = ["total", "importe", "amount", "value", "cost", "depreciation_cost", "price_total"];
+        const priceKeys = ["price", "price_unit", "rate", "precio", "costo_unitario"];
+
+        if (effectiveCoef !== 1 && (annex.isAdjustmentActive || row.coefficient !== undefined)) {
+            let foundTotalKey = totalKeys.find(k => typeof draft[k] === 'number' && draft[k] !== 0);
+            if (foundTotalKey) {
+                draft[foundTotalKey] = new Decimal(draft[foundTotalKey]).times(effectiveCoef).toDecimalPlaces(decimals).toNumber();
+            } else {
+                let foundPriceKey = priceKeys.find(k => typeof draft[k] === 'number' && draft[k] !== 0);
+                if (foundPriceKey) {
+                    draft[foundPriceKey] = new Decimal(draft[foundPriceKey]).times(effectiveCoef).toDecimalPlaces(decimals).toNumber();
+                } else {
+                    Object.keys(draft).forEach(key => {
+                        if (typeof draft[key] === 'number' && !['coefficient', 'id', 'norm', 'norma', 'consumption_norm', 'quantity', 'cantidad', 'qty'].includes(key)) {
+                            draft[key] = new Decimal(draft[key]).times(effectiveCoef).toDecimalPlaces(decimals).toNumber();
+                        }
+                    });
+                }
+            }
+        }
+
+        if (annex.columns) {
+            annex.columns.filter(c => !c.formula).forEach(col => {
+                const val = draft[col.key];
+                if (typeof val === 'string' && val.startsWith('=')) {
+                    draft[col.key] = evaluateAnnexExpressionShared(val, draft, template.header, results, p, []);
+                }
             });
-          }
+            annex.columns.filter(c => c.formula).forEach(col => {
+                draft[col.key] = evaluateAnnexExpressionShared(col.formula, draft, template.header, results, p, []);
+            });
+        }
 
-          for (const col of annex.columns) {
-            if (!col.formula) {
-              const val = draft[col.key];
-              if (typeof val === 'string' && val.length > 0 && val.startsWith('=')) {
-                draft[col.key] = evaluateAnnexExpressionShared(val, draft as unknown as Record<string, unknown>, template.header, results, p, []);
-              }
+        const findVal = (keys: string[]) => {
+            for (const k of keys) {
+                const v = draft[k];
+                if (typeof v === 'number' && v !== 0) return v;
+                if (typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '' && !v.startsWith('=')) return Number(v);
             }
-          }
+            return undefined;
+        };
 
-          for (const col of annex.columns) {
-            if (col.formula) {
-              draft[col.key] = evaluateAnnexExpressionShared(col.formula, draft, template.header, results, p, []);
+        const totalVal = findVal(totalKeys);
+        if (totalVal === undefined || totalVal === 0) {
+            const norm = findVal(['norm', 'norma', 'consumption_norm', 'quantity', 'cantidad', 'qty']);
+            const price = findVal(priceKeys);
+            if (typeof norm === 'number' && typeof price === 'number') {
+                draft.total = new Decimal(norm).times(price).toDecimalPlaces(decimals).toNumber();
+                draft.importe = draft.total;
             }
-          }
-        }),
-      ),
+        }
+        return draft;
+      }),
     };
     results.push(calculatedAnnex);
   });
-
   return results;
 }
 
 export function calculateAnnexesPure(data: any, decimals: number = 2): any {
-    if (!data) return data;
+    if (!data) return [];
     if (data.annexes) return calculateAnnexesShared(data, decimals);
+
+    if ((data.rows || data.data) && !data.sections) {
+        const rowsToUse = data.rows || data.data;
+        const pseudoTemplate: any = {
+            header: {},
+            annexes: [{ ...data, data: rowsToUse }],
+            sections: []
+        };
+        const result = calculateAnnexesShared(pseudoTemplate, decimals);
+        const finalAnnex = result[0];
+        return {
+            ...finalAnnex,
+            rows: finalAnnex.data
+        };
+    }
     return data;
 }
 
@@ -148,7 +198,11 @@ export function buildVHSums(sections: CostSheetSection[]): Record<string, number
 
 // ─── Early Header Evaluation ──────────────────────────────────────────────────
 
-export { evaluateHeaderExpressionShared } from './formula-utils';
+export {
+    evaluateHeaderExpressionShared,
+    evaluateAnnexExpressionShared,
+    createSharedParser
+} from './formula-utils';
 
 export function evaluateEarlyHeader(
   header: CostSheetHeader,
@@ -192,8 +246,8 @@ export function buildEngineRows(
 
       let type: RowSemanticType = 'COST';
       if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
-      if (r.id === '13.2') type = 'TAX';
-      if (['14', '14.1', '12', '12.1', '5'].includes(r.id)) type = 'TOTAL';
+      if (['13.2', '13.3'].includes(r.id)) type = 'TAX';
+      if (['14', '14.1', '5'].includes(r.id)) type = 'TOTAL';
 
       let formula = r.totalFormula || r.formula;
       const isParent = r.children && r.children.length > 0;
@@ -206,14 +260,14 @@ export function buildEngineRows(
       let formaCalculo: FormaCalculo = 'FIJO';
       const method = r.calculationMethod || '';
 
-      if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'FORMULA';
-      if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'FORMULA';
+      if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
+      if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'IMPORTAR_ANEXO';
       if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
 
       const isPercentRow = r.isPercent === true || r.is_percent === true;
       if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'PORCENTAJE';
 
-      if (formula) formaCalculo = 'FORMULA';
+      if (formula && !isFixedValue) formaCalculo = 'FORMULA';
 
       let baseCalculo: BaseRef | null = null;
       const baseRefId = r.baseDeCalculoRef || r.base_ref;
@@ -281,7 +335,12 @@ export function assembleFichaJSON(
           .map((d: AnnexDataRow) => ({
             ...d,
             classification: String(d.classification || d.label || d.id || '').split(/[ -]/)[0].trim(),
-            importe: Number([d.total, d.amount, d.depreciation_cost, d.price_total, d.importe, d.value, d.cost].find(v => v !== undefined && v !== null) ?? 0)
+            importe: (function() {
+                const val = [d.importe, d.total, d.amount, d.depreciation_cost, d.price_total, d.value, d.cost].find(v => v !== undefined && v !== null && v !== '' && !String(v).startsWith('='));
+                if (typeof val === 'number') return val;
+                const parsed = parseFloat(String(val));
+                return isNaN(parsed) ? 0 : parsed;
+            })()
           })),
       })),
     rows: engineRows,
