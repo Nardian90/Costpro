@@ -471,7 +471,7 @@ const CostSheetView = () => {
                                         onScenarioAction={handleScenarioAction}
                                     />
                                 ) : (
-                                    (data?.sections || []).map((section: CostSheetSection) => (
+                                    (data?.sections || []).map((section: CostSheetSection, globalIndex: number) => (
                                         <ExpertModeAccordion
                                             key={section.id}
                                             id={section.id}
@@ -484,6 +484,7 @@ const CostSheetView = () => {
                                             {effectiveLayoutMode === "grid" ? (
                                                 <CostSheetCardView
                                                     sections={[section]}
+                                                    globalSectionIndex={globalIndex}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
                                                     activeSubSectionId="all"
@@ -493,6 +494,7 @@ const CostSheetView = () => {
                                             ) : (
                                                 <CostSheetInteractiveTable
                                                     sections={[section]}
+                                                    globalSectionIndex={globalIndex}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
                                                     activeSubSectionId="all"

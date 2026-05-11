@@ -42,6 +42,7 @@ type CalculatedValues = Record<string, CalculatedRowValue>;
 interface CostSheetInteractiveTableProps {
   sections: CostSheetSection[];
   groupedSections?: { id: string, label: string, sectionIds: string[] }[];
+  globalSectionIndex?: number;
   calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
   activeSubSectionId: string;
@@ -613,7 +614,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             const isAll = activeSubSectionId === 'all';
             const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
-            return sections.map((section, sectionIndex) => {
+            return sections.map((section, localIndex) => {
+                // Use globalSectionIndex if provided (from singleton pattern), otherwise use local index
+                const absoluteSectionIndex = globalSectionIndex ?? localIndex;
                 const isTarget = targetSectionIds.includes(section.id);
                 if (!isTarget) return null;
 
@@ -644,7 +647,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px] cursor-text"
                                     value={section.label}
                                     onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                                    onChange={(e) => updateValue(['sections', absoluteSectionIndex, 'label'], e.target.value)}
                                     aria-label={`Nombre de la sección ${section.label}`}
                                 />
                             </div>
@@ -654,7 +657,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     variant="ghost"
                                     type="button"
                                     className="h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
-                                    onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
+                                    onClick={() => setActiveSectionForActions({ section, index: absoluteSectionIndex })}
                                     aria-label={`Acciones de la sección ${section.label}`}
                                 >
                                     <Settings2 className="w-4 h-4" aria-hidden="true" />
@@ -696,7 +699,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                         row={row}
                                         level={0}
                                         index={rowIndex}
-                                        numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
+                                        numbering={`${absoluteSectionIndex + 1}.${rowIndex + 1}`}
                                         calculated={calculatedValues?.[row.id] || {} as CalculatedRowValue}
                                         calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
