@@ -36,6 +36,7 @@ type CalculatedValues = Record<string, CalculatedRowValue>;
 
 interface CostSheetCardViewProps {
   sections: CostSheetSection[];
+  baseSectionIndex?: number;
   groupedSections?: { id: string, label: string, sectionIds: string[] }[];
   calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
@@ -138,13 +139,19 @@ const RowCard: React.FC<RowCardProps> = memo(({
   };
 
   const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
+    const trimmedVal = val.trim();
+    const looksLikeFormula = trimmedVal.startsWith('=') || /[A-Za-z_]+\s*\(/.test(trimmedVal);
+    if (looksLikeFormula) {
         handleValueChange('formula', val);
         handleValueChange('totalFormula', val);
     } else {
+        const parsed = parseFloat(trimmedVal) || 0;
         handleValueChange('formula', null);
         handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+        handleValueChange('vhFormula', null);
+        handleValueChange('value', parsed);
+        handleValueChange('valorHistorico', parsed);
+        handleValueChange('total', parsed);
     }
     setIsEditingTotal(false);
   };
@@ -352,6 +359,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
 const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   sections,
+  baseSectionIndex = 0,
   groupedSections,
   calculatedValues,
   annexes,
@@ -434,6 +442,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
           </span>
         </div>
         {sections.map((section, sectionIndex) => {
+          const actualSectionIndex = baseSectionIndex + sectionIndex;
           const isTarget = targetSectionIds.includes(section.id);
           if (!isTarget) return null;
 
@@ -453,7 +462,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                     <Input
                       className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
                       value={section.label}
-                      onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                      onChange={(e) => updateValue(['sections', actualSectionIndex, 'label'], e.target.value)}
                     />
                   </div>
                   <Button
@@ -486,14 +495,14 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                           numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
                           calculated={calculatedValues?.[row.id] || {} as CalculatedRowValue}
                           calculatedValues={calculatedValues}
-                          path={['sections', sectionIndex, 'rows', rowIndex]}
+                          path={['sections', actualSectionIndex, 'rows', rowIndex]}
                           annexes={annexes}
                           suggestions={suggestions}
                         />
                       ))}
 
                       <Button
-                          onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
+                          onClick={() => addMainRow(['sections', actualSectionIndex, 'rows'])}
                           variant="outline"
                           className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
                       >
