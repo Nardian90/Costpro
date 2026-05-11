@@ -129,6 +129,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     } else {
         handleValueChange('vhFormula', null);
         handleValueChange('valorHistorico', parseFloat(val) || 0);
+        handleValueChange('calculationMethod', 'FIJO');
     }
     setIsEditingVH(false);
   };
@@ -141,6 +142,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         handleValueChange('formula', null);
         handleValueChange('totalFormula', null);
         handleValueChange('total', parseFloat(val) || 0);
+        handleValueChange('calculationMethod', 'FIJO');
     }
     setIsEditingTotal(false);
   };
