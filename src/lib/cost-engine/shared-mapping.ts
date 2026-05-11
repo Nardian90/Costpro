@@ -491,7 +491,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH')) {
+      if (isParent && (!formula || formula === 'VH') && !isFixedValue) {
           formula = 'sum(children)';
       }
 

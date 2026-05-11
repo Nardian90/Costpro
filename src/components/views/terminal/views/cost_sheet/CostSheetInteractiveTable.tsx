@@ -126,10 +126,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     if (val.startsWith('=')) {
         handleValueChange('vhFormula', val);
         handleValueChange('valorHistorico', 0);
+        handleValueChange('calculationMethod', null);
     } else {
         handleValueChange('vhFormula', null);
         handleValueChange('valorHistorico', parseFloat(val) || 0);
-        handleValueChange('calculationMethod', 'FIJO');
     }
     setIsEditingVH(false);
   };
@@ -138,11 +138,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     if (val.startsWith('=')) {
         handleValueChange('formula', val);
         handleValueChange('totalFormula', val);
+        handleValueChange('calculationMethod', null);
     } else {
         handleValueChange('formula', null);
         handleValueChange('totalFormula', null);
         handleValueChange('total', parseFloat(val) || 0);
-        handleValueChange('calculationMethod', 'FIJO');
+        handleValueChange('calculationMethod', 'ValorFijo');
     }
     setIsEditingTotal(false);
   };
