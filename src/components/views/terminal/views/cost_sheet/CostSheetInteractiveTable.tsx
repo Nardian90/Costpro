@@ -40,6 +40,7 @@ type CalculatedValues = Record<string, CalculatedRowValue>;
 
 // Props for the main table component
 interface CostSheetInteractiveTableProps {
+  sectionIndexOffset?: number;
   sections: CostSheetSection[];
   groupedSections?: { id: string, label: string, sectionIds: string[] }[];
   calculatedValues: CalculatedValues;
@@ -133,14 +134,25 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     setIsEditingVH(false);
   };
 
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
+    const handleTotalSave = (val: string) => {
+    const trimmedVal = val.trim();
+    const isFormula = trimmedVal.startsWith('=') ||
+                     (isNaN(Number(trimmedVal)) && trimmedVal.length > 0);
+
+    if (isFormula) {
+        const formulaVal = trimmedVal.startsWith('=') ? trimmedVal : '=' + trimmedVal;
+        handleValueChange('formula', formulaVal);
+        handleValueChange('totalFormula', formulaVal);
+        handleValueChange('calculationMethod', 'FORMULA');
     } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+        const numVal = parseFloat(trimmedVal) || 0;
+        updateValues([
+            { path: [...path, 'formula'], value: null },
+            { path: [...path, 'totalFormula'], value: null },
+            { path: [...path, 'total'], value: numVal },
+            { path: [...path, 'valorHistorico'], value: numVal },
+            { path: [...path, 'calculationMethod'], value: 'FIJO' }
+        ]);
     }
     setIsEditingTotal(false);
   };
@@ -475,7 +487,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
     activeSubSectionId,
     setActiveSubSectionId,
     onOpenSections,
-    hideHeader = false
+    hideHeader = false,
+    sectionIndexOffset = 0
 }) => {
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const removeMainSection = useCostSheetStore(state => state.removeMainSection);
@@ -613,7 +626,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             const isAll = activeSubSectionId === 'all';
             const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
-            return sections.map((section, sectionIndex) => {
+            return sections.map((section, localIndex) => {
+                const sectionIndex = localIndex + sectionIndexOffset;
                 const isTarget = targetSectionIds.includes(section.id);
                 if (!isTarget) return null;
 
