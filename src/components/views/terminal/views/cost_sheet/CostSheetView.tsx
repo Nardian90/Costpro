@@ -481,21 +481,22 @@ const CostSheetView = () => {
                                             onHelp={() => expertState.setHelpContext(section.id)}
                                         >
                                             <LazyRender>
+
                                             {effectiveLayoutMode === "grid" ? (
                                                 <CostSheetCardView
-                                                    sections={[section]}
+                                                    sections={data?.sections || []}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
-                                                    activeSubSectionId="all"
+                                                    activeSubSectionId={section.id}
                                                     setActiveSubSectionId={() => {}}
                                                     hideHeader={true}
                                                 />
                                             ) : (
                                                 <CostSheetInteractiveTable
-                                                    sections={[section]}
+                                                    sections={data?.sections || []}
                                                     calculatedValues={calculatedValues}
                                                     annexes={data?.annexes || []}
-                                                    activeSubSectionId="all"
+                                                    activeSubSectionId={section.id}
                                                     setActiveSubSectionId={() => {}}
                                                     hideHeader={true}
                                                 />

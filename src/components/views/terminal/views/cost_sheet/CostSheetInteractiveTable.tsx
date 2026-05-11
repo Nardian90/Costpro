@@ -133,14 +133,38 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     setIsEditingVH(false);
   };
 
+
   const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
+    const trimmedVal = val.trim();
+    if (!trimmedVal) {
+      setIsEditingTotal(false);
+      return;
+    }
+
+    // Check if it's a formula (starts with =) or matches a suggestion (e.g. AnexoI, ref('1'))
+    const isFormula = trimmedVal.startsWith('=') ||
+                      suggestions.some(s => s.label === trimmedVal || s.value === trimmedVal);
+
+    if (isFormula) {
+      const formulaVal = trimmedVal.startsWith('=') ? trimmedVal : `=${trimmedVal}`;
+      updateValues([
+        { path: [...path, 'formula'], value: formulaVal },
+        { path: [...path, 'totalFormula'], value: formulaVal },
+        { path: [...path, 'calculationMethod'], value: 'FORMULA' }
+      ]);
     } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+      const numVal = parseFloat(trimmedVal);
+      if (!isNaN(numVal)) {
+        updateValues([
+          { path: [...path, 'formula'], value: null },
+          { path: [...path, 'totalFormula'], value: null },
+          { path: [...path, 'total'], value: numVal },
+          { path: [...path, 'valorHistorico'], value: numVal },
+          { path: [...path, 'calculationMethod'], value: 'FIJO' }
+        ]);
+      } else {
+        toast.error("Entrada inválida. Ingrese un número o una fórmula válida.");
+      }
     }
     setIsEditingTotal(false);
   };
