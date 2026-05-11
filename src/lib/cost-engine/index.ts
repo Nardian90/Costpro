@@ -1,4 +1,6 @@
 import Decimal from 'decimal.js';
+const normalizeClass = (s: string) => String(s || '').replace(/\s+/g, '').toLowerCase();
+
 import { createSafeParser } from './parser-factory';
 import {
   FichaJSON,
@@ -558,20 +560,21 @@ export function calculateFicha(
     const vh = new Decimal(vhNum);
 
     // Helper for prefix matching in annexes
-    const getAnnexSumForPrefix = (anexoId: string, prefix: string): Decimal => {
+        const getAnnexSumForPrefix = (anexoId: string, prefix: string): Decimal => {
         const classSumMap = annexSumMap.get(anexoId);
         if (!classSumMap) return new Decimal(0);
 
+        const normPrefix = normalizeClass(prefix);
         let sum = new Decimal(0);
         let found = false;
         classSumMap.forEach((val, classification) => {
-            // Check if classification starts with prefix (e.g. "1.1.1" starts with "1.1")
-            if (classification === prefix || classification.startsWith(prefix + '.')) {
+            const normClass = normalizeClass(classification);
+            if (normClass === normPrefix || normClass.startsWith(normPrefix + '.')) {
                 sum = sum.plus(val);
                 found = true;
             }
         });
-        return found ? sum : (new Decimal(-1)); // -1 means no match found
+        return found ? sum : (new Decimal(-1));
     };
 
     // Resolve Rules

@@ -9,6 +9,8 @@
  * Contains pure functions only — no React hooks, no state.
  */
 import Decimal from 'decimal.js';
+const normalizeClass = (s: string) => String(s || '').replace(/\s+/g, '').toLowerCase();
+
 import { produce } from 'immer';
 import { createSafeParser } from './parser-factory';
 import type { Parser } from 'expr-eval';
@@ -97,7 +99,7 @@ export function evaluateAnnexExpressionShared(
         const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === classification,
         );
         if (matches.length > 0) {
           const sum = matches.reduce(
@@ -141,7 +143,7 @@ export function evaluateAnnexExpressionShared(
       const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
       if (rowClass) {
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === rowClass,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === rowClass,
         );
         if (matches.length > 0) {
           const sum = matches.reduce((acc: number, d: AnnexDataRow) => {
@@ -210,7 +212,7 @@ export function evaluateHeaderExpressionShared(
         const targetAnnex = calculatedAnnexes.find((a: CalculatedAnnex) => a.id === anexoId);
         if (!targetAnnex) return '0';
         const matches = targetAnnex.data.filter((d: AnnexDataRow) =>
-          String(d.classification || d.label || '').split(' - ')[0].trim() === classification,
+          String(d.classification || d.label || '').split(/[ -]/)[0].trim() === classification,
         );
         if (matches.length > 0) {
           const val = matches[0][field];
@@ -649,7 +651,7 @@ export function assembleFichaJSON(
           .map((d: AnnexDataRow) => ({
             ...d,
             // Normalize classification by taking the prefix before ' - '
-            classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
+            classification: normalizeClass(String(d.classification || d.label || '').split(/[ -]/)[0]),
             importe: (() => {
               const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(
                 (v: string | number | boolean | undefined) => v !== undefined && v !== null,

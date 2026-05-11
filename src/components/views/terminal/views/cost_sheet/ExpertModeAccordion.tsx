@@ -12,7 +12,7 @@ interface ExpertModeAccordionProps {
   children: React.ReactNode;
   isExpanded: boolean;
   onToggle: () => void;
-  onHelp: (e: React.MouseEvent) => void;
+  onHelp: (ctx?: string) => void;
   icon?: React.ReactNode;
   className?: string;
   completionPercent?: number;
@@ -78,10 +78,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
             size="icon"
             type="button"
             className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-primary/10 text-primary transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            onClick={(e) => {
-              e.stopPropagation();
-              onHelp(e);
-            }}
+            onClick={() => onHelp()}
             aria-label={`Ayuda sobre ${title}`}
           >
             <HelpCircle className="w-5 h-5" />

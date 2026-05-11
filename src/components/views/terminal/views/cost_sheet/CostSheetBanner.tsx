@@ -3,31 +3,21 @@
 import React from 'react';
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldCheck, Menu } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { CostSheetModeDropdown, CostSheetViewMode } from "./CostSheetModeDropdown";
 
 interface CostSheetBannerProps {
-  viewMode: CostSheetViewMode;
-  setViewMode: (mode: CostSheetViewMode) => void;
-  onOpenActions?: () => void;
+  activeSection?: string;
+  onAction?: (action: string) => void;
 }
 
-export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSheetBannerProps) => {
+export const CostSheetBanner = ({ activeSection, onAction }: CostSheetBannerProps) => {
   const { setCurrentView } = useUIStore();
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8 px-2 sticky top-0 z-[40] bg-background/80 backdrop-blur-xl py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:relative border-b border-white/5 sm:border-none -mx-4 sm:mx-0 px-4 sm:px-2">
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
         <div className="flex items-center gap-2">
-            {onOpenActions && (
-                <button
-                    onClick={onOpenActions}
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-                    aria-label="Abrir menú de acciones"
-                >
-                    <Menu className="w-5 h-5" />
-                </button>
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -36,6 +26,14 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Regresar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-xl text-muted-foreground font-black uppercase tracking-widest text-[10px] h-11 px-4"
+              onClick={() => onAction?.('templates')}
+            >
+              Plantillas
             </Button>
         </div>
 
@@ -52,8 +50,6 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
               </p>
             </div>
         </div>
-
-
       </div>
 
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
@@ -61,10 +57,11 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
             <ThemeToggle />
         </div>
         <div className="hidden lg:flex neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
-          Sistema Activo
+          SISTEMA SIMPLIFICADO
         </div>
       </div>
     </div>
   );
 };
+
 export default CostSheetBanner;

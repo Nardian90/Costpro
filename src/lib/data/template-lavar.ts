@@ -89,10 +89,10 @@ const template: any = {
               "label": "Vacaciones",
               "calculationMethod": "FORMULA",
               "totalFormula": "=PCT(ref('2.1'), 9.09)",
-              "formula": "=PCT(ref('2.1.1'), 9.09)",
+              "formula": "=PCT(ref('2.1'), 9.09)",
               "baseRef": "2.1",
               "isPercent": true,
-              "vhFormula": "=PCT(vh('2.1.1'), 9.09)"
+              "vhFormula": "=PCT(vh('2.1'), 9.09)"
             }
           ]
         }
@@ -526,7 +526,7 @@ const template: any = {
       "data": [
         {
           "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "classification": "1.1 - Insumos (MP)",
           "code": 1,
           "description": "Detergente líquido ",
           "um": "ml",
@@ -536,7 +536,7 @@ const template: any = {
         },
         {
           "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "classification": "1.4 - Agua",
           "code": 2,
           "description": "Agua",
           "um": "L",
@@ -546,7 +546,7 @@ const template: any = {
         },
         {
           "no": 0,
-          "classification": "1.3 - - Energía",
+          "classification": "1.3 - Energía",
           "code": 0,
           "description": "Energia",
           "um": "Kw",
@@ -593,7 +593,7 @@ const template: any = {
       "data": [
         {
           "no": 0,
-          "classification": "2.1.1 - De ello: Salarios",
+          "classification": "2.1 - Salarios",
           "description": "Operaria",
           "time_norm": 1,
           "hourly_rate": 47,
@@ -638,7 +638,7 @@ const template: any = {
       ],
       "data": [
         {
-          "classification": "3.1.1.5 - -Aparatos y eq. técnicos",
+          "classification": "3.1.5 - Aparatos y eq. técnicos",
           "code": 1,
           "name": "Lavadora automátic",
           "initial_value": 382612.5,

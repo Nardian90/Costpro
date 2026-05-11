@@ -162,7 +162,7 @@ export function mapUIToFicha(data: CostSheetData): FichaJSON {
 
           return {
             ...d,
-            classification: String(d.classification || d.label || '').split(/[ -]/)[0].trim(),
+            classification: normalizeClass(String(d.classification || d.label || '').split(/[ -]/)[0]),
             importe: (baseVal || 0) * coef
           };
         })

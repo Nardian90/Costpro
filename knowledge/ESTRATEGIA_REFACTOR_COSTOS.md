@@ -106,3 +106,25 @@ Se ha implementado el Clasificador de Fórmulas (`formula-classifier.ts`) y se h
 2.  **Soporte Multicampo**: Se unificó la lectura de `baseRef`, `base_ref` y `baseDeCalculoRef`.
 3.  **Consistencia Cliente-Servidor**: Ambos flujos comparten ahora la misma lógica de clasificación.
 4.  **Cobertura de Tests**: Se añadieron tests específicos para el clasificador y para los casos de borde en el mapeo compartido.
+
+## Actualización: Simplificación Agresiva y Robustez del Motor
+
+Se ha realizado una segunda fase de refactorización centrada en la simplicidad de uso y la fiabilidad de las referencias.
+
+### Cambios Clave:
+1.  **Motor de Cálculo (Engine)**:
+    -   Implementación de \`normalizeClass\`: Ahora las comparaciones de clasificación ignoran espacios y mayúsculas/minúsculas (ej. "1.1 - Insumos" coincide con "1.1").
+    -   Búsqueda por prefijo mejorada en \`getAnnexSumForPrefix\`.
+2.  **Interfaz de Usuario (UI)**:
+    -   **Eliminación de Escenarios**: Se han quitado las funciones de comparación y modos paralelos para reducir la carga cognitiva y bugs de estado.
+    -   **Modo Experto Único**: La vista se ha simplificado a un sistema de acordeones (Expert Mode) como estándar.
+    -   **Limpieza de Navegación**: Se eliminó el historial de autoguardado y selectores de modo complejos.
+3.  **Plantilla Lavar**:
+    -   Corrección de referencias internas (ej. 2.2 apuntando a 2.1).
+    -   Alineación de nombres de clasificación entre Anexos y Filas Principales.
+4.  **Mantenibilidad**:
+    -   Eliminación de más de 8 archivos de componentes obsoletos.
+    -   Unificación de la lógica de normalización entre el cliente (\`mapper.ts\`) y el servidor (\`shared-mapping.ts\`).
+
+### Resultado:
+Un flujo lineal donde el usuario edita en tablas interactivas dentro de acordeones, con un motor que resuelve referencias de forma flexible y predecible.

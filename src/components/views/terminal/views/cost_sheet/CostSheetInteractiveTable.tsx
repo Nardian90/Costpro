@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { classifyFormula } from '@/lib/cost-engine/formula-classifier';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -133,17 +134,25 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     setIsEditingVH(false);
   };
 
+
   const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
+    const intent = classifyFormula(val);
+    if (intent.kind === 'MATH' || intent.kind === 'PERCENTAGE' || intent.kind === 'VH_RATIO' || intent.kind === 'SUM_CHILDREN' || intent.kind === 'ANEXO_REF') {
+        const expression = (intent as any).expression || val;
+        handleValueChange('formula', expression);
+        handleValueChange('totalFormula', expression);
+        if (intent.kind === 'ANEXO_REF') {
+           handleValueChange('calculationMethod', 'FORMULA');
+        }
     } else {
         handleValueChange('formula', null);
         handleValueChange('totalFormula', null);
         handleValueChange('total', parseFloat(val) || 0);
+        handleValueChange('calculationMethod', 'FIJO');
     }
     setIsEditingTotal(false);
   };
+
 
   const hasChildren = row.children && row.children.length > 0;
 
