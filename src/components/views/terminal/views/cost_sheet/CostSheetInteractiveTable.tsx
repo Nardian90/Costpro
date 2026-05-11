@@ -47,6 +47,7 @@ interface CostSheetInteractiveTableProps {
   activeSubSectionId: string;
   setActiveSubSectionId: (id: string) => void;
   onOpenSections?: () => void;
+  sectionIndexOffset?: number;
   hideHeader?: boolean;
 }
 
@@ -122,31 +123,79 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     updateValue([...path, field], val);
   };
 
-  const handleVHSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('vhFormula', val);
-        handleValueChange('valorHistorico', 0);
-    } else {
-        handleValueChange('vhFormula', null);
-        handleValueChange('valorHistorico', parseFloat(val) || 0);
-    }
+  const handleVHSave = React.useCallback((val: string) => {
+    setPendingVHValue(null);
     setIsEditingVH(false);
-  };
+    const trimmedVal = val.trim();
 
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
-    } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+    if (trimmedVal === '') {
+      updateValue([...path, 'valorHistorico'], 0);
+      updateValue([...path, 'vhFormula'], '');
+      return;
     }
+
+    if (isNaN(Number(trimmedVal))) {
+      updateValue([...path, 'vhFormula'], trimmedVal);
+      updateValue([...path, 'valorHistorico'], 0);
+    } else {
+      updateValue([...path, 'valorHistorico'], parseFloat(trimmedVal));
+      updateValue([...path, 'vhFormula'], '');
+    }
+  }, [path, updateValue]);
+
+  const handleTotalSave = React.useCallback((val: string) => {
+    setPendingTotalValue(null);
     setIsEditingTotal(false);
-  };
+    const trimmedVal = val.trim();
+
+    if (trimmedVal === '') {
+      const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
+      updateValues([
+        { path: [...path, field], value: 0 },
+        { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+        { path: [...path, 'formula'], value: '' },
+        { path: [...path, 'totalFormula'], value: '' },
+      ]);
+      if (row.isPercent ?? row.is_percent) {
+        updateValue([...path, 'isPercent'], false);
+      }
+      return;
+    }
+
+    const isPlainNumber = !isNaN(Number(trimmedVal));
+
+    if (isPlainNumber) {
+      const numVal = parseFloat(trimmedVal);
+      const updates: { path: (string | number)[]; value: string | number | boolean | null }[] = [
+        { path: [...path, 'formula'], value: '' },
+        { path: [...path, 'totalFormula'], value: '' },
+        { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+      ];
+      if (row.hasOwnProperty('valorHistorico')) {
+        updates.push({ path: [...path, 'valorHistorico'], value: numVal });
+      } else {
+        updates.push({ path: [...path, 'value'], value: numVal });
+      }
+      if (row.isPercent ?? row.is_percent) {
+        updates.push({ path: [...path, 'isPercent'], value: false });
+      }
+      updateValues(updates);
+    } else {
+      const updates: { path: (string | number)[]; value: string | number | boolean | null }[] = [
+        { path: [...path, 'formula'], value: trimmedVal },
+        { path: [...path, 'totalFormula'], value: trimmedVal },
+        { path: [...path, 'calculationMethod'], value: 'FORMULA' },
+      ];
+      if (row.isPercent ?? row.is_percent) {
+        updates.push({ path: [...path, 'isPercent'], value: false });
+      }
+      updateValues(updates);
+    }
+  }, [path, updateValue, updateValues, row]);
 
   const hasChildren = row.children && row.children.length > 0;
 
+  const hasChildren = row.children && row.children.length > 0;
   const isRowPercent = row.isPercent ?? row.is_percent;
   const isResult = isResultRow(String(row.id)) || isRowPercent;
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
@@ -475,6 +524,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
     activeSubSectionId,
     setActiveSubSectionId,
     onOpenSections,
+    sectionIndexOffset = 0,
     hideHeader = false
 }) => {
   const addMainSection = useCostSheetStore(state => state.addMainSection);
@@ -613,7 +663,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             const isAll = activeSubSectionId === 'all';
             const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
-            return sections.map((section, sectionIndex) => {
+            return sections.map((section, localIndex) => {
+                const sectionIndex = sectionIndexOffset + localIndex;
                 const isTarget = targetSectionIds.includes(section.id);
                 if (!isTarget) return null;
 

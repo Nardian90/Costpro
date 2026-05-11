@@ -42,6 +42,7 @@ interface CostSheetCardViewProps {
   activeSubSectionId: string;
   setActiveSubSectionId: (id: string) => void;
   onOpenSections?: () => void;
+  sectionIndexOffset?: number;
   hideHeader?: boolean;
 }
 
@@ -126,28 +127,64 @@ const RowCard: React.FC<RowCardProps> = memo(({
     updateValue([...path, field], val);
   };
 
-  const handleVHSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('vhFormula', val);
-        handleValueChange('valorHistorico', 0);
-    } else {
-        handleValueChange('vhFormula', null);
-        handleValueChange('valorHistorico', parseFloat(val) || 0);
-    }
+  const handleVHSave = React.useCallback((val: string) => {
     setIsEditingVH(false);
-  };
+    const trimmedVal = val.trim();
 
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
-    } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
+    if (trimmedVal === '') {
+      updateValue([...path, 'valorHistorico'], 0);
+      updateValue([...path, 'vhFormula'], '');
+      return;
     }
+
+    if (isNaN(Number(trimmedVal))) {
+      updateValue([...path, 'vhFormula'], trimmedVal);
+      updateValue([...path, 'valorHistorico'], 0);
+    } else {
+      updateValue([...path, 'valorHistorico'], parseFloat(trimmedVal));
+      updateValue([...path, 'vhFormula'], '');
+    }
+  }, [path, updateValue]);
+
+  const handleTotalSave = React.useCallback((val: string) => {
     setIsEditingTotal(false);
-  };
+    const trimmedVal = val.trim();
+
+    if (trimmedVal === '') {
+      const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
+      useCostSheetStore.getState().updateValues([
+        { path: [...path, field], value: 0 },
+        { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+        { path: [...path, 'formula'], value: '' },
+        { path: [...path, 'totalFormula'], value: '' },
+      ]);
+      return;
+    }
+
+    const isPlainNumber = !isNaN(Number(trimmedVal));
+
+    if (isPlainNumber) {
+      const numVal = parseFloat(trimmedVal);
+      const updates: { path: (string | number)[]; value: string | number | boolean | null }[] = [
+        { path: [...path, 'formula'], value: '' },
+        { path: [...path, 'totalFormula'], value: '' },
+        { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
+      ];
+      if (row.hasOwnProperty('valorHistorico')) {
+        updates.push({ path: [...path, 'valorHistorico'], value: numVal });
+      } else {
+        updates.push({ path: [...path, 'value'], value: numVal });
+      }
+      useCostSheetStore.getState().updateValues(updates);
+    } else {
+      const updates: { path: (string | number)[]; value: string | number | boolean | null }[] = [
+        { path: [...path, 'formula'], value: trimmedVal },
+        { path: [...path, 'totalFormula'], value: trimmedVal },
+        { path: [...path, 'calculationMethod'], value: 'FORMULA' },
+      ];
+      useCostSheetStore.getState().updateValues(updates);
+    }
+  }, [path, row]);
 
   return (
     <div className={cn(
@@ -358,6 +395,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   activeSubSectionId,
   setActiveSubSectionId,
   onOpenSections,
+  sectionIndexOffset = 0,
   hideHeader = false
 }) => {
   const { updateValue, addMainRow, addMainSection, removeMainSection } = useCostSheetStore();
@@ -433,7 +471,8 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             {annexes?.[0]?.data?.[0]?.um || 'UND'} / TOTAL
           </span>
         </div>
-        {sections.map((section, sectionIndex) => {
+        {sections.map((section, localIndex) => {
+          const sectionIndex = sectionIndexOffset + localIndex;
           const isTarget = targetSectionIds.includes(section.id);
           if (!isTarget) return null;
 
