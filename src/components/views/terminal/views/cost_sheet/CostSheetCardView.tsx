@@ -74,7 +74,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
   const [isEditingVH, setIsEditingVH] = useState(false);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
 
-  const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
+  const { updateValue, updateValues, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
   const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
     const findSuggested = (rows: CostSheetRow[]): CostSheetRow | null => {
       for (const r of rows) {
@@ -152,7 +152,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
     if (trimmedVal === '') {
       const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
-      useCostSheetStore.getState().updateValues([
+      updateValues([
         { path: [...path, field], value: 0 },
         { path: [...path, 'calculationMethod'], value: 'ValorFijo' },
         { path: [...path, 'formula'], value: '' },
@@ -175,14 +175,14 @@ const RowCard: React.FC<RowCardProps> = memo(({
       } else {
         updates.push({ path: [...path, 'value'], value: numVal });
       }
-      useCostSheetStore.getState().updateValues(updates);
+      updateValues(updates);
     } else {
       const updates: { path: (string | number)[]; value: string | number | boolean | null }[] = [
         { path: [...path, 'formula'], value: trimmedVal },
         { path: [...path, 'totalFormula'], value: trimmedVal },
         { path: [...path, 'calculationMethod'], value: 'FORMULA' },
       ];
-      useCostSheetStore.getState().updateValues(updates);
+      updateValues(updates);
     }
   }, [path, row]);
 
