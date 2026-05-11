@@ -12,8 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
 import { Button } from '@/components/ui/button';
-import ViewSwitcher, { ViewMode as LayoutViewMode } from '@/components/ui/ViewSwitcher';
-import { CostSheetViewMode } from './CostSheetModeDropdown';
+
+
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
 interface ActionItem {
@@ -34,8 +34,8 @@ interface CostSheetActionsPanelProps {
   // New props for better integration
   activeSection?: string;
   setActiveSection?: (id: string) => void;
-  viewMode?: CostSheetViewMode;
-  setViewMode?: (mode: CostSheetViewMode) => void;
+  viewMode?: string;
+  setViewMode?: (mode: string) => void;
   onOpenSections?: () => void;
   onOpenAnnexes?: () => void;
   onOpenHelp?: () => void;
@@ -241,22 +241,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
-              {/* View Switcher - Prominent standalone section */}
-              <div className="p-4 border-b border-sidebar-border/50">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 px-1">
-                    <LayoutGrid className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground/70">
-                      Modo de Diseño
-                    </span>
-                  </div>
-                  <ViewSwitcher
-                    currentView={layoutMode}
-                    onViewChange={setLayoutMode}
-                    className="w-full bg-background border-border"
-                  />
-                </div>
-              </div>
+
 
               <AccordionGroup
                 title="Ficha y Navegación"
@@ -271,24 +256,11 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 {('Secciones'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('open-sections', 'Secciones', ListFilter, onOpenSections)}
                 {('Anexo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('open-annexes', 'Anexo', FileSpreadsheet, onOpenAnnexes)}
                 {('Firmas'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('signature', 'Firmas', PenTool, () => setActiveSection?.('signature'), 'outline', activeSection === 'signature')}
-                {('Vista Consolidada'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('all-content', 'Vista Consolidada', Zap, () => setActiveSection?.('all-content'), 'outline', activeSection === 'all-content')}
-                {('Experto'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('expert-content', 'Experto', Zap, () => setActiveSection?.('expert-content'), 'outline', activeSection === 'expert-content')}
+
+
               </AccordionGroup>
 
-              <AccordionGroup
-                title="Modos de Visualización"
-                isVisible={hasMatchingActions(['Completo', 'Asistido', 'Resumido', 'Vistazo', 'Audit'])}
-                isSearchActive={!!searchTerm}
-                icon={Eye}
-                isOpen={openGroups.includes('modos')}
-                onToggle={() => toggleGroup('modos')}
-              >
-                {('Completo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-expert', 'Completo', Table2, () => setViewMode?.('expert'), 'outline', viewMode === 'expert')}
-                {('Asistido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-assisted', 'Asistido', Wand2, () => setViewMode?.('assisted'), 'outline', viewMode === 'assisted')}
-                {('Resumido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-reading', 'Resumido', BookOpen, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
-                {('Vistazo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-preview', 'Vistazo', Eye, () => setViewMode?.('preview'), 'outline', viewMode === 'preview')}
-                {('Audit'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-audit', 'Audit', Activity, () => setViewMode?.('audit'), 'outline', viewMode === 'audit')}
-              </AccordionGroup>
+
 
               <AccordionGroup
                 title="Inteligencia y Generación"

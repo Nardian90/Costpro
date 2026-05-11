@@ -26,7 +26,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalculationResult, AuditEntry } from '@/lib/cost-engine/types';
 import { ValidationResult } from '@/lib/cost-engine/validations';
-import { CostSheetViewMode } from '@/components/views/terminal/views/cost_sheet/CostSheetModeDropdown';
+
 
 interface UseCostSheetActionsProps {
   data: CostSheetData | null;
@@ -91,7 +91,7 @@ export const useCostSheetActions = ({
   // viewMode/isEditing state is managed by useCostSheetViewState, not here.
   // This prevents the cascade: data change → callback identity change → useEffect re-run.
   const handleSetViewMode = useCallback(
-    (mode: CostSheetViewMode) => {
+    (mode: string) => {
       if (mode === 'audit') { handleSetActiveSection('audit'); }
       else if (mode === 'kpis') { handleSetActiveSection('kpis'); }
       else if (mode === 'expert') { handleSetActiveSection('main'); }

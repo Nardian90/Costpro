@@ -113,7 +113,7 @@ const CostSheetView = () => {
                               <LayoutGrid className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
                               <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Encabezado de Ficha</h3>
                           </div>
-                          <CostSheetHeaderEditor />
+                          <CostSheetHeaderEditor header={data.header} calculatedHeader={calculatedHeader} />
                       </div>
 
                       <div className="space-y-4">

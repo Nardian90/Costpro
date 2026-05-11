@@ -1,5 +1,7 @@
 import { classifyFormula } from "./formula-classifier";
 import { CostSheetData, CostSheetRow } from '@/types/cost-sheet';
+const normalizeClass = (s: string) => String(s || '').replace(/\s+/g, '').toLowerCase();
+
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from './types';
 
 export function mapUIToFicha(data: CostSheetData): FichaJSON {
