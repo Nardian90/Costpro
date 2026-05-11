@@ -155,7 +155,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
             { path: [...path, 'totalFormula'], value: null },
             { path: [...path, 'total'], value: numVal },
             { path: [...path, 'valorHistorico'], value: numVal },
-            { path: [...path, 'calculationMethod'], value: 'FIJO' }
+            { path: [...path, 'calculationMethod'], value: 'ValorFijo' }
         ]);
     }
     setIsEditingTotal(false);

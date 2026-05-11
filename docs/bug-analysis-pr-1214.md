@@ -49,3 +49,10 @@ const handleTotalSave = (val: string) => {
    - Actualizar `valorHistorico` con el nuevo valor.
    - Establecer `calculationMethod` a `'FIJO'` para informar al motor que no debe recalcular este total.
    - Limpiar `formula` y `totalFormula`.
+
+## 3. Inconsistencia de Esquema (Zod vs TypeScript)
+### Causa Raíz
+Se identificó que el uso de `calculationMethod: 'FIJO'` para persistir cambios manuales rompe la validación de Zod en `src/validation/schemas.ts`, ya que solo acepta `["Prorrateo", "ValorFijo", "FORMULA", "ANEXO"]`. La interfaz de TypeScript en `src/types/cost-sheet.ts` es mucho más permisiva, lo que causa fallos silenciosos al recargar datos guardados.
+
+### Solución
+Utilizar `'ValorFijo'` como el método de cálculo estándar para entradas numéricas manuales, alineándose con el esquema de validación existente y garantizando que las fichas editadas sigan siendo cargables.

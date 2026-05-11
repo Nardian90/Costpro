@@ -563,7 +563,7 @@ export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
       baseDeCalculoRef: z.string().nullable().optional(),
       base_ref: z.string().nullable().optional(),
       calculationMethod: z
-        .enum(["Prorrateo", "ValorFijo", "FORMULA", "ANEXO"])
+        .enum(["Prorrateo", "ValorFijo", "FORMULA", "ANEXO", "ANEXO_REF", "FIJO", "MANUAL"])
         .optional(),
       totalFormula: z.string().nullable().optional(),
       formula: z.string().optional(),
