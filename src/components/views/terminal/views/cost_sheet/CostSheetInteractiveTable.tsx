@@ -297,7 +297,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right border-r border-border/10", "cursor-pointer", isEditingVH && "w-auto min-w-[180px]")} onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -335,8 +335,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className={cn("px-2 py-0.5 text-right font-black tabular-nums text-primary transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-primary/5" : "cursor-default opacity-80", isEditingTotal && "w-auto min-w-[180px]")}
-          onClick={() => !hasChildren && setIsEditingTotal(true)}
+          className={cn("px-2 py-0.5 text-right font-black tabular-nums text-primary transition-colors text-xs border-r border-border/10", "cursor-pointer hover:bg-primary/5", isEditingTotal && "w-auto min-w-[180px]")}
+          onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
             <FormulaEditor
