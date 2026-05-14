@@ -15,7 +15,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -120,7 +119,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 sm:px-8 py-6">
+        <div className="flex-1 overflow-y-auto overflow-x-auto px-6 sm:px-8 py-6 min-h-0">
             <div className="space-y-8 pb-6">
                 {/* Format selection */}
                 <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Seleccionar formato de exportación PDF">
@@ -358,7 +357,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                     </div>
                 </div>
             </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="p-4 sm:p-6 border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-md shrink-0 z-10 relative">
             <div className="flex w-full gap-3">

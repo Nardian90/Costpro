@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target, ArrowLeft } from 'lucide-react';
 import { solveCoefficient } from '@/lib/cost-engine/solver';
 import { CostSheetAnnex, CostSheetColumn, CostSheetData } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
@@ -25,13 +25,17 @@ interface CostSheetAnnexEditorProps {
   layoutMode?: ViewMode;
   calculatedAnnexes?: CostSheetAnnex[];
   hideBorder?: boolean;
+  onNavigateToSection?: (rowId: string) => void;
+  referencingSections?: { sectionLabel: string; sectionId: string; rowId: string; rowLabel: string }[];
 }
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   activeAnnexId,
   layoutMode = 'table',
   calculatedAnnexes = [],
-  hideBorder = false
+  hideBorder = false,
+  onNavigateToSection,
+  referencingSections = []
 }) => {
   const data = useCostSheetStore(state => state.data);
   const updateValue = useCostSheetStore(state => state.updateValue);
@@ -165,164 +169,136 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <div className="flex flex-col gap-6 bg-card/50 p-8 rounded-[2.5rem] border border-border/50 shadow-xl backdrop-blur-md">
-          {/* Action Buttons Row */}
-          <div className="flex flex-wrap items-center gap-3 w-full border-b border-primary/10 pb-6">
-             <div className="relative group">
-                <input
-                  type="file"
-                  id={`import-${annex.id}-top`}
-                  className="hidden"
-                  onChange={handleImport}
-                  accept=".xlsx, .xls"
-                  aria-label={`Importar archivo Excel para anexo ${annex.title}`}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="rounded-xl border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 text-primary h-12 px-4 font-black uppercase tracking-widest text-[10px]"
-                >
-                  <label htmlFor={`import-${annex.id}-top`} className="cursor-pointer flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Importar Excel
-                  </label>
-                </Button>
-             </div>
+    <div className="space-y-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+       {/* Compact Toolbar Row — inline with table style */}
+       <div className="flex flex-wrap items-center gap-1.5 px-2 py-1.5 bg-muted/30 border-b border-border/20">
+          <div className="relative group">
+             <input
+               type="file"
+               id={`import-${annex.id}-top`}
+               className="hidden"
+               onChange={handleImport}
+               accept=".xlsx, .xls"
+               aria-label={`Importar archivo Excel para anexo ${annex.title}`}
+             />
              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                className="rounded-xl border-primary/20 hover:bg-primary/10 text-primary h-12 px-4 font-black uppercase tracking-widest text-[10px] gap-2"
+               variant="ghost"
+               size="sm"
+               asChild
+               className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 gap-1"
              >
-                <Download className="w-4 h-4" />
-                Exportar
-             </Button>
-             <Button
-                onClick={() => addRow(annex.id)}
-                className="rounded-xl bg-primary text-foreground h-12 px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
-             >
-                <Plus className="w-5 h-5" />
-                Añadir Fila
+               <label htmlFor={`import-${annex.id}-top`} className="cursor-pointer flex items-center">
+                 <Upload className="w-3 h-3" />
+                 Importar
+               </label>
              </Button>
           </div>
+          <Button
+             variant="ghost"
+             size="sm"
+             onClick={handleExport}
+             className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 gap-1"
+          >
+             <Download className="w-3 h-3" />
+             Exportar
+          </Button>
+          <Button
+             onClick={() => addRow(annex.id)}
+             className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-primary hover:bg-primary/10 gap-1"
+          >
+             <Plus className="w-3 h-3" />
+             Fila
+          </Button>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 w-full">
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                    <div className="h-4 w-1 bg-primary rounded-full" />
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70">Editor de Anexo</h2>
-                </div>
-                <h3 className="text-xl font-black text-foreground uppercase tracking-tighter italic">
-                    {annex.id}: {annex.title}
-                </h3>
+          {/* Coefficient adjustment — compact inline */}
+          {isCoefficientAnnex && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-[8px] font-bold uppercase tracking-wider text-primary/50">Coef:</span>
+              <input
+                  type="text"
+                  value={localCoef}
+                  aria-label="Coeficiente"
+                  onChange={(e) => {
+                      const val = e.target.value;
+                      setLocalCoef(val);
+                      if (val === '' || val === '-' || val.endsWith('.')) return;
+                      if (val === '0' || val === '0.' || val === '0.0') {
+                          updateAnnexAdjustment(annex.id, 0, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
+                          return;
+                      }
+                      const numericVal = parseFloat(val);
+                      if (!isNaN(numericVal)) {
+                          updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
+                      }
+                  }}
+                  onBlur={() => {
+                      if (localCoef === '' || isNaN(parseFloat(localCoef))) {
+                          setLocalCoef('1');
+                          updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
+                      }
+                  }}
+                  className="w-16 h-6 px-1 bg-background border border-primary/20 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all text-center rounded"
+              />
+              <Select
+                  value={annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES')}
+                  onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, val, annex.isAdjustmentActive)}
+              >
+                  <SelectTrigger className="h-6 min-w-[110px] bg-background border-primary/20 rounded text-[8px] font-bold uppercase hover:border-primary/40 transition-colors">
+                      <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded border-primary/20">
+                      {annex.id === 'I' ? (
+                        <>
+                          <SelectItem value="NORMA DE CONSUMO" className="text-[9px] font-bold uppercase">Norma Consumo</SelectItem>
+                          <SelectItem value="PRECIO UNITARIO" className="text-[9px] font-bold uppercase">Precio Unit.</SelectItem>
+                          <SelectItem value="AMBOS" className="text-[9px] font-bold uppercase">Ambos</SelectItem>
+                        </>
+                      ) : annex.id === 'II' ? (
+                        <>
+                          <SelectItem value="HORAS MENSUALES" className="text-[9px] font-bold uppercase">Horas Mens.</SelectItem>
+                          <SelectItem value="TARIFA $/H" className="text-[9px] font-bold uppercase">Tarifa $/h</SelectItem>
+                          <SelectItem value="CANT. OBREROS" className="text-[9px] font-bold uppercase">Cant. Obreros</SelectItem>
+                        </>
+                      ) : null}
+                  </SelectContent>
+              </Select>
+              <div className="flex items-center gap-1.5 bg-background/50 px-2 py-0.5 rounded border border-primary/10">
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-primary/70">Auto</span>
+                  <Switch
+                      checked={!!annex.isAdjustmentActive}
+                      onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), checked)}
+                      className="scale-75"
+                  />
+              </div>
 
-                {isCoefficientAnnex && (
-                <div className="flex flex-wrap items-center gap-4 mt-2 p-3 rounded-2xl bg-primary/5 border border-primary/10 animate-in fade-in slide-in-from-left-4 duration-500">
-                    <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Columna a Ajustar</span>
-                        <Select
-                            value={annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES')}
-                            onValueChange={(val) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, val, annex.isAdjustmentActive)}
-                        >
-                            <SelectTrigger className="h-8 min-w-[160px] bg-background border-primary/20 rounded-xl text-[9px] font-black uppercase hover:border-primary/40 transition-colors">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-primary/20">
-                                {annex.id === 'I' ? (
-                                  <>
-                                    <SelectItem value="NORMA DE CONSUMO" className="text-[10px] font-bold uppercase">Norma de Consumo</SelectItem>
-                                    <SelectItem value="PRECIO UNITARIO" className="text-[10px] font-bold uppercase">Precio Unitario</SelectItem>
-                                    <SelectItem value="AMBOS" className="text-[10px] font-bold uppercase">Ambos (√coef)</SelectItem>
-                                  </>
-                                ) : annex.id === 'II' ? (
-                                  <>
-                                    <SelectItem value="HORAS MENSUALES" className="text-[10px] font-bold uppercase">Horas Mensuales</SelectItem>
-                                    <SelectItem value="TARIFA $/H" className="text-[10px] font-bold uppercase">Tarifa $/h</SelectItem>
-                                    <SelectItem value="CANT. OBREROS" className="text-[10px] font-bold uppercase">Cant. Obreros</SelectItem>
-                                  </>
-                                ) : null}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Coeficiente</span>
-                        <div className="relative group/coef">
-                            <input
-                                type="text"
-                                value={localCoef}
-                                aria-label="Coeficiente"
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setLocalCoef(val);
-                                    if (val === '' || val === '-' || val.endsWith('.')) return;
-                                    if (val === '0' || val === '0.' || val === '0.0') {
-                                        updateAnnexAdjustment(annex.id, 0, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
-                                        return;
-                                    }
-                                    const numericVal = parseFloat(val);
-                                    if (!isNaN(numericVal)) {
-                                        updateAnnexAdjustment(annex.id, numericVal, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
-                                    }
-                                }}
-                                onBlur={() => {
-                                    if (localCoef === '' || isNaN(parseFloat(localCoef))) {
-                                        setLocalCoef('1');
-                                        updateAnnexAdjustment(annex.id, 1, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), annex.isAdjustmentActive);
-                                    }
-                                }}
-                                className="w-24 h-8 px-8 rounded-xl bg-background border border-primary/20 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-center"
-                            />
-                            <RefreshCw className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40 group-hover/coef:rotate-180 transition-transform duration-700" />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 bg-background/50 px-4 py-1.5 rounded-xl border border-primary/10 ml-2">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-primary/70">Auto-ajuste</span>
-                        <Switch
-                            checked={!!annex.isAdjustmentActive}
-                            onCheckedChange={(checked) => updateAnnexAdjustment(annex.id, annex.coefficient !== undefined ? annex.coefficient : 1, annex.adjustmentColumn || (annex.id === 'I' ? 'PRECIO UNITARIO' : 'HORAS MENSUALES'), checked)}
-                            className="scale-90"
-                        />
-                    </div>
-
-                    {showTargetPriceInput && (
-                      <div className="flex flex-row items-end gap-2 ml-4 animate-in fade-in slide-in-from-left-4 duration-700">
-                        <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Precio Venta Objetivo</span>
-                            <div className="relative group/target">
-                                <input
-                                    disabled={isSolving}
-                                    type="number"
-                                    value={targetPrice}
-                                    onChange={(e) => setTargetPrice(e.target.value)}
-                                    placeholder="Ej: 25"
-                                    aria-label="Precio de venta objetivo"
-                                    className="w-32 h-10 px-2 rounded-xl bg-background border border-primary/40 text-sm font-black font-mono text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-center placeholder:text-primary/20 shadow-inner"
-                                />
-                                <Target className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary/40" />
-                            </div>
-                        </div>
-                        <Button
-                            size="sm"
-                            onClick={handleSolve}
-                            disabled={isSolving || !targetPrice}
-                            className="h-10 px-4 rounded-xl bg-primary text-foreground font-black uppercase tracking-widest text-[9px] shadow-lg shadow-primary/10 active:scale-95 transition-all gap-2"
-                        >
-                            {isSolving ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>Calcular</>
-                            )}
-                        </Button>
-                      </div>
-                    )}
-                </div>
-                )}
+              {showTargetPriceInput && (
+                <>
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-primary/50 ml-2">Target:</span>
+                  <input
+                      disabled={isSolving}
+                      type="number"
+                      value={targetPrice}
+                      onChange={(e) => setTargetPrice(e.target.value)}
+                      placeholder="25"
+                      aria-label="Precio de venta objetivo"
+                      className="w-20 h-6 px-1 rounded bg-background border border-primary/40 text-[10px] font-black font-mono text-primary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all text-center placeholder:text-primary/20"
+                  />
+                  <Button
+                      size="sm"
+                      onClick={handleSolve}
+                      disabled={isSolving || !targetPrice}
+                      className="h-6 px-2 rounded text-[8px] font-bold uppercase tracking-wider bg-primary text-foreground hover:bg-primary/90 active:scale-95 transition-all gap-1"
+                  >
+                      {isSolving ? (
+                        <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                      ) : (
+                        <Target className="w-2.5 h-2.5" />
+                      )}
+                  </Button>
+                </>
+              )}
             </div>
-          </div>
+          )}
        </div>
 
        <ProductInventoryPicker
@@ -331,45 +307,92 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
          onSelect={handleProductSelect}
        />
 
+       {/* Referencing sections — back-links */}
+       {referencingSections.length > 0 && onNavigateToSection && (
+         <div className="flex items-center gap-2 px-2 py-1 bg-amber-500/5 border-b border-border/20">
+            <ArrowLeft className="w-3 h-3 text-amber-600/70 shrink-0" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-amber-600/70">Usado en:</span>
+            {referencingSections.map((ref, idx) => (
+              <button
+                key={`${ref.sectionId}-${ref.rowId}-${idx}`}
+                type="button"
+                onClick={() => onNavigateToSection(ref.rowId)}
+                className="text-[9px] font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 px-1.5 py-0.5 rounded transition-colors truncate max-w-[200px]"
+                title={`${ref.sectionLabel} → ${ref.rowLabel}`}
+              >
+                {ref.sectionLabel}: {ref.rowLabel}
+              </button>
+            ))}
+         </div>
+       )}
+
        <div className={cn(
-         "rounded-3xl border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden shadow-2xl",
-         layoutMode === 'grid' && "border-none bg-transparent shadow-none backdrop-blur-none"
+         "border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card",
+         layoutMode === 'grid' && "border-none bg-transparent shadow-none"
        )}>
          <div className="overflow-x-auto no-scrollbar">
             <Table className={cn(layoutMode === 'grid' && "hidden sm:table")}>
-                <TableHeader>
-                    <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border/50">
-                        {annex.columns.map((col: CostSheetColumn) => (
-                            <TableHead key={col.key} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground p-4 h-14">
+                <TableHeader className="sticky top-0 z-20">
+                    <TableRow className="bg-muted/80 hover:bg-transparent border-b border-border/40 h-7">
+                        <TableHead className="w-[32px] px-1 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+                          #
+                        </TableHead>
+                        {annex.columns.map((col: CostSheetColumn) => {
+                            // Intelligent column widths based on column key/label
+                            const colKey = col.key.toLowerCase();
+                            const colLabel = (col.label || col.title || '').toLowerCase();
+                            let colClass = 'px-1.5 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            
+                            if (col.key === 'no') {
+                              colClass = 'w-[56px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            } else if (colKey.includes('price') || colKey.includes('total') || colKey.includes('amount') || colKey.includes('importe') || colKey.includes('depreciation') || colKey.includes('valor') || colLabel.includes('total') || colLabel.includes('importe')) {
+                              colClass = 'w-[120px] px-2 py-0 text-right text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            } else if (colKey.includes('norm') || colKey.includes('consumption') || colKey.includes('quantity') || colKey.includes('cant') || colKey.includes('time') || colKey.includes('horas') || colKey.includes('days') || colKey.includes('días') || colKey.includes('explot')) {
+                              colClass = 'w-[90px] px-2 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            } else if (colKey.includes('um') || colKey === 'um') {
+                              colClass = 'w-[50px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            } else if (colKey.includes('code') || colKey.includes('código') || colKey.includes('clasif')) {
+                              colClass = 'w-[80px] px-2 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20';
+                            } else if (colKey.includes('description') || colKey.includes('descripción') || colKey.includes('nombre') || colKey.includes('puesto') || colKey.includes('worker')) {
+                              colClass = 'px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20 min-w-[180px]';
+                            }
+                            
+                            return (
+                            <TableHead key={col.key} className={colClass}>
                                 {col.label || col.title}
                             </TableHead>
-                        ))}
-                        <TableHead className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground p-4 text-center h-14 w-24">Acciones</TableHead>
+                            );
+                        })}
+                        <TableHead className="px-1 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 w-[48px]">
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {annex.data.map((row: Record<string, string | number | boolean | undefined>, rowIndex: number) => {
                         const isZero = (colKey: string) => Number(row[colKey]) === 0;
                         return (
-                        <TableRow key={rowIndex} className="h-auto sm:h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
+                        <TableRow key={rowIndex} className={cn(
+                          'h-7 text-[11px] transition-colors group border-b border-border/15',
+                          'hover:bg-primary/[0.03]',
+                          rowIndex % 2 === 0 && 'bg-muted/[0.15]'
+                        )}>
+                            {/* Row number column */}
+                            <TableCell className="w-[56px] px-1.5 py-0 text-center text-[10px] font-mono text-muted-foreground/40 tabular-nums border-r border-border/15">
+                              {rowIndex + 1}
+                            </TableCell>
                             {annex.columns.map((col: CostSheetColumn) => {
                                 const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
-                                const widthClass = col.key === 'no' ? 'w-12' :
-                                               (col.key === 'um' ? 'w-16' :
-                                               (col.key === 'total' || col.key === 'amount' ? 'w-32' :
-                                               (!isMain ? 'w-24' : '')));
                                 return (
-                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", widthClass)}>
+                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className="px-2 py-0">
                                     {col.formula ? (
-                                        <div className="relative group/cell">
-                                            <div className={cn("neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                                        <div className="flex items-center justify-end gap-1">
+                                            <span className={cn(
+                                              'font-mono text-right tabular-nums',
+                                              isZero(col.key) ? 'text-muted-foreground/60 font-medium' : 'text-primary font-black'
+                                            )}>
                                                 {formatCurrency((calculatedAnnex?.data[rowIndex]?.[col.key] ?? 0)).replace('$', '').trim()}
-                                            </div>
-                                            <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
-                                        </div>
-                                    ) : col.key === 'no' ? (
-                                        <div className="neu-inset-sm px-3 py-2 font-black text-center bg-muted/20 text-muted-foreground w-12 border border-border/50 mx-auto">
-                                            {rowIndex + 1}
+                                            </span>
+                                            <FunctionSquare className="w-2 h-2 text-primary/30 shrink-0" />
                                         </div>
                                     ) : (
                                         <div className="relative group/cell">
@@ -412,10 +435,10 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     return undefined;
                                                 })()}
                                                 className={cn(
-                                                    "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
-                                                    typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
+                                                  'h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors font-medium',
+                                                  typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && 'text-primary',
+                                                  typeof row[col.key] === "number" && isZero(col.key) && 'text-muted-foreground/60 font-medium'
                                                 )}
-
                                                 placeholder={(() => {
                                                     const val = annex.data[rowIndex][col.key];
                                                     const coef = annex.coefficient !== undefined ? annex.coefficient : 1;
@@ -430,98 +453,72 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     }
                                                     return "";
                                                 })()} />
-                                            {(() => {
-                                                const val = annex.data[rowIndex][col.key];
-                                                const coef = annex.coefficient !== undefined ? annex.coefficient : 1;
-                                                const isActive = !!annex.isAdjustmentActive;
-                                                if (!isActive || coef === 1 || typeof val !== "number" || val === 0) return null;
-
-                                                let show = false;
-                                                if (annex.adjustmentColumn === "AMBOS") {
-                                                    show = isColAdjusted(col.key, "AMBOS");
-                                                } else {
-                                                    show = isColAdjusted(col.key, annex.adjustmentColumn);
-                                                }
-
-                                                if (!show) return null;
-                                                return (
-                                                    <div className="absolute -bottom-4 right-0 text-[8px] font-bold text-muted-foreground whitespace-nowrap opacity-70">
-                                                        Orig: {val.toFixed(4)}
-                                                    </div>
-                                                );
-                                            })()}
                                             {typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && (
-                                                <FunctionSquare className="absolute top-1 right-1 w-2.5 h-2.5 text-primary/40" />
+                                                <FunctionSquare className="absolute top-0.5 right-0.5 w-2 h-2 text-primary/40" />
                                             )}
                                         </div>
                                     )}
                                 </TableCell>
                                 );
                             })}
-                            <TableCell data-label="Acciones" className="text-center p-3 sm:p-4 w-[1%] whitespace-nowrap">
-                                <div className="flex items-center justify-center gap-1">
-                                <div className="flex flex-col sm:flex-row items-center gap-1">
+                            <TableCell className="text-center px-0.5 py-0 w-[60px] whitespace-nowrap">
+                                <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => reorderRow(annex.id, rowIndex, 'up')}
-                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        className="h-5 w-5 text-muted-foreground hover:text-primary transition-all p-0"
                                         title="Subir"
                                     >
-                                        <ChevronUp className="h-4 w-4" />
+                                        <ChevronUp className="h-3 w-3" />
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => reorderRow(annex.id, rowIndex, 'down')}
-                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        className="h-5 w-5 text-muted-foreground hover:text-primary transition-all p-0"
                                         title="Bajar"
                                     >
-                                        <ChevronDown className="h-4 w-4" />
+                                        <ChevronDown className="h-3 w-3" />
                                     </Button>
-                                </div>
-                                {annex.id === 'I' && (
+                                    {annex.id === 'I' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                setTargetRowIndex(rowIndex);
+                                                setIsPickerOpen(true);
+                                            }}
+                                            className="h-5 w-5 text-primary hover:bg-primary/10 transition-all p-0"
+                                            aria-label="Importar desde inventario"
+                                        >
+                                            <Database className="h-3 w-3" />
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => {
-                                            setTargetRowIndex(rowIndex);
-                                            setIsPickerOpen(true);
-                                        }}
-                                        className="p-3 text-primary hover:bg-primary/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
-                                        aria-label="Importar desde inventario"
+                                        onClick={() => removeRow(annex.id, rowIndex)}
+                                        className="h-5 w-5 text-danger hover:bg-danger/10 transition-all p-0"
+                                        aria-label="Eliminar fila"
                                     >
-                                        <Database className="h-4 w-4" />
+                                        <Trash2 className="h-3 w-3" />
                                     </Button>
-                                )}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeRow(annex.id, rowIndex)}
-                                    className="p-3 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
-                                    aria-label="Eliminar fila"
-                                >
-                                    <Trash2 className="h-5 w-5" />
-                                </Button>
                                 </div>
                             </TableCell>
                         </TableRow>
                     );})}
                 </TableBody>
                 <TableFooter>
-                  <TableRow className="bg-primary/5 hover:bg-primary/10 transition-colors border-t-2 border-primary/20">
-                    <TableCell colSpan={annex.columns.length} className="p-0">
-                      <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-4 p-6 min-w-full">
-                        <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
-                                {formatCurrency(totalValue)}
-                            </span>
-
-                        </div>
+                  <TableRow className="bg-primary/5 hover:bg-primary/5 border-t-2 border-primary/20 h-7">
+                    <TableCell colSpan={annex.columns.length + 1} className="px-1.5 py-0">
+                      <div className="flex justify-end items-center gap-3">
+                        <span className="text-[9px] text-primary/70 uppercase font-black tracking-[0.15em]">Total {annex.id}</span>
+                        <span className="text-[11px] font-black font-mono text-primary tabular-nums">
+                            {formatCurrency(totalValue)}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="bg-primary/5"></TableCell>
                   </TableRow>
                 </TableFooter>
             </Table>

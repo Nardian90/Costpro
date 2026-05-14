@@ -19,45 +19,19 @@ import {
   XCircle,
   MoreVertical, Wand2
 } from 'lucide-react';
-import { cn, formatAccounting, formatCurrency } from '@/lib/utils';
-import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
-import { isResultRow } from '@/lib/cost-engine/constants';
+import { cn, formatAccounting } from '@/lib/utils';
+import { exportSectionToExcel } from '@/services/excel-service';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { CostSheetRow, CostSheetSection, CalculatedRowValue, CostSheetAnnex } from '@/types/cost-sheet';
-import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import { CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
+import { useCellEditor, useFormulaSuggestions, getRowDiagnostics } from '@/hooks/logic/useCellEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FormulaEditor } from './FormulaEditor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
+import type { CostSheetCardViewProps, CostSheetRowCardProps } from './cost-sheet-view-shared';
 
-// Define types based on our hook and data structure
-type CalculatedValues = Record<string, CalculatedRowValue>;
-
-interface CostSheetCardViewProps {
-  sections: CostSheetSection[];
-  groupedSections?: { id: string, label: string, sectionIds: string[] }[];
-  calculatedValues: CalculatedValues;
-  annexes: CostSheetAnnex[];
-  activeSubSectionId: string;
-  setActiveSubSectionId: (id: string) => void;
-  onOpenSections?: () => void;
-  hideHeader?: boolean;
-}
-
-interface RowCardProps {
-  row: CostSheetRow;
-  level: number;
-  index: number;
-  numbering: string;
-  calculated: CalculatedRowValue;
-  calculatedValues: Record<string, CalculatedRowValue>;
-  path: (string | number)[];
-  annexes: CostSheetAnnex[];
-  suggestions: { label: string; value: string; description?: string }[];
-}
-
-const RowCard: React.FC<RowCardProps> = memo(({
+const RowCard: React.FC<CostSheetRowCardProps> = memo(({
   row,
   level,
   index,
@@ -74,80 +48,18 @@ const RowCard: React.FC<RowCardProps> = memo(({
   const [isEditingTotal, setIsEditingTotal] = useState(false);
 
   const { updateValue, addMainRow, removeMainRow, reorderMainRow } = useCostSheetStore();
-  const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
-    const findSuggested = (rows: CostSheetRow[]): CostSheetRow | null => {
-      for (const r of rows) {
-        if (r.id === rowId) return r;
-        if (r.children) {
-          const found = findSuggested(r.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    let suggested: CostSheetRow | null = null;
-    if (reinicioTemplate?.sections) {
-      for (const s of reinicioTemplate.sections) {
-        suggested = findSuggested(s.rows);
-        if (suggested) break;
-      }
-    }
-    if (suggested) {
-      if (suggested.totalFormula) {
-        updateValue([...path, 'totalFormula'], suggested.totalFormula);
-        updateValue([...path, 'formula'], suggested.totalFormula);
-      }
-      if (suggested.vhFormula) {
-        updateValue([...path, 'vhFormula'], suggested.vhFormula);
-        updateValue([...path, 'valorHistorico'], 0);
-      }
-      toast.success("Fórmulas sugeridas aplicadas");
-    } else {
-      toast.error("No se encontró fórmula sugerida");
-    }
-  };
+  const { setField, saveVH, saveTotal, applySuggested } = useCellEditor();
 
   const hasChildren = row.children && row.children.length > 0;
-  const isRowPercent = row.isPercent ?? row.is_percent;
-  const isResult = isResultRow(String(row.id)) || isRowPercent;
-
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
-
-  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
-  const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const { isRowPercent, isResult, safeCalculated, criticalErrors, warningErrors, hasEngineWarnings } = getRowDiagnostics(row, calculated);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(!isExpanded);
   };
 
-  const handleValueChange = (field: string, val: string | number | null) => {
-    updateValue([...path, field], val);
-  };
-
-  const handleVHSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('vhFormula', val);
-        handleValueChange('valorHistorico', 0);
-    } else {
-        handleValueChange('vhFormula', null);
-        handleValueChange('valorHistorico', parseFloat(val) || 0);
-    }
-    setIsEditingVH(false);
-  };
-
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
-    } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
-    }
-    setIsEditingTotal(false);
-  };
+  const handleVHSave = (val: string) => { saveVH(path, val); setIsEditingVH(false); };
+  const handleTotalSave = (val: string) => { saveTotal(path, row, val); setIsEditingTotal(false); };
 
   return (
     <div className={cn(
@@ -173,8 +85,8 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     autoFocus
                     className="h-8 text-xs font-bold uppercase tracking-widest bg-muted/50 border-primary/20 rounded-xl"
                     defaultValue={row.label}
-                    onBlur={(e) => { handleValueChange('label', e.target.value); setIsEditingLabel(false); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { handleValueChange('label', (e.target as HTMLInputElement).value); setIsEditingLabel(false); } }}
+                    onBlur={(e) => { setField(path, 'label', e.target.value); setIsEditingLabel(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { setField(path, 'label', (e.target as HTMLInputElement).value); setIsEditingLabel(false); } }}
                  />
                ) : (
                  <h4 role="button" tabIndex={0} aria-label={`Editar nombre del concepto: ${row.label}`} className="text-xs font-black uppercase tracking-widest text-foreground truncate cursor-pointer hover:text-primary transition-colors" onClick={() => setIsEditingLabel(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditingLabel(true); } }}>
@@ -208,7 +120,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'down')}>
                       <ChevronDown className="w-3.5 h-3.5" /> Bajar
                     </Button>
-                                        <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => applySuggestedFormula(row.id, path)}>
+                                        <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => applySuggested(row.id, path)}>
                       <Wand2 className="w-3.5 h-3.5" /> Sugerir Fórmula
                     </Button>
                     <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => addMainRow([...path, 'children'])}>
@@ -373,29 +285,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
   // Suggestions for FormulaEditor
-  const suggestions = useMemo(() => {
-    const list: { label: string; value: string; description: string }[] = [
-      ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
-    ];
-    sections.forEach(s => {
-      s.rows.forEach(r => {
-        list.push({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label });
-        list.push({ label: `VH Fila ${r.id}`, value: `vh('${r.id}')`, description: `Valor Histórico de ${r.label}` });
-        if (r.children) {
-          r.children.forEach(c => {
-            list.push({ label: `Fila ${c.id}`, value: `ref('${c.id}')`, description: c.label });
-            list.push({ label: `VH Fila ${c.id}`, value: `vh('${c.id}')`, description: `Valor Histórico de ${c.label}` });
-          });
-        }
-      });
-    });
-    list.push(
-      { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
-      { label: 'PCT', value: 'PCT(', description: 'Porcentaje de un valor' },
-      { label: 'hijos', value: 'hijos', description: 'Referencia a filas hijas' }
-    );
-    return list;
-  }, [sections, annexes]);
+  const suggestions = useFormulaSuggestions(sections, annexes);
 
 
   if (!sections || sections.length === 0) {

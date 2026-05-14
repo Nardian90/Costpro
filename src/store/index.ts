@@ -56,7 +56,7 @@ export const useUIStore = create<UIState>()(
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
-      activeCostSection: 'templates',
+      activeCostSection: 'main',
       setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
         currentView: view
@@ -86,10 +86,6 @@ export const useUIStore = create<UIState>()(
     {
       name: 'costpro-ui-storage',
       version: 2,
-      partialize: (state) => {
-        const { currentView, ...rest } = state;
-        return rest;
-      },
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           return {

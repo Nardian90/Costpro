@@ -319,6 +319,12 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   };
 
   const handleImport = (template: Template) => {
+    // Clear scenario store to prevent stale data from previous template
+    try {
+      const { useScenarioStore } = require('@/store/scenario-store');
+      const scenarioStore = useScenarioStore.getState();
+      if (scenarioStore?.reset) scenarioStore.reset();
+    } catch {}
     setSheet(template.data);
     setActiveCostSection("expert-content");
     toast.success(`Plantilla "${template.name}" cargada correctamente`);

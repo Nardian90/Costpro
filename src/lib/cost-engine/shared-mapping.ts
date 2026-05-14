@@ -387,9 +387,24 @@ export function calculateAnnexesPure(template: CostSheetData, parser?: Parser): 
           }
 
           // C. Column-level formulas
+          let hasTotalFormula = false;
           for (const col of annex.columns) {
             if (col.formula) {
               draft[col.key] = evaluateAnnexExpressionShared(col.formula, draft, template.header, results, p, _annexWarnings);
+              if (col.key === 'total') hasTotalFormula = true;
+            }
+          }
+
+          // D. Safety net: if total is still 0 but norm*price data exists, force-calculate
+          // This handles edge cases where formula evaluation silently fails (browser-specific)
+          if (hasTotalFormula && (draft.total === 0 || draft.total === undefined || draft.total === null)) {
+            const normKeys = Object.keys(draft).filter(k => isNorm(k) && typeof draft[k] === 'number' && (draft[k] as number) > 0);
+            const priceKeys = Object.keys(draft).filter(k => isPrice(k) && typeof draft[k] === 'number' && (draft[k] as number) > 0);
+            if (normKeys.length > 0 && priceKeys.length > 0) {
+              const forcedTotal = new Decimal(draft[normKeys[0]] as number).times(draft[priceKeys[0]] as number).toDecimalPlaces(2).toNumber();
+              if (forcedTotal > 0) {
+                draft.total = forcedTotal;
+              }
             }
           }
         }),
@@ -491,7 +506,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH')) {
+      if (isParent && (!formula || formula === 'VH') && !isFixedValue) {
           formula = 'sum(children)';
       }
 
@@ -509,20 +524,42 @@ export function buildEngineRows(
 
       // Base Calculation mapping
       let baseCalculo: BaseRef | null = null;
-      const baseRefId = r.baseDeCalculoRef || r.base_ref;
+      const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
+
+      // Detect simple annex reference in formula (e.g. "=AnexoI", "=TotalAnexoIII")
+      const rawFormula = (r.totalFormula || r.formula || '').replace(/^=\s*/, '').trim();
+      const simpleAnnexMatch = rawFormula.match(/^(Total)?[Aa]nexo([IVXLC]+)$/i);
+      const isSimpleAnnexFormula = !!simpleAnnexMatch && !rawFormula.includes(' ');
+
+      // Resolve baseCalculo: from baseDeCalculoRef OR from a simple annex formula
       if (baseRefId) {
-        // Check if it's an Annex ID (match explicit annexes or Roman numerals)
         const isAnnex =
           (template.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
         if (isAnnex) {
           baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
-          // If pointing to annex without specific formula, it's an import
-          if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-            formaCalculo = 'IMPORTAR_ANEXO';
-          }
         } else {
           baseCalculo = { type: 'FILA', classification: baseRefId };
         }
+      } else if (isSimpleAnnexFormula && simpleAnnexMatch) {
+        // No explicit baseDeCalculoRef, but formula is a bare annex ref → infer it
+        const annexId = simpleAnnexMatch[2].toUpperCase();
+        baseCalculo = { type: 'ANEXO', anexoId: annexId };
+      }
+
+      // Route to IMPORTAR_ANEXO when:
+      //   a) baseCalculo points to an annex AND no complex formula, OR
+      //   b) formula is a simple annex reference (e.g. "=AnexoI") with no other expression
+      if (
+        baseCalculo?.type === 'ANEXO' &&
+        r.calculationMethod !== 'Prorrateo' &&
+        (isSimpleAnnexFormula || (!r.formula && !r.totalFormula))
+      ) {
+        formaCalculo = 'IMPORTAR_ANEXO';
+      }
+
+      // ── DEBUG: Log rows with annex-related formulas ──
+      if (formula && /anexo/i.test(formula)) {
+        console.log(`[MAPPING] row=${r.id} class=${currentNumbering} formula="${formula}" method="${method}" formaCalculo=${formaCalculo} isParent=${isParent} isFixedValue=${isFixedValue} baseDeCalculoRef=${r.baseDeCalculoRef}`);
       }
 
       // Normalize =sum(children) formula
@@ -577,7 +614,7 @@ export function buildEngineRows(
         um: r.um || r.unit,
         type,
         formaCalculo,
-        valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
+        valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value ?? r.total ?? 0,
         vhFormula: r.vhFormula,
         baseCalculo,
         coeficiente: isPercentRow ? (r.value ?? r.valorHistorico) : r.coeficiente,

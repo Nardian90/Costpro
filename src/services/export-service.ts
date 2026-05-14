@@ -54,7 +54,7 @@ export const exportToPDF = async (element: HTMLElement, fileName: string) => {
   }
 };
 
-export const exportToCSV = (data: any, calculatedValues: any, fileName: string) => {
+export const exportToCSV = (data: any, calculatedValues: any, fileName: string, calculatedAnnexes?: any[]) => {
   try {
     let csvContent = "data:text/csv;charset=utf-8,";
 
@@ -93,17 +93,30 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string) 
     // Annexes Export
     if (data.annexes && data.annexes.length > 0) {
       csvContent += `\n\n=== ANEXOS ===\n`;
+
+      // Build a map of calculated annex data (with computed totals)
+      const calcAnnexMap = new Map<string, any>();
+      if (calculatedAnnexes && calculatedAnnexes.length > 0) {
+        for (const ca of calculatedAnnexes) {
+          calcAnnexMap.set(ca.id, ca);
+        }
+      }
+
       data.annexes.forEach((annex: any) => {
         csvContent += `\n--- ANEXO ${annex.id}: ${annex.title?.toUpperCase()} ---\n`;
 
-        // Headers
-        const headers = annex.columns.map((c: any) => c.label || c.title || c.key);
+        // Use calculated annex data if available (has computed totals), otherwise fall back to raw data
+        const calcAnnex = calcAnnexMap.get(annex.id);
+        const columns = annex.columns || [];
+        const headers = columns.map((c: any) => c.label || c.title || c.key);
         csvContent += headers.join(',') + "\n";
 
-        // Rows (Even if empty, structure is preserved)
-        if (annex.data && annex.data.length > 0) {
-          annex.data.forEach((row: any) => {
-            const rowValues = annex.columns.map((col: any) => {
+        const annexData = calcAnnex?.data || annex.data || [];
+
+        // Rows
+        if (annexData && annexData.length > 0) {
+          annexData.forEach((row: any) => {
+            const rowValues = columns.map((col: any) => {
               const val = row[col.key];
               if (val === undefined || val === null) return '';
               return typeof val === 'string' ? val.replace(/,/g, ';') : val;

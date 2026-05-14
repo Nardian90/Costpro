@@ -6,6 +6,7 @@ export interface CostSheetHeader {
   currency: string;
   category: string;
   type: string;
+  resolution?: string;
   unit: string;
   client?: string;
   elaboratedBy?: string;
@@ -94,6 +95,10 @@ export interface ScenarioRowValues {
   vhFormula?: string;
   coeficiente?: number;
   baseDeCalculoRef?: string;
+  total?: number;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO' | 'ANEXO_REF' | 'FIJO' | 'MANUAL';
+  formula?: string;
+  isPercent?: boolean;
 }
 
 export type ScenarioValues = Record<string, ScenarioRowValues>;

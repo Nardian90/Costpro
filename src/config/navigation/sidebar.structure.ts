@@ -51,7 +51,8 @@ import {
   Save,
   Download,
   FileSpreadsheet,
-  Upload
+  Upload,
+  GitCompareArrows
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -95,7 +96,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2 },
           { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
-          { id: 'view-reading', label: 'Lectura Narrativa', type: 'item', icon: BookOpen }
+          { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList }
         ]
       },
       {
@@ -115,6 +116,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         icon: FolderOpen,
         children: [
           { id: 'templates', label: 'Explorador Plantillas', type: 'item', icon: FolderOpen },
+          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true },
           { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload }
         ]
       },
@@ -127,17 +129,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'tool-save', label: 'Guardar Ficha', type: 'item', icon: Save },
           { id: 'tool-export-excel', label: 'Exportar Excel', type: 'item', icon: FileSpreadsheet },
           { id: 'tool-export-pdf', label: 'Exportar PDF', type: 'item', icon: Download }
-        ]
-      },
-      {
-        id: 'cost_resources',
-        label: 'Recursos',
-        type: 'submenu',
-        icon: HelpCircle,
-        children: [
-          { id: 'res-help', label: 'Ayuda de Vista', type: 'item', icon: HelpCircle },
-          { id: 'res-system-help', label: 'Ayuda del Sistema', type: 'item', icon: Activity },
-          { id: 'res-academy', label: 'Academia Pro', type: 'item', icon: GraduationCap }
         ]
       }
     ]

@@ -1,6 +1,8 @@
 import { type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
+const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 /**
  * Helper to get the user session in API Route Handlers.
  */
@@ -10,6 +12,20 @@ export async function getServerSession(request: NextRequest) {
     const authHeader = request.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
+
+      // DEV BYPASS: Accept dev-token-bypass when Supabase is not configured
+      if (!isSupabaseConfigured && token === 'dev-token-bypass') {
+        return {
+          user: {
+            id: 'dev-admin-001',
+            email: 'admin@demo.com',
+            role: 'admin' as const,
+            roles: ['admin' as const],
+          },
+          token,
+        };
+      }
+
       const { data: { user }, error } = await supabase.auth.getUser(token);
 
       if (!error && user) {

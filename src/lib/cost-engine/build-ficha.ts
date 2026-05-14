@@ -1,5 +1,5 @@
 /**
- * Pure function that builds an engine-ready FichaJSON from a CostSheetData template.
+ * Pure functions that build engine-ready FichaJSON from a CostSheetData template.
  *
  * CRITICAL: All shared mapping logic now lives in shared-mapping.ts.
  * This file is a thin orchestrator — any mapping/engine-row changes
@@ -8,22 +8,23 @@
  *
  * Used by: solver, simulateForVerification, useCostSheetCalculator.
  */
-import { CostSheetData } from '@/types/cost-sheet';
-import { FichaJSON } from './types';
+import type { CostSheetData } from '@/types/cost-sheet';
+import type { FichaJSON } from './types';
 import {
   createSharedParser,
-  calculateAnnexesPure,
   evaluateEarlyHeader,
   buildVHSums,
   buildEngineRows,
   assembleFichaJSON,
+  calculateAnnexesPure,
 } from './shared-mapping';
 
-// Re-export calculateAnnexesPure for backward compatibility
-export { calculateAnnexesPure } from './shared-mapping';
+// Re-exports for consumers that need direct access
+export { calculateAnnexesPure, evaluateEarlyHeader, buildVHSums, buildEngineRows, assembleFichaJSON } from './shared-mapping';
 
 /**
  * Full pipeline: build engine-ready FichaJSON from a CostSheetData template.
+ * Creates its own parser and calculates annexes internally.
  */
 export function buildEngineFicha(template: CostSheetData): FichaJSON {
   const parser = createSharedParser();
@@ -34,3 +35,15 @@ export function buildEngineFicha(template: CostSheetData): FichaJSON {
   return assembleFichaJSON(earlyHeader, calculatedAnnexes, engineRows);
 }
 
+/**
+ * Like buildEngineFicha but accepts pre-calculated annexes.
+ * Used by useCostSheetCalculator to avoid double annex computation.
+ */
+export function buildEngineFichaWithAnnexes(
+  template: CostSheetData,
+  calculatedAnnexes: ReturnType<typeof calculateAnnexesPure>,
+): FichaJSON {
+  const vhSums = buildVHSums(template.sections);
+  const engineRows = buildEngineRows(template, vhSums);
+  return assembleFichaJSON(template.header, calculatedAnnexes, engineRows);
+}

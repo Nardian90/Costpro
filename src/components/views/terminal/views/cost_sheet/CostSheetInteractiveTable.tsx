@@ -3,7 +3,7 @@ import { LazyRender } from '@/components/ui/LazyRender';
 
 import { motion, AnimatePresence } from "framer-motion";
 
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -12,10 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { cn, formatAccounting } from '@/lib/utils';
-import { isResultRow } from '@/lib/cost-engine/constants';
 import { FormulaEditor } from './FormulaEditor';
 import { toast } from "sonner";
-import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
+import { exportSectionToExcel } from '@/services/excel-service';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
 import {
   AlertDialog,
@@ -27,46 +26,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useCellEditor, useFormulaSuggestions, getRowDiagnostics } from '@/hooks/logic/useCellEditor';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
-  CostSheetAnnex,
   CalculatedRowValue
 } from '@/types/cost-sheet';
-
-// Define types based on our hook and data structure
-type CalculatedValues = Record<string, CalculatedRowValue>;
-
-// Props for the main table component
-interface CostSheetInteractiveTableProps {
-  sections: CostSheetSection[];
-  groupedSections?: { id: string, label: string, sectionIds: string[] }[];
-  calculatedValues: CalculatedValues;
-  annexes: CostSheetAnnex[];
-  activeSubSectionId: string;
-  setActiveSubSectionId: (id: string) => void;
-  onOpenSections?: () => void;
-  hideHeader?: boolean;
-}
-
-// Props for a single row component
-interface RowProps {
-  row: RowData;
-  level: number;
-  index: number;
-  numbering: string;
-  calculated: CalculatedRowValue;
-  calculatedValues: CalculatedValues;
-  path: (string | number)[]; // Path to this row in the Zustand store
-  annexes: CostSheetAnnex[];
-  suggestions: { label: string; value: string; description?: string }[];
-}
+import type { CostSheetInteractiveTableProps, CostSheetRowTableProps } from './cost-sheet-view-shared';
+import { handleImportSectionExcel } from './cost-sheet-view-shared';
 
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
+const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
@@ -76,84 +49,13 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const [pendingTotalValue, setPendingTotalValue] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<(string | number)[] | null>(null);
   const updateValue = useCostSheetStore(state => state.updateValue);
-  const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
-  const applySuggestedFormula = (rowId: string, path: (string | number)[]) => {
-    // Basic implementation: Find the row in the default template (reinicio)
-    const findSuggested = (rows: RowData[]): RowData | null => {
-      for (const r of rows) {
-        if (r.id === rowId) return r;
-        if (r.children) {
-          const found = findSuggested(r.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    let suggested: RowData | null = null;
-    if (reinicioTemplate?.sections) {
-      for (const s of reinicioTemplate.sections) {
-        suggested = findSuggested(s.rows);
-        if (suggested) break;
-      }
-    }
-
-    if (suggested) {
-      if (suggested.totalFormula) {
-        updateValue([...path, 'totalFormula'], suggested.totalFormula);
-        updateValue([...path, 'formula'], suggested.totalFormula);
-      }
-      if (suggested.vhFormula) {
-        updateValue([...path, 'vhFormula'], suggested.vhFormula);
-        updateValue([...path, 'valorHistorico'], 0);
-      }
-      toast.success("Fórmulas sugeridas aplicadas");
-    } else {
-      toast.error("No se encontró fórmula sugerida para este concepto");
-    }
-  };
-
-  const handleToggle = () => setIsExpanded(!isExpanded);
-
-  const handleValueChange = (field: string, val: string | number | boolean | null) => {
-    updateValue([...path, field], val);
-  };
-
-  const handleVHSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('vhFormula', val);
-        handleValueChange('valorHistorico', 0);
-    } else {
-        handleValueChange('vhFormula', null);
-        handleValueChange('valorHistorico', parseFloat(val) || 0);
-    }
-    setIsEditingVH(false);
-  };
-
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-        handleValueChange('formula', val);
-        handleValueChange('totalFormula', val);
-    } else {
-        handleValueChange('formula', null);
-        handleValueChange('totalFormula', null);
-        handleValueChange('total', parseFloat(val) || 0);
-    }
-    setIsEditingTotal(false);
-  };
+  const { setField, saveVH, saveTotal, applySuggested } = useCellEditor();
 
   const hasChildren = row.children && row.children.length > 0;
-
-  const isRowPercent = row.isPercent ?? row.is_percent;
-  const isResult = isResultRow(String(row.id)) || isRowPercent;
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
-
-  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
-  const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const { isRowPercent, isResult, safeCalculated, criticalErrors, warningErrors, hasEngineWarnings } = getRowDiagnostics(row, calculated);
 
   return (
     <>
@@ -171,7 +73,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         <TableCell data-label="Concepto" style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
-              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0" type="button" aria-label={isExpanded ? `Contraer sección de ${row.label}` : `Expandir sección de ${row.label}`}>
+              <button onClick={() => setIsExpanded(!isExpanded)} className="p-1 rounded-full hover:bg-primary/10 shrink-0" type="button" aria-label={isExpanded ? `Contraer sección de ${row.label}` : `Expandir sección de ${row.label}`}>
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} aria-hidden="true" />
               </button>
             )}
@@ -184,12 +86,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     defaultValue={row.label}
                     aria-label={`Nombre del concepto ${row.label}`}
                     onBlur={(e) => {
-                        handleValueChange('label', e.target.value);
+                        setField(path, 'label', e.target.value);
                         setIsEditingLabel(false);
                     }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                            handleValueChange('label', (e.target as HTMLInputElement).value);
+                            setField(path, 'label', (e.target as HTMLInputElement).value);
                             setIsEditingLabel(false);
                         }
                         if (e.key === 'Escape') {
@@ -230,7 +132,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     size="icon"
                     type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
-                    onClick={() => applySuggestedFormula(row.id, path)}
+                    onClick={() => applySuggested(row.id, path)}
                     aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
                     <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
@@ -275,12 +177,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     defaultValue={row.um || row.unit || "Pesos"}
                     aria-label={`Unidad de medida de ${row.label}`}
                     onBlur={(e) => {
-                        handleValueChange("um", e.target.value);
+                        setField(path, "um", e.target.value);
                         setIsEditingUM(false);
                     }}
                     onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                            handleValueChange("um", (e.target as HTMLInputElement).value);
+                            setField(path, "um", (e.target as HTMLInputElement).value);
                             setIsEditingUM(false);
                         }
                         if (e.key === 'Escape') {
@@ -299,7 +201,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 {isEditingVH ? (
                     <FormulaEditor
                         initialValue={row.vhFormula || String(row.valorHistorico || 0)}
-                        onSave={handleVHSave}
+                        onSave={(val: string) => { saveVH(path, val); setIsEditingVH(false); }}
                         onCancel={() => { setPendingVHValue(null); setIsEditingVH(false); }}
                         onPendingChange={setPendingVHValue}
                         suggestions={suggestions}
@@ -337,8 +239,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
-              onSave={handleTotalSave}
+              initialValue={row.formula || row.totalFormula || String(safeCalculated.total ?? 0)}
+              onSave={(val: string) => { saveTotal(path, row, val); setIsEditingTotal(false); }}
               onCancel={() => { setPendingTotalValue(null); setIsEditingTotal(false); }}
               onPendingChange={setPendingTotalValue}
               suggestions={suggestions}
@@ -385,7 +287,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     size="icon"
                     type="button"
                     className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
-                    onClick={() => applySuggestedFormula(row.id, path)}
+                    onClick={() => applySuggested(row.id, path)}
                     aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
                     <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
@@ -480,9 +382,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const removeMainSection = useCostSheetStore(state => state.removeMainSection);
   const updateValue = useCostSheetStore(state => state.updateValue);
-  const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
+
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection, index: number } | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -508,42 +410,10 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   }, [activeSubSectionId, hideHeader]);
 
   // Suggestions for FormulaEditor
-  const suggestions = useMemo(() => {
-    const list: { label: string; value: string; description?: string }[] = [
-      ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
-    ];
-    sections.forEach(s => {
-      s.rows.forEach(r => {
-        list.push({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label });
-        list.push({ label: `VH Fila ${r.id}`, value: `vh('${r.id}')`, description: `Valor Histórico de ${r.label}` });
-        if (r.children) {
-          r.children.forEach(c => {
-            list.push({ label: `Fila ${c.id}`, value: `ref('${c.id}')`, description: c.label });
-            list.push({ label: `VH Fila ${c.id}`, value: `vh('${c.id}')`, description: `Valor Histórico de ${c.label}` });
-          });
-        }
-      });
-    });
-    list.push(
-      { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
-      { label: 'PCT', value: 'PCT(', description: 'Porcentaje de un valor' },
-      { label: 'hijos', value: 'hijos', description: 'Referencia a filas hijas' }
-    );
-    return list;
-  }, [sections, annexes]);
+  const suggestions = useFormulaSuggestions(sections, annexes);
 
-  const handleImportSectionExcel = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-        const section = sections[index];
-        const rows = await importSectionFromExcel(file);
-        updateValue(['sections', index, 'rows'], rows);
-        toast.success("Sección importada correctamente");
-    } catch (err) {
-        toast.error("Error al importar sección");
-        console.error(err);
-    }
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    void handleImportSectionExcel(e, index, sections, updateValue);
   };
 
   if (!sections || sections.length === 0) {
@@ -603,7 +473,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             aria-label="Importar sección desde archivo Excel"
             onChange={(e) => {
                 if (importingSectionIndex !== null) {
-                    handleImportSectionExcel(e, importingSectionIndex);
+                    handleImport(e, importingSectionIndex);
                     setImportingSectionIndex(null);
                 }
             }}

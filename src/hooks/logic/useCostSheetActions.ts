@@ -36,6 +36,9 @@ interface UseCostSheetActionsProps {
   calculationResult: CalculationResult | null;
   isBlocked: boolean;
   activeSection: string;
+  /** setViewMode from useCostSheetViewState — needed so sidebar-driven
+   *  activeCostSection changes can switch the internal viewMode. */
+  setViewMode?: (mode: CostSheetViewMode) => void;
 }
 
 export const useCostSheetActions = ({
@@ -45,7 +48,8 @@ export const useCostSheetActions = ({
   calculatedAnnexes,
   calculationResult,
   isBlocked,
-  activeSection
+  activeSection,
+  setViewMode: externalSetViewMode
 }: UseCostSheetActionsProps) => {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -87,16 +91,33 @@ export const useCostSheetActions = ({
     setActiveCostSection(section);
   }, [setActiveCostSection]);
 
-  // FIX-RCT-140: handleSetViewMode now only handles section navigation logic.
-  // viewMode/isEditing state is managed by useCostSheetViewState, not here.
-  // This prevents the cascade: data change → callback identity change → useEffect re-run.
+  // handleSetViewMode bridges sidebar-driven activeCostSection changes
+  // to the actual viewMode managed by useCostSheetViewState.
+  // It handles both mode switching AND section navigation.
   const handleSetViewMode = useCallback(
     (mode: CostSheetViewMode) => {
+      // Ensure editing is active when switching to any editable mode
+      if (externalSetViewMode) {
+        externalSetViewMode(mode);
+      }
+      // Map mode → appropriate activeCostSection for section-based rendering
       if (mode === 'audit') { handleSetActiveSection('audit'); }
       else if (mode === 'kpis') { handleSetActiveSection('kpis'); }
-      else if (mode === 'expert') { handleSetActiveSection('main'); }
+      else if (mode === 'expert') {
+        // Don't override section if user navigated to a specific section like 'templates'
+        const sec = activeSectionRef.current;
+        if (sec !== 'templates' && sec !== 'header' && sec !== 'signature') {
+          handleSetActiveSection('main');
+        }
+      }
+      // assisted, reading, quick modes render via viewMode, not activeSection,
+      // but we reset to a valid section so the expert consolidated view
+      // shows correctly when switching back.
+      else if (mode === 'assisted') { /* viewMode handles rendering */ }
+      else if (mode === 'reading') { /* viewMode handles rendering */ }
+      else if (mode === 'quick') { /* viewMode handles rendering */ }
     },
-    [handleSetActiveSection]
+    [handleSetActiveSection, externalSetViewMode]
   );
 
   // FIX-RCT-140: Use refs for unstable data dependencies so callbacks remain stable.
@@ -104,9 +125,13 @@ export const useCostSheetActions = ({
   const dataRef = useRef(data);
   const calcValuesRef = useRef(calculatedValues);
   const calcHeaderRef = useRef(calculatedHeader);
+  const calcAnnexesRef = useRef(calculatedAnnexes);
+  const activeSectionRef = useRef(activeSection);
   useEffect(() => { dataRef.current = data; });
   useEffect(() => { calcValuesRef.current = calculatedValues; });
   useEffect(() => { calcHeaderRef.current = calculatedHeader; });
+  useEffect(() => { calcAnnexesRef.current = calculatedAnnexes; });
+  useEffect(() => { activeSectionRef.current = activeSection; });
 
   const handleExportPDF = useCallback(  
     async (options: ExportOptions) => {
@@ -117,7 +142,7 @@ export const useCostSheetActions = ({
           const response = await fetch('/api/cost-sheets/export-pdf', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: dataRef.current, options: opts, calculatedValues: calcValuesRef.current, calculatedHeader: calcHeaderRef.current, calculationResult: calculationResult })
+            body: JSON.stringify({ data: dataRef.current, options: opts, calculatedValues: calcValuesRef.current, calculatedHeader: calcHeaderRef.current, calculatedAnnexes: calcAnnexesRef.current, calculationResult: calculationResult })
           });
           if (response.ok) {
             const blob = await response.blob();
@@ -145,7 +170,7 @@ export const useCostSheetActions = ({
           return;
         }
 
-        const h = calculationResult.metadata?.header || dataRef.current?.header || {};
+        const h = (calculationResult.metadata?.header || dataRef.current?.header || {}) as Record<string, unknown>;
         const evalCode = h.code || 'export';
         const evalName = h.name || 'ficha';
         const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/?%*:|"<>]/g, '-');
@@ -176,7 +201,7 @@ export const useCostSheetActions = ({
     const fileName = currentData?.header?.name
       ? `Ficha de Costo - ${currentData.header.name}`
       : 'Ficha de Costo';
-    exportToCSV(currentData as any, calcValuesRef.current, fileName);
+    exportToCSV(currentData as any, calcValuesRef.current, fileName, calcAnnexesRef.current);
   }, [isBlocked]);
 
   const handleImportJSON = useCallback(() => {
@@ -230,17 +255,18 @@ export const useCostSheetActions = ({
     else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
     else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
-    else if (activeSection === 'gen-expert') { setIsQuickModeGenerating(true); }
+    else if (activeSection === 'gen-expert') { handleSetViewMode('quick'); setIsQuickModeGenerating(true); }
     else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'templates') { handleSetViewMode('expert'); }
     else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
     else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
     else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
-  }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleExportExcel, setCurrentView]);
+  }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleExportExcel, setCurrentView, setIsQuickModeGenerating, setIsExportModalOpen, setIsHelpPanelOpen, setIsSectionsSidebarOpen, setIsAnnexesSidebarOpen]);
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
     setQuickModeProducts(rows.map(r => ({
