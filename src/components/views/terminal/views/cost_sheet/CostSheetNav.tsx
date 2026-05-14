@@ -4,13 +4,14 @@ import React from 'react';
 import type { CostSheetAnnex, CostSheetData } from '@/types/cost-sheet';
 import type { CostSheetViewMode } from './CostSheetModeDropdown';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Save, Bot, Clock } from 'lucide-react';
+import { Save, Bot, Clock, ArrowLeft } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useUIStore } from '@/store';
 
 interface AutoSaveVersion {
   timestamp: number;
@@ -55,8 +56,28 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   versions = [],
   onRestoreVersion
 }) => {
+  const { setCurrentView } = useUIStore();
+
   const navActions: Action[] = React.useMemo(() => {
     const actions: Action[] = [
+        // 0. Regresar (back to dashboard)
+        {
+            id: 'back-action',
+            label: 'Regresar',
+            onClick: () => setCurrentView('dashboard'),
+            component: (
+                <button
+                    onClick={() => setCurrentView('dashboard')}
+                    type="button"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
+                    aria-label="Regresar al tablero principal"
+                >
+                    <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+                </button>
+            ),
+            tooltip: "Regresar"
+        },
+
         // 1. Guardar (Acción crítica inmediata)
         {
             id: 'save-action',
@@ -87,7 +108,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     onSave={onSave || (() => {})}
                     onExportExcel={onExportExcel || (() => {})}
                     onExportPdf={onExportPdf || (() => {})}
-                    onOpenDarian={() => setActiveSection('ai-chat')}
+                    onOpenAudit={() => setActiveSection('audit')}
                 />
             )
         },
@@ -169,8 +190,23 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 
     ];
 
+    // 5. ViewSwitcher (tarjeta ↔ tabla) — inside the action menu after clock
+    if (layoutMode !== undefined && setLayoutMode) {
+      actions.push({
+        id: 'view-switcher',
+        label: 'Vista',
+        onClick: () => {},
+        component: (
+          <ViewSwitcher
+            currentView={layoutMode}
+            onViewChange={setLayoutMode}
+          />
+        )
+      });
+    }
+
     return actions;
-  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection, isSaving, lastSavedAt, versions, onRestoreVersion]);
+  }, [onSave, onExportExcel, onExportPdf, onImport, setActiveSection, isSaving, lastSavedAt, versions, onRestoreVersion, layoutMode, setLayoutMode, setCurrentView]);
 
   return (
     <div className="mb-0 flex items-center gap-3">
@@ -180,13 +216,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         sticky={false}
         className="!z-10 shadow-none bg-transparent !p-0 flex-1 min-w-0"
       />
-      {/* Inline ViewSwitcher: toggle tarjeta ↔ tabla directly in the nav */}
-      {layoutMode !== undefined && setLayoutMode && (
-        <ViewSwitcher
-          currentView={layoutMode}
-          onViewChange={setLayoutMode}
-        />
-      )}
     </div>
   );
 };

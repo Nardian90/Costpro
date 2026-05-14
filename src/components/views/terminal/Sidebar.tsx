@@ -255,15 +255,6 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs">CP</div>
             )}
 
-            {onClose && !focusedModuleId && !isMobile && sidebarState === 'expanded' && (
-              <button
-                onClick={onClose}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                aria-label="Cerrar menú lateral"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
             {isMobile && (
                <button
                 onClick={onClose}

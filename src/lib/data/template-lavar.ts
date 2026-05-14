@@ -2,6 +2,7 @@
 
 const template: any = {
   "header": {
+    "resolution": "Res 148/2023",
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "name": "Lavar",
     "date": "2026-02-26",
@@ -28,6 +29,7 @@ const template: any = {
         {
           "id": "1",
           "label": "GASTO MATERIAL",
+          "helpText": "Incluye materiales primarios, combustibles, energía y agua consumidos en la producción.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -72,6 +74,7 @@ const template: any = {
         {
           "id": "2",
           "label": "SALARIO DIRECTO",
+          "helpText": "Salarios de obreros vinculados a la producción. Incluye vacaciones.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -105,6 +108,7 @@ const template: any = {
         {
           "id": "3",
           "label": "OTROS GASTOS DIRECTOS",
+          "helpText": "Depreciación, mantenimiento, servicios contratados, protección, alquileres, alimentación y dietas.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -206,6 +210,7 @@ const template: any = {
         {
           "id": "4",
           "label": "GASTOS ASOCIADOS PROD.",
+          "helpText": "Gastos indirectos de producción asignados proporcionalmente al gasto material.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -366,6 +371,7 @@ const template: any = {
         {
           "id": "10",
           "label": "GASTOS TRIBUTARIOS",
+          "helpText": "Contribución a la Seguridad Social (14%) e Impuesto sobre la Fuerza de Trabajo (5%).",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -423,6 +429,7 @@ const template: any = {
         {
           "id": "13.1",
           "label": "Utilidad",
+          "helpText": "Porcentaje de utilidad aplicado sobre el total de costos y gastos.",
           "calculationMethod": "FORMULA",
           "formula": "ref('12.1') * 0.3",
           "vhFormula": "vh('12.1') * 0.3"
@@ -465,7 +472,7 @@ const template: any = {
           "id": "15.1",
           "label": "Costo y gasto UNITARIO",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12.1') / cantidad",
+          "totalFormula": "ref('12.1') / quantity",
           "formula": "ref('12.1') / cantidad"
         }
       ]
@@ -478,7 +485,7 @@ const template: any = {
           "id": "16.1",
           "label": "VENTA UNITARIA",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('14.1') / cantidad",
+          "totalFormula": "ref('14.1') / quantity",
           "formula": "=ref('14.1') / cantidad"
         }
       ]

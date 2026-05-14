@@ -8,9 +8,11 @@ import { mapProfileToContract } from '@/contracts/user';
 import { userService } from '@/services/user-service';
 import type { Profile } from '@/types';
 
+const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
-const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
-const PROFILE_FETCH_TIMEOUT = 30 * 1000; // 30 seconds
+const SESSION_CHECK_TIMEOUT = 8 * 1000; // 8 seconds
+const PROFILE_FETCH_TIMEOUT = 12 * 1000; // 12 seconds
 
 export function useSessionManager() {
     const { login, logout, setLoading, setStatus: setAuthStatus } = useAuthStore();
@@ -20,8 +22,16 @@ export function useSessionManager() {
         const now = Date.now();
         const { isMocked, user: currentUser, token: currentToken } = useAuthStore.getState();
 
-        if (isMocked) {
+        // Dev mode without Supabase: keep existing session
+        if (!isSupabaseConfigured) {
             setAuthStatus('authenticated_valid');
+            setLoading(false);
+            return;
+        }
+
+        // Clean up stale dev-bypass session from previous dev mode
+        if (isMocked || currentToken === 'dev-token-bypass') {
+            logout();
             setLoading(false);
             return;
         }
@@ -114,11 +124,16 @@ export function useSessionManager() {
     }, [checkSession]);
 
     useEffect(() => {
+        if (!isSupabaseConfigured) return; // Skip Supabase listener in dev mode
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
+                const wasAuthed = useAuthStore.getState().status !== 'unauthenticated';
                 logout();
                 setLoading(false);
-                window.location.reload();
+                // Only reload if there was an actual session (avoid reload loop on initial load)
+                if (wasAuthed) {
+                    window.location.reload();
+                }
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 const { user: currentUser } = useAuthStore.getState();
                 if (session?.access_token && currentUser) {

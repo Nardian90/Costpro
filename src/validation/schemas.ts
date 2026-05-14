@@ -562,15 +562,18 @@ export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
       value: z.number().optional(),
       baseDeCalculoRef: z.string().nullable().optional(),
       base_ref: z.string().nullable().optional(),
+      baseRef: z.string().nullable().optional(),
+      vhFormula: z.string().nullable().optional(),
       calculationMethod: z
-        .enum(["Prorrateo", "ValorFijo", "FORMULA", "ANEXO"])
+        .enum(["Prorrateo", "ValorFijo", "FORMULA", "ANEXO", "ANEXO_REF", "FIJO", "MANUAL"])
         .optional(),
       totalFormula: z.string().nullable().optional(),
       formula: z.string().optional(),
       isPercent: z.boolean().optional(),
       is_percent: z.boolean().optional(),
       children: z.array(costSheetRowSchema).optional(),
-    }),
+      // Allow dynamic fields (um, unit, note, fuente, coeficiente, type, classification, etc.)
+    }).passthrough(),
 );
 
 export const costSheetSectionSchema = z.object({
@@ -586,7 +589,7 @@ export const costSheetColumnSchema = z
     title: z.string().optional(),
     formula: z.string().optional(),
     type: z.enum(["number", "string", "formula", "text"]).optional(),
-  });
+  }).passthrough();
 
 export const costSheetAnnexSchema = z
   .object({
@@ -596,7 +599,8 @@ export const costSheetAnnexSchema = z
     adjustmentColumn: z.string().optional().default("PRECIO UNITARIO"),
     columns: z.array(costSheetColumnSchema),
     data: z.array(z.record(z.string(), z.any())),
-  });
+    // Allow isAdjustmentActive and other dynamic fields
+  }).passthrough();
 
 export const costSheetSignatureSchema = z
   .object({

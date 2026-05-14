@@ -12,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
-import { mapProfileToContract } from '@/contracts/user';
+import { mapProfileToContract, UserFactory } from '@/contracts/user';
 import { safeNavigate } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
+
+const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -145,11 +147,33 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
 
     // FIX #011: Mask email in logs to protect PII
     const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
-    logger.info('AUTH', 'LOGIN_ATTEMPT', { email: maskedEmail });
+    logger.info('AUTH', 'LOGIN_ATTEMPT', { email: maskedEmail, supabaseConfigured: isSupabaseConfigured });
 
     try {
       if (!email || !password) {
         throw new Error('Por favor completa todos los campos');
+      }
+
+      // DEV BYPASS: When Supabase is not configured, allow local login with any credentials
+      if (!isSupabaseConfigured) {
+        logger.warn('AUTH', 'DEV_BYPASS_LOGIN', { email: maskedEmail });
+        const devUser = UserFactory.create({
+          id: 'dev-admin-001',
+          email: email.toLowerCase().trim(),
+          fullName: 'Admin Demo',
+          role: 'admin',
+          roles: ['admin'],
+          storeId: 'store-001',
+          activeStoreId: 'store-001',
+          maxStoresLimit: 10,
+          maxUsersLimit: 50,
+          createdBy: 'system',
+          isActive: true,
+        });
+        login(devUser, 'dev-token-bypass', 'authenticated_valid', true);
+        toast.success(`¡Bienvenido, ${devUser.fullName}! (modo desarrollo)`);
+        safeNavigate.push(router, '/');
+        return;
       }
 
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

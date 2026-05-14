@@ -7,7 +7,7 @@ import {
   Download, Settings, Table2, LayoutGrid, ChevronDown,
   BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
   BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator,
-  LifeBuoy, GraduationCap, Scale
+  LifeBuoy, GraduationCap, Scale, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
@@ -277,7 +277,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
               <AccordionGroup
                 title="Modos de Visualización"
-                isVisible={hasMatchingActions(['Completo', 'Asistido', 'Resumido', 'Vistazo', 'Audit'])}
+                isVisible={hasMatchingActions(['Completo', 'Asistido', 'Informe', 'Vistazo', 'Audit'])}
                 isSearchActive={!!searchTerm}
                 icon={Eye}
                 isOpen={openGroups.includes('modos')}
@@ -285,7 +285,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
               >
                 {('Completo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-expert', 'Completo', Table2, () => setViewMode?.('expert'), 'outline', viewMode === 'expert')}
                 {('Asistido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-assisted', 'Asistido', Wand2, () => setViewMode?.('assisted'), 'outline', viewMode === 'assisted')}
-                {('Resumido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-reading', 'Resumido', BookOpen, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
+                {('Informe'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-reading', 'Informe', ClipboardList, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
                 {('Vistazo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-preview', 'Vistazo', Eye, () => setViewMode?.('preview'), 'outline', viewMode === 'preview')}
                 {('Audit'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-audit', 'Audit', Activity, () => setViewMode?.('audit'), 'outline', viewMode === 'audit')}
               </AccordionGroup>

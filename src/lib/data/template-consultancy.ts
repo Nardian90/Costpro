@@ -2,6 +2,7 @@ import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
   "header": {
+    "resolution": "Res 148/2023",
     "code": "SERV-001",
     "name": "Consultoría Estratégica Mensual",
     "date": new Date().toISOString().split('T')[0],
@@ -28,6 +29,7 @@ const template: CostSheetDataContract = {
         {
           "id": "1",
           "label": "GASTO MATERIAL",
+          "helpText": "Incluye materiales primarios, combustibles, energía y agua consumidos en la producción.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -46,6 +48,7 @@ const template: CostSheetDataContract = {
         {
           "id": "2",
           "label": "SALARIO DIRECTO",
+          "helpText": "Salarios de obreros vinculados a la producción. Incluye vacaciones.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -62,6 +65,7 @@ const template: CostSheetDataContract = {
         {
           "id": "3",
           "label": "OTROS GASTOS DIRECTOS",
+          "helpText": "Depreciación, mantenimiento, servicios contratados, protección, alquileres, alimentación y dietas.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -95,6 +99,7 @@ const template: CostSheetDataContract = {
         {
           "id": "4",
           "label": "GASTOS ASOCIADOS PROD.",
+          "helpText": "Gastos indirectos de producción asignados proporcionalmente al gasto material.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -174,6 +179,7 @@ const template: CostSheetDataContract = {
         {
           "id": "10",
           "label": "GASTOS TRIBUTARIOS",
+          "helpText": "Contribución a la Seguridad Social (14%) e Impuesto sobre la Fuerza de Trabajo (5%).",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [

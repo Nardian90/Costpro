@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef, memo } from 'react';
+import React, { useState, useRef, useMemo, memo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,9 @@ import {
   ChevronUp,
   ChevronDown,
   XCircle,
-  Settings2
+  Settings2,
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -35,11 +37,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn, formatAccounting } from '@/lib/utils';
-import { isResultRow } from '@/lib/cost-engine/constants';
 import { FormulaEditor } from './FormulaEditor';
 import { toast } from 'sonner';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
-import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
+import { exportSectionToExcel } from '@/services/excel-service';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import type {
   CostSheetSection,
@@ -47,17 +48,13 @@ import type {
   CostSheetAnnex,
   CalculatedRowValue
 } from '@/types/cost-sheet';
-import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import { useCellEditor, useFormulaSuggestions, getRowDiagnostics } from '@/hooks/logic/useCellEditor';
+import type { CostSheetFlatTableProps, StorePath } from './cost-sheet-view-shared';
+import { handleImportSectionExcel } from './cost-sheet-view-shared';
 
-// ── Types ────────────────────────────────────────────────────────────
+// ── Types (extended locally) ─────────────────────────────────────────
 
 type CalculatedValues = Record<string, CalculatedRowValue>;
-
-interface CostSheetFlatTableProps {
-  sections: CostSheetSection[];
-  calculatedValues: CalculatedValues;
-  annexes: CostSheetAnnex[];
-}
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -73,6 +70,8 @@ interface FlatRow {
   sectionId: string;
   fullPath: (string | number)[];
   isSectionHeader: false;
+  /** The row.id of the nearest ancestor parent row (for collapse tracking) */
+  parentRowId?: string;
 }
 
 interface SectionDivider {
@@ -104,7 +103,7 @@ function buildFlatList(sections: CostSheetSection[]): FlatItem[] {
     });
 
     // Rows
-    const addRows = (rows: CostSheetRow[], level: number, parentNumbering: string, basePath: (string | number)[]) => {
+    const addRows = (rows: CostSheetRow[], level: number, parentNumbering: string, basePath: (string | number)[], parentRowId?: string) => {
       rows.forEach((row, rIdx) => {
         globalIdx++;
         const numbering = parentNumbering
@@ -121,11 +120,12 @@ function buildFlatList(sections: CostSheetSection[]): FlatItem[] {
           sectionLabel: section.label || '',
           sectionId: section.id,
           fullPath: [...basePath, rIdx],
-          isSectionHeader: false
+          isSectionHeader: false,
+          parentRowId: parentRowId
         });
 
         if (row.children && row.children.length > 0) {
-          addRows(row.children, level + 1, numbering, [...basePath, rIdx, 'children']);
+          addRows(row.children, level + 1, numbering, [...basePath, rIdx, 'children'], row.id);
         }
       });
     };
@@ -159,7 +159,10 @@ const SectionDividerRow: React.FC<{
   isCollapsed: boolean;
   onToggle: () => void;
   sectionColorIdx: number;
-}> = ({ divider, isCollapsed, onToggle, sectionColorIdx }) => {
+  section?: CostSheetSection;
+  calculatedValues?: CalculatedValues;
+  onOpenActions?: () => void;
+}> = ({ divider, isCollapsed, onToggle, sectionColorIdx, section, calculatedValues, onOpenActions }) => {
   const bgColors = [
     'bg-primary/5',
     'bg-violet-500/5',
@@ -177,6 +180,37 @@ const SectionDividerRow: React.FC<{
     'border-l-cyan-500/40',
   ];
 
+  // Compute active items and % of total costs
+  let activeItems = 0;
+  let sectionTotal = 0;
+  let totalCosts = 0; // Section 12.1
+  let helpText: string | undefined;
+
+  if (section && calculatedValues) {
+    const countActive = (rows: CostSheetRow[]) => {
+      rows.forEach(r => {
+        const hasData = (r.valorHistorico && r.valorHistorico > 0) || r.totalFormula || r.formula || r.vhFormula;
+        if (hasData && !r.children?.length) activeItems++;
+        if (r.children?.length) countActive(r.children);
+      });
+    };
+    countActive(section.rows || []);
+
+    // Get section total and helpText from first root row
+    const rootRow = section.rows?.[0];
+    if (rootRow) {
+      sectionTotal = calculatedValues[rootRow.id]?.total ?? 0;
+      helpText = rootRow.helpText || undefined;
+    }
+
+    // Get total costs (section 12.1 = row id "12.1")
+    totalCosts = calculatedValues['12.1']?.total ?? 0;
+  }
+
+  const pctTotal = totalCosts > 0 && sectionTotal > 0
+    ? ((sectionTotal / totalCosts) * 100).toFixed(1)
+    : null;
+
   return (
     <TableRow className={cn(
       "h-8 border-y border-border/30 group hover:bg-primary/5 transition-colors cursor-pointer",
@@ -192,10 +226,26 @@ const SectionDividerRow: React.FC<{
           <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">
             {divider.label}
           </span>
-          <span className="text-[9px] text-muted-foreground/60 font-mono ml-2">
-            ({divider.rowCount} conceptos)
+          <span className="text-[9px] text-muted-foreground/60 font-mono ml-1">
+            ({divider.rowCount} conceptos
+            {activeItems > 0 && <span className="text-emerald-500/80"> · {activeItems} activos</span>})
           </span>
-          <Settings2 className="w-3 h-3 text-muted-foreground/30 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+          {pctTotal !== null && (
+            <span className={cn(
+              "text-[9px] font-mono ml-1 px-1.5 py-0 rounded-full",
+              parseFloat(pctTotal) > 20
+                ? "bg-primary/10 text-primary font-bold"
+                : "bg-muted/50 text-muted-foreground/60"
+            )}>
+              {pctTotal}%
+            </span>
+          )}
+          {helpText && (
+            <TTip term="Ayuda de sección" description={helpText}>
+              <HelpCircle className="w-3 h-3 text-primary/40 ml-1 shrink-0 cursor-help" />
+            </TTip>
+          )}
+          <Settings2 className="w-3 h-3 text-muted-foreground/30 ml-auto opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onOpenActions?.(); }} />
         </div>
       </TableCell>
     </TableRow>
@@ -210,11 +260,13 @@ interface DataRowProps {
   annexes: CostSheetAnnex[];
   suggestions: { label: string; value: string; description?: string }[];
   allSections: CostSheetSection[];
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onNavigateToAnnex?: (annexId: string) => void;
 }
 
-const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes, suggestions, allSections }) => {
+const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes, suggestions, allSections, isExpanded, onToggleExpand, onNavigateToAnnex }) => {
   const { row, level, numbering, sectionIndex, rowIndexInSection, globalIndex, sectionId } = item;
-  const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -225,42 +277,30 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
+  const { setField, saveVH, saveTotal, applySuggested } = useCellEditor();
 
   const path = item.fullPath;
   const hasChildren = row.children && row.children.length > 0;
-  const isRowPercent = row.isPercent ?? row.is_percent;
-  const isResult = isResultRow(String(row.id)) || isRowPercent;
-  const calculated = calculatedValues?.[row.id] || {} as CalculatedRowValue;
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
-  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !isRowPercent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const { isRowPercent, isResult, safeCalculated, criticalErrors, hasEngineWarnings } = getRowDiagnostics(row, calculatedValues?.[row.id] ?? null);
 
-  const handleValueChange = (field: string, val: string | number | boolean | null) => {
-    updateValue([...path, field], val);
-  };
+  const handleVHSave = (val: string) => { saveVH(path, val); setIsEditingVH(false); };
+  const handleTotalSave = (val: string) => { saveTotal(path, row, val); setIsEditingTotal(false); };
 
-  const handleVHSave = (val: string) => {
-    if (val.startsWith('=')) {
-      handleValueChange('vhFormula', val);
-      handleValueChange('valorHistorico', 0);
-    } else {
-      handleValueChange('vhFormula', null);
-      handleValueChange('valorHistorico', parseFloat(val) || 0);
+  // Detect annex reference in formula (e.g. =AnexoI, =TotalAnexoIII)
+  const annexMatch = React.useMemo(() => {
+    const raw = (row.totalFormula || row.formula || row.vhFormula || '').replace(/^=\s*/, '').trim();
+    const m = raw.match(/^(Total)?[Aa]nexo([IVXLC]+)$/i);
+    if (m) return m[2]; // annex ID
+    // Also check calculationMethod
+    if (row.calculationMethod === 'ANEXO' || row.calculationMethod === 'ANEXO_REF') {
+      const ref = row.baseDeCalculoRef || '';
+      const rm = ref.match(/^(Total)?[Aa]nexo([IVXLC]+)$/i);
+      if (rm) return rm[2];
     }
-    setIsEditingVH(false);
-  };
+    return null;
+  }, [row.totalFormula, row.formula, row.vhFormula, row.calculationMethod, row.baseDeCalculoRef]);
 
-  const handleTotalSave = (val: string) => {
-    if (val.startsWith('=')) {
-      handleValueChange('formula', val);
-      handleValueChange('totalFormula', val);
-    } else {
-      handleValueChange('formula', null);
-      handleValueChange('totalFormula', null);
-      handleValueChange('total', parseFloat(val) || 0);
-    }
-    setIsEditingTotal(false);
-  };
+  const annexRef = annexMatch ? annexes.find(a => a.id === annexMatch) : null;
 
   return (
     <>
@@ -288,7 +328,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
           <div className="flex items-center gap-1 min-w-0 group/row">
             {hasChildren ? (
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
                 className="p-0.5 rounded hover:bg-primary/10 shrink-0"
                 type="button"
                 aria-label={isExpanded ? `Contraer ${row.label}` : `Expandir ${row.label}`}
@@ -306,12 +346,12 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
                 defaultValue={row.label}
                 aria-label={`Nombre del concepto ${row.label}`}
                 onBlur={(e) => {
-                  handleValueChange('label', e.target.value);
+                  setField(path, 'label', e.target.value);
                   setIsEditingLabel(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleValueChange('label', (e.target as HTMLInputElement).value);
+                    setField(path, 'label', (e.target as HTMLInputElement).value);
                     setIsEditingLabel(false);
                   }
                   if (e.key === 'Escape') setIsEditingLabel(false);
@@ -329,6 +369,20 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               </span>
             )}
 
+            {/* Annex navigation link */}
+            {annexRef && onNavigateToAnnex && (
+              <TTip term={`Ir al Anexo ${annexRef.id}`} description={`Abrir ${annexRef.title} (${annexRef.id})`}>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onNavigateToAnnex(annexRef.id); }}
+                  className="p-0.5 rounded hover:bg-amber-500/10 shrink-0 text-amber-600/70 hover:text-amber-600 transition-colors"
+                  aria-label={`Ir al Anexo ${annexRef.id}: ${annexRef.title}`}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </TTip>
+            )}
+
             {/* Actions (hover reveal) */}
             <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0">
               <Button variant="ghost" size="icon" type="button" className="h-5 w-5 text-muted-foreground hover:bg-primary/10 hover:text-primary" onClick={() => reorderMainRow(path, 'up')} aria-label={`Subir ${row.label}`}>
@@ -337,6 +391,11 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               <Button variant="ghost" size="icon" type="button" className="h-5 w-5 text-muted-foreground hover:bg-primary/10 hover:text-primary" onClick={() => reorderMainRow(path, 'down')} aria-label={`Bajar ${row.label}`}>
                 <ChevronDown className="h-3 w-3" />
               </Button>
+              <TTip term="Restablecer Fórmula" description="Restaura la fórmula original de la Plantilla Nueva Ficha para esta fila">
+                <Button variant="ghost" size="icon" type="button" className="h-5 w-5 text-violet-500 hover:bg-violet-500/10" onClick={() => applySuggested(row.id, path)} aria-label={`Restablecer fórmula de ${row.label}`}>
+                  <Wand2 className="h-3 w-3" />
+                </Button>
+              </TTip>
               <Button variant="ghost" size="icon" type="button" className="h-5 w-5 text-primary hover:bg-primary/10" onClick={() => addMainRow([...path, 'children'])} aria-label={`Agregar fila a ${row.label}`}>
                 <Plus className="h-3 w-3" />
               </Button>
@@ -357,8 +416,8 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               autoFocus
               className="h-5 text-[9px] px-0.5 py-0 text-center font-mono"
               defaultValue={row.um || row.unit || "Pesos"}
-              onBlur={(e) => { handleValueChange("um", e.target.value); setIsEditingUM(false); }}
-              onKeyDown={(e) => { if (e.key === "Enter") { handleValueChange("um", (e.target as HTMLInputElement).value); setIsEditingUM(false); } if (e.key === "Escape") setIsEditingUM(false); }}
+              onBlur={(e) => { setField(path, "um", e.target.value); setIsEditingUM(false); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { setField(path, "um", (e.target as HTMLInputElement).value); setIsEditingUM(false); } if (e.key === "Escape") setIsEditingUM(false); }}
             />
           ) : (
             row.um || row.unit || "Pesos"
@@ -404,7 +463,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
+              initialValue={row.formula || row.totalFormula || String(safeCalculated.total ?? 0)}
               onSave={handleTotalSave}
               onCancel={() => setIsEditingTotal(false)}
               suggestions={suggestions}
@@ -447,9 +506,11 @@ DataRow.displayName = 'FlatDataRow';
 const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
   sections,
   calculatedValues,
-  annexes
+  annexes,
+  onNavigateToAnnex
 }) => {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedRows, setCollapsedRows] = useState<Record<string, boolean>>({});
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection; index: number } | null>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
 
@@ -458,65 +519,53 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainSection = useCostSheetStore(state => state.removeMainSection);
 
-  const handleImportSectionExcel = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const rows = await importSectionFromExcel(file);
-      updateValue(['sections', index, 'rows'], rows);
-      toast.success('Sección importada correctamente');
-    } catch (err) {
-      toast.error('Error al importar sección');
-      console.error(err);
-    }
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    void handleImportSectionExcel(e, index, sections, updateValue);
   };
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
+  const toggleRow = (rowId: string) => {
+    setCollapsedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
+  };
+
   // Build flat list
   const flatItems = useMemo(() => buildFlatList(sections), [sections]);
 
-  // Filter out collapsed sections
+  // Filter out collapsed sections and collapsed rows
   const visibleItems = useMemo(() => {
     const result: FlatItem[] = [];
     let skipUntilNextDivider = false;
+    // Track which ancestor rows are collapsed
+    const collapsedAncestors = new Set<string>();
+
     for (const item of flatItems) {
       if (item.isSectionHeader) {
         skipUntilNextDivider = !!collapsedSections[item.sectionId];
+        collapsedAncestors.clear();
         result.push(item);
         continue;
       }
-      if (!skipUntilNextDivider) result.push(item);
+      if (skipUntilNextDivider) continue;
+
+      // Check if any ancestor is collapsed
+      if (item.parentRowId && collapsedAncestors.has(item.parentRowId)) continue;
+
+      result.push(item);
+
+      // If this row has children and is collapsed, add to ancestors set
+      const rowItem = item as FlatRow;
+      if (rowItem.row?.children?.length && collapsedRows[rowItem.row.id]) {
+        collapsedAncestors.add(rowItem.row.id);
+      }
     }
     return result;
-  }, [flatItems, collapsedSections]);
+  }, [flatItems, collapsedSections, collapsedRows]);
 
   // Formula suggestions
-  const suggestions = useMemo(() => {
-    const list: { label: string; value: string; description?: string }[] = [
-      ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
-    ];
-    sections.forEach(s => {
-      s.rows.forEach(r => {
-        list.push({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label });
-        list.push({ label: `VH ${r.id}`, value: `vh('${r.id}')`, description: `VH de ${r.label}` });
-        if (r.children) {
-          r.children.forEach(c => {
-            list.push({ label: `Fila ${c.id}`, value: `ref('${c.id}')`, description: c.label });
-            list.push({ label: `VH ${c.id}`, value: `vh('${c.id}')`, description: `VH de ${c.label}` });
-          });
-        }
-      });
-    });
-    list.push(
-      { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
-      { label: 'PCT', value: 'PCT(', description: 'Porcentaje de un valor' },
-      { label: 'hijos', value: 'hijos', description: 'Referencia a filas hijas' }
-    );
-    return list;
-  }, [sections, annexes]);
+  const suggestions = useFormulaSuggestions(sections, annexes);
 
   const totalRows = flatItems.filter(i => !i.isSectionHeader).length;
 
@@ -571,6 +620,9 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
                       isCollapsed={!!collapsedSections[item.sectionId]}
                       onToggle={() => toggleSection(item.sectionId)}
                       sectionColorIdx={item.sectionIndex}
+                      section={sections[item.sectionIndex]}
+                      calculatedValues={calculatedValues}
+                      onOpenActions={() => setActiveSectionForActions({ section: sections[item.sectionIndex], index: item.sectionIndex })}
                     />
                   );
                 }
@@ -583,6 +635,9 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
                     annexes={annexes}
                     suggestions={suggestions}
                     allSections={sections}
+                    isExpanded={!collapsedRows[item.row.id]}
+                    onToggleExpand={() => toggleRow(item.row.id)}
+                    onNavigateToAnnex={onNavigateToAnnex}
                   />
                 );
               })}
@@ -600,7 +655,7 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
         aria-label="Importar sección desde archivo Excel"
         onChange={(e) => {
           if (importingSectionIndex !== null) {
-            handleImportSectionExcel(e, importingSectionIndex);
+            handleImport(e, importingSectionIndex);
             setImportingSectionIndex(null);
           }
         }}

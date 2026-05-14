@@ -2,6 +2,7 @@
 
 const template: any = {
   "header": {
+    "resolution": "Res 148/2023",
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "name": "Plantilla de Reinicio",
     "date": "2026-02-26",
@@ -28,6 +29,7 @@ const template: any = {
         {
           "id": "1",
           "label": "GASTO MATERIAL",
+          "helpText": "Incluye todos los materiales primarios, combustibles, energía y agua consumidos directamente en la producción. Se nutre del Anexo I.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -72,6 +74,7 @@ const template: any = {
         {
           "id": "2",
           "label": "SALARIO DIRECTO",
+          "helpText": "Salarios de obreros vinculados directamente a la producción. Incluye vacaciones. Se nutre del Anexo II.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -105,6 +108,7 @@ const template: any = {
         {
           "id": "3",
           "label": "OTROS GASTOS DIRECTOS",
+          "helpText": "Depreciación de equipos, mantenimiento, servicios contratados, protección, alquileres, alimentación y dietas. Se nutre de los Anexos III, IV y V.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -206,6 +210,7 @@ const template: any = {
         {
           "id": "4",
           "label": "GASTOS ASOCIADOS PROD.",
+          "helpText": "Gastos indirectos de producción asignados proporcionalmente al gasto material. Incluye salarios indirectos y otros gastos.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -235,6 +240,7 @@ const template: any = {
         {
           "id": "5",
           "label": "COSTO TOTAL (1+2+3+4)",
+          "helpText": "Suma de todos los costos directos y gastos asociados a la producción. Base para calcular gastos generales.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(ref('1'), ref('2'), ref('3'), ref('4'))"
         }
@@ -247,6 +253,7 @@ const template: any = {
         {
           "id": "6",
           "label": "GTOS. GRALES Y ADMÓN.",
+          "helpText": "Gastos generales y de administración: salarios administrativos, comunicación, depreciación, energía y otros gastos. Prorrateados por VH del gasto material.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -366,6 +373,7 @@ const template: any = {
         {
           "id": "10",
           "label": "GASTOS TRIBUTARIOS",
+          "helpText": "Contribución a la Seguridad Social (14%) e Impuesto sobre la Fuerza de Trabajo (5%). Aplica sobre los salarios de secciones 2, 4, 6 y 7.",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "children": [
@@ -423,6 +431,7 @@ const template: any = {
         {
           "id": "13.1",
           "label": "Utilidad",
+          "helpText": "Porcentaje de utilidad (30% por defecto según Res 148/2023) aplicado sobre el total de costos y gastos. Editable según política de la entidad.",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12.1') * 0.3",
           "baseRef": "12",

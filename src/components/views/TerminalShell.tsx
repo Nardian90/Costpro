@@ -53,8 +53,8 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
   );
 }
 
-const OCCView = dynamic(() => import('@/components/views/terminal/views/dashboard/OCCView'), { ssr: false });
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
+const OCCView = dynamic(() => import('@/components/views/terminal/views/dashboard/OCCView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
 const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
 const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
@@ -111,11 +111,6 @@ export default function TerminalShell() {
 
   useKeyboardShortcuts();
 
-  // Force 'occ' as the landing view on initial mount
-  useEffect(() => {
-    setCurrentView('occ');
-  }, []);
-
   useEffect(() => {
     const handler = () => setShowKeyboardHelp(prev => !prev);
     window.addEventListener('toggle-keyboard-help', handler);
@@ -151,6 +146,9 @@ export default function TerminalShell() {
   }, [loading, user, router, queryClient, status]);
 
   useEffect(() => {
+    if (user?.role === 'costo' && (currentView as any) === 'dashboard') {
+      setCurrentView('cost-sheets');
+    }
   }, [user, currentView, setCurrentView]);
 
   if (loading) {
@@ -213,7 +211,7 @@ export default function TerminalShell() {
 
   const renderView = (view: ViewType) => {
     switch (view) {
-        case 'dashboard': return <ViewErrorBoundary viewName="Executive Dashboard"><DashboardView /></ViewErrorBoundary>;
+        case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Pick3 Intelligence"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
@@ -242,7 +240,7 @@ export default function TerminalShell() {
         case 'wiki': return <ViewErrorBoundary viewName="Wiki"><WikiView /></ViewErrorBoundary>;
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
         case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
-        case 'occ': return <ViewErrorBoundary viewName="Centro de Control (OCC)"><OCCView /></ViewErrorBoundary>;
+        case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
         default: return (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">

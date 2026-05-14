@@ -42,7 +42,7 @@ export interface CostRow {
   formula?: string | null;          // expresión segura para FORMULA
   totalFormula?: string | null;     // UI total formula override
   fuente?: string;                  // texto explicativo
-  metadata?: Record<string, any>;   // audit rules, base legal, etc.
+  metadata?: Record<string, unknown>;   // audit rules, base legal, etc.
 }
 
 export interface CalculatedRow extends CostRow {
@@ -121,7 +121,7 @@ export interface ValidationError {
 export interface CalculationResult {
   fichaId: string;
   fichaName?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   rows: CalculatedRow[];
   anexos: Anexo[];
   audits: AuditEntry[];

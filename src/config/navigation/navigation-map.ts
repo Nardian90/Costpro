@@ -54,12 +54,13 @@ const IPV_ROUTES: Record<string, ModuleRoute> = {
 // Costos Module: sidebar IDs → cost-sheets view + internal section
 // ────────────────────────────────────────────────────────────────
 const COSTOS_ROUTES: Record<string, ModuleRoute> = {
-  'cost-sheets':      { type: 'module', view: 'cost-sheets', tab: 'templates' },
+  'cost-sheets':      { type: 'module', view: 'cost-sheets', tab: 'main' },
   'view-assisted':    { type: 'module', view: 'cost-sheets', tab: 'view-assisted' },
   'view-reading':     { type: 'module', view: 'cost-sheets', tab: 'view-reading' },
   'gen-quick':        { type: 'module', view: 'cost-sheets', tab: 'gen-quick' },
   'gen-expert':       { type: 'module', view: 'cost-sheets', tab: 'gen-expert' },
   'templates':        { type: 'module', view: 'cost-sheets', tab: 'templates' },
+  'arena-fc':         { type: 'module', view: 'cost-sheets', tab: 'arena-fc' },
   'tool-import':      { type: 'module', view: 'cost-sheets', tab: 'tool-import' },
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },
@@ -271,12 +272,13 @@ export function getBreadcrumbForView(
     }
   } else if (currentView === 'cost-sheets' && activeCostSection) {
     const COSTOS_ROUTES = {
-      'cost-sheets': { tab: 'templates' },
+      'cost-sheets': { tab: 'main' },
       'view-assisted': { tab: 'view-assisted' },
       'view-reading': { tab: 'view-reading' },
       'gen-quick': { tab: 'gen-quick' },
       'gen-expert': { tab: 'gen-expert' },
       templates: { tab: 'templates' },
+      'arena-fc': { tab: 'arena-fc' },
       'tool-import': { tab: 'tool-import' },
       'tool-save': { tab: 'tool-save' },
       'tool-export-excel': { tab: 'tool-export-excel' },

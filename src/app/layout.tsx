@@ -109,8 +109,10 @@ export default async function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
-        {/* FIX-INF-005: Supabase preconnect — no hardcoded fallback */}
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
+        {/* FIX-INF-005: Supabase preconnect — only render when URL is defined */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        )}
         {/* safe: static structured data, no user input */}
         <script
           nonce={nonce}

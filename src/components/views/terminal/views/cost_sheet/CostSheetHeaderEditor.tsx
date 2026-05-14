@@ -3,235 +3,304 @@
 import React, { useState } from 'react';
 import type { CostSheetHeader } from '@/types/cost-sheet';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useExpertModeState } from '@/hooks/ui/useExpertModeState';
 import { cn } from '@/lib/utils';
-import {
-  ChevronDown,
-  ChevronUp,
-  ClipboardEdit,
-  Tag,
-  Settings2,
-  Building2,
-  TrendingUp,
-  HelpCircle,
-  Hash,
-  Globe,
-  Briefcase,
-  Users,
-  Target,
-  DollarSign,
-  Info
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+
+// ── Types ───────────────────────────────────────────────────────────
 
 interface CostSheetHeaderEditorProps {
   header: CostSheetHeader;
   calculatedHeader?: Partial<CostSheetHeader>;
 }
 
-function SectionHeader({ icon: Icon, title, subtitle }: { icon: React.ComponentType<{ className?: string }>, title: string, subtitle: string }) {
-  return (
-    <div className="col-span-full flex items-center gap-4 mb-4 mt-6 first:mt-0">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-      <div className="flex items-center gap-2.5 px-4">
-        <Icon className="w-4 h-4 text-primary" />
-        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">{title}</span>
-      </div>
-      <div className="h-px flex-1 bg-gradient-to-r from-border/50 via-border/50 to-transparent" />
-    </div>
-  );
+interface FieldDef {
+  id: string;
+  label: string;
+  type?: 'text' | 'number' | 'select';
+  readonly?: boolean;
+  options?: string[];
 }
+
+interface FieldGroup {
+  title: string;
+  colorIdx: number;
+  fields: FieldDef[];
+}
+
+// ── Field Group Definitions ─────────────────────────────────────────
+
+const FIELD_GROUPS: FieldGroup[] = [
+  {
+    title: 'Identificación del Producto',
+    colorIdx: 0,
+    fields: [
+      { id: 'resolution', label: 'Resolución', type: 'select', options: ['Res 148/2023', 'Otra'] },
+      { id: 'code', label: 'Código' },
+      { id: 'name', label: 'Nombre Comercial' },
+    ],
+  },
+  {
+    title: 'Parámetros de Operación',
+    colorIdx: 1,
+    fields: [
+      { id: 'unit', label: 'Unidad de Medida' },
+      { id: 'quantity', label: 'Cantidad Base', type: 'number' },
+      { id: 'production_level', label: 'Nivel de Producción', type: 'number' },
+      { id: 'currency', label: 'Moneda' },
+      { id: 'capacity_utilization', label: '% Capacidad Instalada', readonly: true },
+    ],
+  },
+  {
+    title: 'Entorno Organizativo',
+    colorIdx: 2,
+    fields: [
+      { id: 'company', label: 'Empresa' },
+      { id: 'organism', label: 'Organismo' },
+      { id: 'union', label: 'Unión' },
+      { id: 'destination', label: 'Destino de Producción', type: 'select', options: ['producción', 'servicios'] },
+    ],
+  },
+  {
+    title: 'Comercialización',
+    colorIdx: 3,
+    fields: [
+      { id: 'client', label: 'Cliente Principal' },
+      { id: 'category', label: 'Categoría de Producto' },
+      { id: 'type', label: 'Tipo de Costo' },
+      { id: 'sale_price', label: 'Precio de Venta Sugerido' },
+    ],
+  },
+];
+
+// ── Color Palette (matching FlatTable) ──────────────────────────────
+
+const BG_COLORS = ['bg-primary/5', 'bg-violet-500/5', 'bg-amber-500/5', 'bg-emerald-500/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
+const BORDER_COLORS = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-amber-500/40', 'border-l-emerald-500/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
+
+// ── Group Divider Row ───────────────────────────────────────────────
+
+const GroupDividerRow: React.FC<{ group: FieldGroup; isCollapsed: boolean; onToggle: () => void }> = ({
+  group,
+  isCollapsed,
+  onToggle,
+}) => {
+  const bgColor = BG_COLORS[group.colorIdx % BG_COLORS.length];
+  const borderColor = BORDER_COLORS[group.colorIdx % BORDER_COLORS.length];
+
+  return (
+    <TableRow
+      className={cn(
+        'h-8 border-y border-border/30 group hover:bg-primary/5 transition-colors cursor-pointer',
+        bgColor
+      )}
+      onClick={onToggle}
+    >
+      <TableCell colSpan={3} className="px-3 py-1">
+        <div className="flex items-center gap-2">
+          <ChevronRight
+            className={cn(
+              'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
+              !isCollapsed && 'rotate-90'
+            )}
+          />
+          <div className={cn('w-0.5 h-4 rounded-full border-l-2', borderColor)} />
+          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">
+            {group.title}
+          </span>
+          <span className="text-[9px] text-muted-foreground/60 font-mono ml-2">
+            ({group.fields.length} campos)
+          </span>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────
 
 const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
   header,
-  calculatedHeader
+  calculatedHeader,
 }) => {
   const { updateValue } = useCostSheetStore();
-  const { expandedSections, toggleSection, setHelpContext } = useExpertModeState();
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [editingField, setEditingField] = useState<string | null>(null);
 
-  const isOpen = expandedSections.includes('header');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    updateValue(['header', name], value);
+  const toggleGroup = (groupTitle: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [groupTitle]: !prev[groupTitle] }));
   };
 
-  const renderField = (item: {
-    id: string;
-    label: string;
-    type?: string;
-    isFormula?: boolean;
-    readonly?: boolean;
-    options?: string[];
-    className?: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }) => {
-    const isEditing = focusedField === item.id;
-    const displayValue = (isEditing || !calculatedHeader)
-        ? (header?.[item.id] ?? '')
-        : (calculatedHeader?.[item.id] ?? header?.[item.id] ?? '');
-
-    const isFormula = String(header?.[item.id]).startsWith('=');
-    const Icon = item.icon;
-
-    return (
-      <div key={item.id} className={cn("space-y-1.5 group", item.className)}>
-        <label htmlFor={item.id} className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground flex items-center gap-1.5 px-1 group-focus-within:text-primary transition-colors">
-          {Icon && <Icon className="w-3 h-3" />}
-          {item.label}
-          {isFormula && !isEditing && <span className="ml-1 text-primary font-black animate-pulse text-[8px]">FX</span>}
-        </label>
-        <div className="relative">
-            {item.type === 'select' ? (
-              <select
-                id={item.id}
-                name={item.id}
-                value={displayValue}
-                onChange={(e) => {
-                  updateValue(['header', item.id], e.target.value);
-                }}
-                className={cn(
-                  "w-full px-4 py-2.5 text-sm font-semibold border rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm text-foreground bg-muted/10 border-border/50 hover:border-primary/30 appearance-none"
-                )}
-              >
-                <option value="">Seleccionar...</option>
-                {(item.options || []).map((opt: string) => (
-                  <option key={opt} value={opt} className="dark:bg-background">{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id={item.id}
-                name={item.id}
-                type={(isEditing || isFormula) ? 'text' : (item.type || 'text')}
-                value={displayValue}
-                onChange={handleChange}
-                onFocus={() => setFocusedField(item.id)}
-                onBlur={() => setFocusedField(null)}
-                readOnly={item.readonly}
-                aria-label={item.label}
-                className={cn(
-                  "w-full px-4 py-2.5 text-sm font-semibold border rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm",
-                  item.readonly
-                      ? "bg-muted/40 text-muted-foreground border-border/40 cursor-not-allowed"
-                      : "text-foreground bg-muted/10 border-border/50 hover:border-primary/30",
-                  isFormula && !isEditing && "text-primary dark:text-[currentColor] drop-shadow-[0_0_8px_hsl(var(--primary)/0.2)]"
-                )}
-              />
-            )}
-            {item.type === 'select' && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/50">
-                    <ChevronDown className="w-4 h-4" />
-                </div>
-            )}
-        </div>
-      </div>
-    );
+  const handleChange = (fieldId: string, value: string) => {
+    updateValue(['header', fieldId], value);
   };
+
+  const handleBlur = (fieldId: string, value: string, type?: string) => {
+    setEditingField(null);
+    // Convert number fields
+    if (type === 'number' && value !== '') {
+      const num = Number(value);
+      if (!isNaN(num)) {
+        updateValue(['header', fieldId], num);
+      }
+    }
+  };
+
+  const handleSelectChange = (fieldId: string, value: string) => {
+    updateValue(['header', fieldId], value);
+  };
+
+  let globalRowIndex = 0;
 
   return (
-    <div className="space-y-6">
-      <div className={cn(
-        "bg-card rounded-[2.5rem] border border-border overflow-hidden shadow-sm transition-all duration-300",
-        isOpen ? "ring-1 ring-primary/10 shadow-md" : "hover:border-primary/30"
-      )}>
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Configuración General"
-          className={cn(
-            "w-full px-8 py-6 flex items-center justify-between transition-colors group cursor-pointer",
-            isOpen ? "bg-muted/5" : "hover:bg-muted/30"
-          )}
-          onClick={() => toggleSection('header')}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection('header'); } }}
-        >
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "p-3 rounded-2xl transition-all duration-300",
-              isOpen ? "bg-primary text-primary-foreground scale-105 shadow-lg shadow-primary/20" : "bg-primary/5 text-primary"
-            )}>
-              <ClipboardEdit className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Configuración General</h3>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 opacity-70">Metadatos y Parámetros Operativos</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all "
-              onClick={(e) => {
-                e.stopPropagation();
-                setHelpContext('header');
-              }}
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Button>
-            <div className="p-2 rounded-xl bg-muted/10 group-hover:bg-primary/10 transition-colors">
-                {isOpen ? <ChevronUp className="w-4 h-4 text-primary" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-            </div>
-          </div>
-        </div>
+    <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card">
+      <div className="overflow-x-auto">
+        <Table className="w-full" style={{ borderSpacing: 0 }}>
+          {/* Column Header */}
+          <TableHeader className="sticky top-0 z-20">
+            <TableRow className="bg-muted/80 hover:bg-transparent border-b border-border/40 h-7">
+              <TableHead className="w-[40px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+                #
+              </TableHead>
+              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+                CAMPO
+              </TableHead>
+              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50">
+                VALOR
+              </TableHead>
+            </TableRow>
+          </TableHeader>
 
-        {isOpen && (
-          <div className="px-10 pb-10 space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-            {/* Group 1: Identificación */}
-            <div className="grid grid-cols-12 gap-x-8 gap-y-6">
-              <SectionHeader
-                icon={Tag}
-                title="Identificación del Producto"
-                subtitle=""
-              />
-              {renderField({ id: 'code', label: 'Código', className: 'col-span-12 md:col-span-3', icon: Hash })}
-              {renderField({ id: 'name', label: 'Nombre Comercial', className: 'col-span-12 md:col-span-9', icon: ClipboardEdit })}
-              {renderField({ id: 'description', label: 'Descripción Detallada', className: 'col-span-12', icon: Info })}
-            </div>
+          <TableBody>
+            {FIELD_GROUPS.map((group) => {
+              const isCollapsed = !!collapsedGroups[group.title];
+              const rows: React.ReactNode[] = [];
 
-            {/* Group 2: Parámetros de Operación */}
-            <div className="grid grid-cols-12 gap-x-8 gap-y-6">
-              <SectionHeader
-                icon={Settings2}
-                title="Parámetros de Operación"
-                subtitle=""
-              />
-              {renderField({ id: 'unit', label: 'Unidad de Medida', className: 'col-span-6 md:col-span-3', icon: Tag })}
-              {renderField({ id: 'quantity', label: 'Cantidad Base', className: 'col-span-6 md:col-span-3', icon: Hash })}
-              {renderField({ id: 'production_level', label: 'Nivel de Producción', type: 'number', className: 'col-span-6 md:col-span-3', icon: Target })}
-              {renderField({ id: 'currency', label: 'Moneda', className: 'col-span-6 md:col-span-3', icon: Globe })}
-              {renderField({ id: 'capacity_utilization', label: '% Capacidad Instalada', readonly: true, className: 'col-span-12 md:col-span-3', icon: TrendingUp })}
-            </div>
+              // Group divider
+              rows.push(
+                <GroupDividerRow
+                  key={`divider-${group.title}`}
+                  group={group}
+                  isCollapsed={isCollapsed}
+                  onToggle={() => toggleGroup(group.title)}
+                />
+              );
 
-            {/* Group 3: Entorno Organizativo */}
-            <div className="grid grid-cols-12 gap-x-8 gap-y-6">
-              <SectionHeader
-                icon={Building2}
-                title="Entorno Organizativo"
-                subtitle=""
-              />
-              {renderField({ id: 'company', label: 'Empresa', className: 'col-span-12 md:col-span-4', icon: Building2 })}
-              {renderField({ id: 'organism', label: 'Organismo', className: 'col-span-12 md:col-span-4', icon: Briefcase })}
-              {renderField({ id: 'union', label: 'Unión', className: 'col-span-12 md:col-span-4', icon: Users })}
-              {renderField({ id: 'destination', label: 'Destino de Producción', type: 'select', options: ['producción', 'servicios'], className: 'col-span-12 md:col-span-6', icon: Target })}
-            </div>
+              // Field rows (only if expanded)
+              if (!isCollapsed) {
+                group.fields.forEach((field) => {
+                  globalRowIndex++;
+                  const isEditing = editingField === field.id;
+                  const isFormula = String(header?.[field.id] ?? '').startsWith('=');
+                  const isReadonly = field.readonly;
+                  const isSelect = field.type === 'select';
 
-            {/* Group 4: Clasificación y Comercialización */}
-            <div className="grid grid-cols-12 gap-x-8 gap-y-6">
-              <SectionHeader
-                icon={TrendingUp}
-                title="Comercialización"
-                subtitle=""
-              />
-              {renderField({ id: 'client', label: 'Cliente Principal', className: 'col-span-12 md:col-span-4', icon: Users })}
-              {renderField({ id: 'category', label: 'Categoría de Producto', className: 'col-span-12 md:col-span-4', icon: Tag })}
-              {renderField({ id: 'type', label: 'Tipo de Costo', className: 'col-span-12 md:col-span-4', icon: Info })}
-              {renderField({ id: 'sale_price', label: 'Precio de Venta Sugerido', isFormula: true, className: 'col-span-12 md:col-span-6', icon: DollarSign })}
-            </div>
-          </div>
-        )}
+                  // Determine display value
+                  // When NOT editing: always prefer the calculated result (even for editable fields with formulas)
+                  let displayValue: string;
+                  let editRawValue: string;
+                  if (isReadonly && calculatedHeader?.[field.id] !== undefined) {
+                    displayValue = String(calculatedHeader[field.id] ?? '');
+                    editRawValue = displayValue;
+                  } else if (isFormula && calculatedHeader?.[field.id] !== undefined) {
+                    // Formula field with a computed result → show result, keep raw formula for editing
+                    displayValue = String(calculatedHeader[field.id] ?? '');
+                    editRawValue = String(header?.[field.id] ?? '');
+                  } else {
+                    displayValue = String(header?.[field.id] ?? '');
+                    editRawValue = displayValue;
+                  }
+
+                  rows.push(
+                    <TableRow
+                      key={field.id}
+                      className={cn(
+                        'h-7 text-[11px] transition-colors group border-b border-border/15',
+                        'hover:bg-primary/[0.03]',
+                        globalRowIndex % 2 === 0 && 'bg-muted/[0.15]'
+                      )}
+                    >
+                      {/* Row number */}
+                      <TableCell className="w-[40px] px-1.5 py-0 text-center text-[10px] font-mono text-muted-foreground/40 tabular-nums border-r border-border/15">
+                        {globalRowIndex}
+                      </TableCell>
+
+                      {/* Field label */}
+                      <TableCell className="px-1.5 py-0 font-bold uppercase tracking-wider text-muted-foreground text-[10px] border-r border-border/15 min-w-[180px]">
+                        {field.label}
+                      </TableCell>
+
+                      {/* Value */}
+                      <TableCell className="px-1.5 py-0 font-medium text-foreground text-[11px]">
+                        {isReadonly ? (
+                          <span className="text-muted-foreground tabular-nums">{displayValue}</span>
+                        ) : isSelect ? (
+                          <select
+                            value={displayValue}
+                            onChange={(e) => handleSelectChange(field.id, e.target.value)}
+                            className="h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors appearance-none cursor-pointer text-foreground font-medium"
+                            aria-label={field.label}
+                          >
+                            <option value="">Seleccionar...</option>
+                            {(field.options || []).map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : isEditing ? (
+                          <Input
+                            autoFocus
+                            className={cn(
+                              'h-6 text-[11px] px-1.5 py-0 border-primary/40 bg-background',
+                              isFormula && 'text-primary'
+                            )}
+                            value={editRawValue}
+                            onChange={(e) => handleChange(field.id, e.target.value)}
+                            onBlur={(e) => handleBlur(field.id, e.target.value, field.type)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleBlur(field.id, editRawValue, field.type);
+                              if (e.key === 'Escape') setEditingField(null);
+                            }}
+                            aria-label={field.label}
+                          />
+                        ) : (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            className={cn(
+                              'truncate cursor-text hover:text-primary transition-colors flex items-center gap-1',
+                              isFormula && 'text-primary'
+                            )}
+                            onClick={() => !isReadonly && setEditingField(field.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                if (!isReadonly) setEditingField(field.id);
+                              }
+                            }}
+                          >
+                            {displayValue || (
+                              <span className="text-muted-foreground/30 italic">—</span>
+                            )}
+                            {isFormula && (
+                              <span className="shrink-0 text-[8px] font-black text-primary bg-primary/10 px-1.5 py-0 rounded uppercase tracking-wider animate-pulse">
+                                FX
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
+              }
+
+              return rows;
+            })}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

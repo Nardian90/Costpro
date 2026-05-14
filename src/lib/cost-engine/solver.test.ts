@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { solveCoefficient, solveForTarget } from './solver';
 import { CostSheetData } from '@/types/cost-sheet';
-import templateLavar from '../data/template-lavar';
-import { mapUIToFicha } from './mapper';
-import { calculateFicha } from './index';
 
 const BASE_HEADER = {
   code: 'TEST',

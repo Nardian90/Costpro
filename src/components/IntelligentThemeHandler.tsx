@@ -9,6 +9,7 @@ export type UIMode = 'performance' | 'enhanced';
 
 const STORAGE_KEY = 'costpro-ui-storage';
 const MODE_KEY = 'costpro-mode';
+const MANUAL_OVERRIDE_KEY = 'costpro-mode-manual-override';
 
 /**
  * IntelligentThemeHandler
@@ -41,6 +42,12 @@ export default function IntelligentThemeHandler() {
     }
   }, []);
 
+  /** Check if user has manually overridden mode */
+  const hasManualOverride = useCallback((): boolean => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(MANUAL_OVERRIDE_KEY) === 'true';
+  }, []);
+
   /** Apply mode class to <html> */
   const applyMode = useCallback((mode: UIMode) => {
     const html = document.documentElement;
@@ -66,10 +73,25 @@ export default function IntelligentThemeHandler() {
     } catch {}
 
     // 2. Initialize mode
-    // Priority: prefers-reduced-motion > stored preference > default (enhanced)
-    if (prefersReducedMotion()) {
-      applyMode('performance');
-      localStorage.setItem(MODE_KEY, 'performance');
+    // Priority: manual override > stored preference > default (enhanced)
+    // Note: prefers-reduced-motion only sets the INITIAL default for new users,
+    //       but manual toggle always takes precedence.
+    if (hasManualOverride()) {
+      const storedMode = getStoredMode();
+      if (storedMode) {
+        applyMode(storedMode);
+      } else {
+        applyMode('enhanced');
+        localStorage.setItem(MODE_KEY, 'enhanced');
+      }
+    } else if (prefersReducedMotion()) {
+      const storedMode = getStoredMode();
+      if (storedMode) {
+        applyMode(storedMode);
+      } else {
+        applyMode('performance');
+        localStorage.setItem(MODE_KEY, 'performance');
+      }
     } else {
       const storedMode = getStoredMode();
       if (storedMode) {
@@ -82,10 +104,13 @@ export default function IntelligentThemeHandler() {
     }
 
     // 3. Listen for prefers-reduced-motion changes
+    //    Only auto-switch if user hasn't manually overridden
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const handleMotionChange = (e: MediaQueryListEvent) => {
+      if (hasManualOverride()) return; // User chose manually, respect their choice
       if (e.matches) {
         applyMode('performance');
+        localStorage.setItem(MODE_KEY, 'performance');
       } else {
         const stored = getStoredMode();
         applyMode(stored || 'enhanced');
@@ -94,7 +119,7 @@ export default function IntelligentThemeHandler() {
 
     motionQuery.addEventListener('change', handleMotionChange);
     return () => motionQuery.removeEventListener('change', handleMotionChange);
-  }, [mounted, applyMode, getStoredMode, prefersReducedMotion]);
+  }, [mounted, applyMode, getStoredMode, hasManualOverride, prefersReducedMotion]);
 
   // ── Sync resolved theme on mount ──
   useEffect(() => {
@@ -118,8 +143,8 @@ export function toggleUIMode(): UIMode {
   html.classList.remove('mode-performance', 'mode-enhanced');
   html.classList.add(`mode-${next}`);
   
-  // Respect manual override over prefers-reduced-motion
-  
+  // Mark that user has manually chosen — takes priority over OS preference
+  localStorage.setItem(MANUAL_OVERRIDE_KEY, 'true');
   localStorage.setItem(MODE_KEY, next);
   return next;
 }
@@ -127,8 +152,13 @@ export function toggleUIMode(): UIMode {
 /** Utility: Get current mode */
 export function getCurrentUIMode(): UIMode {
   if (typeof window === 'undefined') return 'enhanced';
-  const stored = localStorage.getItem(MODE_KEY) as UIMode | null;
-  if (stored) return stored;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'performance';
-  return 'enhanced';
+  // If user manually toggled, always respect their choice
+  if (localStorage.getItem(MANUAL_OVERRIDE_KEY) === 'true') {
+    return (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
+  }
+  // Otherwise, respect OS preference as initial default
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return (localStorage.getItem(MODE_KEY) as UIMode) || 'performance';
+  }
+  return (localStorage.getItem(MODE_KEY) as UIMode) || 'enhanced';
 }

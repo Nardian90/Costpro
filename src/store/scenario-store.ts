@@ -66,8 +66,8 @@ const extractValuesFromSections = (sections: CostSheetSection[]): ScenarioValues
       rows.forEach(row => {
         values[row.id] = {
           valorHistorico: row.valorHistorico,
-          totalFormula: (row.totalFormula === 'undefined' ? '' : row.totalFormula) ?? undefined,
-          vhFormula: (row.vhFormula === 'undefined' ? '' : row.vhFormula) ?? undefined,
+          totalFormula: row.totalFormula ?? undefined,
+          vhFormula: row.vhFormula ?? undefined,
           coeficiente: row.coeficiente,
           baseDeCalculoRef: row.baseDeCalculoRef ?? undefined
         };
@@ -85,7 +85,7 @@ export const useScenarioStore = create<ScenarioState>()(
       activeScenarioIds: ['v1'],
       isComparisonMode: false,
       isParallelMode: false,
-      isFlatMode: false,
+      isFlatMode: true,
 
       initializeScenarios: () => {
         const { data, updateValues } = useCostSheetStore.getState();
@@ -240,8 +240,8 @@ export const useScenarioStore = create<ScenarioState>()(
                 if (values[row.id]) {
                   const v = values[row.id];
                   if (v.valorHistorico !== undefined) row.valorHistorico = v.valorHistorico;
-                  if (v.totalFormula !== undefined) row.totalFormula = v.totalFormula === 'undefined' ? '' : v.totalFormula;
-                  if (v.vhFormula !== undefined) row.vhFormula = v.vhFormula === 'undefined' ? '' : v.vhFormula;
+                  if (v.totalFormula !== undefined) row.totalFormula = v.totalFormula;
+                  if (v.vhFormula !== undefined) row.vhFormula = v.vhFormula;
                   if (v.coeficiente !== undefined) row.coeficiente = v.coeficiente;
                   if (v.baseDeCalculoRef !== undefined) row.baseDeCalculoRef = v.baseDeCalculoRef;
                 }
@@ -338,6 +338,10 @@ export const mergeScenarioValues = (baseData: CostSheetData, scenarioId: Scenari
             if (v.vhFormula !== undefined) row.vhFormula = v.vhFormula;
             if (v.coeficiente !== undefined) row.coeficiente = v.coeficiente;
             if (v.baseDeCalculoRef !== undefined) row.baseDeCalculoRef = v.baseDeCalculoRef;
+            if (v.total !== undefined) row.total = v.total;
+            if (v.calculationMethod !== undefined) row.calculationMethod = v.calculationMethod;
+            if (v.formula !== undefined) row.formula = v.formula;
+            if (v.isPercent !== undefined) row.isPercent = v.isPercent;
           }
           if (row.children) processRows(row.children);
         });

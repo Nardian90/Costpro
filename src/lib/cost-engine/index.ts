@@ -20,7 +20,6 @@ interface FormulaContext {
   COEF: number;
   QUANTITY: number | string;
   cantidad: number | string;
-  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -31,7 +30,6 @@ interface VHFormulaContext {
   VH: number;
   QUANTITY: number | string;
   cantidad: number | string;
-  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -40,11 +38,13 @@ interface VHFormulaContext {
 
 
 
-const safeDecimal = (val: any) => {
+const safeDecimal = (val: unknown) => {
     const n = parseFloat(String(val));
     return new Decimal(isNaN(n) ? 0 : n);
 };
-export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
+
+// extractDependencies is only used internally by validateFicha and calculateFicha.
+function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
 
   const extractFromFormula = (formula: string) => {
@@ -700,6 +700,15 @@ const ruleOverride = activeRules[0];
               : formulaToUse;
 
             const formulaStr = smartTranslate(formulaStrRaw || '0', knownIds, knownClasses);
+
+            // ── DEBUG: Log formula resolution for annex references ──
+            if (/anexo/i.test(formulaStrRaw || '')) {
+              console.log(`[COST-ENGINE] FORMULA row=${row.id} (${row.classification}) formulaRaw="${formulaStrRaw}" translated="${formulaStr}" formaCalculo=${formaCalculoToUse}`);
+              console.log(`[COST-ENGINE]   ficha.anexos=${ficha.anexos.map(a => a.id).join(',')}`);
+              console.log(`[COST-ENGINE]   annexTotals=${JSON.stringify(Object.fromEntries(annexTotals))}`);
+              console.log(`[COST-ENGINE]   row.classification="${row.classification}" baseCalculo=`, row.baseCalculo);
+            }
+
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
@@ -722,7 +731,6 @@ const ruleOverride = activeRules[0];
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
-                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -764,6 +772,12 @@ const ruleOverride = activeRules[0];
                     context[`Total${roman}`] = totalVal;
                 }
             });
+
+            // ── DEBUG: Log context values for annex formulas ──
+            if (/anexo/i.test(formulaStrRaw || '')) {
+              const anexoKeys = Object.keys(context).filter(k => /anexo|ANEXO/i.test(k));
+              console.log(`[COST-ENGINE]   context annex keys:`, Object.fromEntries(anexoKeys.map(k => [k, context[k]])));
+            }
 
             const result = expr.evaluate(context as Values);
             if (isNaN(result) || !isFinite(result)) {
@@ -817,7 +831,6 @@ const ruleOverride = activeRules[0];
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
-                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -944,5 +957,5 @@ const ruleOverride = activeRules[0];
     elapsedMs: Date.now() - startTime,
   };
 }
-export * from './mapper';
+// solver.ts is imported directly by consumers (CostSheetAnnexEditor, CostSheetSummary)
 export * from './solver';
