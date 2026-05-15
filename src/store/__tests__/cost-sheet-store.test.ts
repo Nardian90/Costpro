@@ -4,6 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 
 vi.mock('zustand/middleware', () => ({
   persist: (config: any) => config,
+  createJSONStorage: (getStorage: any) => ({ getItem: () => null, setItem: () => {}, removeItem: () => {} }),
 }));
 
 describe('cost-sheet-store', () => {

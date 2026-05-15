@@ -260,7 +260,7 @@ export function useCellEditor(): UseCellEditorReturn {
     (rowId: string, path: StorePath) => {
       const suggested = reinicioTemplate?.sections
         ? reinicioTemplate.sections.reduce(
-            (acc, s) => acc ?? findRowById(s.rows, rowId),
+            (acc: CostSheetRow | null, s: CostSheetSection) => acc ?? findRowById(s.rows, rowId),
             null as CostSheetRow | null,
           )
         : null;
