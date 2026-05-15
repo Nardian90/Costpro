@@ -22,6 +22,7 @@ import {
     ListFilter,
     LayoutGrid,
     TableProperties,
+    DollarSign,
     ChevronRight,
     ClipboardList
 } from 'lucide-react';
@@ -65,7 +66,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { LazyRender } from '@/components/ui/LazyRender';
 import dynamic from 'next/dynamic';
-import { cn } from '@/lib/utils';
+import { cn, formatAccounting } from '@/lib/utils';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { useScenarioStore } from '@/store/scenario-store';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow } from '@/types/cost-sheet';
@@ -163,6 +164,36 @@ function AllContentConsolidated({
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+      {/* Sticky Pricing Bar */}
+      <div className="sticky top-0 z-20 mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="bg-card/80 backdrop-blur-xl border border-primary/20 rounded-[2rem] p-4 flex items-center justify-between shadow-xl shadow-primary/5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-primary/10">
+              <DollarSign className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Precio de Venta Sugerido</p>
+              <h2 className="text-2xl font-black font-mono text-primary">
+                {calculatedHeader?.salePrice ? formatAccounting(calculatedHeader.salePrice) : "$ 0.00"}
+              </h2>
+            </div>
+          </div>
+          <div className="flex items-center gap-8 px-8 border-l border-border/50">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Utilidad</p>
+              <p className="text-sm font-black font-mono text-foreground">
+                {calculatedHeader?.utilityPercent ? `${calculatedHeader.utilityPercent.toFixed(2)}%` : "0.00%"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Costo Unitario</p>
+              <p className="text-sm font-black font-mono text-foreground">
+                {calculatedHeader?.unitCost ? formatAccounting(calculatedHeader.unitCost) : "$ 0.00"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Compact Title Bar (matching section divider style) */}
@@ -376,6 +407,11 @@ const CostSheetView = () => {
   // ── Scenario Store (flat mode only) ───────────────────────────────────
   const isFlatMode = useScenarioStore((s) => s.isFlatMode);
 
+  useEffect(() => {
+    if (activeSection === "main") {
+      handleSetViewMode("expert");
+    }
+  }, [activeSection, handleSetViewMode]);
   const isAnnexActive = useMemo(() => {
     return (data?.annexes || []).some(a => a.id === activeSection) || activeSection === 'all-annexes';
   }, [data?.annexes, activeSection]);
