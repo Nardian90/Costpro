@@ -100,7 +100,7 @@ export default async function RootLayout({
         <style
           nonce={nonce}
           dangerouslySetInnerHTML={{
-          __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#000000;--foreground:#ffffff;color-scheme:dark}`,
+          __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#121212;--foreground:#ffffff;color-scheme:dark}`,
         }} />
         {/* safe: static theme-detection script, no user input */}
         <script

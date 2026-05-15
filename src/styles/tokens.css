@@ -216,28 +216,28 @@
 
 /* ============================================
    THEME: DARK — COSTPRO Design Language
-   Background: #000, Text: #fff, Accent: green
+   Enterprise colors: Stripe/Linear inspired
    ============================================ */
 .dark,
 .theme-dark {
   --radius: var(--radius-lg);
 
   /* ── Semantic Dark Tokens ── */
-  --background: #000000;
-  --background-solid: #000000;
+  --background: #121212;
+  --background-solid: #121212;
   --foreground: #ffffff;
 
-  --card: #0a0a0a;
+  --card: #1e1e1e;
   --card-foreground: #ffffff;
 
-  --muted: #111111;
+  --muted: #1a1a1a;
   --muted-foreground: #a1a1aa;
 
-  --popover: #0a0a0a;
+  --popover: #1e1e1e;
   --popover-foreground: #ffffff;
 
-  --border: #1a1a1a;
-  --input: #1a1a1a;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
 
   --primary: #22c55e;
   --primary-foreground: #052e16;
@@ -270,13 +270,13 @@
   --chart-5: #38bdf8;
 
   /* ── Sidebar (Dark) ── */
-  --sidebar: #050505;
+  --sidebar: #0a0a0a;
   --sidebar-foreground: #a1a1aa;
   --sidebar-primary: #22c55e;
   --sidebar-primary-foreground: #052e16;
-  --sidebar-accent: #111111;
+  --sidebar-accent: #1a1a1a;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #1a1a1a;
+  --sidebar-border: #2a2a2a;
   --sidebar-ring: rgba(34, 197, 94, 0.3);
 
   /* ── Neumorphic Shadows (Dark) ── */
