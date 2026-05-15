@@ -38,7 +38,7 @@ async function handler(req: NextRequest) {
     const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
     if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
-    const body = await req.json();
+    let body; try { body = await req.json(); } catch (e) { return NextResponse.json({ error: "Cuerpo de solicitud inválido" }, { status: 400 }); }
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
     }
