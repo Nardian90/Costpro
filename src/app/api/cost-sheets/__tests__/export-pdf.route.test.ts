@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { POST } from '../export-pdf/route';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -36,6 +36,7 @@ vi.mock('@/lib/export/lazy-pdf', () => {
       line: vi.fn(),
       addPage: vi.fn(),
       setDrawColor: vi.fn(),
+      setPage: vi.fn(),
       output: vi.fn().mockReturnValue(new ArrayBuffer(8)),
       getNumberOfPages: vi.fn().mockReturnValue(1),
       lastAutoTable: { finalY: 100 },

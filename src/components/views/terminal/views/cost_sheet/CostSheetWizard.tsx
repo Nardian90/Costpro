@@ -158,6 +158,30 @@ const PHASE_LABELS = [
   { id: 'finance', label: 'FINANZAS', sublabel: 'Precio Final', color: '#06b6d4' },
   { id: 'output', label: 'OUTPUT', sublabel: 'Documento Aprobado', color: '#6b7280' },
 ];
+// ── SVG Factory Diagram Component ──
+function FactoryDiagram({ progress }: { progress: number }) {
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox="0 0 960 280" className="w-full max-w-4xl mx-auto" style={{ minWidth: 640 }}>
+        <defs>
+          <linearGradient id="beltGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
+            <stop offset="25%" stopColor="#f59e0b" stopOpacity="0.6" />
+            <stop offset="50%" stopColor="#ef4444" stopOpacity="0.6" />
+            <stop offset="75%" stopColor="#06b6d4" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#6b7280" stopOpacity="0.6" />
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1" />
+          </filter>
+        </defs>
+        <rect x="20" y="140" width="920" height="20" rx="10" fill="#334155" />
+        <rect x="20" y="142" width="920" height="16" rx="8" fill="url(#beltGrad)" />
+        <rect x="40" y="148" width={Math.min((progress / 100) * 880, 880)} height="2" rx="1" fill="#10b981" fillOpacity="0.5" />
+      </svg>
+    </div>
+  );
+}
 
 const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValues, calculatedHeader }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -211,118 +235,6 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
   }, [data, calculatedHeader]);
 
   // ── SVG Factory Diagram Component ──
-  const FactoryDiagram = () => (
-    <div className="w-full overflow-x-auto">
-      <svg viewBox="0 0 960 280" className="w-full max-w-4xl mx-auto" style={{ minWidth: 640 }}>
-        <defs>
-          <linearGradient id="beltGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
-            <stop offset="25%" stopColor="#f59e0b" stopOpacity="0.6" />
-            <stop offset="50%" stopColor="#ef4444" stopOpacity="0.6" />
-            <stop offset="75%" stopColor="#06b6d4" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#6b7280" stopOpacity="0.6" />
-          </linearGradient>
-          <filter id="shadow">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.1" />
-          </filter>
-          <linearGradient id="factoryBg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {/* Factory building outline */}
-        <rect x="20" y="20" width="920" height="240" rx="16" fill="none" stroke="currentColor" strokeOpacity="0.08" strokeWidth="2" strokeDasharray="8 4" />
-        <rect x="20" y="20" width="920" height="36" rx="16" fill="currentColor" fillOpacity="0.03" />
-
-        {/* Phase sections */}
-        {PHASE_LABELS.map((phase, i) => {
-          const x = 30 + i * 185;
-          return (
-            <g key={phase.id}>
-              <rect x={x} y="22" width="175" height="32" rx="8" fill={phase.color} fillOpacity="0.08" />
-              <text x={x + 87} y="43" textAnchor="middle" fill={phase.color} fontSize="11" fontWeight="900" letterSpacing="0.15em">{phase.label}</text>
-            </g>
-          );
-        })}
-
-        {/* Conveyor belt */}
-        <rect x="40" y="140" width="880" height="6" rx="3" fill="url(#beltGrad)" />
-        {/* Belt animation marks */}
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
-          <line key={i} x1={80 + i * 88} y1="140" x2={80 + i * 88} y2="146" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1" />
-        ))}
-
-        {/* Step stations on the belt */}
-        {STEPS.map((s, i) => {
-          const x = 70 + i * 108;
-          const isActive = i === currentStep;
-          const isCompleted = i < currentStep;
-          const IconComp = s.icon;
-          return (
-            <g key={s.id} filter={isActive ? 'url(#shadow)' : undefined}>
-              {/* Connection line to belt */}
-              {i % 2 === 0 ? (
-                <line x1={x + 30} y1="105" x2={x + 30} y2="140" stroke={isCompleted ? '#10b981' : isActive ? s.color.replace('text-', '#') : 'currentColor'} strokeOpacity="0.3" strokeWidth="1.5" strokeDasharray="4 3" />
-              ) : (
-                <line x1={x + 30} y1="146" x2={x + 30} y2="175" stroke={isCompleted ? '#10b981' : isActive ? s.color.replace('text-', '#') : 'currentColor'} strokeOpacity="0.3" strokeWidth="1.5" strokeDasharray="4 3" />
-              )}
-
-              {/* Station node */}
-              <g
-                onClick={() => setCurrentStep(i)}
-                className="cursor-pointer"
-                role="button"
-                tabIndex={0}
-                aria-label={`Ir al paso: ${s.label}`}
-              >
-                <rect
-                  x={x}
-                  y={i % 2 === 0 ? 68 : 148}
-                  width="60"
-                  height="38"
-                  rx="10"
-                  fill={isCompleted ? '#10b981' : isActive ? s.color.replace('text-', '#') : 'white'}
-                  fillOpacity={isCompleted ? 0.15 : isActive ? 0.12 : 0.6}
-                  stroke={isCompleted ? '#10b981' : isActive ? s.color.replace('text-', '#') : 'currentColor'}
-                  strokeOpacity={isActive ? 1 : 0.2}
-                  strokeWidth={isActive ? 2.5 : 1.5}
-                />
-                {/* Step number */}
-                <text x={x + 30} y={i % 2 === 0 ? 84 : 164} textAnchor="middle" fill={isCompleted ? '#10b981' : isActive ? s.color.replace('text-', '#') : 'currentColor'} fontSize="9" fontWeight="900">
-                  {i + 1}
-                </text>
-                {/* Step label */}
-                <text x={x + 30} y={i % 2 === 0 ? 98 : 178} textAnchor="middle" fill={isCompleted ? '#10b981' : 'currentColor'} fontSize="7" fontWeight="700" opacity={0.8}>
-                  {s.shortLabel}
-                </text>
-                {/* Completion checkmark */}
-                {isCompleted && (
-                  <circle cx={x + 54} cy={i % 2 === 0 ? 72 : 152} r="6" fill="#10b981" />
-                )}
-              </g>
-            </g>
-          );
-        })}
-
-        {/* Factory smokestacks (decorative) */}
-        <g opacity="0.12">
-          <rect x="870" y="35" width="12" height="30" rx="2" fill="currentColor" />
-          <rect x="885" y="25" width="12" height="40" rx="2" fill="currentColor" />
-          <circle cx="876" cy="32" r="6" fill="currentColor" />
-          <circle cx="891" cy="22" r="5" fill="currentColor" />
-        </g>
-
-        {/* Bottom flow arrows */}
-        <text x="480" y="225" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="700" opacity="0.25" letterSpacing="0.3em">
-          INSUMOS → TRANSFORMACIÓN → COSTOS → PRECIO → APROBACIÓN
-        </text>
-
-        {/* Progress indicator on belt */}
-        <rect x={40} y="148" width={Math.min((progress / 100) * 880, 880)} height="2" rx="1" fill="#10b981" fillOpacity="0.5" />
-      </svg>
-    </div>
-  );
 
   // ── Step Content Renderer ──
   const renderStepContent = () => {
@@ -420,7 +332,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
         {/* Factory SVG Diagram */}
         {showOverview && (
           <div className="px-2 sm:px-4 py-4 border-b border-border/20">
-            <FactoryDiagram />
+            <FactoryDiagram progress={progress} />
           </div>
         )}
 

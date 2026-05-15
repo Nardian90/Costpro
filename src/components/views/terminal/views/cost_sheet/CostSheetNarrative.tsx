@@ -541,7 +541,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success('Informe exportado a Word');
-  }, [header, calculatedHeader, hdr, metrics, sectionAnalysis, annexStatus, compliance, insights]);
+  }, [header, calculatedHeader, hdr, metrics, sectionAnalysis, annexStatus, compliance, insights, compliancePct, complianceScore, complianceTotal]);
 
   // ── Render helpers ──
   const StatusBadge = ({ status, label }: { status: string; label: string }) => {
