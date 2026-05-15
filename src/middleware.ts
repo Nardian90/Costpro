@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   // Edge-compatible nonce generation using Web Crypto API
   const array = new Uint8Array(18);
   crypto.getRandomValues(array);
-  const nonce = btoa(String.fromCharCode(...array)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const nonce = btoa(String.fromCharCode(...Array.from(array))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
   // FIX-INF-001: Use env var instead of hardcoded Supabase URL in CSP
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
