@@ -508,7 +508,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH') && !isFixedValue) {
+      if (isParent && (!formula || formula === 'VH')) {
           formula = 'sum(children)';
       }
 
@@ -522,7 +522,7 @@ export function buildEngineRows(
       const isPercentRow = r.isPercent === true || r.is_percent === true;
       if (isPercentRow && !['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'COEFICIENTE';
       // Only override to FORMULA if the formula is meaningful (not auto-generated for a pinned row)
-      if (formula) formaCalculo = 'FORMULA';
+      if (formula && !isFixedValue) formaCalculo = 'FORMULA';
 
       // Base Calculation mapping
       let baseCalculo: BaseRef | null = null;
