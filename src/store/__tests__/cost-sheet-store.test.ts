@@ -3,7 +3,8 @@ import { useCostSheetStore } from '../cost-sheet-store';
 import { renderHook, act } from '@testing-library/react';
 
 vi.mock('zustand/middleware', () => ({
-  persist: (config: any) => config,
+  persist: (config: any) => config, createJSONStorage: () => ({}),
+  createJSONStorage: () => ({}),
 }));
 
 describe('cost-sheet-store', () => {

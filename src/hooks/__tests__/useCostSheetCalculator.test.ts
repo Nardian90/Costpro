@@ -42,7 +42,6 @@ describe('useCostSheetCalculator - Indirect Costs Complete', () => {
                     {
                         id: 'parent',
                         label: 'Parent',
-                        calculationMethod: 'ValorFijo',
                         children: [
                             { id: 'child', label: 'Child', value: 100, calculationMethod: 'ValorFijo' }
                         ]
