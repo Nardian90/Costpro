@@ -98,9 +98,9 @@ const SYSTEM_TEMPLATES: TemplateOption[] = [
 // ── Color palette ──
 const C = {
   teamA: '#6366f1',
-  teamB: '#10b981',
+  teamB: '#8b5cf6',
   teamALight: 'rgba(99,102,241,0.1)',
-  teamBLight: 'rgba(16,185,129,0.1)',
+  teamBLight: 'rgba(139,92,246,0.1)',
   positive: '#10b981',
   negative: '#ef4444',
   neutral: '#f59e0b',
@@ -161,6 +161,22 @@ function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fa
   }
   return fallback;
 }
+
+const ThemedTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border/50 bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
+      {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
+      {payload.map((entry: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span className="text-muted-foreground">{entry.name || entry.dataKey}:</span>
+          <span className="font-bold text-foreground">{typeof entry.value === 'number' ? entry.value.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ════════════════════════════════════════════════════════════
 // Main Component
@@ -438,8 +454,8 @@ export default function ArenaFC() {
           <h1 className="text-3xl font-black uppercase tracking-tighter italic text-primary">
             Arena FC
           </h1>
-          <div className="p-3 rounded-2xl bg-emerald-500/10">
-            <Scale className="w-7 h-7 text-emerald-500" />
+          <div className="p-3 rounded-2xl bg-violet-500/10">
+            <Scale className="w-7 h-7 text-blue-500" />
           </div>
         </div>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest max-w-xl mx-auto">
@@ -454,7 +470,7 @@ export default function ArenaFC() {
           animate={{ opacity: 1, y: 0 }}
           className="border border-border/60 rounded-3xl overflow-hidden shadow-sm bg-card"
         >
-          <div className="bg-gradient-to-r from-primary/5 via-transparent to-emerald-500/5 px-6 py-4 border-b border-border/20">
+          <div className="bg-gradient-to-r from-primary/5 via-transparent to-violet-500/5 px-6 py-4 border-b border-border/20">
             <h2 className="text-sm font-black uppercase tracking-widest text-center">Selecciona los Competidores</h2>
           </div>
           <div className="p-6">
@@ -506,7 +522,7 @@ export default function ArenaFC() {
 
               {/* VS */}
               <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-emerald-500/20 flex items-center justify-center border-2 border-border/30">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center border-2 border-border/30">
                   <span className="text-lg font-black italic text-foreground">VS</span>
                 </div>
               </div>
@@ -514,8 +530,8 @@ export default function ArenaFC() {
               {/* Team B */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 justify-end">
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-500">Ficha B</span>
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="text-xs font-black uppercase tracking-widest text-violet-500">Ficha B</span>
+                  <div className="w-3 h-3 rounded-full bg-violet-500" />
                 </div>
                 <div className="relative">
                   <button
@@ -523,8 +539,8 @@ export default function ArenaFC() {
                     className={cn(
                       "w-full h-14 rounded-2xl border-2 border-dashed text-left px-5 font-bold text-xs uppercase tracking-widest transition-all",
                       templateB
-                        ? "border-emerald-500/30 bg-emerald-500/5 text-foreground"
-                        : "border-emerald-500/20 bg-muted/30 text-muted-foreground hover:border-emerald-500/40"
+                        ? "border-violet-500/30 bg-violet-500/5 text-foreground"
+                        : "border-violet-500/20 bg-muted/30 text-muted-foreground hover:border-violet-500/40"
                     )}
                   >
                     {templateB ? templateB.name : 'Seleccionar ficha de costo...'}
@@ -542,8 +558,8 @@ export default function ArenaFC() {
                             key={t.id}
                             onClick={() => { setSelectedB(t.id); setOpenDropdown(null); }}
                             className={cn(
-                              "w-full text-left px-5 py-3 text-xs font-bold uppercase tracking-widest hover:bg-emerald-500/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl",
-                              selectedB === t.id && "bg-emerald-500/10 text-emerald-500"
+                              "w-full text-left px-5 py-3 text-xs font-bold uppercase tracking-widest hover:bg-violet-500/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl",
+                              selectedB === t.id && "bg-violet-500/10 text-violet-500"
                             )}
                           >
                             <div>{t.name}</div>
@@ -563,7 +579,7 @@ export default function ArenaFC() {
                 <Button
                   onClick={handleCompare}
                   disabled={!selectedA || !selectedB || selectedA === selectedB || isCalculating}
-                  className="h-14 px-12 bg-gradient-to-r from-primary to-emerald-500 hover:opacity-90 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 gap-3 text-sm"
+                  className="h-14 px-12 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 gap-3 text-sm"
                 >
                   {isCalculating ? (
                     <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
@@ -596,12 +612,12 @@ export default function ArenaFC() {
               comparison.scoreA > comparison.scoreB
                 ? "border-primary/30 bg-primary/5"
                 : comparison.scoreB > comparison.scoreA
-                ? "border-emerald-500/30 bg-emerald-500/5"
+                ? "border-violet-500/30 bg-violet-500/5"
                 : "border-amber-500/30 bg-amber-500/5"
             )}>
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Trophy className={cn("w-8 h-8",
-                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-emerald-500" : "text-amber-500"
+                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-amber-500"
                 )} />
                 <h2 className="text-xl font-black uppercase tracking-tighter italic">
                   {comparison.scoreA > comparison.scoreB
@@ -611,13 +627,13 @@ export default function ArenaFC() {
                     : 'Empate Tecnico'}
                 </h2>
                 <Trophy className={cn("w-8 h-8",
-                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-emerald-500" : "text-amber-500"
+                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-amber-500"
                 )} />
               </div>
               <div className="flex items-center justify-center gap-6 text-xs">
                 <span className="px-4 py-2 rounded-xl bg-primary/10 text-primary font-black">{comparison.nameA}: {comparison.scoreA} pts</span>
                 <span className="text-muted-foreground font-bold">—</span>
-                <span className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 font-black">{comparison.nameB}: {comparison.scoreB} pts</span>
+                <span className="px-4 py-2 rounded-xl bg-violet-500/10 text-violet-500 font-black">{comparison.nameB}: {comparison.scoreB} pts</span>
               </div>
             </div>
 
@@ -633,7 +649,7 @@ export default function ArenaFC() {
                     </div>
                     <div className="text-[11px] font-black font-mono text-primary">{fmt(k.valA)}</div>
                     <div className="text-[9px] text-muted-foreground font-bold mb-1">{comparison.nameA}</div>
-                    <div className="text-[11px] font-black font-mono text-emerald-500">{fmt(k.valB)}</div>
+                    <div className="text-[11px] font-black font-mono text-violet-500">{fmt(k.valB)}</div>
                     <div className="text-[9px] text-muted-foreground font-bold">{comparison.nameB}</div>
                     <div className={cn("text-[10px] font-black mt-1.5 pt-1.5 border-t border-border/30",
                       k.deviationPct > 5 ? "text-red-500" : k.deviationPct < -5 ? "text-emerald-500" : "text-amber-500"
@@ -657,12 +673,12 @@ export default function ArenaFC() {
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={comparison.radarData}>
-                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarGrid stroke="hsl(var(--border))" />
                         <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontWeight: 'bold' }} />
                         <Radar name={comparison.nameA} dataKey="A" stroke={C.teamA} fill={C.teamA} fillOpacity={0.2} strokeWidth={2} />
                         <Radar name={comparison.nameB} dataKey="B" stroke={C.teamB} fill={C.teamB} fillOpacity={0.2} strokeWidth={2} />
                         <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', fontSize: '10px' }} formatter={(v: number) => [fmt(v)]} />
+                        <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -679,10 +695,10 @@ export default function ArenaFC() {
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={comparison.structureData} margin={{ bottom: 40 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} />
                         <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${(v/1000).toFixed(0)}k`} />
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', fontSize: '10px' }} formatter={(v: number) => [fmt(v)]} />
+                        <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                         <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
                         <Bar dataKey="Material" stackId="a" fill="#6366f1" radius={[0,0,0,0]} />
                         <Bar dataKey="Salario" stackId="a" fill="#10b981" />
@@ -707,10 +723,10 @@ export default function ArenaFC() {
                   <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={comparison.deviationData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 'bold' }} angle={-20} textAnchor="end" height={60} />
                         <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${v>0?'+':''}${(v/1000).toFixed(1)}k`} />
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', fontSize: '10px' }} formatter={(v: number) => [fmt(v), 'Desviacion']} />
+                        <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                         <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={2} />
                         <Bar dataKey="desviacion" radius={[4,4,0,0]}>
                           {comparison.deviationData.map((d, i) => (
@@ -736,7 +752,7 @@ export default function ArenaFC() {
                     <tr className="bg-muted/50">
                       <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Seccion</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">{comparison.nameA}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-emerald-500">{comparison.nameB}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">{comparison.nameB}</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desviacion</th>
                       <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">%</th>
                       <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground w-20">Ventaja</th>
@@ -760,7 +776,7 @@ export default function ArenaFC() {
                               <ArrowUpRight className="w-2.5 h-2.5" /> A
                             </span>
                           ) : s.winner === 'B' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 text-[9px] font-black">
                               <ArrowUpRight className="w-2.5 h-2.5" /> B
                             </span>
                           ) : (
@@ -788,7 +804,7 @@ export default function ArenaFC() {
                     <tr className="bg-muted/50">
                       <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Indicador</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">{comparison.nameA}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-emerald-500">{comparison.nameB}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">{comparison.nameB}</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desviacion</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">%</th>
                       <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Interpretacion</th>
@@ -806,7 +822,7 @@ export default function ArenaFC() {
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-right font-mono font-black text-primary">{fmt(k.valA)}</td>
-                          <td className="px-4 py-2.5 text-right font-mono font-black text-emerald-500">{fmt(k.valB)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono font-black text-violet-500">{fmt(k.valB)}</td>
                           <td className={cn("px-4 py-2.5 text-right font-mono font-bold", k.deviation > 0 ? "text-red-500" : k.deviation < 0 ? "text-emerald-500" : "text-muted-foreground")}>
                             {k.deviation > 0 ? '+' : ''}{fmt(k.deviation)}
                           </td>
@@ -834,9 +850,9 @@ export default function ArenaFC() {
                     <tr className="bg-muted/50">
                       <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Anexo</th>
                       <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">Reg. A</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-emerald-500">Reg. B</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">Reg. B</th>
                       <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">Total A</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-emerald-500">Total B</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">Total B</th>
                       <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desv. %</th>
                     </tr>
                   </thead>
@@ -847,7 +863,7 @@ export default function ArenaFC() {
                         <td className="px-4 py-2.5 text-center font-mono">{a.rowsA}</td>
                         <td className="px-4 py-2.5 text-center font-mono">{a.rowsB}</td>
                         <td className="px-4 py-2.5 text-right font-mono font-black text-primary">{fmt(a.totalA)}</td>
-                        <td className="px-4 py-2.5 text-right font-mono font-black text-emerald-500">{fmt(a.totalB)}</td>
+                        <td className="px-4 py-2.5 text-right font-mono font-black text-violet-500">{fmt(a.totalB)}</td>
                         <td className={cn("px-4 py-2.5 text-center font-mono font-bold", Math.abs(a.deviationPct) > 30 ? "text-red-500" : "text-muted-foreground")}>
                           {a.deviationPct.toFixed(1)}%
                         </td>

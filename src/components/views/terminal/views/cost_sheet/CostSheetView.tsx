@@ -2,33 +2,14 @@
 
 import React, { useState, useMemo, useEffect, Suspense, useCallback } from 'react';
 import {
-    Wand2,
-    BookOpen,
     Zap as ZapIcon,
-    Table2,
-    Clock,
     ArrowLeft,
     Edit,
     Eye,
-    Calculator,
-    MoreVertical,
     FileText,
-    Upload,
     Save,
-    FileSpreadsheet,
-    Download,
-    Activity,
-    Edit3,
-    ListFilter,
-    LayoutGrid,
-    TableProperties,
-    DollarSign,
     ChevronRight,
-    ClipboardList
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-
 import { useUIStore } from '@/store';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
@@ -66,7 +47,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { LazyRender } from '@/components/ui/LazyRender';
 import dynamic from 'next/dynamic';
-import { cn, formatAccounting } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { useScenarioStore } from '@/store/scenario-store';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow } from '@/types/cost-sheet';
@@ -128,6 +109,7 @@ interface AllContentProps {
   onNavigateToAnnex?: (annexId: string) => void;
   onNavigateToSection?: (rowId: string) => void;
   annexToSectionsMap?: Record<string, { sectionLabel: string; sectionId: string; rowId: string; rowLabel: string }[]>;
+  deepValidationErrors?: { rowId: string; message: string; type: string; code: string }[];
 }
 
 function AllContentConsolidated({
@@ -142,7 +124,8 @@ function AllContentConsolidated({
   setActiveSubSectionId,
   onNavigateToAnnex,
   onNavigateToSection,
-  annexToSectionsMap = {}
+  annexToSectionsMap = {},
+  deepValidationErrors = []
 }: AllContentProps) {
   const annexes: CostSheetAnnex[] = data?.annexes || [];
 
@@ -164,36 +147,6 @@ function AllContentConsolidated({
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-      {/* Sticky Pricing Bar */}
-      <div className="sticky top-0 z-20 mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="bg-card/80 backdrop-blur-xl border border-primary/20 rounded-[2rem] p-4 flex items-center justify-between shadow-xl shadow-primary/5">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-primary/10">
-              <DollarSign className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Precio de Venta Sugerido</p>
-              <h2 className="text-2xl font-black font-mono text-primary">
-                {calculatedHeader?.salePrice ? formatAccounting(calculatedHeader.salePrice) : "$ 0.00"}
-              </h2>
-            </div>
-          </div>
-          <div className="flex items-center gap-8 px-8 border-l border-border/50">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Utilidad</p>
-              <p className="text-sm font-black font-mono text-foreground">
-                {calculatedHeader?.utilityPercent ? `${calculatedHeader.utilityPercent.toFixed(2)}%` : "0.00%"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Costo Unitario</p>
-              <p className="text-sm font-black font-mono text-foreground">
-                {calculatedHeader?.unitCost ? formatAccounting(calculatedHeader.unitCost) : "$ 0.00"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Compact Title Bar (matching section divider style) */}
@@ -245,6 +198,7 @@ function AllContentConsolidated({
                   sections={data.sections}
                   calculatedValues={calculatedValues}
                   annexes={data?.annexes || []}
+                  deepValidationErrors={deepValidationErrors}
                   onNavigateToAnnex={onNavigateToAnnex}
                 />
               )}
@@ -407,11 +361,6 @@ const CostSheetView = () => {
   // ── Scenario Store (flat mode only) ───────────────────────────────────
   const isFlatMode = useScenarioStore((s) => s.isFlatMode);
 
-  useEffect(() => {
-    if (activeSection === "main") {
-      handleSetViewMode("expert");
-    }
-  }, [activeSection, handleSetViewMode]);
   const isAnnexActive = useMemo(() => {
     return (data?.annexes || []).some(a => a.id === activeSection) || activeSection === 'all-annexes';
   }, [data?.annexes, activeSection]);
@@ -528,56 +477,31 @@ const CostSheetView = () => {
         </div>
       )}
 
-      <CostSheetNav
-          navItems={[]}
-          annexes={data?.annexes || []}
-          activeSection={activeSection}
-          setActiveSection={handleSetActiveSection}
-          viewMode={viewMode}
-          setViewMode={handleSetViewMode}
-          layoutMode={layoutMode}
-          setLayoutMode={setLayoutMode}
-          onOpenActions={() => setIsActionsPanelOpen(true)}
-          onImport={handleImportJSON}
-          onSave={handleExportJSON}
-          onExportExcel={handleExportExcel}
-          onExportPdf={() => setIsExportModalOpen(true)}
-          lastSavedAt={lastSavedAt}
-          isSaving={isSaving}
-          versions={versions}
-          onRestoreVersion={restoreVersion}
-      />
+      {/* Horizontal cost menu — only shown on main Tablero (expert + main section) */}
+      {viewMode === 'expert' && (activeSection === 'main' || activeSection === 'all-content' || activeSection === 'expert-content') && (
+        <CostSheetNav
+            navItems={[]}
+            annexes={data?.annexes || []}
+            activeSection={activeSection}
+            setActiveSection={handleSetActiveSection}
+            viewMode={viewMode}
+            setViewMode={handleSetViewMode}
+            layoutMode={layoutMode}
+            setLayoutMode={setLayoutMode}
+            onOpenActions={() => setIsActionsPanelOpen(true)}
+            onImport={handleImportJSON}
+            onSave={handleExportJSON}
+            onExportExcel={handleExportExcel}
+            onExportPdf={() => setIsExportModalOpen(true)}
+            lastSavedAt={lastSavedAt}
+            isSaving={isSaving}
+            versions={versions}
+            onRestoreVersion={restoreVersion}
+        />
+      )}
 
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
-          {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-background dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4" role="group" aria-label="Seleccionar modo de visualización de la ficha">
-                  <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-primary/10 rounded-xl" aria-hidden="true">
-                          {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}
-                          {viewMode === 'reading' && <ClipboardList className="w-5 h-5 text-primary" />}
-                          {viewMode === 'quick' && <ZapIcon className="w-5 h-5 text-primary" />}
-                      </div>
-                      <div>
-                          <h3 className="text-sm font-bold uppercase tracking-tight">
-                              {viewMode === 'assisted' ? 'Modo Asistido' : viewMode === 'reading' ? 'Informe' : 'Modo Rápido'}
-                          </h3>
-                          <p className="text-xs text-muted-foreground uppercase font-black tracking-[0.2em]">Vista Simplificada Activa</p>
-                      </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() => handleSetViewMode('expert')}
-                    aria-label={viewMode === 'assisted' ? 'Volver a Modo Experto desde Modo Asistido' : viewMode === 'reading' ? 'Volver a Modo Experto desde Informe' : 'Volver a Modo Experto desde Modo Rápido'}
-                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
-                  >
-                      <Table2 className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
-                      Volver a Modo Todo
-                  </Button>
-              </div>
-          )}
 
           {viewMode === 'expert' && (
             <>
@@ -609,6 +533,7 @@ const CostSheetView = () => {
                             onNavigateToAnnex={handleNavigateToAnnex}
                             onNavigateToSection={handleNavigateToSection}
                             annexToSectionsMap={annexToSectionsMap}
+                            deepValidationErrors={deepValidationErrors}
                         />
                     )}
 

@@ -207,11 +207,10 @@ export function ChatBot() {
             onClick={() => setIsOpen(true)}
             aria-label="Abrir chat con Darian" /* FIX-ACC-001 */
             aria-expanded={isOpen}
-            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 transition-transform group relative overflow-hidden"
+            className="w-14 h-14 rounded-full bg-primary/15 backdrop-blur-xl border-2 border-primary/30 text-primary shadow-lg shadow-primary/15 flex items-center justify-center hover:scale-110 hover:bg-primary/25 transition-all duration-300 group relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
             <MessageSquare className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-background rounded-full animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>

@@ -4,7 +4,6 @@
 import React, { memo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { AuditEntry } from '@/lib/cost-engine/types';
 import { Clock, Info, AlertTriangle, Zap, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,8 +29,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px] pr-4">
-          <div className="space-y-3">
+        <div className="space-y-3">
             {audits.map((audit, i) => (
               <div
                 key={i}
@@ -66,8 +64,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                  </div>
               </div>
             ))}
-          </div>
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );

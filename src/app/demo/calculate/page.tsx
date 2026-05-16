@@ -82,9 +82,12 @@ export default function CostEngineDemo() {
         toast.error('Primero debes calcular la ficha');
         return;
     }
+    const { supabase } = await import('@/lib/supabaseClient');
+    const { data: { session } } = await supabase.auth.getSession();
+
     const response = await fetch('/api/cost-sheets/export-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token || ''}` },
         body: JSON.stringify(calculateMutation.data)
     });
     if (response.ok) {

@@ -12,6 +12,11 @@ export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'r
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 
+export interface PendingAuditFilter {
+  rowId: string;
+  severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'all';
+}
+
 interface UIState {
   currentView: ViewType;
   previousView: ViewType | null;
@@ -26,6 +31,7 @@ interface UIState {
   isChatBotOpen: boolean;
   ipvActiveTab: string;
   activeCostSection: string;
+ pendingAuditFilter: PendingAuditFilter | null;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
@@ -39,6 +45,7 @@ interface UIState {
   setIsChatBotOpen: (open: boolean) => void;
   setIpvActiveTab: (tab: string) => void;
   setActiveCostSection: (section: string) => void;
+  setPendingAuditFilter: (filter: PendingAuditFilter | null) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -57,6 +64,7 @@ export const useUIStore = create<UIState>()(
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
       activeCostSection: 'main',
+      pendingAuditFilter: null,
       setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
         currentView: view
@@ -82,6 +90,7 @@ export const useUIStore = create<UIState>()(
       setIsChatBotOpen: (isChatBotOpen: boolean) => set({ isChatBotOpen }),
       setIpvActiveTab: (ipvActiveTab: string) => set({ ipvActiveTab }),
       setActiveCostSection: (activeCostSection: string) => set({ activeCostSection }),
+      setPendingAuditFilter: (pendingAuditFilter) => set({ pendingAuditFilter }),
     }),
     {
       name: 'costpro-ui-storage',

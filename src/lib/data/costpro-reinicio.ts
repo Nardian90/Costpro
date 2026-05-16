@@ -434,7 +434,7 @@ const template: any = {
           "helpText": "Porcentaje de utilidad (30% por defecto según Res 148/2023) aplicado sobre el total de costos y gastos. Editable según política de la entidad.",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12.1') * 0.3",
-          "baseRef": "12",
+          "baseRef": "12.1",
           "vhFormula": "vh('12.1') * 0.3"
         },
         {

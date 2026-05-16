@@ -139,9 +139,16 @@ export const useCostSheetActions = ({
 
       const downloadPDF = async (opts: ExportOptions, filename: string) => {
         try {
+          // Get Supabase session for Bearer token auth (FIX-SEC-024: cookies fallback removed)
+          const { supabase } = await import('@/lib/supabaseClient');
+          const { data: { session } } = await supabase.auth.getSession();
+
           const response = await fetch('/api/cost-sheets/export-pdf', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': session ? `Bearer ${session.access_token}` : '',
+            },
             body: JSON.stringify({ data: dataRef.current, options: opts, calculatedValues: calcValuesRef.current, calculatedHeader: calcHeaderRef.current, calculatedAnnexes: calcAnnexesRef.current, calculationResult: calculationResult })
           });
           if (response.ok) {
@@ -250,7 +257,8 @@ export const useCostSheetActions = ({
   // FIX-RCT-140: This useEffect is now stable because all callbacks use refs
   // for unstable data deps, preventing re-runs on every data/calculation change.
   useEffect(() => {
-    if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
+    if (activeSection === 'main') { handleSetViewMode('expert'); }
+    else if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
     else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
     else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }

@@ -54,8 +54,7 @@ export interface UseCellEditorReturn {
 
 const FIJO_METHODS = new Set(['FIJO', 'MANUAL', 'ValorFijo']);
 
-/** Regex: bare annex references like "AnexoI", "AnexoIV", "ANEXOii", "TotalAnexoI" */
-const ANNEX_REF_RE = /^(Total)?[Aa]nexo([IVXLC]+)$/i;
+import { classifyFormula } from '@/lib/cost-engine/formula-classifier';
 
 const DEFAULT_CALC: CalculatedRowValue = {
   total: 0,
@@ -190,9 +189,17 @@ export function useCellEditor(): UseCellEditorReturn {
 
   const saveVH = useCallback(
     (path: StorePath, val: string) => {
-      if (val.startsWith('=')) {
-        setFields(path, { vhFormula: val, valorHistorico: 0 });
+      const cls = classifyFormula(val);
+      if (cls.kind === 'EQUATION' || cls.kind === 'ENGINE_FUNC') {
+        // Explicit "=..." or engine function without "=" (e.g. "=PCT(vh('2.1.1'), 9.09)")
+        const formulaStr = cls.kind === 'ENGINE_FUNC' ? '=' + val.trim() : val.trim();
+        setFields(path, { vhFormula: formulaStr, valorHistorico: 0 });
+      } else if (cls.kind === 'ANNEX_REF') {
+        // Bare annex ref without "=" (e.g. "AnexoI") — store as formula
+        const formulaStr = '=' + val.trim();
+        setFields(path, { vhFormula: formulaStr, valorHistorico: 0 });
       } else {
+        // NUMERIC, EMPTY, or unrecognised → store as fixed value
         setFields(path, { vhFormula: null, valorHistorico: parseFloat(val) || 0 });
       }
     },
@@ -201,22 +208,12 @@ export function useCellEditor(): UseCellEditorReturn {
 
   const saveTotal = useCallback(
     (path: StorePath, row: CostSheetRow, val: string) => {
+      const cls = classifyFormula(val);
       const trimmed = val.trim();
 
-      if (trimmed.startsWith('=')) {
-        // ── Formula path (e.g. "=ref('1.1')*0.15", "=AnexoI") ──
-        const updates: Record<string, string | number | boolean | null> = {
-          formula: trimmed,
-          totalFormula: trimmed,
-        };
-        if (row.calculationMethod && FIJO_METHODS.has(row.calculationMethod)) {
-          updates.calculationMethod = 'FORMULA';
-        }
-        setFields(path, updates);
-      } else if (ANNEX_REF_RE.test(trimmed)) {
-        // ── Bare annex reference without "=" (e.g. "AnexoI", "TotalAnexoIII") ──
-        // Treat as formula so the engine resolves it via FORMULA context.
-        const formulaStr = '=' + trimmed;
+      if (cls.kind === 'EQUATION' || cls.kind === 'ENGINE_FUNC' || cls.kind === 'ANNEX_REF') {
+        // ── Formula path (any recognised formula: "=ref('1.1')", "ref('12.1')*0.3", "AnexoI") ──
+        const formulaStr = trimmed.startsWith('=') ? trimmed : '=' + trimmed;
         const updates: Record<string, string | number | boolean | null> = {
           formula: formulaStr,
           totalFormula: formulaStr,
@@ -224,10 +221,9 @@ export function useCellEditor(): UseCellEditorReturn {
         if (row.calculationMethod && FIJO_METHODS.has(row.calculationMethod)) {
           updates.calculationMethod = 'FORMULA';
         }
-        // Also set baseDeCalculoRef for IMPORTAR_ANEXO routing in buildEngineRows
-        const romanMatch = trimmed.match(/([IVXLC]+)$/i);
-        if (romanMatch) {
-          updates.baseDeCalculoRef = romanMatch[1].toUpperCase();
+        // Set baseDeCalculoRef for IMPORTAR_ANEXO routing when annex ref detected
+        if (cls.annexRoman) {
+          updates.baseDeCalculoRef = cls.annexRoman;
         }
         setFields(path, updates);
       } else {
@@ -260,7 +256,7 @@ export function useCellEditor(): UseCellEditorReturn {
     (rowId: string, path: StorePath) => {
       const suggested = reinicioTemplate?.sections
         ? reinicioTemplate.sections.reduce(
-            (acc: CostSheetRow | null, s: CostSheetSection) => acc ?? findRowById(s.rows, rowId),
+            (acc, s) => acc ?? findRowById(s.rows, rowId),
             null as CostSheetRow | null,
           )
         : null;

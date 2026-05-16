@@ -166,7 +166,7 @@ export function useCostSheetViewState(
   }, [groupedSections, activeSubSectionId]);
 
   // Responsive layout adjustment — derive from isMobile instead of syncing via effect
-  const effectiveLayoutMode = isMobile ? 'grid' : layoutMode;
+  const effectiveLayoutMode = layoutMode;
 
   return {
     activeSubSectionId,

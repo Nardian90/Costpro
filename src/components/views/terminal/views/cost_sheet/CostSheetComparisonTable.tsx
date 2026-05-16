@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -82,15 +82,15 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
 
             return (
               <React.Fragment key={sid}>
-                <TableCell className={cn("text-right p-2 border-l border-border/50 transition-colors", isPrimary && "bg-amber-500/5 group-hover:bg-amber-500/10")}>
+                <TableCell className={cn("text-right p-2 border-l border-border/50 transition-colors", isPrimary && "bg-muted/20 group-hover:bg-muted/30")}>
                   <Input
-                    className="h-7 text-right text-xs p-1 focus:ring-1 focus:ring-primary bg-transparent border-transparent hover:border-border transition-all"
+                    className="h-7 text-right text-xs text-muted-foreground p-1 focus:ring-1 focus:ring-primary/40 bg-transparent border-transparent hover:border-border/50 transition-all tabular-nums"
                     defaultValue={scenario?.values[row.id]?.valorHistorico ?? row.valorHistorico ?? 0}
                     onBlur={(e) => onUpdateRowValue(sid, row.id, 'valorHistorico', parseFloat(e.target.value) || 0)}
                   />
                 </TableCell>
-                <TableCell className={cn("text-right p-2 font-bold text-xs border-r border-border/10", isPrimary && "bg-amber-500/5 group-hover:bg-amber-500/10")}>
-                  {calculated.total.toFixed(2)}
+                <TableCell className={cn("text-right p-2 border-r border-border/10 tabular-nums transition-colors", isPrimary && "bg-primary/5 group-hover:bg-primary/10")}>
+                  <span className="text-sm font-black">{calculated.total.toFixed(2)}</span>
                 </TableCell>
                 {sid !== baseId && (
                   <>
@@ -221,7 +221,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
       {renderMobileScenarioCards()}
 
       {/* Desktop Table View */}
-      <div className="hidden md:block relative border border-border/50 rounded-[2.5rem] overflow-hidden bg-card shadow-2xl overflow-x-auto custom-scrollbar">
+      <div className="hidden md:block relative border border-border/50 rounded-[2.5rem] overflow-x-auto overflow-y-clip bg-card shadow-2xl custom-scrollbar">
         <Table className="w-full border-collapse">
           <TableHeader className="bg-muted/90 backdrop-blur-md sticky top-0 z-30">
             <TableRow className="border-b-2 border-border/20">
@@ -257,7 +257,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                             <LayoutGrid className="w-4 h-4 mr-3 text-primary"/> Duplicar Escenario
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onScenarioAction('exportPdf', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
-                            <FileDown className="w-4 h-4 mr-3 text-emerald-500"/> Exportar este escenario (PDF)
+                            <FileDown className="w-4 h-4 mr-3 text-primary"/> Exportar este escenario (PDF)
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="my-2 opacity-50" />
                           <DropdownMenuItem
@@ -280,14 +280,14 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
               <TableHead className="sticky left-[260px] bg-muted z-40 w-[60px] text-center text-[10px] font-black border-r border-border/30">UM</TableHead>
               {activeScenarioIds.map(sid => (
                 <React.Fragment key={sid}>
-                  <TableHead className={cn("text-center border-l border-border/20 bg-muted/20 p-2", sid === primaryId && "bg-amber-500/5")}>
+                  <TableHead className={cn("text-center border-l border-border/20 bg-muted/10 p-2", sid === primaryId && "bg-muted/20")}>
                     <TechnicalTooltip term="Valor Histórico (VH)" description="Costo unitario o valor base de entrada para esta fila. Es el dato crudo antes de aplicar fórmulas de costo total.">
-                      <span className="text-[9px] font-black tracking-widest opacity-60">VH</span>
+                      <span className="text-[9px] font-bold tracking-widest text-muted-foreground/60">VH</span>
                     </TechnicalTooltip>
                   </TableHead>
-                  <TableHead className={cn("text-center bg-muted/20 p-2", sid === primaryId && "bg-amber-500/5")}>
+                  <TableHead className={cn("text-center bg-primary/5 p-2", sid === primaryId && "bg-primary/10")}>
                     <TechnicalTooltip term="Total Calculado" description="Resultado final tras procesar la fórmula, unidad de medida y coeficientes técnicos asociados a este concepto.">
-                      <span className="text-[9px] font-black tracking-widest opacity-60">TOTAL</span>
+                      <span className="text-[9px] font-black tracking-widest text-primary">TOTAL</span>
                     </TechnicalTooltip>
                   </TableHead>
                   {sid !== baseId && (
@@ -308,8 +308,35 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
               ))}
             </TableRow>
           </TableHeader>
+          {/* Sticky Precio de Venta — always visible during scroll */}
+          <thead className="sticky top-[84px] z-20">
+            <tr className="bg-primary/5 backdrop-blur-xl border-b-2 border-primary/20">
+              <th colSpan={3} className="sticky left-0 z-30 bg-primary/5 backdrop-blur-xl font-black text-[10px] uppercase text-primary py-2 px-6 tracking-widest border-r border-border/30 text-left">
+                Precio de Venta
+              </th>
+              {activeScenarioIds.map(sid => {
+                const precioVal = calcs[sid]?.calculatedValues?.['14.1']?.total ?? 0;
+                return (
+                  <React.Fragment key={sid}>
+                    <th className="text-right p-2 text-xs text-muted-foreground border-l border-border/20">
+                      —
+                    </th>
+                    <th className={cn("text-right p-2 tabular-nums border-r border-border/10", sid === primaryId ? "font-black text-base text-primary bg-primary/10" : "font-bold text-sm text-foreground")}>
+                      ${precioVal.toFixed(2)}
+                    </th>
+                    {sid !== baseId && (
+                      <>
+                        <th className="text-right p-2 text-[10px] text-muted-foreground border-l border-border/10">—</th>
+                        <th className="text-right p-2 text-[10px] text-muted-foreground border-r border-border/10">—</th>
+                      </>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tr>
+          </thead>
           <TableBody>
-            {sections.map((s: CostSheetSection) => (
+            {sections.filter((s) => s.id !== 's14' && s.id !== 's15' && s.id !== 's16').map((s: CostSheetSection) => (
               <React.Fragment key={s.id}>
                 <TableRow className="bg-muted/40 backdrop-blur-sm border-y border-border/20 hover:bg-muted/60 transition-colors">
                   <TableCell colSpan={20} className="font-black text-[10px] uppercase text-primary/80 py-1.5 px-6 tracking-widest">
@@ -320,6 +347,19 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
               </React.Fragment>
             ))}
           </TableBody>
+          {/* Sticky Precio de Venta Footer — SAS ISO 19249 pattern: key output always visible */}
+          <TableFooter className="sticky bottom-0 z-20 bg-card/95 backdrop-blur-xl border-t-2 border-primary/30 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+            {sections.filter((s) => s.id === 's13' || s.id === 's14' || s.id === 's15' || s.id === 's16').map((s: CostSheetSection) => (
+              <React.Fragment key={s.id}>
+                <TableRow className="bg-primary/5 hover:bg-primary/10 transition-colors">
+                  <TableCell colSpan={20} className="font-black text-[10px] uppercase text-primary py-1 px-6 tracking-widest">
+                    {s.label}
+                  </TableCell>
+                </TableRow>
+                {s.rows.map((r: CostSheetRow) => renderRow(r))}
+              </React.Fragment>
+            ))}
+          </TableFooter>
         </Table>
       </div>
 

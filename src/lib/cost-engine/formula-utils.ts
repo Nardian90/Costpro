@@ -43,7 +43,10 @@ export const RESERVED_FORMULA_NAMES: ReadonlySet<string> = new Set([
 export function getFormulaReferenceIssue(name: string): string | null {
   if (!name || !name.trim()) return 'El nombre no puede estar vacío.';
   const trimmed = name.trim();
-  if (trimmed.length === 1) return `El identificador "${trimmed}" es demasiado corto (1 carácter). Use al menos 2 caracteres para evitar conflictos con variables internas del motor.`;
+  // Only flag single-letter IDs (a-z) — single-digit numeric IDs (0-9) are safe
+  if (trimmed.length === 1 && /^[a-zA-Z]$/.test(trimmed)) {
+    return `El identificador "${trimmed}" es una letra reservada potencial del motor de fórmulas. Use al menos 2 caracteres para evitar conflictos.`;
+  }
   if (RESERVED_FORMULA_NAMES.has(trimmed) || RESERVED_FORMULA_NAMES.has(trimmed.toLowerCase())) {
     return `"${trimmed}" es una palabra reservada del motor de fórmulas (función matemática, constante o variable interna). Elija otro nombre o use ref('${trimmed}') explícitamente.`;
   }

@@ -97,17 +97,7 @@ export function CookieConsent() {
   };
 
   if (!visible) {
-    // Show small cookie icon in bottom-right to re-open preferences
-    return (
-      <button
-        onClick={handleWithdraw}
-        className="fixed bottom-4 right-4 z-50 p-2 rounded-full bg-muted/80 backdrop-blur-sm border border-border hover:bg-muted transition-colors"
-        aria-label="Gestionar consentimiento de cookies"
-        title="Gestionar cookies"
-      >
-        <Cookie className="w-4 h-4 text-muted-foreground" />
-      </button>
-    );
+    return null;
   }
 
   const animationClass = prefersReducedMotion ? '' : 'animate-in slide-in-from-bottom-4 fade-in duration-300';

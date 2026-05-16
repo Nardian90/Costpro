@@ -22,10 +22,6 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
   const criticalCount = alerts.filter(a => a.severity === 'critical').length;
   const warningCount = alerts.filter(a => a.severity === 'warning').length;
 
-  const fabColor = criticalCount > 0
-    ? 'bg-destructive text-white shadow-destructive/30'
-    : 'bg-amber-500 text-white shadow-amber-500/30';
-
   return (
     <>
       {/* FAB */}
@@ -33,9 +29,11 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
         onClick={() => setIsOpen(true)}
         aria-label={`${alerts.length} alertas de stock. ${criticalCount} críticas, ${warningCount} en mínimo`}
         className={cn(
-          'fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-lg',
-          'font-black text-xs uppercase tracking-widest transition-all active:scale-95',
-          fabColor
+          'fixed bottom-24 right-6 z-[45] flex items-center gap-2 px-4 py-3 rounded-2xl backdrop-blur-xl border-2 shadow-lg',
+          'font-black text-xs uppercase tracking-widest transition-all active:scale-95 hover:scale-105',
+          criticalCount > 0
+            ? 'bg-red-500/15 border-red-500/30 text-red-500 shadow-red-500/15'
+            : 'bg-amber-500/15 border-amber-500/30 text-amber-500 shadow-amber-500/15'
         )}
       >
         <AlertTriangle className="w-4 h-4" />

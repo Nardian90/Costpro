@@ -46,7 +46,7 @@ export default function ScrollToTop() {
           exit={{ opacity: 0, scale: 0.5 }}
           onClick={scrollToTop}
           className={cn(
-            "fixed bottom-8 left-8 z-50",
+            "fixed bottom-8 left-8 z-40",
             "neu-raised-sm w-12 h-12 flex items-center justify-center",
             "bg-primary text-foreground rounded-2xl shadow-2xl",
             "hover:scale-110 active:scale-95 transition-transform"

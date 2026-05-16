@@ -40,6 +40,7 @@ export interface CostSheetFlatTableProps {
   sections: CostSheetSection[];
   calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
+  deepValidationErrors?: { rowId: string; message: string; type: string; code: string }[];
   onNavigateToAnnex?: (annexId: string) => void;
 }
 
