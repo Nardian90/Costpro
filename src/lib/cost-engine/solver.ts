@@ -191,7 +191,7 @@ export function solveForTarget(
   const y1 = simulate(1);
   const slope = y1 - y0;
 
-  if (Math.abs(slope) < 1e-10) return 0;
+   if (Math.abs(slope) < 1e-10) return 0;
   const guess = (targetValue - y0) / slope;
   if (!isFinite(guess)) return 0;
 
