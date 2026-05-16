@@ -238,7 +238,7 @@ describe('solveForTarget', () => {
               id: '14.1',
               classification: '14.1',
               label: 'Target Output',
-              formula: 'ref("13.1") * 1.2',
+              formula: 'ref("13.1") * 1.25',
               calculationMethod: 'FORMULA'
             }
           ]
@@ -248,8 +248,8 @@ describe('solveForTarget', () => {
       signature: { prepared_by: '', approved_by: '' }
     };
 
-    // Target is 2400. 2400 / 1.2 = 2000.
-    const result = solveForTarget(mockData, '14.1', 2400, '13.1');
+    // Target is 2500. 2400 / 1.25 = 2000.
+    const result = solveForTarget(mockData, '14.1', 2500, '13.1');
     expect(result).toBeCloseTo(2000, 2);
   });
 
