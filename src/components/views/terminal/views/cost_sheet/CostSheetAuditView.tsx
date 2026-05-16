@@ -166,17 +166,19 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
     useEffect(() => {
         if (pendingAuditFilter && !initialFilterApplied) {
             // Apply severity filter
-            setActiveFilter(pendingAuditFilter.severity === 'INFO' ? 'INFO_SUCCESS' : pendingAuditFilter.severity as SeverityFilter);
-            // Auto-expand the target row
-            setExpandedRows(prev => {
-                const next = new Set(prev);
-                next.add(pendingAuditFilter.rowId);
-                return next;
-            });
-            // Mark source row for highlight
-            setSourceRowId(pendingAuditFilter.rowId);
-            setInitialFilterApplied(true);
-            setPendingAuditFilter(null);
+            const targetSeverity = pendingAuditFilter.severity === "INFO" ? "INFO_SUCCESS" : pendingAuditFilter.severity as SeverityFilter;
+            const targetRowId = pendingAuditFilter.rowId;
+            setTimeout(() => {
+                setActiveFilter(targetSeverity);
+                setExpandedRows(prev => {
+                    const next = new Set(prev);
+                    next.add(targetRowId);
+                    return next;
+                });
+                setSourceRowId(targetRowId);
+                setInitialFilterApplied(true);
+                setPendingAuditFilter(null);
+            }, 0);
 
             // Scroll to flag table after render
             requestAnimationFrame(() => {

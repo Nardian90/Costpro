@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useCostSheetStore, useAuthStore, useUIStore } from '@/store';
+import { useScenarioStore } from '@/store/scenario-store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { storeService } from '@/services/store-service';
@@ -321,9 +322,8 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const handleImport = (template: Template) => {
     // Clear scenario store to prevent stale data from previous template
     try {
-      const { useScenarioStore } = require('@/store/scenario-store');
       const scenarioStore = useScenarioStore.getState();
-      if (scenarioStore?.reset) scenarioStore.reset();
+
     } catch {}
     setSheet(template.data);
     setActiveCostSection("expert-content");

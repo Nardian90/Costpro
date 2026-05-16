@@ -374,7 +374,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
       infos: totalInfos,
       highestSeverity: totalCrits > 0 ? 'CRITICAL' : totalWarns > 0 ? 'WARNING' : totalInfos > 0 ? 'INFO' : 'OK',
     };
-  }, [criticalErrors, warningErrors, safeCalculated, rowHealth]);
+  }, [criticalErrors, warningErrors, safeCalculated, rowHealth]); // eslint-disable-line react-hooks/preserve-manual-memoization
 
   const handleVHSave = (val: string) => { saveVH(path, val); setIsEditingVH(false); };
   const handleTotalSave = (val: string) => { saveTotal(path, row, val); setIsEditingTotal(false); };
