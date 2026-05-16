@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth-middleware';
+import { getServerSession } from "@/lib/auth";
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
-import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 
@@ -24,18 +23,22 @@ function validateComparisonData(data: any): { ok: boolean; error?: string } {
     return { ok: true };
 }
 
-function safeLocale(val: any) {
-  const n = parseFloat(String(val));
-  return isNaN(n) ? val : n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const safeLocale = (val: number | string | undefined | null) => {
+  if (val === undefined || val === null) return '0.00';
+  const num = typeof val === 'number' ? val : parseFloat(String(val));
+  if (isNaN(num)) return '0.00';
+  return num.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-const handler = withAuth(async (req, session) => {
+async function handler(req: NextRequest) {
   try {
-    const clientId = session.user.id;
+    const session = await getServerSession(req);
+    const clientId = session?.user?.id || req.headers.get('x-forwarded-for') || 'anonymous';
+
     const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
     if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
-    const body = await req.json();
+    let body; try { body = await req.json(); } catch (e) { return NextResponse.json({ error: "Cuerpo de solicitud inválido" }, { status: 400 }); }
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
     }
@@ -111,16 +114,14 @@ const handler = withAuth(async (req, session) => {
         headStyles: { fillColor: primaryColor, textColor: 255, halign: 'center' },
       });
     } else {
-      // Single-mode: body contains { data: CostSheetData, options, calculatedValues, calculatedHeader }
+      // Single-mode
       const sheetData = body.data || body;
       const calculatedValues = body.calculatedValues || {};
       const calculatedHeader = body.calculatedHeader || null;
       const header = sheetData.header || {};
 
-      // --- FICHA HEADER ---
       let currentY = addHeader(doc, "FICHA DE COSTO");
 
-      // Header info block
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(60);
@@ -134,7 +135,6 @@ const handler = withAuth(async (req, session) => {
       }
       currentY += 5;
 
-      // --- SECTIONS TABLE ---
       const processRows = (rows: any[], depth = 0): any[] => {
         if (depth > 5) return [];
         const tableBody: any[] = [];
@@ -161,7 +161,6 @@ const handler = withAuth(async (req, session) => {
           doc.addPage();
           currentY = 20;
         }
-        // Section divider row
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(80);
@@ -183,7 +182,6 @@ const handler = withAuth(async (req, session) => {
         }
       }
 
-      // --- ANNEXES ---
       const annexes = sheetData.annexes || [];
       const calculatedAnnexes = body.calculatedAnnexes || [];
       const calcAnnexMap = new Map<string, any>();
@@ -233,7 +231,6 @@ const handler = withAuth(async (req, session) => {
         }
       }
 
-      // --- UTILITY NOTE ---
       if (exportOptions.includeUtilityNote && calculatedHeader) {
         const utilPercent = calculatedHeader.utilityPercent || calculatedHeader.porcentajeUtilidad || 0;
         const costTotal = calculatedHeader.totalCost || calculatedHeader.costoTotal || 0;
@@ -245,7 +242,6 @@ const handler = withAuth(async (req, session) => {
         doc.text(`Nota de Utilidad: ${safeLocale(utilPercent)}% | Costo: ${safeLocale(costTotal)} | Precio Venta: ${safeLocale(salePrice)}`, 14, currentY);
       }
 
-      // --- DATE/TIME FOOTER ---
       if (exportOptions.showDateTime !== false) {
         const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
@@ -269,6 +265,6 @@ const handler = withAuth(async (req, session) => {
     console.error('PDF Export Error:', error);
     return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
-});
+}
 
 export const POST = withTracing((req: NextRequest) => handler(req), 'POST /api/cost-sheets/export-pdf');

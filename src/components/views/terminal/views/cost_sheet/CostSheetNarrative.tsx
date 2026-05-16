@@ -17,6 +17,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend, Cell, ComposedChart, Line, ReferenceLine, Area, AreaChart
 } from 'recharts';
+import { ThemedTooltip } from "@/components/ui/ThemedTooltip";
 import { cn } from '@/lib/utils';
 
 // ── Types ──
@@ -690,12 +691,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={waterfallData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.3)" />
                       <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 'bold' }} angle={-30} textAnchor="end" height={50} />
                       <YAxis tick={{ fontSize: 9, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
-                        formatter={(value: number, name: string) => [fmt(value), name === 'acumulado' ? 'Acumulado' : 'Valor']}
+                      <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
                       />
                       <Bar dataKey="acumulado" fill={COLORS.primary} fillOpacity={0.15} radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="acumulado" stroke={COLORS.primary} strokeWidth={2} dot={{ fill: COLORS.primary, r: 3 }} />
@@ -780,12 +779,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                   { name: 'Gastos\n(Secciones 6-10)', valor: metrics.s11, fill: COLORS.amber },
                   { name: 'Total C+G\n(Seccion 12)', valor: metrics.s12, fill: COLORS.emerald },
                 ]}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.3)" />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} />
                   <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
-                    formatter={(value: number) => [fmt(value), 'Importe']}
+                  <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
                   />
                   <Bar dataKey="valor" radius={[8, 8, 0, 0]} barSize={50}>
                     {[
@@ -951,12 +948,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 layout="vertical"
                 margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border) / 0.3)" />
                 <XAxis type="number" tick={{ fontSize: 9, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} width={100} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
-                  formatter={(value: number) => [fmt(value), 'Importe']}
+                <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
                 />
                 <Bar dataKey="valor" radius={[0, 6, 6, 0]} barSize={24} stackId="a">
                   {[

@@ -292,14 +292,14 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                   </TableHead>
                   {sid !== baseId && (
                     <>
-                      <TableHead className="text-center border-l border-border/10 bg-emerald-500/5 p-2">
+                      <TableHead className="text-center border-l border-border/10 bg-primary/5 p-2">
                         <TechnicalTooltip term="Diferencia (Δ)" description="Valor absoluto de la variación respecto al Escenario Base. El color verde indica ahorro y el rojo incremento de costo.">
-                          <span className="text-[9px] font-black tracking-widest text-emerald-600/70">Δ</span>
+                          <span className="text-[9px] font-black tracking-widest text-primary/70">Δ</span>
                         </TechnicalTooltip>
                       </TableHead>
-                      <TableHead className="text-center bg-emerald-500/5 p-2">
+                      <TableHead className="text-center bg-primary/5 p-2">
                         <TechnicalTooltip term="Variación (%)" description="Porcentaje relativo de aumento o disminución comparado con el valor de referencia de la Base Delta.">
-                          <span className="text-[9px] font-black tracking-widest text-emerald-600/70">%</span>
+                          <span className="text-[9px] font-black tracking-widest text-primary/70">%</span>
                         </TechnicalTooltip>
                       </TableHead>
                     </>
