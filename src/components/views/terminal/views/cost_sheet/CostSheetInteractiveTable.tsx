@@ -195,8 +195,8 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
             )}
         </TableCell>
 
-        {/* Valor Histórico / % */}
-        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        {/* Valor Histórico / % — PRIMARY COLUMN: user input with maximum visual emphasis */}
+        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right border-r-2 border-primary/30 bg-primary/5", !hasChildren ? "cursor-pointer" : "cursor-default", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -211,9 +211,9 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                         <Input
                         type="text"
                         className={cn(
-                        "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1",
+                        "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1 font-black tabular-nums",
                         isRowPercent && "pr-6",
-                        (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
+                        (hasChildren || row.vhFormula) && "bg-primary/10 font-black border-primary/30 border-dashed"
                         )}
                         value={hasChildren
                         ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
@@ -232,9 +232,9 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
             </div>
         </TableCell>
 
-        {/* Total */}
+        {/* Total — SUBDUED: calculated result, secondary visual weight */}
         <TableCell
-          className={cn("px-2 py-0.5 text-right font-black tabular-nums text-primary transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-primary/5" : "cursor-default opacity-80", isEditingTotal && "w-auto min-w-[180px]")}
+          className={cn("px-2 py-0.5 text-right text-muted-foreground tabular-nums transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60", isEditingTotal && "w-auto min-w-[180px]")}
           onClick={() => !hasChildren && setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -554,8 +554,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
-                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Valor Histórico</TableHead>
-                                    <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Total</TableHead>
+                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest text-primary bg-primary/5 border-r border-primary/20">Valor Histórico</TableHead>
+                                    <TableHead className="w-[120px] px-2 py-0.5 text-right font-bold uppercase tracking-widest text-muted-foreground/60 bg-muted/30 border-r border-border/10">Total</TableHead>
                                     <TableHead className="w-[100px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -606,6 +606,49 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 }
             }}
         />
+
+        {/* ── Sticky Precio de Venta Bar — SAS ISO 19249: key output always visible ── */}
+        {(() => {
+          const pricingSections = sections.filter(s => {
+            const num = parseInt(s.id.replace('s', ''), 10);
+            return num >= 13 && num <= 16;
+          });
+          if (pricingSections.length === 0) return null;
+          const precioRow = sections.find(s => s.id === 's14')?.rows?.[0];
+          const utilidadRow = sections.find(s => s.id === 's13')?.rows?.[0];
+          const precioCalc = precioRow ? calculatedValues?.[precioRow.id] : null;
+          const utilidadCalc = utilidadRow ? calculatedValues?.[utilidadRow.id] : null;
+          const costoYGastoRow = sections.find(s => s.id === 's12')?.rows?.[0];
+          const costoYGastoCalc = costoYGastoRow ? calculatedValues?.[costoYGastoRow.id] : null;
+
+          return (
+            <div className="sticky bottom-0 z-30 mt-4 -mx-1">
+              <div className="bg-card/95 backdrop-blur-xl border-2 border-t border-primary/30 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.15)] px-4 py-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded-lg">Precio de Venta</span>
+                  {costoYGastoCalc && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">C+G:</span>
+                      <span className="text-xs font-bold tabular-nums text-foreground">{formatAccounting(costoYGastoCalc.total ?? 0)}</span>
+                    </div>
+                  )}
+                  {utilidadCalc && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Utilidad:</span>
+                      <span className="text-xs font-bold tabular-nums text-foreground">{formatAccounting(utilidadCalc.total ?? 0)}</span>
+                    </div>
+                  )}
+                  {precioCalc && (
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-primary">Precio Final:</span>
+                      <span className="text-base font-black tabular-nums text-primary">{formatAccounting(precioCalc.total ?? 0)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 });

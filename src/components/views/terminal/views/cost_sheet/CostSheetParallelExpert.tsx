@@ -240,7 +240,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
                 <TableCell
                   className={cn(
                     "px-1.5 py-0.5 text-right border-r border-border/10 min-w-[120px]",
-                    diff < -0.01 ? "bg-emerald-500/5" : diff > 0.01 ? "bg-red-500/5" : ""
+                    diff < -0.01 ? "bg-primary/5" : diff > 0.01 ? "bg-red-500/5" : ""
                   )}
                 >
                   <VarianceBadge diff={diff} percent={pct} />
@@ -590,9 +590,9 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                               </TTip>
                             </TableHead>
                             {!isBase && (
-                              <TableHead className="px-1.5 py-1 text-center text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20 bg-emerald-500/5">
+                              <TableHead className="px-1.5 py-1 text-center text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20 bg-primary/5">
                                 <TTip term="Variación (Δ %)" description="Diferencia absoluta y porcentual respecto al escenario Base. Verde=ahorro, Rojo=incremento.">
-                                  <span className="text-emerald-600/70">Δ %</span>
+                                  <span className="text-primary/70">Δ %</span>
                                 </TTip>
                               </TableHead>
                             )}

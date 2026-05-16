@@ -20,6 +20,7 @@ interface FormulaContext {
   COEF: number;
   QUANTITY: number | string;
   cantidad: number | string;
+  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -30,6 +31,7 @@ interface VHFormulaContext {
   VH: number;
   QUANTITY: number | string;
   cantidad: number | string;
+  quantity: number | string;
   header: FichaMeta;
   children: number[];
   hijos: number[];
@@ -292,18 +294,32 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
       }
     }
 
-    // Check ref() in formulas — WARNING (not CRITICAL) because:
-    // 1. Templates legitimately reference rows not yet created (e.g. pror targets like 1.1.1)
-    // 2. The calculation engine gracefully returns 0 for missing refs
-    // 3. CRITICAL would block export for valid templates
+    // Check ref() in formulas — INFO (not WARNING) because:
+    // 1. Templates legitimately reference rows in other sections (e.g. ref('1.1.1') from section 4)
+    // 2. Cross-section refs are resolved dynamically at calculation time
+    // 3. The calculation engine gracefully returns 0 for missing refs
+    // 4. CRITICAL would block export for valid templates
+    // 5. WARNING pollutes the Problems Panel with false positives for normal cross-section dependencies
     const formulaToUse = row.formula || row.totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
-        const refMatches = formulaToUse.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
-        for (const match of refMatches) {
+        // Check both ref() and vh() references for unresolved rows
+        const refPattern = /ref\(['"]([^'"]+)['"]\)/g;
+        const vhPattern = /vh\(['"]([^'"]+)['"]\)/g;
+        let match: RegExpExecArray | null;
+
+        while ((match = refPattern.exec(formulaToUse)) !== null) {
             const refId = match[1];
             if (!ids.has(refId) && !classifications.has(refId)) {
-                const msg = `Referencia en fórmula no resuelta: ${refId}`;
-                validationErrors.push({ rowId: row.id, message: msg, type: 'WARNING', code: 'MISSING_REF' });
+                const msg = `Referencia en fórmula no resuelta: ref('${refId}')`;
+                validationErrors.push({ rowId: row.id, message: msg, type: 'INFO', code: 'MISSING_REF' });
+            }
+        }
+
+        while ((match = vhPattern.exec(formulaToUse)) !== null) {
+            const refId = match[1];
+            if (!ids.has(refId) && !classifications.has(refId)) {
+                const msg = `Referencia en fórmula no resuelta: vh('${refId}')`;
+                validationErrors.push({ rowId: row.id, message: msg, type: 'INFO', code: 'MISSING_REF' });
             }
         }
     }
@@ -731,6 +747,7 @@ const ruleOverride = activeRules[0];
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
+                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -831,6 +848,7 @@ const ruleOverride = activeRules[0];
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
+                quantity: ficha.meta.quantity || 0,
                 header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)

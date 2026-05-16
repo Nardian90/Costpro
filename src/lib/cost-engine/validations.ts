@@ -19,7 +19,7 @@ const CERT_COEFFICIENTS = {
   SOCIAL_SECURITY_RATE: 0.14,
   /** Row 10.2 — 5% of base salary */
   SOCIAL_ASSISTANCE_RATE: 0.05,
-  /** Row 13.3 — Tax: 13.1 / 0.9 * 0.1 */
+  /** Row 13.3 — Tax: 13.2 / 0.9 * 0.1 */
   TAX_CALCULATION: { divisor: 0.9, rate: 0.1 },
   /** Profit ratio prudential limit */
   MAX_PROFIT_RATIO: 0.3,
@@ -104,8 +104,9 @@ export const calculateCostSheetHealth = (
         }
 
         if (costVal > 0) {
-            const ratio = new Decimal(utilVal ?? 0).div(costVal ?? 1).toNumber();
-            if (ratio > CERT_COEFFICIENTS.MAX_PROFIT_RATIO) {
+            const ratioD = new Decimal(utilVal ?? 0).div(costVal ?? 1);
+            const ratio = ratioD.toNumber();
+            if (ratioD.gt(new Decimal(CERT_COEFFICIENTS.MAX_PROFIT_RATIO))) {
                 results.push({
                     type: 'WARNING',
                     category: 'Rentabilidad',
@@ -366,7 +367,7 @@ export const calculateCostSheetHealth = (
         const v2 = calculatedValues['2']?.total || 0;
         const v3 = calculatedValues['3']?.total || 0;
         const v4 = calculatedValues['4']?.total || 0;
-        const v51 = calculatedValues['5.1']?.total || 0;
+        const v51 = calculatedValues['5.1']?.total || calculatedValues['5']?.total || 0;
         const expected51 = new Decimal(v1 ?? 0).plus(v2 ?? 0).plus(v3 ?? 0).plus(v4 ?? 0).toNumber();
         if (new Decimal(v51 ?? 0).minus(expected51 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
@@ -384,7 +385,7 @@ export const calculateCostSheetHealth = (
         const v8 = calculatedValues['8']?.total || 0;
         const v9 = calculatedValues['9']?.total || 0;
         const v10 = calculatedValues['10']?.total || 0;
-        const v111 = calculatedValues['11.1']?.total || 0;
+        const v111 = calculatedValues['11.1']?.total || calculatedValues['11']?.total || 0;
         const expected111 = new Decimal(v6 ?? 0).plus(v7 ?? 0).plus(v8 ?? 0).plus(v9 ?? 0).plus(v10 ?? 0).toNumber();
         if (new Decimal(v111 ?? 0).minus(expected111 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
@@ -423,15 +424,15 @@ export const calculateCostSheetHealth = (
             });
         }
 
-        // Rule 10: 13.3 = 13.1 / 0.9 * 0.1
+        // Rule 10: 13.3 = 13.2 / 0.9 * 0.1
         const v133 = calculatedValues['13.3']?.total || 0;
-        const expected133 = new Decimal(v131 ?? 0).div(CERT_COEFFICIENTS.TAX_CALCULATION.divisor).mul(CERT_COEFFICIENTS.TAX_CALCULATION.rate).toDecimalPlaces(2).toNumber();
+        const expected133 = new Decimal(v132 ?? 0).div(CERT_COEFFICIENTS.TAX_CALCULATION.divisor).mul(CERT_COEFFICIENTS.TAX_CALCULATION.rate).toDecimalPlaces(2).toNumber();
         if (new Decimal(v133 ?? 0).minus(expected133 ?? 0).abs().gt(CERT_MATERIALITY_THRESHOLD)) {
             standardResults.push({
                 type: 'WARNING',
                 category,
                 title: 'Certificación: Impuesto 13.3',
-                message: `13.3 (${v133}) debe ser 13.1/0.9*0.1 (${expected133}).`,
+                message: `13.3 (${v133}) debe ser 13.2/0.9*0.1 (${expected133}).`,
                 rowId: '13.3'
             });
         }

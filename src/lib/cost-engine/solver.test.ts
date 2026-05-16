@@ -23,10 +23,10 @@ describe('Cost Solver', () => {
           rows: [
             {
               id: '14.1',
-              classification: '14.1',
               label: 'Precio Final',
               calculationMethod: 'ANEXO',
-              baseDeCalculoRef: 'I'
+              baseDeCalculoRef: 'I',
+              formula: 'TotalAnexoI'
             }
           ]
         }
@@ -35,13 +35,10 @@ describe('Cost Solver', () => {
         {
           id: 'I',
           title: 'Anexo I',
-          columns: [
-            { key: 'price_unit', type: 'number', label: 'PRECIO UNITARIO' },
-            { key: 'total', type: 'formula', label: 'TOTAL', formula: 'price_unit' }
-          ],
-          data: [{ price_unit: 10, classification: '14.1' }],
+          columns: [{ key: 'price_unit', type: 'number', label: 'PRECIO UNITARIO' }],
+          data: [{ price_unit: 10, total: 10, classification: '1.1' }],
           coefficient: 1,
-          isAdjustmentActive: true,
+          isAdjustmentActive: false,
           adjustmentColumn: 'PRECIO UNITARIO'
         }
       ],
@@ -61,21 +58,19 @@ describe('Cost Solver', () => {
           rows: [
             {
               id: '12',
-              classification: '12',
               label: 'Costo Total',
               calculationMethod: 'ANEXO',
-              baseDeCalculoRef: 'I'
+              baseDeCalculoRef: 'I',
+              formula: 'TotalAnexoI'
             },
             {
               id: '13.1',
-              classification: '13.1',
               label: 'Utilidad',
               formula: 'ref("12") * 0.1',
               calculationMethod: 'FORMULA'
             },
             {
               id: '14.1',
-              classification: '14.1',
               label: 'Precio Final',
               formula: 'ref("12") + ref("13.1")',
               calculationMethod: 'FORMULA'
@@ -87,19 +82,19 @@ describe('Cost Solver', () => {
         {
           id: 'I',
           title: 'Anexo I',
-          columns: [
-            { key: 'price_unit', type: 'number', label: 'PRECIO UNITARIO' },
-            { key: 'total', type: 'formula', label: 'TOTAL', formula: 'price_unit' }
-          ],
-          data: [{ price_unit: 100, classification: '12' }],
+          columns: [{ key: 'total', type: 'number', label: 'TOTAL' }],
+          data: [{ total: 100, classification: '1.1' }],
           coefficient: 1,
-          isAdjustmentActive: true,
+          isAdjustmentActive: false,
           adjustmentColumn: 'PRECIO UNITARIO'
         }
       ],
       signature: { prepared_by: '', approved_by: '' }
     };
 
+    // Target is 220. Cost 100 * 1.1 = 110. 110 + 11 = 121 (if coef=1)
+    // Target 220 means Cost should be 200 (since 200 + 20 = 220).
+    // So Coef should be 2.0
     const coef = solveCoefficient(mockData, 'I', 220);
     expect(coef).toBeCloseTo(2.0, 1);
   });
@@ -113,10 +108,10 @@ describe('Cost Solver', () => {
           rows: [
             {
               id: '14.1',
-              classification: '14.1',
               label: 'Precio Final',
               calculationMethod: 'ANEXO',
-              baseDeCalculoRef: 'I'
+              baseDeCalculoRef: 'I',
+              formula: 'TotalAnexoI'
             }
           ]
         }
@@ -125,13 +120,10 @@ describe('Cost Solver', () => {
         {
           id: 'I',
           title: 'Anexo I',
-          columns: [
-            { key: 'price_unit', type: 'number', label: 'PRECIO UNITARIO' },
-            { key: 'total', type: 'formula', label: 'TOTAL', formula: 'price_unit' }
-          ],
-          data: [{ price_unit: 100, classification: '14.1' }],
+          columns: [{ key: 'total', type: 'number', label: 'TOTAL' }],
+          data: [{ total: 100, classification: '1.1' }],
           coefficient: 1,
-          isAdjustmentActive: true,
+          isAdjustmentActive: false,
           adjustmentColumn: 'PRECIO UNITARIO'
         }
       ],
@@ -151,14 +143,12 @@ describe('Cost Solver', () => {
           rows: [
             {
               id: '1.1',
-              classification: '1.1',
               label: 'Costo Base',
               value: 1000,
               calculationMethod: 'FIJO'
             },
             {
               id: '14.1',
-              classification: '14.1',
               label: 'Precio Final',
               calculationMethod: 'FORMULA',
               formula: 'ref("1.1") + TotalAnexoI'
@@ -173,9 +163,9 @@ describe('Cost Solver', () => {
           columns: [
               { key: 'norma', type: 'number', label: 'NORMA' },
               { key: 'precio', type: 'number', label: 'PRECIO' },
-              { key: 'total', type: 'formula', label: 'IMPORTE', formula: 'norma * precio' }
+              { key: 'importe', type: 'formula', label: 'IMPORTE', formula: '=norma * precio' }
           ],
-          data: [{ norma: 2, precio: 500, classification: '14.1' }],
+          data: [{ norma: 2, precio: 500, importe: '=norma * precio', classification: '1.1' }],
           coefficient: 1,
           isAdjustmentActive: true,
           adjustmentColumn: 'PRECIO UNITARIO'
@@ -197,10 +187,10 @@ describe('Cost Solver', () => {
           rows: [
             {
               id: '14.1',
-              classification: '14.1',
               label: 'Precio Final',
               calculationMethod: 'ANEXO',
-              baseDeCalculoRef: 'I'
+              baseDeCalculoRef: 'I',
+              formula: 'TotalAnexoI'
             }
           ]
         }
@@ -210,11 +200,11 @@ describe('Cost Solver', () => {
           id: 'I',
           title: 'Anexo I',
           columns: [
-              { key: 'norm', label: 'Norma', type: 'number' },
-              { key: 'price', label: 'Precio', type: 'number' },
-              { key: 'total', label: 'Total', type: 'formula', formula: 'norm * price' }
+              { key: 'consumption_norm', label: 'Norma' },
+              { key: 'price', label: 'Precio' },
+              { key: 'total', label: 'Total' }
           ],
-          data: [{ norm: 10, price: 200, classification: '14.1' }],
+          data: [{ consumption_norm: 10, price: 200, total: 0, classification: '1.1' }],
           coefficient: 1,
           isAdjustmentActive: true,
           adjustmentColumn: 'PRECIO UNITARIO'
@@ -264,6 +254,12 @@ describe('solveForTarget', () => {
   });
 
   it('should handle vhFormula on variable row (real template scenario)', () => {
+    // This mimics the real cost sheet structure:
+    // 12.1 = cost (fixed 817.69)
+    // 13.1 = utility = ref('12.1') * 0.3 (has vhFormula too)
+    // 13.2 = price before tax = ref('12.1') + ref('13.1')
+    // 13.3 = tax = ref('13.2') / 0.9 * 0.1
+    // 14.1 = final price = ref('13.2') + ref('13.3')
     const mockData: CostSheetData = {
       header: { ...BASE_HEADER, quantity: 1 },
       sections: [
@@ -316,10 +312,26 @@ describe('solveForTarget', () => {
       signature: { prepared_by: '', approved_by: '' }
     };
 
+    // When utilidad=0:
+    // 13.2 = 817.69 + 0 = 817.69
+    // 13.3 = 817.69 / 9 = 90.85
+    // 14.1 = 817.69 + 90.85 = 908.54
+    // Target 1999: need 14.1 = 1999
+    // 14.1 = (12.1 + 13.1) * 10/9
+    // 1999 = (817.69 + U) * 10/9
+    // 1999 * 9/10 = 817.69 + U
+    // 1799.1 = 817.69 + U
+    // U = 981.41
     const targetPrice = 1999;
     const result = solveForTarget(mockData, '14.1', targetPrice, '13.1');
+
+    // Verify: the utilidad should be approximately 981.41
     expect(result).toBeCloseTo(981.41, 0);
 
+    // Verify by manual calculation:
+    // 14.1 = (817.69 + result) + (817.69 + result) / 9
+    // = (817.69 + result) * (1 + 1/9)
+    // = (817.69 + result) * 10/9
     const achieved = (817.69 + result) * (10 / 9);
     expect(achieved).toBeCloseTo(targetPrice, 0);
   });

@@ -2,6 +2,11 @@
 
 import React, { useMemo, useCallback } from 'react';
 import {
+  Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun,
+  WidthType, AlignmentType, HeadingLevel, BorderStyle, ShadingType,
+  TableLayoutType, VerticalAlign
+} from 'docx';
+import {
   FileText, TrendingUp, Download, PieChart as PieIcon, BarChart3,
   Activity, Target, Shield, AlertTriangle, CheckCircle2, ChevronRight,
   ArrowUpRight, ArrowDownRight, Minus, Lightbulb, Building2, Package,
@@ -17,8 +22,23 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Legend, Cell, ComposedChart, Line, ReferenceLine, Area, AreaChart
 } from 'recharts';
-import { ThemedTooltip } from "@/components/ui/ThemedTooltip";
 import { cn } from '@/lib/utils';
+
+const ThemedTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border/50 bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
+      {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
+      {payload.map((entry: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 text-xs">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span className="text-muted-foreground">{entry.name || entry.dataKey}:</span>
+          <span className="font-bold text-foreground">{typeof entry.value === 'number' ? entry.value.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ── Types ──
 interface CostSheetNarrativeProps {
@@ -95,25 +115,42 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
   const pct = (val: number, total: number) => total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
 
   // ── Key financial metrics from calculated values ──
+  // R1.4: Use calculatedHeader as primary source, fallback to calculatedValues by ID
   const metrics = useMemo(() => {
-    const s1 = getVal(calculatedValues, '1');
-    const s2 = getVal(calculatedValues, '2');
-    const s3 = getVal(calculatedValues, '3');
-    const s4 = getVal(calculatedValues, '4');
-    const s5 = getVal(calculatedValues, '5');
-    const s6 = getVal(calculatedValues, '6');
-    const s7 = getVal(calculatedValues, '7');
-    const s8 = getVal(calculatedValues, '8');
-    const s9 = getVal(calculatedValues, '9');
-    const s10 = getVal(calculatedValues, '10');
-    const s11 = getVal(calculatedValues, '11');
-    const s12 = getVal(calculatedValues, '12.1');
-    const s13_utility = getVal(calculatedValues, '13.1');
-    const s13_precio_antes_imp = getVal(calculatedValues, '13.2');
-    const s13_imp = getVal(calculatedValues, '13.3');
-    const s14_precio = getVal(calculatedValues, '14.1');
-    const s15_unit_cost = getVal(calculatedValues, '15.1');
-    const s16_unit_sale = getVal(calculatedValues, '16.1');
+    const cv = calculatedValues;
+    const ch = calculatedHeader as Record<string, unknown> | undefined;
+
+    // Helper: try calculatedHeader first, then specific row IDs
+    const pick = (headerField: string, ...rowIds: string[]): number => {
+      if (ch) {
+        const hVal = ch[headerField];
+        if (typeof hVal === 'number' && hVal > 0) return hVal;
+      }
+      for (const id of rowIds) {
+        const v = getVal(cv, id);
+        if (v > 0) return v;
+      }
+      return 0;
+    };
+
+    const s1 = pick('costoMaterial', '1', 's1', '1.1');
+    const s2 = pick('salarioDirecto', '2', 's2', '2.1');
+    const s3 = pick('otrosDirectos', '3', 's3', '3.1');
+    const s4 = pick('gastosAsociados', '4', 's4', '4.1');
+    const s5 = pick('totalCost', 'costoTotal', 'total_cost', '5', 's5');
+    const s6 = pick('gastosAdmon', '6', 's6');
+    const s7 = pick('gastosDistribucion', '7', 's7');
+    const s8 = pick('gastosFinancieros', '8', 's8');
+    const s9 = pick('gastosOsde', '9', 's9');
+    const s10 = pick('gastosTributarios', '10', 's10');
+    const s11 = pick('totalGastos', '11', 's11');
+    const s12 = pick('costoYGasto', '12', '12.1', 's12');
+    const s13_utility = pick('utilidad', '13.1', 's13');
+    const s13_precio_antes_imp = pick('precioAntesImpuesto', '13.2');
+    const s13_imp = pick('impuestoVentas', '13.3');
+    const s14_precio = pick('precioVenta', 'precio_venta', 'sale_price', '14.1', 's14');
+    const s15_unit_cost = pick('costoUnitario', '15.1', 's15');
+    const s16_unit_sale = pick('precioUnitario', '16.1', 's16');
 
     const costoTotal = s5 || 0;
     const gastosTotal = s11 || 0;
@@ -136,16 +173,28 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
   // ── Section analysis ──
   const sectionAnalysis: SectionAnalysis[] = useMemo(() => {
     return sections.map((sec, idx) => {
-      const secTotal = getVal(calculatedValues, sec.rows?.[0]?.id || '');
+      // FIX: Try multiple routes to find section total — sec.id, rows[0].id, then recursive scan
+      const secTotal =
+        getVal(calculatedValues, sec.id) ||
+        getVal(calculatedValues, sec.rows?.[0]?.id || '') ||
+        getFirstDataRowValue(calculatedValues, sec.rows || []);
       const hasData = secTotal > 0;
       const childCount = sec.rows?.length || 0;
+
+      // R2.1 — Compute partial status: count filled rows
+      let status: 'empty' | 'partial' | 'complete' = 'empty';
+      if (hasData) {
+        const filledRows = (sec.rows || []).filter(r => getVal(calculatedValues, r.id) > 0).length;
+        status = filledRows >= childCount * 0.8 ? 'complete' : 'partial';
+      }
+
       return {
         id: sec.id,
         label: sec.label?.replace(/^Sección\s*\d+:\s*/i, '') || sec.label || `S${idx + 1}`,
         total: secTotal,
         percentOfCosto: metrics.s5 > 0 ? (secTotal / metrics.s5 * 100) : 0,
         rows: childCount,
-        status: hasData ? 'complete' as const : 'empty' as const,
+        status,
       };
     });
   }, [sections, calculatedValues, metrics.s5]);
@@ -400,153 +449,188 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
     return fallback;
   };
 
-  // ── Word Export ──
-  const exportToWord = useCallback(() => {
-    const productName = hdr('name', 'Ficha de Costo');
-    const productCode = hdr('code', 'S/C');
-    const resolution = hdr('resolution', 'No especificada');
-    const date = hdr('date', new Date().toISOString().split('T')[0]);
-    const quantity = hdr('quantity', '1');
-    const currency = hdr('currency', 'CUP');
-    const unit = hdr('unit', 'unidad');
+  // ── Word Export — R1.3: Real .docx using docx library ──
+  const exportToWord = useCallback(async () => {
+    try {
+      const productName = hdr('name', 'Ficha de Costo');
+      const productCode = hdr('code', 'S/C');
+      const resolution = hdr('resolution', 'No especificada');
+      const date = hdr('date', new Date().toISOString().split('T')[0]);
+      const quantity = hdr('quantity', '1');
+      const currency = hdr('currency', 'CUP');
+      const unit = hdr('unit', 'unidad');
 
-    const statusIcon = (s: string) => {
-      if (s === 'pass') return '[OK]';
-      if (s === 'warning') return '[!]';
-      if (s === 'fail') return '[X]';
-      return '[-]';
-    };
+      const statusLabel = (s: string) => {
+        if (s === 'pass') return 'OK';
+        if (s === 'warning') return 'PARCIAL';
+        if (s === 'fail') return 'NO';
+        return 'N/A';
+      };
 
-    let html = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office"
-            xmlns:w="urn:schemas-microsoft-com:office:word"
-            xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: 'Calibri', Arial, sans-serif; font-size: 11pt; color: #1e293b; line-height: 1.6; margin: 2cm; }
-          h1 { font-size: 20pt; color: #6366f1; margin-bottom: 4pt; text-transform: uppercase; letter-spacing: 2px; }
-          h2 { font-size: 14pt; color: #334155; border-bottom: 2px solid #6366f1; padding-bottom: 4pt; margin-top: 24pt; text-transform: uppercase; letter-spacing: 1px; }
-          h3 { font-size: 12pt; color: #475569; margin-top: 16pt; }
-          table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
-          th { background-color: #6366f1; color: white; padding: 6pt 10pt; text-align: left; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
-          td { border: 1px solid #e2e8f0; padding: 5pt 10pt; font-size: 10pt; }
-          tr:nth-child(even) { background-color: #f8fafc; }
-          .kpi-box { display: inline-block; width: 22%; padding: 10pt; margin: 4pt; background: #f1f5f9; border-radius: 6pt; text-align: center; }
-          .kpi-value { font-size: 16pt; font-weight: bold; color: #6366f1; }
-          .kpi-label { font-size: 8pt; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
-          .compliance-pass { color: #10b981; font-weight: bold; }
-          .compliance-fail { color: #ef4444; font-weight: bold; }
-          .compliance-warning { color: #f59e0b; font-weight: bold; }
-          .header-info { background: #f8fafc; padding: 12pt; border-radius: 6pt; border-left: 4px solid #6366f1; margin: 8pt 0; }
-          .footer { margin-top: 24pt; padding-top: 8pt; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #94a3b8; }
-          .section-title { font-weight: bold; font-size: 10pt; color: #334155; background: #f1f5f9; padding: 4pt 8pt; }
-          ul { margin: 4pt 0; padding-left: 20pt; }
-          li { margin-bottom: 3pt; }
-        </style>
-      </head>
-      <body>
-        <h1>Informe de Costo</h1>
-        <p style="color: #64748b; font-size: 9pt; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16pt;">
-          Analisis Integral &bull; ${resolution} &bull; Generado: ${new Date().toLocaleDateString('es-CU')}
-        </p>
+      const headerCell = (text: string, width: number, shading?: string) => new TableCell({
+        width: { size: width, type: WidthType.PERCENTAGE },
+        shading: shading ? { type: ShadingType.SOLID, color: shading } : undefined,
+        verticalAlign: VerticalAlign.CENTER,
+        children: [new Paragraph({ children: [new TextRun({ text, bold: true, font: 'Calibri', size: 18, color: 'FFFFFF' })] })],
+      });
 
-        <div class="header-info">
-          <table>
-            <tr><td style="border:none; width:25%; color:#64748b; font-size:9pt; text-transform:uppercase;">Producto</td><td style="border:none; font-weight:bold;">${productName}</td></tr>
-            <tr><td style="border:none; color:#64748b; font-size:9pt; text-transform:uppercase;">Codigo</td><td style="border:none;">${productCode}</td></tr>
-            <tr><td style="border:none; color:#64748b; font-size:9pt; text-transform:uppercase;">Cantidad</td><td style="border:none;">${quantity} ${unit}</td></tr>
-            <tr><td style="border:none; color:#64748b; font-size:9pt; text-transform:uppercase;">Moneda</td><td style="border:none;">${currency}</td></tr>
-            <tr><td style="border:none; color:#64748b; font-size:9pt; text-transform:uppercase;">Fecha</td><td style="border:none;">${date}</td></tr>
-          </table>
-        </div>
+      const dataCell = (text: string, opts?: { bold?: boolean; color?: string; shading?: string }) => new TableCell({
+        verticalAlign: VerticalAlign.CENTER,
+        shading: opts?.shading ? { type: ShadingType.SOLID, color: opts?.shading } : undefined,
+        children: [new Paragraph({ children: [new TextRun({ text, font: 'Calibri', size: 20, bold: opts?.bold, color: opts?.color })] })],
+      });
 
-        <h2>Resumen Ejecutivo</h2>
-        <div style="text-align:center; margin: 12pt 0;">
-          <div class="kpi-box"><div class="kpi-value">${fmt(metrics.s5)}</div><div class="kpi-label">Costo Total</div></div>
-          <div class="kpi-box"><div class="kpi-value">${fmt(metrics.s11)}</div><div class="kpi-label">Gastos Totales</div></div>
-          <div class="kpi-box"><div class="kpi-value">${fmt(metrics.s12)}</div><div class="kpi-label">Costos + Gastos</div></div>
-          <div class="kpi-box"><div class="kpi-value">${fmt(metrics.precioFinal)}</div><div class="kpi-label">Precio Final</div></div>
-        </div>
-        <p>Este informe presenta el analisis integral de la ficha de costo para <strong>${productName}</strong>. El costo total de produccion asciende a ${fmt(metrics.s5)}, con gastos operacionales de ${fmt(metrics.s11)}, para un costo y gasto total de ${fmt(metrics.s12)}. La utilidad proyectada es del ${metrics.margenPct.toFixed(1)}%, resultando en un precio de venta de ${fmt(metrics.precioFinal)} por unidad.</p>
+      const doc = new Document({
+        sections: [{
+          properties: {
+            page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } },
+          },
+          children: [
+            // Title
+            new Paragraph({
+              heading: HeadingLevel.HEADING_1,
+              spacing: { after: 100 },
+              children: [new TextRun({ text: 'INFORME DE COSTO', bold: true, font: 'Calibri', size: 40, color: '4F46E5' })],
+            }),
+            new Paragraph({
+              spacing: { after: 300 },
+              children: [new TextRun({ text: `Analisis Integral  |  ${resolution}  |  Generado: ${new Date().toLocaleDateString('es-CU')}`, font: 'Calibri', size: 18, color: '64748B', italics: true })],
+            }),
 
-        <h2>Desglose por Secciones</h2>
-        <table>
-          <tr><th>Seccion</th><th>Concepto</th><th>Total</th><th>% del Costo</th></tr>
-          ${sectionAnalysis.map((s, i) => `
-            <tr>
-              <td style="text-align:center;">${i + 1}</td>
-              <td>${s.label}</td>
-              <td style="text-align:right; font-weight:bold;">${fmt(s.total)}</td>
-              <td style="text-align:right;">${s.percentOfCosto.toFixed(1)}%</td>
-            </tr>
-          `).join('')}
-        </table>
+            // Product info
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 }, children: [new TextRun({ text: 'DATOS DEL PRODUCTO', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: [dataCell('Producto', { bold: true, shading: 'F1F5F9' }), dataCell(productName, { bold: true })] }),
+                new TableRow({ children: [dataCell('Codigo', { bold: true, shading: 'F1F5F9' }), dataCell(productCode)] }),
+                new TableRow({ children: [dataCell('Cantidad', { bold: true, shading: 'F1F5F9' }), dataCell(`${quantity} ${unit}`)] }),
+                new TableRow({ children: [dataCell('Moneda', { bold: true, shading: 'F1F5F9' }), dataCell(currency)] }),
+                new TableRow({ children: [dataCell('Fecha', { bold: true, shading: 'F1F5F9' }), dataCell(date)] }),
+              ],
+            }),
 
-        <h2>Estado de Anexos</h2>
-        <table>
-          <tr><th>Anexo</th><th>Descripcion</th><th>Registros</th><th>Estado</th></tr>
-          ${annexStatus.map(a => `
-            <tr>
-              <td style="text-align:center; font-weight:bold;">${a.id}</td>
-              <td>${a.title}</td>
-              <td style="text-align:center;">${a.rowCount}</td>
-              <td style="text-align:center;" class="${a.hasData ? 'compliance-pass' : 'compliance-fail'}">${a.hasData ? 'Completo' : 'Sin datos'}</td>
-            </tr>
-          `).join('')}
-        </table>
+            // KPI Summary
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'RESUMEN EJECUTIVO', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Paragraph({
+              spacing: { after: 200 },
+              children: [new TextRun({ text: `Costo Total: ${fmt(metrics.s5)}  |  Gastos: ${fmt(metrics.s11)}  |  C+G: ${fmt(metrics.s12)}  |  Precio: ${fmt(metrics.precioFinal)}  |  Utilidad: ${metrics.margenPct.toFixed(1)}%`, font: 'Calibri', size: 22, bold: true, color: '4F46E5' })],
+            }),
+            new Paragraph({
+              spacing: { after: 200 },
+              children: [new TextRun({ text: `Este informe presenta el analisis integral de la ficha de costo para ${productName}. El costo total asciende a ${fmt(metrics.s5)}, con gastos de ${fmt(metrics.s11)}, para un costo y gasto de ${fmt(metrics.s12)}. La utilidad es del ${metrics.margenPct.toFixed(1)}%, resultando en un precio de venta de ${fmt(metrics.precioFinal)}.`, font: 'Calibri', size: 22 })],
+            }),
 
-        <h2>Comprobacion de Cumplimiento - Res 148/2023</h2>
-        <table>
-          <tr><th>Codigo</th><th>Requisito</th><th>Estado</th><th>Detalle</th></tr>
-          ${compliance.map(c => `
-            <tr>
-              <td style="text-align:center; font-family:monospace; font-size:9pt;">${c.rule}</td>
-              <td>${c.description}</td>
-              <td style="text-align:center;" class="compliance-${c.status}">${statusIcon(c.status)}</td>
-              <td style="font-size:9pt;">${c.detail}</td>
-            </tr>
-          `).join('')}
-        </table>
-        <p style="margin-top:8pt; font-weight:bold;">Puntaje de cumplimiento: ${compliancePct}% (${complianceScore}/${complianceTotal})</p>
+            // Section breakdown
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'DESGLOSE POR SECCIONES', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: [headerCell('Seccion', 10, '4F46E5'), headerCell('Total', 30, '4F46E5'), headerCell('% del Costo', 15, '4F46E5'), headerCell('Estado', 15, '4F46E5')] }),
+                ...sectionAnalysis.map((s, i) => new TableRow({
+                  children: [
+                    dataCell(`${i + 1}. ${s.label}`),
+                    dataCell(fmt(s.total), { bold: true }),
+                    dataCell(`${s.percentOfCosto.toFixed(1)}%`),
+                    dataCell(statusLabel(s.status), { color: s.status === 'complete' ? '059669' : s.status === 'partial' ? 'D97706' : 'DC2626' }),
+                  ],
+                })),
+              ],
+            }),
 
-        <h2>Analisis de Rentabilidad</h2>
-        <table>
-          <tr><td style="width:40%; font-weight:bold;">Costo Unitario</td><td style="text-align:right;">${fmt(metrics.costoUnitario)}</td></tr>
-          <tr><td style="font-weight:bold;">Precio Venta Unitario</td><td style="text-align:right;">${fmt(metrics.precioUnitario)}</td></tr>
-          <tr><td style="font-weight:bold;">Margen Bruto</td><td style="text-align:right; color:#10b981;">${fmt(metrics.precioUnitario - metrics.costoUnitario)}</td></tr>
-          <tr><td style="font-weight:bold;">% Margen</td><td style="text-align:right;">${metrics.margenPct.toFixed(1)}%</td></tr>
-          <tr><td style="font-weight:bold;">Contribucion CSS (14%)</td><td style="text-align:right;">${fmt(metrics.css)}</td></tr>
-          <tr><td style="font-weight:bold;">Imp. Fuerza Trabajo (5%)</td><td style="text-align:right;">${fmt(metrics.impFuerzaTrabajo)}</td></tr>
-        </table>
+            // Annex status
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'ESTADO DE ANEXOS', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: [headerCell('Anexo', 15, '4F46E5'), headerCell('Descripcion', 40, '4F46E5'), headerCell('Registros', 15, '4F46E5'), headerCell('Estado', 15, '4F46E5')] }),
+                ...annexStatus.map(a => new TableRow({
+                  children: [
+                    dataCell(`Anexo ${a.id}`, { bold: true }),
+                    dataCell(a.title),
+                    dataCell(String(a.rowCount)),
+                    dataCell(a.hasData ? 'Completo' : 'Sin datos', { color: a.hasData ? '059669' : 'DC2626' }),
+                  ],
+                })),
+              ],
+            }),
 
-        <h2>Hallazgos y Recomendaciones</h2>
-        <ul>
-          ${insights.map(ins => `<li>${ins.text}</li>`).join('')}
-        </ul>
+            // Compliance
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'CUMPLIMIENTO RES 148/2023', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({ children: [headerCell('Codigo', 15, '4F46E5'), headerCell('Requisito', 35, '4F46E5'), headerCell('Estado', 15, '4F46E5'), headerCell('Detalle', 35, '4F46E5')] }),
+                ...compliance.map(c => new TableRow({
+                  children: [
+                    dataCell(c.rule, { bold: true }),
+                    dataCell(c.description),
+                    dataCell(statusLabel(c.status), { color: c.status === 'pass' ? '059669' : c.status === 'warning' ? 'D97706' : 'DC2626' }),
+                    dataCell(c.detail, { color: '64748B' }),
+                  ],
+                })),
+              ],
+            }),
+            new Paragraph({
+              spacing: { before: 100, after: 200 },
+              children: [new TextRun({ text: `Puntaje de cumplimiento: ${compliancePct}% (${complianceScore}/${complianceTotal})`, bold: true, font: 'Calibri', size: 22 })],
+            }),
 
-        <div class="footer">
-          <p>Informe generado automaticamente por CostPro &bull; ${new Date().toLocaleString('es-CU')} &bull; Basado en la Resolucion 148/2023 del Ministerio de Finanzas y Precios de la Republica de Cuba</p>
-        </div>
-      </body>
-      </html>
-    `;
+            // Pricing
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'ANALISIS DE RENTABILIDAD', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                ...[
+                  ['Costo Unitario', fmt(metrics.costoUnitario)],
+                  ['Precio Venta Unitario', fmt(metrics.precioUnitario)],
+                  ['Margen Bruto', fmt(metrics.precioUnitario - metrics.costoUnitario)],
+                  ['% Margen', `${metrics.margenPct.toFixed(1)}%`],
+                  ['CSS (14%)', fmt(metrics.css)],
+                  ['Imp. Fuerza Trabajo (5%)', fmt(metrics.impFuerzaTrabajo)],
+                ].map(([label, value]) => new TableRow({
+                  children: [dataCell(label as string, { bold: true, shading: 'F8FAFC' }), dataCell(value as string)],
+                })),
+              ],
+            }),
 
-    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Informe_Costo_${productName.replace(/[^a-zA-Z0-9]/g, '_')}_${date}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Informe exportado a Word');
+            // Insights
+            new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 100 }, children: [new TextRun({ text: 'HALLAZGOS Y RECOMENDACIONES', bold: true, font: 'Calibri', size: 28, color: '334155' })] }),
+            ...insights.map(ins => new Paragraph({
+              spacing: { after: 80 },
+              bullet: { level: 0 },
+              children: [new TextRun({ text: ins.text, font: 'Calibri', size: 22 })],
+            })),
+
+            // Footer
+            new Paragraph({
+              spacing: { before: 400 },
+              children: [new TextRun({ text: `Informe generado automaticamente por CostPro  |  ${new Date().toLocaleString('es-CU')}  |  Basado en la Resolucion 148/2023`, font: 'Calibri', size: 16, color: '94A3B8', italics: true })],
+            }),
+          ],
+        }],
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([new Uint8Array(buffer)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Informe_Costo_${productName.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ]/g, '_')}_${date}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Informe exportado a Word (.docx)');
+    } catch (e) {
+      console.error('[Narrative] Export error:', e);
+      toast.error('Error al exportar el informe');
+    }
   }, [header, calculatedHeader, hdr, metrics, sectionAnalysis, annexStatus, compliance, insights, compliancePct, complianceScore, complianceTotal]);
 
   // ── Render helpers ──
   const StatusBadge = ({ status, label }: { status: string; label: string }) => {
-    const cls = status === 'pass' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+    const cls = status === 'pass' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20'
       : status === 'warning' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
       : status === 'fail' ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
       : 'bg-slate-500/10 text-slate-500 border-slate-500/20';
@@ -563,7 +647,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
     const colorMap: Record<string, string> = {
       info: 'border-blue-500/20 bg-blue-500/5 text-blue-900 dark:text-blue-200',
       warning: 'border-amber-500/20 bg-amber-500/5 text-amber-900 dark:text-amber-200',
-      success: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-900 dark:text-emerald-200',
+      success: 'border-blue-500/20 bg-blue-500/5 text-blue-900 dark:text-blue-200',
       danger: 'border-red-500/20 bg-red-500/5 text-red-900 dark:text-red-200',
     };
     return (
@@ -597,7 +681,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
               className="h-9 px-4 text-[10px] font-bold uppercase tracking-widest gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Exportar Word</span>
+              <span className="hidden sm:inline">Exportar Word (.docx)</span>
             </Button>
           </div>
         </div>
@@ -608,9 +692,9 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             { label: 'Costo Total', value: fmt(metrics.s5), color: 'text-primary' },
             { label: 'Total Gastos', value: fmt(metrics.s11), color: 'text-blue-600 dark:text-blue-400' },
             { label: 'Costo + Gastos', value: fmt(metrics.s12), color: 'text-foreground' },
-            { label: 'Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, color: 'text-emerald-600 dark:text-emerald-400' },
+            { label: 'Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, color: 'text-foreground' },
             { label: 'Precio Final', value: fmt(metrics.precioFinal), color: 'text-violet-600 dark:text-violet-400' },
-            { label: 'Cumplimiento', value: `${compliancePct}%`, color: compliancePct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' },
+            { label: 'Cumplimiento', value: `${compliancePct}%`, color: compliancePct >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400' },
           ].map(kpi => (
             <div key={kpi.label} className="px-4 py-3 text-center">
               <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">{kpi.label}</div>
@@ -682,7 +766,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         {/* Cost Accumulation Waterfall */}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
-            <BarChart3 className="w-4 h-4 text-emerald-500" />
+            <BarChart3 className="w-4 h-4 text-primary" />
             <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Acumulacion de Costos y Gastos</h3>
           </div>
           <div className="p-4">
@@ -691,11 +775,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={waterfallData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.3)" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 'bold' }} angle={-30} textAnchor="end" height={50} />
                       <YAxis tick={{ fontSize: 9, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
-                      />
+                      <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                       <Bar dataKey="acumulado" fill={COLORS.primary} fillOpacity={0.15} radius={[4, 4, 0, 0]} />
                       <Line type="monotone" dataKey="acumulado" stroke={COLORS.primary} strokeWidth={2} dot={{ fill: COLORS.primary, r: 3 }} />
                     </ComposedChart>
@@ -754,7 +837,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                   </div>
                   <div className="col-span-1 text-center text-[10px] text-muted-foreground font-mono">{sec.rows}</div>
                   <div className="col-span-2 flex justify-center">
-                    <StatusBadge status={sec.status} label={sec.status === 'complete' ? 'OK' : 'Vacio'} />
+                    <StatusBadge status={sec.status} label={sec.status === 'complete' ? 'OK' : sec.status === 'partial' ? 'Parcial' : 'Vacio'} />
                   </div>
                 </div>
               );
@@ -779,11 +862,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                   { name: 'Gastos\n(Secciones 6-10)', valor: metrics.s11, fill: COLORS.amber },
                   { name: 'Total C+G\n(Seccion 12)', valor: metrics.s12, fill: COLORS.emerald },
                 ]}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.3)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} />
                   <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
-                  />
+                  <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                   <Bar dataKey="valor" radius={[8, 8, 0, 0]} barSize={50}>
                     {[
                       { fill: COLORS.primary },
@@ -806,7 +888,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <span className="font-bold text-muted-foreground">Gastos</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-emerald-500" />
+                <div className="w-3 h-3 rounded bg-primary" />
                 <span className="font-bold text-muted-foreground">Total</span>
               </div>
             </div>
@@ -866,7 +948,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
               <div className="text-[9px] text-muted-foreground truncate mt-0.5">{annex.title}</div>
               <div className="text-[10px] font-bold mt-1">
                 {annex.hasData
-                  ? <span className="text-emerald-600 dark:text-emerald-400">{annex.rowCount} registros</span>
+                  ? <span className="text-foreground">{annex.rowCount} registros</span>
                   : <span className="text-red-500">Sin datos</span>}
               </div>
             </div>
@@ -919,7 +1001,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-700",
-                  compliancePct >= 80 ? "bg-emerald-500" : compliancePct >= 50 ? "bg-amber-500" : "bg-red-500"
+                  compliancePct >= 80 ? "bg-primary" : compliancePct >= 50 ? "bg-amber-500" : "bg-red-500"
                 )}
                 style={{ width: `${compliancePct}%` }}
               />
@@ -931,8 +1013,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
 
       {/* ── Pricing & Margin Analysis ── */}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
-        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-emerald-500/5 border-b border-border/20">
-          <DollarSign className="w-4 h-4 text-emerald-500" />
+        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-primary/5 border-b border-border/20">
+          <DollarSign className="w-4 h-4 text-primary" />
           <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Analisis de Precio y Margen</h3>
         </div>
         <div className="p-4">
@@ -948,11 +1030,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 layout="vertical"
                 margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border) / 0.3)" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                 <XAxis type="number" tick={{ fontSize: 9, fontWeight: 'bold' }} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold' }} width={100} />
-                <Tooltip content={<ThemedTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.4)", stroke: "hsl(var(--border))" }}
-                />
+                <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                 <Bar dataKey="valor" radius={[0, 6, 6, 0]} barSize={24} stackId="a">
                   {[
                     { fill: COLORS.primary },
@@ -970,9 +1051,9 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Costo Unitario', value: fmt(metrics.costoUnitario), icon: Calculator, color: 'text-primary' },
-              { label: 'Precio Unitario', value: fmt(metrics.precioUnitario), icon: DollarSign, color: 'text-emerald-600 dark:text-emerald-400' },
-              { label: 'Margen Bruto', value: fmt(metrics.precioUnitario - metrics.costoUnitario), icon: TrendingUp, color: metrics.precioUnitario > metrics.costoUnitario ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' },
-              { label: '% Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, icon: Target, color: metrics.margenPct >= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' },
+              { label: 'Precio Unitario', value: fmt(metrics.precioUnitario), icon: DollarSign, color: 'text-foreground' },
+              { label: 'Margen Bruto', value: fmt(metrics.precioUnitario - metrics.costoUnitario), icon: TrendingUp, color: metrics.precioUnitario > metrics.costoUnitario ? 'text-foreground' : 'text-red-600 dark:text-red-400' },
+              { label: '% Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, icon: Target, color: metrics.margenPct >= 30 ? 'text-foreground' : 'text-amber-600 dark:text-amber-400' },
             ].map(m => (
               <div key={m.label} className="p-3 rounded-xl bg-muted/30 border border-border/20">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -1008,14 +1089,14 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className={cn(
         "border rounded-2xl p-6 shadow-sm relative overflow-hidden",
         compliancePct >= 80
-          ? "bg-emerald-500/5 border-emerald-500/20"
+          ? "bg-primary/5 border-primary/20"
           : compliancePct >= 50
             ? "bg-amber-500/5 border-amber-500/20"
             : "bg-red-500/5 border-red-500/20"
       )}>
         <div className={cn(
           "absolute top-0 right-0 p-4 opacity-10",
-          compliancePct >= 80 ? "text-emerald-500" : "text-amber-500"
+          compliancePct >= 80 ? "text-primary" : "text-amber-500"
         )}>
           <FileCheck className="w-20 h-20" />
         </div>
@@ -1031,7 +1112,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
           <div className="flex items-center gap-6 pt-2">
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Cumplimiento</div>
-              <div className={cn("text-xl font-black", compliancePct >= 80 ? "text-emerald-600" : "text-amber-600")}>{compliancePct}%</div>
+              <div className={cn("text-xl font-black", compliancePct >= 80 ? "text-foreground" : "text-amber-600")}>{compliancePct}%</div>
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Precio Final</div>
@@ -1039,7 +1120,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Margen</div>
-              <div className={cn("text-xl font-black", metrics.margenPct >= 30 ? "text-emerald-600" : "text-amber-600")}>{metrics.margenPct.toFixed(1)}%</div>
+              <div className={cn("text-xl font-black", metrics.margenPct >= 30 ? "text-foreground" : "text-amber-600")}>{metrics.margenPct.toFixed(1)}%</div>
             </div>
           </div>
         </div>

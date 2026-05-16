@@ -12,6 +12,7 @@ import Decimal from 'decimal.js';
 import { produce } from 'immer';
 import { createSafeParser } from './parser-factory';
 import type { Parser } from 'expr-eval';
+import { isSimpleAnnexRef } from './formula-classifier';
 import {
   CostSheetData,
   CostSheetRow,
@@ -119,6 +120,7 @@ export function evaluateAnnexExpressionShared(
     expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
     expr = expr.replace(/\bcantidad\b/g, String(header.quantity || 0));
     expr = expr.replace(/\bQUANTITY\b/g, String(header.quantity || 0));
+    expr = expr.replace(/\bquantity\b/g, String(header.quantity || 0));
 
     // Annex replacements (e.g. AnexoI) with Smart Resolve
     // Also handles TotalAnexo[ID] for explicit total access
@@ -527,9 +529,8 @@ export function buildEngineRows(
       const baseRefId = r.baseDeCalculoRef || r.base_ref || r.baseRef;
 
       // Detect simple annex reference in formula (e.g. "=AnexoI", "=TotalAnexoIII")
-      const rawFormula = (r.totalFormula || r.formula || '').replace(/^=\s*/, '').trim();
-      const simpleAnnexMatch = rawFormula.match(/^(Total)?[Aa]nexo([IVXLC]+)$/i);
-      const isSimpleAnnexFormula = !!simpleAnnexMatch && !rawFormula.includes(' ');
+      const annexRoman = isSimpleAnnexRef(r.totalFormula || r.formula || '');
+      const isSimpleAnnexFormula = !!annexRoman;
 
       // Resolve baseCalculo: from baseDeCalculoRef OR from a simple annex formula
       if (baseRefId) {
@@ -540,10 +541,9 @@ export function buildEngineRows(
         } else {
           baseCalculo = { type: 'FILA', classification: baseRefId };
         }
-      } else if (isSimpleAnnexFormula && simpleAnnexMatch) {
+      } else if (isSimpleAnnexFormula && annexRoman) {
         // No explicit baseDeCalculoRef, but formula is a bare annex ref → infer it
-        const annexId = simpleAnnexMatch[2].toUpperCase();
-        baseCalculo = { type: 'ANEXO', anexoId: annexId };
+        baseCalculo = { type: 'ANEXO', anexoId: annexRoman };
       }
 
       // Route to IMPORTAR_ANEXO when:
@@ -555,11 +555,6 @@ export function buildEngineRows(
         (isSimpleAnnexFormula || (!r.formula && !r.totalFormula))
       ) {
         formaCalculo = 'IMPORTAR_ANEXO';
-      }
-
-      // ── DEBUG: Log rows with annex-related formulas ──
-      if (formula && /anexo/i.test(formula)) {
-        console.log(`[MAPPING] row=${r.id} class=${currentNumbering} formula="${formula}" method="${method}" formaCalculo=${formaCalculo} isParent=${isParent} isFixedValue=${isFixedValue} baseDeCalculoRef=${r.baseDeCalculoRef}`);
       }
 
       // Normalize =sum(children) formula
@@ -606,10 +601,10 @@ export function buildEngineRows(
       engineRows.push({
         id: r.id,
         parentId: parentId,
-        // BUG-015 FIX: Use positional numbering for UUID-based rows so ref() can find them
-        classification: /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(r.id || '')
-          ? currentNumbering
-          : (r.id || currentNumbering),
+        // Classification must always be positional numbering (e.g. "4.1.1")
+        // so that ref()/vh() lookups resolve correctly — the engine's
+        // Priority-2 ID fallback still handles legacy ref('4.1') calls.
+        classification: currentNumbering,
         label: r.label,
         um: r.um || r.unit,
         type,

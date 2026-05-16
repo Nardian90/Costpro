@@ -216,25 +216,26 @@
 
 /* ============================================
    THEME: DARK — COSTPRO Design Language
-   Enterprise colors: Stripe/Linear inspired
+   Background: Zed-style dark gray, Text: #fff, Accent: green
+   WCAG 2.1 AA compliant contrast ratios
    ============================================ */
 .dark,
 .theme-dark {
   --radius: var(--radius-lg);
 
-  /* ── Semantic Dark Tokens ── */
+  /* ── Semantic Dark Tokens (Neutral dark gray — VS Code / Zed style) ── */
   --background: #121212;
   --background-solid: #121212;
-  --foreground: #ffffff;
+  --foreground: #e4e4e7;
 
-  --card: #1e1e1e;
-  --card-foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #e4e4e7;
 
-  --muted: #1a1a1a;
+  --muted: #1e1e1e;
   --muted-foreground: #a1a1aa;
 
-  --popover: #1e1e1e;
-  --popover-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #e4e4e7;
 
   --border: #2a2a2a;
   --input: #2a2a2a;
@@ -256,8 +257,8 @@
   --danger-light: #fca5a5;
   --destructive: #ef4444;
 
-  --accent: #052e16;
-  --accent-foreground: #86efac;
+  --accent: #1a1a1a;
+  --accent-foreground: #e4e4e7;
 
   --ring: rgba(34, 197, 94, 0.4);
   --selection: rgba(34, 197, 94, 0.2);
@@ -269,12 +270,12 @@
   --chart-4: #fbbf24;
   --chart-5: #38bdf8;
 
-  /* ── Sidebar (Dark) ── */
+  /* ── Sidebar (Dark) — darkest layer for visual depth ── */
   --sidebar: #0a0a0a;
-  --sidebar-foreground: #a1a1aa;
+  --sidebar-foreground: #d4d4d8;
   --sidebar-primary: #22c55e;
   --sidebar-primary-foreground: #052e16;
-  --sidebar-accent: #1a1a1a;
+  --sidebar-accent: #1e1e1e;
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #2a2a2a;
   --sidebar-ring: rgba(34, 197, 94, 0.3);

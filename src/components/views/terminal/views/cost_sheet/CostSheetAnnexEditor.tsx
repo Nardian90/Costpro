@@ -203,11 +203,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
              Exportar
           </Button>
           <Button
+             variant="ghost"
+             size="sm"
              onClick={() => addRow(annex.id)}
-             className="h-6 px-2 text-[9px] font-bold uppercase tracking-wider text-primary hover:bg-primary/10 gap-1"
+             className="h-6 px-2.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 gap-1"
           >
              <Plus className="w-3 h-3" />
-             Fila
+             Agregar fila
           </Button>
 
           {/* Coefficient adjustment — compact inline */}
@@ -294,6 +296,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                       ) : (
                         <Target className="w-2.5 h-2.5" />
                       )}
+                      Calcular
                   </Button>
                 </>
               )}

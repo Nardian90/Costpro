@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "@/lib/auth";
+import { getServerSession } from '@/lib/auth';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
@@ -9,6 +9,10 @@ export const runtime = 'nodejs';
 const MAX_SECTIONS = 50;
 const MAX_ROWS_PER_SECTION = 200;
 const MAX_SCENARIOS = 5;
+
+function getClientId(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anonymous';
+}
 
 function validateComparisonData(data: any): { ok: boolean; error?: string } {
     if (!data || typeof data !== 'object') return { ok: false, error: 'comparisonData inválido' };
@@ -23,22 +27,20 @@ function validateComparisonData(data: any): { ok: boolean; error?: string } {
     return { ok: true };
 }
 
-const safeLocale = (val: number | string | undefined | null) => {
-  if (val === undefined || val === null) return '0.00';
-  const num = typeof val === 'number' ? val : parseFloat(String(val));
-  if (isNaN(num)) return '0.00';
-  return num.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function safeLocale(val: any) {
+  const n = parseFloat(String(val));
+  return isNaN(n) ? val : n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-async function handler(req: NextRequest) {
+const handler = async (req: NextRequest) => {
   try {
+    // Optional auth: use session if available, fall back to IP-based rate limiting
     const session = await getServerSession(req);
-    const clientId = session?.user?.id || req.headers.get('x-forwarded-for') || 'anonymous';
-
+    const clientId = session ? session.user.id : getClientId(req);
     const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
     if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
-    let body; try { body = await req.json(); } catch (e) { return NextResponse.json({ error: "Cuerpo de solicitud inválido" }, { status: 400 }); }
+    const body = await req.json();
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Cuerpo de solicitud inválido' }, { status: 400 });
     }
@@ -53,7 +55,7 @@ async function handler(req: NextRequest) {
     const pageWidth = doc.internal.pageSize.width;
     const timestamp = new Date().toLocaleString();
     const exportOptions = body.options || body.exportOptions || {};
-    const primaryColor: [number, number, number] = exportOptions.pdfFormat === 'pro' ? [26, 82, 118] : [0, 0, 0];
+    const primaryColor: [number, number, number] = exportOptions.pdfFormat === 'pro' ? [21, 128, 61] : [21, 128, 61];
 
     const addHeader = (pdf: any, title: string) => {
       pdf.setFontSize(14);
@@ -114,14 +116,16 @@ async function handler(req: NextRequest) {
         headStyles: { fillColor: primaryColor, textColor: 255, halign: 'center' },
       });
     } else {
-      // Single-mode
+      // Single-mode: body contains { data: CostSheetData, options, calculatedValues, calculatedHeader }
       const sheetData = body.data || body;
       const calculatedValues = body.calculatedValues || {};
       const calculatedHeader = body.calculatedHeader || null;
       const header = sheetData.header || {};
 
+      // --- FICHA HEADER ---
       let currentY = addHeader(doc, "FICHA DE COSTO");
 
+      // Header info block
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(60);
@@ -135,6 +139,7 @@ async function handler(req: NextRequest) {
       }
       currentY += 5;
 
+      // --- SECTIONS TABLE ---
       const processRows = (rows: any[], depth = 0): any[] => {
         if (depth > 5) return [];
         const tableBody: any[] = [];
@@ -161,6 +166,7 @@ async function handler(req: NextRequest) {
           doc.addPage();
           currentY = 20;
         }
+        // Section divider row
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(80);
@@ -182,6 +188,7 @@ async function handler(req: NextRequest) {
         }
       }
 
+      // --- ANNEXES ---
       const annexes = sheetData.annexes || [];
       const calculatedAnnexes = body.calculatedAnnexes || [];
       const calcAnnexMap = new Map<string, any>();
@@ -231,6 +238,7 @@ async function handler(req: NextRequest) {
         }
       }
 
+      // --- UTILITY NOTE ---
       if (exportOptions.includeUtilityNote && calculatedHeader) {
         const utilPercent = calculatedHeader.utilityPercent || calculatedHeader.porcentajeUtilidad || 0;
         const costTotal = calculatedHeader.totalCost || calculatedHeader.costoTotal || 0;
@@ -242,6 +250,7 @@ async function handler(req: NextRequest) {
         doc.text(`Nota de Utilidad: ${safeLocale(utilPercent)}% | Costo: ${safeLocale(costTotal)} | Precio Venta: ${safeLocale(salePrice)}`, 14, currentY);
       }
 
+      // --- DATE/TIME FOOTER ---
       if (exportOptions.showDateTime !== false) {
         const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
@@ -265,6 +274,6 @@ async function handler(req: NextRequest) {
     console.error('PDF Export Error:', error);
     return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
   }
-}
+};
 
-export const POST = withTracing((req: NextRequest) => handler(req), 'POST /api/cost-sheets/export-pdf');
+export const POST = withTracing(handler, 'POST /api/cost-sheets/export-pdf');
