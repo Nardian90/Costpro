@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 import { reportsGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
@@ -209,7 +210,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
         processRows(section.rows);
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos + 5,
         head: [mainHeaders],
         body: mainRows,
@@ -249,7 +250,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
           return val || '-';
         }));
 
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: finalY + 2,
           head: [headers],
           body: data,
@@ -301,7 +302,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
 
       const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: 50,
         head: [displayHeaders],
         body: tableData,
@@ -309,7 +310,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
         styles: { fontSize: 8, cellPadding: 2 },
         margin: { top: 50 },
-        didDrawPage: (_data: Record<string, unknown>) => {
+        didDrawPage: (_data: any) => {
           // Footer
           const str = `Página ${doc.getNumberOfPages()}`;
           doc.setFontSize(8);

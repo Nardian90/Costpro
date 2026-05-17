@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 import { logger } from '@/lib/logger';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { format } from 'date-fns';
@@ -83,7 +84,7 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
       Number(row.amount || row.importe || 0).toFixed(2)
     ]);
 
-    (docInstance as any).autoTable({
+    autoTable(docInstance, {
       startY: yOffset + 63,
       head: [['CONCEPTO', 'IMPORTE ($)']],
       body: tableRows,

@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 "use client";
 
 import { useCallback } from "react";
@@ -38,7 +39,7 @@ export const usePOSCartExports = ({ lastSale }: UsePOSCartExportsOptions) => {
     doc.setFontSize(14);
     doc.text("Detalle de Compra", 20, 55);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 60,
       head: [["Producto", "Cant.", "Precio", "Subtotal"]],
       body: lastSale.items.map((item: LastSale["items"][number]) => [

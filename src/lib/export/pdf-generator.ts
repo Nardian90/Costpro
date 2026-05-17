@@ -1,5 +1,6 @@
+import { jsPDF } from 'jspdf';
 import { createPDFDocument } from './lazy-pdf';
-import { CostSheetData, CalculatedRowValue } from '@/types/cost-sheet';
+import autoTable from 'jspdf-autotable';
 
 const MAX_SECTIONS = 50;
 const MAX_ROWS_PER_SECTION = 200;
@@ -36,7 +37,7 @@ export async function generateCostSheetPDF(body: any) {
     const exportOptions = body.options || body.exportOptions || {};
     const primaryColor: [number, number, number] = [21, 128, 61];
 
-    const addHeader = (pdf: any, title: string) => {
+    const addHeader = (pdf: jsPDF, title: string) => {
       pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(...primaryColor);
@@ -86,7 +87,7 @@ export async function generateCostSheetPDF(body: any) {
         processRows(section.rows);
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: currentY,
         head: headRows,
         body: tableBody,
@@ -149,7 +150,7 @@ export async function generateCostSheetPDF(body: any) {
 
         const sectionTableData = processRows(section.rows || []);
         if (sectionTableData.length > 0) {
-          (doc as any).autoTable({
+          autoTable(doc, {
             startY: currentY,
             head: [['No.', 'Concepto', 'UM', 'V. Histórico', 'Total']],
             body: sectionTableData,
@@ -198,7 +199,7 @@ export async function generateCostSheetPDF(body: any) {
         );
 
         if (annexTableData.length > 0) {
-          (doc as any).autoTable({
+          autoTable(doc, {
             startY: currentY,
             head: [colHeaders],
             body: annexTableData,
@@ -213,13 +214,13 @@ export async function generateCostSheetPDF(body: any) {
 
       if (exportOptions.includeUtilityNote && calculatedHeader) {
         const utilPercent = calculatedHeader.utilityPercent || calculatedHeader.porcentajeUtilidad || 0;
-        const costTotal = calculatedHeader.totalCost || calculatedHeader.costoTotal || 0;
-        const salePrice = calculatedHeader.salePrice || calculatedHeader.precioVenta || 0;
+        const n_costTotal = calculatedHeader.totalCost || calculatedHeader.costoTotal || 0;
+        const n_salePrice = calculatedHeader.salePrice || calculatedHeader.precioVenta || 0;
         if (currentY > 260) { doc.addPage(); currentY = 20; }
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(60);
-        doc.text(`Nota de Utilidad: ${safeLocale(utilPercent)}% | Costo: ${safeLocale(costTotal)} | Precio Venta: ${safeLocale(salePrice)}`, 14, currentY);
+        doc.text(`Nota de Utilidad: ${safeLocale(utilPercent)}% | Costo: ${safeLocale(n_costTotal)} | Precio Venta: ${safeLocale(n_salePrice)}`, 14, currentY);
       }
 
       if (exportOptions.showDateTime !== false) {

@@ -1,14 +1,14 @@
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /**
- * Loads jsPDF and autoTable only when needed for export.
- * Eliminates ~300KB from the initial client bundle.
+ * Creates a new jsPDF document.
+ * In the browser, jspdf-autotable will automatically register itself.
  */
 export async function createPDFDocument(
   orientation?: 'p' | 'l' | 'portrait' | 'landscape',
   unit?: 'pt' | 'px' | 'in' | 'mm' | 'cm' | 'ex' | 'em' | 'pc',
   format?: string | number[],
 ) {
-  const { jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
   return new jsPDF(orientation, unit, format);
 }
