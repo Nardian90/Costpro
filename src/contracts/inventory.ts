@@ -3,7 +3,7 @@
  * @description Centraliza las definiciones de tipos para el inventario,
  * eliminando `null` y `undefined` para garantizar consistencia.
  */
-export interface InventoryItemContract {
+export interface InventoryItem {
   productId: string;
   sku: string;
   name: string;
@@ -12,12 +12,12 @@ export interface InventoryItemContract {
 }
 
 /**
- * Fábrica para crear objetos InventoryItemContract con valores predeterminados seguros.
+ * Fábrica para crear objetos InventoryItem con valores predeterminados seguros.
  */
 export const InventoryItemFactory = {
   create: (
-    initialValues?: Partial<InventoryItemContract>
-  ): InventoryItemContract => ({
+    initialValues?: Partial<InventoryItem>
+  ): InventoryItem => ({
     productId: '',
     sku: '',
     name: '',
@@ -27,7 +27,7 @@ export const InventoryItemFactory = {
   }),
 };
 
-export interface InventoryMovementContract {
+export interface InventoryMovement {
   movementId: string;
   timestamp: string;
   quantityChange: number;
@@ -35,12 +35,12 @@ export interface InventoryMovementContract {
 }
 
 /**
- * Fábrica para crear objetos InventoryMovementContract con valores predeterminados seguros.
+ * Fábrica para crear objetos InventoryMovement con valores predeterminados seguros.
  */
 export const InventoryMovementFactory = {
   create: (
-    initialValues?: Partial<InventoryMovementContract>
-  ): InventoryMovementContract => ({
+    initialValues?: Partial<InventoryMovement>
+  ): InventoryMovement => ({
     movementId: '',
     timestamp: new Date().toISOString(),
     quantityChange: 0,
@@ -48,3 +48,9 @@ export const InventoryMovementFactory = {
     ...initialValues,
   }),
 };
+
+export interface AdjustInventoryResponse {
+  productId: string;
+  newQuantity: number;
+  newVersion: number;
+}

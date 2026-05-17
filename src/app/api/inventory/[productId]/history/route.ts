@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { getServerSession } from "@/lib/auth";
-import { InventoryMovement } from "@/types/inventory";
+import { InventoryMovement } from "@/contracts/inventory";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 
