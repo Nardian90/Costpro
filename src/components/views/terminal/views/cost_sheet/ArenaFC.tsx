@@ -7,7 +7,7 @@ import {
   AlertTriangle, TrendingUp, TrendingDown, Minus, ChevronDown,
   BarChart3, PieChart as PieIcon, Target, Shield, Zap, Info,
   FileText, Layers, DollarSign, Users, Package, Activity,
-  Trophy, ArrowUpRight, ArrowDownRight, Scale, Award
+  Trophy, ArrowUpRight, ArrowDownRight, Scale, Award, Printer
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -17,6 +17,8 @@ import {
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useStore } from '@/store';
 import { toast } from 'sonner';
 import type { CostSheetData, CostSheetHeader, CostSheetSection, CostSheetRow, CostSheetAnnex } from '@/types/cost-sheet';
 import { buildEngineFicha, calculateAnnexesPure } from '@/lib/cost-engine/build-ficha';
@@ -164,14 +166,23 @@ function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fa
 
 const ThemedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
+  const printStyles = `
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-container { padding: 0 !important; margin: 0 !important; }
+      .border { border-color: #eee !important; }
+    }
+  `;
+
   return (
-    <div className="rounded-xl border border-border/50 bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
+    <div className="rounded-xl border border-border bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
       {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-xs">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
           <span className="text-muted-foreground">{entry.name || entry.dataKey}:</span>
-          <span className="font-bold text-foreground">{typeof entry.value === 'number' ? entry.value.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : entry.value}</span>
+          <span className="font-bold text-foreground">{typeof entry.value === 'number' ? entry.value.toLocaleString('es-CU', { minimumFractionDigits: 2 }) + unit : entry.value}</span>
         </div>
       ))}
     </div>
@@ -191,14 +202,14 @@ export default function ArenaFC() {
   // ── Calculate both sheets ──
   const { calcA, calcB } = useMemo(() => {
     if (!selectedA || !selectedB) return { calcA: null, calcB: null };
-    const tmplA = SYSTEM_TEMPLATES.find(t => t.id === selectedA);
-    const tmplB = SYSTEM_TEMPLATES.find(t => t.id === selectedB);
+    const tmplA = allOptions.find(t => t.id === selectedA);
+    const tmplB = allOptions.find(t => t.id === selectedB);
     if (!tmplA || !tmplB) return { calcA: null, calcB: null };
     return {
       calcA: { ...calculateTemplate(tmplA.data), template: tmplA },
       calcB: { ...calculateTemplate(tmplB.data), template: tmplB },
     };
-  }, [selectedA, selectedB]);
+  }, [selectedA, selectedB, allOptions]);
 
   // ── Comparison data ──
   const comparison = useMemo(() => {
@@ -266,8 +277,8 @@ export default function ArenaFC() {
     const annexComparison: AnnexComparison[] = allAnnexIds.map(id => {
       const aA = annexesA.find(a => a.id === id);
       const aB = annexesB.find(a => a.id === id);
-      const totalA = (aA?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
-      const totalB = (aB?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
+      const totalA = getVal(vA, `anexo-${id}`) || getVal(vA, id) || (aA?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
+      const totalB = getVal(vB, `anexo-${id}`) || getVal(vB, id) || (aB?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
       return {
         id,
         title: aA?.title?.split(' - ')[1]?.trim() || aB?.title?.split(' - ')[1]?.trim() || `Anexo ${id}`,
@@ -298,14 +309,14 @@ export default function ArenaFC() {
     const margenA = costoA > 0 && utilA > 0 ? (utilA / (costoA + getVal(vA, '11')) * 100) : 0;
     const margenB = costoB > 0 && utilB > 0 ? (utilB / (costoB + getVal(vB, '11')) * 100) : 0;
 
-    // Radar chart data
+    // Radar chart data (Normalized to % of total cost)
     const radarData = [
-      { metric: 'Material', A: getVal(vA, '1'), B: getVal(vB, '1') },
-      { metric: 'Salario', A: getVal(vA, '2'), B: getVal(vB, '2') },
-      { metric: 'Otros Dir.', A: getVal(vA, '3'), B: getVal(vB, '3') },
-      { metric: 'Gastos Asoc.', A: getVal(vA, '4'), B: getVal(vB, '4') },
-      { metric: 'Gral. Admon.', A: getVal(vA, '6'), B: getVal(vB, '6') },
-      { metric: 'Tributarios', A: getVal(vA, '10'), B: getVal(vB, '10') },
+      { metric: 'Material', A: costoA > 0 ? (getVal(vA, '1') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '1') / costoB * 100) : 0 },
+      { metric: 'Salario', A: costoA > 0 ? (getVal(vA, '2') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '2') / costoB * 100) : 0 },
+      { metric: 'Otros Dir.', A: costoA > 0 ? (getVal(vA, '3') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '3') / costoB * 100) : 0 },
+      { metric: 'Gastos Asoc.', A: costoA > 0 ? (getVal(vA, '4') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '4') / costoB * 100) : 0 },
+      { metric: 'Gral. Admon.', A: costoA > 0 ? (getVal(vA, '6') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '6') / costoB * 100) : 0 },
+      { metric: 'Tributarios', A: costoA > 0 ? (getVal(vA, '10') / costoA * 100) : 0, B: costoB > 0 ? (getVal(vB, '10') / costoB * 100) : 0 },
     ];
 
     // Cost structure comparison (stacked)
@@ -347,7 +358,7 @@ export default function ArenaFC() {
       setShowResults(true);
       setIsCalculating(false);
     }, 600);
-  }, [selectedA, selectedB]);
+  }, [selectedA, selectedB, allOptions]);
 
   const handleReset = useCallback(() => {
     setSelectedA('');
@@ -357,8 +368,8 @@ export default function ArenaFC() {
 
   const fmt = (v: number) => formatCurrency(v);
 
-  const templateA = SYSTEM_TEMPLATES.find(t => t.id === selectedA);
-  const templateB = SYSTEM_TEMPLATES.find(t => t.id === selectedB);
+  const templateA = allOptions.find(t => t.id === selectedA);
+  const templateB = allOptions.find(t => t.id === selectedB);
 
   // ── Word Export for comparison ──
   const exportComparisonWord = useCallback(() => {
@@ -385,6 +396,15 @@ export default function ArenaFC() {
       <table><tr><th style="border:none;width:50%;text-align:center"><span class="team-a">${comparison.nameA}</span><br/><span style="font-size:8pt;color:#64748b">${comparison.categoryA}</span></th><th style="border:none;width:50%;text-align:center"><span class="team-b">${comparison.nameB}</span><br/><span style="font-size:8pt;color:#64748b">${comparison.categoryB}</span></th></tr></table>
 
       <h2>Resumen Ejecutivo</h2>
+      <div style="text-align:center;margin:8pt 0">
+        <div class="kpi"><div class="kpi-val team-a">${fmt(comparison.kpis.find(k=>k.key==='5')?.valA||0)}</div><div class="kpi-label">${comparison.nameA} - Costo</div></div>
+        <div class="kpi"><div class="kpi-val team-b">${fmt(comparison.kpis.find(k=>k.key==='5')?.valB||0)}</div><div class="kpi-label">${comparison.nameB} - Costo</div></div>
+      </div>
+      <div style="text-align:center;margin:8pt 0">
+        <div class="kpi"><div class="kpi-val team-a">${comparison.margenA.toFixed(1)}%</div><div class="kpi-label">Margen A</div></div>
+        <div class="kpi"><div class="kpi-val team-b">${comparison.margenB.toFixed(1)}%</div><div class="kpi-label">Margen B</div></div>
+        <div class="kpi"><div class="kpi-val">${comparison.scoreA} vs ${comparison.scoreB}</div><div class="kpi-label">Puntuacion Final</div></div>
+      </div>
       <div style="text-align:center;margin:8pt 0">
         <div class="kpi"><div class="kpi-val team-a">${fmt(comparison.kpis.find(k=>k.key==='5')?.valA||0)}</div><div class="kpi-label">${comparison.nameA} - Costo</div></div>
         <div class="kpi"><div class="kpi-val team-b">${fmt(comparison.kpis.find(k=>k.key==='5')?.valB||0)}</div><div class="kpi-label">${comparison.nameB} - Costo</div></div>
@@ -444,7 +464,8 @@ export default function ArenaFC() {
   }, [comparison]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
+    <div className="w-full max-w-7xl mx-auto space-y-6 p-4 print-container">
+      <style>{printStyles}</style>
       {/* ── Header ── */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-3 mb-2">
@@ -501,7 +522,7 @@ export default function ArenaFC() {
                         exit={{ opacity: 0, y: -8 }}
                         className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
                       >
-                        {SYSTEM_TEMPLATES.filter(t => t.id !== selectedB).map(t => (
+                        {allOptions.filter(t => t.id !== selectedB).map(t => (
                           <button
                             key={t.id}
                             onClick={() => { setSelectedA(t.id); setOpenDropdown(null); }}
@@ -553,7 +574,7 @@ export default function ArenaFC() {
                         exit={{ opacity: 0, y: -8 }}
                         className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
                       >
-                        {SYSTEM_TEMPLATES.filter(t => t.id !== selectedA).map(t => (
+                        {allOptions.filter(t => t.id !== selectedA).map(t => (
                           <button
                             key={t.id}
                             onClick={() => { setSelectedB(t.id); setOpenDropdown(null); }}
@@ -635,10 +656,28 @@ export default function ArenaFC() {
                 <span className="text-muted-foreground font-bold">—</span>
                 <span className="px-4 py-2 rounded-xl bg-violet-500/10 text-violet-500 font-black">{comparison.nameB}: {comparison.scoreB} pts</span>
               </div>
+              <div className="flex items-center justify-center gap-8 mt-3 text-[10px]">
+                <span className="text-primary font-black uppercase tracking-widest">
+                  Margen A: {comparison.margenA.toFixed(1)}%
+                </span>
+                <span className="text-violet-500 font-black uppercase tracking-widest">
+                  Margen B: {comparison.margenB.toFixed(1)}%
+                </span>
+              </div>
+              <details className="text-[9px] text-muted-foreground mt-4 cursor-pointer hover:text-foreground transition-colors border-t border-border/10 pt-2">
+                <summary className="font-bold uppercase tracking-widest list-none flex items-center justify-center gap-1">
+                  <Activity className="w-2.5 h-2.5" /> ¿Como se calcula el score?
+                </summary>
+                <p className="mt-2 text-center max-w-sm mx-auto opacity-70 leading-relaxed">
+                  +2 pts por menor Costo Total (S5), C+G (S12.1) y Total Gastos (S11).
+                  <br />
+                  +3 pts por mayor Utilidad (S13.1). Score maximo: 9 pts.
+                </p>
+              </details>
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-5 gap-3">
               {comparison.kpis.slice(0, 5).map(k => {
                 const Icon = k.icon;
                 return (
@@ -674,7 +713,7 @@ export default function ArenaFC() {
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={comparison.radarData}>
                         <PolarGrid stroke="hsl(var(--border))" />
-                        <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontWeight: 'bold' }} />
+                        <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontWeight: 'bold', fill: 'hsl(var(--muted-foreground))' }} />
                         <Radar name={comparison.nameA} dataKey="A" stroke={C.teamA} fill={C.teamA} fillOpacity={0.2} strokeWidth={2} />
                         <Radar name={comparison.nameB} dataKey="B" stroke={C.teamB} fill={C.teamB} fillOpacity={0.2} strokeWidth={2} />
                         <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
@@ -696,8 +735,8 @@ export default function ArenaFC() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={comparison.structureData} margin={{ bottom: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold' }} />
-                        <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${(v/1000).toFixed(0)}k`} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9, fontWeight: 'bold', fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v: number) => `${(v/1000).toFixed(0)}k`} />
                         <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                         <Legend wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
                         <Bar dataKey="Material" stackId="a" fill="#6366f1" radius={[0,0,0,0]} />
@@ -724,8 +763,8 @@ export default function ArenaFC() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={comparison.deviationData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 'bold' }} angle={-20} textAnchor="end" height={60} />
-                        <YAxis tick={{ fontSize: 9 }} tickFormatter={(v: number) => `${v>0?'+':''}${(v/1000).toFixed(1)}k`} />
+                        <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 'bold', fill: 'hsl(var(--muted-foreground))' }} angle={-20} textAnchor="end" height={60} />
+                        <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v: number) => `${v>0?'+':''}${(v/1000).toFixed(1)}k`} />
                         <Tooltip content={<ThemedTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.4)', stroke: 'hsl(var(--border))' }} />
                         <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={2} />
                         <Bar dataKey="desviacion" radius={[4,4,0,0]}>
@@ -890,6 +929,14 @@ export default function ArenaFC() {
               >
                 <Download className="w-4 h-4" />
                 Exportar Word
+              </Button>
+              <Button
+                onClick={() => window.print()}
+                variant="ghost"
+                className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 no-print"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
               </Button>
             </div>
           </motion.div>
