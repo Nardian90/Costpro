@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { inventoryAdjustSchema, zodError } from '@/validation/api-schemas';
-import { AdjustInventoryResponse } from "@/types/inventory";
+import { AdjustInventoryResponse } from "@/contracts/inventory";
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';

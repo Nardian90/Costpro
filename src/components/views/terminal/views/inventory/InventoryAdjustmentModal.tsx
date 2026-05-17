@@ -42,16 +42,6 @@ export default function InventoryAdjustmentModal({
 
   // Sincronizar ajusteValorUnitario cuando cambian las unidades para mostrar el "Costo Sugerido"
   // Solo se sincroniza si el usuario no ha ingresado un valor manual (o si lo borró)
-  useEffect(() => {
-    if (ajusteUnidades < 0) {
-      // Para reducciones, el costo sugerido es el promedio actual
-      if (ajusteValorUnitario === '') {
-          // Si está vacío, los resultados ya usan el promedio por defecto en la lógica
-      }
-    } else if (ajusteUnidades > 0) {
-      // Para incrementos, el costo sugerido es 0 (dilución) a menos que se especifique
-    }
-  }, [ajusteUnidades]);
 
   const resultados = useMemo(() => {
     return calcularAjusteInventario({
