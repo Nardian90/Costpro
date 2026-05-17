@@ -69,6 +69,14 @@ export const reportsGenerateSchema = z.object({
   format: z.enum(['a4', 'letter', 'legal']).optional().default('a4'),
   orientation: z.enum(['portrait', 'landscape']).optional().default('portrait'),
   data: z.record(z.string(), z.unknown()).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  store_id: z.string().uuid().optional().nullable(),
+  columns: z.array(z.string()).optional(),
+  name: z.string().optional(),
+  definition_id: z.string().uuid().optional(),
+  calculatedValues: z.record(z.string(), z.any()).optional(),
+  calculatedAnnexes: z.array(z.any()).optional(),
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
