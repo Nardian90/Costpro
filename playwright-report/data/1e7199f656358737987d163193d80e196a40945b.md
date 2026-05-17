@@ -6,8 +6,8 @@
 
 # Test info
 
-- Name: home-page.spec.ts >> Home Page >> should load the application splash screen
-- Location: e2e/home-page.spec.ts:4:7
+- Name: arena-fc-verification.spec.ts >> Arena FC - Verify visual and logic fixes
+- Location: e2e/arena-fc-verification.spec.ts:3:5
 
 # Error details
 

@@ -157,11 +157,27 @@ function getVal(cv: Record<string, CalculatedRowValue>, id: string): number {
 }
 
 // ── Resolve header field (skip formula strings) ──
-function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fallback = '--'): string {
+function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fallback = '--', allData?: CostSheetData): string {
   const val = header[field];
   if (val !== undefined && val !== null && val !== '') {
     const s = String(val);
     if (!s.startsWith('=')) return s;
+
+    // Attempt basic resolution if allData is provided
+    if (allData && s.startsWith('=')) {
+      try {
+        const formula = s.substring(1);
+        const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+        if (match) {
+          const [_, annexId, rowIdx, fieldName] = match;
+          const annex = allData.annexes?.find(a => a.id === annexId);
+          const row = annex?.data?.[parseInt(rowIdx) - 1];
+          if (row && row[fieldName]) return String(row[fieldName]);
+        }
+      } catch (e) {
+        return s;
+      }
+    }
   }
   return fallback;
 }
@@ -186,6 +202,27 @@ const ThemedTooltip = ({ active, payload, label, unit = "" }: any) => {
 // Main Component
 // ════════════════════════════════════════════════════════════
 export default function ArenaFC() {
+  // Helper to resolve formulas in names
+  const resolveFormulaicString = (str: string, data: CostSheetData) => {
+    if (!str || !str.startsWith('=')) return str;
+    try {
+      const formula = str.substring(1);
+      // Support common name formula pattern
+      const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+      if (match) {
+        const [_, annexId, rowIdx, field] = match;
+        const annex = data.annexes?.find(a => a.id === annexId);
+        const row = annex?.data?.[parseInt(rowIdx) - 1];
+        if (row && row[field]) {
+          return String(row[field]);
+        }
+      }
+      return str;
+    } catch (e) {
+      return str;
+    }
+  };
+
   const printStyles = `
     @media print {
       .no-print { display: none !important; }
@@ -206,17 +243,29 @@ export default function ArenaFC() {
     async function loadUserSheets() {
       const { data, error } = await supabase
         .from('cost_sheets')
-        .select('id, name, category, data')
+        .select('id, name, category, data, updated_at')
         .order('updated_at', { ascending: false });
 
       if (!error && data) {
-        setUserSheets(data.map((d: any) => ({
-          id: d.id,
-          name: d.name || 'Sin nombre',
-          description: 'Ficha personalizada',
-          category: d.category || 'Mis Fichas',
-          data: d.data as unknown as CostSheetData
-        })));
+        setUserSheets(data.map((d: any) => {
+          const sheetData = d.data as unknown as CostSheetData;
+          let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
+
+          // Resolve name if it is a formula
+          resolvedName = resolveFormulaicString(resolvedName, sheetData);
+
+          const dateStr = new Date(d.updated_at).toLocaleDateString('es-CU', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+          });
+
+          return {
+            id: d.id,
+            name: resolvedName,
+            description: `Actualizada el ${dateStr}`,
+            category: d.category || 'Mis Fichas',
+            data: sheetData
+          };
+        }));
       }
     }
     loadUserSheets();
