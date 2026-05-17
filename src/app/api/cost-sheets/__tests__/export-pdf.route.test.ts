@@ -9,6 +9,7 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
 }));
 
+// Mock rate-limit
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn(),
 }));
@@ -64,12 +65,13 @@ const makeRequest = (body: any) => {
 describe('POST /api/cost-sheets/export-pdf', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(rateLimit).mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() });
+    // Default: allow requests
+    (rateLimit as any).mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() });
   });
 
-  it('retorna 401 si no hay sesión y falla el rate limit (simulado)', async () => {
+  it('retorna 429 si falla el rate limit', async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
-    vi.mocked(rateLimit).mockResolvedValue({ allowed: false } as any);
+    (rateLimit as any).mockResolvedValue({ allowed: false });
 
     const req = makeRequest({});
     const res = await POST(req);
