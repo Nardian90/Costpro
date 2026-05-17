@@ -128,4 +128,31 @@ describe('POST /api/reports/generate', () => {
     expect(json.success).toBe(true);
     expect(json.url).toBe('http://pdf');
   });
+
+  it('genera reporte de ficha de costo exitosamente', async () => {
+    const { getServerSession } = await import('@/lib/auth');
+    vi.mocked(getServerSession).mockResolvedValueOnce({
+      user: { id: 'u1' },
+      token: 'valid-token'
+    } as unknown as Awaited<ReturnType<typeof getServerSession>>);
+
+    const req = new NextRequest('http://localhost/api/reports/generate', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer valid-token' },
+      body: JSON.stringify({
+        type: 'cost-sheet',
+        data: {
+          header: { name: 'Test Pizza', code: 'P01', date: '2025-01-01', unit: 'U', quantity: 1, currency: 'CUP', category: 'Food' },
+          sections: []
+        },
+        calculatedValues: {},
+        calculatedAnnexes: []
+      })
+    });
+    const res = await POST(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.success).toBe(true);
+  });
 });

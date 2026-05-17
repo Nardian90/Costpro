@@ -32,7 +32,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
       store_id,
       columns,
       name
-    } = (body as any);
+    } = body;
 
     if (store_id && !canManageStore(session.user as any, store_id)) {
       return NextResponse.json({ error: 'Prohibido', message: 'No tiene permisos para acceder a esta tienda' }, { status: 403 });
@@ -44,7 +44,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
     const { data: runData, error: runError } = await supabase
       .from('report_runs')
       .insert({
-        report_definition_id: (body as any).definition_id || '00000000-0000-0000-0000-000000000000',
+        report_definition_id: body.definition_id || '00000000-0000-0000-0000-000000000000',
         executed_by: session.user.id,
         status: 'pending',
         parameters_snapshot: body,
@@ -61,10 +61,17 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
       case 'inventory':
         const { data: invData, error: invError } = await supabase
           .from('inventory')
-          .select('product:products(name, sku, category), quantity, unit_cost, total_cost:quantity*unit_cost')
+          .select('product:products(name, sku, category), quantity, unit_cost')
           .eq('store_id', store_id);
         if (invError) throw invError;
-        data = invData || [];
+        data = (invData || []).map((item: any) => ({
+            name: item.product?.name,
+            sku: item.product?.sku,
+            category: item.product?.category,
+            quantity: item.quantity,
+            unit_cost: item.unit_cost,
+            total_cost: (item.quantity || 0) * (item.unit_cost || 0)
+        }));
         break;
 
       case 'sales':
@@ -117,8 +124,15 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
         })).sort((a, b) => b.date.localeCompare(a.date));
         break;
 
-      case 'cost_sheet':
+      case 'cost-sheet':
         // Data already handled above
+        break;
+
+      case 'transfer':
+      case 'cash':
+      case 'kardex':
+      case 'audit':
+        data = []; // Placeholder for implementation
         break;
 
       default:
@@ -127,18 +141,22 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
 
     // 3. Generate PDF
     const doc = await createPDFDocument(
-      (body as any).orientation || 'portrait',
+      body.orientation || 'portrait',
       'mm',
-      (body as any).format || 'a4'
+      body.format || 'a4'
     );
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
-    if (type === 'cost_sheet') {
-      const costData = (body as any).data;
-      const calcValues = (body as any).calculatedValues;
-      const calcAnnexes = (body as any).calculatedAnnexes;
+    if (type === 'cost-sheet') {
+      const costData = body.data as any;
+      const calcValues = body.calculatedValues || {};
+      const calcAnnexes = body.calculatedAnnexes || [];
+
+      if (!costData) {
+        throw new Error('Datos de ficha de costo requeridos para este reporte');
+      }
 
       // --- CUSTOM COST SHEET GENERATOR ---
 
