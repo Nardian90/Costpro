@@ -32,6 +32,11 @@ vi.mock('@/lib/roles', () => ({
   hasRole: vi.fn().mockReturnValue(true),
 }));
 
+
+vi.mock('jspdf-autotable', () => ({
+  default: vi.fn(),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
