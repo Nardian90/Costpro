@@ -104,6 +104,38 @@ export default function InventoryView() {
         }
     };
 
+    const handleExportCSV = useCallback(() => {
+        if (products.length === 0) {
+            toast.error('No hay productos para exportar');
+            return;
+        }
+
+        const headers = ['SKU', 'Nombre', 'Stock Actual', 'Costo Promedio', 'Valor Total', 'Categoría'];
+        const rows = products.map(p => [
+            p.sku || '',
+            p.name || '',
+            p.stock_current?.toString() || '0',
+            p.cost_average?.toFixed(2) || '0.00',
+            ((p.stock_current || 0) * (p.cost_average || 0)).toFixed(2),
+            p.category || ''
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(r => r.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `inventario-${user?.activeStoreId || 'export'}-${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Inventario exportado a CSV');
+    }, [products, user?.activeStoreId]);
+
     const actions: Action[] = [
         {
             id: 'toggle-layout',
@@ -120,7 +152,18 @@ export default function InventoryView() {
             variant: currentView === 'inventory' ? 'primary' : 'danger',
             ariaLabel: currentView === 'inventory' ? "Ir a registrar nueva recepción de mercancía" : "Volver al listado de inventario"
         },
+        {
+            id: 'export-csv',
+            label: 'Exportar CSV',
+            icon: Download,
+            onClick: handleExportCSV,
+            variant: 'outline',
+            className: currentView === 'inventory' ? 'flex' : 'hidden',
+        },
     ];
+
+
+
 
     const handleAdjustProduct = useCallback((product: Product) => {
         setAdjustingProduct(product);
