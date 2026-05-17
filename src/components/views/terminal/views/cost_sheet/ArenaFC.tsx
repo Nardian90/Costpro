@@ -17,8 +17,10 @@ import {
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useStore } from '@/store';
+import { supabase } from '@/lib/supabaseClient';
+import { useUIStore } from '@/store';
+
+
 import { toast } from 'sonner';
 import type { CostSheetData, CostSheetHeader, CostSheetSection, CostSheetRow, CostSheetAnnex } from '@/types/cost-sheet';
 import { buildEngineFicha, calculateAnnexesPure } from '@/lib/cost-engine/build-ficha';
@@ -164,17 +166,8 @@ function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fa
   return fallback;
 }
 
-const ThemedTooltip = ({ active, payload, label }: any) => {
+const ThemedTooltip = ({ active, payload, label, unit = "" }: any) => {
   if (!active || !payload?.length) return null;
-  const printStyles = `
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white !important; color: black !important; }
-      .print-container { padding: 0 !important; margin: 0 !important; }
-      .border { border-color: #eee !important; }
-    }
-  `;
-
   return (
     <div className="rounded-xl border border-border bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
       {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
@@ -193,17 +186,52 @@ const ThemedTooltip = ({ active, payload, label }: any) => {
 // Main Component
 // ════════════════════════════════════════════════════════════
 export default function ArenaFC() {
+  const printStyles = `
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-container { padding: 0 !important; margin: 0 !important; }
+      .border { border-color: #eee !important; }
+    }
+  `;
+
   const [selectedA, setSelectedA] = useState<string>('');
   const [selectedB, setSelectedB] = useState<string>('');
   const [showResults, setShowResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<'A' | 'B' | null>(null);
+  const [userSheets, setUserSheets] = useState<TemplateOption[]>([]);
+
+  useEffect(() => {
+    async function loadUserSheets() {
+      const { data, error } = await supabase
+        .from('cost_sheets')
+        .select('id, name, category, data')
+        .order('updated_at', { ascending: false });
+
+      if (!error && data) {
+        setUserSheets(data.map((d: any) => ({
+          id: d.id,
+          name: d.name || 'Sin nombre',
+          description: 'Ficha personalizada',
+          category: d.category || 'Mis Fichas',
+          data: d.data as unknown as CostSheetData
+        })));
+      }
+    }
+    loadUserSheets();
+  }, []);
+
+  const allOptions = useMemo(() => [
+    ...userSheets,
+    ...SYSTEM_TEMPLATES
+  ], [userSheets]);
 
   // ── Calculate both sheets ──
   const { calcA, calcB } = useMemo(() => {
     if (!selectedA || !selectedB) return { calcA: null, calcB: null };
-    const tmplA = allOptions.find(t => t.id === selectedA);
-    const tmplB = allOptions.find(t => t.id === selectedB);
+    const tmplA = allOptions.find((t: any) => t.id === selectedA);
+    const tmplB = allOptions.find((t: any) => t.id === selectedB);
     if (!tmplA || !tmplB) return { calcA: null, calcB: null };
     return {
       calcA: { ...calculateTemplate(tmplA.data), template: tmplA },
@@ -273,10 +301,10 @@ export default function ArenaFC() {
     // Annex comparison
     const annexesA = calcA.template.data.annexes || [];
     const annexesB = calcB.template.data.annexes || [];
-    const allAnnexIds = [...new Set([...annexesA.map(a => a.id), ...annexesB.map(a => a.id)])];
+    const allAnnexIds = [...new Set([...annexesA.map((a: any) => a.id), ...annexesB.map((a: any) => a.id)])];
     const annexComparison: AnnexComparison[] = allAnnexIds.map(id => {
-      const aA = annexesA.find(a => a.id === id);
-      const aB = annexesB.find(a => a.id === id);
+      const aA = annexesA.find((a: any) => a.id === id);
+      const aB = annexesB.find((a: any) => a.id === id);
       const totalA = getVal(vA, `anexo-${id}`) || getVal(vA, id) || (aA?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
       const totalB = getVal(vB, `anexo-${id}`) || getVal(vB, id) || (aB?.data || []).reduce((s: number, r: any) => s + (Number(r.total) || Number(r.amount) || Number(r.importe) || 0), 0);
       return {
@@ -334,8 +362,7 @@ export default function ArenaFC() {
 
     return {
       sections, kpis, annexes: annexComparison,
-      scoreA, scoreB,
-      margenA, margenB,
+      scoreA, scoreB, margenA, margenB,
       radarData, structureData, deviationData,
       nameA: calcA.template.name,
       nameB: calcB.template.name,
@@ -368,8 +395,8 @@ export default function ArenaFC() {
 
   const fmt = (v: number) => formatCurrency(v);
 
-  const templateA = allOptions.find(t => t.id === selectedA);
-  const templateB = allOptions.find(t => t.id === selectedB);
+  const templateA = allOptions.find((t: any) => t.id === selectedA);
+  const templateB = allOptions.find((t: any) => t.id === selectedB);
 
   // ── Word Export for comparison ──
   const exportComparisonWord = useCallback(() => {
@@ -399,6 +426,11 @@ export default function ArenaFC() {
       <div style="text-align:center;margin:8pt 0">
         <div class="kpi"><div class="kpi-val team-a">${fmt(comparison.kpis.find(k=>k.key==='5')?.valA||0)}</div><div class="kpi-label">${comparison.nameA} - Costo</div></div>
         <div class="kpi"><div class="kpi-val team-b">${fmt(comparison.kpis.find(k=>k.key==='5')?.valB||0)}</div><div class="kpi-label">${comparison.nameB} - Costo</div></div>
+      </div>
+      <div style="text-align:center;margin:8pt 0">
+        <div class="kpi"><div class="kpi-val team-a">${comparison.margenA.toFixed(1)}%</div><div class="kpi-label">Margen A</div></div>
+        <div class="kpi"><div class="kpi-val team-b">${comparison.margenB.toFixed(1)}%</div><div class="kpi-label">Margen B</div></div>
+        <div class="kpi"><div class="kpi-val">${comparison.scoreA} vs ${comparison.scoreB}</div><div class="kpi-label">Puntuacion Final</div></div>
       </div>
       <div style="text-align:center;margin:8pt 0">
         <div class="kpi"><div class="kpi-val team-a">${comparison.margenA.toFixed(1)}%</div><div class="kpi-label">Margen A</div></div>
@@ -522,7 +554,7 @@ export default function ArenaFC() {
                         exit={{ opacity: 0, y: -8 }}
                         className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
                       >
-                        {allOptions.filter(t => t.id !== selectedB).map(t => (
+                        {allOptions.filter((t: any) => t.id !== selectedB).map((t: any) => (
                           <button
                             key={t.id}
                             onClick={() => { setSelectedA(t.id); setOpenDropdown(null); }}
@@ -574,7 +606,7 @@ export default function ArenaFC() {
                         exit={{ opacity: 0, y: -8 }}
                         className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
                       >
-                        {allOptions.filter(t => t.id !== selectedA).map(t => (
+                        {allOptions.filter((t: any) => t.id !== selectedA).map((t: any) => (
                           <button
                             key={t.id}
                             onClick={() => { setSelectedB(t.id); setOpenDropdown(null); }}
