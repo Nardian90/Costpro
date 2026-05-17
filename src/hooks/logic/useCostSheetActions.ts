@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { usageService } from '@/services/usage-service';
 import { exportToCSV } from '@/services/export-service';
+import { generateCostSheetPDF } from '@/lib/export/pdf-generator';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalculationResult, AuditEntry } from '@/lib/cost-engine/types';
@@ -133,43 +134,9 @@ export const useCostSheetActions = ({
   useEffect(() => { calcAnnexesRef.current = calculatedAnnexes; });
   useEffect(() => { activeSectionRef.current = activeSection; });
 
-  const handleExportPDF = useCallback(  
+  const handleExportPDF = useCallback(
     async (options: ExportOptions) => {
       const toastId = toast.loading('Generando PDF...');
-
-      const downloadPDF = async (opts: ExportOptions, filename: string) => {
-        try {
-          // Get Supabase session for Bearer token auth (FIX-SEC-024: cookies fallback removed)
-          const { supabase } = await import('@/lib/supabaseClient');
-          const { data: { session } } = await supabase.auth.getSession();
-
-          const response = await fetch('/api/cost-sheets/export-pdf', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': session ? `Bearer ${session.access_token}` : '',
-            },
-            body: JSON.stringify({ data: dataRef.current, options: opts, calculatedValues: calcValuesRef.current, calculatedHeader: calcHeaderRef.current, calculatedAnnexes: calcAnnexesRef.current, calculationResult: calculationResult })
-          });
-          if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            return true;
-          }
-          const errorMsg = await response.text();
-          console.error('PDF export API error:', errorMsg);
-          return false;
-        } catch (fetchError: any) {
-          console.error('PDF export fetch error:', fetchError);
-          return false;
-        }
-      };
 
       try {
         if (!calculationResult) {
@@ -182,18 +149,25 @@ export const useCostSheetActions = ({
         const evalName = h.name || 'ficha';
         const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/?%*:|"<>]/g, '-');
 
-        if (options.consolidated) {
-          const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
-          if (success) {
-            toast.success('PDF consolidado generado con éxito', { id: toastId });
-            if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
-          } else {
-            throw new Error('El servidor no pudo generar el PDF.');
-          }
-        } else {
-          toast.success('PDF generado con éxito', { id: toastId });
-        }
+        const doc = await generateCostSheetPDF({
+          data: dataRef.current,
+          options,
+          calculatedValues: calcValuesRef.current,
+          calculatedHeader: calcHeaderRef.current,
+          calculatedAnnexes: calcAnnexesRef.current,
+          calculationResult: calculationResult
+        });
+
+        const filename = options.consolidated
+          ? `ficha-consolidada-${safeBaseName}.pdf`
+          : `ficha-costo-${safeBaseName}.pdf`;
+
+        doc.save(filename);
+
+        toast.success('PDF generado con éxito', { id: toastId });
+        if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
       } catch (error: any) {
+        console.error('PDF export error:', error);
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
       }
     },
