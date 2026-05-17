@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import { db, type BankTransaction } from "@/lib/dexie";
@@ -139,7 +140,7 @@ export function TransferQRReportView({ type }: Props) {
             ''
         ]);
 
-        (doc as any).autoTable({
+        autoTable(doc, {
             head: [['No', 'Fecha', 'CI / Pasaporte', 'Nombres y Apellidos', 'Importe', 'Transferencia', 'Teléfono', 'Firma Cliente', 'Firma Dep.']],
             body: tableData,
             startY: 30,

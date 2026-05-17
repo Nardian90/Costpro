@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -40,7 +41,7 @@ export class ReleaseGatePdfExporter {
       let finalY = 90;
 
       // Infrastructure Metrics Table
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: finalY,
         head: [['Categoría: Infraestructura', 'Valor']],
         body: [
@@ -56,7 +57,7 @@ export class ReleaseGatePdfExporter {
       finalY = (doc as any).lastAutoTable?.finalY || finalY + 40;
 
       // Security Metrics Table
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: finalY + 10,
         head: [['Categoría: Seguridad & GRC', 'Estado']],
         body: [
@@ -70,7 +71,7 @@ export class ReleaseGatePdfExporter {
       finalY = (doc as any).lastAutoTable?.finalY || finalY + 40;
 
       // MRI Breakdown
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: finalY + 10,
         head: [['Métrica MRI', 'Valor']],
         body: [
@@ -87,7 +88,7 @@ export class ReleaseGatePdfExporter {
 
       // Hard Stops Status
       if (mri.hardStops && mri.hardStops.length > 0) {
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: finalY + 10,
           head: [['Hard Stop de Gobernanza', 'Resultado']],
           body: mri.hardStops.map((hs: any) => [hs.name, hs.passed ? 'PASSED' : 'FAILED']),

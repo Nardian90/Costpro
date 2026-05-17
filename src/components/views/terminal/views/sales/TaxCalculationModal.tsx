@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 'use client';
 
 import React, { useState } from 'react';
@@ -56,7 +57,7 @@ export const TaxCalculationModal = ({
     doc.text(`Facturas seleccionadas: ${selectedTransactions.length}`, 14, 40);
 
     // Summary Table
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 50,
       head: [['Concepto', 'Base de Cálculo', 'Cálculo', 'Total']],
       body: [
@@ -80,7 +81,7 @@ export const TaxCalculationModal = ({
         doc.setFontSize(16);
         doc.text(`Detalle de Impuesto: ${tax.name}`, 14, 20);
 
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: 30,
           head: [['Concepto', 'Base', 'Tasa', 'Total']],
           body: [
@@ -94,7 +95,7 @@ export const TaxCalculationModal = ({
         if (includeAnnex) {
           doc.setFontSize(12);
           doc.text('Anexo de Facturas (esta sección)', 14, (doc as any).lastAutoTable.finalY + 15);
-          (doc as any).autoTable({
+          autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 20,
             head: [['Referencia', 'Monto']],
             body: selectedTransactions.map(t => [t.id.split('-')[0].toUpperCase(), formatCurrency(t.total_amount)]),
@@ -107,7 +108,7 @@ export const TaxCalculationModal = ({
         doc.setFontSize(12);
         doc.text('Anexo: Detalle de Facturas', 14, (doc as any).lastAutoTable.finalY + 15);
 
-        (doc as any).autoTable({
+        autoTable(doc, {
           startY: (doc as any).lastAutoTable.finalY + 20,
           head: [['Referencia', 'Fecha', 'Monto']],
           body: selectedTransactions.map(t => [

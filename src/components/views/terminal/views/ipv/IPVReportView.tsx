@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 'use client';
 import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -205,7 +206,7 @@ export function IPVReportView() {
       doc.setFontSize(18);
       doc.text('REPORTE IPV DIARIO', pageWidth / 2, 25, { align: 'center' });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: 35,
         head: [['Concepto', 'Monto']],
         body: [
@@ -221,7 +222,7 @@ export function IPVReportView() {
         f.cod, f.descripcion, f.um, f.saldo_inicial_qty, f.entrada_qty || 0, f.venta_cantidad_qty, formatCurrencyCents(f.precio_unitario_cents), formatCurrencyCents(f.importe_cents), f.existencia_final_qty
       ]);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
         head: [['Cod', 'Producto', 'UM', 'Inicial', 'Entrada', 'Venta', 'Precio', 'Importe', 'Final']],
         body: tableData,

@@ -1,3 +1,4 @@
+import autoTable from 'jspdf-autotable';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
@@ -107,7 +108,7 @@ const handler = async (req: NextRequest) => {
         processRows(section.rows);
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: currentY,
         head: headRows,
         body: tableBody,
@@ -175,7 +176,7 @@ const handler = async (req: NextRequest) => {
 
         const sectionTableData = processRows(section.rows || []);
         if (sectionTableData.length > 0) {
-          (doc as any).autoTable({
+          autoTable(doc, {
             startY: currentY,
             head: [['No.', 'Concepto', 'UM', 'V. Histórico', 'Total']],
             body: sectionTableData,
@@ -225,7 +226,7 @@ const handler = async (req: NextRequest) => {
         );
 
         if (annexTableData.length > 0) {
-          (doc as any).autoTable({
+          autoTable(doc, {
             startY: currentY,
             head: [colHeaders],
             body: annexTableData,
