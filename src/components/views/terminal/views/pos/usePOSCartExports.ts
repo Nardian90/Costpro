@@ -1,5 +1,5 @@
-import autoTable from 'jspdf-autotable';
 "use client";
+import autoTable from 'jspdf-autotable';
 
 import { useCallback } from "react";
 import { createPDFDocument } from '@/lib/export/lazy-pdf';

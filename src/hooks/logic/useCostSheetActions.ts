@@ -86,7 +86,7 @@ export const useCostSheetActions = ({
 
   const askConfirmation = useCallback((title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
     setConfirmation({ isOpen: true, title, message, onConfirm, variant });
-  }, []);
+  }, [data, calculatedHeader, calculatedValues]);
 
   const handleSetActiveSection = useCallback((section: string) => {
     setActiveCostSection(section);
@@ -123,16 +123,8 @@ export const useCostSheetActions = ({
 
   // FIX-RCT-140: Use refs for unstable data dependencies so callbacks remain stable.
   // This prevents the useEffect at the bottom from re-running on every data/calc change.
-  const dataRef = useRef(data);
-  const calcValuesRef = useRef(calculatedValues);
-  const calcHeaderRef = useRef(calculatedHeader);
-  const calcAnnexesRef = useRef(calculatedAnnexes);
-  const activeSectionRef = useRef(activeSection);
-  useEffect(() => { dataRef.current = data; });
-  useEffect(() => { calcValuesRef.current = calculatedValues; });
-  useEffect(() => { calcHeaderRef.current = calculatedHeader; });
-  useEffect(() => { calcAnnexesRef.current = calculatedAnnexes; });
-  useEffect(() => { activeSectionRef.current = activeSection; });
+
+
 
   const handleExportPDF = useCallback(
     async (options: ExportOptions) => {
@@ -144,17 +136,17 @@ export const useCostSheetActions = ({
           return;
         }
 
-        const h = (calculationResult.metadata?.header || dataRef.current?.header || {}) as Record<string, unknown>;
+        const h = (calculationResult.metadata?.header || data?.header || {}) as Record<string, unknown>;
         const evalCode = h.code || 'export';
         const evalName = h.name || 'ficha';
         const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/?%*:|"<>]/g, '-');
 
         const doc = await generateCostSheetPDF({
-          data: dataRef.current,
+          data: data,
           options,
-          calculatedValues: calcValuesRef.current,
-          calculatedHeader: calcHeaderRef.current,
-          calculatedAnnexes: calcAnnexesRef.current,
+          calculatedValues: calculatedValues,
+          calculatedHeader: calculatedHeader,
+          calculatedAnnexes: calculatedAnnexes,
           calculationResult: calculationResult
         });
 
@@ -171,19 +163,19 @@ export const useCostSheetActions = ({
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
       }
     },
-    [calculationResult, user]
+    [calculationResult, user, data, calculatedValues, calculatedHeader, calculatedAnnexes]
   );
 
   const handleExportExcel = useCallback(() => {
     if (isBlocked) {
       toast.warning('Exportando con advertencias: La ficha contiene errores críticos.');
     }
-    const currentData = dataRef.current;
+    const currentData = data;
     const fileName = currentData?.header?.name
       ? `Ficha de Costo - ${currentData.header.name}`
       : 'Ficha de Costo';
-    exportToCSV(currentData as any, calcValuesRef.current, fileName, calcAnnexesRef.current);
-  }, [isBlocked]);
+    exportToCSV(currentData as any, calculatedValues, fileName, calculatedAnnexes);
+  }, [isBlocked, data, calculatedValues, calculatedAnnexes]);
 
   const handleImportJSON = useCallback(() => {
     const input = document.createElement('input');
@@ -206,15 +198,15 @@ export const useCostSheetActions = ({
   }, [setSheet]);
 
   const handleExportJSON = useCallback(() => {
-    const currentData = dataRef.current;
-    const currentCalcHeader = calcHeaderRef.current;
+    const currentData = data;
+    const currentCalcHeader = calculatedHeader;
     const exportData = {
       ...currentData,
       metadata: {
         exportedAt: new Date().toISOString(),
         calculationSnapshot: {
           header: currentCalcHeader,
-          values: calcValuesRef.current
+          values: calculatedValues
         }
       }
     };
@@ -226,7 +218,7 @@ export const useCostSheetActions = ({
     a.click();
     a.remove();
     toast.success('JSON exportado correctamente');
-  }, []);
+  }, [data, calculatedHeader, calculatedValues]);
 
   // FIX-RCT-140: This useEffect is now stable because all callbacks use refs
   // for unstable data deps, preventing re-runs on every data/calculation change.
@@ -237,17 +229,17 @@ export const useCostSheetActions = ({
     else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
     else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
-    else if (activeSection === 'gen-expert') { handleSetViewMode('quick'); setIsQuickModeGenerating(true); }
-    else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
-    else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'gen-expert') { handleSetViewMode('quick'); setTimeout(() => setIsQuickModeGenerating(true), 0); }
+    else if (activeSection === 'tool-import') { setTimeout(() => handleImportJSON(), 0); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-save') { setTimeout(() => handleExportJSON(), 0); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-excel') { setTimeout(() => handleExportExcel(), 0); handleSetActiveSection('main'); }
+    else if (activeSection === 'tool-export-pdf') { setTimeout(() => setIsExportModalOpen(true), 0); handleSetActiveSection('main'); }
     else if (activeSection === 'templates') { handleSetViewMode('expert'); }
-    else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'res-help') { setTimeout(() => setIsHelpPanelOpen(true), 0); handleSetActiveSection('main'); }
     else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
     else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }
-    else if (activeSection === 'open-sections') { setIsSectionsSidebarOpen(true); handleSetActiveSection('main'); }
-    else if (activeSection === 'open-annexes') { setIsAnnexesSidebarOpen(true); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-sections') { setTimeout(() => setIsSectionsSidebarOpen(true), 0); handleSetActiveSection('main'); }
+    else if (activeSection === 'open-annexes') { setTimeout(() => setIsAnnexesSidebarOpen(true), 0); handleSetActiveSection('main'); }
   }, [activeSection, handleSetViewMode, handleSetActiveSection, handleImportJSON, handleExportJSON, handleExportExcel, setCurrentView, setIsQuickModeGenerating, setIsExportModalOpen, setIsHelpPanelOpen, setIsSectionsSidebarOpen, setIsAnnexesSidebarOpen]);
 
   const handleQuickGenerate = useCallback(async (rows: any[]) => {
@@ -259,8 +251,8 @@ export const useCostSheetActions = ({
       quantity: r.quantity,
       sale_price: r.sale_price
     })));
-    setIsQuickModeGenerating(true);
-  }, []);
+    setTimeout(() => setIsQuickModeGenerating(true), 0);
+  }, [data, calculatedHeader, calculatedValues]);
 
   const onOpenAnnexes = useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = useCallback(() => setIsSectionsSidebarOpen(true), []);

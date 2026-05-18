@@ -5,6 +5,11 @@ import { getServerSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 
 // Mock auth
+
+vi.mock('jspdf-autotable', () => ({
+  default: vi.fn(),
+}));
+
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
 }));
@@ -23,6 +28,8 @@ vi.mock('@/lib/export/lazy-pdf', () => {
           width: orientation === 'l' ? 297 : 210,
           height: orientation === 'l' ? 210 : 297,
           getWidth: () => orientation === 'l' ? 297 : 210,
+          getFontSize: vi.fn().mockReturnValue(10),
+          getTextColor: vi.fn().mockReturnValue([0, 0, 0]),
           getHeight: () => orientation === 'l' ? 210 : 297,
         },
       },
