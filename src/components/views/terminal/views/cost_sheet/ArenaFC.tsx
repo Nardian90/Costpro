@@ -7,7 +7,8 @@ import {
   AlertTriangle, TrendingUp, TrendingDown, Minus, ChevronDown,
   BarChart3, PieChart as PieIcon, Target, Shield, Zap, Info,
   FileText, Layers, DollarSign, Users, Package, Activity,
-  Trophy, ArrowUpRight, ArrowDownRight, Scale, Award, Printer
+  Trophy, ArrowUpRight, ArrowDownRight, Scale, Award, Printer,
+  Search, Filter, LayoutGrid, List
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -50,6 +51,8 @@ interface TemplateOption {
   description: string;
   category: string;
   data: CostSheetData;
+  totalCost?: number;
+  isSystem?: boolean;
 }
 
 interface SectionComparison {
@@ -166,13 +169,16 @@ function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fa
     // Attempt basic resolution if allData is provided
     if (allData && s.startsWith('=')) {
       try {
-        const formula = s.substring(1);
-        const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+        const formula = s.substring(1).trim();
+        const match = formula.match(/GET_ANEXO_FILA_DATO\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\s*\)/i);
         if (match) {
           const [_, annexId, rowIdx, fieldName] = match;
           const annex = allData.annexes?.find(a => a.id === annexId);
           const row = annex?.data?.[parseInt(rowIdx) - 1];
-          if (row && row[fieldName]) return String(row[fieldName]);
+          if (row) {
+             const val = row[fieldName] || row[fieldName.toLowerCase()] || row[fieldName.toUpperCase()];
+             if (val !== undefined) return String(val);
+          }
         }
       } catch (e) {
         return s;
@@ -206,15 +212,17 @@ export default function ArenaFC() {
   const resolveFormulaicString = (str: string, data: CostSheetData) => {
     if (!str || !str.startsWith('=')) return str;
     try {
-      const formula = str.substring(1);
-      // Support common name formula pattern
-      const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+      const formula = str.substring(1).trim();
+      // Improved regex with optional spaces
+      const match = formula.match(/GET_ANEXO_FILA_DATO\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\s*\)/i);
       if (match) {
         const [_, annexId, rowIdx, field] = match;
         const annex = data.annexes?.find(a => a.id === annexId);
         const row = annex?.data?.[parseInt(rowIdx) - 1];
-        if (row && row[field]) {
-          return String(row[field]);
+        if (row) {
+          // Try exact match then case-insensitive
+          const val = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+          if (val !== undefined) return String(val);
         }
       }
       return str;
@@ -236,8 +244,9 @@ export default function ArenaFC() {
   const [selectedB, setSelectedB] = useState<string>('');
   const [showResults, setShowResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<'A' | 'B' | null>(null);
   const [userSheets, setUserSheets] = useState<TemplateOption[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     async function loadUserSheets() {
@@ -247,23 +256,38 @@ export default function ArenaFC() {
         .order('updated_at', { ascending: false });
 
       if (!error && data) {
-        setUserSheets(data.map((d: any) => {
+        const latestByName = new Map<string, any>();
+
+        data.forEach((d: any) => {
           const sheetData = d.data as unknown as CostSheetData;
           let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
+          resolvedName = resolveFormulaicString(resolvedName, sheetData);
 
-          // Resolve name if it is a formula
+          // Use name as key for deduplication to keep only the latest version of each named sheet
+          if (!latestByName.has(resolvedName) || new Date(d.updated_at) > new Date(latestByName.get(resolvedName).updated_at)) {
+            latestByName.set(resolvedName, d);
+          }
+        });
+
+        setUserSheets(Array.from(latestByName.values()).map((d: any) => {
+          const sheetData = d.data as unknown as CostSheetData;
+          let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
           resolvedName = resolveFormulaicString(resolvedName, sheetData);
 
           const dateStr = new Date(d.updated_at).toLocaleDateString('es-CU', {
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
           });
 
+          const calc = calculateTemplate(sheetData);
+
           return {
             id: d.id,
             name: resolvedName,
             description: `Actualizada el ${dateStr}`,
             category: d.category || 'Mis Fichas',
-            data: sheetData
+            data: sheetData,
+            totalCost: calc.values['5']?.total || 0,
+            isSystem: false
           };
         }));
       }
@@ -271,10 +295,52 @@ export default function ArenaFC() {
     loadUserSheets();
   }, []);
 
-  const allOptions = useMemo(() => [
-    ...userSheets,
-    ...SYSTEM_TEMPLATES
-  ], [userSheets]);
+  const allOptions = useMemo(() => {
+    const sys = SYSTEM_TEMPLATES.map(t => ({
+      ...t,
+      isSystem: true,
+      totalCost: calculateTemplate(t.data).values['5']?.total || 0
+    }));
+
+    // Deduplicate: If a user sheet has the same name as a system sheet,
+    // it usually means they modified a system template.
+    // In "Arena", we want to show both or just the latest?
+    // The user image shows many "PLANTILLA DE REINICIO" which are likely auto-saves.
+    // Our loadUserSheets already deduplicates user sheets by name.
+    // Now we filter out system templates if the user has a sheet with the same name.
+
+    const filteredSys = sys.filter(s => !userSheets.some(u => u.name.toLowerCase() === s.name.toLowerCase()));
+
+    return [...userSheets, ...filteredSys];
+  }, [userSheets]);
+
+  const categories = useMemo(() => {
+    const cats = new Set(allOptions.map(t => t.category));
+    return ['all', ...Array.from(cats)];
+  }, [allOptions]);
+
+  const filteredOptions = useMemo(() => {
+    return allOptions.filter(t => {
+      const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           t.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allOptions, searchQuery, selectedCategory]);
+
+  const handleSelect = (id: string) => {
+    if (selectedA === id) {
+      setSelectedA('');
+    } else if (selectedB === id) {
+      setSelectedB('');
+    } else if (!selectedA) {
+      setSelectedA(id);
+    } else if (!selectedB) {
+      setSelectedB(id);
+    } else {
+      setSelectedB(id);
+    }
+  };
 
   // ── Calculate both sheets ──
   const { calcA, calcB } = useMemo(() => {
@@ -567,137 +633,219 @@ export default function ArenaFC() {
 
       {/* ── Selection Arena ── */}
       {!showResults && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="border border-border/60 rounded-3xl overflow-hidden shadow-sm bg-card"
-        >
-          <div className="bg-gradient-to-r from-primary/5 via-transparent to-violet-500/5 px-6 py-4 border-b border-border/20">
-            <h2 className="text-sm font-black uppercase tracking-widest text-center">Selecciona los Competidores</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
-              {/* Team A */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <span className="text-xs font-black uppercase tracking-widest text-primary">Ficha A</span>
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === 'A' ? null : 'A')}
-                    className={cn(
-                      "w-full h-14 rounded-2xl border-2 border-dashed text-left px-5 font-bold text-xs uppercase tracking-widest transition-all",
-                      templateA
-                        ? "border-primary/30 bg-primary/5 text-foreground"
-                        : "border-primary/20 bg-muted/30 text-muted-foreground hover:border-primary/40"
-                    )}
-                  >
-                    {templateA ? templateA.name : 'Seleccionar ficha de costo...'}
-                  </button>
-                  <AnimatePresence>
-                    {openDropdown === 'A' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
-                      >
-                        {allOptions.filter((t: any) => t.id !== selectedB).map((t: any) => (
-                          <button
-                            key={t.id}
-                            onClick={() => { setSelectedA(t.id); setOpenDropdown(null); }}
-                            className={cn(
-                              "w-full text-left px-5 py-3 text-xs font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl",
-                              selectedA === t.id && "bg-primary/10 text-primary"
-                            )}
-                          >
-                            <div>{t.name}</div>
-                            <div className="text-[9px] text-muted-foreground font-normal normal-case">{t.description} — {t.category}</div>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* VS */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center border-2 border-border/30">
-                  <span className="text-lg font-black italic text-foreground">VS</span>
-                </div>
-              </div>
-
-              {/* Team B */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 justify-end">
-                  <span className="text-xs font-black uppercase tracking-widest text-violet-500">Ficha B</span>
-                  <div className="w-3 h-3 rounded-full bg-violet-500" />
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(openDropdown === 'B' ? null : 'B')}
-                    className={cn(
-                      "w-full h-14 rounded-2xl border-2 border-dashed text-left px-5 font-bold text-xs uppercase tracking-widest transition-all",
-                      templateB
-                        ? "border-violet-500/30 bg-violet-500/5 text-foreground"
-                        : "border-violet-500/20 bg-muted/30 text-muted-foreground hover:border-violet-500/40"
-                    )}
-                  >
-                    {templateB ? templateB.name : 'Seleccionar ficha de costo...'}
-                  </button>
-                  <AnimatePresence>
-                    {openDropdown === 'B' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute z-50 top-full mt-2 w-full max-h-64 overflow-y-auto bg-popover border border-border rounded-2xl shadow-2xl"
-                      >
-                        {allOptions.filter((t: any) => t.id !== selectedA).map((t: any) => (
-                          <button
-                            key={t.id}
-                            onClick={() => { setSelectedB(t.id); setOpenDropdown(null); }}
-                            className={cn(
-                              "w-full text-left px-5 py-3 text-xs font-bold uppercase tracking-widest hover:bg-violet-500/10 transition-colors first:rounded-t-2xl last:rounded-b-2xl",
-                              selectedB === t.id && "bg-violet-500/10 text-violet-500"
-                            )}
-                          >
-                            <div>{t.name}</div>
-                            <div className="text-[9px] text-muted-foreground font-normal normal-case">{t.description} — {t.category}</div>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="flex flex-col md:flex-row items-center gap-4 bg-card/50 backdrop-blur-md p-4 rounded-3xl border border-border/40 shadow-sm">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar ficha de costo..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-12 pl-11 pr-4 bg-muted/20 border-none rounded-2xl text-sm font-bold placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+              />
             </div>
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+              {categories.map(cat => {
+                const count = allOptions.filter(o => cat === 'all' || o.category === cat).length;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={cn(
+                      "px-4 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-2",
+                      selectedCategory === cat
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                        : "bg-muted/30 text-muted-foreground border-transparent hover:border-border/60"
+                    )}
+                  >
+                    {cat === 'all' ? 'Todos' : cat}
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded-md text-[8px] font-bold",
+                      selectedCategory === cat ? "bg-white/20 text-white" : "bg-muted-foreground/20 text-muted-foreground"
+                    )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {(searchQuery || selectedCategory !== 'all') && (
+              <Button
+                variant="ghost"
+                onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+                className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              >
+                Limpiar Filtros
+              </Button>
+            )}
+          </div>
 
-            {/* Compare Button */}
-            <div className="flex justify-center mt-8">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          {/* Catalog Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-32">
+            <AnimatePresence mode='popLayout'>
+              {filteredOptions.map((t) => {
+                const isA = selectedA === t.id;
+                const isB = selectedB === t.id;
+                const isSelected = isA || isB;
+
+                return (
+                  <motion.div
+                    layout
+                    key={t.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSelect(t.id)}
+                    className={cn(
+                      "group relative p-5 rounded-[2rem] border-2 cursor-pointer transition-colors duration-300 flex flex-col h-full",
+                      isA ? "border-primary bg-primary/10 shadow-2xl shadow-primary/20 scale-[1.02]" :
+                      isB ? "border-violet-500 bg-violet-500/10 shadow-2xl shadow-violet-500/20 scale-[1.02]" :
+                      "border-border/40 bg-card hover:border-primary/50 hover:bg-primary/[0.02]"
+                    )}
+                  >
+                    {/* Selection Badges */}
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0, rotate: 20 }}
+                          className={cn(
+                            "absolute -top-3 -right-3 w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black italic text-lg shadow-2xl z-10",
+                            isA ? "bg-primary" : "bg-violet-500"
+                          )}
+                        >
+                          {isA ? 'A' : 'B'}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={cn(
+                        "p-3 rounded-2xl transition-colors",
+                        isSelected ? (isA ? "bg-primary/20 text-primary" : "bg-violet-500/20 text-violet-500") : "bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                      )}>
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-muted/50 text-muted-foreground">
+                        {t.category}
+                      </span>
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={cn(
+                          "text-sm font-black uppercase tracking-tighter italic transition-colors",
+                          isSelected ? (isA ? "text-primary" : "text-violet-500") : "text-foreground group-hover:text-primary"
+                        )}>
+                          {t.name}
+                        </h3>
+                        {isSelected && (
+                          <span className={cn(
+                            "text-[8px] font-black px-2 py-0.5 rounded-full border",
+                            isA ? "bg-primary/10 border-primary/20 text-primary" : "bg-violet-500/10 border-violet-500/20 text-violet-500"
+                          )}>
+                            SELECCIONADO
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-medium line-clamp-2">
+                        {t.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
+                      <div className="flex items-center gap-1.5">
+                        {t.isSystem ? (
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase tracking-tighter">Sistema</span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-tighter">Usuario</span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</span>
+                        <span className="text-[11px] font-mono font-black text-primary">
+                          ${t.totalCost?.toLocaleString('es-CU', { minimumFractionDigits: 2 }) || '0.00'}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* Sticky Selection Feedback Bar */}
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4 no-print"
+          >
+            <div className="bg-popover/80 backdrop-blur-2xl border border-border/60 rounded-[2.5rem] p-4 shadow-2xl shadow-black/20 flex flex-col sm:flex-row items-center gap-6">
+              <div className="flex flex-1 items-center justify-center sm:justify-start gap-4">
+                {/* Team A Preview */}
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center font-black italic",
+                    templateA ? "bg-primary text-white" : "bg-muted/30 text-muted-foreground border-2 border-dashed border-border/40"
+                  )}>
+                    {templateA ? 'A' : '?'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-primary">Competidor A</span>
+                    <span className="text-[11px] font-bold truncate max-w-[120px]">{templateA?.name || 'Seleccionar...'}</span>
+                  </div>
+                </div>
+
+                <div className="text-muted-foreground font-black italic text-xl px-2">VS</div>
+
+                {/* Team B Preview */}
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center font-black italic",
+                    templateB ? "bg-violet-500 text-white" : "bg-muted/30 text-muted-foreground border-2 border-dashed border-border/40"
+                  )}>
+                    {templateB ? 'B' : '?'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-violet-500">Competidor B</span>
+                    <span className="text-[11px] font-bold truncate max-w-[120px]">{templateB?.name || 'Seleccionar...'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <Button
+                  onClick={handleReset}
+                  variant="ghost"
+                  className="rounded-2xl px-6 font-black uppercase tracking-widest text-[9px] text-muted-foreground hover:text-foreground"
+                >
+                  Limpiar
+                </Button>
                 <Button
                   onClick={handleCompare}
-                  disabled={!selectedA || !selectedB || selectedA === selectedB || isCalculating}
-                  className="h-14 px-12 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 gap-3 text-sm"
+                  disabled={!selectedA || !selectedB || isCalculating}
+                  className="flex-1 sm:flex-none h-14 px-10 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 gap-3 text-xs"
                 >
                   {isCalculating ? (
                     <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
-                      <Zap className="w-5 h-5" />
+                      <Zap className="w-4 h-4" />
                     </motion.div>
                   ) : (
                     <>
-                      <GitCompareArrows className="w-5 h-5" />
+                      <GitCompareArrows className="w-4 h-4" />
                       Iniciar Comparacion
                     </>
                   )}
                 </Button>
-              </motion.div>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       )}
 
       {/* ── Results ── */}
