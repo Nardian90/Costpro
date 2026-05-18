@@ -2,6 +2,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { syncOperationSchema } from '@/validation/schemas';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 type SyncOperationType = z.infer<typeof syncOperationSchema>;
 
@@ -9,7 +10,6 @@ const SYNC_QUEUE_KEY = 'sync_queue';
 const OFFLINE_SNAPSHOT_KEY = 'offline_snapshot';
 
 // Prioridad de operaciones: menor número = mayor prioridad
-// Las ventas deben procesarse antes que los ajustes para evitar stock negativo temporal
 const OPERATION_PRIORITY: Record<string, number> = {
   'sale':               1,
   'payment':            1,
@@ -23,7 +23,7 @@ const OPERATION_PRIORITY: Record<string, number> = {
 };
 
 const getOperationPriority = (entity: string): number =>
-  OPERATION_PRIORITY[entity] ?? 5; // default al final
+  OPERATION_PRIORITY[entity] ?? 5;
 
 // Configure localforage
 localforage.config({
@@ -52,6 +52,8 @@ export const offlineStorage = {
 
     queue.push(newOp);
     await localforage.setItem(SYNC_QUEUE_KEY, queue);
+
+    logger.info('SYNC', 'OPERATION_ADDED_TO_QUEUE', { entity: operation.entity, idempotencyKey: operation.idempotencyKey });
     return newOp;
   },
 
@@ -73,22 +75,8 @@ export const offlineStorage = {
       .sort((a, b) => {
         const priorityDiff = getOperationPriority(a.entity) - getOperationPriority(b.entity);
         if (priorityDiff !== 0) return priorityDiff;
-        // Mismo nivel de prioridad: FIFO por timestamp de creación
         return a.clientClock - b.clientClock;
       });
-  },
-
-  /**
-   * Update an operation
-   */
-  async updateOperation(idempotencyKey: string, updates: Partial<SyncOperationType>): Promise<void> {
-    const queue = await this.getQueue();
-    const index = queue.findIndex(op => op.idempotencyKey === idempotencyKey);
-
-    if (index !== -1) {
-      queue[index] = { ...queue[index], ...updates };
-      await localforage.setItem(SYNC_QUEUE_KEY, queue);
-    }
   },
 
   /**
@@ -109,6 +97,19 @@ export const offlineStorage = {
   },
 
   /**
+   * Update an operation
+   */
+  async updateOperation(idempotencyKey: string, updates: Partial<SyncOperationType>): Promise<void> {
+    const queue = await this.getQueue();
+    const index = queue.findIndex(op => op.idempotencyKey === idempotencyKey);
+
+    if (index !== -1) {
+      queue[index] = { ...queue[index], ...updates };
+      await localforage.setItem(SYNC_QUEUE_KEY, queue);
+    }
+  },
+
+  /**
    * Remove synced operations from the queue
    */
   async removeSyncedOperations(): Promise<void> {
@@ -121,20 +122,30 @@ export const offlineStorage = {
    * Save an offline snapshot of data (e.g., product list)
    */
   async saveSnapshot(key: string, data: unknown): Promise<void> {
-    const snapshots = await localforage.getItem<Record<string, { data: unknown; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY) || {};
-    snapshots[key] = {
-      data,
-      timestamp: Date.now(),
-    };
-    await localforage.setItem(OFFLINE_SNAPSHOT_KEY, snapshots);
+    try {
+        const snapshots = await localforage.getItem<Record<string, { data: unknown; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY) || {};
+        snapshots[key] = {
+          data,
+          timestamp: Date.now(),
+        };
+        await localforage.setItem(OFFLINE_SNAPSHOT_KEY, snapshots);
+        logger.info('SYNC', 'SNAPSHOT_SAVED', { key });
+    } catch (err) {
+        logger.error('SYNC', 'SNAPSHOT_SAVE_FAILED', { key, error: String(err) });
+    }
   },
 
   /**
    * Get an offline snapshot
    */
-  async getSnapshot(key: string): Promise<unknown | null> {
-    const snapshots = await localforage.getItem<Record<string, { data: unknown; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY);
-    return snapshots?.[key]?.data || null;
+  async getSnapshot<T>(key: string): Promise<T | null> {
+    const snapshots = await localforage.getItem<Record<string, { data: T; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY);
+    const snapshot = snapshots?.[key];
+    if (snapshot) {
+        logger.info('SYNC', 'SNAPSHOT_RETRIEVED', { key, age: Date.now() - snapshot.timestamp });
+        return snapshot.data;
+    }
+    return null;
   },
 
   /**
