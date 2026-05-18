@@ -518,7 +518,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         </TableCell>
 
         {/* Valor Histórico — SUBDUED: reference input value */}
-        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground", !hasChildren && "cursor-pointer hover:bg-muted/30")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground text-[10px]", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60")} onClick={() => !hasChildren && setIsEditingVH(true)}>
           {isEditingVH ? (
             <FormulaEditor
               initialValue={row.vhFormula || String(row.valorHistorico || 0)}
@@ -531,7 +531,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               <Input
                 type="text"
                 className={cn(
-                  "h-6 text-right text-[11px] px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground",
+                  "h-6 text-right text-[10px] px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground",
                   "bg-transparent border-transparent hover:border-border/50 focus-visible:ring-0",
                   (hasChildren || row.vhFormula) && "bg-muted/20 border-border/30 border-dashed"
                 )}
@@ -551,7 +551,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
 
         {/* Total — PRIMARY COLUMN: calculated result with maximum visual emphasis */}
         <TableCell
-          className={cn("px-1.5 py-0 text-right border-r-2 border-primary/30 bg-primary/5 tabular-nums text-[11px] transition-colors", !hasChildren && "cursor-pointer hover:bg-primary/10")}
+          className={cn("px-1.5 py-0 text-right border-r-2 border-primary/30 bg-primary/5 tabular-nums text-sm transition-colors", !hasChildren ? "cursor-pointer hover:bg-primary/10" : "cursor-default")}
           onClick={() => !hasChildren && setIsEditingTotal(true)}
         >
           {isEditingTotal ? (

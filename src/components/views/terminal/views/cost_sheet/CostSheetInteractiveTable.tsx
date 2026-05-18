@@ -195,8 +195,8 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
             )}
         </TableCell>
 
-        {/* Valor Histórico / % — PRIMARY COLUMN: user input with maximum visual emphasis */}
-        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right border-r-2 border-primary/30 bg-primary/5", !hasChildren ? "cursor-pointer" : "cursor-default", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        {/* Valor Histórico / % — SUBDUED: reference input value */}
+        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right text-muted-foreground tabular-nums transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -211,7 +211,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                         <Input
                         type="text"
                         className={cn(
-                        "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1 font-black tabular-nums",
+                        "neu-input text-right h-10 sm:h-8 transition-all text-xs px-2 cursor-pointer flex-1 tabular-nums text-muted-foreground",
                         isRowPercent && "pr-6",
                         (hasChildren || row.vhFormula) && "bg-primary/10 font-black border-primary/30 border-dashed"
                         )}
@@ -232,9 +232,9 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
             </div>
         </TableCell>
 
-        {/* Total — SUBDUED: calculated result, secondary visual weight */}
+        {/* Total — PRIMARY COLUMN: calculated result with maximum visual emphasis */}
         <TableCell
-          className={cn("px-2 py-0.5 text-right text-muted-foreground tabular-nums transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60", isEditingTotal && "w-auto min-w-[180px]")}
+          className={cn("px-2 py-0.5 text-right border-r-2 border-primary/30 bg-primary/5 tabular-nums text-sm sm:text-base transition-colors", !hasChildren ? "cursor-pointer hover:bg-primary/10" : "cursor-default", isEditingTotal && "w-auto min-w-[180px]")}
           onClick={() => !hasChildren && setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -247,7 +247,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
             />
           ) : (
              <div className="flex items-center justify-end gap-1">
-                 <span className={cn(
+                 <span className={cn("font-black",
                     (row.formula || row.totalFormula) ? "underline decoration-primary/30 decoration-dotted underline-offset-4" : ""
                  )}>
                     {formatAccounting(safeCalculated.total)}
@@ -554,8 +554,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
-                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest text-primary bg-primary/5 border-r border-primary/20">Valor Histórico</TableHead>
-                                    <TableHead className="w-[120px] px-2 py-0.5 text-right font-bold uppercase tracking-widest text-muted-foreground/60 bg-muted/30 border-r border-border/10">Total</TableHead>
+                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-bold uppercase tracking-widest text-muted-foreground/60 bg-muted/30 border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest text-primary bg-primary/5 border-r border-primary/20">Total</TableHead>
                                     <TableHead className="w-[100px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
