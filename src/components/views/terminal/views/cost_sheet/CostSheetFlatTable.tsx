@@ -518,7 +518,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         </TableCell>
 
         {/* Valor Histórico — SUBDUED: reference input value */}
-        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground", !hasChildren && "cursor-pointer hover:bg-muted/30")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground/60 text-[9px]", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60")} onClick={() => !hasChildren && setIsEditingVH(true)}>
           {isEditingVH ? (
             <FormulaEditor
               initialValue={row.vhFormula || String(row.valorHistorico || 0)}
@@ -531,7 +531,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               <Input
                 type="text"
                 className={cn(
-                  "h-6 text-right text-[11px] px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground",
+                  "h-6 text-right text-[10px] px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground",
                   "bg-transparent border-transparent hover:border-border/50 focus-visible:ring-0",
                   (hasChildren || row.vhFormula) && "bg-muted/20 border-border/30 border-dashed"
                 )}
@@ -551,7 +551,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
 
         {/* Total — PRIMARY COLUMN: calculated result with maximum visual emphasis */}
         <TableCell
-          className={cn("px-1.5 py-0 text-right border-r-2 border-primary/30 bg-primary/5 tabular-nums text-[11px] transition-colors", !hasChildren && "cursor-pointer hover:bg-primary/10")}
+          className={cn("px-1.5 py-0 text-right border-r-2 border-primary/30 bg-primary/10 tabular-nums text-base transition-colors", !hasChildren ? "cursor-pointer hover:bg-primary/10" : "cursor-default")}
           onClick={() => !hasChildren && setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -713,12 +713,12 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
                     <span className="opacity-70">UM</span>
                   </TTip>
                 </TableHead>
-                <TableHead className="w-[120px] px-1.5 py-0 text-right text-[8px] font-bold tracking-widest text-muted-foreground/50 bg-muted/20 border-r border-border/15">
+                <TableHead className="w-[120px] px-1.5 py-0 text-right text-[8px] font-medium tracking-widest text-muted-foreground/40 bg-muted/10 border-r border-border/15">
                   <TTip term="Valor Histórico" description="Costo base unitario de entrada. Clic para editar o usar fórmulas con =">
                     <span className="text-muted-foreground/60">VALOR HISTÓRICO</span>
                   </TTip>
                 </TableHead>
-                <TableHead className="w-[130px] px-1.5 py-0 text-right text-[8px] font-black tracking-widest text-primary bg-primary/5 border-r-2 border-primary/20">
+                <TableHead className="w-[130px] px-1.5 py-0 text-right text-[8px] font-black tracking-widest text-primary bg-primary/10 border-r-2 border-primary/30 shadow-sm">
                   <TTip term="Total" description="Resultado calculado. Clic para editar fórmula con =">
                     <span className="text-primary">TOTAL</span>
                   </TTip>
