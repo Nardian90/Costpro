@@ -14,29 +14,157 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus } from 'lucide-react';
+import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus, Scale, BarChart3, Calculator, ShieldCheck, Minimize2, Globe, Columns, Ship } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+export type PDFFormat =
+  | 'standard'
+  | 'pro'
+  | 'res148'
+  | 'ejecutivo'
+  | 'contabilidad'
+  | 'auditoria'
+  | 'simplificado'
+  | 'bilingue'
+  | 'comparativo'
+  | 'exportacion';
+
 export interface ExportOptions {
+  // Documents
   includeFC: boolean;
   includeAudit: boolean;
-  includeAnnexes: string[]; // IDs of annexes to include
+  includeAnnexes: string[];
+
+  // Format
+  pdfFormat: PDFFormat;
+  logo?: string;
+
+  // Advanced
   consolidated: boolean;
   skipZeros: boolean;
   includeFinancialSummary: boolean;
   includeUtilityNote: boolean;
   showDateTime: boolean;
-  alwaysZip?: boolean;
-  pdfFormat: "standard" | "pro";
-  logo?: string; // base64 string for Pro mode company logo
+  alwaysZip: boolean;
+
+  // Comparison
   includeComparison?: boolean;
   scenarioId?: string;
-  includeFC_v2?: boolean; // For backward compatibility if needed
-  includeFC_v3?: boolean;
-  includeFC_v4?: boolean;
-  includeFC_v5?: boolean;
 }
+
+
+const PDF_FORMATS: Array<{
+  id: PDFFormat;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  accent: string;
+  accentBg: string;
+  accentBorder: string;
+  accentText: string;
+}> = [
+  {
+    id: 'standard',
+    label: 'Estándar',
+    description: 'Básico y limpio',
+    icon: FileText,
+    accent: 'primary',
+    accentBg: 'bg-primary/5',
+    accentBorder: 'border-primary',
+    accentText: 'text-primary',
+  },
+  {
+    id: 'pro',
+    label: 'Pro Corporativo',
+    description: 'Con logo e identidad visual',
+    icon: ImagePlus,
+    accent: 'amber',
+    accentBg: 'bg-amber-500/5',
+    accentBorder: 'border-amber-500',
+    accentText: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    id: 'res148',
+    label: 'Res 148/2023',
+    description: 'Formato oficial MINCIN Cuba',
+    icon: Scale,
+    accent: 'blue',
+    accentBg: 'bg-blue-500/5',
+    accentBorder: 'border-blue-500',
+    accentText: 'text-blue-600 dark:text-blue-400',
+  },
+  {
+    id: 'ejecutivo',
+    label: 'Ejecutivo',
+    description: 'KPIs y estructura — dirección',
+    icon: BarChart3,
+    accent: 'purple',
+    accentBg: 'bg-purple-500/5',
+    accentBorder: 'border-purple-500',
+    accentText: 'text-purple-600 dark:text-purple-400',
+  },
+  {
+    id: 'contabilidad',
+    label: 'Contabilidad',
+    description: 'Cuentas, referencias y verificación',
+    icon: Calculator,
+    accent: 'teal',
+    accentBg: 'bg-teal-500/5',
+    accentBorder: 'border-teal-500',
+    accentText: 'text-teal-600 dark:text-teal-400',
+  },
+  {
+    id: 'auditoria',
+    label: 'Auditoría',
+    description: 'Trazabilidad y firmas',
+    icon: ShieldCheck,
+    accent: 'orange',
+    accentBg: 'bg-orange-500/5',
+    accentBorder: 'border-orange-500',
+    accentText: 'text-orange-600 dark:text-orange-400',
+  },
+  {
+    id: 'simplificado',
+    label: 'Simplificado',
+    description: 'Una página, solo totales',
+    icon: Minimize2,
+    accent: 'gray',
+    accentBg: 'bg-muted/30',
+    accentBorder: 'border-muted-foreground/40',
+    accentText: 'text-muted-foreground',
+  },
+  {
+    id: 'bilingue',
+    label: 'Bilingüe ES/EN',
+    description: 'Columnas paralelas español e inglés',
+    icon: Globe,
+    accent: 'indigo',
+    accentBg: 'bg-indigo-500/5',
+    accentBorder: 'border-indigo-500',
+    accentText: 'text-indigo-600 dark:text-indigo-400',
+  },
+  {
+    id: 'comparativo',
+    label: 'Escenarios Paralelos',
+    description: 'Base vs variaciones +10% +20% -10%',
+    icon: Columns,
+    accent: 'cyan',
+    accentBg: 'bg-cyan-500/5',
+    accentBorder: 'border-cyan-500',
+    accentText: 'text-cyan-600 dark:text-cyan-400',
+  },
+  {
+    id: 'exportacion',
+    label: 'Para Exportación',
+    description: 'CUP + USD, campos internacionales',
+    icon: Ship,
+    accent: 'emerald',
+    accentBg: 'bg-emerald-500/5',
+    accentBorder: 'border-emerald-500',
+    accentText: 'text-emerald-600 dark:text-emerald-400',
+  },
+];
 
 interface CostSheetExportModalProps {
   isOpen: boolean;
@@ -121,54 +249,56 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
         <div className="flex-1 overflow-y-auto overflow-x-auto px-6 sm:px-8 py-6 min-h-0">
             <div className="space-y-8 pb-6">
-                {/* Format selection */}
-                <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Seleccionar formato de exportación PDF">
-                    <button
-                        onClick={() => setOptions(prev => ({ ...prev, pdfFormat: 'standard' }))}
-                        className={cn(
-                            "flex flex-col items-start p-4 rounded-3xl border-2 transition-all text-left group",
-                            options.pdfFormat === 'standard'
-                                ? "bg-primary/5 border-primary shadow-lg shadow-primary/5"
-                                : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
-                        )}
-                        type="button"
-                        role="radio"
-                        aria-checked={options.pdfFormat === 'standard'}
-                        aria-label="Modo Estándar: formato básico y limpio"
-                    >
-                        <div className={cn(
-                            "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
-                            options.pdfFormat === 'standard' ? "bg-primary text-primary-foreground" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
-                        )}>
-                            <FileText className="w-5 h-5" aria-hidden="true" />
-                        </div>
-                        <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Estándar</span>
-                        <span className="text-xs text-muted-foreground font-medium">Básico y limpio</span>
-                    </button>
-
-                    <button
-                        onClick={() => setOptions(prev => ({ ...prev, pdfFormat: 'pro' }))}
-                        className={cn(
-                            "flex flex-col items-start p-4 rounded-3xl border-2 transition-all text-left group",
-                            options.pdfFormat === 'pro'
-                                ? "bg-amber-500/5 border-amber-500 shadow-lg shadow-amber-500/5"
-                                : "bg-sidebar/40 border-transparent hover:border-sidebar-border/80"
-                        )}
-                        type="button"
-                        role="radio"
-                        aria-checked={options.pdfFormat === 'pro'}
-                        aria-label="Modo Pro: con logo corporativo"
-                    >
-                        <div className={cn(
-                            "w-10 h-10 rounded-2xl flex items-center justify-center mb-3 transition-colors",
-                            options.pdfFormat === 'pro' ? "bg-amber-500 text-white" : "bg-sidebar text-muted-foreground group-hover:bg-sidebar-border"
-                        )}>
-                            <ImagePlus className="w-5 h-5" aria-hidden="true" />
-                        </div>
-                        <span className="font-black uppercase tracking-widest text-[10px] mb-1">Modo Pro</span>
-                        <span className="text-xs text-muted-foreground font-medium">Con logo corporativo</span>
-                    </button>
-                </div>
+                                {/* Format Selection */}
+<div className="space-y-3">
+  <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+    Formato de Exportación
+  </div>
+  <div
+    className="grid grid-cols-2 gap-2"
+    role="radiogroup"
+    aria-label="Seleccionar formato de exportación PDF"
+  >
+    {PDF_FORMATS.map((fmt) => {
+      const Icon = fmt.icon;
+      const isSelected = options.pdfFormat === fmt.id;
+      return (
+        <button
+          key={fmt.id}
+          type="button"
+          role="radio"
+          aria-checked={isSelected}
+          aria-label={`${fmt.label}: ${fmt.description}`}
+          onClick={() => setOptions(prev => ({ ...prev, pdfFormat: fmt.id }))}
+          className={cn(
+            'flex items-start gap-3 p-3 rounded-2xl border-2 transition-all text-left group',
+            isSelected
+              ? `${fmt.accentBg} ${fmt.accentBorder} shadow-sm`
+              : 'bg-sidebar/40 border-transparent hover:border-sidebar-border/80'
+          )}
+        >
+          <div className={cn(
+            'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+            isSelected ? `${fmt.accentBg} ${fmt.accentText}` : 'bg-sidebar text-muted-foreground'
+          )}>
+            <Icon className="w-4 h-4" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <div className={cn(
+              'font-black uppercase tracking-widest text-[9px] truncate',
+              isSelected ? fmt.accentText : 'text-foreground'
+            )}>
+              {fmt.label}
+            </div>
+            <div className="text-[10px] text-muted-foreground font-medium leading-tight mt-0.5 line-clamp-2">
+              {fmt.description}
+            </div>
+          </div>
+        </button>
+      );
+    })}
+  </div>
+</div>
 
                 {/* Logo Upload (Only Pro) */}
                 <div className={cn(
