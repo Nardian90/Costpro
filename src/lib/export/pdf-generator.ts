@@ -73,7 +73,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   };
 
   // Resolve formulas in header fields
-  Object.keys(header).forEach(key => {
+  Object.keys(header).forEach((key: any) => {
     const val = header[key];
     if (typeof val === 'string' && val.startsWith('=')) {
       if (calculatedHeader && calculatedHeader[key] !== undefined) {
@@ -267,7 +267,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       { label: 'Margen', value: safeLocale((calculatedHeader?.salePrice || 0) - (calculatedHeader?.totalCost || 0)) },
     ];
     const boxW = (pageWidth - 28 - 9) / 4;
-    kpis.forEach((kpi, i) => {
+    kpis.forEach((kpi: any, i: number) => {
       const x = 14 + i * (boxW + 3);
       doc.setDrawColor(...primaryColor);
       doc.setFillColor(245, 251, 246);
@@ -287,7 +287,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     doc.text('Estructura de Costos', 14, y);
     y += 10;
 
-    const sortedSections = [...sections].sort((a, b) => {
+    const sortedSections = [...sections].sort((a: any, b: any) => {
       const totalA = Number(calculatedValues[a.rows?.[0]?.id]?.total || 0);
       const totalB = Number(calculatedValues[b.rows?.[0]?.id]?.total || 0);
       return totalB - totalA;
@@ -311,7 +311,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   else if (pdfFormat === 'simplificado') {
     let y = addHeader(doc, 'FICHA RESUMIDA');
     y = addGeneralData(doc, header, y, pageWidth);
-    const rows = sections.map(s => {
+    const rows = sections.map((s: any) => {
       const total = Number(calculatedValues[s.rows?.[0]?.id]?.total || 0);
       const pct = (calculatedHeader?.totalCost || 0) > 0 ? (total / calculatedHeader.totalCost * 100).toFixed(1) : '0.0';
       return [s.label, safeLocale(total), `${pct}%` ];
@@ -456,12 +456,12 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
           const calc = calculatedValues[r.id] || {};
           const base = Number(calc.total || 0);
           const ind = ' '.repeat(d);
-          const vars = factors.map(f => base * f);
-          const deltaMax = Math.max(...vars.map(v => Math.abs(v - base)));
+          const vars = factors.map((f: any) => base * f);
+          const deltaMax = Math.max(...vars.map((v: any) => Math.abs(v - base)));
           const deltaPct = base > 0 ? (deltaMax / base * 100) : 0;
           compRows.push([
             ind + r.id, ind + r.label, r.um || '-',
-            ...vars.map(v => safeLocale(v)),
+            ...vars.map((v: any) => safeLocale(v)),
             { content: `${deltaPct.toFixed(1)}%`, styles: deltaPct > 15 ? { textColor: [185, 28, 28] } : {} }
           ]);
           if (r.children) process(r.children, d + 1);
