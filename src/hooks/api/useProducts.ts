@@ -12,12 +12,11 @@ import {
   createProductInputSchema,
   updateProductInputSchema,
   createProductVariantInputSchema,
-  uuidRegex
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
-import type { Product } from '@/types';
+import { offlineStorage } from '@/lib/sync/offline-storage';
 
 export function useSuspenseProducts(storeId?: string | null, searchTerm = '', category = '') {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -33,18 +32,26 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
         p_search_term: searchTerm,
         p_category: category
       });
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
-      const validatedData = await validateRPCArrayResponse(
-        data,
-        getProductsForPosResponseSchema,
-        'get_products_for_pos'
-      );
+      try {
+        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+        const validatedData = await validateRPCArrayResponse(data, getProductsForPosResponseSchema, rpcName);
+        const mappedData = (validatedData || []).map((item) => ({
+            ...item,
+            public_image_url: getSupabaseUrl('product-images', item.image_url),
+        }));
 
-      return (validatedData || []).map((item) => ({
-        ...item,
-        public_image_url: getSupabaseUrl('product-images', item.image_url),
-      }));
+        if (!searchTerm && !category) {
+            await offlineStorage.saveSnapshot(`products_${cleanStoreId}`, mappedData);
+        }
+        return mappedData;
+      } catch (err) {
+        if (!navigator.onLine) {
+            const snapshot = await offlineStorage.getSnapshot<any[]>(`products_${cleanStoreId}`);
+            if (snapshot) return snapshot;
+        }
+        throw err;
+      }
     },
   });
 }
@@ -63,18 +70,26 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
         p_search_term: searchTerm,
         p_category: category
       });
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
-      const validatedData = await validateRPCArrayResponse(
-        data,
-        getProductsForPosResponseSchema,
-        'get_products_for_pos'
-      );
+      try {
+        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+        const validatedData = await validateRPCArrayResponse(data, getProductsForPosResponseSchema, rpcName);
+        const mappedData = (validatedData || []).map((item) => ({
+            ...item,
+            public_image_url: getSupabaseUrl('product-images', item.image_url),
+        }));
 
-      return (validatedData || []).map((item) => ({
-        ...item,
-        public_image_url: getSupabaseUrl('product-images', item.image_url),
-      }));
+        if (!searchTerm && !category) {
+            await offlineStorage.saveSnapshot(`products_${cleanStoreId}`, mappedData);
+        }
+        return mappedData;
+      } catch (err) {
+        if (!navigator.onLine) {
+            const snapshot = await offlineStorage.getSnapshot<any[]>(`products_${cleanStoreId}`);
+            if (snapshot) return snapshot;
+        }
+        throw err;
+      }
     },
     enabled: storeId !== undefined,
     staleTime: 30 * 1000,
@@ -98,19 +113,15 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
         p_category: category
       });
 
-      // Usamos withLogging también en el prefetch para visibilidad en el inspector
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
-
-      const validatedData = await validateRPCArrayResponse(
-        data,
-        getProductsForPosResponseSchema,
-        'get_products_for_pos'
-      );
-
-      return (validatedData || []).map((item) => ({
+      const validatedData = await validateRPCArrayResponse(data, getProductsForPosResponseSchema, rpcName);
+      const mappedData = (validatedData || []).map((item) => ({
         ...item,
         public_image_url: getSupabaseUrl('product-images', item.image_url),
       }));
+
+      await offlineStorage.saveSnapshot(`products_${cleanStoreId}`, mappedData);
+      return mappedData;
     },
     staleTime: 30 * 1000,
   });
