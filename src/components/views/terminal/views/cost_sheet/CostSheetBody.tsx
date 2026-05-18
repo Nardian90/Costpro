@@ -82,13 +82,13 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 </td>
 
                 {/* Valor Histórico */}
-                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground text-[10px] w-[140px] whitespace-nowrap">
+                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground/60 text-[9px] w-[140px] whitespace-nowrap">
                     {(calc.calculatedVH ?? calc.valorHistorico ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
 
                 {/* Total */}
                 <td data-label="Total" className={cn(
-                    "py-0.5 px-2 text-right font-mono font-black text-base w-[120px] whitespace-nowrap",
+                    "py-0.5 px-2 text-right font-mono font-black text-lg w-[120px] whitespace-nowrap",
                     hasChildren ? "text-foreground" : (isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")
                 )}>
                     {formatCurrency(calc.total).replace('$', '').trim()}
