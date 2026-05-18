@@ -51,6 +51,8 @@ interface TemplateOption {
   description: string;
   category: string;
   data: CostSheetData;
+  totalCost?: number;
+  isSystem?: boolean;
 }
 
 interface SectionComparison {
@@ -167,13 +169,16 @@ function resolveHeader(header: CostSheetHeader, field: keyof CostSheetHeader, fa
     // Attempt basic resolution if allData is provided
     if (allData && s.startsWith('=')) {
       try {
-        const formula = s.substring(1);
-        const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+        const formula = s.substring(1).trim();
+        const match = formula.match(/GET_ANEXO_FILA_DATO\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\s*\)/i);
         if (match) {
           const [_, annexId, rowIdx, fieldName] = match;
           const annex = allData.annexes?.find(a => a.id === annexId);
           const row = annex?.data?.[parseInt(rowIdx) - 1];
-          if (row && row[fieldName]) return String(row[fieldName]);
+          if (row) {
+             const val = row[fieldName] || row[fieldName.toLowerCase()] || row[fieldName.toUpperCase()];
+             if (val !== undefined) return String(val);
+          }
         }
       } catch (e) {
         return s;
@@ -207,15 +212,17 @@ export default function ArenaFC() {
   const resolveFormulaicString = (str: string, data: CostSheetData) => {
     if (!str || !str.startsWith('=')) return str;
     try {
-      const formula = str.substring(1);
-      // Support common name formula pattern
-      const match = formula.match(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/i);
+      const formula = str.substring(1).trim();
+      // Improved regex with optional spaces
+      const match = formula.match(/GET_ANEXO_FILA_DATO\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\s*\)/i);
       if (match) {
         const [_, annexId, rowIdx, field] = match;
         const annex = data.annexes?.find(a => a.id === annexId);
         const row = annex?.data?.[parseInt(rowIdx) - 1];
-        if (row && row[field]) {
-          return String(row[field]);
+        if (row) {
+          // Try exact match then case-insensitive
+          const val = row[field] || row[field.toLowerCase()] || row[field.toUpperCase()];
+          if (val !== undefined) return String(val);
         }
       }
       return str;
@@ -249,23 +256,38 @@ export default function ArenaFC() {
         .order('updated_at', { ascending: false });
 
       if (!error && data) {
-        setUserSheets(data.map((d: any) => {
+        const latestByName = new Map<string, any>();
+
+        data.forEach((d: any) => {
           const sheetData = d.data as unknown as CostSheetData;
           let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
+          resolvedName = resolveFormulaicString(resolvedName, sheetData);
 
-          // Resolve name if it is a formula
+          // Use name as key for deduplication to keep only the latest version of each named sheet
+          if (!latestByName.has(resolvedName) || new Date(d.updated_at) > new Date(latestByName.get(resolvedName).updated_at)) {
+            latestByName.set(resolvedName, d);
+          }
+        });
+
+        setUserSheets(Array.from(latestByName.values()).map((d: any) => {
+          const sheetData = d.data as unknown as CostSheetData;
+          let resolvedName = d.name || sheetData?.header?.name || 'Sin nombre';
           resolvedName = resolveFormulaicString(resolvedName, sheetData);
 
           const dateStr = new Date(d.updated_at).toLocaleDateString('es-CU', {
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
           });
 
+          const calc = calculateTemplate(sheetData);
+
           return {
             id: d.id,
             name: resolvedName,
             description: `Actualizada el ${dateStr}`,
             category: d.category || 'Mis Fichas',
-            data: sheetData
+            data: sheetData,
+            totalCost: calc.values['5']?.total || 0,
+            isSystem: false
           };
         }));
       }
@@ -273,10 +295,24 @@ export default function ArenaFC() {
     loadUserSheets();
   }, []);
 
-  const allOptions = useMemo(() => [
-    ...userSheets,
-    ...SYSTEM_TEMPLATES
-  ], [userSheets]);
+  const allOptions = useMemo(() => {
+    const sys = SYSTEM_TEMPLATES.map(t => ({
+      ...t,
+      isSystem: true,
+      totalCost: calculateTemplate(t.data).values['5']?.total || 0
+    }));
+
+    // Deduplicate: If a user sheet has the same name as a system sheet,
+    // it usually means they modified a system template.
+    // In "Arena", we want to show both or just the latest?
+    // The user image shows many "PLANTILLA DE REINICIO" which are likely auto-saves.
+    // Our loadUserSheets already deduplicates user sheets by name.
+    // Now we filter out system templates if the user has a sheet with the same name.
+
+    const filteredSys = sys.filter(s => !userSheets.some(u => u.name.toLowerCase() === s.name.toLowerCase()));
+
+    return [...userSheets, ...filteredSys];
+  }, [userSheets]);
 
   const categories = useMemo(() => {
     const cats = new Set(allOptions.map(t => t.category));
@@ -611,21 +647,39 @@ export default function ArenaFC() {
               />
             </div>
             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={cn(
-                    "px-4 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
-                    selectedCategory === cat
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                      : "bg-muted/30 text-muted-foreground border-transparent hover:border-border/60"
-                  )}
-                >
-                  {cat === 'all' ? 'Todos' : cat}
-                </button>
-              ))}
+              {categories.map(cat => {
+                const count = allOptions.filter(o => cat === 'all' || o.category === cat).length;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={cn(
+                      "px-4 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-2",
+                      selectedCategory === cat
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                        : "bg-muted/30 text-muted-foreground border-transparent hover:border-border/60"
+                    )}
+                  >
+                    {cat === 'all' ? 'Todos' : cat}
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded-md text-[8px] font-bold",
+                      selectedCategory === cat ? "bg-white/20 text-white" : "bg-muted-foreground/20 text-muted-foreground"
+                    )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+            {(searchQuery || selectedCategory !== 'all') && (
+              <Button
+                variant="ghost"
+                onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+                className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              >
+                Limpiar Filtros
+              </Button>
+            )}
           </div>
 
           {/* Catalog Grid */}
@@ -640,16 +694,17 @@ export default function ArenaFC() {
                   <motion.div
                     layout
                     key={t.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    whileHover={{ y: -4 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleSelect(t.id)}
                     className={cn(
-                      "group relative p-5 rounded-[2rem] border-2 cursor-pointer transition-all duration-300",
-                      isA ? "border-primary bg-primary/5 shadow-xl shadow-primary/10" :
-                      isB ? "border-violet-500 bg-violet-500/5 shadow-xl shadow-violet-500/10" :
-                      "border-border/40 bg-card hover:border-primary/30 hover:bg-muted/10"
+                      "group relative p-5 rounded-[2rem] border-2 cursor-pointer transition-colors duration-300 flex flex-col h-full",
+                      isA ? "border-primary bg-primary/10 shadow-2xl shadow-primary/20 scale-[1.02]" :
+                      isB ? "border-violet-500 bg-violet-500/10 shadow-2xl shadow-violet-500/20 scale-[1.02]" :
+                      "border-border/40 bg-card hover:border-primary/50 hover:bg-primary/[0.02]"
                     )}
                   >
                     {/* Selection Badges */}
@@ -681,15 +736,43 @@ export default function ArenaFC() {
                       </span>
                     </div>
 
-                    <h3 className={cn(
-                      "text-sm font-black uppercase tracking-tighter italic mb-1 transition-colors",
-                      isSelected ? (isA ? "text-primary" : "text-violet-500") : "text-foreground group-hover:text-primary"
-                    )}>
-                      {t.name}
-                    </h3>
-                    <p className="text-[10px] text-muted-foreground font-medium line-clamp-2">
-                      {t.description}
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={cn(
+                          "text-sm font-black uppercase tracking-tighter italic transition-colors",
+                          isSelected ? (isA ? "text-primary" : "text-violet-500") : "text-foreground group-hover:text-primary"
+                        )}>
+                          {t.name}
+                        </h3>
+                        {isSelected && (
+                          <span className={cn(
+                            "text-[8px] font-black px-2 py-0.5 rounded-full border",
+                            isA ? "bg-primary/10 border-primary/20 text-primary" : "bg-violet-500/10 border-violet-500/20 text-violet-500"
+                          )}>
+                            SELECCIONADO
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground font-medium line-clamp-2">
+                        {t.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
+                      <div className="flex items-center gap-1.5">
+                        {t.isSystem ? (
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase tracking-tighter">Sistema</span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-tighter">Usuario</span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</span>
+                        <span className="text-[11px] font-mono font-black text-primary">
+                          ${t.totalCost?.toLocaleString('es-CU', { minimumFractionDigits: 2 }) || '0.00'}
+                        </span>
+                      </div>
+                    </div>
                   </motion.div>
                 );
               })}
