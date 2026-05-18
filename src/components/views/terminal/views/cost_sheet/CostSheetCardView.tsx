@@ -159,7 +159,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
               ) : (
                 <div className="flex items-baseline gap-1">
                   <span className={cn(
-                    "text-lg font-black font-mono tracking-tighter transition-colors",
+                    "text-base font-black font-mono tracking-tighter transition-colors text-muted-foreground/60",
                     (row.vhFormula || hasChildren) ? "text-primary/70" : "text-foreground"
                   )}>
                     {hasChildren
@@ -197,7 +197,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
                  </div>
               ) : (
                 <div className="flex items-center justify-end gap-1.5">
-                  <span className="text-xl font-black font-mono tracking-tighter text-primary drop-shadow-sm">
+                  <span className="text-2xl font-black font-mono tracking-tighter text-primary drop-shadow-sm">
                     {formatAccounting(safeCalculated.total)}
                   </span>
                   {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}

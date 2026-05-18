@@ -517,7 +517,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <TableCell colSpan={annex.columns.length + 1} className="px-1.5 py-0">
                       <div className="flex justify-end items-center gap-3">
                         <span className="text-[9px] text-primary/70 uppercase font-black tracking-[0.15em]">Total {annex.id}</span>
-                        <span className="text-[11px] font-black font-mono text-primary tabular-nums">
+                        <span className="text-sm font-black font-mono text-white tabular-nums">
                             {formatCurrency(totalValue)}
                         </span>
                       </div>
@@ -559,7 +559,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full">
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                    <span className="text-4xl font-black font-mono text-white drop-shadow-sm">
                         {formatCurrency(totalValue)}
                     </span>
                     {annex.coefficient && annex.coefficient !== 1 && (
