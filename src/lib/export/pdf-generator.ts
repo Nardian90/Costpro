@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { createPDFDocument } from './lazy-pdf';
 import autoTable from 'jspdf-autotable';
+import { sanitizeAnnexTitle, isSectionHeaderRedundant, addGeneralData } from "./pdf-generator-utils";
 import { ExportOptions, PDFFormat } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
 
 const TRANSLATIONS: Record<string, string> = {
@@ -65,7 +66,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   const calculationResult = body.calculationResult || null;
   const annexes = sheetData?.annexes || [];
 
-    const header = {
+  const header = {
     ...(sheetData?.header || {}),
     ...(calculatedHeader || {}),
     ...(calculationResult?.metadata?.header || {})
@@ -75,7 +76,6 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   Object.keys(header).forEach(key => {
     const val = header[key];
     if (typeof val === 'string' && val.startsWith('=')) {
-      // If it's a formula, try to get the resolved value from calculatedHeader
       if (calculatedHeader && calculatedHeader[key] !== undefined) {
         header[key] = calculatedHeader[key];
       }
@@ -83,12 +83,11 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   });
 
   const sections = sheetData?.sections || [];
-
   const orientation = (pdfFormat === 'bilingue' || pdfFormat === 'comparativo') ? 'l' : 'p';
   const doc = await createPDFDocument(orientation, 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
-  const primaryColor: [number, number, number] = [21, 128, 61];
+  const primaryColor: [number, number, number] = [21, 128, 61]; // #15803d
 
   const addHeader = (d: jsPDF, title: string, color: [number, number, number] = primaryColor) => {
     let y = 15;
@@ -135,21 +134,17 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   // --- 1 & 2. Standard & Pro ---
   if (pdfFormat === 'standard' || pdfFormat === 'pro') {
     let y = addHeader(doc, 'FICHA DE COSTO');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Producto: ${header.name || 'N/A'}`, 14, y);
-    doc.text(`Código: ${header.code || 'N/A'}`, pageWidth / 2, y);
-    y += 6;
-    doc.text(`Cantidad: ${header.quantity || '1'} ${header.unit || ''}`, 14, y);
-    y += 10;
+    y = addGeneralData(doc, header, y, pageWidth);
 
     const tableRows: any[] = [];
     sections.forEach((section: any) => {
-      tableRows.push([{
-        content: section.label || section.id,
-        colSpan: 5,
-        styles: { fontStyle: 'bold', fillColor: [240, 240, 240] }
-      }]);
+      if (!isSectionHeaderRedundant(section.label || section.id, section.rows)) {
+        tableRows.push([{
+          content: section.label || section.id,
+          colSpan: 5,
+          styles: { fontStyle: 'bold', fillColor: [240, 240, 240] }
+        }]);
+      }
       const processRows = (rows: any[], depth = 0) => {
         rows.forEach((row: any) => {
           if (shouldSkipRow(row, calculatedValues, skipZeros)) return;
@@ -189,20 +184,17 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     doc.text('(RES 148/2023)', pageWidth / 2, 18, { align: 'center' });
 
     let y = 22;
-    // FC Logo simulation
     doc.setFontSize(24);
     doc.text('FC', 25, y + 10, { align: 'center' });
 
     doc.setFontSize(7);
     doc.setTextColor(40);
 
-    // Organismo, Union, Empresa block
     doc.text(`ORGANISMO: -`, 60, y + 5);
     doc.text(`UNION: -`, 60, y + 10);
     doc.text(`EMPRESA: -`, 60, y + 15);
     doc.text(`CODIGO EMPRESA: -`, 60, y + 20);
 
-    // Right block
     const rightCol = pageWidth - 80;
     doc.text(`ID: ${header.id || '-'}`, rightCol, y + 5);
     doc.text(`COD. PROD: ${header.code || '-'}`, rightCol, y + 10);
@@ -210,8 +202,6 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     doc.text(`UM: ${header.unit || '-'}`, rightCol, y + 20);
 
     y += 25;
-
-    // Cantidad & Precio row
     doc.text(`Cantidad: ${header.quantity || '1'}`, rightCol, y + 5);
     doc.setFillColor(240, 240, 240);
     doc.rect(rightCol, y + 7, 60, 6, 'F');
@@ -223,11 +213,13 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
 
     const res148Rows: any[] = [];
     sections.forEach((section: any) => {
-      res148Rows.push([{
-        content: section.label || section.id,
-        colSpan: 5,
-        styles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
-      }]);
+      if (!isSectionHeaderRedundant(section.label || section.id, section.rows)) {
+        res148Rows.push([{
+          content: section.label || section.id,
+          colSpan: 5,
+          styles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+        }]);
+      }
       const processRows = (rows: any[], depth = 0) => {
         rows.forEach((row: any) => {
           if (shouldSkipRow(row, calculatedValues, skipZeros)) return;
@@ -266,7 +258,8 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
   // --- 4. Ejecutivo ---
   else if (pdfFormat === 'ejecutivo') {
-    addHeader(doc, "RESUMEN EJECUTIVO");
+    let y = addHeader(doc, "RESUMEN EJECUTIVO");
+    y = addGeneralData(doc, header, y, pageWidth);
     const kpis = [
       { label: 'Costo Total', value: safeLocale(calculatedHeader?.totalCost || 0) },
       { label: 'Precio Venta', value: safeLocale(calculatedHeader?.salePrice || 0) },
@@ -278,17 +271,17 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       const x = 14 + i * (boxW + 3);
       doc.setDrawColor(...primaryColor);
       doc.setFillColor(245, 251, 246);
-      doc.roundedRect(x, 35, boxW, 22, 3, 3, 'FD');
+      doc.roundedRect(x, y + 5, boxW, 22, 3, 3, 'FD');
       doc.setFontSize(7);
       doc.setTextColor(100);
-      doc.text(kpi.label, x + boxW / 2, 41, { align: 'center' });
+      doc.text(kpi.label, x + boxW / 2, y + 11, { align: 'center' });
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...primaryColor);
-      doc.text(kpi.value, x + boxW / 2, 51, { align: 'center' });
+      doc.text(kpi.value, x + boxW / 2, y + 21, { align: 'center' });
     });
 
-    let y = 70;
+    y = y + 40;
     doc.setFontSize(12);
     doc.setTextColor(60);
     doc.text('Estructura de Costos', 14, y);
@@ -316,101 +309,71 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
   // --- 5. Simplificado ---
   else if (pdfFormat === 'simplificado') {
-    addHeader(doc, 'FICHA DE COSTO — RESUMEN');
-    const simpleRows: any[][] = [];
-    let count = 0;
-    for (const section of sections) {
-      if (count >= 12) {
-        simpleRows.push([{ content: `(+ ${sections.length - 12} secciones omitidas)`, colSpan: 3, styles: { fontStyle: 'italic', textColor: [150, 150, 150] } }]);
-        break;
-      }
-      const parentRow = section.rows?.[0];
-      if (!parentRow) continue;
-      const calc = calculatedValues[parentRow.id] || {};
-      const total = Number(calc.total || 0);
-      if (skipZeros && total === 0) continue;
+    let y = addHeader(doc, 'FICHA RESUMIDA');
+    y = addGeneralData(doc, header, y, pageWidth);
+    const rows = sections.map(s => {
+      const total = Number(calculatedValues[s.rows?.[0]?.id]?.total || 0);
       const pct = (calculatedHeader?.totalCost || 0) > 0 ? (total / calculatedHeader.totalCost * 100).toFixed(1) : '0.0';
-      simpleRows.push([section.label || section.id, safeLocale(total), `${pct}%`]);
-      count++;
-    }
-
-    autoTable(doc, {
-      startY: 40,
-      head: [['Sección', 'Total', '% Costo']],
-      body: simpleRows,
-      theme: 'striped',
-      headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 8 },
-      styles: { fontSize: 8, cellPadding: 2 },
+      return [s.label, safeLocale(total), `${pct}%` ];
     });
-
-    if (calculatedHeader) {
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...primaryColor);
-      doc.text(`Costo Total: ${safeLocale(calculatedHeader.totalCost || 0)} | Precio: ${safeLocale(calculatedHeader.salePrice || 0)} | Utilidad: ${safeLocale(calculatedHeader.utilityPercent || 0)}%`, 14, Math.min(finalY, 280));
-    }
-    // Simplificado is 1 page only
-    if (showDateTime) {
-        doc.setFontSize(7);
-        doc.setTextColor(150);
-        const ts = new Date().toLocaleString('es-CU');
-        doc.text(`${ts} | Pág. 1/1 | CostPro`, pageWidth / 2, pageHeight - 6, { align: 'center' });
-    }
-    return doc;
+    autoTable(doc, {
+      startY: y + 5,
+      head: [['Sección', 'Total', '% Costo']],
+      body: rows,
+      theme: 'striped',
+      headStyles: { fillColor: primaryColor },
+    });
   }
   // --- 6. Contabilidad ---
   else if (pdfFormat === 'contabilidad') {
-    addHeader(doc, 'FICHA DE COSTO — CONTABILIDAD');
+    let y = addHeader(doc, 'FICHA DE COSTO — CONTABILIDAD');
+    y = addGeneralData(doc, header, y, pageWidth);
     const contRows: any[] = [];
     sections.forEach((section: any) => {
-      contRows.push([{ content: section.label, colSpan: 6, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      if (!isSectionHeaderRedundant(section.label || section.id, section.rows)) {
+        contRows.push([{ content: section.label, colSpan: 6, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      }
       const process = (rows: any[], depth = 0) => {
         rows.forEach((row: any) => {
           if (shouldSkipRow(row, calculatedValues, skipZeros)) return;
           const calc = calculatedValues[row.id] || {};
-          const indent = '  '.repeat(depth);
           contRows.push([
-            `${indent}${row.id}`,
-            `${indent}${row.label || ''}`,
-            row.accountCode || row.cuenta || '-',
-            row.reference || '-',
+            ' '.repeat(depth) + row.id,
+            ' '.repeat(depth) + row.label,
             row.um || '-',
-            safeLocale(calc.total || 0, 4)
+            safeLocale(calc.valorHistorico || 0),
+            safeLocale(calc.total || 0),
+            '' // Para firmas o notas
           ]);
           if (row.children) process(row.children, depth + 1);
         });
       };
       process(section.rows || []);
-      const secTotal = Number(calculatedValues[section.rows?.[0]?.id]?.total || 0);
-      contRows.push([{ content: `Subtotal ${section.label}: ${safeLocale(secTotal, 4)}`, colSpan: 6, styles: { fontStyle: 'bold', halign: 'right', fillColor: [250, 250, 250] } }]);
     });
-
     autoTable(doc, {
-      startY: 35,
-      head: [['No.', 'Concepto', 'Cuenta', 'Ref.', 'UM', 'Total (4 dec)']],
+      startY: y + 5,
+      head: [['Cuenta/Fila', 'Descripción', 'UM', 'V. Histórico', 'Importe', 'Anotaciones']],
       body: contRows,
       theme: 'grid',
-      headStyles: { fillColor: [0, 128, 128], textColor: 255, fontSize: 7 },
+      headStyles: { fillColor: [50, 50, 50], fontSize: 8 },
       styles: { fontSize: 7 },
-      margin: { left: 14, right: 14 },
     });
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.text("Verificado por: _________________  Fecha: ___________", 14, Math.min(finalY + 10, pageHeight - 20));
   }
   // --- 7. Auditoría ---
   else if (pdfFormat === 'auditoria') {
-    addHeader(doc, 'FICHA DE COSTO — INFORME DE AUDITORÍA');
+    let y = addHeader(doc, 'FICHA DE COSTO — INFORME DE AUDITORÍA');
+    y = addGeneralData(doc, header, y, pageWidth);
     doc.setFontSize(8);
-    doc.text(`Versión: ${header.version || '1.0'} | Elaborado por: ${header.prepared_by || 'N/A'} | Aprobado por: ${header.approved_by || 'N/A'}`, 14, 35);
-    let currentY = 40;
+    doc.text(`Versión: ${header.version || '1.0'} | Elaborado por: ${header.prepared_by || 'N/A'} | Aprobado por: ${header.approved_by || 'N/A'}`, 14, y);
+    y += 10;
+    let currentY = y;
     sections.forEach((section: any) => {
        const rows: any[] = [];
        const process = (rs: any[], d = 0) => {
          rs.forEach((r: any) => {
            if (shouldSkipRow(r, calculatedValues, skipZeros)) return;
            const calc = calculatedValues[r.id] || {};
-           rows.push(['  '.repeat(d) + r.id, '  '.repeat(d) + (r.label || ''), r.um || '-', safeLocale(calc.total || 0)]);
+           rows.push([' '.repeat(d) + r.id, r.label, r.um || '-', safeLocale(calc.total)]);
            if (r.children) process(r.children, d + 1);
          });
        };
@@ -418,7 +381,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
        if (rows.length > 0) {
            autoTable(doc, {
              startY: currentY,
-             head: [[section.label, 'Concepto', 'UM', 'Total']],
+             head: [[isSectionHeaderRedundant(section.label || section.id, section.rows) ? 'Detalle de Conceptos' : section.label, 'Concepto', 'UM', 'Total']],
              body: rows,
              theme: 'grid',
              headStyles: { fillColor: [255, 165, 0], textColor: 0 },
@@ -444,15 +407,16 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       ['Límite de utilidad', '[ X ]', '[   ]', '[   ]'],
     ];
     autoTable(doc, { startY: 25, body: checklist.slice(1), head: [checklist[0]], theme: 'grid' });
-
-    // Watermark handled in the end loop
   }
   // --- 8. Bilingüe ---
   else if (pdfFormat === 'bilingue') {
-    addHeader(doc, 'COST SHEET / FICHA DE COSTO');
+    let y = addHeader(doc, 'COST SHEET / FICHA DE COSTO');
+    y = addGeneralData(doc, header, y, pageWidth, true);
     const biRows: any[] = [];
     sections.forEach((s: any) => {
-      biRows.push([{ content: `${s.label} / ${translate(s.label)}`, colSpan: 10, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      if (!isSectionHeaderRedundant(s.label || s.id, s.rows)) {
+        biRows.push([{ content: `${s.label} / ${translate(s.label)}`, colSpan: 10, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      }
       const process = (rs: any[], d = 0) => {
         rs.forEach((r: any) => {
           if (shouldSkipRow(r, calculatedValues, skipZeros)) return;
@@ -468,7 +432,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       process(s.rows || []);
     });
     autoTable(doc, {
-      startY: 30,
+      startY: y + 5,
       head: [['No.', 'Concepto (ES)', 'UM', 'VH', 'Total', 'No.', 'Concept (EN)', 'UoM', 'HV', 'Total']],
       body: biRows,
       theme: 'grid',
@@ -478,12 +442,15 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
   // --- 9. Comparativo ---
   else if (pdfFormat === 'comparativo') {
-    addHeader(doc, 'ANÁLISIS COMPARATIVO DE ESCENARIOS');
+    let y = addHeader(doc, 'ANÁLISIS COMPARATIVO DE ESCENARIOS');
+    y = addGeneralData(doc, header, y, pageWidth);
     const factors = [1.0, 1.1, 1.2, 0.9];
     const labels = ['BASE', '+10%', '+20%', '-10%'];
     const compRows: any[] = [];
     sections.forEach((s: any) => {
-      compRows.push([{ content: s.label, colSpan: 8, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      if (!isSectionHeaderRedundant(s.label || s.id, s.rows)) {
+        compRows.push([{ content: s.label, colSpan: 8, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      }
       const process = (rs: any[], d = 0) => {
         rs.forEach((r: any) => {
           const calc = calculatedValues[r.id] || {};
@@ -503,7 +470,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       process(s.rows || []);
     });
     autoTable(doc, {
-      startY: 30,
+      startY: y + 5,
       head: [['No.', 'Concepto', 'UM', ...labels, 'Δ MAX']],
       body: compRows,
       theme: 'grid',
@@ -513,13 +480,17 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
   // --- 10. Exportación ---
   else if (pdfFormat === 'exportacion') {
-    addHeader(doc, 'PARA EXPORTACIÓN / FOR EXPORT');
+    let y = addHeader(doc, 'PARA EXPORTACIÓN / FOR EXPORT');
+    y = addGeneralData(doc, header, y, pageWidth, true);
     const rate = Number(header.exchangeRate || 1);
     doc.setFontSize(8);
-    doc.text(`País: ${header.destinationCountry || 'N/A'} | Incoterm: ${header.incoterm || 'N/A'} | Tasa: 1 USD = ${rate} CUP`, 14, 35);
+    doc.text(`País: ${header.destinationCountry || 'N/A'} | Incoterm: ${header.incoterm || 'N/A'} | Tasa: 1 USD = ${rate} CUP`, 14, y);
+    y += 10;
     const expRows: any[] = [];
     sections.forEach((s: any) => {
-      expRows.push([{ content: s.label, colSpan: 6, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      if (!isSectionHeaderRedundant(s.label || s.id, s.rows)) {
+        expRows.push([{ content: s.label, colSpan: 6, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+      }
       const process = (rs: any[], d = 0) => {
         rs.forEach((r: any) => {
           if (shouldSkipRow(r, calculatedValues, skipZeros)) return;
@@ -534,7 +505,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       process(s.rows || []);
     });
     autoTable(doc, {
-      startY: 40,
+      startY: y + 5,
       head: [['No.', 'Concepto', 'UM', 'CUP', 'USD', '% Costo']],
       body: expRows,
       theme: 'striped',
@@ -559,7 +530,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...primaryColor);
-      doc.text(`ANEXO ${annex.id}: ${annex.title}`, 14, 20);
+      doc.text(sanitizeAnnexTitle(annex.id, annex.title), 14, 20, { maxWidth: pageWidth - 28 });
       const columns = annex.columns || [];
       const colHeaders = columns.map((c: any) => c.label || c.title || c.key);
       const rows = annexData.map((r: any) => columns.map((c: any) => {
@@ -606,12 +577,9 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     });
   }
 
-  // --- End of Document Loops ---
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-
-    // Watermark for Audit
     if (pdfFormat === 'auditoria') {
         doc.saveGraphicsState();
         doc.setTextColor(220, 220, 220);
@@ -620,28 +588,18 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
         doc.text("CONFIDENCIAL", pageWidth / 2, pageHeight / 2, { align: 'center', angle: 45 });
         doc.restoreGraphicsState();
     }
-
-    // Footer
     if (showDateTime) {
       doc.setFontSize(7);
       doc.setTextColor(150);
       doc.setFont('helvetica', 'normal');
       const ts = new Date().toLocaleString('es-CU');
       const dateOnly = new Date().toLocaleDateString('es-CU');
-
       let footerText = `${ts} | Pág. ${i}/${pageCount} | CostPro`;
-      if (pdfFormat === 'bilingue') {
-          footerText = `${ts} | Pág. ${i}/${pageCount} | CostPro Export / Exportación CostPro`;
-      } else if (pdfFormat === 'exportacion') {
-          footerText = `${ts} | Pág. ${i}/${pageCount} | Generado por CostPro / Generated by CostPro`;
-      } else if (pdfFormat === 'res148') {
-          footerText = `Conforme Res. 148/2023 | Fecha: ${dateOnly} | Pág. ${i}/${pageCount}`;
-      }
-
+      if (pdfFormat === 'bilingue') footerText = `${ts} | Pág. ${i}/${pageCount} | CostPro Export / Exportación CostPro`;
+      else if (pdfFormat === 'exportacion') footerText = `${ts} | Pág. ${i}/${pageCount} | Generado por CostPro / Generated by CostPro`;
+      else if (pdfFormat === 'res148') footerText = `Conforme Res. 148/2023 | Fecha: ${dateOnly} | Pág. ${i}/${pageCount}`;
       doc.text(footerText, pageWidth / 2, pageHeight - 6, { align: 'center' });
     }
-
-    // Pro mode watermark
     if (pdfFormat === 'pro') {
         doc.setFontSize(8);
         doc.setTextColor(230, 230, 230);
@@ -649,7 +607,6 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     }
   }
 
-  // Add utility note at the end of last page if requested
   if (includeUtilityNote && calculatedHeader && (pdfFormat as any) !== 'simplificado') {
     doc.setPage(pageCount);
     const finalY = (doc as any).lastAutoTable?.finalY || 200;
