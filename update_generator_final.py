@@ -1,4 +1,6 @@
-import { jsPDF } from 'jspdf';
+import sys
+
+content = r"""import { jsPDF } from 'jspdf';
 import { createPDFDocument } from './lazy-pdf';
 import autoTable from 'jspdf-autotable';
 import { ExportOptions, PDFFormat } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
@@ -65,22 +67,11 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   const calculationResult = body.calculationResult || null;
   const annexes = sheetData?.annexes || [];
 
-    const header = {
+  const header = {
     ...(sheetData?.header || {}),
     ...(calculatedHeader || {}),
     ...(calculationResult?.metadata?.header || {})
   };
-
-  // Resolve formulas in header fields
-  Object.keys(header).forEach(key => {
-    const val = header[key];
-    if (typeof val === 'string' && val.startsWith('=')) {
-      // If it's a formula, try to get the resolved value from calculatedHeader
-      if (calculatedHeader && calculatedHeader[key] !== undefined) {
-        header[key] = calculatedHeader[key];
-      }
-    }
-  });
 
   const sections = sheetData?.sections || [];
 
@@ -118,15 +109,6 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       d.setFont('helvetica', 'bold');
       d.setTextColor(...color);
       d.text(title, 14, 20);
-
-      if (showDateTime) {
-          const ts = new Date().toLocaleString('es-CU');
-          d.setFontSize(8);
-          d.setFont('helvetica', 'normal');
-          d.setTextColor(100);
-          d.text(ts, pageWidth - 14, 20, { align: 'right' });
-      }
-
       d.setTextColor(0, 0, 0);
       return 30;
     }
@@ -189,44 +171,39 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     doc.text('(RES 148/2023)', pageWidth / 2, 18, { align: 'center' });
 
     let y = 22;
-    // FC Logo simulation
-    doc.setFontSize(24);
-    doc.text('FC', 25, y + 10, { align: 'center' });
-
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.3);
+    doc.rect(14, y, pageWidth - 28, 30);
     doc.setFontSize(7);
     doc.setTextColor(40);
+    const metaFields = [
+      ['OBJETO DE COSTING:', header.name || ''],
+      ['CÓDIGO:', header.code || ''],
+      ['CANTIDAD:', String(header.quantity || '')],
+      ['UM:', header.unit || ''],
+      ['FECHA:', header.date || new Date().toLocaleDateString('es-CU')],
+      ['ELABORADO POR:', header.prepared_by || header.elaboratedBy || ''],
+      ['APROBADO POR:', header.approved_by || header.approvedBy || ''],
+    ];
+    metaFields.forEach(([label, value], i) => {
+      const col = i % 2 === 0 ? 16 : pageWidth / 2;
+      const row = y + 6 + Math.floor(i / 2) * 6;
+      doc.text(`${label} ${value}`, col, row);
+    });
+    y += 35;
 
-    // Organismo, Union, Empresa block
-    doc.text(`ORGANISMO: -`, 60, y + 5);
-    doc.text(`UNION: -`, 60, y + 10);
-    doc.text(`EMPRESA: -`, 60, y + 15);
-    doc.text(`CODIGO EMPRESA: -`, 60, y + 20);
-
-    // Right block
-    const rightCol = pageWidth - 80;
-    doc.text(`ID: ${header.id || '-'}`, rightCol, y + 5);
-    doc.text(`COD. PROD: ${header.code || '-'}`, rightCol, y + 10);
-    doc.text(`PRODUCTO: ${header.name || '-'}`, rightCol, y + 15);
-    doc.text(`UM: ${header.unit || '-'}`, rightCol, y + 20);
-
-    y += 25;
-
-    // Cantidad & Precio row
-    doc.text(`Cantidad: ${header.quantity || '1'}`, rightCol, y + 5);
-    doc.setFillColor(240, 240, 240);
-    doc.rect(rightCol, y + 7, 60, 6, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.text(`PRECIO:`, rightCol + 2, y + 11.5);
-    doc.text(`${safeLocale(header.salePrice || 0)}`, rightCol + 58, y + 11.5, { align: 'right' });
-
-    y += 15;
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100);
+    doc.text('Conforme Res. 148/2023 MINCIN — República de Cuba', 14, y);
+    y += 4;
 
     const res148Rows: any[] = [];
     sections.forEach((section: any) => {
       res148Rows.push([{
         content: section.label || section.id,
-        colSpan: 5,
-        styles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 0, 0] }
+        colSpan: 6,
+        styles: { fontStyle: 'bold', fillColor: [230, 244, 255], textColor: [21, 68, 128] }
       }]);
       const processRows = (rows: any[], depth = 0) => {
         rows.forEach((row: any) => {
@@ -234,10 +211,11 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
           const calc = calculatedValues[row.id] || {};
           const indent = '  '.repeat(depth);
           res148Rows.push([
+            `${indent}${row.id || ''}`,
             `${indent}${row.label || ''}`,
-            row.id || '',
             row.um || row.unit || '-',
-            safeLocale(row.coefficient || row.coeficiente || 1, 4),
+            safeLocale(calc.valorHistorico || 0),
+            safeLocale(row.coefficient || row.coeficiente || 1),
             safeLocale(calc.total || 0),
           ]);
           if (row.children) processRows(row.children, depth + 1);
@@ -249,18 +227,17 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     if (calculatedHeader) {
       const cost = calculatedHeader.totalCost || 0;
       const price = calculatedHeader.salePrice || 0;
-      res148Rows.push([{ content: `COSTO TOTAL UNITARIO:`, colSpan: 4, styles: { fontStyle: 'bold' } }, { content: safeLocale(cost), styles: { fontStyle: 'bold' } }]);
-      res148Rows.push([{ content: `PRECIO TOTAL:`, colSpan: 4, styles: { fontStyle: 'bold' } }, { content: safeLocale(price), styles: { fontStyle: 'bold' } }]);
-      res148Rows.push([{ content: `UTILIDAD (%):`, colSpan: 4, styles: { fontStyle: 'bold' } }, { content: safeLocale(calculatedHeader.utilityPercent || 0, 4), styles: { fontStyle: 'bold' } }]);
+      res148Rows.push([{ content: `COSTO TOTAL: ${safeLocale(cost)}`, colSpan: 6, styles: { fontStyle: 'bold', fillColor: primaryColor, textColor: 255 } }]);
+      res148Rows.push([{ content: `UTILIDAD: ${safeLocale(price - cost)} | PRECIO DE VENTA: ${safeLocale(price)}`, colSpan: 6, styles: { fontStyle: 'bold' } }]);
     }
 
     autoTable(doc, {
       startY: y,
-      head: [['CONCEPTOS DE GASTOS', 'FILA', 'UM', 'INDICE', 'TOTAL']],
+      head: [['No.', 'Concepto', 'UM', 'V. Histórico', 'Coef.', 'Total']],
       body: res148Rows,
       theme: 'grid',
-      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontSize: 7, fontStyle: 'bold', lineWidth: 0.1 },
-      styles: { fontSize: 7, cellPadding: 1.2, textColor: [0, 0, 0] },
+      headStyles: { fillColor: [21, 68, 128], textColor: 255, fontSize: 7 },
+      styles: { fontSize: 7, cellPadding: 1.2 },
       margin: { left: 14, right: 14 },
     });
   }
@@ -544,7 +521,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
 
   // --- Common Annexes ---
-  if ((pdfFormat as any) !== 'simplificado' && pdfFormat !== 'ejecutivo') {
+  if (pdfFormat !== 'simplificado' && pdfFormat !== 'ejecutivo') {
     const calcAnnexes = body.calculatedAnnexes || [];
     const calcAnnexMap = new Map();
     calcAnnexes.forEach((ca: any) => calcAnnexMap.set(ca.id, ca));
@@ -627,18 +604,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       doc.setTextColor(150);
       doc.setFont('helvetica', 'normal');
       const ts = new Date().toLocaleString('es-CU');
-      const dateOnly = new Date().toLocaleDateString('es-CU');
-
-      let footerText = `${ts} | Pág. ${i}/${pageCount} | CostPro`;
-      if (pdfFormat === 'bilingue') {
-          footerText = `${ts} | Pág. ${i}/${pageCount} | CostPro Export / Exportación CostPro`;
-      } else if (pdfFormat === 'exportacion') {
-          footerText = `${ts} | Pág. ${i}/${pageCount} | Generado por CostPro / Generated by CostPro`;
-      } else if (pdfFormat === 'res148') {
-          footerText = `Conforme Res. 148/2023 | Fecha: ${dateOnly} | Pág. ${i}/${pageCount}`;
-      }
-
-      doc.text(footerText, pageWidth / 2, pageHeight - 6, { align: 'center' });
+      doc.text(`${ts} | Pág. ${i}/${pageCount} | CostPro`, pageWidth / 2, pageHeight - 6, { align: 'center' });
     }
 
     // Pro mode watermark
@@ -650,7 +616,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   }
 
   // Add utility note at the end of last page if requested
-  if (includeUtilityNote && calculatedHeader && (pdfFormat as any) !== 'simplificado') {
+  if (includeUtilityNote && calculatedHeader && pdfFormat !== 'simplificado') {
     doc.setPage(pageCount);
     const finalY = (doc as any).lastAutoTable?.finalY || 200;
     doc.setFontSize(9);
@@ -663,3 +629,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
 
   return doc;
 }
+"""
+
+with open('src/lib/export/pdf-generator.ts', 'w') as f:
+    f.write(content)

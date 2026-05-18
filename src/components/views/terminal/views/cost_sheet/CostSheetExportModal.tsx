@@ -29,7 +29,6 @@ export type PDFFormat =
   | 'bilingue'
   | 'comparativo'
   | 'exportacion';
-
 export interface ExportOptions {
   // Documents
   includeFC: boolean;
@@ -52,8 +51,6 @@ export interface ExportOptions {
   includeComparison?: boolean;
   scenarioId?: string;
 }
-
-
 const PDF_FORMATS: Array<{
   id: PDFFormat;
   label: string;
