@@ -129,9 +129,9 @@ export const offlineStorage = {
           timestamp: Date.now(),
         };
         await localforage.setItem(OFFLINE_SNAPSHOT_KEY, snapshots);
-        logger.info('OFFLINE', 'SNAPSHOT_SAVED', { key });
+        logger.info('SYNC', 'SNAPSHOT_SAVED', { key });
     } catch (err) {
-        logger.error('OFFLINE', 'SNAPSHOT_SAVE_FAILED', { key, error: String(err) });
+        logger.error('SYNC', 'SNAPSHOT_SAVE_FAILED', { key, error: String(err) });
     }
   },
 
@@ -142,7 +142,7 @@ export const offlineStorage = {
     const snapshots = await localforage.getItem<Record<string, { data: T; timestamp: number }>>(OFFLINE_SNAPSHOT_KEY);
     const snapshot = snapshots?.[key];
     if (snapshot) {
-        logger.info('OFFLINE', 'SNAPSHOT_RETRIEVED', { key, age: Date.now() - snapshot.timestamp });
+        logger.info('SYNC', 'SNAPSHOT_RETRIEVED', { key, age: Date.now() - snapshot.timestamp });
         return snapshot.data;
     }
     return null;
