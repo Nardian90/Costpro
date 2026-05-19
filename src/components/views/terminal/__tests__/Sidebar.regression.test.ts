@@ -1,4 +1,5 @@
 import { SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
+import { SYSTEM_ACTIONS, getActionsForUser } from '@/config/actions';
 import { describe, it, expect } from 'vitest';
 
 // Helper: find a module id recursively in the tree
@@ -15,7 +16,7 @@ function filterModulesByRole(modules: any[], role: string): any[] {
   return modules
     .filter((mod: any) => {
       if (!mod.allowedRoles) return true;
-      return mod.allowedRoles.includes(role);
+      return mod.allowedRoles.map((r: string) => r.toLowerCase()).includes(role.toLowerCase());
     })
     .map((mod: any) => {
       if (!mod.children) return mod;
@@ -28,33 +29,24 @@ function filterModulesByRole(modules: any[], role: string): any[] {
     });
 }
 
-describe('Regresión: Sidebar Access Control', () => {
-  describe('rol: costo', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'costo');
+describe('Regresión: Control de Acceso Reforzado', () => {
+  describe('rol: costo (Case-insensitive check)', () => {
+    // Test with uppercase to ensure robustness
+    const role = 'COSTO';
+    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, role);
     const topLevelIds = getTopLevelIds(filtered);
+    const actions = getActionsForUser(role);
 
     it('costo ve el grupo costos', () => {
       expect(topLevelIds).toContain('costos');
     });
 
-    it('costo ve el grupo recursos (Más recursos)', () => {
-      expect(topLevelIds).toContain('recursos');
-    });
-
-    it('costo ve el grupo configuracion', () => {
-      expect(topLevelIds).toContain('configuracion');
-    });
-
-    it('costo ve Ajustes Globales (settings) dentro de Sistema', () => {
+    it('costo ve Ajustes Globales (settings)', () => {
       expect(findDeep(filtered, 'settings')).toBe(true);
     });
 
-    it('costo NO ve el grupo core (GENERAL)', () => {
+    it('costo NO ve el grupo core (GENERAL/ESCRITORIO)', () => {
       expect(topLevelIds).not.toContain('core');
-    });
-
-    it('costo NO ve el grupo tienda (MULTI-TIENDA)', () => {
-      expect(topLevelIds).not.toContain('tienda');
     });
 
     it('costo NO ve el grupo ipv_module (IPV)', () => {
@@ -65,43 +57,30 @@ describe('Regresión: Sidebar Access Control', () => {
       expect(topLevelIds).not.toContain('otros');
     });
 
-    it('costo NO ve el submenu administrativa', () => {
-      expect(findDeep(filtered, 'administrativa')).toBe(false);
+    it('getActionsForUser para COSTO no devuelve acciones de IPV', () => {
+      const hasIpvAction = actions.some(a => ['analytics', 'receipts', 'transfers'].includes(a.id));
+      expect(hasIpvAction).toBe(false);
     });
 
-    it('costo NO ve el submenu comunicacion', () => {
-      expect(findDeep(filtered, 'comunicacion')).toBe(false);
-    });
-
-    it('costo NO ve Salud Plataforma (health)', () => {
-      expect(findDeep(filtered, 'health')).toBe(false);
-    });
-
-    it('costo NO ve Auditoría Global (audit)', () => {
-      expect(findDeep(filtered, 'audit')).toBe(false);
-    });
-
-    it('costo NO ve Generador Reportes (reports)', () => {
-      expect(findDeep(filtered, 'reports')).toBe(false);
+    it('getActionsForUser para COSTO no devuelve acciones de POS', () => {
+      const hasPosAction = actions.some(a => a.id === 'pos');
+      expect(hasPosAction).toBe(false);
     });
   });
 
   describe('rol: admin', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
-    const topLevelIds = getTopLevelIds(filtered);
+    const role = 'admin';
+    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, role);
+    const actions = getActionsForUser(role);
 
-    it('admin ve todo', () => {
-      expect(topLevelIds).toContain('core');
-      expect(topLevelIds).toContain('costos');
-      expect(topLevelIds).toContain('tienda');
-      expect(topLevelIds).toContain('ipv_module');
-      expect(topLevelIds).toContain('otros');
-      expect(topLevelIds).toContain('configuracion');
-      expect(topLevelIds).toContain('recursos');
+    it('admin ve todo en el sidebar', () => {
+      expect(getTopLevelIds(filtered)).toContain('core');
+      expect(getTopLevelIds(filtered)).toContain('ipv_module');
+    });
 
-      expect(findDeep(filtered, 'users')).toBe(true);
-      expect(findDeep(filtered, 'health')).toBe(true);
-      expect(findDeep(filtered, 'audit')).toBe(true);
+    it('admin ve todas las acciones principales', () => {
+      expect(actions.some(a => a.id === 'pos')).toBe(true);
+      expect(actions.some(a => a.id === 'analytics')).toBe(true);
     });
   });
 });

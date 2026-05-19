@@ -60,6 +60,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   // ─── Multi-Tienda ───────────────────────────────────────────
   {
     id: 'dashboard',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Dashboard KPI',
     icon: TrendingUp,
     keywords: ['dashboard', 'escritorio', 'centro', 'control', 'kpi', 'indicadores'],
@@ -68,6 +69,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'pos',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Punto de Venta (POS)',
     icon: ShoppingCart,
     keywords: ['venta', 'pos', 'caja', 'vender', 'factura', 'ticket', 'cliente', 'terminal'],
@@ -76,6 +78,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'sales',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Historial de Ventas',
     icon: Receipt,
     keywords: ['ventas', 'historial', 'facturas', 'comprobantes', 'consultar'],
@@ -84,6 +87,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'cash',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Arqueo de Caja',
     icon: Scale,
     keywords: ['cierre', 'caja', 'arqueo', 'cuadre', 'efectivo', 'turno'],
@@ -92,6 +96,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'catalog',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Catálogo Maestro',
     icon: Package,
     keywords: ['catálogo', 'productos', 'precios', 'lista', 'maestro', 'referencias'],
@@ -100,6 +105,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'inventory',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Stock Actual',
     icon: Package,
     keywords: ['stock', 'inventario', 'existencias', 'almacén', 'productos'],
@@ -108,6 +114,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'history',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Trazabilidad Stock',
     icon: History,
     keywords: ['historial', 'movimientos', 'kardex', 'entradas', 'salidas', 'stock'],
@@ -116,6 +123,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'inventory_adjustments',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Ajustes Documentales',
     icon: RotateCcw,
     keywords: ['ajuste', 'inventario', 'corrección', 'documental', 'diferencia'],
@@ -124,6 +132,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'recepcion',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Nueva Recepción',
     icon: Warehouse,
     keywords: ['recibir', 'mercancía', 'proveedor', 'entrada', 'compra', 'remisión'],
@@ -132,6 +141,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'reception_list',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Historial Recepciones',
     icon: History,
     keywords: ['recepciones', 'historial', 'consultar', 'entradas', 'proveedor'],
@@ -140,6 +150,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'transferencias',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Transferencia Stock',
     icon: ArrowRightLeft,
     keywords: ['transferencia', 'mover', 'almacén', 'entre', 'sucursales', 'traslado'],
@@ -148,6 +159,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'inventory_count',
+    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'Auditoría Conteo',
     icon: ClipboardList,
     keywords: ['conteo', 'auditoría', 'inventario', 'físico', 'verificar'],
@@ -264,6 +276,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   // ─── IPV ────────────────────────────────────────────────────
   {
     id: 'analytics',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Dashboard Institucional',
     icon: TrendingUp,
     keywords: ['dashboard', 'institucional', 'ipv', 'kpi', 'indicadores', 'general'],
@@ -272,6 +285,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'reports_ipv',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Reportes IPV',
     icon: FileText,
     keywords: ['reportes', 'ipv', 'informes', 'extractos', 'estadísticas'],
@@ -280,6 +294,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'receipts',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Recibos SC-3-01',
     icon: Receipt,
     keywords: ['recibos', 'sc301', 'ingresos', 'documentos', 'comprobantes'],
@@ -288,6 +303,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'transfers',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Transferencias',
     icon: ArrowRightLeft,
     keywords: ['transferencias', 'bancarias', 'envíos', 'ipv', 'cuentas'],
@@ -296,6 +312,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'qr',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Pagos QR',
     icon: QrCode,
     keywords: ['qr', 'pagos', 'cobros', 'código', 'lectura'],
@@ -304,6 +321,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'ingestion',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Extracto Bancario',
     icon: Database,
     keywords: ['extracto', 'banco', 'ingesta', 'estado', 'cuenta', 'importar'],
@@ -312,6 +330,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'pivot',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Consolidado Datos',
     icon: FileSearch,
     keywords: ['consolidado', 'datos', 'pivot', 'resumen', 'agregado'],
@@ -320,6 +339,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'dashboard_ipv',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Panel de Control IPV',
     icon: Workflow,
     keywords: ['panel', 'control', 'ipv', 'operaciones', 'transacciones'],
@@ -328,6 +348,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'transactions',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Gestión Transacciones',
     icon: Table2,
     keywords: ['transacciones', 'ipv', 'gestión', 'bancarias', 'procesar'],
@@ -336,6 +357,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'catalog_ipv',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Catálogo Productos IPV',
     icon: PackageSearch,
     keywords: ['catálogo', 'productos', 'ipv', 'referencias', 'códigos'],
@@ -344,6 +366,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'customers',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Directorio Clientes',
     icon: Users,
     keywords: ['clientes', 'directorio', 'contactos', 'ipv'],
@@ -352,6 +375,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'rules',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Reglas de Negocio',
     icon: Cpu,
     keywords: ['reglas', 'negocio', 'matching', 'motor', 'criterios', 'ipv'],
@@ -360,6 +384,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'sim',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Simulación Escenarios',
     icon: Zap,
     keywords: ['simulación', 'escenarios', 'prueba', 'matching', 'ipv'],
@@ -368,6 +393,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'intelligent-receipts',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Recepciones IA',
     icon: Wand2,
     keywords: ['recepciones', 'inteligencia', 'artificial', 'ia', 'automático', 'ipv'],
@@ -376,6 +402,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'breakdown',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Desglose Operativo',
     icon: BarChart4,
     keywords: ['desglose', 'operativo', 'detalle', 'análisis', 'ipv'],
@@ -384,6 +411,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'audit_ipv',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Registro Auditoría IPV',
     icon: History,
     keywords: ['auditoría', 'registro', 'trazabilidad', 'ipv', 'logs'],
@@ -392,6 +420,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'movements',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Trazabilidad Flujo',
     icon: Workflow,
     keywords: ['trazabilidad', 'flujo', 'movimientos', 'ipv', 'seguimiento'],
@@ -400,6 +429,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'planning',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Planeación Fiscal',
     icon: Target,
     keywords: ['planeación', 'fiscal', 'impuestos', 'proyección', 'ipv'],
@@ -408,6 +438,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'errors',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Centro Errores',
     icon: AlertCircle,
     keywords: ['errores', 'incidentes', 'problemas', 'fallos', 'ipv'],
@@ -416,6 +447,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'mapping-rules',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Mapeo Dinámico',
     icon: ListFilter,
     keywords: ['mapeo', 'dinámico', 'reglas', 'cuentas', 'ipv'],
@@ -424,6 +456,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'mvt',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Exportación Datos IPV',
     icon: FileText,
     keywords: ['exportación', 'datos', 'mvt', 'descargar', 'ipv'],
@@ -432,6 +465,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'mipyme',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Transacciones Mipyme',
     icon: Users,
     keywords: ['mipyme', 'transacciones', 'pequeña', 'empresa', 'ipv'],
@@ -442,6 +476,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   // ─── Otros Módulos ─────────────────────────────────────────
   {
     id: 'wallet',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Billetera Digital',
     icon: Wallet,
     keywords: ['billetera', 'digital', 'notificaciones', 'sms', 'transferencias', 'ingresos'],
@@ -458,6 +493,7 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'pick3',
+    roles: ['admin', 'manager', 'encargado'],
     label: 'Pick3 Intelligence',
     icon: Zap,
     keywords: ['pick3', 'inteligencia', 'análisis', 'predicción', 'datos'],
@@ -480,7 +516,7 @@ export const SYSTEM_ACTIONS: Action[] = [
     icon: Users,
     keywords: ['usuarios', 'equipo', 'personal', 'permisos', 'acceso', 'roles'],
     route: 'users',
-    roles: ['admin'],
+    roles: ['admin', 'manager', 'encargado'],
     description: 'Administra cuentas de usuario y niveles de acceso.'
   },
   {
@@ -574,6 +610,6 @@ export const SYSTEM_ACTIONS: Action[] = [
 export function getActionsForUser(role: string): Action[] {
   return SYSTEM_ACTIONS.filter(action => {
     if (!action.roles) return true;
-    return action.roles.includes(role);
+    return action.roles.map(r => r.toLowerCase()).includes(role.toLowerCase());
   });
 }

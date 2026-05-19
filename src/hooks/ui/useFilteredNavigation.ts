@@ -7,7 +7,7 @@ function filterModulesByRole(modules: NavModule[], role: string): NavModule[] {
     .filter(mod => {
       // Si no tiene allowedRoles definido, acceso universal
       if (!mod.allowedRoles) return true;
-      return mod.allowedRoles.includes(role);
+      return mod.allowedRoles.map(r => r.toLowerCase()).includes(role.toLowerCase());
     })
     .map(mod => {
       if (!mod.children) return mod;
