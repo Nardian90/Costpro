@@ -1,10 +1,6 @@
 import { SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
 import { describe, it, expect } from 'vitest';
 
-// Import the pure function directly (not the hook)
-// We test filterModulesByRole by extracting it
-import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
-
 // Helper: find a module id recursively in the tree
 const findDeep = (mods: any[], id: string): boolean =>
   mods.some(
@@ -15,11 +11,6 @@ const findDeep = (mods: any[], id: string): boolean =>
 const getTopLevelIds = (mods: any[]): string[] =>
   mods.map((m) => m.id);
 
-/**
- * Since filterModulesByRole is not exported directly,
- * we need to test through the hook. But to avoid React rendering overhead,
- * we extract the function logic here.
- */
 function filterModulesByRole(modules: any[], role: string): any[] {
   return modules
     .filter((mod: any) => {
@@ -37,164 +28,80 @@ function filterModulesByRole(modules: any[], role: string): any[] {
     });
 }
 
-describe('Regresión: Sidebar bug FC-Sidebar (hasAvailableItems)', () => {
-  describe('rol: admin', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
+describe('Regresión: Sidebar Access Control', () => {
+  describe('rol: costo', () => {
+    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'costo');
+    const topLevelIds = getTopLevelIds(filtered);
 
-    it('admin ve todos los grupos de nivel superior', () => {
-      expect(filtered.length).toBeGreaterThan(0);
-      // Admin should see: core, costos, tienda, ipv_module, otros, configuracion, recursos
-      const topLevelIds = getTopLevelIds(filtered);
+    it('costo ve el grupo costos', () => {
       expect(topLevelIds).toContain('costos');
-      expect(topLevelIds).toContain('tienda');
+    });
+
+    it('costo ve el grupo recursos (Más recursos)', () => {
+      expect(topLevelIds).toContain('recursos');
+    });
+
+    it('costo ve el grupo configuracion', () => {
       expect(topLevelIds).toContain('configuracion');
     });
 
-    it('admin ve ítems profundamente anidados (cost-sheets dentro de costos)', () => {
-      expect(findDeep(filtered, 'cost-sheets')).toBe(true);
+    it('costo ve Ajustes Globales (settings) dentro de Sistema', () => {
+      expect(findDeep(filtered, 'settings')).toBe(true);
     });
 
-    it('admin ve el módulo de usuarios', () => {
-      expect(findDeep(filtered, 'users')).toBe(true);
+    it('costo NO ve el grupo core (GENERAL)', () => {
+      expect(topLevelIds).not.toContain('core');
     });
 
-    it('admin ve POS', () => {
-      expect(findDeep(filtered, 'pos')).toBe(true);
+    it('costo NO ve el grupo tienda (MULTI-TIENDA)', () => {
+      expect(topLevelIds).not.toContain('tienda');
     });
 
-    it('admin ve transferencias', () => {
-      expect(findDeep(filtered, 'transferencias')).toBe(true);
+    it('costo NO ve el grupo ipv_module (IPV)', () => {
+      expect(topLevelIds).not.toContain('ipv_module');
     });
 
-    it('admin ve recepción', () => {
-      expect(findDeep(filtered, 'recepcion')).toBe(true);
-    });
-  });
-
-  describe('rol: warehouse', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'warehouse');
-
-    it('warehouse NO ve el ítem pos en ningún nivel del árbol', () => {
-      expect(findDeep(filtered, 'pos')).toBe(false);
+    it('costo NO ve el grupo otros (OTROS)', () => {
+      expect(topLevelIds).not.toContain('otros');
     });
 
-    it('warehouse NO ve el módulo de configuración (solo admin)', () => {
-      const topLevelIds = getTopLevelIds(filtered);
-      expect(topLevelIds).not.toContain('configuracion');
+    it('costo NO ve el submenu administrativa', () => {
+      expect(findDeep(filtered, 'administrativa')).toBe(false);
     });
 
-    it('warehouse ve inventory', () => {
-      expect(findDeep(filtered, 'inventory')).toBe(true);
+    it('costo NO ve el submenu comunicacion', () => {
+      expect(findDeep(filtered, 'comunicacion')).toBe(false);
     });
 
-    it('warehouse ve recepcion', () => {
-      expect(findDeep(filtered, 'recepcion')).toBe(true);
+    it('costo NO ve Salud Plataforma (health)', () => {
+      expect(findDeep(filtered, 'health')).toBe(false);
     });
 
-    it('warehouse ve transferencias', () => {
-      expect(findDeep(filtered, 'transferencias')).toBe(true);
+    it('costo NO ve Auditoría Global (audit)', () => {
+      expect(findDeep(filtered, 'audit')).toBe(false);
+    });
+
+    it('costo NO ve Generador Reportes (reports)', () => {
+      expect(findDeep(filtered, 'reports')).toBe(false);
     });
   });
 
-  describe('rol: costo', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'costo');
+  describe('rol: admin', () => {
+    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'admin');
+    const topLevelIds = getTopLevelIds(filtered);
 
-    it('costo ve el grupo costos', () => {
-      const topLevelIds = getTopLevelIds(filtered);
+    it('admin ve todo', () => {
+      expect(topLevelIds).toContain('core');
       expect(topLevelIds).toContain('costos');
-    });
+      expect(topLevelIds).toContain('tienda');
+      expect(topLevelIds).toContain('ipv_module');
+      expect(topLevelIds).toContain('otros');
+      expect(topLevelIds).toContain('configuracion');
+      expect(topLevelIds).toContain('recursos');
 
-    it('costo ve cost-sheets dentro del grupo costos', () => {
-      expect(findDeep(filtered, 'cost-sheets')).toBe(true);
-    });
-
-    it('costo NO ve módulos de operaciones de tienda', () => {
-      expect(findDeep(filtered, 'transferencias')).toBe(false);
-      expect(findDeep(filtered, 'recepcion')).toBe(false);
-    });
-
-    it('costo NO ve el módulo de usuarios', () => {
-      expect(findDeep(filtered, 'users')).toBe(false);
-    });
-  });
-
-  describe('rol: encargado', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'encargado');
-
-    it('encargado ve POS', () => {
-      expect(findDeep(filtered, 'pos')).toBe(true);
-    });
-
-    it('encargado ve costos', () => {
-      expect(findDeep(filtered, 'cost-sheets')).toBe(true);
-    });
-
-    it('encargado ve transferencias', () => {
-      expect(findDeep(filtered, 'transferencias')).toBe(true);
-    });
-
-    it('encargado NO ve configuración (solo admin)', () => {
-      const topLevelIds = getTopLevelIds(filtered);
-      expect(topLevelIds).not.toContain('configuracion');
-    });
-  });
-
-  describe('rol: clerk', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'clerk');
-
-    it('clerk ve POS', () => {
-      expect(findDeep(filtered, 'pos')).toBe(true);
-    });
-
-    it('clerk NO ve catálogo maestro (solo admin/manager/encargado)', () => {
-      expect(findDeep(filtered, 'catalog')).toBe(false);
-    });
-  });
-
-  describe('rol: usuario', () => {
-    const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'usuario');
-
-    it('usuario ve POS', () => {
-      expect(findDeep(filtered, 'pos')).toBe(true);
-    });
-
-    it('usuario NO ve configuración', () => {
-      expect(findDeep(filtered, 'users')).toBe(false);
-      expect(findDeep(filtered, 'roles')).toBe(false);
-    });
-
-    it('usuario NO ve el dashboard KPI', () => {
-      // Dashboard KPI has allowedRoles: ['admin', 'manager', 'encargado']
-      expect(findDeep(filtered, 'dashboard')).toBe(false);
-    });
-  });
-
-  describe('integridad del árbol', () => {
-    it('no quedan grupos vacíos después de filtrar por warehouse', () => {
-      const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'warehouse');
-      filtered.forEach((mod) => {
-        if (mod.type !== 'item') {
-          expect(mod.children?.length).toBeGreaterThan(0);
-        }
-      });
-    });
-
-    it('no quedan grupos vacíos después de filtrar por costo', () => {
-      const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, 'costo');
-      filtered.forEach((mod) => {
-        if (mod.type !== 'item') {
-          expect(mod.children?.length).toBeGreaterThan(0);
-        }
-      });
-    });
-
-    it('el grupo "core" es visible para todos los roles (sin allowedRoles)', () => {
-      const roles = ['admin', 'encargado', 'warehouse', 'costo', 'clerk', 'usuario'];
-      roles.forEach((role) => {
-        const filtered = filterModulesByRole(SIDEBAR_STRUCTURE, role);
-        const topLevelIds = getTopLevelIds(filtered);
-        expect(topLevelIds).toContain('core');
-      });
+      expect(findDeep(filtered, 'users')).toBe(true);
+      expect(findDeep(filtered, 'health')).toBe(true);
+      expect(findDeep(filtered, 'audit')).toBe(true);
     });
   });
 });

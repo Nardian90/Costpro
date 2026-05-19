@@ -72,6 +72,7 @@ export interface NavModule {
 export const SIDEBAR_STRUCTURE: NavModule[] = [
   {
     id: 'core',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'ESCRITORIO',
     type: 'group',
     icon: Home,
@@ -135,11 +136,11 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'tienda',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     label: 'MULTI-TIENDA',
     type: 'group',
     icon: Building,
     ariaLabel: 'Operaciones Multi-Tienda',
-    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', allowedRoles: ['admin', 'manager', 'encargado'] },
       {
@@ -181,6 +182,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'ipv_module',
+    allowedRoles: ['admin', 'manager', 'encargado'],
     label: 'IPV',
     type: 'group',
     icon: Layers,
@@ -252,6 +254,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   },
   {
     id: 'otros',
+    allowedRoles: ['admin', 'manager', 'encargado'],
     label: 'OTROS',
     type: 'group',
     icon: LayoutGrid,
@@ -267,11 +270,12 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Settings,
     ariaLabel: 'Ajustes del Sistema',
-    allowedRoles: ['admin'],
+    allowedRoles: ['admin', 'costo'],
     children: [
       {
         id: 'administrativa',
         label: 'Administrativa',
+        allowedRoles: ['admin'],
         type: 'submenu',
         ariaLabel: 'Gestión de usuarios y entidades',
         children: [
@@ -283,18 +287,20 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       {
         id: 'sistema',
         label: 'Sistema',
+        allowedRoles: ['admin', 'costo'],
         type: 'submenu',
         ariaLabel: 'Mantenimiento del sistema',
         children: [
-          { id: 'health', label: 'Salud Plataforma', type: 'item', icon: HeartPulse },
-          { id: 'audit', label: 'Auditoría Global', type: 'item', icon: Shield },
-          { id: 'settings', label: 'Ajustes Globales', type: 'item', icon: Settings },
-          { id: 'reports', label: 'Generador Reportes', type: 'item', icon: FileText }
+          { id: 'health', label: 'Salud Plataforma', type: 'item', icon: HeartPulse, allowedRoles: ['admin'] },
+          { id: 'audit', label: 'Auditoría Global', type: 'item', icon: Shield, allowedRoles: ['admin'] },
+          { id: 'settings', label: 'Ajustes Globales', type: 'item', icon: Settings, allowedRoles: ['admin', 'costo'] },
+          { id: 'reports', label: 'Generador Reportes', type: 'item', icon: FileText, allowedRoles: ['admin'] }
         ]
       },
       {
         id: 'comunicacion',
         label: 'Comunicación',
+        allowedRoles: ['admin'],
         type: 'submenu',
         ariaLabel: 'Noticias y RSS',
         children: [
