@@ -84,13 +84,13 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
               <React.Fragment key={sid}>
                 <TableCell className={cn("text-right p-2 border-l border-border/50 transition-colors", isPrimary && "bg-muted/20 group-hover:bg-muted/30")}>
                   <Input
-                    className="h-7 text-right text-xs text-muted-foreground p-1 focus:ring-1 focus:ring-primary/40 bg-transparent border-transparent hover:border-border/50 transition-all tabular-nums"
+                    className="h-7 text-right text-[10px] text-muted-foreground/60 p-1 focus:ring-1 focus:ring-primary/40 bg-transparent border-transparent hover:border-border/50 transition-all tabular-nums"
                     defaultValue={scenario?.values[row.id]?.valorHistorico ?? row.valorHistorico ?? 0}
                     onBlur={(e) => onUpdateRowValue(sid, row.id, 'valorHistorico', parseFloat(e.target.value) || 0)}
                   />
                 </TableCell>
                 <TableCell className={cn("text-right p-2 border-r border-border/10 tabular-nums transition-colors", isPrimary && "bg-primary/5 group-hover:bg-primary/10")}>
-                  <span className="text-sm font-black">{calculated.total.toFixed(2)}</span>
+                  <span className="text-base font-black">{calculated.total.toFixed(2)}</span>
                 </TableCell>
                 {sid !== baseId && (
                   <>
