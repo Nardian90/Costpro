@@ -76,7 +76,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Home,
     ariaLabel: 'Navegación principal',
-    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       { id: 'occ', label: 'Centro de Control', type: 'item', icon: Home, ariaLabel: 'Ir al escritorio principal' },
     ]
