@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus, Scale, BarChart3, Calculator, ShieldCheck, Minimize2, Globe, Columns, Ship } from 'lucide-react';
+import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus, Scale, BarChart3, Calculator, ShieldCheck, Minimize2, Globe, Columns, Ship, Layers, FileOutput } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +29,8 @@ export type PDFFormat =
   | 'bilingue'
   | 'comparativo'
   | 'exportacion';
+export type AnnexLayout = 'together' | 'separate';
+
 export interface ExportOptions {
   // Documents
   includeFC: boolean;
@@ -46,6 +48,7 @@ export interface ExportOptions {
   includeUtilityNote: boolean;
   showDateTime: boolean;
   alwaysZip: boolean;
+  annexLayout: AnnexLayout;
 
   // Comparison
   includeComparison?: boolean;
@@ -56,110 +59,110 @@ const PDF_FORMATS: Array<{
   label: string;
   description: string;
   icon: React.ElementType;
-  accent: string;
-  accentBg: string;
-  accentBorder: string;
-  accentText: string;
+  selectedBg: string;
+  selectedBorder: string;
+  selectedIconBg: string;
+  selectedIconText: string;
 }> = [
   {
     id: 'standard',
     label: 'Estándar',
-    description: 'Básico y limpio',
+    description: 'Limpio y universal',
     icon: FileText,
-    accent: 'primary',
-    accentBg: 'bg-primary/5',
-    accentBorder: 'border-primary',
-    accentText: 'text-primary',
+    selectedBg: 'bg-primary/5',
+    selectedBorder: 'border-primary',
+    selectedIconBg: 'bg-primary',
+    selectedIconText: 'text-primary-foreground',
   },
   {
     id: 'pro',
     label: 'Pro Corporativo',
     description: 'Con logo e identidad visual',
     icon: ImagePlus,
-    accent: 'amber',
-    accentBg: 'bg-amber-500/5',
-    accentBorder: 'border-amber-500',
-    accentText: 'text-amber-600 dark:text-amber-400',
+    selectedBg: 'bg-amber-500/5',
+    selectedBorder: 'border-amber-500',
+    selectedIconBg: 'bg-amber-500',
+    selectedIconText: 'text-white',
   },
   {
     id: 'res148',
     label: 'Res 148/2023',
-    description: 'Formato oficial MINCIN Cuba',
+    description: 'Formato oficial MINCIN',
     icon: Scale,
-    accent: 'blue',
-    accentBg: 'bg-blue-500/5',
-    accentBorder: 'border-blue-500',
-    accentText: 'text-blue-600 dark:text-blue-400',
+    selectedBg: 'bg-blue-500/5',
+    selectedBorder: 'border-blue-500',
+    selectedIconBg: 'bg-blue-600',
+    selectedIconText: 'text-white',
   },
   {
     id: 'ejecutivo',
     label: 'Ejecutivo',
-    description: 'KPIs y estructura — dirección',
+    description: 'KPIs para dirección',
     icon: BarChart3,
-    accent: 'purple',
-    accentBg: 'bg-purple-500/5',
-    accentBorder: 'border-purple-500',
-    accentText: 'text-purple-600 dark:text-purple-400',
+    selectedBg: 'bg-purple-500/5',
+    selectedBorder: 'border-purple-500',
+    selectedIconBg: 'bg-purple-600',
+    selectedIconText: 'text-white',
   },
   {
     id: 'contabilidad',
     label: 'Contabilidad',
-    description: 'Cuentas, referencias y verificación',
+    description: 'Cuentas y precisión 4 decimales',
     icon: Calculator,
-    accent: 'teal',
-    accentBg: 'bg-teal-500/5',
-    accentBorder: 'border-teal-500',
-    accentText: 'text-teal-600 dark:text-teal-400',
+    selectedBg: 'bg-teal-500/5',
+    selectedBorder: 'border-teal-500',
+    selectedIconBg: 'bg-teal-600',
+    selectedIconText: 'text-white',
   },
   {
     id: 'auditoria',
     label: 'Auditoría',
     description: 'Trazabilidad y firmas',
     icon: ShieldCheck,
-    accent: 'orange',
-    accentBg: 'bg-orange-500/5',
-    accentBorder: 'border-orange-500',
-    accentText: 'text-orange-600 dark:text-orange-400',
+    selectedBg: 'bg-orange-500/5',
+    selectedBorder: 'border-orange-500',
+    selectedIconBg: 'bg-orange-500',
+    selectedIconText: 'text-white',
   },
   {
     id: 'simplificado',
     label: 'Simplificado',
-    description: 'Una página, solo totales',
+    description: 'Una sola página, totales',
     icon: Minimize2,
-    accent: 'gray',
-    accentBg: 'bg-muted/30',
-    accentBorder: 'border-muted-foreground/40',
-    accentText: 'text-muted-foreground',
+    selectedBg: 'bg-muted/40',
+    selectedBorder: 'border-muted-foreground/50',
+    selectedIconBg: 'bg-muted-foreground',
+    selectedIconText: 'text-background',
   },
   {
     id: 'bilingue',
     label: 'Bilingüe ES/EN',
-    description: 'Columnas paralelas español e inglés',
+    description: 'Columnas español e inglés',
     icon: Globe,
-    accent: 'indigo',
-    accentBg: 'bg-indigo-500/5',
-    accentBorder: 'border-indigo-500',
-    accentText: 'text-indigo-600 dark:text-indigo-400',
+    selectedBg: 'bg-indigo-500/5',
+    selectedBorder: 'border-indigo-500',
+    selectedIconBg: 'bg-indigo-600',
+    selectedIconText: 'text-white',
   },
   {
     id: 'comparativo',
-    label: 'Escenarios Paralelos',
-    description: 'Base vs variaciones +10% +20% -10%',
+    label: 'Escenarios',
+    description: 'Base vs variaciones ±10%',
     icon: Columns,
-    accent: 'cyan',
-    accentBg: 'bg-cyan-500/5',
-    accentBorder: 'border-cyan-500',
-    accentText: 'text-cyan-600 dark:text-cyan-400',
+    selectedBg: 'bg-cyan-500/5',
+    selectedBorder: 'border-cyan-500',
+    selectedIconBg: 'bg-cyan-600',
+    selectedIconText: 'text-white',
   },
   {
     id: 'exportacion',
-    label: 'Para Exportación',
-    description: 'CUP + USD, campos internacionales',
+    label: 'Exportación',
+    description: 'CUP + USD, campos int\'l',
     icon: Ship,
-    accent: 'emerald',
-    accentBg: 'bg-emerald-500/5',
-    accentBorder: 'border-emerald-500',
-    accentText: 'text-emerald-600 dark:text-emerald-400',
+    selectedBg: 'bg-emerald-500/5',
+    selectedBorder: 'border-emerald-500',
+    selectedIconBg: 'bg-emerald-600',
+    selectedIconText: 'text-white',
   },
 ];
 
@@ -186,6 +189,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     includeUtilityNote: true,
     showDateTime: true,
     alwaysZip: false,
+    annexLayout: 'together',
     pdfFormat: "standard"
   });
 
@@ -268,26 +272,28 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
           aria-label={`${fmt.label}: ${fmt.description}`}
           onClick={() => setOptions(prev => ({ ...prev, pdfFormat: fmt.id }))}
           className={cn(
-            'flex items-start gap-3 p-3 rounded-2xl border-2 transition-all text-left group',
+            'flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left',
             isSelected
-              ? `${fmt.accentBg} ${fmt.accentBorder} shadow-sm`
+              ? `${fmt.selectedBg} ${fmt.selectedBorder} shadow-sm`
               : 'bg-sidebar/40 border-transparent hover:border-sidebar-border/80'
           )}
         >
           <div className={cn(
-            'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors',
-            isSelected ? `${fmt.accentBg} ${fmt.accentText}` : 'bg-sidebar text-muted-foreground'
+            'w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+            isSelected
+              ? `${fmt.selectedIconBg} ${fmt.selectedIconText}`
+              : 'bg-sidebar text-muted-foreground'
           )}>
             <Icon className="w-4 h-4" aria-hidden="true" />
           </div>
           <div className="min-w-0">
             <div className={cn(
               'font-black uppercase tracking-widest text-[9px] truncate',
-              isSelected ? fmt.accentText : 'text-foreground'
+              isSelected ? 'text-foreground' : 'text-muted-foreground'
             )}>
               {fmt.label}
             </div>
-            <div className="text-[10px] text-muted-foreground font-medium leading-tight mt-0.5 line-clamp-2">
+            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
               {fmt.description}
             </div>
           </div>
@@ -412,6 +418,81 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 />
                             </div>
                         ))}
+                    </div>
+
+                    {/* Annex Layout: Together vs Separate */}
+                    <div className="space-y-2">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                            Disposición de Anexos
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={options.annexLayout === 'together'}
+                                aria-label="Anexos juntos en hojas consecutivas"
+                                onClick={() => setOptions(prev => ({ ...prev, annexLayout: 'together' }))}
+                                className={cn(
+                                    'flex items-center gap-2.5 p-3 rounded-2xl border-2 transition-all text-left',
+                                    options.annexLayout === 'together'
+                                        ? 'bg-primary/5 border-primary shadow-sm'
+                                        : 'bg-sidebar/40 border-transparent hover:border-sidebar-border/80'
+                                )}
+                            >
+                                <div className={cn(
+                                    'w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                                    options.annexLayout === 'together'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-sidebar text-muted-foreground'
+                                )}>
+                                    <Layers className="w-3.5 h-3.5" aria-hidden="true" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className={cn(
+                                        'font-black uppercase tracking-widest text-[8px]',
+                                        options.annexLayout === 'together' ? 'text-foreground' : 'text-muted-foreground'
+                                    )}>
+                                        Juntos
+                                    </div>
+                                    <div className="text-[9px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+                                        Consecutivos en una o varias hojas
+                                    </div>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={options.annexLayout === 'separate'}
+                                aria-label="Un anexo por hoja"
+                                onClick={() => setOptions(prev => ({ ...prev, annexLayout: 'separate' }))}
+                                className={cn(
+                                    'flex items-center gap-2.5 p-3 rounded-2xl border-2 transition-all text-left',
+                                    options.annexLayout === 'separate'
+                                        ? 'bg-blue-500/5 border-blue-500 shadow-sm'
+                                        : 'bg-sidebar/40 border-transparent hover:border-sidebar-border/80'
+                                )}
+                            >
+                                <div className={cn(
+                                    'w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                                    options.annexLayout === 'separate'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-sidebar text-muted-foreground'
+                                )}>
+                                    <FileOutput className="w-3.5 h-3.5" aria-hidden="true" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className={cn(
+                                        'font-black uppercase tracking-widest text-[8px]',
+                                        options.annexLayout === 'separate' ? 'text-foreground' : 'text-muted-foreground'
+                                    )}>
+                                        Separados
+                                    </div>
+                                    <div className="text-[9px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+                                        Un anexo por hoja
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

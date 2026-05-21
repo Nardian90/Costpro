@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { BuildingIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -145,8 +146,10 @@ export default function TerminalShell() {
     }
   }, [loading, user, router, queryClient, status]);
 
+  // Role-based view guard: restrict 'costo' users to cost-related views + resources only
+  const COSTO_ALLOWED_VIEWS: ViewType[] = ['cost-sheets', 'legal', 'help', 'wiki', 'academy'];
   useEffect(() => {
-    if (user?.role === 'costo' && (currentView as any) === 'dashboard') {
+    if (user?.role === 'costo' && !COSTO_ALLOWED_VIEWS.includes(currentView)) {
       setCurrentView('cost-sheets');
     }
   }, [user, currentView, setCurrentView]);
@@ -361,14 +364,10 @@ export default function TerminalShell() {
               )}
             >
               <Suspense fallback={
-                <div className="flex items-center justify-center py-24 min-h-[50vh]">
-                  <CostProLoader
-                    text={String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    subtext="Cargando..."
-                    showText
-                    showSubtext
-                  />
-                </div>
+                <ViewLoadingSplash
+                  label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  showTips={currentView === 'cost-sheets' || currentView === 'ipv'}
+                />
               }>
                 <ChunkErrorBoundary chunkName={String(currentView)}>
                   <MobileSafeContainer>

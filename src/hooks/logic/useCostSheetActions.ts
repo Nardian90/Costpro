@@ -67,6 +67,7 @@ export const useCostSheetActions = ({
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isQuickModeGenerating, setIsQuickModeGenerating] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [quickModeProducts, setQuickModeProducts] = useState<any[] | null>(null);
   const [quickModeMapping, setQuickModeMapping] = useState<any>({});
 
@@ -136,13 +137,18 @@ export const useCostSheetActions = ({
 
   const handleExportPDF = useCallback(
     async (options: ExportOptions) => {
+      setIsPdfGenerating(true);
       const toastId = toast.loading('Generando PDF...');
 
       try {
         if (!calculationResult) {
           toast.error('No hay datos de cálculo disponibles para exportar.', { id: toastId });
+          setIsPdfGenerating(false);
           return;
         }
+
+        // Small delay so the overlay renders before heavy work blocks the main thread
+        await new Promise(r => setTimeout(r, 100));
 
         const h = (calculationResult.metadata?.header || dataRef.current?.header || {}) as Record<string, unknown>;
         const evalCode = h.code || 'export';
@@ -169,6 +175,8 @@ export const useCostSheetActions = ({
       } catch (error: any) {
         console.error('PDF export error:', error);
         toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
+      } finally {
+        setIsPdfGenerating(false);
       }
     },
     [calculationResult, user]
@@ -286,6 +294,7 @@ export const useCostSheetActions = ({
     setQuickModeProducts,
     isQuickModeGenerating,
     setIsQuickModeGenerating,
+    isPdfGenerating,
     isActionsPanelOpen,
     setIsActionsPanelOpen,
     isHelpPanelOpen,

@@ -76,6 +76,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Home,
     ariaLabel: 'Navegación principal',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       { id: 'occ', label: 'Centro de Control', type: 'item', icon: Home, ariaLabel: 'Ir al escritorio principal' },
     ]
@@ -185,6 +186,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Layers,
     ariaLabel: 'Módulo IPV',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       {
         id: 'ipv_reporting',
@@ -256,6 +258,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: LayoutGrid,
     ariaLabel: 'Otros Recursos',
+    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       { id: 'pick3-intelligence', label: 'Pick 3 Intelligence', type: 'item', icon: BarChart3, ariaLabel: 'Inteligencia de picking' },
       { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera' }

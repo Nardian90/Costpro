@@ -1,5 +1,5 @@
-import autoTable from 'jspdf-autotable';
 'use client';
+import autoTable from 'jspdf-autotable';
 import React, { useState, useMemo, useEffect } from 'react';
 import { db, type BankTransaction } from "@/lib/dexie";
 import { resolveIdentity } from "@/lib/ipv/identity/registry";

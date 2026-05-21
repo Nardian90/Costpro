@@ -69,7 +69,8 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string, 
       rows.forEach(row => {
         const calc = calculatedValues[row.id] || {};
         const label = (row.label || '').replace(/,/g, '');
-        const vh = calc.valorHistorico || 0;
+        // FIX: Use calculatedVH (from vhFormula) before valorHistorico (initial value)
+        const vh = calc.calculatedVH ?? calc.valorHistorico ?? 0;
         const method = row.calculationMethod || (row.formula ? 'Fórmula' : 'Libre');
         const base = row.baseDeCalculoRef || '-';
         const coef = calc.coeficiente || 0;
