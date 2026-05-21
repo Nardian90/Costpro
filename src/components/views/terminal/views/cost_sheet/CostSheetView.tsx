@@ -38,6 +38,8 @@ import { SteelStructureCalculator } from './SteelStructureCalculator';
 
 import { CostSheetProblemsPanel } from './CostSheetProblemsPanel';
 import { CostSheetExportModal } from './CostSheetExportModal';
+import { PdfExportOverlay } from '@/components/ui/PdfExportOverlay';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -327,6 +329,7 @@ const CostSheetView = () => {
     setIsExportModalOpen,
     isUpgradeModalOpen,
     setIsUpgradeModalOpen,
+    isPdfGenerating,
     onOpenAnnexes,
     onOpenSections,
     allActions,
@@ -438,24 +441,12 @@ const CostSheetView = () => {
   }, viewMode === 'expert' && isEditing);
 
   // ── Loading Skeleton ────────────────────────────────────────────────
+  // Show loading while Zustand persist rehydrates from localStorage.
+  // Without this check, the view renders with the reinicioTemplate default
+  // during hydration, showing a blank/wrong state before the real data loads.
 
-  if (!data || !data.header || !data.annexes || !data.sections) {
-    return (
-      <div className="w-full max-w-none px-2 pb-32 pt-0">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
-          <div className="flex items-center gap-4">
-            <Skeleton className="w-12 h-12 rounded-2xl" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-24" />
-        </div>
-        <Skeleton className="h-12 w-full mb-8" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+  if (!hasHydrated || !data || !data.header || !data.annexes || !data.sections) {
+    return <ViewLoadingSplash label="Tablero Principal" showTips />;
   }
 
   return (
@@ -671,6 +662,7 @@ const CostSheetView = () => {
         onExport={handleExportPDF}
         annexes={(data?.annexes || []).map((a: CostSheetAnnex) => ({ id: a.id, title: a.title }))}
       />
+      <PdfExportOverlay isVisible={isPdfGenerating} />
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
       <BaseModal
         open={confirmation.isOpen}

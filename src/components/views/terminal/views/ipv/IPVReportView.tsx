@@ -1,5 +1,5 @@
-import autoTable from 'jspdf-autotable';
 'use client';
+import autoTable from 'jspdf-autotable';
 import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';

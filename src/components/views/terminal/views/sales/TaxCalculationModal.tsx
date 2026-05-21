@@ -1,5 +1,5 @@
-import autoTable from 'jspdf-autotable';
 'use client';
+import autoTable from 'jspdf-autotable';
 
 import React, { useState } from 'react';
 import {

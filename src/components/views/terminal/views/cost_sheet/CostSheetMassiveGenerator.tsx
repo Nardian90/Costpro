@@ -40,7 +40,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     includeFC: true, includeAudit: false,
     includeAnnexes: (currentSheet?.annexes as { id: string }[] | undefined)?.map((a) => a.id) || [],
     consolidated: true, skipZeros: true, includeFinancialSummary: true,
-    includeUtilityNote: true, showDateTime: true, alwaysZip: false, pdfFormat: 'standard',
+    includeUtilityNote: true, showDateTime: true, alwaysZip: false, annexLayout: 'together', pdfFormat: 'standard',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -94,7 +94,8 @@ const handler = async (req: NextRequest) => {
             const rowData = [row.id, row.label, row.um || row.unit || '-'];
             activeScenarios.forEach((s: any) => {
               const calc = calcs[s.id]?.calculatedValues?.[row.id] || { total: 0, valorHistorico: 0 };
-              rowData.push(safeLocale(calc.valorHistorico), safeLocale(calc.total));
+              // FIX: Use calculatedVH (from vhFormula) before valorHistorico (initial value)
+              rowData.push(safeLocale(calc.calculatedVH ?? calc.valorHistorico ?? 0), safeLocale(calc.total));
               if (s.id !== baseId) {
                 const baseCalc = calcs[baseId]?.calculatedValues?.[row.id] || { total: 0 };
                 const diff = calc.total - baseCalc.total;
@@ -151,7 +152,7 @@ const handler = async (req: NextRequest) => {
             `${indent}${row.id || ''}`,
             `${indent}${(row.label || '').replace(/,/g, '')}`,
             row.um || row.unit || '-',
-            safeLocale(calc.valorHistorico || row.valorHistorico || 0),
+            safeLocale(calc.calculatedVH ?? calc.valorHistorico ?? row.valorHistorico ?? 0),
             safeLocale(calc.total || row.total || 0),
           ]);
           if (row.children) {

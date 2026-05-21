@@ -189,7 +189,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
                 <TTip term="Valor Histórico" description={`Costo base de entrada para este concepto en el escenario "${scenario?.label}".`}>
                   {hasChildren ? (
                     <span className={cn(
-                      "text-[9px] text-muted-foreground/60 tabular-nums",
+                      "text-xs tabular-nums",
                       isResult ? "font-bold" : "font-medium text-muted-foreground"
                     )}>
                       {formatAccounting(calculated.calculatedVH ?? calculated.valorHistorico ?? 0)}
@@ -197,7 +197,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
                   ) : (
                     <Input
                       className={cn(
-                        "h-7 text-right text-[9px] text-muted-foreground/60 p-1 bg-transparent border-transparent hover:border-border focus:ring-1 focus:ring-primary tabular-nums",
+                        "h-7 text-right text-xs p-1 bg-transparent border-transparent hover:border-border focus:ring-1 focus:ring-primary tabular-nums",
                         editingCell?.scenarioId === sid && editingCell.field === 'valorHistorico' && "border-primary bg-background"
                       )}
                       value={
@@ -221,7 +221,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
               {/* Scenario Total */}
               <TableCell
                 className={cn(
-                  "px-1.5 py-0.5 text-right font-bold tabular-nums text-primary text-sm font-black border-r border-border/10 min-w-[100px]",
+                  "px-1.5 py-0.5 text-right font-bold tabular-nums text-primary text-xs border-r border-border/10 min-w-[100px]",
                   isPrimary && "bg-amber-500/5"
                 )}
               >
