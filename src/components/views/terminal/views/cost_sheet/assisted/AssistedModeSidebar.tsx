@@ -12,20 +12,22 @@ import {
   ShoppingCart,
   BarChart3,
   CheckCircle2,
-  AlertCircle,
   FileText,
   Users,
   Box,
   TrendingUp,
   ShieldCheck,
   History,
-  Download,
-  LayoutDashboard
+  Download
 } from 'lucide-react';
 
-export const AssistedModeSidebar: React.FC = () => {
+interface AssistedModeSidebarProps {
+  calculatedValues?: any;
+}
+
+export const AssistedModeSidebar: React.FC<AssistedModeSidebarProps> = ({ calculatedValues }) => {
   const { mode, setMode, setActiveNode } = useAssistedModeStore();
-  const { data, calculatedValues } = useCostSheetStore();
+  const { data } = useCostSheetStore();
 
   const modes: { id: AssistedViewMode; label: string; icon: any }[] = [
     { id: 'prod', label: 'Producción', icon: Factory },
@@ -43,15 +45,12 @@ export const AssistedModeSidebar: React.FC = () => {
     { id: 'audit', label: 'Auditoría', icon: History, node: 'audit' },
   ];
 
-  // Placeholder for progress calculation based on actual data
   const progress = data ? 65 : 0;
-
   const totalCost = calculatedValues?.summary?.grandTotal || 0;
   const productName = data?.header?.product_name || 'Sin nombre';
 
   return (
     <div className="w-72 border-r border-border bg-card flex flex-col shrink-0 overflow-hidden">
-      {/* Header: Mode Switcher */}
       <div className="p-4 border-b border-border bg-muted/30">
         <h2 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-3 ml-1">Ecosistema Operativo</h2>
         <div className="flex gap-1 p-1 bg-background/50 rounded-xl border border-border">
@@ -77,7 +76,6 @@ export const AssistedModeSidebar: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar py-4 space-y-6">
-        {/* Navigation Sections */}
         <section className="px-4 space-y-1">
           <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3 px-2">Navegación Modular</h3>
           {sections.map((s) => (
@@ -94,7 +92,6 @@ export const AssistedModeSidebar: React.FC = () => {
           ))}
         </section>
 
-        {/* Real-time KPIs */}
         <section className="px-6 space-y-4">
           <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3">Indicadores Clave</h3>
           <div className="space-y-2">
@@ -117,7 +114,6 @@ export const AssistedModeSidebar: React.FC = () => {
           </div>
         </section>
 
-        {/* Completion Tracker */}
         <section className="px-6">
           <div className="flex justify-between items-end mb-2 px-1">
             <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Completitud</h3>
@@ -129,7 +125,6 @@ export const AssistedModeSidebar: React.FC = () => {
         </section>
       </div>
 
-      {/* Footer Actions */}
       <div className="p-4 border-t border-border bg-muted/20 space-y-2">
         <Button variant="outline" className="w-full font-black uppercase tracking-widest text-[9px] h-9 gap-2 rounded-xl">
           <Download className="w-3.5 h-3.5" />

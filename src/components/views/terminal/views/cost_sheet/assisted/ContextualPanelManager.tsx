@@ -11,17 +11,20 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import CostSheetAnnexEditor from '../CostSheetAnnexEditor';
-import { CostSheetInteractiveTable } from '../CostSheetInteractiveTable';
-import CostSheetSignatureEditor from '../CostSheetSignatureEditor';
+import CostSheetInteractiveTable from '../CostSheetInteractiveTable';
 
-export const ContextualPanelManager: React.FC = () => {
+interface ContextualPanelManagerProps {
+  calculatedValues: any;
+  calculatedHeader: any;
+}
+
+export const ContextualPanelManager: React.FC<ContextualPanelManagerProps> = ({ calculatedValues, calculatedHeader }) => {
   const { activeNodeId, isPanelOpen, togglePanel, panelSide } = useAssistedModeStore();
-  const { data, calculatedValues } = useCostSheetStore();
+  const { data } = useCostSheetStore();
 
   const renderContent = () => {
     if (!activeNodeId) return null;
 
-    // ANNEXES MAPPING
     if (activeNodeId.match(/(insumos|recursos|origen)/)) {
       return <CostSheetAnnexEditor activeAnnexId="I" />;
     }
@@ -35,7 +38,6 @@ export const ContextualPanelManager: React.FC = () => {
       return <CostSheetAnnexEditor activeAnnexId="IV" />;
     }
 
-    // INTERACTIVE TABLE MAPPING
     if (activeNodeId.match(/(taller|ejecucion|venta|gi|comercial)/)) {
        return (
          <div className="space-y-6">
