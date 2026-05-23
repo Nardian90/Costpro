@@ -39,6 +39,7 @@ export interface RowDiagnostics {
   criticalErrors: { message: string; type: string }[];
   warningErrors: { message: string; type: string }[];
   hasEngineWarnings: boolean;
+  audits: any[];
 }
 
 export interface UseCellEditorReturn {
@@ -145,7 +146,7 @@ export function getRowDiagnostics(
       safe.total === 0 &&
       ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
-  return { isRowPercent, isResult, safeCalculated: safe, criticalErrors, warningErrors, hasEngineWarnings };
+  return { isRowPercent, isResult, safeCalculated: safe, criticalErrors, warningErrors, hasEngineWarnings, audits: safe.audits || [] };
 }
 
 /**

@@ -55,7 +55,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
   const { setField, saveVH, saveTotal, applySuggested } = useCellEditor();
 
   const hasChildren = row.children && row.children.length > 0;
-  const { isRowPercent, isResult, safeCalculated, criticalErrors, warningErrors, hasEngineWarnings } = getRowDiagnostics(row, calculated);
+  const { isRowPercent, isResult, safeCalculated, criticalErrors, warningErrors, hasEngineWarnings, audits } = getRowDiagnostics(row, calculated);
 
   return (
     <>
