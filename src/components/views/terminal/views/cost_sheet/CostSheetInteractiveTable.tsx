@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Info, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -65,8 +65,38 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
         isResult && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
-            {numbering}
+        <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10 relative">
+            <div className="flex flex-col items-center justify-center gap-0.5">
+                {numbering}
+                {audits.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="h-4 w-4 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/10 transition-colors">
+                        <Info className="w-2.5 h-2.5 text-muted-foreground" />
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-muted-foreground/20 text-[7px] font-black">
+                          {audits.length}
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3 bg-popover/95 backdrop-blur-sm border-border shadow-xl rounded-xl z-[60]">
+                      <div className="space-y-2">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                          <Info className="w-3 h-3" />
+                          Auditoría de Fila {numbering}
+                        </h4>
+                        <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+                          {audits.map((a: any, i: number) => (
+                            <div key={i} className="p-2 rounded-lg bg-muted\/30 border border-border\/10 text-[11px] leading-relaxed">
+                              <p className="font-medium">{a.message}</p>
+                              {a.timestamp && <p className="text-[9px] text-muted-foreground mt-1">{new Date(a.timestamp).toLocaleTimeString()}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+            </div>
         </TableCell>
 
         {/* Concepto */}
@@ -135,7 +165,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                     onClick={() => applySuggested(row.id, path)}
                     aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
-                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
+                    <Info className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"
@@ -290,7 +320,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                     onClick={() => applySuggested(row.id, path)}
                     aria-label={`Aplicar fórmula sugerida a ${row.label}`}
                 >
-                    <Wand2 className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
+                    <Info className="h-4 w-4 sm:h-3 sm:w-3" aria-hidden="true" />
                 </Button>
                 <Button
                     variant="ghost"

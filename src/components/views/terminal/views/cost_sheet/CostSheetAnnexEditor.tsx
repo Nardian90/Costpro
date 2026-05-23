@@ -530,7 +530,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
        {/* Global suggestions for classification column */}
        <datalist id={`classification-suggestions-${activeAnnexId}`}>
-          {classificationSuggestions.map(s => (
+          {classificationSuggestions.filter(s => (s.id.match(/\./g) || []).length >= 2).map(s => (
               <option key={s.id} value={`${s.id} - ${s.label}`} aria-label={s.label} />
           ))}
        </datalist>
