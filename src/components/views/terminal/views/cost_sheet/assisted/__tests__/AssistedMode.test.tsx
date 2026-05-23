@@ -18,7 +18,7 @@ vi.mock('../ContextualPanelManager', () => ({
 
 describe('AssistedModeShell', () => {
   it('renders correctly with all sub-components', () => {
-    render(<AssistedModeShell />);
+    render(<AssistedModeShell calculatedValues={{}} calculatedHeader={{}} />);
     expect(screen.getByTestId('interactive-map')).toBeDefined();
     expect(screen.getByTestId('assisted-sidebar')).toBeDefined();
     expect(screen.getByTestId('contextual-panel')).toBeDefined();

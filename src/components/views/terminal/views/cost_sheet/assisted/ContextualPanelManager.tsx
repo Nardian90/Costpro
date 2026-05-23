@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAssistedModeStore } from '@/store/assisted-mode-store';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import {
@@ -21,6 +21,8 @@ interface ContextualPanelManagerProps {
 export const ContextualPanelManager: React.FC<ContextualPanelManagerProps> = ({ calculatedValues, calculatedHeader }) => {
   const { activeNodeId, isPanelOpen, togglePanel, panelSide } = useAssistedModeStore();
   const { data } = useCostSheetStore();
+
+  const [activeSubSectionId, setActiveSubSectionId] = useState<string>('all');
 
   const renderContent = () => {
     if (!activeNodeId) return null;
@@ -43,8 +45,10 @@ export const ContextualPanelManager: React.FC<ContextualPanelManagerProps> = ({ 
          <div className="space-y-6">
            <CostSheetInteractiveTable
              sections={data?.sections || []}
-             calculatedValues={calculatedValues}
+             calculatedValues={calculatedValues || {}}
              annexes={data?.annexes || []}
+             activeSubSectionId={activeSubSectionId}
+             setActiveSubSectionId={setActiveSubSectionId}
            />
          </div>
        );
@@ -90,7 +94,7 @@ export const ContextualPanelManager: React.FC<ContextualPanelManagerProps> = ({ 
 
   return (
     <Sheet open={isPanelOpen} onOpenChange={togglePanel}>
-      <SheetContent side={panelSide} className="sm:max-w-[700px] overflow-y-auto border-l-primary/20 shadow-2xl">
+      <SheetContent side={panelSide} className="sm:max-w-[800px] overflow-y-auto border-l-primary/20 shadow-2xl">
         <SheetHeader className="mb-8 relative">
           <div className="absolute -left-12 top-0 w-1 h-12 bg-primary/40 rounded-full" />
           <SheetTitle className="text-2xl font-black uppercase tracking-tighter italic text-foreground">
