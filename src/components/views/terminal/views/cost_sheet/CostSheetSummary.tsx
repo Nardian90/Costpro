@@ -69,19 +69,28 @@ export const CostSheetSummary: React.FC = () => {
   const isSolvingRef = useRef(false);
   const isConfirmingRef = useRef(false);
 
-  // Memos for KPI cards
+  // Memos for KPI cards — lookup by classification (legacy numbered ID) so they
+  // work regardless of whether the row id is a UUID or a legacy string.
   const utilityRow = useMemo(() => {
     for (const section of data.sections) {
-      const row = section.rows.find(r => ['13', '13.1'].includes(r.id));
+      const row = section.rows.find(r => ['13', '13.1'].includes(r.classification || r.id));
       if (row) return row;
     }
     return null;
   }, [data.sections]);
 
   const totalCost = useMemo(() => {
-    const costRow = data.sections.flatMap(s => s.rows).find(r => ['12', '12.1'].includes(r.id));
+    const costRow = data.sections.flatMap(s => s.rows).find(r => ['12', '12.1'].includes(r.classification || r.id));
     return costRow ? (calculatedValues[costRow.id]?.total || 0) : 0;
   }, [data.sections, calculatedValues]);
+
+  const salePriceRow = useMemo(() => {
+    for (const section of data.sections) {
+      const row = section.rows.find(r => ['14', '14.1'].includes(r.classification || r.id));
+      if (row) return row;
+    }
+    return null;
+  }, [data.sections]);
 
   // All rows flattened for search/select
   const allRows = useMemo(() => {
@@ -338,7 +347,7 @@ export const CostSheetSummary: React.FC = () => {
               Precio Final (100%)
             </CardDescription>
             <CardTitle className="text-2xl font-black font-mono text-blue-700 dark:text-blue-400">
-              {formatCurrency(calculatedValues['14.1']?.total || calculatedValues['14']?.total || 0)}
+              {formatCurrency(calculatedValues[salePriceRow?.id ?? '']?.total || 0)}
             </CardTitle>
           </CardHeader>
         </Card>

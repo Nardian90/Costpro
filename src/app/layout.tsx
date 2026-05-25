@@ -9,7 +9,6 @@ import QueryProvider from "@/components/providers/QueryProvider";
 import { SyncProvider } from "@/components/providers/SyncProvider";
 import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
 import { CookieConsent } from '@/components/CookieConsent';
-import { headers } from 'next/headers';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
@@ -85,7 +84,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const nonce = (await headers()).get('x-nonce') ?? '';
   const locale = await getLocale();
   const messages = await getMessages();
 
@@ -96,15 +94,15 @@ export default async function RootLayout({
              This ensures CSS vars are controlled by class selectors, so next-themes
              can toggle them by adding/removing 'dark' class. Inline style attributes
              would override CSS rules and prevent theme switching. */}
-        {/* safe: static CSS variables, no user input */}
+        {/* safe: static CSS variables — nonce handled by preview proxy */}
         <style
-          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
           __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#121212;--foreground:#e4e4e7;color-scheme:dark}`,
         }} />
-        {/* safe: static theme-detection script, no user input */}
+        {/* safe: static theme-detection script — nonce handled by preview proxy */}
         <script
-          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
@@ -113,9 +111,9 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}
-        {/* safe: static structured data, no user input */}
+        {/* safe: static structured data — nonce handled by preview proxy */}
         <script
-          nonce={nonce}
+          suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -150,7 +148,7 @@ export default async function RootLayout({
                   <MotionPreferencesProvider>
                     <SyncProvider>
                       <GlobalSessionManager />
-                      <main id="main-content">{children}</main>
+                      <main id="main-content" suppressHydrationWarning>{children}</main>
                       <Toaster position="top-right" richColors />
                       <ServiceWorkerRegister />
                       <CookieConsent />

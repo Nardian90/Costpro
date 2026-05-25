@@ -156,8 +156,8 @@ export default function TerminalShell() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
-        <CostProLoader text="COSTPRO" subtext="INICIALIZANDO TERMINAL..." showText showSubtext />
+      <div className="h-screen w-full bg-background">
+        <ViewLoadingSplash label="COSTPRO" showTips={false} />
       </div>
     );
   }
@@ -351,32 +351,32 @@ export default function TerminalShell() {
           currentView === 'help' ? "p-0" : "px-3 sm:px-4 pt-0 pb-24 lg:pb-28"
         )}>
           <ParticleBackground />
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={currentView}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as any }}
-              className={cn(
-                "mx-auto w-full",
-                (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
-              )}
-            >
-              <Suspense fallback={
-                <ViewLoadingSplash
-                  label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  showTips={currentView === 'cost-sheets' || currentView === 'ipv'}
-                />
-              }>
+          <Suspense fallback={
+            <ViewLoadingSplash
+              label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              showTips={currentView === 'cost-sheets' || currentView === 'ipv'}
+            />
+          }>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={currentView}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as any }}
+                className={cn(
+                  "mx-auto w-full",
+                  (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
+                )}
+              >
                 <ChunkErrorBoundary chunkName={String(currentView)}>
                   <MobileSafeContainer>
                     {renderActiveView()}
                   </MobileSafeContainer>
                 </ChunkErrorBoundary>
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
+          </Suspense>
         </div>
       </main>
 

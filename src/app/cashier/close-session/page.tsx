@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store";
 import { useCartStore } from "@/store/cart";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CostProLoader } from "@/components/ui/CostProLoader";
 
 interface Difference {
   productId: string;
@@ -142,7 +143,13 @@ export default function CloseSessionPage() {
     }
   };
 
-  if (isLoading) return <div>Cargando productos...</div>;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-[50vh]">
+        <CostProLoader text="CAJA" subtext="Cargando productos..." showText showSubtext />
+      </div>
+    );
+  }
 
   const allProductsCounted = products.every(
     (p) => countedQuantities[p.id] !== undefined

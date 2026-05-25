@@ -6,7 +6,9 @@ import { ExportOptions, PDFFormat, AnnexLayout } from '@/components/views/termin
 import {
   FormatContext,
   PG, LBL,
-  sanitizeText, fmtCell, safeLocale, shouldSkip, addAnnexTotalRow,
+  sanitizeText, fmtCell, safeLocale, shouldSkip, addAnnexTotalRow, calcSectionTotal,
+  FORMAT_ANNEX_COLORS,
+  isUtilidadSection, calcUtilidadPercent, getCostBase,
 } from './pdf-shared';
 import { renderRes148 } from './pdf-format-res148';
 import { renderStandard, renderPro } from './pdf-format-standard';
@@ -174,6 +176,9 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
     const calcAnnexMap = new Map<string, any>();
     calcAnnexes.forEach((ca: any) => calcAnnexMap.set(ca.id, ca));
 
+    // Determine annex colors based on format — fallback to green (PG) for unknown formats
+    const ac = FORMAT_ANNEX_COLORS[pdfFormat] || { headerText: PG, headFill: PG, headText: [255,255,255], totalFill: LBL };
+
     let isFirstAnnex = true;
     let annexY = 20;
 
@@ -225,7 +230,7 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       // Annex header
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...PG);
+      doc.setTextColor(...ac.headerText);
       doc.text(sanitizeAnnexTitle(annex.id, sanitizeText(annex.title) || ''), 14, annexY, { maxWidth: pageWidth - 28 });
       annexY += 6;
 
@@ -247,14 +252,14 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
         head: [colHeaders],
         body: tableData,
         theme: pdfFormat === 'pro' ? 'grid' : 'striped',
-        headStyles: { fillColor: PG, textColor: 255, fontSize: 7 },
+        headStyles: { fillColor: ac.headFill, textColor: ac.headText, fontSize: 7 },
         styles: { fontSize: 7, cellPadding: 1.5 },
         margin: { left: 14, right: 14 },
         didParseCell(data) {
-          // Style the TOTAL row as bold with light blue background
+          // Style the TOTAL row as bold with format-matched background
           if (data.row.index === tableData.length - 1 && data.section === 'body') {
             data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.fillColor = LBL;
+            data.cell.styles.fillColor = ac.totalFill;
           }
         },
       });
@@ -264,17 +269,20 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
   // ════════════════════════════════════════════════════════════════
   // UTILITY NOTE (not for simplificado — those handle their own)
   // ════════════════════════════════════════════════════════════════
-  if (includeUtilityNote && calculatedHeader && pdfFormat !== 'simplificado') {
-    const up = calculatedHeader.utilityPercent || calculatedHeader.porcentajeUtilidad || 0;
-    const ct = calculatedHeader.totalCost || calculatedHeader.costoTotal || 0;
-    const pv = calculatedHeader.salePrice || calculatedHeader.precioVenta || 0;
+  if (includeUtilityNote && pdfFormat !== 'simplificado') {
+    // FIX: Costo total = Section 12 only (TOTAL COSTOS Y GASTOS)
+    const ct = getCostBase(sections, calculatedValues, calculatedHeader);
+    const pv = parseFloat(String(calculatedHeader?.salePrice || calculatedHeader?.precioVenta || header.sale_price || 0))
+      || parseFloat(String(calculatedValues?.['14.1']?.total || calculatedValues?.['14']?.total || 0));
+    // FIX: % Utilidad = 13.1 / 14.1 * 100 (rentabilidad sobre precio venta)
+    const up = calcUtilidadPercent(calculatedValues, calculatedHeader);
     const lastY = (doc as any).lastAutoTable?.finalY;
-    if (lastY != null && lastY > 0) {
+    if (lastY != null && lastY > 0 && (ct > 0 || pv > 0)) {
       const noteY = Math.min(lastY + 8, pageHeight - 20);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(60);
-      doc.text(`Nota de Utilidad: ${safeLocale(up)}%  |  Costo: ${safeLocale(ct)}  |  Precio Venta: ${safeLocale(pv)}`, 14, noteY);
+      doc.text(`Nota de Utilidad: ${up.toFixed(1)}%  |  Costo: ${safeLocale(ct)}  |  Precio Venta: ${safeLocale(pv)}`, 14, noteY);
     }
   }
 

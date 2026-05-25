@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CostProLoader } from './CostProLoader';
+import { ViewLoadingSplash } from './ViewLoadingSplash';
 
 interface LoadingOverlayProps {
   isVisible: boolean;
@@ -20,24 +20,21 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
         >
-          <div className="relative flex flex-col items-center gap-8">
-            <CostProLoader
-                size={140}
-                text={progress !== undefined ? `${Math.round(progress)}%` : "COSTPRO"}
-                subtext={message}
-                showSubtext={!!message}
-            />
+          <ViewLoadingSplash
+            overlay
+            label={progress !== undefined ? `${Math.round(progress)}%` : (message || 'PROCESANDO')}
+            showTips={false}
+          />
 
-            {progress !== undefined && (
-                <div className="w-48 h-1 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        className="h-full bg-primary"
-                    />
-                </div>
-            )}
-          </div>
+          {progress !== undefined && (
+              <div className="absolute bottom-[30%] w-48 h-1 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      className="h-full bg-primary"
+                  />
+              </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

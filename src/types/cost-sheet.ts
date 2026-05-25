@@ -4,6 +4,16 @@ export interface CostSheetHeader {
   date: string;
   quantity: number | string;
   currency: string;
+  /** Exchange rate for currency conversion (1 targetCurrency = N CUP). e.g. 1 USD = 540 CUP → exchangeRate = 540 */
+  exchangeRate?: number;
+  /** Target currency code (ISO 4217). e.g. "USD", "EUR" */
+  targetCurrency?: string;
+  /** Date of the exchange rate (for IAS 21.22 disclosure). e.g. "2025-05-25" */
+  rateDate?: string;
+  /** Source of the exchange rate. e.g. "BCC Oficial", "Manual", "BCC Promedio" */
+  rateSource?: string;
+  /** Type of exchange rate. e.g. "Spot", "Promedio", "Cierre" */
+  rateType?: 'Spot' | 'Promedio' | 'Cierre' | string;
   category: string;
   type: string;
   resolution?: string;
@@ -13,6 +23,7 @@ export interface CostSheetHeader {
   revisedBy?: string;
   approvedBy?: string;
   signature?: string;
+  logo?: string;
   product_code?: string;
   production_level?: number | string;
   capacity_utilization?: number | string;

@@ -6,7 +6,7 @@ import { Flashcard } from './Flashcard';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Brain, Library, BarChart3, RefreshCw, Zap } from 'lucide-react';
-import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { toast } from 'sonner';
 
 const MasteryDashboard = dynamic(() => import('./MasteryDashboard').then(m => ({ default: m.MasteryDashboard })), {
@@ -57,7 +57,7 @@ export default function AcademyView() {
   if (loading && allCards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <CostProLoader size={200} text="ACADEMIA" subtext="PREPARANDO MATERIAL..." />
+        <ViewLoadingSplash label="ACADEMIA" showTips={false} />
       </div>
     );
   }

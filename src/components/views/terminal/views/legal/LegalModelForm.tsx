@@ -279,7 +279,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
             className="w-full sm:w-auto px-8 h-14 bg-primary text-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             ) : (
               <Download className="w-4 h-4" />
             )}

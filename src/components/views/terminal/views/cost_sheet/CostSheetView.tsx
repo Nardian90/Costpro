@@ -49,7 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { LazyRender } from '@/components/ui/LazyRender';
 import dynamic from 'next/dynamic';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useExpertModeKeyboard } from '@/hooks/ui/useExpertModeKeyboard';
 import { useScenarioStore } from '@/store/scenario-store';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow } from '@/types/cost-sheet';
@@ -72,12 +72,14 @@ const ArenaFC = dynamic(() => import('./ArenaFC'), {
 const SECTION_BG = ['bg-primary/5', 'bg-violet-500/5', 'bg-amber-500/5', 'bg-emerald-500/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
 const SECTION_BORDER = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-amber-500/40', 'border-l-emerald-500/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
 
-function SectionDivider({ label, sectionColorIdx, rowCount, isCollapsed, onToggle }: {
+function SectionDivider({ label, sectionColorIdx, rowCount, isCollapsed, onToggle, annexTotal, annexPercent }: {
   label: string;
   sectionColorIdx: number;
   rowCount?: number;
   isCollapsed: boolean;
   onToggle: () => void;
+  annexTotal?: number;
+  annexPercent?: number;
 }) {
   return (
     <div
@@ -94,6 +96,14 @@ function SectionDivider({ label, sectionColorIdx, rowCount, isCollapsed, onToggl
       <div className={cn('w-0.5 h-4 rounded-full border-l-2', SECTION_BORDER[sectionColorIdx % SECTION_BORDER.length])} />
       <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">{label}</span>
       {rowCount !== undefined && <span className="text-[9px] text-muted-foreground/60 font-mono ml-2">({rowCount} filas)</span>}
+      {annexTotal !== undefined && annexTotal > 0 && (
+        <span className="ml-auto flex items-center gap-2">
+          <span className="text-[9px] text-muted-foreground/50 font-mono">Total: <span className="text-primary font-black">{formatCurrency(annexTotal)}</span></span>
+          {annexPercent !== undefined && annexPercent > 0 && (
+            <span className="text-[8px] font-black text-primary/60 bg-primary/10 px-1.5 py-0 rounded font-mono">{annexPercent.toFixed(1)}%</span>
+          )}
+        </span>
+      )}
     </div>
   );
 };
@@ -144,6 +154,35 @@ function AllContentConsolidated({
     });
     return initial;
   });
+
+  // Calculate annex totals and percentages
+  const annexTotals = useMemo(() => {
+    if (!calculatedAnnexes || calculatedAnnexes.length === 0) return {};
+
+    const totals: Record<string, number> = {};
+    let grandTotal = 0;
+
+    // Calculate individual annex totals
+    calculatedAnnexes.forEach((annex: CostSheetAnnex) => {
+      const total = annex.data?.reduce((sum: number, row: Record<string, string | number | boolean | undefined>) => {
+        const val = [row.total, row.amount, row.depreciation_cost, row.price_total, row.importe].find(v => v !== undefined && v !== null);
+        return sum + (parseFloat(String(val ?? 0)) || 0);
+      }, 0) || 0;
+      totals[annex.id] = total;
+      grandTotal += total;
+    });
+
+    // Calculate percentages
+    const percentages: Record<string, number> = {};
+    Object.entries(totals).forEach(([id, total]) => {
+      percentages[id] = grandTotal > 0 ? (total / grandTotal) * 100 : 0;
+    });
+
+    // Total rows across all annexes
+    const totalRows = annexes.reduce((acc: number, a: CostSheetAnnex) => acc + (a.data?.length || 0), 0);
+
+    return { totals, percentages, grandTotal, totalRows };
+  }, [calculatedAnnexes, annexes]);
 
   const toggle = (key: string) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -216,9 +255,14 @@ function AllContentConsolidated({
             rowCount={annexes.length}
             isCollapsed={collapsed['consolidated-annexes']}
             onToggle={() => toggle('consolidated-annexes')}
+            annexTotal={annexTotals.grandTotal}
           />
           {!collapsed['consolidated-annexes'] && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center justify-between px-3 py-1 bg-muted/20 border-b border-border/10">
+                <span className="text-[9px] text-muted-foreground/50 font-mono">{annexTotals.totalRows} filas en total</span>
+                <span className="text-[9px] text-muted-foreground/50 font-mono">Total General: <span className="text-primary font-black">{formatCurrency(annexTotals.grandTotal ?? 0)}</span></span>
+              </div>
               {annexes.map((annex, idx) => (
                 <div key={annex.id}>
                   <SectionDivider
@@ -227,6 +271,8 @@ function AllContentConsolidated({
                     rowCount={annex.data?.length || 0}
                     isCollapsed={collapsed[`consolidated-annex-${annex.id}`]}
                     onToggle={() => toggle(`consolidated-annex-${annex.id}`)}
+                    annexTotal={annexTotals.totals?.[annex.id]}
+                    annexPercent={annexTotals.percentages?.[annex.id]}
                   />
                   {!collapsed[`consolidated-annex-${annex.id}`] && (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
@@ -272,6 +318,14 @@ const CostSheetView = () => {
   const hasHydrated = useCostSheetStore((s) => s._hasHydrated);
   const { activeCostSection: activeSection } = useUIStore();
 
+  // Track previous section for "back" navigation from audit
+  const [previousSection, setPreviousSection] = React.useState<string>('main');
+  React.useEffect(() => {
+    if (activeSection !== 'audit') {
+      setPreviousSection(activeSection);
+    }
+  }, [activeSection]);
+
   // ── Data & Calculations ─────────────────────────────────────────────
   // FIX-RCT-140: Use selector to only re-render when data actually changes
   const data = useCostSheetStore((s) => s.data);
@@ -284,6 +338,7 @@ const CostSheetView = () => {
     calculationResult,
     isBlocked,
     deepValidationErrors,
+    healthPercent,
     error: calcError
   } = useCostSheetCalculator(data);
 
@@ -414,6 +469,11 @@ const CostSheetView = () => {
     }, 500);
   }, [handleSetActiveSection, data?.sections, expertState]);
 
+  // Back from audit → return to previous section
+  const handleGoBackFromAudit = React.useCallback(() => {
+    handleSetActiveSection(previousSection || 'main');
+  }, [previousSection, handleSetActiveSection]);
+
   const { expandAllSections, toggleProblems } = expertState;
 
   useExpertModeKeyboard({
@@ -450,7 +510,7 @@ const CostSheetView = () => {
   }
 
   return (
-    <div className="relative min-h-screen pb-32">
+    <div className="relative min-h-screen pb-40">
       {/* ── Diagnostic Banner (visible when calculation has issues) ── */}
       {(isCalcEmpty || calcError) && totalRows > 0 && (
         <div className={cn(
@@ -609,6 +669,10 @@ const CostSheetView = () => {
                 data={data}
                 calculatedValues={calculatedValues}
                 calculatedHeader={calculatedHeader}
+                calculatedAnnexes={calculatedAnnexes}
+                validations={validations}
+                deepValidationErrors={deepValidationErrors}
+                healthPercent={healthPercent}
               />
           )}
 
@@ -697,7 +761,11 @@ const CostSheetView = () => {
 
       <CostSheetProblemsPanel
         problems={deepValidationErrors.map((e: EngineValidationError) => ({ ...e, sectionLabel: (data.sections as CostSheetSection[]).find(s => s.rows.some((r: CostSheetRow) => r.id === e.rowId || (r.children && r.children.some((c: CostSheetRow) => c.id === e.rowId))))?.label }))}
+        calculatedValues={calculatedValues}
+        isAuditView={activeSection === 'audit'}
         onGoTo={(rowId: string) => { handleSetActiveSection('main'); const section: CostSheetSection | undefined = (data.sections as CostSheetSection[]).find(s => s.rows.some((r: CostSheetRow) => r.id === rowId || (r.children && r.children.some((c: CostSheetRow) => c.id === rowId)))); if (section && !expertState.expandedSections.includes(section.id)) expertState.toggleSection(section.id); setTimeout(() => { const el = document.getElementById(rowId); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500); }}
+        onGoToAudit={() => handleSetActiveSection('audit')}
+        onGoBack={handleGoBackFromAudit}
       />
     </div>
   );

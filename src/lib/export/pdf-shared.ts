@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Decimal from 'decimal.js';
 
 // ── Color constants ──
 export const PG = [21, 128, 61] as [number, number, number];       // CostPro green
@@ -13,6 +14,108 @@ export const ORG = [200, 100, 0] as [number, number, number];      // Orange for
 export const IND = [50, 50, 150] as [number, number, number];      // Indigo for bilingual
 export const CYN = [0, 140, 180] as [number, number, number];      // Cyan for scenarios
 export const EMR = [0, 120, 80] as [number, number, number];       // Emerald for export
+export const BLK = [0, 0, 0] as [number, number, number];           // Black
+export const WHT = [255, 255, 255] as [number, number, number];     // White
+export const LGR = [235, 235, 235] as [number, number, number];     // Light gray (general)
+
+// ── Ejecutivo B&W constants (shared) ──
+export const E_BLK = [0, 0, 0] as [number, number, number];
+export const E_DGR = [60, 60, 60] as [number, number, number];
+export const E_MGR = [120, 120, 120] as [number, number, number];
+export const E_LGR = [235, 235, 235] as [number, number, number];
+
+// ── ISO 4217 Valid Currency Codes ──
+const ISO_4217 = new Set([
+  'USD','EUR','GBP','JPY','CUP','CNY','CAD','AUD','CHF','MXN','BRL','ARS','COP','CLP','PEN',
+  'VES','UYU','PYG','BOB','DOP','GTQ','HNL','NIO','SVC','PAB','CRC','NIO','JPY','KRW','INR',
+  'RUB','TRY','ZAR','SEK','NOK','DKK','PLN','CZK','HUF','RON','BGN','HRK','RSD','UAH','GEL',
+  'AED','SAR','QAR','BHD','OMR','KWD','JOD','ILS','LBP','EGP','MAD','TND','DZD','NGN','KES',
+  'TZS','UGX','ETB','XAF','XOF','PHP','MYR','THB','IDR','SGD','HKD','TWD','NZD','MLC',
+]);
+
+/** Validate a currency code against ISO 4217 */
+export function isValidCurrency(code: string): boolean {
+  return ISO_4217.has((code || '').toUpperCase().trim());
+}
+
+// ── Currency Conversion Context ──
+export interface ConversionCtx {
+  active: boolean;           // Whether conversion is enabled
+  rate: number;              // Exchange rate (1 target = N base)
+  targetCurrency: string;    // Target currency code (e.g. "USD")
+  baseCurrency: string;      // Base currency code (e.g. "CUP")
+  rateDate: string;          // Date of the rate
+  rateSource: string;        // Source of the rate
+  rateType: string;          // Type of rate (Spot/Promedio/Cierre)
+}
+
+/**
+ * Build conversion context from header data.
+ * Returns null if no valid exchange rate is configured.
+ */
+export function getConversionCtx(header: Record<string, any>): ConversionCtx | null {
+  const rate = parseFloat(String(header.exchangeRate || 0));
+  const target = sanitizeText(header.targetCurrency || '').toUpperCase().trim();
+  if (!rate || rate <= 0 || !target || !isValidCurrency(target)) return null;
+  return {
+    active: true,
+    rate,
+    targetCurrency: target,
+    baseCurrency: sanitizeText(header.currency || 'CUP').toUpperCase().trim() || 'CUP',
+    rateDate: sanitizeText(header.rateDate || '') || '',
+    rateSource: sanitizeText(header.rateSource || '') || '',
+    rateType: sanitizeText(header.rateType || 'Spot') || 'Spot',
+  };
+}
+
+/**
+ * Convert a value using decimal.js ROUND_HALF_UP for consistency with the cost engine.
+ * Returns converted value, or original if no conversion context.
+ */
+export function convertValue(value: number, ctx: ConversionCtx | null, decimals = 2): number {
+  if (!ctx || !ctx.active) return value;
+  if (value === 0 || isNaN(value)) return 0;
+  return new Decimal(value).div(ctx.rate).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP).toNumber();
+}
+
+/** Get the display label for a unit of measure, converting to target currency if applicable */
+export function convertUM(um: string, ctx: ConversionCtx | null): string {
+  if (!ctx || !ctx.active) return um || '';
+  // Replace base currency with target currency in UM
+  const base = ctx.baseCurrency.toUpperCase();
+  const target = ctx.targetCurrency;
+  if (um && um.toUpperCase() === base) return target;
+  return um || '';
+}
+
+/** Generate IAS 21.22 disclosure note text for PDF footers */
+export function getConversionDisclosureNote(ctx: ConversionCtx): string {
+  if (!ctx || !ctx.active) return '';
+  let note = `CONVERSION REFERENCIAL: Valores convertidos de ${ctx.baseCurrency} a ${ctx.targetCurrency}`;
+  note += ` (Tasa ${ctx.rateType}: 1 ${ctx.targetCurrency} = ${ctx.rate} ${ctx.baseCurrency}`;
+  if (ctx.rateSource) note += `, Fuente: ${ctx.rateSource}`;
+  if (ctx.rateDate) note += `, Fecha: ${ctx.rateDate}`;
+  note += '). Los costos oficiales se expresan en la moneda base conforme a la Resolucion 148/2023 del MFP.';
+  return note;
+}
+
+// ── Format-to-color map for annexes ──
+// Each format uses its own theme color for annex headers and table styling,
+// ensuring visual consistency with the main format body.
+export const FORMAT_ANNEX_COLORS: Record<string, {
+  headerText: [number, number, number];     // Annex title text color
+  headFill: [number, number, number];       // Table header background
+  headText: [number, number, number];       // Table header text color
+  totalFill: [number, number, number];      // TOTAL row background
+}> = {
+  ejecutivo:     { headerText: E_DGR, headFill: E_LGR, headText: E_BLK, totalFill: E_LGR },
+  contabilidad:  { headerText: TEAL, headFill: TEAL,  headText: [255,255,255], totalFill: [230, 245, 245] },
+  auditoria:     { headerText: ORG,  headFill: ORG,   headText: [255,255,255], totalFill: [255, 240, 230] },
+  bilingue:      { headerText: IND,  headFill: IND,   headText: [255,255,255], totalFill: LBL },
+  comparativo:   { headerText: CYN,  headFill: CYN,   headText: [255,255,255], totalFill: [230, 250, 255] },
+  exportacion:   { headerText: EMR,  headFill: EMR,   headText: [255,255,255], totalFill: [230, 250, 240] },
+  pro:           { headerText: [40,40,40], headFill: [180,180,180], headText: [255,255,255], totalFill: GRY },
+};
 
 // ── Sanitize text for jsPDF — CRITICAL: prevents %Ï rendering bug ──
 // jsPDF's built-in Helvetica font only supports WinAnsiEncoding (basically Latin-1).
@@ -170,21 +273,99 @@ export function shouldSkip(row: any, calculatedValues: Record<string, any>, skip
   return (parseFloat(String(c.total ?? 0)) === 0) && (vh === 0);
 }
 
-// ── Calculate section total from rows ──
-// FIX: Always add valid numbers (including zero) to avoid NaN propagation
-// and ensure subtotals match visible table content.
+// ── Calculate section total from TOP-LEVEL rows only ──
+// FIX: Do NOT recurse into children. A parent row's `total` already contains
+// the computed sum of its children (e.g., row 1.1 total = 1.1.1 + 1.1.2 + …).
+// Recursing would double-count: parent value + each child value.
 export function calcSectionTotal(section: any, calculatedValues: Record<string, any>): number {
   let total = 0;
+  (section.rows || []).forEach((r: any) => {
+    const c = calculatedValues[r.id] || {};
+    const t = parseFloat(String(c.total ?? 0));
+    if (!isNaN(t)) total += t;
+  });
+  return total;
+}
+
+// ── Calculate section VH (Valor Histórico) from TOP-LEVEL rows only ──
+// Same logic as calcSectionTotal but for the calculatedVH / valorHistorico column.
+export function calcSectionTotalVH(section: any, calculatedValues: Record<string, any>): number {
+  let total = 0;
+  (section.rows || []).forEach((r: any) => {
+    const c = calculatedValues[r.id] || {};
+    const vh = parseFloat(String(c.calculatedVH ?? c.valorHistorico ?? 0));
+    if (!isNaN(vh)) total += vh;
+  });
+  return total;
+}
+
+// ── Check if a section is the Utilidad section (Section 13) ──
+// Section 13 contains independent summary items (Utilidad, Precio Venta, etc.)
+// that must NOT be summed together. Each row is its own metric.
+export function isUtilidadSection(section: any): boolean {
+  const id = String(section.id || '').trim();
+  const label = String(section.label || '').toLowerCase();
+  // Match section id "13", "13.x", "Sección 13", "13 Utilidad", etc.
+  return id === '13' || /^13[.\-]/.test(id) ||
+         /^secci[oó]n?\s*13/.test(label) ||
+         /^13\s/.test(label);
+}
+
+// ── Expand a section's rows as individual items (for Section 13) ──
+// Returns an array of { id, label, total } for each top-level row in the section.
+export function expandSectionRows(section: any, calculatedValues: Record<string, any>): { id: string; label: string; total: number }[] {
+  const items: { id: string; label: string; total: number }[] = [];
   const walk = (rows: any[]) => {
     rows.forEach((r: any) => {
       const c = calculatedValues[r.id] || {};
       const t = parseFloat(String(c.total ?? 0));
-      if (!isNaN(t)) total += t;   // Include zero; guard against NaN
+      items.push({ id: String(r.id || ''), label: String(r.label || r.id || ''), total: isNaN(t) ? 0 : t });
       if (r.children) walk(r.children);
     });
   };
   walk(section.rows || []);
-  return total;
+  return items;
+}
+
+// ── Calculate % Utilidad = 13.1 / 14.1 * 100 (rentabilidad / profit margin) ──
+// Uses Precio Venta as denominator, NOT Costo Total.
+// Falls back to calculatedHeader if available.
+export function calcUtilidadPercent(calculatedValues: Record<string, any>, calculatedHeader?: any): number {
+  const fromHeader = parseFloat(String(calculatedHeader?.utilityPercent || calculatedHeader?.porcentajeUtilidad || 0));
+  if (fromHeader > 0) return fromHeader;
+  const pv = parseFloat(String(calculatedValues?.['14.1']?.total || calculatedValues?.['14']?.total || 0));
+  const util = parseFloat(String(calculatedValues?.['13.1']?.total || calculatedValues?.['13']?.total || 0));
+  return pv > 0 ? (util / pv) * 100 : 0;
+}
+
+// ── Get cost base from Section 12 (TOTAL COSTOS Y GASTOS) ──
+// Section 12 is the definitive total of all cost sections. It should be used as
+// the denominator for % Costo calculations, NOT the sum of all sections
+// (which double-counts Section 12 since it already contains the sum of 1-11).
+export function getCostBase(sections: any[], calculatedValues: Record<string, any>, calculatedHeader?: any): number {
+  // Priority 1: pre-computed in header
+  const fromHeader = parseFloat(String(calculatedHeader?.totalCost || calculatedHeader?.costoTotal || 0));
+  if (fromHeader > 0) return fromHeader;
+
+  // Priority 2: calculatedValues row 12.1 or 12 (formula engine result)
+  const fromCV = parseFloat(String(calculatedValues?.['12.1']?.total || calculatedValues?.['12']?.total || 0));
+  if (fromCV > 0) return fromCV;
+
+  // Priority 3: Find Section 12 in sections array by id
+  const sec12 = sections.find((s: any) => {
+    const id = String(s.id || '').trim();
+    return id === '12' || /^12[.\-]/.test(id);
+  });
+  if (sec12) {
+    const fromSection = calcSectionTotal(sec12, calculatedValues);
+    if (fromSection > 0) return fromSection;
+  }
+
+  // Priority 4: Fall back to sum of all non-utilidad sections (legacy)
+  return sections.reduce((sum: number, s: any) => {
+    if (isUtilidadSection(s)) return sum;
+    return sum + calcSectionTotal(s, calculatedValues);
+  }, 0);
 }
 
 // ── Adds page number footer to all pages ──
@@ -201,7 +382,9 @@ export function addPageNumbers(doc: jsPDF, pageWidth: number, pageHeight: number
 
 // ── Adds signature block ──
 export function addSignatureBlock(doc: jsPDF, y: number, pageWidth: number, pageHeight: number, preparedBy?: string, approvedBy?: string): number {
-  if (y > pageHeight - 35) {
+  // FIX: Signature text goes at y+4 and y+8. Footer is at pageHeight-8.
+  // Need y+8 < pageHeight-10 (2px margin) → y < pageHeight-18, use 20 for safety.
+  if (y > pageHeight - 20) {
     doc.addPage();
     y = 20;
   }
@@ -320,7 +503,115 @@ export function addAnnexTotalRow(
   return tableData;
 }
 
-// Adds the general data block with ALL header fields from templates
+// ── Unified DATOS GENERALES table ──
+// Used by ALL 10 PDF format templates. Same 5-column grid layout everywhere.
+// Only colors, borders, fonts vary via theme parameter.
+export interface GeneralDataTheme {
+  hdrFill: [number, number, number];           // Title bar background
+  hdrText: [number, number, number];           // Title bar text
+  fcFill: [number, number, number];            // FC badge background
+  fcText: [number, number, number];            // FC badge text
+  fieldText: [number, number, number];         // Normal field text
+  labelText: [number, number, number];        // Label text (bold portion) — defaults to same as fieldText if not provided
+  tableTheme: 'plain' | 'grid' | 'striped';   // autoTable theme
+  tableLineColor?: [number, number, number];   // Border color for 'grid'
+  tableLineWidth?: number;                     // Border width for 'grid'
+  priceFill: [number, number, number];         // PRECIO row background
+  priceText: [number, number, number];         // PRECIO row text
+  showFC?: boolean;                            // Show FC badge (default: true)
+}
+
+const DEFAULT_THEME: GeneralDataTheme = {
+  hdrFill: LGR, hdrText: BLK,
+  fcFill: WHT, fcText: BLK,
+  fieldText: [30, 30, 30],
+  labelText: [60, 60, 60],
+  tableTheme: 'plain',
+  priceFill: LGR, priceText: BLK,
+};
+
+export function addGeneralDataTable(
+  doc: jsPDF,
+  header: any,
+  calculatedValues: Record<string, any>,
+  y: number,
+  pageWidth: number,
+  theme: Partial<GeneralDataTheme> = {},
+): number {
+  const t = { ...DEFAULT_THEME, ...theme };
+  const cc = getConversionCtx(header);
+  const precio = calculatedValues?.['14.1']?.total ?? calculatedValues?.['14']?.total ?? 0;
+  const precioDisplay = cc ? convertValue(precio, cc) : precio;
+  const moneda = cc ? cc.targetCurrency : sanitizeText(header.currency || 'CUP');
+
+  const lv = (label: string, value: string | number, extra?: any) => ({
+    content: `${label}: ${value}`,
+    styles: { fontSize: 6.5, cellPadding: 1.8, textColor: [...t.fieldText], ...extra },
+  });
+
+  const hdrStyle = { fontStyle: 'bold', fontSize: 8, halign: 'center', fillColor: t.hdrFill, textColor: [...t.hdrText], cellPadding: 2 };
+  const fcStyle = { fontStyle: 'bold', fontSize: 18, halign: 'center', valign: 'middle', fillColor: t.fcFill, textColor: [...t.fcText], cellPadding: 4 };
+
+  // Build rows: base 6 rows + optional conversion info row
+  const baseRows: any[][] = [
+    [{ content: 'DATOS GENERALES', colSpan: 5, styles: hdrStyle }],
+    [
+      ...(t.showFC !== false ? [{ content: 'FC', rowSpan: 4, styles: fcStyle }] : []),
+      lv('Organismo', sanitizeText(header.organism || header.organismo || '-')),
+      lv('Union', sanitizeText(header.union || '-')),
+      { ...lv('Cod. Empresa', sanitizeText(header.codigoEmpresa || header.code || '-')), colSpan: t.showFC !== false ? 2 : 3 },
+    ],
+    [
+      { ...lv('Empresa', sanitizeText(header.company || header.empresa || '-')), colSpan: 2 },
+      { ...lv('Cliente', sanitizeText(header.client || header.clientePrincipal || '-')), colSpan: 2 },
+    ],
+    [
+      lv('ID', sanitizeText(header.code || header.id || '-')),
+      lv('Cod. Prod', sanitizeText(header.product_code || header.code || '-')),
+      { ...lv('Producto', sanitizeText(header.name || 'S/N')), colSpan: 2 },
+    ],
+    [
+      lv('Nivel Prod.', sanitizeText(header.production_level || header.nivelProduccion || '1')),
+      lv('UM', sanitizeText(header.unit || header.um || 'U')),
+      lv('Cantidad', sanitizeText(header.quantity || header.cantidadBase || '1')),
+      lv('Resolucion', sanitizeText(header.resolution || 'Res 148/2023')),
+    ],
+    [
+      lv('% Util. Cap.', sanitizeText(header.capacity_utilization || header.capacidadInstalada || '100')),
+      lv('Destino', sanitizeText(header.destination || header.destinoProduccion || 'Ventas')),
+      lv('Tipo Costo', sanitizeText(header.type || header.tipoCosto || 'EMPRESA')),
+      lv('Categoria', sanitizeText(header.category || header.categoriaProducto || 'General')),
+      lv('Moneda', moneda),
+    ],
+    // Conversion info row (only if active)
+    ...(cc ? [[
+      { ...lv(`Tasa (${cc.targetCurrency})`, `1 ${cc.targetCurrency} = ${safeLocale(cc.rate)} ${cc.baseCurrency}  [${cc.rateType}${cc.rateSource ? `, ${cc.rateSource}` : ''}${cc.rateDate ? `, ${cc.rateDate}` : ''}]`), colSpan: 5, styles: { fontSize: 5.5, cellPadding: 1, textColor: [100, 100, 100], fontStyle: 'italic' } },
+    ]] : []),
+    [
+      { content: 'PRECIO', colSpan: 4, styles: { fontStyle: 'bold', fontSize: 9, halign: 'right', fillColor: t.priceFill, textColor: [...t.priceText], cellPadding: 2 } },
+      { content: `${safeLocale(precioDisplay)} ${moneda}`, styles: { fontStyle: 'bold', fontSize: 9, halign: 'left', fillColor: t.priceFill, textColor: [...t.priceText], cellPadding: 2 } },
+    ],
+  ];
+
+  autoTable(doc, {
+    startY: y,
+    body: baseRows,
+    theme: t.tableTheme,
+    styles: {
+      fontSize: 6.5,
+      cellPadding: 1.8,
+      lineColor: t.tableLineColor || [200, 200, 200],
+      lineWidth: t.tableLineWidth ?? 0.3,
+      textColor: [...t.fieldText],
+    },
+    columnStyles: { 0: { cellWidth: 'auto' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 'auto' }, 4: { cellWidth: 'auto' } },
+    margin: { left: 14, right: 14 },
+  });
+
+  return (doc as any).lastAutoTable.finalY + 4;
+}
+
+// Adds the general data block with ALL header fields from templates (legacy — kept for compatibility)
 export function addGeneralDataFull(doc: any, header: any, y: number, pageWidth: number, isBilingual: boolean = false): number {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');

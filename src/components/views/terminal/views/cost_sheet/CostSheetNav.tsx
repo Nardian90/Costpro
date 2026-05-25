@@ -4,7 +4,7 @@ import React from 'react';
 import type { CostSheetAnnex, CostSheetData } from '@/types/cost-sheet';
 import type { CostSheetViewMode } from './CostSheetModeDropdown';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Save, Bot, Clock, ArrowLeft } from 'lucide-react';
+import { FileText, Bot, Clock, ArrowLeft } from 'lucide-react';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -60,7 +60,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 
   const navActions: Action[] = React.useMemo(() => {
     const actions: Action[] = [
-        // 0. Regresar (back to dashboard)
+        // 0. Regresar (back to dashboard) — visually grouped with subtle background
         {
             id: 'back-action',
             label: 'Regresar',
@@ -69,7 +69,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 <button
                     onClick={() => setCurrentView('dashboard')}
                     type="button"
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-foreground/70 hover:text-primary hover:bg-primary/10 rounded-xl border border-border/40"
                     aria-label="Regresar al tablero principal"
                 >
                     <ArrowLeft className="w-5 h-5" aria-hidden="true" />
@@ -78,23 +78,23 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             tooltip: "Regresar"
         },
 
-        // 1. Guardar (Acción crítica inmediata)
+        // 1. Exportar PDF (Acción crítica inmediata)
         {
-            id: 'save-action',
-            label: 'Guardar',
-            onClick: onSave || (() => {}),
+            id: 'export-pdf-action',
+            label: 'Exportar PDF',
+            onClick: onExportPdf || (() => {}),
             component: (
                 <button
-                    onClick={onSave || (() => {})}
+                    onClick={onExportPdf || (() => {})}
                     type="button"
                     className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 rounded-xl"
-                    aria-label="Guardar ficha de costo"
+                    aria-label="Exportar ficha de costo a PDF"
                 >
-                    <Save className="w-4 h-4" aria-hidden="true" />
-                    <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar'}</span>
+                    <FileText className="w-4 h-4" aria-hidden="true" />
+                    <span className="hidden sm:inline">{isSaving ? 'Exportando...' : 'Exportar PDF'}</span>
                 </button>
             ),
-            tooltip: "Guardar Ficha"
+            tooltip: "Exportar PDF"
         },
 
         // 2. Exportar / Opciones (Dropdown simplificado)
@@ -139,7 +139,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <div className="flex items-center gap-2">
                     {lastSavedAt && (
-                        <span className="hidden lg:block text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                        <span className="hidden lg:block text-[9px] font-black uppercase tracking-widest text-foreground/40">
                             Guardado {formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: es })}
                         </span>
                     )}

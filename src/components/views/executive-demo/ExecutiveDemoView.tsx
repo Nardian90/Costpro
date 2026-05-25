@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { DEMO_DATASET, DemoProduct } from '@/lib/data/demo-products';
-import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -175,7 +175,7 @@ export default function ExecutiveDemoView() {
             <div className="p-8 rounded-[2.5rem] bg-sidebar/50 border border-sidebar-border/50 backdrop-blur-xl relative overflow-hidden">
                {phase === 'LOADING' && (
                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">
-                    <CostProLoader size={200} text="PREPARANDO" subtext="INICIALIZANDO MOTOR..." />
+                    <ViewLoadingSplash label="PREPARANDO" showTips={false} />
                  </div>
                )}
 

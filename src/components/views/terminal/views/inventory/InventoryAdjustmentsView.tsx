@@ -66,7 +66,7 @@ export default function InventoryAdjustmentsView() {
       <div className="grid grid-cols-1 gap-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Cargando Ajustes...</p>
           </div>
         ) : adjustments.length > 0 ? (

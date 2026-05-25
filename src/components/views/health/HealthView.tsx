@@ -3,7 +3,7 @@
 import React from 'react';
 import { useHealthData } from './hooks/useHealthData';
 import { HealthLayout } from './HealthLayout';
-import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function HealthView() {
@@ -11,12 +11,8 @@ export default function HealthView() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
-        <CostProLoader
-          size={300}
-          text="INTELLIGENCE HUB"
-          subtext="CARGANDO ARTEFACTOS DEL SISTEMA..."
-        />
+      <div className="h-screen w-full bg-background">
+        <ViewLoadingSplash label="INTELLIGENCE HUB" showTips={false} />
       </div>
     );
   }

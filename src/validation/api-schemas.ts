@@ -103,14 +103,29 @@ export const logsSchema = z.object({
 });
 
 // ─── Bot ────────────────────────────────────────────────────────────────────
+export const botMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system', 'tool']),
+  content: z.string(),
+  tool_calls: z.array(z.record(z.string(), z.unknown())).optional(),
+  tool_call_id: z.string().optional(),
+  name: z.string().optional(),
+  imageData: z.object({
+    mimeType: z.string(),
+    data: z.string(),
+  }).nullable().optional(),
+});
+
 export const botChatSchema = z.object({
   message: z.string().min(1).max(4000).optional(),
-  messages: z.array(z.any()).optional(),
+  messages: z.array(botMessageSchema).optional(),
   conversationId: z.string().uuid().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   aiProvider: z.string().optional(),
   aiApiKey: z.string().optional(),
-  storeId: z.string().uuid().optional(),
+  model: z.string().optional(),
+  storeId: z.string().uuid().nullable().optional(),
+  temperature: z.number().min(0).max(1).optional(),
+  stream: z.boolean().optional(),
 });
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────

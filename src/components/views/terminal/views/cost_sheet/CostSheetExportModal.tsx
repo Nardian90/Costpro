@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Download, FileText, CheckCircle2, X, Layout, Upload, ImagePlus, Scale, BarChart3, Calculator, ShieldCheck, Minimize2, Globe, Columns, Ship, Layers, FileOutput } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useCostSheetStore } from '@/store/cost-sheet-store';
 
 export type PDFFormat =
   | 'standard'
@@ -179,6 +180,9 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
   onExport,
   annexes
 }) => {
+  const { data, updateValue } = useCostSheetStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [options, setOptions] = useState<ExportOptions>({
     includeFC: true,
     includeAudit: false,
@@ -193,7 +197,12 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     pdfFormat: "standard"
   });
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Sync persisted logo from store header into local options on mount / when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setOptions(prev => ({ ...prev, logo: data.header.logo }));
+    }
+  }, [isOpen, data.header.logo]);
 
   const handleToggleAnnex = (id: string) => {
     setOptions(prev => ({
@@ -220,7 +229,10 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setOptions(prev => ({ ...prev, logo: reader.result as string }));
+        const dataUrl = reader.result as string;
+        setOptions(prev => ({ ...prev, logo: dataUrl }));
+        // Persist to store header so it survives modal close/reopen
+        updateValue(['header', 'logo'], dataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -228,6 +240,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
   const handleRemoveLogo = () => {
     setOptions(prev => ({ ...prev, logo: undefined }));
+    // Clear from store header
+    updateValue(['header', 'logo'], undefined);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 

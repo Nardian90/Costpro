@@ -36,8 +36,9 @@ export function MipymeTransactionsView() {
 
   if (!transactions) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-none text-muted-foreground font-bold uppercase tracking-widest">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+        <div className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
           Cargando transacciones...
         </div>
       </div>

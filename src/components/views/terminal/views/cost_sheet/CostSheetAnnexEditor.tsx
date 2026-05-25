@@ -11,7 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target, ArrowLeft } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, RefreshCw, Download, Upload, Target, ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { solveCoefficient } from '@/lib/cost-engine/solver';
 import { CostSheetAnnex, CostSheetColumn, CostSheetData } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
@@ -28,6 +30,84 @@ interface CostSheetAnnexEditorProps {
   onNavigateToSection?: (rowId: string) => void;
   referencingSections?: { sectionLabel: string; sectionId: string; rowId: string; rowLabel: string }[];
 }
+
+/** Professional Combobox for classification column — per-annex filtered, searchable */
+const ClassificationCombobox = React.memo(({ value, options, onChange }: {
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (val: string) => void;
+}) => {
+  const [open, setOpen] = React.useState(false);
+
+  // Find the matching option for the current value
+  // The stored value format is "1.1 - De ello: - Insumos (MP)" or just "1.1"
+  const currentOption = React.useMemo(() => {
+    const prefix = value.split(' - ')[0]?.trim() ?? '';
+    return options.find(o => o.id === prefix);
+  }, [value, options]);
+
+  const displayValue = currentOption ? `${currentOption.id} - ${currentOption.label}` : value;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex items-center justify-between h-6 w-full text-[11px] px-1.5 py-0 rounded transition-colors font-medium text-left gap-0.5",
+            "bg-transparent border border-transparent hover:border-border/30 focus:outline-none",
+            value
+              ? "text-primary"
+              : "text-muted-foreground/40"
+          )}
+        >
+          <span className="truncate flex-1">{displayValue || 'Seleccionar...'}</span>
+          <ChevronsUpDown className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0 z-[60]" align="start" sideOffset={4}>
+        <Command className="rounded-lg border-border/60">
+          <CommandInput
+            placeholder="Buscar clasificación..."
+            className="h-8 text-[11px]"
+          />
+          <CommandList className="max-h-[220px]">
+            <CommandEmpty className="text-[10px] py-2 text-muted-foreground/60">
+              Sin resultados
+            </CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => {
+                const fullValue = `${opt.id} - ${opt.label}`;
+                const isSelected = currentOption?.id === opt.id;
+                return (
+                  <CommandItem
+                    key={opt.id}
+                    value={`${opt.id} ${opt.label}`}
+                    onSelect={() => {
+                      onChange(fullValue);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 text-[11px] cursor-pointer rounded-sm",
+                      isSelected && "bg-primary/10 text-primary"
+                    )}
+                  >
+                    <span className="font-mono font-bold text-[10px] text-muted-foreground/60 w-10 shrink-0 tabular-nums">
+                      {opt.id}
+                    </span>
+                    <span className="flex-1 truncate">{opt.label}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0 ml-auto" />}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+});
+ClassificationCombobox.displayName = 'ClassificationCombobox';
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   activeAnnexId,
@@ -131,14 +211,38 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     }
   };
 
-  const classificationSuggestions = [
-    { id: '1.1', label: 'Insumos / Materiales' },
-    { id: '1.2', label: 'Combustible' },
-    { id: '1.3', label: 'Energía' },
-    { id: '2.1', label: 'Salarios Directos' },
-    { id: '3.1', label: 'Amortización' },
-    { id: '3.2', label: 'Otros Gastos Directos' }
-  ];
+  // Per-annex classification options — only leaf nodes with 2+ dots (e.g. 1.1.1, 3.1.2)
+  // Parents with a single dot (e.g. 1.1, 3.2) are excluded
+  const ANNEX_CLASSIFICATION_MAP: Record<string, { id: string; label: string }[]> = {
+    'I': [
+      { id: '1.1.1', label: 'De ello - Insumos (MP)' },
+      { id: '1.1.2', label: '- Combustibles y lubricantes' },
+      { id: '1.1.3', label: '- Energía' },
+      { id: '1.1.4', label: '- Agua' },
+    ],
+    'II': [
+      { id: '2.1.1', label: 'De ello: Salarios' },
+      { id: '2.1.2', label: 'Vacaciones' },
+    ],
+    'III': [
+      { id: '3.1.1', label: '- Edificios' },
+      { id: '3.1.2', label: '- Otras Construcciones' },
+      { id: '3.1.3', label: '- Maquinas y eq. energéticos' },
+      { id: '3.1.4', label: '- Maquinas y eq. productivos' },
+      { id: '3.1.5', label: '- Aparatos y eq. técnicos' },
+    ],
+    'IV': [
+      { id: '3.2.1', label: '- Mantenimiento' },
+      { id: '3.3.1', label: '- Servicios contratados' },
+      { id: '3.4.1', label: '- Medios de protección' },
+      { id: '3.5.1', label: '- Alquiler locales' },
+      { id: '3.6.1', label: '- Alimentación' },
+    ],
+    'V': [
+      { id: '3.7.1', label: '- Dietas' },
+    ],
+  };
+  const annexOptions = ANNEX_CLASSIFICATION_MAP[activeAnnexId] ?? [];
 
   const handleExport = () => {
     exportAnnexToExcel(annex);
@@ -397,7 +501,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                             </span>
                                             <FunctionSquare className="w-2 h-2 text-primary/30 shrink-0" />
                                         </div>
-                                    ) : (
+                                    ) : col.key === 'classification' && annexOptions.length > 0 ? (
+                                          <ClassificationCombobox
+                                            value={String(annex.data[rowIndex][col.key] ?? '')}
+                                            options={annexOptions}
+                                            onChange={(val) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], val)}
+                                          />
+                                        ) : (
                                         <div className="relative group/cell">
                                             <Input
                                                 type={typeof (annex.data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
@@ -429,14 +539,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     }
                                                     handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], val);
                                                 }}
-                                                list={(() => {
-                                                    const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
-                                                    if (activeAnnexId === 'I' && col.key === 'description') return undefined;
-                                                    if (activeAnnexId === 'II' && isDescriptionColumn) return undefined;
-                                                    if (['IV', 'V'].includes(activeAnnexId) && isDescriptionColumn) return undefined;
-                                                    if (col.key === 'classification' || col.key === 'description') return `classification-suggestions-${activeAnnexId}`;
-                                                    return undefined;
-                                                })()}
                                                 className={cn(
                                                   'h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors font-medium',
                                                   typeof annex.data[rowIndex][col.key] === 'string' && annex.data[rowIndex][col.key] !== '' && 'text-primary',
@@ -528,12 +630,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
          </div>
        </div>
 
-       {/* Global suggestions for classification column */}
-       <datalist id={`classification-suggestions-${activeAnnexId}`}>
-          {classificationSuggestions.map(s => (
-              <option key={s.id} value={`${s.id} - ${s.label}`} aria-label={s.label} />
-          ))}
-       </datalist>
+
 
        {/* Import Confirmation Dialog */}
        <AlertDialog open={!!importTarget} onOpenChange={(open) => !open && setImportTarget(null)}>

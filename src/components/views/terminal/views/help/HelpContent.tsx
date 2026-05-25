@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 
 interface HelpContentProps {
   doc: any;
@@ -87,15 +88,8 @@ export default function HelpContent({
   // ── Loading State ──
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 border-t-primary animate-spin" />
-          <div className="absolute inset-2 rounded-xl border-2 border-primary/10 border-b-primary/40 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-        </div>
-        <div className="text-center">
-          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Cargando documentación</h3>
-          <p className="text-[10px] font-medium text-muted-foreground/40 mt-1.5">{`CostPro Engine ${APP_DISPLAY_VERSION}`}</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <CostProLoader text="AYUDA" subtext="Cargando documentación" showText showSubtext />
       </div>
     );
   }
