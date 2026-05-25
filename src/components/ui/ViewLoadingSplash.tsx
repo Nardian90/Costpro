@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CostProLoader } from './CostProLoader';
 
 /* ── Cost tips that rotate during loading ── */
 const COST_TIPS = [
@@ -74,18 +73,6 @@ export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
     <div className="relative flex flex-col items-center gap-5 max-w-sm px-4">
       {/* CSS animations — unique per instance via useId */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes vls-spin-${id} {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .vls-spinner-${id} { animation: vls-spin-${id} 1.4s linear infinite; }
-
-        @keyframes vls-glow-${id} {
-          0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,0.15), 0 0 24px rgba(34,197,94,0.05); }
-          50% { box-shadow: 0 0 16px rgba(34,197,94,0.35), 0 0 48px rgba(34,197,94,0.1); }
-        }
-        .vls-glow-${id} { animation: vls-glow-${id} 2s ease-in-out infinite; }
-
         @keyframes vls-line-${id} {
           0% { width: 0; }
           50% { width: 80px; }
@@ -106,31 +93,6 @@ export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
           animation: vls-shimmer-${id} 2.5s linear infinite;
         }
       `}} />
-
-      {/* Logo */}
-      <h1
-        className="text-3xl sm:text-4xl tracking-tighter leading-none"
-        style={{
-          fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
-          fontWeight: 900,
-          color: 'var(--foreground)',
-        }}
-      >
-        Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
-      </h1>
-
-      {/* Circular spinner with arc */}
-      <div className={`vls-glow-${id} relative w-14 h-14 rounded-full border-[3px] border-muted`}>
-        <div className={`vls-spinner-${id} absolute inset-0`}>
-          <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: 'var(--primary)' }}
-          />
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <CostProLoader size={24} showText={false} showSubtext={false} />
-        </div>
-      </div>
 
       {/* Animated line */}
       <div className="flex items-center justify-center">

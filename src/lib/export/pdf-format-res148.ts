@@ -2,9 +2,11 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
   FormatContext,
-  PG, BLU, LBL,
+  PG, BLU, LBL, LGR,
   sanitizeText, fmtCell, safeLocale, shouldSkip, addRes148Footer,
-  addAnnexTotalRow, addSignatureBlock,
+  addAnnexTotalRow, addSignatureBlock, addGeneralDataTable,
+  calcUtilidadPercent,
+  getConversionCtx, convertValue, convertUM, getConversionDisclosureNote,
 } from './pdf-shared';
 import { AnnexLayout } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
 
@@ -38,6 +40,7 @@ export function renderRes148(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, annexes,
     skipZeros, includeAudit, showDateTime, includeUtilityNote, includedAnnexIds,
     pageWidth, pageHeight, body } = ctx;
+  const cc = getConversionCtx(header);
 
   const pw = pageWidth;
   let y = 10;
@@ -80,94 +83,16 @@ export function renderRes148(ctx: FormatContext): void {
   y += 4;
 
   // ══════════════════════════════════════════
-  // DATOS GENERALES — Professional compact table
+  // DATOS GENERALES — Unified 5-column grid (Res 148 blue theme)
   // ══════════════════════════════════════════
-  // 5-column grid: FC badge (rowSpan:4) + 4 data columns.
-  // FC spans the first 4 data rows for visual cohesion.
-  const precio = calculatedHeader?.salePrice || calculatedHeader?.precioVenta || header.sale_price || 0;
-  const moneda = sanitizeText(header.currency || 'CUP');
-
-  // Styles
-  const hdrTitle: any = { fontStyle: 'bold', fontSize: 8, halign: 'center', fillColor: LBL, textColor: [...BLU], cellPadding: 2 };
-  const fcStyle: any = { fontStyle: 'bold', fontSize: 18, halign: 'center', valign: 'middle', fillColor: LBL, textColor: [...BLU], cellPadding: 4, lineWidth: 0.5, lineColor: [...BLU] };
-  const d: any = { fontSize: 6.5, cellPadding: 1.8, textColor: [30, 30, 30] };
-
-  // Shorthand: combined "Label: Value" cell
-  const lv = (label: string, value: string | number, extra?: any) => ({
-    content: `${label}: ${value}`,
-    styles: { ...d, ...extra },
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: LBL, hdrText: BLU,
+    fcFill: LBL, fcText: BLU,
+    fieldText: [30, 30, 30],
+    tableTheme: 'grid',
+    tableLineColor: [180, 200, 220], tableLineWidth: 0.3,
+    priceFill: LBL, priceText: [0, 40, 100],
   });
-
-  const metaRows: any[][] = [
-    // ── Header: DATOS GENERALES (centered, spans all 5 cols) ──
-    [
-      { content: 'DATOS GENERALES', colSpan: 5, styles: hdrTitle },
-    ],
-    // ── Row 1 (FC starts rowSpan:4): Organismo, Union, Cod. Empresa ──
-    [
-      { content: 'FC', rowSpan: 4, styles: fcStyle },
-      lv('Organismo', sanitizeText(header.organism || header.organismo || '-')),
-      lv('Union', sanitizeText(header.union || '-')),
-      { ...lv('Cod. Empresa', sanitizeText(header.codigoEmpresa || header.code || '-')), colSpan: 2 },
-    ],
-    // ── Row 2: Empresa, Cliente ──
-    [
-      // (FC rowSpan continues)
-      { ...lv('Empresa', sanitizeText(header.company || header.empresa || '-')), colSpan: 2 },
-      { ...lv('Cliente', sanitizeText(header.client || header.clientePrincipal || '-')), colSpan: 2 },
-    ],
-    // ── Row 3: ID, Cod. Prod, Producto ──
-    [
-      // (FC rowSpan continues)
-      lv('ID', sanitizeText(header.code || header.id || '-')),
-      lv('Cod. Prod', sanitizeText(header.product_code || header.code || '-')),
-      { ...lv('Producto', sanitizeText(header.name || 'S/N')), colSpan: 2 },
-    ],
-    // ── Row 4: Nivel Prod., UM, Cantidad, Resolucion ──
-    [
-      // (FC rowSpan continues)
-      lv('Nivel Prod.', sanitizeText(header.production_level || header.nivelProduccion || '1')),
-      lv('UM', sanitizeText(header.unit || header.um || 'U')),
-      lv('Cantidad', sanitizeText(header.quantity || header.cantidadBase || '1')),
-      lv('Resolucion', sanitizeText(header.resolution || 'Res 148/2023')),
-    ],
-    // ── Classification (5 cols, no FC) ──
-    [
-      lv('% Util. Cap.', sanitizeText(header.capacity_utilization || header.capacidadInstalada || '100')),
-      lv('Destino', sanitizeText(header.destination || header.destinoProduccion || 'Ventas')),
-      lv('Tipo Costo', sanitizeText(header.type || header.tipoCosto || 'EMPRESA')),
-      lv('Categoria', sanitizeText(header.category || header.categoriaProducto || 'General')),
-      lv('Moneda', moneda),
-    ],
-    // ── PRECIO highlighted row (5 cols) ──
-    [
-      { content: 'PRECIO', colSpan: 4, styles: { fontStyle: 'bold', fontSize: 9, halign: 'right', fillColor: LBL, textColor: [0, 40, 100], cellPadding: 2 } },
-      { content: safeLocale(precio), styles: { fontStyle: 'bold', fontSize: 9, halign: 'left', fillColor: LBL, textColor: [0, 40, 100], cellPadding: 2 } },
-    ],
-  ];
-
-  autoTable(doc, {
-    startY: y,
-    body: metaRows,
-    theme: 'grid',
-    styles: {
-      fontSize: 6.5,
-      cellPadding: 1.8,
-      lineColor: [180, 200, 220],
-      lineWidth: 0.3,
-      textColor: [30, 30, 30],
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 'auto' },
-      3: { cellWidth: 'auto' },
-      4: { cellWidth: 'auto' },
-    },
-    margin: { left: 14, right: 14 },
-  });
-
-  y = (doc as any).lastAutoTable.finalY + 4;
 
   // ══════════════════════════════════════════
   // MAIN TABLE — Faithful to the ficha de costo data
@@ -196,6 +121,10 @@ export function renderRes148(ctx: FormatContext): void {
       // Strip "De ello:" from label for children
       const rawLabel = sanitizeText(row.label || row.id)!;
       const cleanLabel = depth > 0 ? cleanChildLabel(rawLabel) : rawLabel;
+
+      // Skip rows with empty label after cleaning (avoids blank rows)
+      if (!cleanLabel.trim()) return;
+
       const prefix = depth > 0 ? '- ' : '';
       const label = `${indent}${prefix}${cleanLabel}`;
 
@@ -205,9 +134,9 @@ export function renderRes148(ctx: FormatContext): void {
       mainRows.push([
         { content: label, styles: { fontStyle: isParent ? 'bold' : 'normal' } },
         filaStr,
-        row.um || row.unit || header.currency || 'CUP',
-        fmtCell(vh),
-        fmtCell(total),
+        convertUM(row.um || row.unit || header.currency || 'CUP', cc),
+        fmtCell(convertValue(vh, cc)),
+        fmtCell(convertValue(total, cc)),
       ]);
 
       if (row.children) processRows(row.children, depth + 1);
@@ -283,20 +212,21 @@ export function renderRes148(ctx: FormatContext): void {
   // ══════════════════════════════════════════
   // NOTA BOX (with optional utility percentage)
   // ══════════════════════════════════════════
-  // Calculate utility % when includeUtilityNote is enabled: 13.1 / 12.1 * 100
+  // Calculate utility % when includeUtilityNote is enabled: 13.1 / 14.1 * 100
   let utilityPercentStr = '';
   if (includeUtilityNote) {
-    const totalCostVal = calculatedValues['12.1']?.total ?? calculatedValues['12']?.total ?? 0;
-    const utilityVal   = calculatedValues['13.1']?.total ?? calculatedValues['13']?.total ?? 0;
-    if (totalCostVal > 0 && utilityVal > 0) {
-      const pct = (utilityVal / totalCostVal) * 100;
-      utilityPercentStr = `% Utilidad sobre Costo: ${pct.toFixed(1)}% (Fila 13.1 / 12.1 x 100)`;
+    // FIX: % Utilidad = 13.1 / 14.1 * 100 (rentabilidad sobre precio venta)
+    const pct = calcUtilidadPercent(calculatedValues);
+    const utilityVal = calculatedValues['13.1']?.total ?? calculatedValues['13']?.total ?? 0;
+    if (pct > 0 || utilityVal !== 0) {
+      utilityPercentStr = `% Utilidad: ${pct.toFixed(1)}% (Fila 13.1 / 14.1 x 100)`;
     }
   }
 
-  const notaLineCount = utilityPercentStr ? 3 : 2;
+  const hasConvNote = cc && cc.active;
+  const notaLineCount = (utilityPercentStr ? 3 : 2) + (hasConvNote ? 1 : 0);
   const notaBoxH = 8 + notaLineCount * 3.5;
-  const needsNewPage = finalY + notaBoxH > pageHeight - 45;
+  const needsNewPage = finalY + notaBoxH > pageHeight - 26;
 
   if (!needsNewPage) {
     doc.setDrawColor(150);
@@ -309,12 +239,19 @@ export function renderRes148(ctx: FormatContext): void {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(80);
-    doc.text('Los calculos se realizan conforme a la Resolucion 148/2023 del MFP.', 16, finalY + 8);
-    doc.text('Los valores en cero se representan con guion (-).', 16, finalY + 11.5);
+    let ly = finalY + 8;
+    doc.text('Los calculos se realizan conforme a la Resolucion 148/2023 del MFP.', 16, ly); ly += 3.5;
+    doc.text('Los valores en cero se representan con guion (-).', 16, ly); ly += 3.5;
     if (utilityPercentStr) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...BLU);
-      doc.text(utilityPercentStr, 16, finalY + 15);
+      doc.text(utilityPercentStr, 16, ly); ly += 3.5;
+    }
+    if (hasConvNote) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(100);
+      doc.text(getConversionDisclosureNote(cc!), 16, ly);
     }
     finalY += notaBoxH + 4;
   } else {

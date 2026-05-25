@@ -3,48 +3,214 @@ import { logger } from '@/lib/logger';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2, Lightbulb, RefreshCw, ChevronDown, AlertTriangle, ImagePlus, Plus, Clock, MessageCircle } from 'lucide-react';
 import { useAuthStore, useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
+// ─── TYPES ────────────────────────────────────────────────────────────────────
 interface Message {
-  id?: string; // FIX-RCT-120: Optional id for stable keys
+  id?: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   tool_calls?: any[];
+  imageData?: { mimeType: string; data: string } | null;
+  isError?: boolean;
+  timestamp?: number;
 }
 
+interface Conversation {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
+  hasImage?: boolean;
+}
+
+interface ModelOption {
+  id: string;
+  label: string;
+  badge?: string;
+}
+
+const MODEL_OPTIONS: ModelOption[] = [
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', badge: 'Rápido' },
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', badge: 'Preciso' },
+  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', badge: 'Estable' },
+];
+
+const QUICK_PROMPTS = [
+  { icon: '📊', text: 'Muéstrame el resumen de costos', view: 'cost-sheets' },
+  { icon: '📦', text: '¿Cómo creo una ficha de costo?', view: 'cost-sheets' },
+  { icon: '🔍', text: 'Busca un producto en el catálogo', view: 'catalog' },
+  { icon: '📈', text: '¿Qué ventas se hicieron hoy?', view: 'sales' },
+];
+
+// ─── STORAGE HELPERS WITH DEBOUNCE ────────────────────────────────────────────
+const CONVERSATIONS_KEY = 'darian_chat_conversations';
+const ACTIVE_CONVO_KEY = 'darian_chat_active_conversation';
+const MODEL_STORAGE_KEY = 'darian_chat_model';
+const SETTINGS_STORAGE_KEY = 'darian_chat_settings';
+const TEMP_STORAGE_KEY = 'darian_chat_temperature';
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// Debounced save to avoid blocking main thread
+let saveTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+function debouncedSave(key: string, value: any, delay = 300) {
+  if (typeof window === 'undefined') return;
+  if (saveTimers[key]) clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch { /* storage full */ }
+  }, delay);
+}
+
+// ─── CONVERSATION MANAGEMENT ──────────────────────────────────────────────────
+function createConversation(title?: string, firstMessage?: string): Conversation {
+  return {
+    id: crypto.randomUUID(),
+    title: title || firstMessage?.slice(0, 40) || 'Nueva conversación',
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+
+// ─── CHATBOT COMPONENT ───────────────────────────────────────────────────────
 export function ChatBot() {
   const router = useRouter();
   const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
+
+  // Multi-conversation state (F1-04)
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModelOpen, setIsModelOpen] = useState(false);
+
+  // Attached image state (F1-01)
+  const [attachedImage, setAttachedImage] = useState<{ mimeType: string; data: string; preview: string } | null>(null);
 
   // Settings state
   const { user, token, updateUser } = useAuthStore();
   const [tempProvider, setTempProvider] = useState(user?.aiProvider || 'gemini');
   const [tempApiKey, setTempApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Temperature control (F2-02)
+  const [temperature, setTemperature] = useState<number>(() => loadFromStorage(TEMP_STORAGE_KEY, 0.4));
+
+  // Latency tracking (UX improvement)
+  const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const requestStartTimeRef = useRef<number>(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
+  // Persisted selected model
+  const [selectedModel, setSelectedModel] = useState<string>(() =>
+    loadFromStorage(MODEL_STORAGE_KEY, 'gemini-2.5-flash')
+  );
+
+  // ─── DERIVED STATE ────────────────────────────────────────────────────────
+  const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
+  const messages = activeConversation?.messages || [];
+
+  // ─── LOAD CONVERSATIONS ON MOUNT ──────────────────────────────────────────
+  useEffect(() => {
+    const saved = loadFromStorage<Conversation[]>(CONVERSATIONS_KEY, []);
+    const savedActiveId = loadFromStorage<string | null>(ACTIVE_CONVO_KEY, null);
+
+    if (saved.length > 0) {
+      setConversations(saved);
+      if (savedActiveId && saved.find(c => c.id === savedActiveId)) {
+        setActiveConversationId(savedActiveId);
+      } else {
+        setActiveConversationId(saved[0].id);
+      }
+    } else {
+      // Migrate legacy single-conversation messages
+      try {
+        const legacyMessages = localStorage.getItem('darian_chat_messages');
+        if (legacyMessages) {
+          const parsed = JSON.parse(legacyMessages);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const newConvo = createConversation('Conversación anterior', parsed[0]?.content);
+            newConvo.messages = parsed;
+            setConversations([newConvo]);
+            setActiveConversationId(newConvo.id);
+            localStorage.removeItem('darian_chat_messages');
+            debouncedSave(CONVERSATIONS_KEY, [newConvo]);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  // ─── PERSIST CONVERSATIONS WITH DEBOUNCE ─────────────────────────────────
+  useEffect(() => {
+    if (conversations.length > 0) {
+      debouncedSave(CONVERSATIONS_KEY, conversations);
+    }
+    if (activeConversationId) {
+      debouncedSave(ACTIVE_CONVO_KEY, activeConversationId);
+    }
+  }, [conversations, activeConversationId]);
+
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
 
-  // ✅ ESC KEY HANDLER - NUEVO
+  // Focus input when chat opens
+  useEffect(() => {
+    if (isOpen && !isSettingsOpen) {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [isOpen, isSettingsOpen]);
+
+  // Close model dropdown on outside click
+  useEffect(() => {
+    if (!isModelOpen) return;
+    const handler = () => setIsModelOpen(false);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, [isModelOpen]);
+
+  // ESC key handler
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
-        setIsOpen(false);
+        if (isSettingsOpen) {
+          setIsSettingsOpen(false);
+        } else if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        } else {
+          handleCloseChat();
+        }
       }
     };
 
@@ -52,8 +218,110 @@ export function ChatBot() {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, setIsOpen]);
+  }, [isOpen, isSettingsOpen, isSidebarOpen]);
 
+  // ─── TEXTAREA AUTO-RESIZE (F1-03) ────────────────────────────────────────
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
+
+  // ─── CONVERSATION ACTIONS ────────────────────────────────────────────────
+  const createNewConversation = useCallback(() => {
+    const newConvo = createConversation();
+    setConversations(prev => [newConvo, ...prev]);
+    setActiveConversationId(newConvo.id);
+    setAttachedImage(null);
+    setIsSidebarOpen(false);
+    inputRef.current?.focus();
+  }, []);
+
+  const switchConversation = useCallback((id: string) => {
+    setActiveConversationId(id);
+    setAttachedImage(null);
+    setIsSidebarOpen(false);
+    inputRef.current?.focus();
+  }, []);
+
+  const deleteConversation = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConversations(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      if (updated.length === 0) {
+        const newConvo = createConversation();
+        setActiveConversationId(newConvo.id);
+        return [newConvo];
+      }
+      if (activeConversationId === id) {
+        setActiveConversationId(updated[0].id);
+      }
+      return updated;
+    });
+    toast.success('Conversación eliminada');
+  }, [activeConversationId]);
+
+  const renameConversation = useCallback((id: string, newTitle: string) => {
+    setConversations(prev =>
+      prev.map(c => c.id === id ? { ...c, title: newTitle, updatedAt: Date.now() } : c)
+    );
+  }, []);
+
+  const handleClearChat = useCallback(() => {
+    if (!activeConversationId) return;
+    setConversations(prev =>
+      prev.map(c => c.id === activeConversationId ? { ...c, messages: [], updatedAt: Date.now() } : c)
+    );
+    toast.success('Conversación eliminada');
+  }, [activeConversationId]);
+
+  // ─── IMAGE HANDLING (F1-01) ─────────────────────────────────────────────
+  const handleImageAttach = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type and size (max 10MB)
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten archivos de imagen');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('La imagen no debe superar 10MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Full = reader.result as string;
+      const base64Data = base64Full.split(',')[1];
+      const mimeType = file.type;
+
+      setAttachedImage({
+        mimeType,
+        data: base64Data,
+        preview: base64Full,
+      });
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  }, []);
+
+  const removeAttachedImage = useCallback(() => {
+    setAttachedImage(null);
+  }, []);
+
+  // ─── ACTIONS HANDLER ─────────────────────────────────────────────────────
   const handleAction = (action: any) => {
     logger.info('DATABASE', '[AI_CONTROLLER]_ACTION_RECEIVED:', { data: action })
 
@@ -66,6 +334,11 @@ export function ChatBot() {
       case 'form_fill':
         toast.success(`Formulario ${action.payload.formName} completado por Darian`);
         window.dispatchEvent(new CustomEvent('ai:fill-form', { detail: action.payload }));
+        break;
+
+      case 'form_submit':
+        toast.success(`Formulario ${action.payload.formName} enviado por Darian`);
+        window.dispatchEvent(new CustomEvent('ai:submit-form', { detail: action.payload }));
         break;
 
       case 'export':
@@ -81,38 +354,99 @@ export function ChatBot() {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading || !user) return;
+  const addErrorMessage = (content: string) => {
+    const errorMsg: Message = {
+      role: 'assistant',
+      content,
+      id: crypto.randomUUID(),
+      isError: true,
+      timestamp: Date.now()
+    };
 
-    // FIX-RCT-120: Add stable id to user message
-    const userMessage: Message = { role: 'user', content: input, id: crypto.randomUUID() };
-    const pendingMessages = [...messages, userMessage];
-    // FIX-BUG-LOG-004: Increased truncation limit to 20 and warn user when truncation happens
-    if (pendingMessages.length > 20) {
-      toast.info('El historial de chat ha sido truncado a los últimos 20 mensajes para mantener el contexto.');
+    if (activeConversationId) {
+      setConversations(prev =>
+        prev.map(c => c.id === activeConversationId ? { ...c, messages: [...c.messages, errorMsg], updatedAt: Date.now() } : c)
+      );
     }
-    const newMessages = pendingMessages.slice(-20);
-    setMessages(newMessages);
+  };
+
+  // ─── SEND MESSAGE (with streaming) ───────────────────────────────────────
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = overrideText || input;
+    if (!textToSend.trim() && !attachedImage) return;
+    if (isLoading) return;
+
+    // Ensure we have an active conversation
+    let convoId = activeConversationId;
+    if (!convoId) {
+      const newConvo = createConversation(undefined, textToSend);
+      setConversations(prev => [newConvo, ...prev]);
+      setActiveConversationId(newConvo.id);
+      convoId = newConvo.id;
+    }
+
+    const userMessage: Message = {
+      role: 'user',
+      content: textToSend,
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      imageData: attachedImage ? { mimeType: attachedImage.mimeType, data: attachedImage.data } : null,
+    };
+
+    // Update conversation with user message and auto-title
+    setConversations(prev => {
+      return prev.map(c => {
+        if (c.id !== convoId) return c;
+        const updatedMessages = [...c.messages, userMessage];
+        const title = c.messages.length === 0 && textToSend.trim()
+          ? textToSend.slice(0, 40) + (textToSend.length > 40 ? '...' : '')
+          : c.title;
+        return {
+          ...c,
+          messages: updatedMessages,
+          title,
+          updatedAt: Date.now(),
+          hasImage: c.hasImage || !!attachedImage,
+        };
+      });
+    });
+
     setInput('');
+    setAttachedImage(null);
     setIsLoading(true);
+    setLatencyMs(null);
+    requestStartTimeRef.current = Date.now();
 
     const controller = new AbortController();
     setAbortController(controller);
 
     try {
+      // Get current messages for API call
+      const currentConvo = conversations.find(c => c.id === convoId);
+      const allMessages = [...(currentConvo?.messages || []), userMessage];
+      const apiMessages = allMessages
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .slice(-30); // Increased context window
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Use streaming (F2-01)
       const response = await fetch('/api/bot/chat', {
         method: 'POST',
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
-          messages: newMessages,
-          storeId: user.activeStoreId,
-          aiProvider: user.aiProvider,
-          aiApiKey: user.aiApiKey,
-          botContext: {
+          messages: apiMessages,
+          storeId: user?.activeStoreId || undefined,
+          aiProvider: user?.aiProvider || 'gemini',
+          aiApiKey: user?.aiApiKey || undefined,
+          model: selectedModel,
+          temperature,
+          stream: true,
+          context: {
             currentView,
             uiMode: 'standard'
           }
@@ -121,37 +455,104 @@ export function ChatBot() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al conectar con Darian');
+        throw new Error(errorData.error || `Error ${response.status}: No se pudo conectar con Darian`);
       }
 
-      const data = await response.json();
-      setMessages([...newMessages, { role: 'assistant', content: data.text }]);
+      // Handle SSE streaming response
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No se pudo obtener el stream de respuesta');
 
-      // FIX-BUG-LOG-005: Use optional chaining to prevent crash on undefined metadata
-      data.metadata?.actions?.forEach(handleAction);
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let assistantMsgId = crypto.randomUUID();
+      let actions: any[] = [];
+
+      // Create a placeholder assistant message
+      setConversations(prev =>
+        prev.map(c => c.id === convoId
+          ? { ...c, messages: [...c.messages, { role: 'assistant', content: '', id: assistantMsgId, timestamp: Date.now() }], updatedAt: Date.now() }
+          : c
+        )
+      );
+
+      // Read stream
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) {
+              addErrorMessage(parsed.error);
+              fullText = '';
+              break;
+            }
+            if (parsed.text) {
+              fullText += parsed.text;
+              // Update the assistant message with accumulated text
+              const currentText = fullText;
+              setConversations(prev =>
+                prev.map(c => c.id === convoId
+                  ? { ...c, messages: c.messages.map(m => m.id === assistantMsgId ? { ...m, content: currentText } : m), updatedAt: Date.now() }
+                  : c
+                )
+              );
+            }
+            if (parsed.metadata?.actions) {
+              actions = parsed.metadata.actions;
+            }
+            if (parsed.done) {
+              // Finalize
+              setLatencyMs(Date.now() - requestStartTimeRef.current);
+            }
+          } catch {
+            // Ignore parse errors for partial chunks
+          }
+        }
+      }
+
+      // If no text was received via streaming, fall back to non-streaming
+      if (!fullText) {
+        // Remove the empty placeholder
+        setConversations(prev =>
+          prev.map(c => c.id === convoId
+            ? { ...c, messages: c.messages.filter(m => m.id !== assistantMsgId), updatedAt: Date.now() }
+            : c
+          )
+        );
+        throw new Error('No se recibió respuesta del servidor');
+      }
+
+      // Execute client-side actions
+      actions.forEach(handleAction);
+
+      setLatencyMs(Date.now() - requestStartTimeRef.current);
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        logger.info('DATABASE', '[CHAT]_REQUEST_CANCELLED_BY_USER')
+        logger.info('DATABASE', '[CHAT]_REQUEST_CANCELLED_BY_USER');
+        addErrorMessage('Solicitud cancelada.');
         return;
       }
 
       const errorMsg = error.message || '';
-      const isFallbackError = errorMsg.includes('Todos los proveedores fallaron') ||
-                             errorMsg.includes('No hay proveedores configurados');
 
-      if (isFallbackError) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: '⚠️ La cuota global de la Inteligencia Artificial está agotada o los proveedores no responden. Por favor, ingresa tu clave API personal en los ajustes (icono de engranaje arriba) para continuar chateando sin límites.'
-        }]);
-      } else if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: '⚠️ ' + errorMsg + ' Puedes cambiar a otro proveedor o ingresar tu propia clave en los ajustes (icono de engranaje arriba).'
-        }]);
+      if (errorMsg.includes('Cuota') || errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
+        addErrorMessage('**Cuota agotada.** Espera un momento o cambia tu API Key en los ajustes.');
+      } else if (errorMsg.includes('inválida') || errorMsg.includes('401') || errorMsg.includes('PERMISSION_DENIED')) {
+        addErrorMessage('**API Key inválida o expirada.** Verifica tu clave en los ajustes.');
+      } else if (errorMsg.includes('Timeout')) {
+        addErrorMessage('**Tiempo de espera agotado.** La respuesta tardó demasiado. Intenta de nuevo.');
       } else {
-        toast.error(errorMsg);
+        addErrorMessage(errorMsg);
       }
     } finally {
       setIsLoading(false);
@@ -159,8 +560,42 @@ export function ChatBot() {
     }
   };
 
+  // ─── SETTINGS ────────────────────────────────────────────────────────────
+  const handleTestApiKey = async () => {
+    const keyToTest = tempApiKey || user?.aiApiKey;
+    if (!keyToTest) {
+      toast.error('No hay API Key para probar');
+      return;
+    }
+    setIsTesting(true);
+    setTestResult('idle');
+    try {
+      const res = await fetch('/api/bot/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'ping', id: 'test' }],
+          aiApiKey: keyToTest,
+          aiProvider: 'gemini',
+        }),
+      });
+      setTestResult(res.ok ? 'success' : 'error');
+      toast.success(res.ok ? 'API Key válida — conexión exitosa' : 'API Key inválida');
+    } catch {
+      setTestResult('error');
+      toast.error('Error de conexión');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const handleSaveSettings = async () => {
-    if (!user) return;
+    if (!user) {
+      saveToStorage(SETTINGS_STORAGE_KEY, { provider: tempProvider, apiKey: tempApiKey });
+      toast.success('Configuración guardada localmente');
+      setIsSettingsOpen(false);
+      return;
+    }
     setIsSaving(true);
     try {
       await userService.updateAISettings(user.id, tempProvider, tempApiKey);
@@ -179,7 +614,6 @@ export function ChatBot() {
     }
   };
 
-  // ✅ HANDLER CLOSE MEJORADO
   const handleCloseChat = useCallback((e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -188,16 +622,35 @@ export function ChatBot() {
     if (abortController) {
       abortController.abort();
     }
-    // FIX-BUG-LOG-006: Removed setMessages([]) so messages persist when chat is closed and reopened
+    setIsSettingsOpen(false);
+    setIsModelOpen(false);
+    setIsSidebarOpen(false);
     setInput('');
     setIsLoading(false);
+    setAttachedImage(null);
     setIsOpen(false);
   }, [abortController, setIsOpen]);
 
-  const isConfigured = !!user?.aiProvider && (!!user?.aiApiKey || user.aiProvider === 'qwen');
+  const handleModelSelect = (modelId: string) => {
+    setSelectedModel(modelId);
+    debouncedSave(MODEL_STORAGE_KEY, modelId);
+    setIsModelOpen(false);
+    const model = MODEL_OPTIONS.find(m => m.id === modelId);
+    toast.success(`Modelo: ${model?.label || modelId}`);
+  };
 
+  const currentModelLabel = MODEL_OPTIONS.find(m => m.id === selectedModel)?.label || selectedModel;
+
+  function saveToStorage(key: string, value: any) {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch { /* storage full */ }
+  }
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -205,7 +658,7 @@ export function ChatBot() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0, opacity: 0, y: 20 }}
             onClick={() => setIsOpen(true)}
-            aria-label="Abrir chat con Darian" /* FIX-ACC-001 */
+            aria-label="Abrir chat con Darian"
             aria-expanded={isOpen}
             className="w-14 h-14 rounded-full bg-primary/15 backdrop-blur-xl border-2 border-primary/30 text-primary shadow-lg shadow-primary/15 flex items-center justify-center hover:scale-110 hover:bg-primary/25 transition-all duration-300 group relative overflow-hidden"
           >
@@ -221,41 +674,49 @@ export function ChatBot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            role="dialog" /* FIX-ACC-007 */
-            aria-label="Chat con Darian" /* FIX-ACC-007 */
-            className="w-[calc(100vw-2rem)] sm:w-[380px] h-[calc(100vh-4rem)] sm:h-[600px] max-h-[600px] bg-background border border-border shadow-2xl rounded-[32px] flex flex-col overflow-hidden relative"
+            role="dialog"
+            aria-label="Chat con Darian"
+            aria-modal="true"
+            className="fixed top-3 right-3 bottom-3 left-3 sm:left-auto sm:w-[460px] bg-background border border-border shadow-2xl rounded-2xl sm:rounded-[28px] flex flex-col overflow-hidden z-50"
           >
-            {/* Header */}
-            <div className="h-20 bg-primary text-primary-foreground flex items-center justify-between px-6 relative overflow-hidden shrink-0">
+            {/* ─── HEADER ─── */}
+            <div className="h-14 bg-primary text-primary-foreground flex items-center justify-between px-3 relative overflow-hidden shrink-0">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
 
+              {/* Sidebar toggle (conversations list) */}
               <button
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                aria-label="Configuración de IA" /* FIX-ACC-002 */
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95"
-                title="Configuración de IA"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                aria-label="Lista de conversaciones"
+                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-10"
+                title="Conversaciones"
                 type="button"
               >
-                <Settings className={`w-4 h-4 ${isSettingsOpen ? 'animate-spin-slow' : ''}`} />
+                <MessageCircle className={cn('w-4 h-4')} />
               </button>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
-                  <Bot className="w-6 h-6" />
+              {/* Darian info */}
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className="flex items-center gap-2 relative z-10"
+                type="button"
+                aria-label="Configuración de IA"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
+                  <Bot className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="font-black text-xs uppercase tracking-tighter">Darian</h3>
-                  <div className="flex items-center gap-1.5">
+                <div className="text-center">
+                  <h3 className="font-black text-[11px] uppercase tracking-tighter leading-none">Darian</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Controller Activo</p>
+                    <p className="text-[9px] opacity-80 uppercase tracking-widest font-bold">Controller Activo</p>
                   </div>
                 </div>
-              </div>
+              </button>
 
-              {/* ✅ CLOSE BUTTON FIXED */}
+              {/* Close button */}
               <button
                 onClick={handleCloseChat}
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-50"
+                className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-xl transition-colors active:scale-95 relative z-50"
                 title="Cerrar chat (ESC)"
                 type="button"
                 aria-label="Cerrar chat"
@@ -264,8 +725,83 @@ export function ChatBot() {
               </button>
             </div>
 
-            {/* Messages or Settings */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20 relative" aria-live="polite" aria-atomic="false" /* FIX-ACC-011 */>
+            {/* ─── CONVERSATIONS SIDEBAR (F1-04) ─── */}
+            <AnimatePresence>
+              {isSidebarOpen && (
+                <motion.div
+                  initial={{ opacity: 0, x: -200 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -200 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="absolute inset-0 z-30 bg-background flex flex-col"
+                >
+                  <div className="h-14 bg-primary/10 flex items-center justify-between px-4 shrink-0">
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Conversaciones</span>
+                    <button
+                      onClick={createNewConversation}
+                      className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity active:scale-95"
+                      title="Nueva conversación"
+                      type="button"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {conversations.map((convo) => (
+                      <div
+                        key={convo.id}
+                        onClick={() => switchConversation(convo.id)}
+                        className={cn(
+                          'group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all text-left',
+                          convo.id === activeConversationId
+                            ? 'bg-primary/10 border border-primary/20'
+                            : 'hover:bg-muted border border-transparent'
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            {convo.hasImage && <ImagePlus className="w-3 h-3 text-primary/50 shrink-0" />}
+                            <p className="text-xs font-semibold truncate">{convo.title}</p>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                            {convo.messages.length} mensajes
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => deleteConversation(convo.id, e)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all shrink-0"
+                          title="Eliminar conversación"
+                          type="button"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {conversations.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground/50">
+                        <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        <p className="text-xs">No hay conversaciones</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3 border-t border-border">
+                    <button
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="w-full h-10 rounded-xl border border-border text-xs font-bold uppercase tracking-widest hover:bg-muted transition-colors"
+                      type="button"
+                    >
+                      Volver al chat
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ─── CONTENT AREA ─── */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20 relative min-h-0" aria-live="polite" aria-atomic="false">
               <AnimatePresence mode="wait">
                 {isSettingsOpen ? (
                   <motion.div
@@ -273,32 +809,90 @@ export function ChatBot() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="h-full flex flex-col space-y-6 pt-4"
+                    className="h-full flex flex-col space-y-4 pt-2 overflow-y-auto"
                   >
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</span>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['gemini', 'gpt', 'qwen'].map((p) => (
-                            <button
-                              key={p}
-                              onClick={() => setTempProvider(p)}
-                              className={`h-11 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all ${
-                                tempProvider === p
+                    {/* Model selector */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modelo</span>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {MODEL_OPTIONS.map((m) => (
+                          <button
+                            key={m.id}
+                            onClick={() => handleModelSelect(m.id)}
+                            className={cn(
+                              'h-10 px-3 rounded-xl border-2 text-xs font-bold uppercase tracking-tight transition-all flex items-center justify-between',
+                              selectedModel === m.id
+                                ? 'border-primary bg-primary/5 text-primary'
+                                : 'border-border bg-background text-muted-foreground hover:border-primary/20'
+                            )}
+                            type="button"
+                          >
+                            <span>{m.label}</span>
+                            {m.badge && (
+                              <span className={cn(
+                                'text-[9px] px-1.5 py-0.5 rounded-md font-bold',
+                                selectedModel === m.id ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground/70'
+                              )}>
+                                {m.badge}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Temperature slider (F2-02) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Temperatura</span>
+                        <span className="text-xs font-bold text-primary">{temperature.toFixed(1)}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={temperature}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setTemperature(val);
+                          debouncedSave(TEMP_STORAGE_KEY, val);
+                        }}
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between text-[9px] text-muted-foreground/60 uppercase tracking-widest">
+                        <span>Preciso</span>
+                        <span>Creativo</span>
+                      </div>
+                    </div>
+
+                    {/* API Provider */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {['gemini', 'gpt', 'qwen'].map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setTempProvider(p)}
+                            className={cn(
+                              'h-10 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all',
+                              tempProvider === p
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border bg-background text-muted-foreground'
-                              }`}
-                              type="button"
-                            >
-                              {p}
-                            </button>
-                          ))}
-                        </div>
+                            )}
+                            type="button"
+                          >
+                            {p}
+                          </button>
+                        ))}
                       </div>
+                    </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="chatbot-api-key" className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
-                        <div className="relative">
+                    {/* API Key */}
+                    <div className="space-y-2">
+                      <label htmlFor="chatbot-api-key" className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY</label>
+                      <div className="flex gap-1.5">
+                        <div className="relative flex-1">
                           <input
                             id="chatbot-api-key"
                             type="password"
@@ -308,25 +902,38 @@ export function ChatBot() {
                             onCopy={(e) => e.preventDefault()}
                             onCut={(e) => e.preventDefault()}
                             placeholder={user?.aiApiKey ? '••••••••••••••••' : 'Pega tu clave aquí...'}
-                            className="w-full h-12 bg-background border border-border rounded-xl px-4 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-10"
+                            className="w-full h-11 bg-background border border-border rounded-xl px-3 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-9"
                           />
-                          <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
+                          <Key className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground opacity-40" />
                         </div>
-                        <p className="text-xs text-muted-foreground/60 leading-tight">
-                          Tu clave se guarda de forma segura. Por seguridad, no se puede visualizar ni copiar una vez guardada.
-                        </p>
+                        <button
+                          onClick={handleTestApiKey}
+                          disabled={isTesting}
+                          className="px-3 h-11 bg-muted hover:bg-muted/80 text-xs font-bold rounded-xl transition disabled:opacity-50 shrink-0 flex items-center gap-1"
+                          type="button"
+                          title="Probar conexión"
+                        >
+                          {isTesting ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                          <span className="hidden sm:inline text-[10px]">Probar</span>
+                        </button>
                       </div>
+                      {testResult !== 'idle' && (
+                        <p className={cn('text-[10px] font-semibold', testResult === 'success' ? 'text-emerald-500' : 'text-destructive')}>
+                          {testResult === 'success' ? 'Conexión exitosa' : 'Clave inválida o sin conexión'}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="pt-4 mt-auto">
+                    {/* Save button */}
+                    <div className="pt-2 mt-auto">
                       <button
                         onClick={handleSaveSettings}
-                        disabled={isSaving || (tempProvider === user?.aiProvider && !tempApiKey)}
-                        className="w-full h-14 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        disabled={isSaving}
+                        className="w-full h-12 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                         type="button"
                       >
                         {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        {isSaving ? 'Guardando...' : 'Actualizar Configuración'}
+                        {isSaving ? 'Guardando...' : 'Guardar Configuración'}
                       </button>
                     </div>
                   </motion.div>
@@ -337,51 +944,90 @@ export function ChatBot() {
                     animate={{ opacity: 1 }}
                     className="space-y-4"
                   >
+                    {/* ─── EMPTY STATE ─── */}
                     {messages.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 py-20">
-                        <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center border-2 border-dashed border-primary/20">
-                          <Sparkles className="w-8 h-8 text-primary opacity-30" />
+                      <div className="h-full flex flex-col items-center justify-center text-center p-3 space-y-3 py-8">
+                        <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center border-2 border-dashed border-primary/20">
+                          <Sparkles className="w-7 h-7 text-primary opacity-30" />
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs font-black uppercase text-primary tracking-widest">Hola, {user?.fullName?.split(' ')[0]}</p>
-                          {!isConfigured ? (
-                            <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20 space-y-3 mt-4">
-                               <p className="text-xs text-warning font-bold uppercase tracking-tight">Darian no configurado</p>
-                               <p className="text-xs text-muted-foreground font-medium">
-                                 Para interactuar conmigo, primero debes ingresar tu API Key en la configuración.
-                               </p>
-                               <button
-                                 onClick={() => setIsSettingsOpen(true)}
-                                 className="w-full h-11 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
-                                 type="button"
-                               >
-                                 Configurar Darian
-                               </button>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                              Soy Darian, tu Controller AI. Puedo navegar, completar formularios y explicarte el sistema.
-                            </p>
-                          )}
+                        <div className="space-y-1.5">
+                          <p className="text-sm font-black uppercase text-primary tracking-widest">
+                            Hola, {user?.fullName?.split(' ')[0] || 'Usuario'}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+                            Soy Darian, tu Controller AI. Puedo analizar imágenes, navegar, buscar, explicar vistas y ayudarte con CostPro.
+                          </p>
+                          <div className="flex items-center gap-1.5 justify-center mt-1">
+                            <Lightbulb className="w-3 h-3 text-primary/50" />
+                            <span className="text-[10px] text-muted-foreground/70 uppercase tracking-widest font-bold">Prueba una sugerencia</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-1.5 mt-1 w-full">
+                          {QUICK_PROMPTS.map((prompt, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleSend(prompt.text)}
+                              disabled={isLoading}
+                              className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-background hover:bg-primary/5 hover:border-primary/20 transition-all text-left disabled:opacity-50 group"
+                              type="button"
+                            >
+                              <span className="text-sm">{prompt.icon}</span>
+                              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                {prompt.text}
+                              </span>
+                            </button>
+                          ))}
                         </div>
                       </div>
                     )}
+
+                    {/* ─── MESSAGE LIST ─── */}
                     {messages.map((msg, i) => (
-                      <div key={msg.id || i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium shadow-sm break-words ${
+                      <div key={msg.id || i} className={cn('flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                        <div className={cn(
+                          'max-w-[88%] rounded-2xl text-xs font-medium shadow-sm break-words',
                           msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-tr-none'
-                          : 'bg-background border border-border rounded-tl-none'
-                        }`}>
-                          {msg.content}
+                            ? 'bg-primary text-primary-foreground rounded-tr-none px-4 py-2.5'
+                            : msg.isError
+                              ? 'bg-destructive/5 border border-destructive/20 text-destructive rounded-tl-none px-4 py-3'
+                              : 'bg-background border border-border rounded-tl-none px-4 py-3'
+                        )}>
+                          {msg.role === 'user' && msg.imageData && (
+                            <div className="mb-2 -mt-1 -mx-1 rounded-lg overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`data:${msg.imageData.mimeType};base64,${msg.imageData.data}`}
+                                alt="Imagen adjunta"
+                                className="max-w-full max-h-48 rounded-lg object-contain"
+                              />
+                            </div>
+                          )}
+                          {msg.role === 'assistant' ? (
+                            <div className={cn(
+                              'prose prose-xs max-w-none',
+                              msg.isError ? 'prose-destructive' : 'prose-neutral dark:prose-invert',
+                              '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:leading-relaxed [&_p]:my-0.5 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_strong]:font-bold [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_code]:text-[11px] [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-2 [&_pre]:my-2 [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs [&_a]:text-primary [&_a]:underline'
+                            )}>
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <span>{msg.content}</span>
+                          )}
                         </div>
                       </div>
                     ))}
-                    {isLoading && (
+
+                    {/* ─── LOADING INDICATOR (streaming-aware) ─── */}
+                    {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content === '' && (
                       <div className="flex justify-start">
-                        <div className="bg-background border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
-                          <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Ejecutando...</span>
+                        <div className="bg-background border border-border px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2.5 shadow-sm">
+                          <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pensando...</span>
                         </div>
                       </div>
                     )}
@@ -390,28 +1036,157 @@ export function ChatBot() {
               </AnimatePresence>
             </div>
 
-            {/* Input */}
-            {!isSettingsOpen && (
-              <div className="p-4 bg-background border-t border-border">
-                <div className={`flex gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border ${!isConfigured ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* ─── INPUT AREA ─── */}
+            {!isSettingsOpen && !isSidebarOpen && (
+              <div className="p-3 bg-background border-t border-border shrink-0">
+                {/* Top bar: model selector + clear + latency */}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setIsModelOpen(!isModelOpen); }}
+                      className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60 hover:text-foreground transition-colors uppercase tracking-widest font-bold"
+                      type="button"
+                    >
+                      {currentModelLabel}
+                      <ChevronDown className={cn('w-3 h-3 transition-transform', isModelOpen && 'rotate-180')} />
+                    </button>
+
+                    {/* Latency indicator */}
+                    {latencyMs !== null && !isLoading && (
+                      <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground/40">
+                        <Clock className="w-2.5 h-2.5" />
+                        <span>{(latencyMs / 1000).toFixed(1)}s</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {messages.length > 0 && (
+                      <button
+                        onClick={handleClearChat}
+                        disabled={isLoading}
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground/60 hover:text-destructive transition-colors uppercase tracking-widest font-bold disabled:opacity-50"
+                        type="button"
+                        title="Limpiar conversación"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span className="hidden sm:inline">Limpiar</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Model dropdown */}
+                <AnimatePresence>
+                  {isModelOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scaleY: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                      exit={{ opacity: 0, y: 4, scaleY: 0.95 }}
+                      className="origin-top mb-1.5 p-1.5 bg-popover border border-border rounded-xl shadow-lg space-y-0.5"
+                    >
+                      {MODEL_OPTIONS.map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={(e) => { e.stopPropagation(); handleModelSelect(m.id); }}
+                          className={cn(
+                            'w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between',
+                            selectedModel === m.id
+                              ? 'bg-primary/10 text-primary'
+                              : 'hover:bg-muted text-muted-foreground'
+                          )}
+                          type="button"
+                        >
+                          <span>{m.label}</span>
+                          {m.badge && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted font-bold">{m.badge}</span>
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Attached image preview */}
+                <AnimatePresence>
+                  {attachedImage && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mb-1.5 relative inline-block"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={attachedImage.preview}
+                        alt="Vista previa"
+                        className="max-h-24 max-w-48 rounded-lg border border-border object-contain"
+                      />
+                      <button
+                        onClick={removeAttachedImage}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+                        type="button"
+                        aria-label="Quitar imagen"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Input row with textarea (F1-03) */}
+                <div className="flex gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border focus-within:border-primary/30 transition-colors items-end">
+                  {/* Image attach button (F1-01) */}
+                  <button
+                    onClick={handleImageAttach}
+                    disabled={isLoading}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 shrink-0"
+                    type="button"
+                    title="Adjuntar imagen"
+                    aria-label="Adjuntar imagen"
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                  </button>
                   <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+
+                  {/* Auto-expandable textarea */}
+                  <textarea
+                    ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    disabled={!isConfigured}
+                    onKeyDown={(e) => {
+                      // Enter sends, Shift+Enter adds newline (F1-03)
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    disabled={isLoading}
                     aria-label="Escribir mensaje al asistente"
-                    placeholder={isConfigured ? "Navega, crea, busca..." : "Configura tu IA para comenzar"}
-                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 h-11"
+                    placeholder="Pregunta algo a Darian..."
+                    rows={1}
+                    className="flex-1 bg-transparent border-none px-1 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 resize-none disabled:cursor-not-allowed min-h-[40px] max-h-[120px] leading-5"
                   />
+
                   <button
-                    disabled={!input.trim() || isLoading || !isConfigured}
-                    onClick={handleSend}
-                    className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
+                    disabled={(!input.trim() && !attachedImage) || isLoading}
+                    onClick={() => handleSend()}
+                    className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
                     type="button"
+                    aria-label="Enviar mensaje"
                   >
-                    <Send className="w-4 h-4" />
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </button>
                 </div>
+                <p className="text-center text-[9px] text-muted-foreground/30 mt-1 uppercase tracking-widest">
+                  Darian AI · {currentModelLabel} · T:{temperature.toFixed(1)}
+                </p>
               </div>
             )}
           </motion.div>

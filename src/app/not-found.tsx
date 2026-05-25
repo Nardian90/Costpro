@@ -1,10 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FileQuestion, Home, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+
+/* ------------------------------------------------------------------ */
+/*  Random fun greetings for the 404 page                            */
+/* ------------------------------------------------------------------ */
+const GREETINGS = [
+  'Hola!!!',
+  'Venga, te toca',
+  '¿Qué tal?',
+  '¡Dale!',
+  '¡Vamos!',
+  'Aquí estamos',
+  'Tu momento, ¡actúa!',
+  'Nada por aquí...',
+  '¡Bienvenido!',
+  '¿Buscabas algo?',
+  'Ups, ruta perdida',
+  '¡Sigue intentando!',
+  'Nadie está aquí... o sí',
+  '¿Y ahora qué?',
+  'La página se escapó',
+  '404: creatividad al máximo',
+];
+
+function useRandomGreeting(): string {
+  return useMemo(() => {
+    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  }, []);
+}
 
 /* ------------------------------------------------------------------ */
 /*  CSS-only particles floating upward (same pattern as SplashScreen) */
@@ -20,6 +48,7 @@ const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
 
 export default function NotFound() {
   const t = useTranslations('notFound');
+  const greeting = useRandomGreeting();
 
   return (
     <div
@@ -110,14 +139,20 @@ export default function NotFound() {
           />
         </motion.div>
 
-        {/* Subtitle */}
+        {/* Random greeting */}
         <motion.h2
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
-          className="mb-3 text-2xl font-bold text-white sm:text-3xl"
+          className="mb-3 text-3xl font-bold sm:text-4xl md:text-5xl"
+          style={{
+            background: 'linear-gradient(135deg, #4ade80 0%, #22d3ee 50%, #4ade80 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 20px rgba(34,197,94,0.25))',
+          }}
         >
-          {t('title')}
+          {greeting}
         </motion.h2>
 
         {/* Description */}

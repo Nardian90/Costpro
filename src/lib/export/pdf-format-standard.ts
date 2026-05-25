@@ -4,7 +4,9 @@ import {
   FormatContext,
   PG,
   sanitizeText, fmtCell, safeLocale, shouldSkip,
-  addAnnexTotalRow, addSignatureBlock, addGeneralDataFull, calcSectionTotal,
+  addAnnexTotalRow, addSignatureBlock, addGeneralDataTable, calcSectionTotal,
+  isUtilidadSection, calcUtilidadPercent, getCostBase, calcSectionTotalVH,
+  getConversionCtx, convertValue, convertUM, getConversionDisclosureNote,
 } from './pdf-shared';
 import { AnnexLayout } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
 
@@ -44,6 +46,7 @@ export function renderStandard(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, annexes,
     skipZeros, includeAudit, showDateTime, includeUtilityNote, includedAnnexIds,
     pageWidth, pageHeight, body } = ctx;
+  const cc = getConversionCtx(header);
 
   const pw = pageWidth;
   let y = 10;
@@ -86,89 +89,16 @@ export function renderStandard(ctx: FormatContext): void {
   y += 4;
 
   // ══════════════════════════════════════════
-  // DATOS GENERALES — Same 5-column grid as Res 148 but B&W, no borders
+  // DATOS GENERALES — Unified 5-column grid (B&W, plain)
   // ══════════════════════════════════════════
-  const precio = calculatedHeader?.salePrice || calculatedHeader?.precioVenta || header.sale_price || 0;
-  const moneda = sanitizeText(header.currency || 'CUP');
-
-  // B&W styles (no colored fills, no colored text)
-  const hdrTitle: any = { fontStyle: 'bold', fontSize: 8, halign: 'center', fillColor: LGR, textColor: [...BLK], cellPadding: 2, lineWidth: 0 };
-  const fcStyle: any = { fontStyle: 'bold', fontSize: 18, halign: 'center', valign: 'middle', fillColor: WHT, textColor: [...BLK], cellPadding: 4, lineWidth: 0 };
-  const d: any = { fontSize: 6.5, cellPadding: 1.8, textColor: [30, 30, 30], lineWidth: 0 };
-
-  // Shorthand: combined "Label: Value" cell
-  const lv = (label: string, value: string | number, extra?: any) => ({
-    content: `${label}: ${value}`,
-    styles: { ...d, ...extra },
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: LGR, hdrText: BLK,
+    fcFill: WHT, fcText: BLK,
+    fieldText: [30, 30, 30],
+    tableTheme: 'plain',
+    tableLineColor: [255, 255, 255], tableLineWidth: 0,
+    priceFill: LGR, priceText: BLK,
   });
-
-  const metaRows: any[][] = [
-    // ── Header: DATOS GENERALES (centered, spans all 5 cols) ──
-    [
-      { content: 'DATOS GENERALES', colSpan: 5, styles: hdrTitle },
-    ],
-    // ── Row 1 (FC starts rowSpan:4): Organismo, Union, Cod. Empresa ──
-    [
-      { content: 'FC', rowSpan: 4, styles: fcStyle },
-      lv('Organismo', sanitizeText(header.organism || header.organismo || '-')),
-      lv('Union', sanitizeText(header.union || '-')),
-      { ...lv('Cod. Empresa', sanitizeText(header.codigoEmpresa || header.code || '-')), colSpan: 2 },
-    ],
-    // ── Row 2: Empresa, Cliente ──
-    [
-      { ...lv('Empresa', sanitizeText(header.company || header.empresa || '-')), colSpan: 2 },
-      { ...lv('Cliente', sanitizeText(header.client || header.clientePrincipal || '-')), colSpan: 2 },
-    ],
-    // ── Row 3: ID, Cod. Prod, Producto ──
-    [
-      lv('ID', sanitizeText(header.code || header.id || '-')),
-      lv('Cod. Prod', sanitizeText(header.product_code || header.code || '-')),
-      { ...lv('Producto', sanitizeText(header.name || 'S/N')), colSpan: 2 },
-    ],
-    // ── Row 4: Nivel Prod., UM, Cantidad, Resolucion ──
-    [
-      lv('Nivel Prod.', sanitizeText(header.production_level || header.nivelProduccion || '1')),
-      lv('UM', sanitizeText(header.unit || header.um || 'U')),
-      lv('Cantidad', sanitizeText(header.quantity || header.cantidadBase || '1')),
-      lv('Resolucion', sanitizeText(header.resolution || 'Res 148/2023')),
-    ],
-    // ── Classification (5 cols, no FC) ──
-    [
-      lv('% Util. Cap.', sanitizeText(header.capacity_utilization || header.capacidadInstalada || '100')),
-      lv('Destino', sanitizeText(header.destination || header.destinoProduccion || 'Ventas')),
-      lv('Tipo Costo', sanitizeText(header.type || header.tipoCosto || 'EMPRESA')),
-      lv('Categoria', sanitizeText(header.category || header.categoriaProducto || 'General')),
-      lv('Moneda', moneda),
-    ],
-    // ── PRECIO highlighted row (5 cols, B&W: light gray bg, black bold text) ──
-    [
-      { content: 'PRECIO', colSpan: 4, styles: { fontStyle: 'bold', fontSize: 9, halign: 'right', fillColor: LGR, textColor: [...BLK], cellPadding: 2, lineWidth: 0 } },
-      { content: safeLocale(precio), styles: { fontStyle: 'bold', fontSize: 9, halign: 'left', fillColor: LGR, textColor: [...BLK], cellPadding: 2, lineWidth: 0 } },
-    ],
-  ];
-
-  autoTable(doc, {
-    startY: y,
-    body: metaRows,
-    theme: 'plain',
-    styles: {
-      fontSize: 6.5,
-      cellPadding: 1.8,
-      lineWidth: 0,
-      lineColor: [255, 255, 255],
-      textColor: [30, 30, 30],
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 'auto' },
-      3: { cellWidth: 'auto' },
-      4: { cellWidth: 'auto' },
-    },
-    margin: { left: 14, right: 14 },
-  });
-
-  y = (doc as any).lastAutoTable.finalY + 4;
 
   // ══════════════════════════════════════════
   // MAIN TABLE — Same structure as Res 148/2023, no borders, B&W
@@ -191,6 +121,10 @@ export function renderStandard(ctx: FormatContext): void {
       // Strip "De ello:" from label for children
       const rawLabel = sanitizeText(row.label || row.id)!;
       const cleanLabel = depth > 0 ? cleanChildLabel(rawLabel) : rawLabel;
+
+      // Skip rows with empty label after cleaning (avoids blank rows)
+      if (!cleanLabel.trim()) return;
+
       const prefix = depth > 0 ? '- ' : '';
       const label = `${indent}${prefix}${cleanLabel}`;
 
@@ -200,9 +134,9 @@ export function renderStandard(ctx: FormatContext): void {
       mainRows.push([
         { content: label, styles: { fontStyle: isParent ? 'bold' : 'normal' } },
         filaStr,
-        row.um || row.unit || header.currency || 'CUP',
-        fmtCell(vh),
-        fmtCell(total),
+        convertUM(row.um || row.unit || header.currency || 'CUP', cc),
+        fmtCell(convertValue(vh, cc)),
+        fmtCell(convertValue(total, cc)),
       ]);
 
       if (row.children) processRows(row.children, depth + 1);
@@ -282,20 +216,22 @@ export function renderStandard(ctx: FormatContext): void {
   // ══════════════════════════════════════════
   let utilityPercentStr = '';
   if (includeUtilityNote) {
-    const totalCostVal = calculatedValues['12.1']?.total ?? calculatedValues['12']?.total ?? 0;
-    const utilityVal   = calculatedValues['13.1']?.total ?? calculatedValues['13']?.total ?? 0;
-    // FIX: Only require denominator > 0; utility can be 0% (valid) or negative (loss)
-    if (totalCostVal > 0) {
-      const pct = (utilityVal / totalCostVal) * 100;
+    // FIX: % Utilidad = 13.1 / 14.1 * 100 (rentabilidad sobre precio venta)
+    const pct = calcUtilidadPercent(calculatedValues);
+    const utilityVal = calculatedValues['13.1']?.total ?? calculatedValues['13']?.total ?? 0;
+    if (pct > 0 || utilityVal !== 0) {
       utilityPercentStr = utilityVal >= 0
-        ? `% Utilidad sobre Costo: ${pct.toFixed(1)}% (Fila 13.1 / 12.1 x 100)`
-        : `% Pérdida sobre Costo: ${pct.toFixed(1)}% (Fila 13.1 / 12.1 x 100)`;
+        ? `% Utilidad: ${pct.toFixed(1)}% (Fila 13.1 / 14.1 x 100)`
+        : `% Perdida: ${pct.toFixed(1)}% (Fila 13.1 / 14.1 x 100)`;
     }
   }
 
-  const notaLineCount = utilityPercentStr ? 3 : 2;
+  const hasConvNote = cc && cc.active;
+  const notaLineCount = (utilityPercentStr ? 3 : 2) + (hasConvNote ? 1 : 0);
   const notaBoxH = 8 + notaLineCount * 3.5;
-  const needsNewPage = finalY + notaBoxH > pageHeight - 45;
+  // FIX: Total space needed after finalY: notaBoxH + 4(gap) + 14(sig) + footer_margin
+  // Footer is at pageHeight - 8, so we need finalY + notaBoxH + 18 < pageHeight - 8
+  const needsNewPage = finalY + notaBoxH > pageHeight - 26;
 
   const renderNotaBox = (startY: number) => {
     // B&W nota box: thin gray border
@@ -309,13 +245,20 @@ export function renderStandard(ctx: FormatContext): void {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(...MGR);
-    doc.text('Los calculos se realizan conforme a la Resolucion 148/2023 del MFP.', 16, startY + 8);
-    doc.text('Los valores en cero se representan con guion (-).', 16, startY + 11.5);
+    let ly = startY + 8;
+    doc.text('Los calculos se realizan conforme a la Resolucion 148/2023 del MFP.', 16, ly); ly += 3.5;
+    doc.text('Los valores en cero se representan con guion (-).', 16, ly); ly += 3.5;
     if (utilityPercentStr) {
       // B&W: bold black instead of blue
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...BLK);
-      doc.text(utilityPercentStr, 16, startY + 15);
+      doc.text(utilityPercentStr, 16, ly); ly += 3.5;
+    }
+    if (hasConvNote) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text(getConversionDisclosureNote(cc!), 16, ly);
     }
     return startY + notaBoxH + 4;
   };
@@ -517,49 +460,94 @@ export function renderStandard(ctx: FormatContext): void {
 }
 
 // ══════════════════════════════════════════
-// PRO FORMAT — Kept intact (corporate branded, separate from standard)
+// PRO FORMAT — B&W print-friendly version (no heavy fills, saves ink)
 // ══════════════════════════════════════════
 
 /**
- * PRO FORMAT — Corporate branded format with: green header bar, logo, KPI row,
- * section tables with subtotals, cost breakdown bars, and branded footer.
+ * PRO FORMAT — B&W print-friendly version with: thin line header, logo support,
+ * DATOS GENERALES table (same grid as Standard), KPI strip, section tables with
+ * subtotals, COSTO TOTAL GENERAL row, cost structure bars, and footer.
+ * All rendered in black & white to save ink when printing.
  */
 export function renderPro(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, skipZeros,
     pageWidth, pageHeight, logo } = ctx;
+  const cc = getConversionCtx(header);
   const pw = pageWidth;
 
-  let y = addHeader(doc, 'FICHA DE COSTO', pw, ctx.showDateTime, 'pro', logo);
+  // ── Header (B&W: thin line + title, logo if present) ──
+  const hasLogo = !!logo;
+  doc.setDrawColor(...BLK);
+  doc.setLineWidth(0.8);
+  doc.line(14, 10, pw - 14, 10);
 
-  // Full header data
-  y = addGeneralDataFull(doc, header, y, pw);
+  // Logo on the right side
+  if (hasLogo) {
+    try {
+      const logoData = logo.split(',')[1] || logo;
+      const mimeMatch = logo.match(/data:image\/([a-zA-Z]+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1].toUpperCase() : 'PNG';
+      doc.addImage(logoData, mimeType as any, pw - 48, 2, 36, 20);
+    } catch (e) {
+      console.warn('Logo render failed:', e);
+    }
+  }
 
-  // ── KPI strip ──
-  if (calculatedHeader) {
-    const ct = calculatedHeader.totalCost || 0;
-    const pv = calculatedHeader.salePrice || 0;
-    const up = calculatedHeader.utilityPercent || 0;
-    const mg = parseFloat(String(pv)) - parseFloat(String(ct));
+  let y = 18;
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...BLK);
+  const titleX = hasLogo ? (pw - 48) / 2 : pw / 2;
+  doc.text('FICHA DE COSTO', titleX, y, { align: 'center' });
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...MGR);
+  doc.text('Pro Corporativo', pw / 2, y + 5, { align: 'center' });
+
+  y = hasLogo ? 30 : 24;
+
+  // ══════════════════════════════════════════
+  // DATOS GENERALES — Unified 5-column grid (B&W, plain)
+  // ══════════════════════════════════════════
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: LGR, hdrText: BLK,
+    fcFill: WHT, fcText: BLK,
+    fieldText: [30, 30, 30],
+    tableTheme: 'plain',
+    tableLineColor: [255, 255, 255], tableLineWidth: 0,
+    priceFill: LGR, priceText: BLK,
+  });
+
+  // ── KPI strip (B&W: light gray boxes with thin border) ──
+  // FIX: Costo total = Section 12 only (TOTAL COSTOS Y GASTOS)
+  const costTotal = getCostBase(sections, calculatedValues, calculatedHeader);
+  const precioVenta = calculatedValues?.['14.1']?.total ?? calculatedValues?.['14']?.total ?? parseFloat(String(calculatedHeader?.salePrice || 0));
+  const precioUnitario = calculatedValues?.['16.1']?.total ?? calculatedValues?.['16']?.total ?? precioVenta;
+  const utilidad = calculatedValues?.['13.1']?.total ?? calculatedValues?.['13']?.total ?? 0;
+  // FIX: % Utilidad = 13.1 / 14.1 * 100 (rentabilidad sobre precio venta)
+  const pctUtilidad = calcUtilidadPercent(calculatedValues, calculatedHeader);
+
+  if (costTotal > 0 || precioVenta > 0) {
     const kpis = [
-      { label: 'COSTO TOTAL', value: safeLocale(ct), color: PG as [number, number, number] },
-      { label: 'PRECIO VENTA', value: safeLocale(pv), color: [21, 68, 128] as [number, number, number] },
-      { label: 'UTILIDAD %', value: `${safeLocale(up)}%`, color: [0, 120, 80] as [number, number, number] },
-      { label: 'MARGEN', value: safeLocale(mg), color: [140, 80, 0] as [number, number, number] },
+      { label: 'COSTO TOTAL', value: safeLocale(convertValue(costTotal, cc)) },
+      { label: 'PRECIO VENTA', value: safeLocale(convertValue(precioVenta, cc)) },
+      { label: 'PRECIO UNITARIO', value: safeLocale(convertValue(precioUnitario, cc)) },
+      { label: '% UTILIDAD', value: `${pctUtilidad.toFixed(1)}%` },
     ];
     const bw = (pw - 28 - 9) / 4;
     kpis.forEach((kpi, i) => {
       const x = 14 + i * (bw + 3);
-      doc.setFillColor(245, 251, 246);
-      doc.setDrawColor(...PG);
-      doc.setLineWidth(0.5);
+      doc.setFillColor(...LGR);
+      doc.setDrawColor(...DGR);
+      doc.setLineWidth(0.3);
       doc.roundedRect(x, y, bw, 16, 2, 2, 'FD');
       doc.setFontSize(5.5);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
+      doc.setTextColor(...MGR);
       doc.text(kpi.label, x + bw / 2, y + 4, { align: 'center' });
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(40);
+      doc.setTextColor(...BLK);
       doc.text(kpi.value, x + bw / 2, y + 11, { align: 'center' });
     });
     y += 22;
@@ -570,24 +558,24 @@ export function renderPro(ctx: FormatContext): void {
   let grandTotal = 0;
 
   for (const section of sections) {
-    if (y > 250) { doc.addPage(); y = 20; }
+    if (y > 262) { doc.addPage(); y = 20; }
+    // FIX: Section 13 (Utilidad) — rows are independent items, no subtotal
+    const isUtil = isUtilidadSection(section);
     const rows: any[][] = [];
-    let sTotalVH = 0;
-    let sTotal = 0;
+    // FIX: Do NOT accumulate sTotal/sTotalVH in walk — parent rows already include children.
     const walk = (r: any[], d = 0) => {
       r.forEach(row => {
         if (shouldSkip(row, calculatedValues, skipZeros)) return;
+        const lbl = sanitizeText(row.label || '');
+        // Skip rows with empty label (avoids blank rows)
+        if (!lbl.trim()) return;
         const c = calculatedValues[row.id] || {};
-        const vhVal = parseFloat(String(c.calculatedVH ?? c.valorHistorico ?? 0));
-        const tVal = parseFloat(String(c.total || 0));
-        sTotalVH += vhVal;
-        sTotal += tVal;
         rows.push([
           `${'  '.repeat(d)}${sanitizeText(row.id)}`,
-          `${'  '.repeat(d)}${sanitizeText(row.label || '')}`,
-          row.um || '-',
-          fmtCell(c.calculatedVH ?? c.valorHistorico ?? 0),
-          fmtCell(c.total || 0),
+          `${'  '.repeat(d)}${lbl}`,
+          convertUM(row.um || header.currency || 'CUP', cc) || '-',
+          fmtCell(convertValue(parseFloat(String(c.calculatedVH ?? c.valorHistorico ?? 0)), cc)),
+          fmtCell(convertValue(parseFloat(String(c.total || 0)), cc)),
         ]);
         if (row.children) walk(row.children, d + 1);
       });
@@ -595,24 +583,28 @@ export function renderPro(ctx: FormatContext): void {
     walk(section.rows || []);
     if (rows.length === 0) continue;
 
-    // Subtotal row
-    rows.push([
-      { content: `Subtotal: ${sanitizeText(section.label || section.id)}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: [230, 243, 255] } },
-      { content: fmtCell(sTotalVH), styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 243, 255] } },
-      { content: fmtCell(sTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 243, 255] } },
-    ]);
-
-    grandTotalVH += sTotalVH;
-    grandTotal += sTotal;
+    // FIX: Section 13 (Utilidad) — no subtotal row, don't add to grand total
+    if (!isUtil) {
+      // Subtotal from top-level rows only (no double-counting)
+      const sTotal = calcSectionTotal(section, calculatedValues);
+      const sTotalVH = calcSectionTotalVH(section, calculatedValues);
+      // Subtotal row (B&W: light gray)
+      rows.push([
+        { content: `Subtotal: ${sanitizeText(section.label || section.id)}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LGR } },
+        { content: fmtCell(convertValue(sTotalVH, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: LGR } },
+        { content: fmtCell(convertValue(sTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: LGR } },
+      ]);
+      grandTotalVH += sTotalVH;
+      grandTotal += sTotal;
+    }
 
     autoTable(doc, {
       startY: y,
-      head: [[{ content: sanitizeText(section.label || section.id)!, colSpan: 5, styles: { fillColor: PG, textColor: 255, fontStyle: 'bold', fontSize: 8 } }],
+      head: [[{ content: sanitizeText(section.label || section.id)!, colSpan: 5, styles: { fillColor: LGR, textColor: BLK, fontStyle: 'bold', fontSize: 8 } }],
              ['No.', 'Concepto', 'UM', 'V. Historico', 'Total']],
       body: rows,
       theme: 'grid',
-      headStyles: { fillColor: PG, textColor: 255, fontSize: 7 },
-      alternateRowStyles: { fillColor: [245, 251, 246] },
+      headStyles: { fillColor: LGR, textColor: BLK, fontSize: 7 },
       styles: { fontSize: 7, cellPadding: 1.5 },
       columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' } },
       margin: { left: 14, right: 14 },
@@ -620,41 +612,43 @@ export function renderPro(ctx: FormatContext): void {
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // ── GRAND TOTAL ──
-  if (y > 260) { doc.addPage(); y = 20; }
+  // ── COSTO TOTAL GENERAL — uses Section 12 total as authoritative cost base ──
+  if (y > 270) { doc.addPage(); y = 20; }
   autoTable(doc, {
     startY: y,
     body: [[
-      { content: 'COSTO TOTAL GENERAL', colSpan: 3, styles: { fontStyle: 'bold', fillColor: PG, textColor: 255, fontSize: 9 } },
-      { content: fmtCell(grandTotalVH), styles: { fontStyle: 'bold', halign: 'right', fillColor: PG, textColor: 255, fontSize: 9 } },
-      { content: fmtCell(grandTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: PG, textColor: 255, fontSize: 9 } },
+      { content: 'COSTO TOTAL GENERAL', colSpan: 3, styles: { fontStyle: 'bold', fillColor: DGR, textColor: 255 } },
+      { content: fmtCell(convertValue(costTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: DGR, textColor: 255 } },
+      { content: fmtCell(convertValue(costTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: DGR, textColor: 255 } },
     ]],
-    theme: 'grid', styles: { fontSize: 9, cellPadding: 2.5 },
+    theme: 'grid',
+    styles: { fontSize: 7, cellPadding: 2 },
     margin: { left: 14, right: 14 },
   });
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y = (doc as any).lastAutoTable.finalY + 6;
 
-  // ── Cost Structure bars ──
-  if (y < pageHeight - 80) {
+  // ── Cost Structure bars (B&W: gray bars) ──
+  if (y < pageHeight - 45) {
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(60);
+    doc.setTextColor(...BLK);
     doc.text('ESTRUCTURA DE COSTOS', 14, y);
     y += 5;
 
-    const maxVal = Math.max(...sections.map(s => calcSectionTotal(s, calculatedValues)), 1);
+    const maxVal = Math.max(...sections.filter((s: any) => !isUtilidadSection(s)).map(s => calcSectionTotal(s, calculatedValues)), 1);
     sections.forEach((section: any) => {
+      if (isUtilidadSection(section)) return; // Skip Utilidad section in cost structure
       const val = calcSectionTotal(section, calculatedValues);
       if (val === 0) return;
       const barW = (val / maxVal) * (pw - 70);
-      const pct = grandTotal > 0 ? (val / grandTotal * 100).toFixed(1) : '0';
-      doc.setFillColor(...PG);
+      const pct = costTotal > 0 ? (val / costTotal * 100).toFixed(1) : '0';
+      doc.setFillColor(...MGR);
       doc.roundedRect(55, y - 3, barW, 5, 1, 1, 'F');
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(60);
+      doc.setTextColor(...DGR);
       doc.text(sanitizeText((section.label || section.id).substring(0, 25))!, 14, y);
-      doc.text(`${safeLocale(val)} (${pct}%)`, pw - 14, y, { align: 'right' });
+      doc.text(`${safeLocale(convertValue(val, cc))} (${pct}%)`, pw - 14, y, { align: 'right' });
       y += 7;
     });
     y += 4;
@@ -666,62 +660,14 @@ export function renderPro(ctx: FormatContext): void {
     header.approvedBy || header.approved_by
   );
 
-  // ── Pro branded footer ──
+  // ── Footer (B&W) ──
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(180);
+    doc.setTextColor(...MGR);
     doc.text('Documento generado por CostPro', 14, pageHeight - 12);
     doc.text(`Pag. ${i}/${pageCount}`, pw - 14, pageHeight - 12, { align: 'right' });
-  }
-}
-
-// ── Shared addHeader helper for pro format ──
-function addHeader(d: jsPDF, title: string, pageWidth: number, showDateTime: boolean, pdfFormat: string, logo?: string): number {
-  let y = 15;
-  if (pdfFormat === 'pro' && logo) {
-    try {
-      const logoData = logo.split(',')[1] || logo;
-      const mimeMatch = logo.match(/data:image\/([a-zA-Z]+);base64,/);
-      const mimeType = mimeMatch ? mimeMatch[1].toUpperCase() : 'PNG';
-      d.addImage(logoData, mimeType as any, 14, 8, 30, 15);
-      y = 30;
-    } catch (e) {
-      console.warn('Logo render failed:', e);
-    }
-  }
-
-  if (pdfFormat === 'pro') {
-    d.setFillColor(...PG);
-    d.rect(0, 0, pageWidth, 25, 'F');
-    d.setTextColor(255, 255, 255);
-    d.setFontSize(18);
-    d.setFont('helvetica', 'bold');
-    d.text(title, pageWidth / 2, 17, { align: 'center' });
-    d.setTextColor(0, 0, 0);
-    return 35;
-  } else {
-    d.setFontSize(16);
-    d.setFont('helvetica', 'bold');
-    d.setTextColor(...PG);
-    d.text(title, 14, 20);
-
-    // Thin green line under title
-    d.setDrawColor(...PG);
-    d.setLineWidth(0.8);
-    d.line(14, 23, pageWidth - 14, 23);
-
-    if (showDateTime) {
-      const ts = new Date().toLocaleString('es-CU');
-      d.setFontSize(8);
-      d.setFont('helvetica', 'normal');
-      d.setTextColor(100);
-      d.text(ts, pageWidth - 14, 20, { align: 'right' });
-    }
-
-    d.setTextColor(0, 0, 0);
-    return 30;
   }
 }

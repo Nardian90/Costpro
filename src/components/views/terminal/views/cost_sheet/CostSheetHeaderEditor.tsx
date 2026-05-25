@@ -18,9 +18,11 @@ interface CostSheetHeaderEditorProps {
 interface FieldDef {
   id: string;
   label: string;
-  type?: 'text' | 'number' | 'select';
+  type?: 'text' | 'number' | 'select' | 'date';
   readonly?: boolean;
   options?: string[];
+  helpText?: string;
+  helpExample?: string;
 }
 
 interface FieldGroup {
@@ -36,40 +38,51 @@ const FIELD_GROUPS: FieldGroup[] = [
     title: 'Identificación del Producto',
     colorIdx: 0,
     fields: [
-      { id: 'resolution', label: 'Resolución', type: 'select', options: ['Res 148/2023', 'Otra'] },
-      { id: 'code', label: 'Código' },
-      { id: 'name', label: 'Nombre Comercial' },
+      { id: 'resolution', label: 'Resolución', type: 'select', options: ['Res 148/2023', 'Otra'], helpText: 'Normativa que regula la ficha de costos', helpExample: 'Res 148/2023' },
+      { id: 'code', label: 'Código', helpText: 'Código único del producto o servicio en el sistema de la empresa', helpExample: 'MP-001, SVC-045' },
+      { id: 'name', label: 'Nombre Comercial', helpText: 'Denominación oficial del producto o servicio que se está costeando', helpExample: 'Hamburguesa Doble Queso, Servicio de Mantenimiento Industrial' },
     ],
   },
   {
     title: 'Parámetros de Operación',
     colorIdx: 1,
     fields: [
-      { id: 'unit', label: 'Unidad de Medida' },
-      { id: 'quantity', label: 'Cantidad Base', type: 'number' },
-      { id: 'production_level', label: 'Nivel de Producción', type: 'number' },
-      { id: 'currency', label: 'Moneda' },
-      { id: 'capacity_utilization', label: '% Capacidad Instalada', readonly: true },
+      { id: 'unit', label: 'Unidad de Medida', helpText: 'Unidad en que se expresa la producción (unidad, kg, litro, etc.)', helpExample: 'u, kg, L, m2, m3, pza, docena' },
+      { id: 'quantity', label: 'Cantidad Base', helpText: 'Cantidad de referencia para el cálculo del costo unitario', helpExample: '1, 100, 1000' },
+      { id: 'production_level', label: 'Nivel de Producción', helpText: 'Volumen de producción mensual o anual utilizado como base de prorrateo', helpExample: '500, 10000' },
+      { id: 'capacity_utilization', label: '% Capacidad Instalada', readonly: true, helpText: 'Porcentaje de capacidad utilizada (calculado automáticamente: cantidad/nivel de producción)', helpExample: '85%' },
+    ],
+  },
+  {
+    title: 'Financiera',
+    colorIdx: 5,
+    fields: [
+      { id: 'currency', label: 'Moneda', type: 'select', options: ['CUP', 'USD', 'EUR', 'MLC'], helpText: 'Moneda en que se expresan los costos', helpExample: 'CUP, USD, EUR, MLC' },
+      { id: 'exchangeRate', label: 'Tasa de Cambio', type: 'number', helpText: 'Tasa para convertir la ficha a otra moneda. 1 USD = N CUP. Dejar vacio para desactivar conversion', helpExample: '540' },
+      { id: 'targetCurrency', label: 'Moneda Destino', type: 'select', options: ['USD', 'EUR', 'GBP', 'CUP', 'MLC', 'CAD', 'CHF', 'MXN', 'CNY', 'JPY', 'BRL', 'ARS'], helpText: 'Moneda a la que se convierte la ficha (codigo ISO 4217)', helpExample: 'USD' },
+      { id: 'rateType', label: 'Tipo de Tasa', type: 'select', options: ['Cierre', 'Spot', 'Promedio'], helpText: 'Tipo de tasa de cambio segun IAS 21.22', helpExample: 'Cierre' },
+      { id: 'rateDate', label: 'Fecha de la Tasa', type: 'date', helpText: 'Fecha de la tasa de cambio (para disclosure IAS 21.22)', helpExample: '2025-05-25' },
+      { id: 'rateSource', label: 'Fuente de la Tasa', helpText: 'Origen de la tasa de cambio', helpExample: 'BCC Oficial, Manual, BCC Promedio' },
     ],
   },
   {
     title: 'Entorno Organizativo',
     colorIdx: 2,
     fields: [
-      { id: 'company', label: 'Empresa' },
-      { id: 'organism', label: 'Organismo' },
-      { id: 'union', label: 'Unión' },
-      { id: 'destination', label: 'Destino de Producción', type: 'select', options: ['producción', 'servicios'] },
+      { id: 'company', label: 'Empresa', helpText: 'Nombre de la entidad productiva o prestadora del servicio', helpExample: 'Empresa de Alimentos "La Ideal" EIG' },
+      { id: 'organism', label: 'Organismo', helpText: 'Organismo superior al que pertenece la empresa', helpExample: 'MINAL, MINSAP, GECMIN' },
+      { id: 'union', label: 'Unión', helpText: 'Organización sindical o(base) de la empresa', helpExample: 'CTC, SNTF' },
+      { id: 'destination', label: 'Destino de Producción', type: 'select', options: ['producción', 'servicios'], helpText: 'Indica si el costo se destina a la producción de bienes o a la prestación de servicios', helpExample: 'producción, servicios' },
     ],
   },
   {
     title: 'Comercialización',
     colorIdx: 3,
     fields: [
-      { id: 'client', label: 'Cliente Principal' },
-      { id: 'category', label: 'Categoría de Producto' },
-      { id: 'type', label: 'Tipo de Costo' },
-      { id: 'sale_price', label: 'Precio de Venta Sugerido' },
+      { id: 'client', label: 'Cliente Principal', helpText: 'Destinatario principal del producto o servicio', helpExample: 'Grupo CIMEX, MIP, Mercado Interno' },
+      { id: 'category', label: 'Categoría de Producto', helpText: 'Clasificación del producto según la normativa vigente', helpExample: 'General, Especial, Estratégico, Sustituto de Importación' },
+      { id: 'type', label: 'Tipo de Costo', helpText: 'Clasificación del costo según su naturaleza', helpExample: 'EMPRESA, ESTATAL, MIXTO' },
+      { id: 'sale_price', label: 'Precio de Venta Sugerido', helpText: 'Precio propuesto para la venta (puede ser una fórmula que se calcula automáticamente)', helpExample: '=ref(\'14.1\'), 125.50' },
     ],
   },
 ];
@@ -97,7 +110,7 @@ const GroupDividerRow: React.FC<{ group: FieldGroup; isCollapsed: boolean; onTog
       )}
       onClick={onToggle}
     >
-      <TableCell colSpan={3} className="px-3 py-1">
+      <TableCell colSpan={4} className="px-3 py-1">
         <div className="flex items-center gap-2">
           <ChevronRight
             className={cn(
@@ -166,8 +179,11 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
               <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
                 CAMPO
               </TableHead>
-              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50">
+              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
                 VALOR
+              </TableHead>
+              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50">
+                AYUDA
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -195,6 +211,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                   const isFormula = String(header?.[field.id] ?? '').startsWith('=');
                   const isReadonly = field.readonly;
                   const isSelect = field.type === 'select';
+                  const isDate = field.type === 'date';
 
                   // Determine display value
                   // When NOT editing: always prefer the calculated result (even for editable fields with formulas)
@@ -232,7 +249,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                       </TableCell>
 
                       {/* Value */}
-                      <TableCell className="px-1.5 py-0 font-medium text-foreground text-[11px]">
+                      <TableCell className="px-1.5 py-0 border-r border-border/15 font-medium text-foreground text-[11px] min-w-[120px]">
                         {isReadonly ? (
                           <span className="text-muted-foreground tabular-nums">{displayValue}</span>
                         ) : isSelect ? (
@@ -249,6 +266,17 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                               </option>
                             ))}
                           </select>
+                        ) : isDate ? (
+                          <input
+                            type="date"
+                            value={displayValue || ''}
+                            onChange={(e) => {
+                              handleChange(field.id, e.target.value);
+                              updateValue(['header', field.id], e.target.value);
+                            }}
+                            className="h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors cursor-pointer text-foreground font-medium"
+                            aria-label={field.label}
+                          />
                         ) : isEditing ? (
                           <Input
                             autoFocus
@@ -290,6 +318,24 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                               </span>
                             )}
                           </div>
+                        )}
+                      </TableCell>
+
+                      {/* Help column with description and example */}
+                      <TableCell className="px-2 py-0 min-w-[220px] max-w-[320px]">
+                        {(field.helpText || field.helpExample) ? (
+                          <div className="space-y-0.5">
+                            {field.helpText && (
+                              <p className="text-[9px] text-muted-foreground/70 leading-tight">{field.helpText}</p>
+                            )}
+                            {field.helpExample && (
+                              <p className="text-[8px] text-primary/50 italic leading-tight">
+                                <span className="font-bold not-italic text-primary/70">Ej:</span> {field.helpExample}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/20 italic text-[9px]">—</span>
                         )}
                       </TableCell>
                     </TableRow>

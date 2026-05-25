@@ -15,15 +15,15 @@ import { parseRawSms, calculateAnalytics } from "@/lib/wallet/parser";
 import { RawSms } from "@/lib/wallet/types";
 import { toast } from "sonner";
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 
 const AnalyticsDashboard = dynamic(
   () => import('./components/AnalyticsDashboard').then(mod => mod.AnalyticsDashboard),
   {
     ssr: false,
     loading: () => (
-        <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Cargando...</p>
+        <div className="flex flex-col items-center justify-center p-20">
+            <CostProLoader text="ANALYTICS" subtext="Cargando..." showText showSubtext />
         </div>
     )
   }

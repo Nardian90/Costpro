@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/store';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { useTranslations } from 'next-intl';
 
 // ── Lazy-loaded to reduce initial compilation memory ──
@@ -71,7 +72,7 @@ export default function HomePage() {
     return (
       <Suspense fallback={
         <div className="min-h-screen w-full flex items-center justify-center bg-background">
-          <CostProLoader text={t('main')} subtext={t('loadingApp')} showText showSubtext />
+          <ViewLoadingSplash label={t('main')} showTips={false} />
         </div>
       }>
         <LandingPage />
@@ -82,7 +83,7 @@ export default function HomePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <CostProLoader text={t('main')} subtext={t('loadingTerminal')} showText showSubtext />
+        <ViewLoadingSplash label={t('main')} showTips={false} />
       </div>
     }>
       <CyberShell>

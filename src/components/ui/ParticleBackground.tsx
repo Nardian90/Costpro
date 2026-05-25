@@ -1,7 +1,27 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
+
+/* ── Random background greetings ── */
+const BG_GREETINGS = [
+  'Hola!!!',
+  'Venga, te toca',
+  '¿Qué tal?',
+  '¡Dale!',
+  '¡Vamos!',
+  'Aquí estamos',
+  'Tu momento, ¡actúa!',
+  'Nada por aquí...',
+  '¡Bienvenido!',
+  '¿Buscabas algo?',
+  'Ups, ruta perdida',
+  '¡Sigue intentando!',
+  'Nadie está aquí... o sí',
+  '¿Y ahora qué?',
+  'La página se escapó',
+  'Creatividad al máximo',
+];
 
 interface Particle {
   x: number;
@@ -191,6 +211,9 @@ export function ParticleBackground() {
   const { scrollY } = useScroll();
   const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
 
+  /* ── Random background greeting ── */
+  const bgGreeting = useMemo(() => BG_GREETINGS[Math.floor(Math.random() * BG_GREETINGS.length)], []);
+
   return (
     <>
       {/* ── Layer 1: Mesh Gradient — animated orbs (pure CSS, 0 GPU cost) ── */}
@@ -202,6 +225,17 @@ export function ParticleBackground() {
         <div className="mesh-orb mesh-orb-1" />
         <div className="mesh-orb mesh-orb-2" />
         <div className="mesh-orb mesh-orb-3" />
+      </motion.div>
+
+      {/* ── Layer 2: Background Greeting Text ── */}
+      <motion.div
+        className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden"
+        aria-hidden="true"
+        style={{ opacity: meshFade }}
+      >
+        <span className="bg-greeting-text select-none whitespace-nowrap">
+          {bgGreeting}
+        </span>
       </motion.div>
 
       {/* ── Layer 3: Particle canvas ── */}
@@ -265,6 +299,18 @@ export function ParticleBackground() {
         /* ── Respect reduced motion ── */
         @media (prefers-reduced-motion: reduce) {
           .mesh-orb { animation: none !important; }
+        }
+
+        /* ── Background Greeting Text ── */
+        .bg-greeting-text {
+          font-size: clamp(4rem, 12vw, 10rem);
+          font-weight: 900;
+          letter-spacing: -0.04em;
+          line-height: 1;
+          color: rgba(34, 197, 94, 0.04);
+        }
+        html:not(.dark) .bg-greeting-text {
+          color: rgba(0, 0, 0, 0.03);
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */

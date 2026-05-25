@@ -317,7 +317,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
         const colors = {
             CRITICAL: 'bg-destructive/15 text-destructive border-destructive/25',
             WARNING: 'bg-amber-500/15 text-amber-600 border-amber-500/25',
-            INFO: 'bg-blue-500/15 text-blue-500 border-blue-500/25',
+            INFO: 'bg-muted/50 text-muted-foreground border-muted-foreground/25',
         };
         return (
             <Badge variant="outline" className={cn('text-[9px] font-bold px-1.5 py-0 rounded-full leading-none', colors[type])}>

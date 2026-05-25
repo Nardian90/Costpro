@@ -1,70 +1,152 @@
 'use client';
-import React, { useState } from 'react';
-import { AlertCircle, AlertTriangle, Info, X, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import React, { useMemo } from 'react';
+import { ArrowLeft, AlertCircle, ArrowRight, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
+import { cn, formatAccounting } from '@/lib/utils';
 import type { ValidationError } from '@/lib/cost-engine/types';
 
 interface CostSheetProblemsPanelProps {
   problems: ValidationError[];
+  calculatedValues?: Record<string, { total?: number }>;
+  /** Whether the user is currently on the Audit view */
+  isAuditView?: boolean;
+  /** Navigate to a specific row */
   onGoTo?: (rowId: string) => void;
+  /** Navigate to the Audit view */
+  onGoToAudit?: () => void;
+  /** Navigate back to the previous section */
+  onGoBack?: () => void;
 }
 
-export const CostSheetProblemsPanel = ({ problems, onGoTo }: CostSheetProblemsPanelProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  // Only show CRITICAL and WARNING — INFO messages (cross-section links, unresolved refs) are noise
+export const CostSheetProblemsPanel = ({
+  problems,
+  calculatedValues = {},
+  isAuditView = false,
+  onGoTo,
+  onGoToAudit,
+  onGoBack,
+}: CostSheetProblemsPanelProps) => {
+  // Only show CRITICAL and WARNING — INFO messages are noise
   const actionableProblems = problems?.filter((p) => p.type !== 'INFO') ?? [];
-  if (!actionableProblems.length) return null;
   const critical = actionableProblems.filter((p) => p.type === 'CRITICAL').length;
+  const warnings = actionableProblems.length - critical;
+
+  // KPIs from calculated values
+  const kpis = useMemo(() => {
+    const precioVenta = calculatedValues?.['14.1']?.total ?? 0;
+    const precioUnitario = calculatedValues?.['16.1']?.total ?? 0;
+    const utilidad = calculatedValues?.['13.1']?.total ?? 0;
+    const costoTotal = calculatedValues?.['12.1']?.total ?? 0;
+    const pctUtilidad = costoTotal > 0 ? (utilidad / costoTotal) * 100 : 0;
+    return { precioVenta, precioUnitario, pctUtilidad };
+  }, [calculatedValues]);
+
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "fixed bottom-24 right-6 h-14 w-14 rounded-full backdrop-blur-xl border-2 shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300 z-[55]",
-          critical > 0
-            ? "bg-red-500/15 border-red-500/30 text-red-500 shadow-red-500/15"
-            : "bg-amber-500/15 border-amber-500/30 text-amber-500 shadow-amber-500/15"
+    <div
+      className={cn(
+        "fixed bottom-3 left-3 right-3 z-[55] rounded-xl border backdrop-blur-xl shadow-[0_-4px_30px_rgba(0,0,0,0.25)]",
+        isAuditView
+          ? "bg-card/95 border-border/60"
+          : critical > 0
+            ? "bg-card/90 border-red-500/20"
+            : actionableProblems.length > 0
+              ? "bg-card/90 border-amber-500/20"
+              : "bg-card/90 border-border/60"
+      )}
+    >
+      {/* ── KPIs + Alerts bar — everything centered ── */}
+      <div className="flex items-center justify-center h-12 px-4 sm:px-6 gap-4 sm:gap-6">
+
+        {/* Back button — only visible in Audit view */}
+        {isAuditView && onGoBack && (
+          <button
+            onClick={onGoBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
+            aria-label="Volver a la vista anterior"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Volver</span>
+          </button>
         )}
-        aria-label={`${problems.length} problemas de validación`}
-      >
-        <div className="relative">
-          <AlertCircle className="w-6 h-6" />
-          <span className={cn(
-            "absolute -top-3 -right-3 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-background",
-            critical > 0
-              ? "bg-gradient-to-br from-red-400 to-red-600 text-white shadow-red-500/30"
-              : "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-amber-500/30"
-          )}>
-            {actionableProblems.length}
-          </span>
+
+        {isAuditView && <div className="w-px h-5 bg-border/40 shrink-0" />}
+
+        {/* Precio de Venta Final */}
+        <div className="flex items-center gap-1.5">
+          <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+            <DollarSign className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+              Precio Venta
+            </p>
+            <p className="text-xs font-black font-mono text-primary tabular-nums leading-none">
+              ${formatAccounting(kpis.precioVenta)}
+            </p>
+          </div>
         </div>
-        {critical > 0 && (
-          <span className="absolute inset-0 rounded-full animate-pulse bg-red-500/10" />
+
+        {/* Precio Unitario */}
+        <div className="flex items-center gap-1.5">
+          <div className="p-1.5 rounded-md bg-violet-500/10 shrink-0">
+            <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+              Unitario
+            </p>
+            <p className="text-xs font-black font-mono text-violet-400 tabular-nums leading-none">
+              ${formatAccounting(kpis.precioUnitario)}
+            </p>
+          </div>
+        </div>
+
+        {/* % Utilidad sobre Costo */}
+        <div className="flex items-center gap-1.5">
+          <div className={cn(
+            "p-1.5 rounded-md shrink-0",
+            kpis.pctUtilidad >= 20 ? "bg-emerald-500/10" : kpis.pctUtilidad >= 0 ? "bg-amber-500/10" : "bg-red-500/10"
+          )}>
+            <TrendingUp className={cn(
+              "w-3.5 h-3.5",
+              kpis.pctUtilidad >= 20 ? "text-emerald-400" : kpis.pctUtilidad >= 0 ? "text-amber-400" : "text-red-400"
+            )} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+              % Utilidad
+            </p>
+            <p className={cn(
+              "text-xs font-black font-mono tabular-nums leading-none",
+              kpis.pctUtilidad >= 20 ? "text-emerald-400" : kpis.pctUtilidad >= 0 ? "text-amber-400" : "text-red-400"
+            )}>
+              {kpis.pctUtilidad.toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Separator before alert badge */}
+        {!isAuditView && actionableProblems.length > 0 && <div className="w-px h-5 bg-border/40 shrink-0" />}
+
+        {/* Alert badge — navigates to audit */}
+        {!isAuditView && actionableProblems.length > 0 && (
+          <button
+            onClick={onGoToAudit}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0",
+              critical > 0
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                : "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+            )}
+            aria-label={`${actionableProblems.length} problemas. Ir a Auditoría.`}
+          >
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">
+              {critical > 0 ? critical : warnings}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 opacity-50" />
+          </button>
         )}
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed bottom-40 right-6 w-80 backdrop-blur-xl bg-card/90 border border-border/50 shadow-2xl rounded-2xl z-[55] overflow-hidden flex flex-col max-h-96">
-            <div className="p-4 border-b flex items-center justify-between bg-muted/30">
-              <h4 className="text-xs font-bold uppercase">Problemas de Validación</h4>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}><X className="w-4 h-4"/></Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
-              {actionableProblems.map((p, i: number) => (
-                <div key={i} className={cn("p-2 rounded-lg border text-xs flex gap-2", p.type === 'CRITICAL' ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800/50" : "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/50")}>
-                  {p.type === 'CRITICAL' ? <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
-                  <div className="flex-1">
-                    <p>{p.message}</p>
-                    {p.rowId && onGoTo && <Button variant="link" className="p-0 h-auto text-[10px]" onClick={() => { onGoTo(p.rowId); setIsOpen(false); }}>Ir a fila <ArrowRight className="w-2 h-2 ml-1"/></Button>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+      </div>
+    </div>
   );
 };

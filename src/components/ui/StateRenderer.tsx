@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CostProLoader } from './CostProLoader';
+import { ViewLoadingSplash } from './ViewLoadingSplash';
 
 export interface StateRendererProps<T> {
   isLoading: boolean;
@@ -16,9 +16,7 @@ export interface StateRendererProps<T> {
 }
 
 const DefaultLoadingComponent = () => (
-  <div className="flex flex-col items-center justify-center py-20 w-full">
-    <CostProLoader text="CARGANDO" subtext="Sincronizando Datos" showText showSubtext />
-  </div>
+  <ViewLoadingSplash label="CARGANDO" showTips={false} />
 );
 
 const DefaultErrorComponent = ({ message }: { message: string }) => (

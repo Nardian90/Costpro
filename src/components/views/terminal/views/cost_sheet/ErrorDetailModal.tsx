@@ -63,9 +63,9 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string; bg: strin
         icon: AlertCircle,
     },
     INFO: {
-        badge: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
-        border: 'border-l-blue-500',
-        bg: 'bg-blue-500/5',
+        badge: 'bg-muted/50 text-muted-foreground border-muted-foreground/30',
+        border: 'border-l-muted-foreground/50',
+        bg: 'bg-muted/30',
         icon: Info,
     },
 };
@@ -96,11 +96,35 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
     const [editedVhFormula, setEditedVhFormula] = useState<string>(() => currentRow?.vhFormula ?? '');
     const [activeTab, setActiveTab] = useState<string>('total');
 
-    const severity = SEVERITY_STYLES[error?.type ?? 'INFO'] ?? SEVERITY_STYLES.INFO;
-    const errorCodeConfig = error ? (ERROR_CODE_CONFIG[error.code] || { icon: AlertOctagon, label: error.code, color: 'text-muted-foreground bg-muted' }) : null;
+    /* ── Guard: if no error selected, render closed Dialog shell only ── */
+    if (!error) {
+        return (
+            <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+                <DialogContent className="rounded-[2rem] sm:max-w-2xl backdrop-blur-xl bg-background/95 border-border/50 shadow-2xl shadow-black/10">
+                    <DialogHeader>
+                        <DialogTitle>No hay elemento seleccionado</DialogTitle>
+                        <DialogDescription>Seleccione un elemento de la lista de auditoría para ver sus detalles.</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={onClose} className="rounded-xl text-xs font-bold h-9 px-4">
+                            <X className="w-3.5 h-3.5 mr-1.5" />
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    const severity = SEVERITY_STYLES[error.type] ?? SEVERITY_STYLES.INFO;
+    const errorCodeConfig = ERROR_CODE_CONFIG[error.code] || { icon: AlertOctagon, label: error.code, color: 'text-muted-foreground bg-muted' };
 
     const hasSuggestedTotal = suggestedRow && suggestedRow.totalFormula && suggestedRow.totalFormula.trim() !== '';
     const hasSuggestedVh = suggestedRow && suggestedRow.vhFormula && suggestedRow.vhFormula.trim() !== '';
+
+    /* Check if formulas match the standard (current == suggested) */
+    const totalFormulaMatches = !!(hasSuggestedTotal && suggestedRow && editedTotalFormula.trim() === suggestedRow.totalFormula?.trim());
+    const vhFormulaMatches = !!(hasSuggestedVh && suggestedRow && editedVhFormula.trim() === suggestedRow.vhFormula?.trim());
 
     /* Derive hasChanges without state or effects */
     const hasChanges = useMemo(() => {
@@ -161,10 +185,28 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
         }
     }, [rowPath, currentRow, editedTotalFormula, editedVhFormula, updateValue, onClose]);
 
-    if (!error || !currentRow) return null;
+    /* Determine title based on severity type */
+    const detailTitle = error.type === 'INFO'
+        ? `Información — Fila ${error.rowId}`
+        : error.type === 'WARNING'
+            ? `Advertencia — Fila ${error.rowId}`
+            : `Detalle del Error — Fila ${error.rowId}`;
+
+    const detailDescription = error.type === 'INFO'
+        ? `Información de auditoría para la fila ${error.rowId}`
+        : `Modal de detalle del error de cálculo para la fila ${error.rowId}`;
 
     const ErrorIcon = errorCodeConfig ? errorCodeConfig.icon : AlertOctagon;
     const SeverityIcon = severity.icon;
+
+    /* Inline component: badge shown when current formula matches the standard */
+    const FormulaMatchBadge = ({ matches }: { matches: boolean | null | undefined }) =>
+        matches ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold shrink-0">
+                <Check className="w-3 h-3" />
+                Correcta según estándar
+            </div>
+        ) : null;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -190,19 +232,19 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         )}
                     </div>
                     <DialogTitle className="text-base font-bold mt-1">
-                        Detalle del Error — Fila {error.rowId}
+                        {detailTitle}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                        Modal de detalle del error de cálculo para la fila {error.rowId}
+                        {detailDescription}
                     </DialogDescription>
                 </DialogHeader>
 
                 {/* ── Error Information ── */}
                 <div className={cn('rounded-2xl border border-border/50 p-4 space-y-3', severity.bg)}>
                     <div className="flex items-start gap-2.5">
-                        <SeverityIcon className={cn('w-5 h-5 mt-0.5 shrink-0', severity.badge.includes('destructive') ? 'text-destructive' : severity.badge.includes('amber') ? 'text-amber-500' : 'text-blue-500')} />
+                        <SeverityIcon className={cn('w-5 h-5 mt-0.5 shrink-0', severity.badge.includes('destructive') ? 'text-destructive' : severity.badge.includes('amber') ? 'text-amber-500' : 'text-muted-foreground')} />
                         <div className="flex-1 min-w-0">
-                            <p className={cn('text-sm font-medium leading-relaxed', severity.badge.includes('destructive') ? 'text-destructive/90' : severity.badge.includes('amber') ? 'text-amber-600/90' : 'text-blue-600/90')}>
+                            <p className={cn('text-sm font-medium leading-relaxed', severity.badge.includes('destructive') ? 'text-destructive/90' : severity.badge.includes('amber') ? 'text-amber-600/90' : 'text-muted-foreground')}>
                                 {error.message}
                             </p>
                         </div>
@@ -215,7 +257,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         </div>
                         <div className="bg-background/60 rounded-xl px-3 py-2">
                             <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-[10px]">Etiqueta</span>
-                            <span className="font-medium text-foreground truncate block">{currentRow.label}</span>
+                            <span className="font-medium text-foreground truncate block">{currentRow?.label || '—'}</span>
                         </div>
                         <div className="bg-background/60 rounded-xl px-3 py-2 col-span-2 sm:col-span-1">
                             <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-[10px]">Sección</span>
@@ -279,15 +321,18 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
                                                 Fórmula Sugerida
                                             </span>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleApplySuggestedTotal}
-                                                className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
-                                            >
-                                                <Copy className="w-3 h-3 mr-1" />
-                                                Copiar al editor
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <FormulaMatchBadge matches={totalFormulaMatches} />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleApplySuggestedTotal}
+                                                    className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
+                                                >
+                                                    <Copy className="w-3 h-3 mr-1" />
+                                                    Copiar al editor
+                                                </Button>
+                                            </div>
                                         </div>
                                         <code className="block text-xs font-mono text-primary/90 bg-background/60 rounded-lg p-2.5 leading-relaxed break-all">
                                             {suggestedRow!.totalFormula}
@@ -333,15 +378,18 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
                                                 Fórmula VH Sugerida
                                             </span>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleApplySuggestedVh}
-                                                className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
-                                            >
-                                                <Copy className="w-3 h-3 mr-1" />
-                                                Copiar al editor
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <FormulaMatchBadge matches={vhFormulaMatches} />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleApplySuggestedVh}
+                                                    className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
+                                                >
+                                                    <Copy className="w-3 h-3 mr-1" />
+                                                    Copiar al editor
+                                                </Button>
+                                            </div>
                                         </div>
                                         <code className="block text-xs font-mono text-primary/90 bg-background/60 rounded-lg p-2.5 leading-relaxed break-all">
                                             {suggestedRow!.vhFormula}

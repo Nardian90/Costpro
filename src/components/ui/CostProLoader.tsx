@@ -107,10 +107,10 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           phase === 'out' ? 'opacity-0 transition-opacity duration-500' : '',
           className,
         )}
-        style={{ backgroundColor: 'var(--background)' }}
+        style={{ backgroundColor: '#000' }}
       >
         {/* safe: static CSS keyframe animations using React.useId(), no user input */}
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `
           /* ── Netflix Line: expand from center (scaleX — GPU accelerated) ── */
           @keyframes cp-line-expand-${id} {
             0% { transform: scaleX(0); opacity: 0; }
@@ -173,7 +173,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
               style={{
                 fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
                 fontWeight: 900,
-                color: 'var(--foreground)',
+                color: '#fff',
               }}
             >
               Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
@@ -203,7 +203,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   return (
     <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
       {/* safe: static CSS keyframe animations using React.useId(), no user input */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `
         @keyframes cp-dot-pulse-${id} {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.85); }

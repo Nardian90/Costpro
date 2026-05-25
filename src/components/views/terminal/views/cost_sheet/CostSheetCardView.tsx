@@ -76,7 +76,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
       <div className="relative z-10">
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="text-[10px] font-black font-mono text-muted-foreground/40 shrink-0">
+            <span className="text-[10px] font-black font-mono text-muted-foreground/60 shrink-0">
               {numbering}
             </span>
             <div className="flex-1 min-w-0">
@@ -137,7 +137,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground/60">Histórico / %</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">Histórico / %</p>
             <div
               role="button"
               tabIndex={0}

@@ -44,6 +44,7 @@ import { BacktestEngine, ModelValidationResult } from '@/services/pick3/backtest
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CostProLoader } from '@/components/ui/CostProLoader';
 
 export default function Pick3IntelligenceView() {
   const { user } = useAuthStore();
@@ -151,9 +152,8 @@ export default function Pick3IntelligenceView() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 animate-pulse">
-        <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        <p className="text-xs font-black uppercase tracking-widest opacity-40 italic">Sincronizando Probabilidades...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <CostProLoader text="PICK3" subtext="Sincronizando Probabilidades..." showText showSubtext />
       </div>
     );
   }

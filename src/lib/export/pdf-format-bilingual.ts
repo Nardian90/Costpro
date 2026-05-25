@@ -2,10 +2,12 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
   FormatContext,
-  PG, LBL, IND, CYN, EMR, GRY,
+  PG, LBL, IND, CYN, EMR, GRY, LGR, BLK, WHT,
   sanitizeText, fmtCell, safeLocale, shouldSkip, addGeneralDataFull,
   addPageNumbers, addSignatureBlock, calcSectionTotal, addAnnexTotalRow,
-  translateLabel, drawBar,
+  translateLabel, drawBar, addGeneralDataTable,
+  isUtilidadSection, expandSectionRows, calcUtilidadPercent, getCostBase,
+  getConversionCtx, convertValue, convertUM, getConversionDisclosureNote,
 } from './pdf-shared';
 import { isSectionHeaderRedundant } from './pdf-generator-utils';
 
@@ -17,6 +19,7 @@ import { isSectionHeaderRedundant } from './pdf-generator-utils';
  */
 export function renderBilingue(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, skipZeros, pageWidth, pageHeight } = ctx;
+  const cc = getConversionCtx(header);
   const pw = pageWidth;
 
   // ── Bilingual header ──
@@ -28,22 +31,31 @@ export function renderBilingue(ctx: FormatContext): void {
   doc.text('COST SHEET / FICHA DE COSTO', pw / 2, 8, { align: 'center' });
   let y = 17;
 
-  // ── Bilingual metadata ──
-  y = addGeneralDataFull(doc, header, y, pw, true);
+  // ── Bilingual metadata — Unified 5-column grid (Indigo theme) ──
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: IND, hdrText: [255, 255, 255],
+    fcFill: [240, 240, 255], fcText: IND,
+    fieldText: [30, 30, 30],
+    tableTheme: 'grid',
+    tableLineColor: [180, 180, 220], tableLineWidth: 0.3,
+    priceFill: IND, priceText: [255, 255, 255],
+  });
 
   // ── KPI strip ──
-  if (calculatedHeader) {
-    const ct = calculatedHeader.totalCost || 0;
-    const pv = calculatedHeader.salePrice || 0;
-    const up = calculatedHeader.utilityPercent || 0;
+  // FIX: Costo total = Section 12 only (TOTAL COSTOS Y GASTOS)
+  const kpiCt = getCostBase(sections, calculatedValues, calculatedHeader);
+  const kpiPv = parseFloat(String(calculatedHeader?.salePrice || calculatedHeader?.precioVenta || header.sale_price || calculatedValues?.['14.1']?.total || 0));
+  // FIX: % Utilidad = 13.1 / 14.1 * 100 (rentabilidad sobre precio venta)
+  const kpiUp = calcUtilidadPercent(calculatedValues, calculatedHeader);
+  if (kpiCt > 0 || kpiPv > 0) {
     doc.setFillColor(240, 240, 255);
     doc.rect(14, y, pw - 28, 7, 'F');
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(40, 40, 120);
-    doc.text(`Total Cost / Costo Total: ${safeLocale(ct)}`, 18, y + 5);
-    doc.text(`Price / Precio: ${safeLocale(pv)}`, pw / 3 + 10, y + 5);
-    doc.text(`Profit / Utilidad: ${safeLocale(up)}%`, 2 * pw / 3, y + 5);
+    doc.text(`Total Cost / Costo Total: ${safeLocale(convertValue(kpiCt, cc))}`, 18, y + 5);
+    doc.text(`Price / Precio: ${safeLocale(convertValue(kpiPv, cc))}`, pw / 3 + 10, y + 5);
+    doc.text(`Profit / Utilidad: ${kpiUp.toFixed(1)}%`, 2 * pw / 3, y + 5);
     y += 10;
   }
 
@@ -52,47 +64,57 @@ export function renderBilingue(ctx: FormatContext): void {
   let grandTotal = 0;
 
   sections.forEach((s: any) => {
-    const sTotal = calcSectionTotal(s, calculatedValues);
-    grandTotal += sTotal;
+    // FIX: Section 13 (Utilidad) — expand rows individually, no section subtotal
+    const isUtil = isUtilidadSection(s);
+    const sTotal = isUtil ? 0 : calcSectionTotal(s, calculatedValues);
+    if (!isUtil) grandTotal += sTotal;
 
-    if (!isSectionHeaderRedundant(s.label || s.id, s.rows)) {
+    if (!isUtil && !isSectionHeaderRedundant(s.label || s.id, s.rows)) {
+      rows.push([{ content: `${sanitizeText(s.label)} / ${translateLabel(s.label)}`, colSpan: 10, styles: { fontStyle: 'bold', fillColor: [240, 240, 255] } }]);
+    } else if (isUtil) {
       rows.push([{ content: `${sanitizeText(s.label)} / ${translateLabel(s.label)}`, colSpan: 10, styles: { fontStyle: 'bold', fillColor: [240, 240, 255] } }]);
     }
 
     const walk = (r: any[], d = 0) => {
       r.forEach(row => {
         if (shouldSkip(row, calculatedValues, skipZeros)) return;
+        const lbl = sanitizeText(row.label || '');
+        // Skip rows with empty label (avoids blank rows)
+        if (!lbl.trim()) return;
         const c = calculatedValues[row.id] || {};
         const indent = '  '.repeat(d);
         // FIX: Use calculatedVH (from vhFormula) before valorHistorico (initial value)
         rows.push([
-          `${indent}${sanitizeText(row.id)}`, `${indent}${sanitizeText(row.label || '')}`, row.um || '-',
-          fmtCell(c.calculatedVH ?? c.valorHistorico ?? 0), fmtCell(c.total || 0),
-          `${indent}${sanitizeText(row.id)}`, `${indent}${translateLabel(sanitizeText(row.label || '')!)}`, row.um || '-',
-          fmtCell(c.calculatedVH ?? c.valorHistorico ?? 0), fmtCell(c.total || 0),
+          `${indent}${sanitizeText(row.id)}`, `${indent}${lbl}`, convertUM(row.um || header.currency || 'CUP', cc) || '-',
+          fmtCell(convertValue(parseFloat(String(c.calculatedVH ?? c.valorHistorico ?? 0)), cc)), fmtCell(convertValue(parseFloat(String(c.total || 0)), cc)),
+          `${indent}${sanitizeText(row.id)}`, `${indent}${translateLabel(sanitizeText(row.label || '')!)}`, convertUM(row.um || header.currency || 'CUP', cc) || '-',
+          fmtCell(convertValue(parseFloat(String(c.calculatedVH ?? c.valorHistorico ?? 0)), cc)), fmtCell(convertValue(parseFloat(String(c.total || 0)), cc)),
         ]);
         if (row.children) walk(row.children, d + 1);
       });
     };
     walk(s.rows || []);
 
-    // Section subtotal
-    rows.push([
-      { content: `Subtotal / Subtotal`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LBL } },
-      { content: '', styles: { fillColor: LBL } },
-      { content: fmtCell(sTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: LBL } },
-      { content: `Subtotal`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LBL } },
-      { content: '', styles: { fillColor: LBL } },
-      { content: fmtCell(sTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: LBL } },
-    ]);
+    // FIX: Section 13 (Utilidad) — no subtotal row, each row is independent
+    if (!isUtil) {
+      // Section subtotal
+      rows.push([
+        { content: `Subtotal / Subtotal`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LBL } },
+        { content: '', styles: { fillColor: LBL } },
+        { content: fmtCell(convertValue(sTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: LBL } },
+        { content: `Subtotal`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LBL } },
+        { content: '', styles: { fillColor: LBL } },
+        { content: fmtCell(convertValue(sTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: LBL } },
+      ]);
+    }
   });
 
   // Grand total row
   rows.push([
     { content: 'TOTAL GENERAL / GRAND TOTAL', colSpan: 4, styles: { fontStyle: 'bold', fillColor: IND, textColor: 255 } },
-    { content: fmtCell(grandTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: IND, textColor: 255 } },
+    { content: fmtCell(convertValue(grandTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: IND, textColor: 255 } },
     { content: 'GRAND TOTAL', colSpan: 4, styles: { fontStyle: 'bold', fillColor: IND, textColor: 255 } },
-    { content: fmtCell(grandTotal), styles: { fontStyle: 'bold', halign: 'right', fillColor: IND, textColor: 255 } },
+    { content: fmtCell(convertValue(grandTotal, cc)), styles: { fontStyle: 'bold', halign: 'right', fillColor: IND, textColor: 255 } },
   ]);
 
   autoTable(doc, {
@@ -133,6 +155,7 @@ export function renderBilingue(ctx: FormatContext): void {
  */
 export function renderComparativo(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, skipZeros, pageWidth, pageHeight } = ctx;
+  const cc = getConversionCtx(header);
   const pw = pageWidth;
 
   // ── Header ──
@@ -144,19 +167,27 @@ export function renderComparativo(ctx: FormatContext): void {
   doc.text('ANALISIS DE SENSIBILIDAD / SENSITIVITY ANALYSIS', pw / 2, 8, { align: 'center' });
   let y = 17;
 
-  // ── General data (compact, bilingual) ──
-  y = addGeneralDataFull(doc, header, y, pw, true);
+  // ── General data (compact, bilingual) — Unified 5-column grid (Cyan theme) ──
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: CYN, hdrText: [255, 255, 255],
+    fcFill: [230, 250, 255], fcText: CYN,
+    fieldText: [30, 30, 30],
+    tableTheme: 'grid',
+    tableLineColor: [180, 220, 230], tableLineWidth: 0.3,
+    priceFill: CYN, priceText: [255, 255, 255],
+  });
 
   // ── KPI strip ──
-  if (calculatedHeader) {
-    const ct = calculatedHeader.totalCost || 0;
+  // FIX: Costo total = Section 12 only (TOTAL COSTOS Y GASTOS)
+  const cmpCt = getCostBase(sections, calculatedValues, calculatedHeader);
+  if (cmpCt > 0) {
     doc.setFillColor(230, 250, 255);
     doc.rect(10, y, pw - 20, 7, 'F');
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 80, 100);
-    doc.text(`Costo Base / Base Cost: ${safeLocale(ct)}`, 14, y + 5);
-    doc.text(`Moneda / Currency: ${sanitizeText(header.currency || 'CUP')}`, pw / 2, y + 5);
+    doc.text(`Costo Base / Base Cost: ${safeLocale(convertValue(cmpCt, cc))}`, 14, y + 5);
+    doc.text(`Moneda / Currency: ${sanitizeText(cc ? cc.targetCurrency : header.currency || 'CUP')}`, pw / 2, y + 5);
     y += 10;
   }
 
@@ -169,22 +200,27 @@ export function renderComparativo(ctx: FormatContext): void {
     // Section header
     rows.push([{ content: sanitizeText(section.label || section.id)!, colSpan: 8, styles: { fontStyle: 'bold', fillColor: [230, 250, 255] } }]);
 
-    let sectionBase = 0;
+    // FIX: Section 13 (Utilidad) — expand rows individually, no section subtotal
+    const isUtil = isUtilidadSection(section);
+    // FIX: Do NOT accumulate sectionBase in walk — parent rows already include children.
     const walk = (r: any[], d = 0) => {
       r.forEach(row => {
+        const lbl = sanitizeText(row.label || '');
+        // Skip rows with empty label (avoids blank rows)
+        if (!lbl.trim()) return;
         const c = calculatedValues[row.id] || {};
         const base = parseFloat(String(c.total || 0));
-        sectionBase += base;
-        const vars = factors.map(f => base * f);
-        const deltaMaxPct = base > 0 ? (Math.max(...vars.map(v => Math.abs(v - base))) / base * 100) : 0;
+        const baseConv = convertValue(base, cc);
+        const vars = factors.map(f => baseConv * f);
+        const deltaMaxPct = baseConv > 0 ? (Math.max(...vars.map(v => Math.abs(v - baseConv))) / baseConv * 100) : 0;
 
         // Color for delta: red if >15%, amber if >10%, green otherwise
         const deltaColor = deltaMaxPct > 15 ? [185, 28, 28] : deltaMaxPct > 10 ? [217, 119, 6] : [40, 40, 40];
 
         rows.push([
           `${'  '.repeat(d)}${sanitizeText(row.id)}`,
-          `${'  '.repeat(d)}${sanitizeText(row.label || '')}`,
-          row.um || '-',
+          `${'  '.repeat(d)}${lbl}`,
+          convertUM(row.um || header.currency || 'CUP', cc) || '-',
           ...vars.map(v => fmtCell(v)),
           { content: `${deltaMaxPct.toFixed(1)}%`, styles: { textColor: deltaColor, fontStyle: deltaMaxPct > 15 ? 'bold' : 'normal' } },
         ]);
@@ -193,10 +229,13 @@ export function renderComparativo(ctx: FormatContext): void {
     };
     walk(section.rows || []);
 
-    // Section subtotal
-    if (sectionBase > 0) {
-      const sVars = factors.map(f => sectionBase * f);
-      const sDelta = (Math.max(...sVars.map(v => Math.abs(v - sectionBase))) / sectionBase * 100);
+    // FIX: Section 13 (Utilidad) — no section subtotal
+    // FIX: sectionBase from top-level rows only (no double-counting)
+    const sectionBase = isUtil ? 0 : calcSectionTotal(section, calculatedValues);
+    if (sectionBase > 0 && !isUtil) {
+      const sectionBaseConv = convertValue(sectionBase, cc);
+      const sVars = factors.map(f => sectionBaseConv * f);
+      const sDelta = (Math.max(...sVars.map(v => Math.abs(v - sectionBaseConv))) / sectionBaseConv * 100);
       rows.push([
         { content: `Subtotal: ${sanitizeText(section.label || section.id)}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: LBL } },
         ...sVars.map(v => ({ content: fmtCell(v), styles: { fontStyle: 'bold', halign: 'right', fillColor: LBL } })),
@@ -218,8 +257,8 @@ export function renderComparativo(ctx: FormatContext): void {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // ── Summary comparison ──
-  if (calculatedHeader && y < pageHeight - 50) {
-    const baseCost = parseFloat(String(calculatedHeader.totalCost || 0));
+  if (cmpCt > 0 && y < pageHeight - 35) {
+    const baseCost = convertValue(cmpCt, cc);
     const scenarios = [
       { label: 'BASE (100%)', value: baseCost },
       { label: 'Optimista (-10%)', value: baseCost * 0.9 },
@@ -270,6 +309,7 @@ export function renderComparativo(ctx: FormatContext): void {
  */
 export function renderExportacion(ctx: FormatContext): void {
   const { doc, header, sections, calculatedValues, calculatedHeader, skipZeros, pageWidth, pageHeight } = ctx;
+  const cc = getConversionCtx(header);
   const pw = pageWidth;
 
   // ── Export header ──
@@ -281,11 +321,21 @@ export function renderExportacion(ctx: FormatContext): void {
   doc.text('FICHA DE COSTO - PARA EXPORTACION / EXPORT COST SHEET', pw / 2, 10, { align: 'center' });
   let y = 22;
 
-  // ── Full bilingual header ──
-  y = addGeneralDataFull(doc, header, y, pw, true);
+  // ── Full bilingual header — Unified 5-column grid (Emerald theme) ──
+  y = addGeneralDataTable(doc, header, calculatedValues, y, pw, {
+    hdrFill: EMR, hdrText: [255, 255, 255],
+    fcFill: [230, 250, 240], fcText: EMR,
+    fieldText: [30, 30, 30],
+    tableTheme: 'grid',
+    tableLineColor: [180, 220, 200], tableLineWidth: 0.3,
+    priceFill: EMR, priceText: [255, 255, 255],
+  });
 
   // ── International fields box ──
-  const rate = parseFloat(String(header.exchangeRate || 1));
+  const rate = cc ? cc.rate : parseFloat(String(header.exchangeRate || 1));
+  const hasDualCurrency = cc && cc.active && rate !== 1;
+  const targetCur = cc ? cc.targetCurrency : 'USD';
+  const baseCur = cc ? cc.baseCurrency : 'CUP';
   doc.setFillColor(230, 250, 240);
   doc.setDrawColor(...EMR);
   doc.setLineWidth(0.5);
@@ -301,7 +351,7 @@ export function renderExportacion(ctx: FormatContext): void {
     16, y + 8
   );
   doc.text(
-    `Tasa de cambio / Exchange Rate: 1 USD = ${rate === 1 ? 'N/C' : safeLocale(rate) + ' CUP'}    |    Cliente / Client: ${sanitizeText(header.client || header.clientePrincipal || 'N/A')}`,
+    `Tasa de cambio / Exchange Rate: 1 ${targetCur} = ${hasDualCurrency ? safeLocale(rate) + ' ' + baseCur : 'N/C'}    |    Cliente / Client: ${sanitizeText(header.client || header.clientePrincipal || 'N/A')}`,
     16, y + 12
   );
   y += 18;
@@ -309,23 +359,29 @@ export function renderExportacion(ctx: FormatContext): void {
   // ── Sections with CUP/USD columns ──
   const rows: any[][] = [];
   let grandCUP = 0;
+  // FIX: Costo total = Section 12 only (TOTAL COSTOS Y GASTOS)
+  const expCt = getCostBase(sections, calculatedValues, calculatedHeader);
 
   sections.forEach((section: any) => {
-    const sCUP = calcSectionTotal(section, calculatedValues);
-    grandCUP += sCUP;
+    const isUtil = isUtilidadSection(section);
+    const sCUP = isUtil ? 0 : calcSectionTotal(section, calculatedValues);
+    if (!isUtil) grandCUP += sCUP;
 
     rows.push([{ content: sanitizeText(section.label || section.id)!, colSpan: 6, styles: { fontStyle: 'bold', fillColor: [230, 250, 240] } }]);
 
     const walk = (r: any[], d = 0) => {
       r.forEach(row => {
         if (shouldSkip(row, calculatedValues, skipZeros)) return;
+        const lbl = sanitizeText(row.label || '');
+        // Skip rows with empty label (avoids blank rows)
+        if (!lbl.trim()) return;
         const c = calculatedValues[row.id] || {};
         const cup = parseFloat(String(c.total || 0));
-        const usd = rate !== 1 ? cup / rate : null;
-        const pct = (calculatedHeader?.totalCost || 0) > 0 ? (cup / (calculatedHeader?.totalCost || 1) * 100).toFixed(1) : '-';
+        const usd = hasDualCurrency ? convertValue(cup, cc) : null;
+        const pct = expCt > 0 ? (cup / expCt * 100).toFixed(1) : '-';
         rows.push([
           `${'  '.repeat(d)}${sanitizeText(row.id)}`,
-          `${'  '.repeat(d)}${sanitizeText(row.label || '')}`,
+          `${'  '.repeat(d)}${lbl}`,
           row.um || '-',
           fmtCell(cup),
           usd !== null ? fmtCell(usd) : 'N/C',
@@ -336,19 +392,22 @@ export function renderExportacion(ctx: FormatContext): void {
     };
     walk(section.rows || []);
 
-    // Section subtotal
-    const sUSD = rate !== 1 ? sCUP / rate : null;
-    const sPct = (calculatedHeader?.totalCost || 0) > 0 ? (sCUP / (calculatedHeader?.totalCost || 1) * 100).toFixed(1) : '-';
-    rows.push([
-      { content: `Subtotal: ${sanitizeText(section.label || section.id)}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: [230, 250, 240] } },
-      { content: fmtCell(sCUP), styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
-      { content: sUSD !== null ? fmtCell(sUSD) : 'N/C', styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
-      { content: `${sPct}%`, styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
-    ]);
+    // FIX: Section 13 (Utilidad) — no section subtotal
+    if (!isUtil) {
+      // Section subtotal
+      const sUSD = hasDualCurrency ? convertValue(sCUP, cc) : null;
+      const sPct = expCt > 0 ? (sCUP / expCt * 100).toFixed(1) : '-';
+      rows.push([
+        { content: `Subtotal: ${sanitizeText(section.label || section.id)}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: [230, 250, 240] } },
+        { content: fmtCell(sCUP), styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
+        { content: sUSD !== null ? fmtCell(sUSD) : 'N/C', styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
+        { content: `${sPct}%`, styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 250, 240] } },
+      ]);
+    }
   });
 
   // Grand total
-  const grandUSD = rate !== 1 ? grandCUP / rate : null;
+  const grandUSD = hasDualCurrency ? convertValue(grandCUP, cc) : null;
   rows.push([
     { content: 'TOTAL GENERAL / GRAND TOTAL', colSpan: 3, styles: { fontStyle: 'bold', fillColor: EMR, textColor: 255 } },
     { content: fmtCell(grandCUP), styles: { fontStyle: 'bold', halign: 'right', fillColor: EMR, textColor: 255 } },
@@ -369,7 +428,7 @@ export function renderExportacion(ctx: FormatContext): void {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // ── Exchange rate note ──
-  if (rate === 1) {
+  if (!hasDualCurrency) {
     doc.setFontSize(6);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(150);
@@ -378,7 +437,7 @@ export function renderExportacion(ctx: FormatContext): void {
   }
 
   // ── Certificate of compliance ──
-  if (y < pageHeight - 60) {
+  if (y < pageHeight - 30) {
     doc.setDrawColor(...EMR);
     doc.setLineWidth(0.5);
     doc.roundedRect(14, y, pw - 28, 20, 2, 2, 'S');
