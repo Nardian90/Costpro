@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CostSheetProblemsPanel } from '../CostSheetProblemsPanel';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -8,37 +8,44 @@ describe('CostSheetProblemsPanel', () => {
     { type: 'WARNING' as const, message: 'Revisar coeficientes', rowId: 'row-2', code: 'SEMANTIC_DISCREPANCY' as const }
   ];
 
-  it('no renderiza nada si no hay problemas', () => {
-    const { container } = render(<CostSheetProblemsPanel problems={[]} />);
-    expect(container.firstChild).toBeNull();
+  it('no muestra el badge de alerta si no hay problemas accionables', () => {
+    render(<CostSheetProblemsPanel problems={[]} />);
+    // El panel ahora siempre renderiza la barra de KPIs, pero no el badge de alerta
+    expect(screen.queryByRole('button', { name: /problemas/i })).toBeNull();
+    expect(screen.getByText(/Precio Venta/i)).toBeInTheDocument();
   });
 
-  it('muestra el botón flotante con el número de problemas', () => {
+  it('muestra el badge con el número de problemas críticos si existen', () => {
     render(<CostSheetProblemsPanel problems={mockProblems} />);
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // Muestra '1' porque solo hay un problema CRITICAL y el badge prioriza críticos
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('abre el panel al hacer click en el botón', () => {
-    render(<CostSheetProblemsPanel problems={mockProblems} />);
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('Problemas de Validación')).toBeInTheDocument();
-    expect(screen.getByText('Falta valor base')).toBeInTheDocument();
-    expect(screen.getByText('Revisar coeficientes')).toBeInTheDocument();
+  it('muestra el badge con advertencias si no hay críticos', () => {
+    const onlyWarnings = [
+      { type: 'WARNING' as const, message: 'Revisar algo', rowId: 'row-3', code: 'SEMANTIC_DISCREPANCY' as const }
+    ];
+    render(<CostSheetProblemsPanel problems={onlyWarnings} />);
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('llama a onGoTo y cierra el panel al hacer click en "Ir a fila"', async () => {
-    const onGoTo = vi.fn();
-    render(<CostSheetProblemsPanel problems={mockProblems} onGoTo={onGoTo} />);
-    fireEvent.click(screen.getByRole('button')); // Abre
+  it('llama a onGoToAudit al hacer click en el badge de alerta', () => {
+    const onGoToAudit = vi.fn();
+    render(<CostSheetProblemsPanel problems={mockProblems} onGoToAudit={onGoToAudit} />);
 
-    const goToButtons = screen.getAllByText(/Ir a fila/i);
-    fireEvent.click(goToButtons[0]);
+    const alertBadge = screen.getByRole('button', { name: /problemas/i });
+    fireEvent.click(alertBadge);
 
-    expect(onGoTo).toHaveBeenCalledWith('row-1');
+    expect(onGoToAudit).toHaveBeenCalled();
+  });
 
-    // Esperar a que AnimatePresence termine de desmontar
-    await waitFor(() => {
-      expect(screen.queryByText('Problemas de Validación')).not.toBeInTheDocument();
-    });
+  it('muestra botón de volver en vista de auditoría', () => {
+    const onGoBack = vi.fn();
+    render(<CostSheetProblemsPanel problems={[]} isAuditView={true} onGoBack={onGoBack} />);
+
+    const backButton = screen.getByRole('button', { name: /volver/i });
+    fireEvent.click(backButton);
+
+    expect(onGoBack).toHaveBeenCalled();
   });
 });
