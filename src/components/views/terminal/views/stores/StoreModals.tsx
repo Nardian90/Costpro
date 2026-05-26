@@ -73,7 +73,7 @@ export function StoreModals({
         setIsUploading(true);
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const fileName = `${crypto.randomUUID()}.${fileExt}`;
             const filePath = `store-logos/${fileName}`;
 
             const { error: uploadError } = await supabase.storage

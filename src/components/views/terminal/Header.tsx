@@ -37,6 +37,7 @@ interface HeaderProps {
   user: UserContract | null;
   handleSetActiveStore: (id: string) => void;
   allStores?: any[];
+  onLogout?: () => void;
 }
 
 function SidebarIcon({ sidebarState }: { sidebarState: string }) {
@@ -55,12 +56,13 @@ export const Header = ({
   onViewChange,
   user,
   handleSetActiveStore,
-  allStores = []
+  allStores = [],
+  onLogout,
 }: HeaderProps) => {
   // Determine which list of stores to show
   const storesToShow = user?.role === 'admin' && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
-    : user?.memberships?.map(m => ({
+    : user?.memberships?.filter(m => m.status === 'active').map(m => ({
         id: m.store_id || '',
         name: m.store?.name || (m.store_id ? `Sucursal ${m.store_id.slice(0, 4)}` : 'Desconocida')
       })) || [];
@@ -203,10 +205,10 @@ export const Header = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer focus:bg-danger/10 focus:text-danger min-h-[44px] text-danger"
-                onClick={() => onViewChange('dashboard')}
+                onClick={() => onLogout?.()}
               >
                 <LogOut aria-hidden="true" className="w-4 h-4" />
-                <span className="text-xs font-semibold">Cerrar Sesión</span>
+                <span className="text-xs font-semibold">Cerrar Sesion</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

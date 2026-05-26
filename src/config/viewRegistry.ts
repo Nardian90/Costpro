@@ -145,6 +145,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["start_count", "reconcile_count"]
   },
   {
+    id: "labels",
+    route: "/terminal?view=labels",
+    description: "Generación e impresión de etiquetas de producto con código de barras para exhibición. Hasta 4 por hoja carta.",
+    actions: ["generate_labels", "print_labels"]
+  },
+  {
     id: "news",
     route: "/terminal?view=news",
     description: "Noticias y comunicados internos de la empresa.",

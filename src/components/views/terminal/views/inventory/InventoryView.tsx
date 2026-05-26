@@ -3,13 +3,15 @@
 import { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
 import ProductReceptionView from './ProductReceptionView';
 import InventoryAdjustmentModal from './InventoryAdjustmentModal';
+import KardexModal from './KardexModal';
+import ABCAnalysisModal from './ABCAnalysisModal';
 import { Product } from '@/types';
 import { uuidRegex } from '@/validation/schemas';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -22,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { useStockAlerts } from '@/hooks/logic/useStockAlerts';
 import StockAlertsPanel from './StockAlertsPanel';
+import InventoryKPIs from './InventoryKPIs';
 
 const PAGE_LIMIT = 20;
 
@@ -56,6 +59,8 @@ export default function InventoryView() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+    const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
+    const [showABC, setShowABC] = useState(false);
     const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(null);
 
     const { mutateAsync: adjustStock } = useAdjustStock();
@@ -160,6 +165,14 @@ export default function InventoryView() {
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },
+        {
+            id: 'abc-analysis',
+            label: 'Análisis ABC',
+            icon: BarChart3,
+            onClick: () => setShowABC(true),
+            variant: 'outline',
+            className: currentView === 'inventory' ? 'flex' : 'hidden',
+        },
     ];
 
 
@@ -215,6 +228,11 @@ export default function InventoryView() {
 
             <QueryInspector />
 
+            {/* KPI Dashboard */}
+            {products.length > 0 && (
+              <InventoryKPIs products={products} />
+            )}
+
             <div className="space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-md sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:mx-0 sm:px-0 sm:shadow-none">
                 <SearchBar
                     value={searchTerm}
@@ -255,6 +273,7 @@ export default function InventoryView() {
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
                                 onAdjust={handleAdjustProduct}
+                                onViewKardex={setKardexProduct}
                             />
                         )
                     )}
@@ -269,6 +288,18 @@ export default function InventoryView() {
                     onConfirm={handleConfirmAdjustment}
                 />
             )}
+
+            <KardexModal
+                product={kardexProduct}
+                isOpen={!!kardexProduct}
+                onClose={() => setKardexProduct(null)}
+            />
+
+            <ABCAnalysisModal
+                products={products}
+                isOpen={showABC}
+                onClose={() => setShowABC(false)}
+            />
 
             {isMobile && (
                 <ActionMenu

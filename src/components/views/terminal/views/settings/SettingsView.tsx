@@ -47,6 +47,7 @@ export default function SettingsView() {
       const { data, error } = await supabase
         .from('ai_api_keys')
         .select('*')
+        .eq('store_id', user?.activeStoreId)
         .order('created_at', { ascending: false });
 
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
@@ -68,7 +69,7 @@ export default function SettingsView() {
     try {
       const { data, error } = await supabase
         .from('ai_api_keys')
-        .insert([{ ...newKey, user_id: user?.id }])
+        .insert([{ ...newKey, user_id: user?.id, store_id: user?.activeStoreId }])
         .select();
 
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
@@ -85,7 +86,7 @@ export default function SettingsView() {
 
   const handleDeleteKey = async (id: string) => {
     try {
-      const { error } = await supabase.from('ai_api_keys').delete().eq('id', id);
+      const { error } = await supabase.from('ai_api_keys').delete().eq('id', id).eq('store_id', user?.activeStoreId);
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
       if (error) { toast.error('Error al eliminar la llave: ' + error.message); return; }
       setAiKeys(aiKeys.filter(k => k.id !== id));
@@ -100,7 +101,8 @@ export default function SettingsView() {
       const { error } = await supabase
         .from('ai_api_keys')
         .update({ is_active: !key.is_active })
-        .eq('id', key.id);
+        .eq('id', key.id)
+        .eq('store_id', user?.activeStoreId);
 
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
       if (error) { toast.error('Error al actualizar estado: ' + error.message); return; }
@@ -116,7 +118,8 @@ export default function SettingsView() {
       const { error } = await supabase
         .from('ai_api_keys')
         .update(updatedFields)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('store_id', user?.activeStoreId);
 
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
       if (error) { toast.error('Error al actualizar la llave: ' + error.message); return; }
@@ -408,7 +411,8 @@ export default function SettingsView() {
                       const { error } = await supabase
                         .from('tax_configurations')
                         .update({ is_active: !tax.is_active })
-                        .eq('id', tax.id);
+                        .eq('id', tax.id)
+                        .eq('store_id', user?.activeStoreId);
 
                       // FIX-BUG-LOG-016: Explicit error check with toast and early return
                       if (error) { toast.error('Error al actualizar impuesto: ' + error.message); return; }

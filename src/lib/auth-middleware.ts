@@ -54,14 +54,16 @@ export function withAuth(handler: AuthHandler) {
       try {
         const { data: profile } = await admin
           .from('profiles')
-          .select('role, roles, memberships:user_store_memberships(*)')
+          .select('role, roles, memberships:user_store_memberships(user_id,store_id,role,status)')
           .eq('id', session.user.id)
           .single();
 
         if (profile) {
           enrichedUser.role = profile.role;
           enrichedUser.roles = profile.roles;
-          enrichedUser.memberships = profile.memberships;
+          enrichedUser.memberships = (profile.memberships || []).filter(
+            (m: any) => m.status === 'active'
+          );
         }
       } catch (err) {
         console.error('[withAuth] RBAC Enrichment Error:', err);
@@ -97,7 +99,7 @@ export function withRole(requiredRole: UserRole, handler: AuthHandler) {
 
     const { data: profile } = await admin
       .from('profiles')
-      .select('role, roles, memberships:user_store_memberships(*)')
+      .select('role, roles, memberships:user_store_memberships(user_id,store_id,role,status)')
       .eq('id', session.user.id)
       .single();
 
@@ -108,13 +110,17 @@ export function withRole(requiredRole: UserRole, handler: AuthHandler) {
       );
     }
 
+    const activeMemberships = (profile.memberships || []).filter(
+      (m: any) => m.status === 'active'
+    );
+
     const enrichedSession: AuthenticatedSession = {
       ...session,
       user: {
         ...session.user,
         role: profile.role,
         roles: profile.roles,
-        memberships: profile.memberships
+        memberships: activeMemberships
       } as any
     };
 

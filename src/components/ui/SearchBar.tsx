@@ -90,7 +90,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           aria-expanded={ariaExpanded}
           role={role}
           className={cn(
-            "w-full pl-12 pr-24 py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
+            "w-full !pl-12 !pr-24 !py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
             !isPerformanceTheme(theme) ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
           )}
         />

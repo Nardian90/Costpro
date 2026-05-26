@@ -210,7 +210,7 @@ export function useInventoryCount() {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            storeId: user.storeId,
+            storeId: user?.activeStoreId,
             items: itemsToSubmit
           }),
         });

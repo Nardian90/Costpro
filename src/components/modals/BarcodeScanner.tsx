@@ -73,7 +73,8 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         stopScanner();
       };
     }
-  }, [isOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, onScan, onClose]);
 
   return (
     <BaseModal

@@ -53,7 +53,7 @@ export default function CloseSessionPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [token, user]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const quantity = parseInt(value, 10);
@@ -104,7 +104,7 @@ export default function CloseSessionPage() {
   };
 
   const handleFinalSubmit = async () => {
-    if (!user?.storeId) return;
+    if (!user?.activeStoreId) return;
     setIsSubmitting(true);
 
     const itemsToSubmit = differences.map(d => ({
@@ -117,7 +117,7 @@ export default function CloseSessionPage() {
       }))
     }));
 
-    const storeId = user.storeId;
+    const storeId = user.activeStoreId;
 
     try {
       const response = await fetch("/api/inventory/adjustments", {

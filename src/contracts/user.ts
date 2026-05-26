@@ -12,6 +12,7 @@ export interface UserContract {
   fullName: string;
   role: UserRole;
   roles: UserRole[];
+  /** @deprecated Use activeStoreId instead. This field is legacy from single-store era. */
   storeId: string;
   activeStoreId: string;
   maxStoresLimit: number;
@@ -68,7 +69,8 @@ export const mapProfileToContract = (p: Profile): UserContract => ({
   email: p.email,
   fullName: p.full_name,
   role: p.role,
-  roles: p.roles || [p.role],
+  roles: (p.roles && p.roles.length > 0 ? p.roles : [p.role]),
+  // Legacy field — kept for backward compatibility with single-store era
   storeId: p.store_id || '',
   activeStoreId: p.active_store_id || '',
   maxStoresLimit: p.max_stores_limit ?? 1,

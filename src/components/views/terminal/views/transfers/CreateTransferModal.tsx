@@ -201,7 +201,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 placeholder="Nombre o SKU del producto..."
                 aria-label="Buscar productos por nombre o código SKU para agregar a la transferencia"
                 aria-busy={isSearching}
-                className="neu-input w-full pl-10 text-sm"
+                className="neu-input w-full !pl-10 text-sm"
               />
             </div>
 

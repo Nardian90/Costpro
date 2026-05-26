@@ -16,14 +16,14 @@ export default function CashClosureView() {
     isLoading: isLoadingClosures,
     refetch: refetchClosures,
     isRefetching: isRefetchingClosures
-  } = useCashClosures(user?.storeId, user?.role === 'admin');
+  } = useCashClosures(user?.activeStoreId, user?.role === 'admin');
 
   const {
     data: salesData,
     isLoading: isLoadingSales,
     refetch: refetchSales,
     isRefetching: isRefetchingSales
-  } = useSalesSinceLastClosure(user?.storeId);
+  } = useSalesSinceLastClosure(user?.activeStoreId);
 
   const createClosure = useCreateCashClosure();
   const updateClosure = useUpdateCashClosure();
@@ -68,7 +68,7 @@ export default function CashClosureView() {
   const canClose = ['admin', 'manager', 'encargado'].includes(user?.role || '');
 
   const handleProcessClosure = async () => {
-    if (!user?.storeId) return;
+    if (!user?.activeStoreId) return;
 
     if (pendingClosure) {
       // If user is manager/admin, they finalize. If clerk, they update declaration.
@@ -90,7 +90,7 @@ export default function CashClosureView() {
     } else {
       // Create declaration (Operator flow)
       createClosure.mutate({
-        store_id: user.storeId,
+        store_id: user.activeStoreId,
         user_id: user.id,
         declared_cash: declaredCash,
         declared_vouchers: declaredVouchers,

@@ -21,7 +21,7 @@ export function useSalesHistoryView() {
     const duplicateDocumentMutation = useDuplicateDocument();
 
     // Data Fetching
-    const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.storeId, user?.role === 'admin');
+    const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
 
     const filteredTransactions = useMemo(() => {
         return transactionsData.filter(t =>
@@ -56,12 +56,14 @@ export function useSalesHistoryView() {
             return;
         }
 
+        if (!user?.activeStoreId) { toast.error('No hay tienda activa'); return; }
+
         try {
             await invertDocumentMutation.mutateAsync({
                 type: 'sale',
                 id: txn.id,
                 items: transactionItems.length > 0 && selectedTransactionId === txn.id ? transactionItems : undefined,
-                storeId: user?.activeStoreId || user?.storeId || ''
+                storeId: user?.activeStoreId || ''
             });
         } catch (error) {
             console.error('Error inverting sale:', error);

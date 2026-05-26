@@ -146,11 +146,15 @@ export interface Store {
 // Producto
 // ============================================
 
+export type BarcodeType = 'EAN13' | 'UPC' | 'CODE128' | 'SKU' | 'auto';
+
 export interface Product {
   id: string;
   name: string;
   description?: string | null;
   sku?: string | null;
+  barcode?: string | null;
+  barcode_type?: BarcodeType | null;
   price: number;
   cost_price: number;
   image_url?: string | null;

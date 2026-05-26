@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 export default function InventoryAdjustmentsView() {
   const { user } = useAuthStore();
   // Usamos el mismo storeId que el resto de la app
-  const currentStoreId = user?.activeStoreId || user?.storeId;
+  const currentStoreId = user?.activeStoreId;
   const { data: movementsData, isLoading, refetch } = useStockMovements(currentStoreId, user?.role === 'admin');
   const [searchTerm, setSearchTerm] = useState('');
 

@@ -89,9 +89,11 @@ export const useCartStore = create<CartState>()(
             );
 
             if (existing) {
-              const stock = product?.stock_current ?? product?.stock ?? 999999;
-              if (existing.quantity + incomingQuantity > stock) {
-                toast.warning(`No hay suficiente stock for ${product?.name || 'producto'}.`);
+              const conversionFactor = variant?.conversion_factor || 1;
+              // Stock is in base units; variant quantity must be multiplied by conversion_factor
+              const maxVariantQty = Math.floor((product?.stock_current ?? product?.stock ?? 999999) / conversionFactor);
+              if (existing.quantity + incomingQuantity > maxVariantQty) {
+                toast.warning(`Stock insuficiente para ${product?.name || 'producto'}. Máx: ${maxVariantQty} ${variant?.name || 'uds'}`);
                 return;
               }
               existing.quantity += incomingQuantity;
@@ -99,8 +101,10 @@ export const useCartStore = create<CartState>()(
               existing.cash_paid = existing.subtotal;
               existing.transfer_paid = 0;
             } else {
+              const conversionFactor = variant?.conversion_factor || 1;
               const stock = product?.stock_current ?? product?.stock ?? 999999;
-              if (stock <= 0) {
+              const maxVariantQty = Math.floor(stock / conversionFactor);
+              if (maxVariantQty <= 0) {
                 toast.error(`Producto ${product?.name || 'producto'} sin existencias.`);
                 return;
               }
@@ -168,12 +172,14 @@ export const useCartStore = create<CartState>()(
               (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
-              const stock = item.product?.stock_current ?? (item.product as any)?.stock ?? 999999;
-              if (quantity > stock) {
+              const conversionFactor = item.variant?.conversion_factor || 1;
+              const stockInBaseUnits = item.product?.stock_current ?? (item.product as any)?.stock ?? 999999;
+              const maxVariantQty = Math.floor(stockInBaseUnits / conversionFactor);
+              if (quantity > maxVariantQty) {
                 toast.warning(
-                  `Stock máximo para ${item.product?.name || 'producto'} es ${stock}.`,
+                  `Stock máximo para ${item.product?.name || 'producto'} es ${maxVariantQty} ${item.variant?.name || 'uds'}.`,
                 );
-                item.quantity = stock;
+                item.quantity = maxVariantQty;
               } else if (quantity > 0) {
                 item.quantity = quantity;
               } else {
