@@ -36,9 +36,12 @@ async function postHandler(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido en la solicitud' }, { status: 400 });
     }
 
-    const parsed = aiChatSchema.safeParse(body);
+        const parsed = aiChatSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
+      const errorResponse = zodError(parsed.error);
+      console.error("[AIChat] Validation error:", JSON.stringify(errorResponse));
+      console.log("[AIChat] Payload received:", JSON.stringify(body));
+      return NextResponse.json(errorResponse, { status: 400 });
     }
     const { messages, sheetData, aiProvider, aiApiKey } = parsed.data;
 
