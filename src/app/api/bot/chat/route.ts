@@ -581,7 +581,7 @@ async function botChatHandler(req: NextRequest) {
 
       // Build messages for Gemini with multimodal support (F1-01)
       const geminiMessages: GeminiMessage[] = messages
-        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+        .filter((m: any) => m.role === 'user' || m.role === 'assistant' || m.role === 'model')
         .map((m: any) => ({
           role: m.role,
           content: m.content || '',

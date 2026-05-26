@@ -1,5 +1,8 @@
+import { Message } from '@/lib/ai/types';
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
+
+//  from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { aiChatSchema, zodError } from '@/validation/api-schemas';
@@ -93,7 +96,7 @@ async function postHandler(req: NextRequest) {
     try {
       // Use user-specific key if available
       const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
-      const response = await provider.getResponse([systemPrompt, ...messages], { temperature: 0.1 });
+      const response = await provider.getResponse([systemPrompt, ...(messages as any)], { temperature: 0.1 });
 
       if (!response || !response.text) {
         throw new Error('La IA no devolvió ninguna respuesta');

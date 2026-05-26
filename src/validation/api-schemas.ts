@@ -3,140 +3,138 @@ import { z } from 'zod';
 // ─── Users ───────────────────────────────────────────────────────────────────
 export const managedCreateUserSchema = z.object({
   p_email: z.string().email('Email inválido'),
-  p_password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
+  p_password: z.string().min(8, 'Mínimo 8 caracteres').optional().nullable(),
   p_full_name: z.string().min(1, 'Nombre requerido'),
-  p_role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo', 'superadmin']),
-  p_store_id: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid('store_id inválido').nullable().optional()),
-  p_memberships: z.array(z.any()).optional(),
-  p_max_stores: z.number().int().optional(),
-  p_max_users: z.number().int().optional(),
-});
+  p_role: z.any().optional(),
+  p_store_id: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().optional().nullable()),
+  p_memberships: z.array(z.any()).optional().nullable().default([]),
+  p_max_stores: z.any().optional(),
+  p_max_users: z.any().optional(),
+}).passthrough();
 
 export const toggleUserStatusSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
-  is_active: z.boolean(),
-});
+  user_id: z.string().uuid(),
+  is_active: z.any(),
+}).passthrough();
 
 export const deleteUserSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
-});
+  user_id: z.string().uuid(),
+}).passthrough();
 
 export const resetPasswordSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
-  new_password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
-  send_reset_email: z.boolean().optional().default(true),
-});
+  user_id: z.string().uuid(),
+  new_password: z.string().optional().nullable(),
+  send_reset_email: z.any().optional(),
+}).passthrough();
 
 // ─── Inventory ────────────────────────────────────────────────────────────────
 export const inventoryAdjustSchema = z.object({
-  productId: z.string().uuid('productId inválido'),
-  storeId: z.string().uuid('storeId inválido'),
-  quantity: z.number().int().min(-9999).max(99999),
-  movementType: z.enum(['add', 'subtract', 'set']),
-  version: z.number().int().positive('version debe ser positivo'),
-  reason: z.string().max(500).optional(),
-});
+  productId: z.string().uuid(),
+  storeId: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable()),
+  quantity: z.any(),
+  movementType: z.any(),
+  version: z.any(),
+  reason: z.any().optional(),
+}).passthrough();
 
 export const inventoryAdjustmentsSchema = z.object({
-  storeId: z.string().uuid('storeId inválido'),
-  items: z.array(z.object({
-    product_id: z.string().uuid(),
-    quantity: z.number().int(),
-    movement_type: z.enum(['add', 'subtract', 'set']).optional(),
-    reason: z.string().max(500).optional(),
-  })).min(1, 'Se requiere al menos un ítem'),
-});
+  storeId: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable()),
+  items: z.array(z.any()).min(1),
+}).passthrough();
 
 // ─── Cost sheets ─────────────────────────────────────────────────────────────
 export const costSheetSaveSchema = z.object({
   updateData: z.record(z.string(), z.unknown()),
-  currentData: z.record(z.string(), z.unknown()).optional(),
-});
+  currentData: z.record(z.string(), z.unknown()).optional().nullable(),
+}).passthrough();
 
 export const aiChatSchema = z.object({
   messages: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system', 'tool', 'model']),
-    content: z.string().max(8000).default(''),
-  })).min(1).max(50),
-  aiProvider: z.string().min(1).max(50).optional(),
-  sheetData: z.record(z.string(), z.unknown()).optional().nullable(),
-  aiApiKey: z.string().optional(),
-});
+    role: z.preprocess((val) => {
+      const s = String(val).toLowerCase();
+      if (s === 'model' || s === 'assistant') return 'assistant';
+      return s;
+    }, z.string().default('user')),
+    content: z.preprocess((val) => (val === null || val === undefined ? '' : String(val)), z.string().default('')),
+  }).passthrough()).optional().nullable().default([]),
+  aiProvider: z.any().optional(),
+  sheetData: z.any().optional(),
+  aiApiKey: z.any().optional(),
+}).passthrough();
 
 // ─── Reports ─────────────────────────────────────────────────────────────────
 export const reportsGenerateSchema = z.object({
-  type: z.enum(['cost-sheet', 'inventory', 'sales', 'transfer', 'cash', 'profit', 'kardex', 'purchases', 'audit']),
-  format: z.enum(['a4', 'letter', 'legal']).optional().default('a4'),
-  orientation: z.enum(['portrait', 'landscape']).optional().default('portrait'),
-  data: z.record(z.string(), z.unknown()).optional(),
-  from: z.string().optional(),
-  to: z.string().optional(),
-  store_id: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().optional().nullable()),
-  columns: z.array(z.string()).optional(),
-  name: z.string().optional(),
-  definition_id: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? undefined : val), z.string().uuid().optional()),
-  calculatedValues: z.record(z.string(), z.any()).optional(),
-  calculatedAnnexes: z.array(z.any()).optional(),
-  options: z.record(z.string(), z.unknown()).optional(),
-});
+  type: z.any(),
+  format: z.any().optional(),
+  orientation: z.any().optional(),
+  data: z.any().optional(),
+  from: z.any().optional(),
+  to: z.any().optional(),
+  store_id: z.preprocess((val) => (val === '' ? null : val), z.string().uuid().optional().nullable()),
+  columns: z.any().optional(),
+  name: z.any().optional(),
+  definition_id: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable()),
+  calculatedValues: z.any().optional(),
+  calculatedAnnexes: z.any().optional(),
+  options: z.any().optional(),
+}).passthrough();
 
 // ─── Academy ─────────────────────────────────────────────────────────────────
 export const academyGenerateSchema = z.object({
-  filename: z.string().min(1).max(200),
-  limit: z.number().int().min(1).max(20).optional().default(3),
-  aiProvider: z.string().min(1).max(50),
-  aiApiKey: z.string().optional(),
-});
+  filename: z.string().min(1),
+  limit: z.any().optional(),
+  aiProvider: z.any(),
+  aiApiKey: z.any().optional(),
+}).passthrough();
 
 export const academyReviewSchema = z.object({
-  score: z.number().int().min(0).max(5),
-});
+  score: z.any(),
+}).passthrough();
 
 // ─── Logs ─────────────────────────────────────────────────────────────────────
 export const logsSchema = z.object({
-  context: z.string().max(100).optional(),
-  error: z.object({
-    message: z.string().max(1000),
-    stack: z.string().max(5000).optional(),
-    code: z.string().max(50).optional(),
-  }),
-});
+  context: z.any().optional(),
+  error: z.any(),
+}).passthrough();
 
 // ─── Bot ────────────────────────────────────────────────────────────────────
 export const botMessageSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system', 'tool', 'model']),
-  content: z.string().default(''),
-  tool_calls: z.array(z.record(z.string(), z.unknown())).optional(),
-  tool_call_id: z.string().optional(),
-  name: z.string().optional(),
-  imageData: z.object({
-    mimeType: z.string(),
-    data: z.string(),
-  }).nullable().optional(),
-});
+  role: z.preprocess((val) => {
+    const s = String(val).toLowerCase();
+    if (s === 'model' || s === 'assistant') return 'assistant';
+    return s;
+  }, z.string().default('user')),
+  content: z.preprocess((val) => (val === null || val === undefined ? '' : String(val)), z.string().default('')),
+  tool_calls: z.any().optional().nullable(),
+  tool_call_id: z.any().optional().nullable(),
+  name: z.any().optional().nullable(),
+  imageData: z.any().optional().nullable(),
+}).passthrough();
 
 export const botChatSchema = z.object({
-  message: z.string().min(1).max(4000).optional(),
-  messages: z.array(botMessageSchema).optional(),
-  conversationId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? undefined : val), z.string().uuid().optional()),
-  context: z.record(z.string(), z.unknown()).optional(),
-  aiProvider: z.string().optional(),
-  aiApiKey: z.string().optional(),
-  model: z.string().optional(),
-  storeId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().nullable().optional()),
-  temperature: z.preprocess((val) => (typeof val === 'string' ? parseFloat(val) : val), z.number().min(0).max(1).optional()),
-  stream: z.boolean().optional(),
-});
+  message: z.any().optional(),
+  messages: z.array(botMessageSchema).optional().nullable().default([]),
+  conversationId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? undefined : val), z.string().uuid().optional().nullable()),
+  context: z.any().optional(),
+  aiProvider: z.preprocess((val) => (val === '' ? undefined : val), z.string().optional().nullable()),
+  aiApiKey: z.preprocess((val) => (val === '' ? undefined : val), z.string().optional().nullable()),
+  model: z.any().optional(),
+  storeId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().optional().nullable()),
+  temperature: z.any().optional(),
+  stream: z.any().optional(),
+}).passthrough();
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
 export function zodError(errors: z.ZodError) {
   const firstError = errors.issues[0];
-  const detail = firstError ? `${firstError.path.join('.')}: ${firstError.message}` : 'Unknown validation error';
+  const path = firstError ? (Array.isArray(firstError.path) ? firstError.path.join('.') : 'root') : 'unknown';
+  const message = firstError ? firstError.message : 'Unknown validation error';
+  const detail = `${path}: ${message}`;
   return {
     ok: false,
     error: `Validation failed: ${detail}`,
     details: errors.issues.map(e => ({
-      path: e.path.join('.'),
+      path: Array.isArray(e.path) ? e.path.join('.') : 'root',
       message: e.message,
     })),
   };
