@@ -598,7 +598,7 @@ export function ChatBot() {
     }
     setIsSaving(true);
     try {
-      await userService.updateAISettings(user.id, tempProvider, tempApiKey);
+      await userService.updateAISettings(user.id, user.id, tempProvider, tempApiKey);
       updateUser({
         ...user,
         aiProvider: tempProvider as any,

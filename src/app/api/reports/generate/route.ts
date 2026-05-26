@@ -35,6 +35,14 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
       name
     } = body;
 
+    // FIX HIGH-005: For non-admin users, enforce store isolation
+    const isAdmin = session.user.role === 'admin';
+    const effectiveStoreId = store_id || (isAdmin ? null : session.user.memberships?.find((m: any) => m.status === 'active')?.store_id);
+
+    if (!effectiveStoreId && !isAdmin) {
+      return NextResponse.json({ error: 'Se requiere una tienda activa para generar reportes', message: 'No hay tienda activa disponible' }, { status: 400 });
+    }
+
     if (store_id && !canManageStore(session.user as any, store_id)) {
       return NextResponse.json({ error: 'Prohibido', message: 'No tiene permisos para acceder a esta tienda' }, { status: 403 });
     }
@@ -60,10 +68,15 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
     let data: any[] = [];
     switch (type) {
       case 'inventory':
+        // FIX HIGH-005: Guard against null store_id
+        if (!effectiveStoreId) {
+          data = [];
+          break;
+        }
         const { data: invData, error: invError } = await supabase
           .from('inventory')
           .select('product:products(name, sku, category), quantity, unit_cost')
-          .eq('store_id', store_id);
+          .eq('store_id', effectiveStoreId);
         if (invError) throw invError;
         data = (invData || []).map((item: any) => ({
             name: item.product?.name,
@@ -77,7 +90,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
 
       case 'sales':
         let sQuery = supabase.from('sales').select('*, profiles(full_name)');
-        if (store_id) sQuery = sQuery.eq('store_id', store_id);
+        if (effectiveStoreId) sQuery = sQuery.eq('store_id', effectiveStoreId);
         if (from) sQuery = sQuery.gte('created_at', from);
         if (to) sQuery = sQuery.lte('created_at', to);
         const { data: sData, error: sError } = await sQuery.order('created_at', { ascending: false });
@@ -87,7 +100,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
 
       case 'profit':
         let pQuery = supabase.from('sales').select('created_at, total_amount');
-        if (store_id) pQuery = pQuery.eq('store_id', store_id);
+        if (effectiveStoreId) pQuery = pQuery.eq('store_id', effectiveStoreId);
         if (from) pQuery = pQuery.gte('created_at', from);
         if (to) pQuery = pQuery.lte('created_at', to);
         const { data: pData, error: pError } = await pQuery;
@@ -107,7 +120,7 @@ async function generateReportHandler(req: NextRequest, session: AuthenticatedSes
 
       case 'purchases':
         let eQuery = supabase.from('receptions').select('created_at, total_cost');
-        if (store_id) eQuery = eQuery.eq('store_id', store_id);
+        if (effectiveStoreId) eQuery = eQuery.eq('store_id', effectiveStoreId);
         if (from) eQuery = eQuery.gte('created_at', from);
         if (to) eQuery = eQuery.lte('created_at', to);
         const { data: eData, error: eError } = await eQuery.order('created_at', { ascending: false }).limit(1000);

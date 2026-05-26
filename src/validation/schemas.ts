@@ -136,6 +136,8 @@ export const productSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
   sku: z.string().min(1, "El SKU es obligatorio"),
+  barcode: z.string().nullable().optional(),
+  barcode_type: z.string().nullable().optional(),
   price: z.coerce.number().min(0).optional().default(0),
   cost_price: z.coerce.number().min(0).optional().default(0),
   image_url: z.string().nullable().optional(),
@@ -455,6 +457,9 @@ export const bulkUpdateProductItemSchema = z.object({
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   unit_of_measure: z.string().nullable().optional(),
+  barcode: z.string().nullable().optional(),
+  barcode_type: z.string().nullable().optional(),
+  min_stock: z.number().min(0).nullable().optional(),
 });
 
 export const bulkUpdateProductsInputSchema = z.object({

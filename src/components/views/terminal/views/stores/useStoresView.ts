@@ -7,16 +7,19 @@ import { Store } from '@/types';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { storeService } from '@/services/store-service';
-import { userService } from '@/services/user-service';
+import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '@/store/cart';
 
 export type StoreFormMode = 'create' | 'edit' | 'delete' | 'reset' | null;
 
 export function useStoresView() {
-    const { user, updateUser } = useAuthStore();
+    const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
     const queryClient = useQueryClient();
+
+    // FIX HIGH-001: Use consolidated store switcher
+    const { switchStore } = useStoreSwitcher();
 
     // Modal State
     const [storeFormMode, setStoreFormMode] = useState<StoreFormMode>(null);
@@ -42,20 +45,7 @@ export function useStoresView() {
 
     // Internal execution function
     const executeStoreChange = async (storeId: string) => {
-        if (!user) return;
-        try {
-            updateUser({ activeStoreId: storeId });
-            await userService.setActiveStore(user.id, storeId);
-            toast.success('Tienda cambiada exitosamente');
-            queryClient.invalidateQueries({ queryKey: ['products'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-            queryClient.invalidateQueries({ queryKey: ['inventory'] });
-            queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-        } catch (error: any) {
-            logger.error('DATABASE', 'SET_ACTIVE_STORE_FAILED', { storeId, error });
-            toast.error('Error al cambiar de tienda');
-        }
+        await switchStore(storeId);
     };
 
     // Operations
@@ -91,20 +81,20 @@ export function useStoresView() {
         setIsSubmitting(true);
         try {
             if (mode === 'edit' && selectedStore) {
-                await storeService.updateStore(selectedStore.id, data.name || '', data.address || '', {
+                await storeService.updateStore(user?.role || '', selectedStore.id, data.name || '', data.address || '', {
                     reeup: data.reeup,
                     bank_account: data.bank_account,
                     logo_url: data.logo_url
                 });
                 toast.success('Tienda actualizada');
             } else if (mode === 'create') {
-                await storeService.createStore(data.name || '', data.address || '', user?.id);
+                await storeService.createStore(user?.role || '', data.name || '', data.address || '', user?.id);
                 toast.success('Tienda creada exitosamente');
             } else if (mode === 'delete' && selectedStore) {
-                await storeService.deleteStore(selectedStore.id);
+                await storeService.deleteStore(user?.role || '', selectedStore.id);
                 toast.success('Tienda eliminada');
             } else if (mode === 'reset' && selectedStore) {
-                await storeService.resetStore(selectedStore.id);
+                await storeService.resetStore(user?.role || '', selectedStore.id);
                 toast.success('Tienda reiniciada exitosamente');
             }
             setStoreFormMode(null);

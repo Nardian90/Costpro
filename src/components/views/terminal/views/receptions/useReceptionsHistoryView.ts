@@ -27,7 +27,7 @@ export function useReceptionsHistoryView() {
   const duplicateDocumentMutation = useDuplicateDocument();
 
   // Data Fetching
-  const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId || user?.storeId);
+  const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId);
 
   const filteredReceipts = useMemo(() => {
     return receptions.filter(r => {
@@ -77,11 +77,11 @@ export function useReceptionsHistoryView() {
   };
 
   const handleVoidConfirm = async (receipt: Receipt) => {
-    if (!user?.activeStoreId && !user?.storeId) return;
+    if (!user?.activeStoreId) { toast.error('No hay tienda activa'); return; }
     try {
       await voidReceptionMutation.mutateAsync({
         receiptId: receipt.id,
-        storeId: user?.activeStoreId || user?.storeId || '',
+        storeId: user?.activeStoreId || '',
         reason: 'Anulada por encargado'
       });
       setSelectedReceiptId(null);
@@ -117,12 +117,14 @@ export function useReceptionsHistoryView() {
       return;
     }
 
+    if (!user?.activeStoreId) { toast.error('No hay tienda activa'); return; }
+
     try {
       await invertDocumentMutation.mutateAsync({
         type: 'reception',
         id: receipt.id,
         items: items.length > 0 && selectedReceiptId === receipt.id ? items : undefined,
-        storeId: user?.activeStoreId || user?.storeId || ''
+        storeId: user?.activeStoreId || ''
       });
     } catch (error) {
       console.error('Error inverting reception:', error);

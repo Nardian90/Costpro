@@ -3,7 +3,7 @@
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit } from 'lucide-react';
+import { Package, Edit, BookOpen } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -13,9 +13,10 @@ interface InventoryTableViewProps {
     hasMore: boolean;
     isLoading: boolean;
     onAdjust?: (product: Product) => void;
+    onViewKardex?: (product: Product) => void;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void }>(({ product, onAdjust }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void }>(({ product, onAdjust, onViewKardex }, ref) => {
     const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
@@ -64,10 +65,18 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                 </span>
             </td>
             <td className="p-4" data-label="Acciones" aria-label="Acciones del producto">
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-1">
+                    <button
+                        onClick={() => onViewKardex?.(product)}
+                        className="neu-btn min-h-[44px] min-w-[44px] !px-3 flex items-center justify-center gap-1 hover:neu-raised-sm"
+                        title="Ver Kardex"
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        <span className="text-xs font-black uppercase tracking-widest hidden sm:inline">Kardex</span>
+                    </button>
                     <button
                         onClick={() => onAdjust?.(product)}
-                        className="neu-btn min-h-[44px] min-w-[44px] !px-4 flex items-center justify-center gap-2 hover:neu-raised-sm w-full sm:w-auto"
+                        className="neu-btn min-h-[44px] min-w-[44px] !px-4 flex items-center justify-center gap-2 hover:neu-raised-sm"
                     >
                         <Edit className="w-4 h-4" />
                         <span className="text-xs font-black uppercase tracking-widest">Ajustar</span>
@@ -79,7 +88,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
 });
 ProductRow.displayName = "ProductRow";
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex }: InventoryTableViewProps) {
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLTableRowElement) => {
         if (isLoading) return;
@@ -112,6 +121,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                             key={product.id}
                             product={product}
                             onAdjust={onAdjust}
+                            onViewKardex={onViewKardex}
                             ref={index === products.length - 1 ? lastElementRef : null}
                         />
                     ))}

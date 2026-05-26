@@ -17,8 +17,9 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
       try {
           const storeColumns = 'id, name, address, logo_url, is_active, created_at';
 
+          // FIX CRITICAL-002: Only fetch active stores
           const storesData = await withTableLogging('select', 'stores', () =>
-            supabase.from('stores').select(storeColumns).order('name')
+            supabase.from('stores').select(storeColumns).eq('is_active', true).order('name')
           );
 
           const membershipsData = await withTableLogging('select', 'user_store_memberships', () =>
@@ -31,13 +32,15 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
           const validatedStores = await validateRPCArrayResponse(storesData, storeSchema, 'stores');
           const allStores = validatedStores || [];
 
-          await offlineStorage.saveSnapshot(`all_stores`, allStores);
+          const memberships = membershipsData || [];
+          const assignedStoreIds = memberships.map(m => m.store_id);
+
+          // FIX MEDIUM-001: Save only filtered stores to offline cache
+          const storesForUser = isAdmin ? allStores : allStores.filter(s => assignedStoreIds.includes(s.id));
+          await offlineStorage.saveSnapshot(`all_stores`, storesForUser);
           await offlineStorage.saveSnapshot(`memberships_${userId}`, membershipsData);
 
           if (isAdmin) return allStores;
-
-          const memberships = membershipsData || [];
-          const assignedStoreIds = memberships.map(m => m.store_id);
 
           if (isEncargado) {
             const managedStoreIds = memberships
@@ -49,19 +52,13 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
           return allStores.filter(s => assignedStoreIds.includes(s.id));
       } catch (err) {
           if (!navigator.onLine) {
-              const allStores = await offlineStorage.getSnapshot<Store[]>(`all_stores`) || [];
-              const memberships = await offlineStorage.getSnapshot<any[]>(`memberships_${userId}`) || [];
+              // Offline data is already filtered per user from MEDIUM-001 fix
+              const offlineStores = await offlineStorage.getSnapshot<Store[]>(`all_stores`) || [];
 
-              if (isAdmin) return allStores;
+              if (isAdmin) return offlineStores;
 
-              const assignedStoreIds = memberships.map(m => m.store_id);
-              if (isEncargado) {
-                const managedStoreIds = memberships
-                  .filter(m => ['encargado', 'manager'].includes(m.role))
-                  .map(m => m.store_id);
-                return allStores.filter(s => managedStoreIds.includes(s.id));
-              }
-              return allStores.filter(s => assignedStoreIds.includes(s.id));
+              // In offline mode, return the pre-filtered cached stores directly
+              return offlineStores;
           }
           throw err;
       }

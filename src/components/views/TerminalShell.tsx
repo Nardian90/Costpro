@@ -15,6 +15,7 @@ import { prefetchDashboardData } from '@/hooks/api/useDashboard';
 import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
 import { prefetchReceptions } from '@/hooks/api/useReceptions';
 import { useStores } from '@/hooks/api/useStores';
+import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -84,6 +85,7 @@ const RSSManagementView = dynamic(() => import('@/components/views/terminal/view
 const WikiView = dynamic(() => import('@/components/views/terminal/views/wiki/WikiView'), { ssr: false });
 const HealthView = dynamic(() => import('@/components/views/health/HealthView'), { ssr: false });
 const ReceptionsHistoryView = dynamic(() => import('@/components/views/terminal/views/receptions/ReceptionsHistoryView'), { ssr: false });
+const ProductLabelGenerator = dynamic(() => import('@/components/views/terminal/views/labels/ProductLabelGenerator'), { ssr: false });
 
 const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
@@ -118,11 +120,17 @@ export default function TerminalShell() {
     return () => window.removeEventListener('toggle-keyboard-help', handler);
   }, []);
 
+  // FIX HIGH-004: Calculate isEncargado dynamically (not hardcoded false)
+  const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
+
   const { data: allStores = [] } = useStores(
     user?.id || '',
     user?.role === 'admin',
-    false
+    isEncargado || false
   );
+
+  // FIX HIGH-001: Use consolidated store switcher
+  const { switchStore } = useStoreSwitcher();
 
   const handleLogout = async () => {
     try {
@@ -243,6 +251,7 @@ export default function TerminalShell() {
         case 'wiki': return <ViewErrorBoundary viewName="Wiki"><WikiView /></ViewErrorBoundary>;
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
         case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
+        case 'labels': return <ViewErrorBoundary viewName="Etiquetas"><ProductLabelGenerator /></ViewErrorBoundary>;
         case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
         default: return (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
@@ -326,22 +335,8 @@ export default function TerminalShell() {
           onViewChange={handleViewChange}
           user={user as any}
           allStores={allStores}
-          handleSetActiveStore={async (id) => {
-            try {
-              updateUser({ activeStoreId: id });
-              await userService.setActiveStore(user!.id, id);
-              toast.success('Sucursal actualizada correctamente');
-              queryClient.invalidateQueries({ queryKey: ['products'] });
-              queryClient.invalidateQueries({ queryKey: ['transactions'] });
-              queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-              queryClient.invalidateQueries({ queryKey: ['inventory'] });
-              queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
-              queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
-            } catch (error) {
-              console.error('Error al cambiar de sucursal:', error);
-              toast.error('No se pudo persistir el cambio de sucursal');
-            }
-          }}
+          handleSetActiveStore={switchStore}
+          onLogout={handleLogout}
         />
 
         <NavigationBreadcrumb className="px-3 sm:px-4 pt-3 pb-0" />

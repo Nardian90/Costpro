@@ -162,7 +162,8 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'catalog', label: 'Catálogo Maestro', type: 'item', icon: Package, ariaLabel: 'Gestionar productos', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'inventory', label: 'Stock Actual', type: 'item', icon: Package, ariaLabel: 'Ver existencias', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
           { id: 'history', label: 'Trazabilidad Stock', type: 'item', icon: History, ariaLabel: 'Movimientos de inventario', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
-          { id: 'inventory_adjustments', label: 'Ajustes Documentales', type: 'item', icon: RefreshCcw, ariaLabel: 'Corregir inventario', allowedRoles: ['admin', 'manager', 'encargado'] }
+          { id: 'inventory_adjustments', label: 'Ajustes Documentales', type: 'item', icon: RefreshCcw, ariaLabel: 'Corregir inventario', allowedRoles: ['admin', 'manager', 'encargado'] },
+          { id: 'labels', label: 'Etiquetas y Codigos', type: 'item', icon: QrCode, ariaLabel: 'Generar etiquetas de producto', allowedRoles: ['admin', 'manager', 'encargado'] }
         ]
       },
       {

@@ -9,6 +9,8 @@ export interface ProductContract {
   name: string;
   description: string;
   sku: string;
+  barcode: string;
+  barcodeType: string;
   price: number;
   costPrice: number;
   imageUrl: string;
@@ -33,6 +35,8 @@ export const ProductFactory = {
     name: '',
     description: '',
     sku: '',
+    barcode: '',
+    barcodeType: 'auto',
     price: 0,
     costPrice: 0,
     imageUrl: '',

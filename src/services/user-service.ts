@@ -7,6 +7,37 @@ import { validateResponse } from '@/lib/rpc-validator';
 export const userService = {
   async setActiveStore(userId: string, storeId: string) {
     logger.info('DATABASE', 'SET_ACTIVE_STORE', { userId, storeId });
+
+    // FIX CRITICAL-001: Validate membership before setting active store
+    const { data: membership, error: membershipError } = await supabase
+      .from('user_store_memberships')
+      .select('id, status, store:stores(id, is_active)')
+      .eq('user_id', userId)
+      .eq('store_id', storeId)
+      .limit(1);
+
+    if (membershipError) {
+      logger.error('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_CHECK_FAILED', { userId, storeId, error: membershipError });
+      throw new Error('Error al verificar membresía de tienda');
+    }
+
+    const membershipRecord = membership?.[0];
+    if (!membershipRecord) {
+      logger.warn('DATABASE', 'SET_ACTIVE_STORE_NO_MEMBERSHIP', { userId, storeId });
+      throw new Error('No tienes acceso a esta tienda. Membresía no encontrada.');
+    }
+
+    if (membershipRecord.status !== 'active') {
+      logger.warn('DATABASE', 'SET_ACTIVE_STORE_MEMBERSHIP_REVOKED', { userId, storeId });
+      throw new Error('Tu membresía a esta tienda ha sido revocada.');
+    }
+
+    const storeData = (membershipRecord as any).store;
+    if (storeData && storeData.is_active === false) {
+      logger.warn('DATABASE', 'SET_ACTIVE_STORE_INACTIVE', { userId, storeId });
+      throw new Error('Esta tienda está desactivada. No se puede seleccionar.');
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .update({ active_store_id: storeId })
@@ -29,7 +60,10 @@ export const userService = {
     }
   },
 
-  async updateAISettings(userId: string, provider: string, apiKey: string) {
+  async updateAISettings(currentUserId: string, userId: string, provider: string, apiKey: string) {
+    if (userId !== currentUserId) {
+      throw new Error('No puedes modificar la configuración de otro usuario');
+    }
     logger.info('DATABASE', 'UPDATE_AI_SETTINGS', { userId, provider });
 
     const updates: any = { ai_provider: provider };
@@ -92,13 +126,18 @@ export const userService = {
     }
     let memberships: UserMembership[] = [];
     try {
+      // FIX MEDIUM-005: Filter memberships by active status AND active stores server-side
       const { data: membershipsData, error: membershipsError } = await supabase
         .from('user_store_memberships')
         .select(`id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('status', 'active');
 
       if (!membershipsError && membershipsData) {
-        memberships = membershipsData;
+        // Also filter out memberships with inactive stores (defense in depth)
+        memberships = membershipsData.filter(
+          (m: any) => !m.store || m.store.is_active !== false
+        );
       }
     } catch (err) {
       logger.warn('DATABASE', 'GET_USER_PROFILE_MEMBERSHIPS_FAILED_SILENT', { userId, err });
@@ -118,9 +157,14 @@ export const userService = {
 
     let effectiveActiveStoreId = profileData.active_store_id || profileData.store_id;
 
-    // AUTO-SELECT STORE si no tiene uno activo
+    // FIX HIGH-006: AUTO-SELECT STORE - Only consider active memberships with active stores
     if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
-      effectiveActiveStoreId = profileData.memberships[0].store_id ?? null;
+      const validMemberships = profileData.memberships.filter(
+        (m) => m.status === 'active' && (!m.store || (m.store as any)?.is_active !== false)
+      );
+      if (validMemberships.length > 0) {
+        effectiveActiveStoreId = validMemberships[0].store_id ?? null;
+      }
     }
 
     let activeRoles: UserRole[] = profileData.roles || [profileData.role];

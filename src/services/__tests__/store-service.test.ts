@@ -64,13 +64,13 @@ describe('storeService', () => {
       const mockStore = { id: 's1' };
       chain.then.mockImplementationOnce((resolve: any) => resolve({ data: mockStore, error: null }));
 
-      const result = await storeService.createStore('Name', 'Addr');
+      const result = await storeService.createStore('admin', 'Name', 'Addr');
       expect(result).toEqual(mockStore);
     });
 
     it('maneja errores en createStore', async () => {
         chain.then.mockImplementationOnce((resolve: any) => resolve({ error: new Error('Err') }));
-        await expect(storeService.createStore('N', 'A')).rejects.toThrow('Err');
+        await expect(storeService.createStore('admin', 'N', 'A')).rejects.toThrow('Err');
     });
   });
 
@@ -78,28 +78,28 @@ describe('storeService', () => {
       it('actualiza una tienda', async () => {
           const mockStore = { id: 's1', name: 'U' };
           chain.then.mockImplementationOnce((resolve: any) => resolve({ data: mockStore, error: null }));
-          const result = await storeService.updateStore('s1', 'U', 'A');
+          const result = await storeService.updateStore('admin', 's1', 'U', 'A');
           expect(result).toEqual(mockStore);
           expect(chain.update).toHaveBeenCalledWith(expect.objectContaining({ name: 'U' }));
       });
 
       it('maneja errores en updateStore', async () => {
           chain.then.mockImplementationOnce((resolve: any) => resolve({ error: new Error('Err') }));
-          await expect(storeService.updateStore('s1', 'U', 'A')).rejects.toThrow('Err');
+          await expect(storeService.updateStore('admin', 's1', 'U', 'A')).rejects.toThrow('Err');
       });
   });
 
   describe('deleteStore', () => {
       it('elimina una tienda', async () => {
           chain.then.mockImplementationOnce((resolve: any) => resolve({ error: null }));
-          await storeService.deleteStore('s1');
+          await storeService.deleteStore('admin', 's1');
           expect(chain.delete).toHaveBeenCalled();
           expect(chain.eq).toHaveBeenCalledWith('id', 's1');
       });
 
       it('maneja errores en deleteStore', async () => {
           chain.then.mockImplementationOnce((resolve: any) => resolve({ error: new Error('Err') }));
-          await expect(storeService.deleteStore('s1')).rejects.toThrow('Err');
+          await expect(storeService.deleteStore('admin', 's1')).rejects.toThrow('Err');
       });
   });
 
@@ -109,7 +109,7 @@ describe('storeService', () => {
       mocks.rpc.mockResolvedValueOnce({ error: null });
       chain.then.mockImplementation((resolve: any) => resolve({ data: null, error: null }));
 
-      await storeService.resetStore('s1');
+      await storeService.resetStore('admin', 's1');
 
       expect(chain.insert).toHaveBeenCalledWith(expect.objectContaining({
           action: 'store_reset_initiated'
@@ -123,7 +123,7 @@ describe('storeService', () => {
 
     it('maneja error en RPC', async () => {
         mocks.rpc.mockResolvedValueOnce({ error: new Error('RPC Failed') });
-        await expect(storeService.resetStore('s1')).rejects.toThrow('RPC Failed');
+        await expect(storeService.resetStore('admin', 's1')).rejects.toThrow('RPC Failed');
     });
   });
 });

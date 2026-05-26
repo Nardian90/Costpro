@@ -75,7 +75,7 @@ describe('userService', () => {
   describe('updateAISettings', () => {
     it('actualiza el proveedor y la clave de IA', async () => {
       chain.then.mockImplementationOnce((resolve: any) => resolve({ error: null }));
-      await userService.updateAISettings('user-1', 'openai', 'key-123');
+      await userService.updateAISettings('user-1', 'user-1', 'openai', 'key-123');
 
       expect(chain.update).toHaveBeenCalledWith(expect.objectContaining({
         ai_provider: 'openai',
