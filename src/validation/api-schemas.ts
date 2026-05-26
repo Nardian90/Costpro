@@ -123,7 +123,7 @@ export const botChatSchema = z.object({
   aiProvider: z.string().optional(),
   aiApiKey: z.string().optional(),
   model: z.string().optional(),
-  storeId: z.string().uuid().nullable().optional(),
+  storeId: z.string().nullable().optional(),
   temperature: z.number().min(0).max(1).optional(),
   stream: z.boolean().optional(),
 });

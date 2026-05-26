@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getViewDetails } from '@/config/viewRegistry';
 import { executeTool } from '@/lib/ai/tools/registry';
 import { TOOLS } from '@/lib/ai/tools/definitions';
@@ -11,6 +10,17 @@ import { createServerClient } from '@/lib/supabaseClient';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
+
+// ─── Z-AI SDK CLIENT (bypasses geo-restrictions) ────────────────────────────
+let _zaiClient: any = null;
+
+async function getZaiClient() {
+  if (!_zaiClient) {
+    const ZAI = (await import('z-ai-web-dev-sdk')).default;
+    _zaiClient = await ZAI.create();
+  }
+  return _zaiClient;
+}
 
 // ─── RETRY UTILITY WITH EXPONENTIAL BACKOFF ──────────────────────────────────
 async function fetchWithRetry<T>(
@@ -21,7 +31,6 @@ async function fetchWithRetry<T>(
   let lastError: any;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      // Add explicit timeout of 30s per call
       const result = await Promise.race([
         fn(),
         new Promise<never>((_, reject) =>
@@ -146,8 +155,8 @@ async function buildSystemPrompt(context: {
 - Modo UI: ${context.uiMode || 'standard'}${viewSection}${businessContext}`;
 }
 
-// ─── DIRECT GEMINI CALL (same pattern as working MVP) ─────────────────────────
-interface GeminiMessage {
+// ─── MESSAGE TYPES ───────────────────────────────────────────────────────────
+interface ChatMessage {
   role: string;
   content: string;
   tool_calls?: any[];
@@ -162,189 +171,120 @@ interface ToolCallResult {
   actions: any[];
 }
 
-async function callGeminiDirect(
-  apiKey: string,
-  messages: GeminiMessage[],
-  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; tools?: any[]; modelName?: string }
+// ─── Z-AI SDK DIRECT CALL (OpenAI-compatible, bypasses geo-block) ───────────
+async function callAI(
+  messages: ChatMessage[],
+  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; tools?: any[] }
 ): Promise<ToolCallResult> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const modelName = options.modelName || 'gemini-2.5-flash';
+  const zai = await getZaiClient();
 
-  const modelConfig: any = { model: modelName };
+  // Build OpenAI-compatible messages
+  const apiMessages: any[] = [];
   if (options.systemPrompt) {
-    modelConfig.systemInstruction = options.systemPrompt;
+    apiMessages.push({ role: 'system', content: options.systemPrompt });
   }
 
-  if (options.tools && options.tools.length > 0) {
-    modelConfig.tools = [{
-      functionDeclarations: options.tools.map((t: any) => ({
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters
-      }))
-    }];
-  }
-
-  const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
-
-  // Build contents (same pattern as MVP, with multimodal support)
-  let contents: any[] = [];
-  messages.forEach((msg) => {
+  // Handle multimodal: extract images and add as separate messages or inline
+  for (const msg of messages) {
     if (msg.role === 'tool') {
-      contents.push({
-        role: 'function',
-        parts: [{ functionResponse: { name: msg.name, response: { content: msg.content } } }]
+      apiMessages.push({
+        role: 'tool',
+        tool_call_id: msg.tool_call_id,
+        content: msg.content,
       });
-      return;
+      continue;
     }
 
-    const role = msg.role === 'assistant' ? 'model' : 'user';
+    const role = msg.role === 'assistant' ? 'assistant' : 'user';
     const parts: any[] = [];
 
-    if (msg.tool_calls) {
-      msg.tool_calls.forEach((tc: any) => {
-        try {
-          parts.push({ functionCall: { name: tc.function.name, args: JSON.parse(tc.function.arguments) } });
-        } catch {
-          parts.push({ functionCall: { name: tc.function.name, args: {} } });
-        }
+    // If message has tool_calls (from assistant)
+    if (msg.tool_calls && msg.tool_calls.length > 0) {
+      apiMessages.push({
+        role: 'assistant',
+        content: msg.content || null,
+        tool_calls: msg.tool_calls,
       });
+      continue;
     }
 
-    // Multimodal: add image as inlineData before text
+    // Multimodal support: image + text
     if (msg.imageData) {
       parts.push({
-        inlineData: {
-          mimeType: msg.imageData.mimeType,
-          data: msg.imageData.data
-        }
+        type: 'image_url',
+        image_url: { url: `data:${msg.imageData.mimeType};base64,${msg.imageData.data}` }
       });
     }
 
     if (msg.content) {
-      parts.push({ text: msg.content });
+      parts.push({ type: 'text', text: msg.content });
     }
 
-    // Merge consecutive same-role messages (required by Gemini API)
-    if (contents.length > 0) {
-      const last = contents[contents.length - 1];
-      if (last.role === role) {
-        last.parts.push(...parts);
-        return;
-      }
-    }
-
-    contents.push({ role, parts });
-  });
-
-  if (contents.length === 0) {
-    contents.push({ role: 'user', parts: [{ text: 'Hola' }] });
-  } else if (contents[0].role === 'model') {
-    contents = [{ role: 'user', parts: [{ text: '[Contexto]' }] }, ...contents];
+    apiMessages.push({
+      role,
+      content: parts.length === 1 && parts[0].type === 'text'
+        ? msg.content
+        : parts.length > 0 ? parts : msg.content,
+    });
   }
 
-  const result = await model.generateContent({
-    contents,
-    generationConfig: {
-      temperature: options.temperature ?? 0.4,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: options.maxTokens ?? 4096,
-    }
-  });
+  if (apiMessages.length === 0) {
+    apiMessages.push({ role: 'user', content: 'Hola' });
+  }
 
-  const response = await result.response;
-  if (!response) throw new Error('Respuesta vacía del servidor de Google.');
+  const reqBody: any = {
+    messages: apiMessages,
+    temperature: options.temperature ?? 0.4,
+    max_tokens: options.maxTokens ?? 4096,
+  };
 
-  const respParts = response.candidates?.[0]?.content?.parts || [];
-  let text = '';
-  const tool_calls: any[] = [];
+  const completion = await zai.chat.completions.create(reqBody);
+  const choice = completion.choices?.[0];
+  const text = choice?.message?.content || '';
+  const tool_calls = choice?.message?.tool_calls || undefined;
 
-  respParts.forEach((part: any) => {
-    if (part.text) text += part.text;
-    if (part.functionCall) {
-      tool_calls.push({
-        id: `call_${Math.random().toString(36).substring(7)}`,
-        type: 'function',
-        function: {
-          name: part.functionCall.name,
-          arguments: JSON.stringify(part.functionCall.args)
-        }
-      });
-    }
-  });
-
-  return { text, tool_calls: tool_calls.length > 0 ? tool_calls : undefined, actions: [] };
+  return { text, tool_calls: tool_calls?.length ? tool_calls : undefined, actions: [] };
 }
 
-// ─── STREAMING GEMINI CALL (SSE support) ──────────────────────────────────────
-async function callGeminiStream(
-  apiKey: string,
-  messages: GeminiMessage[],
-  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; tools?: any[]; modelName?: string }
+// ─── Z-AI SDK STREAMING CALL (SSE) ──────────────────────────────────────────
+async function callAIStream(
+  messages: ChatMessage[],
+  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; tools?: any[] }
 ): Promise<ReadableStream<Uint8Array>> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const modelName = options.modelName || 'gemini-2.5-flash';
+  const zai = await getZaiClient();
 
-  const modelConfig: any = { model: modelName };
+  const apiMessages: any[] = [];
   if (options.systemPrompt) {
-    modelConfig.systemInstruction = options.systemPrompt;
+    apiMessages.push({ role: 'system', content: options.systemPrompt });
   }
 
-  const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
-
-  // Build contents (same as callGeminiDirect)
-  let contents: any[] = [];
-  messages.forEach((msg) => {
+  for (const msg of messages) {
     if (msg.role === 'tool') {
-      contents.push({
-        role: 'function',
-        parts: [{ functionResponse: { name: msg.name, response: { content: msg.content } } }]
-      });
-      return;
+      apiMessages.push({ role: 'tool', tool_call_id: msg.tool_call_id, content: msg.content });
+      continue;
     }
-
-    const role = msg.role === 'assistant' ? 'model' : 'user';
+    if (msg.tool_calls && msg.tool_calls.length > 0) {
+      apiMessages.push({ role: 'assistant', content: msg.content || null, tool_calls: msg.tool_calls });
+      continue;
+    }
+    const role = msg.role === 'assistant' ? 'assistant' : 'user';
     const parts: any[] = [];
-
-    if (msg.tool_calls) {
-      msg.tool_calls.forEach((tc: any) => {
-        try {
-          parts.push({ functionCall: { name: tc.function.name, args: JSON.parse(tc.function.arguments) } });
-        } catch {
-          parts.push({ functionCall: { name: tc.function.name, args: {} } });
-        }
-      });
-    }
-
     if (msg.imageData) {
-      parts.push({
-        inlineData: {
-          mimeType: msg.imageData.mimeType,
-          data: msg.imageData.data
-        }
-      });
+      parts.push({ type: 'image_url', image_url: { url: `data:${msg.imageData.mimeType};base64,${msg.imageData.data}` } });
     }
-
     if (msg.content) {
-      parts.push({ text: msg.content });
+      parts.push({ type: 'text', text: msg.content });
     }
+    apiMessages.push({
+      role,
+      content: parts.length === 1 && parts[0].type === 'text'
+        ? msg.content
+        : parts.length > 0 ? parts : msg.content,
+    });
+  }
 
-    if (contents.length > 0) {
-      const last = contents[contents.length - 1];
-      if (last.role === role) {
-        last.parts.push(...parts);
-        return;
-      }
-    }
-
-    contents.push({ role, parts });
-  });
-
-  if (contents.length === 0) {
-    contents.push({ role: 'user', parts: [{ text: 'Hola' }] });
-  } else if (contents[0].role === 'model') {
-    contents = [{ role: 'user', parts: [{ text: '[Contexto]' }] }, ...contents];
+  if (apiMessages.length === 0) {
+    apiMessages.push({ role: 'user', content: 'Hola' });
   }
 
   const encoder = new TextEncoder();
@@ -352,28 +292,23 @@ async function callGeminiStream(
   return new ReadableStream({
     async start(controller) {
       try {
-        const result = await Promise.race([
-          model.generateContentStream({
-            contents,
-            generationConfig: {
-              temperature: options.temperature ?? 0.4,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: options.maxTokens ?? 4096,
-            }
+        // Use non-streaming as fallback since streaming via SDK may vary
+        const completion = await Promise.race([
+          zai.chat.completions.create({
+            messages: apiMessages,
+            temperature: options.temperature ?? 0.4,
+            max_tokens: options.maxTokens ?? 4096,
           }),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Timeout: streaming excedió los 30 segundos')), 30_000)
           )
         ]);
 
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
-          if (text) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
-          }
+        const text = completion.choices?.[0]?.message?.content || '';
+        // Send as single chunk
+        if (text) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
         }
-
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       } catch (error: any) {
@@ -389,9 +324,8 @@ async function callGeminiStream(
 const MAX_TOOL_ITERATIONS = 3;
 
 async function runAgentLoop(
-  apiKey: string,
-  initialMessages: GeminiMessage[],
-  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; modelName?: string },
+  initialMessages: ChatMessage[],
+  options: { temperature?: number; maxTokens?: number; systemPrompt?: string },
   toolContext: { supabase: any; userId: string; userRole: string; storeId: string }
 ): Promise<{ text: string; actions: any[] }> {
   let messages = [...initialMessages];
@@ -399,24 +333,23 @@ async function runAgentLoop(
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
     const result = await fetchWithRetry(() =>
-      callGeminiDirect(apiKey, messages, { ...options, tools: TOOLS })
+      callAI(messages, { ...options, tools: TOOLS })
     );
 
     if (!result.tool_calls || result.tool_calls.length === 0) {
       return { text: result.text, actions: allActions };
     }
 
-    // Add assistant message with tool calls
     messages.push({
       role: 'assistant',
       content: result.text || '',
       tool_calls: result.tool_calls,
     });
 
-    // Execute tool calls in parallel with Promise.all() (F3-01)
+    // Execute tool calls in parallel (F3-01)
     const toolPromises = result.tool_calls.map(async (tc) => {
       let args: any;
-      try { args = JSON.parse(tc.function.arguments); } catch { args = {}; }
+      try { args = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : tc.function.arguments; } catch { args = {}; }
 
       try {
         const toolResult = await executeTool(tc.function.name, args, toolContext);
@@ -428,12 +361,11 @@ async function runAgentLoop(
           action: toolResult?.action || null,
         };
       } catch (toolErr: any) {
-        const errMsg = toolErr?.message || 'Error ejecutando herramienta';
-        console.error(`[BotChat] Tool '${tc.function.name}' error:`, errMsg);
+        console.error(`[BotChat] Tool '${tc.function.name}' error:`, toolErr.message);
         return {
           id: tc.id,
           name: tc.function.name,
-          content: JSON.stringify({ error: errMsg }),
+          content: JSON.stringify({ error: toolErr.message }),
           success: false,
           action: null,
         };
@@ -442,7 +374,6 @@ async function runAgentLoop(
 
     const toolResults = await Promise.all(toolPromises);
 
-    // Append all tool results and collect actions
     for (const tr of toolResults) {
       messages.push({
         role: 'tool',
@@ -450,25 +381,20 @@ async function runAgentLoop(
         content: tr.content,
         tool_call_id: tr.id,
       });
-
-      if (tr.success && tr.action) {
-        allActions.push(tr.action);
-      }
+      if (tr.success && tr.action) allActions.push(tr.action);
     }
   }
 
-  // Final call without tools for summary
   const final = await fetchWithRetry(() =>
-    callGeminiDirect(apiKey, messages, { ...options, tools: [] })
+    callAI(messages, { ...options, tools: [] })
   );
   return { text: final.text || 'Procesé varias acciones. ¿Necesitas algo más?', actions: allActions };
 }
 
-// ─── STREAMING AGENT LOOP (tool execution, then stream final response) ─────────
+// ─── STREAMING AGENT LOOP ────────────────────────────────────────────────────
 async function runAgentLoopStream(
-  apiKey: string,
-  initialMessages: GeminiMessage[],
-  options: { temperature?: number; maxTokens?: number; systemPrompt?: string; modelName?: string },
+  initialMessages: ChatMessage[],
+  options: { temperature?: number; maxTokens?: number; systemPrompt?: string },
   toolContext: { supabase: any; userId: string; userRole: string; storeId: string }
 ): Promise<{ stream: ReadableStream<Uint8Array>; actions: any[] }> {
   let messages = [...initialMessages];
@@ -476,12 +402,11 @@ async function runAgentLoopStream(
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
     const result = await fetchWithRetry(() =>
-      callGeminiDirect(apiKey, messages, { ...options, tools: TOOLS })
+      callAI(messages, { ...options, tools: TOOLS })
     );
 
     if (!result.tool_calls || result.tool_calls.length === 0) {
-      // No tool calls — stream the final response directly
-      const stream = await callGeminiStream(apiKey, messages, { ...options, tools: [] });
+      const stream = await callAIStream(messages, { ...options, tools: [] });
       return { stream, actions: allActions };
     }
 
@@ -491,10 +416,9 @@ async function runAgentLoopStream(
       tool_calls: result.tool_calls,
     });
 
-    // Parallel tool execution
     const toolPromises = result.tool_calls.map(async (tc) => {
       let args: any;
-      try { args = JSON.parse(tc.function.arguments); } catch { args = {}; }
+      try { args = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : tc.function.arguments; } catch { args = {}; }
       try {
         const toolResult = await executeTool(tc.function.name, args, toolContext);
         return { id: tc.id, name: tc.function.name, content: JSON.stringify(toolResult), success: toolResult?.success, action: toolResult?.action || null };
@@ -511,15 +435,13 @@ async function runAgentLoopStream(
     }
   }
 
-  // Final streaming call
-  const stream = await callGeminiStream(apiKey, messages, { ...options, tools: [] });
+  const stream = await callAIStream(messages, { ...options, tools: [] });
   return { stream, actions: allActions };
 }
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
 async function botChatHandler(req: NextRequest) {
   try {
-    // Auth check — authentication is now mandatory for all chat requests (F1-05)
     const session = await getServerSession(req);
     if (!session?.user) {
       return NextResponse.json({ error: 'Autenticación requerida. Inicia sesión para usar el chat.' }, { status: 401 });
@@ -540,25 +462,12 @@ async function botChatHandler(req: NextRequest) {
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
 
-    const { messages, aiProvider, aiApiKey, storeId, context: botContext, model } = parsed.data;
+    const { messages, aiProvider, storeId, context: botContext } = parsed.data;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
     }
 
-    // ─── DETERMINE API KEY (F1-02: no hardcodes, env only) ──────────────────
-    const serverApiKey = process.env.GEMINI_API_KEY;
-    const effectiveApiKey = (aiApiKey && aiApiKey.trim().length > 0)
-      ? aiApiKey.trim()
-      : serverApiKey || '';
-
-    if (!effectiveApiKey || effectiveApiKey.length < 10) {
-      return NextResponse.json({
-        error: 'No hay API Key configurada. Configura GEMINI_API_KEY en el servidor o ingresa tu clave personal en los ajustes del chat.'
-      }, { status: 400 });
-    }
-
-    // Determine if streaming is requested
     const useStreaming = body.stream === true;
 
     try {
@@ -566,7 +475,6 @@ async function botChatHandler(req: NextRequest) {
       const uiMode = (botContext?.uiMode as string) || undefined;
       const temperature = typeof body.temperature === 'number' ? Math.max(0, Math.min(1, body.temperature)) : 0.4;
 
-      // Build system prompt with dynamic business context (F2-06)
       const supabaseClient = createServerClient();
       const systemPrompt = await buildSystemPrompt({
         userName: session?.user ? ((session.user as any).name || session.user.email || 'Usuario') : 'Usuario',
@@ -577,8 +485,7 @@ async function botChatHandler(req: NextRequest) {
         supabase: supabaseClient,
       });
 
-      // Build messages for Gemini with multimodal support (F1-01)
-      const geminiMessages: GeminiMessage[] = messages
+      const chatMessages: ChatMessage[] = messages
         .filter((m: any) => m.role === 'user' || m.role === 'assistant')
         .map((m: any) => ({
           role: m.role,
@@ -593,18 +500,12 @@ async function botChatHandler(req: NextRequest) {
       const userId = session.user?.id || 'anonymous';
       const toolContext = { supabase: supabaseClient, userId, userRole, storeId: storeId || '' };
 
-      // ─── STREAMING RESPONSE (F2-01) ───────────────────────────────────────
-      if (useStreaming) {
-        const { stream, actions } = await runAgentLoopStream(
-          effectiveApiKey,
-          geminiMessages,
-          { temperature, maxTokens: 4096, systemPrompt, modelName: model || 'gemini-2.5-flash' },
-          toolContext
-        );
+      const aiOptions = { temperature, maxTokens: 4096, systemPrompt };
 
-        // Wrap stream to inject actions at the end
+      if (useStreaming) {
+        const { stream, actions } = await runAgentLoopStream(chatMessages, aiOptions, toolContext);
+
         const encoder = new TextEncoder();
-        const actionsStr = JSON.stringify(actions);
         const wrappedStream = new ReadableStream({
           async start(controller) {
             const reader = stream.getReader();
@@ -612,8 +513,7 @@ async function botChatHandler(req: NextRequest) {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
-                  // Send actions metadata as final event
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ metadata: { provider: aiProvider || 'gemini', actions }, done: true })}\n\n`));
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ metadata: { provider: aiProvider || 'z-ai', actions }, done: true })}\n\n`));
                   controller.close();
                   break;
                 }
@@ -635,13 +535,8 @@ async function botChatHandler(req: NextRequest) {
         });
       }
 
-      // ─── NON-STREAMING RESPONSE (standard) ───────────────────────────────
-      const result = await runAgentLoop(
-        effectiveApiKey,
-        geminiMessages,
-        { temperature, maxTokens: 4096, systemPrompt, modelName: model || 'gemini-2.5-flash' },
-        toolContext
-      );
+      // Non-streaming
+      const result = await runAgentLoop(chatMessages, aiOptions, toolContext);
 
       if (!result.text) {
         throw new Error('La IA no devolvió ninguna respuesta');
@@ -650,7 +545,7 @@ async function botChatHandler(req: NextRequest) {
       return NextResponse.json({
         text: result.text,
         metadata: {
-          provider: aiProvider || 'gemini',
+          provider: aiProvider || 'z-ai',
           actions: result.actions ?? [],
         },
         timestamp: new Date().toISOString()
@@ -663,18 +558,15 @@ async function botChatHandler(req: NextRequest) {
       const isQuota = errorMsg.includes('cuota') ||
                       errorMsg.includes('quota') ||
                       errorMsg.includes('429') ||
-                      errorMsg.includes('RESOURCE_EXHAUSTED') ||
-                      errorMsg.includes('QUOTA_EXHAUSTED');
+                      errorMsg.includes('RESOURCE_EXHAUSTED');
 
       const isAuthError = errorMsg.includes('401') ||
                           errorMsg.includes('unauthorized') ||
-                          errorMsg.includes('invalid api key') ||
-                          errorMsg.includes('API key not valid') ||
-                          errorMsg.includes('PERMISSION_DENIED');
+                          errorMsg.includes('invalid api key');
 
       let userMessage = 'Error de comunicación con la IA';
-      if (isAuthError) userMessage = 'API Key inválida o expirada. Verifica tu clave en los ajustes del chat.';
-      else if (isQuota) userMessage = 'Cuota de API agotada. Espera un momento o usa otra clave.';
+      if (isAuthError) userMessage = 'API Key inválida o expirada.';
+      else if (isQuota) userMessage = 'Cuota de API agotada. Espera un momento.';
 
       return NextResponse.json({
         error: userMessage,
