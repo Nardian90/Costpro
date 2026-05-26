@@ -534,10 +534,12 @@ async function botChatHandler(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const parsed = botChatSchema.safeParse(body);
+        const parsed = botChatSchema.safeParse(body);
     if (!parsed.success) {
-      console.error('[BotChat] Validation error:', JSON.stringify(parsed.error.issues));
-      return NextResponse.json(zodError(parsed.error), { status: 400 });
+      const errorResponse = zodError(parsed.error);
+      console.error("[BotChat] Validation error:", JSON.stringify(errorResponse));
+      console.log("[BotChat] Payload received:", JSON.stringify(body));
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
     const { messages, aiProvider, aiApiKey, storeId, context: botContext, model } = parsed.data;

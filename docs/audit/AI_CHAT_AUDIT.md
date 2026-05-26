@@ -46,3 +46,10 @@ storeId: z.preprocess(
 
 ## 5. Conclusión
 El sistema ha sido estabilizado y verificado mediante pruebas de integración. La arquitectura de validación ahora es compatible con los estados iniciales del frontend, garantizando una experiencia de usuario fluida sin sacrificar la integridad de los datos.
+
+## Actualización (26 de Mayo 14:30)
+Se han detectado posibles fallos por campos de texto (`content`) ausentes o con roles no estándar (`model`) en el historial de mensajes. El sistema ha sido actualizado para:
+1.  **Flexibilidad de Roles:** Aceptar el rol `model` en el esquema de mensajes.
+2.  **Valores por Defecto:** Asignar una cadena vacía como valor predeterminado para el contenido de los mensajes si este llega ausente.
+3.  **Diagnósticos en Tiempo Real:** Las respuestas de error 400 ahora incluyen el detalle exacto del campo que falló (`Validation failed: path.to.field: reason`).
+4.  **Logging del Servidor:** Se ha habilitado el volcado del payload recibido en los logs del servidor para facilitar la depuración de discrepancias entre el frontend y el backend.

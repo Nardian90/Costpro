@@ -55,8 +55,8 @@ export const costSheetSaveSchema = z.object({
 
 export const aiChatSchema = z.object({
   messages: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    content: z.string().max(8000),
+    role: z.enum(['user', 'assistant', 'system', 'tool', 'model']),
+    content: z.string().max(8000).default(''),
   })).min(1).max(50),
   aiProvider: z.string().min(1).max(50).optional(),
   sheetData: z.record(z.string(), z.unknown()).optional().nullable(),
@@ -104,8 +104,8 @@ export const logsSchema = z.object({
 
 // ─── Bot ────────────────────────────────────────────────────────────────────
 export const botMessageSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system', 'tool']),
-  content: z.string(),
+  role: z.enum(['user', 'assistant', 'system', 'tool', 'model']),
+  content: z.string().default(''),
   tool_calls: z.array(z.record(z.string(), z.unknown())).optional(),
   tool_call_id: z.string().optional(),
   name: z.string().optional(),
@@ -124,15 +124,17 @@ export const botChatSchema = z.object({
   aiApiKey: z.string().optional(),
   model: z.string().optional(),
   storeId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().nullable().optional()),
-  temperature: z.number().min(0).max(1).optional(),
+  temperature: z.preprocess((val) => (typeof val === 'string' ? parseFloat(val) : val), z.number().min(0).max(1).optional()),
   stream: z.boolean().optional(),
 });
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
 export function zodError(errors: z.ZodError) {
+  const firstError = errors.issues[0];
+  const detail = firstError ? `${firstError.path.join('.')}: ${firstError.message}` : 'Unknown validation error';
   return {
     ok: false,
-    error: 'Validation failed',
+    error: `Validation failed: ${detail}`,
     details: errors.issues.map(e => ({
       path: e.path.join('.'),
       message: e.message,
