@@ -117,7 +117,7 @@ export function ChatBot() {
   const [testResult, setTestResult] = useState<'idle' | 'success' | 'error'>('idle');
 
   // Temperature control (F2-02)
-  const [temperature, setTemperature] = useState<number>(() => loadFromStorage(TEMP_STORAGE_KEY, 0.4));
+  const [temperature, setTemperature] = useState<number>(0.4);
 
   // Latency tracking (UX improvement)
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
@@ -129,9 +129,7 @@ export function ChatBot() {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // Persisted selected model
-  const [selectedModel, setSelectedModel] = useState<string>(() =>
-    loadFromStorage(MODEL_STORAGE_KEY, 'gemini-2.5-flash')
-  );
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
 
   // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
@@ -139,6 +137,10 @@ export function ChatBot() {
 
   // ─── LOAD CONVERSATIONS ON MOUNT ──────────────────────────────────────────
   useEffect(() => {
+    // Hydrate settings to avoid SSR mismatch
+    setTemperature(loadFromStorage(TEMP_STORAGE_KEY, 0.4));
+    setSelectedModel(loadFromStorage(MODEL_STORAGE_KEY, 'gemini-2.5-flash'));
+
     const saved = loadFromStorage<Conversation[]>(CONVERSATIONS_KEY, []);
     const savedActiveId = loadFromStorage<string | null>(ACTIVE_CONVO_KEY, null);
 
