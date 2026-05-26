@@ -10,20 +10,23 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
-// Mock the internal functions of route.ts by mocking the modules it imports
-vi.mock('@google/generative-ai', () => {
+vi.mock('z-ai-web-dev-sdk', () => {
   return {
-    GoogleGenerativeAI: class {
-      getGenerativeModel() {
-        return {
-          generateContent: vi.fn().mockResolvedValue({
-            response: {
-              text: () => 'Bot response',
-              candidates: [{ content: { parts: [{ text: 'Bot response' }] } }]
-            }
-          })
-        };
-      }
+    default: {
+      create: vi.fn().mockResolvedValue({
+        chat: {
+          completions: {
+            create: vi.fn().mockResolvedValue({
+              choices: [{
+                message: {
+                  content: 'Bot response',
+                  tool_calls: []
+                }
+              }]
+            })
+          }
+        }
+      })
     }
   };
 });
