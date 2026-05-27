@@ -73,14 +73,23 @@ describe('storeService', () => {
     expect(result).toEqual(mockData);
   });
 
-  it('actualiza una tienda', async () => {
+  it('actualiza una tienda y aplica whitelist', async () => {
     const mockData = { id: '1', name: 'Updated Store' };
     const builder = createMockQueryBuilder();
     builder.mockResolvedValue({ data: mockData, error: null });
     vi.mocked(supabase.from).mockReturnValue(builder as any);
 
-    const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address');
+    const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address', {
+        is_active: false,
+        ...({ tenant_id: 'malicious-tenant' } as any) // Esto debería ser filtrado
+    });
+
     expect(result).toEqual(mockData);
+    expect(builder.update).toHaveBeenCalledWith({
+        name: 'Updated Store',
+        address: 'New Address',
+        is_active: false
+    });
   });
 
   it('realiza soft-delete de la tienda', async () => {
