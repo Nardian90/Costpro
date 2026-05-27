@@ -10,6 +10,15 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
+vi.mock('z-ai-web-dev-sdk', () => ({
+  default: {
+    create: vi.fn().mockResolvedValue({
+      getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' }),
+      getResponseStream: vi.fn().mockResolvedValue(new ReadableStream())
+    })
+  }
+}));
+
 vi.mock('@/lib/ai/orchestrator', () => ({
   getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
     getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })

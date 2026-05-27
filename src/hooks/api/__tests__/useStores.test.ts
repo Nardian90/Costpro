@@ -37,13 +37,13 @@ describe('useStores', () => {
         if (table === 'stores') {
             return {
                 select: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: mockStores, error: null })
+                order: vi.fn().mockImplementation(() => ({ then: (cb) => Promise.resolve(cb({ data: mockStores, error: null })) }))
             };
         }
         return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            mockResolvedValue: vi.fn().mockResolvedValue({ data: [], error: null })
+            then: (cb) => Promise.resolve(cb({ data: [], error: null }))
         };
     });
 
