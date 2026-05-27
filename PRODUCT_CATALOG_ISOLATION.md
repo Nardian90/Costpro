@@ -59,3 +59,9 @@ const { data } = await supabase
   .eq('store_id', currentStoreId)
   .eq('is_complete', false);
 ```
+
+### 5. Automatización de Completitud
+Para garantizar la integridad de los datos sin requerir lógica adicional en el frontend, se ha implementado un trigger de base de datos (`trg_maintain_product_completeness`).
+
+*   **Comportamiento**: Cualquier inserción o actualización de la columna `price` recalculará automáticamente el estado de `is_complete`.
+*   **Regla Actual**: `is_complete = (price > 0)`.
