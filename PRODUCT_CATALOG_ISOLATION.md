@@ -44,3 +44,18 @@ Las funciones almacenadas han sido endurecidas para garantizar que no haya cruce
 *   **Independencia de Inventario**: Cada tienda puede tener su propio listado de productos con precios y costos distintos, incluso si comparten proveedores y SKUs.
 *   **Flexibilidad de Importación**: Permite importar catálogos existentes de una tienda a otra sin conflictos de duplicidad.
 *   **Seguridad**: Refuerza el aislamiento multi-inquilino al validar la pertenencia de los productos a la tienda en operaciones críticas.
+
+### 4. Seguimiento de Completitud del Producto
+Se ha añadido una columna `is_complete` para rastrear si un producto tiene toda la información mínima requerida (ej. precio > 0).
+
+*   **Uso**: Se utiliza para filtrar rápidamente productos que necesitan atención del usuario.
+*   **Optimización**: Existe un índice parcial `idx_products_is_complete` que optimiza las consultas de productos incompletos (`is_complete = false`).
+
+**Ejemplo de consulta de productos pendientes:**
+```typescript
+const { data } = await supabase
+  .from('products')
+  .select('*')
+  .eq('store_id', currentStoreId)
+  .eq('is_complete', false);
+```
