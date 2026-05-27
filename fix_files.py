@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server';
+import os
+
+export_pdf_content = """import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { withRole } from '@/lib/auth-middleware';
@@ -116,3 +118,9 @@ async function exportTransferPdfHandler(
 }
 
 export const GET = withTracing(withRole('manager', exportTransferPdfHandler), 'GET /api/transfers/[transferId]/export-pdf');
+"""
+
+with open('src/app/api/transfers/[transferId]/export-pdf/route.ts', 'w') as f:
+    f.write(export_pdf_content)
+
+print("Successfully wrote export-pdf route.ts")
