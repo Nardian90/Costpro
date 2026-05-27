@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
 import { useMultiStoreDashboard, StoreKPI } from '@/hooks/api/useMultiStoreDashboard';
+import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 
@@ -124,13 +125,15 @@ export default function MultiStoreDashboardView() {
     user?.activeStoreId
   );
 
+  const { switchStore } = useStoreSwitcher();
+
   const isLoading = loadingStores || loadingKPIs;
   const totalSalesToday = kpis.reduce((s, k) => s + k.todaySales, 0);
   const totalTransactions = kpis.reduce((s, k) => s + k.todayTransactions, 0);
   const totalAlerts = kpis.reduce((s, k) => s + k.lowStockCount + k.pendingTransfersOut, 0);
 
-  const handleActivateStore = (storeId: string) => {
-    window.dispatchEvent(new CustomEvent('costpro:set-active-store', { detail: { storeId } }));
+  const handleActivateStore = async (storeId: string) => {
+    await switchStore(storeId);
   };
 
   return (
