@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useStores } from '@/hooks/api/useStores';
 import { ReportDefinition, ReportType } from '@/types';

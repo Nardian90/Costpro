@@ -51,7 +51,7 @@ export function useStockMovements(
 
       const validated = await validateRPCArrayResponse(data, extendedSchema, 'stock_movements');
       const items = validated || [];
-      const total = data.count ?? items.length;
+      const total = (data as any).count ?? items.length;
       const hasMore = items.length === PAGE_SIZE;
 
       return { items, total, hasMore, nextOffset: hasMore ? from + PAGE_SIZE : null };

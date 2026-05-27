@@ -63,7 +63,7 @@ describe('useStoresView Cart Guard', () => {
       await result.current.handleSetActiveStore('store-1');
     });
 
-    expect(mockUpdateUser).toHaveBeenCalledWith({ activeStoreId: 'store-1' });
+    expect(mockUpdateUser).toHaveBeenCalledWith({ activeStoreId: 'store-1', storeId: 'store-1' });
     expect(userService.setActiveStore).toHaveBeenCalledWith('user-1', 'store-1');
     expect(toast.success).toHaveBeenCalledWith('Tienda cambiada exitosamente');
     expect(toast.warning).not.toHaveBeenCalled();
@@ -111,7 +111,7 @@ describe('useStoresView Cart Guard', () => {
     });
 
     expect(mockClearCart).toHaveBeenCalled();
-    expect(mockUpdateUser).toHaveBeenCalledWith({ activeStoreId: 'store-1' });
+    expect(mockUpdateUser).toHaveBeenCalledWith({ activeStoreId: 'store-1', storeId: 'store-1' });
     expect(userService.setActiveStore).toHaveBeenCalledWith('user-1', 'store-1');
   });
 });

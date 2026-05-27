@@ -1,4 +1,6 @@
-import { describe, it } from 'vitest';\ndescribe('Muted', () => { it('is muted', () => {}) });\n/*\nimport { NextRequest } from 'next/server';
+import os
+
+content = """import { NextRequest } from 'next/server';
 import { POST } from '../chat/route';
 import { vi, describe, it, expect } from 'vitest';
 
@@ -49,4 +51,9 @@ describe('POST /api/bot/chat', () => {
     expect(json.text).toBe('Bot response');
   });
 });
-\n*/
+"""
+
+with open('src/app/api/bot/__tests__/chat.route.test.ts', 'w') as f:
+    f.write(content)
+
+print("Fixed chat.route.test.ts")
