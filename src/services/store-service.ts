@@ -66,9 +66,19 @@ export const storeService = {
       throw new Error('No tienes permisos para realizar esta operación');
     }
     logger.info('DATABASE', 'UPDATE_STORE', { storeId, name, address });
+
+    // FIX BAJO-002: Whitelist allowed fields in additionalData to prevent CWE-915
+    const whitelistedData: Partial<Store> = {};
+    if (additionalData) {
+      if (additionalData.is_active !== undefined) whitelistedData.is_active = additionalData.is_active;
+      if (additionalData.phone !== undefined) whitelistedData.phone = additionalData.phone;
+      if (additionalData.email !== undefined) whitelistedData.email = additionalData.email;
+      if (additionalData.settings !== undefined) whitelistedData.settings = additionalData.settings;
+    }
+
     const { data, error } = await supabase
       .from('stores')
-      .update({ name, address, ...additionalData })
+      .update({ name, address, ...whitelistedData })
       .eq('id', storeId)
       .select()
       .single();

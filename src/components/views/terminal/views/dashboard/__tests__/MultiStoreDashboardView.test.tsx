@@ -3,6 +3,7 @@ import MultiStoreDashboardView from '../MultiStoreDashboardView';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
 import { useMultiStoreDashboard } from '@/hooks/api/useMultiStoreDashboard';
+import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 vi.mock('@/store', () => ({
@@ -15,6 +16,10 @@ vi.mock('@/hooks/api/useStores', () => ({
 
 vi.mock('@/hooks/api/useMultiStoreDashboard', () => ({
   useMultiStoreDashboard: vi.fn(),
+}));
+
+vi.mock('@/hooks/ui/useStoreSwitcher', () => ({
+  useStoreSwitcher: vi.fn(),
 }));
 
 // Mock de StateRenderer
@@ -54,10 +59,13 @@ describe('MultiStoreDashboardView', () => {
     }
   ];
 
+  const mockSwitchStore = vi.fn();
+
   beforeEach(() => {
     vi.mocked(useAuthStore).mockReturnValue({ user: mockUser } as any);
     vi.mocked(useStores).mockReturnValue({ data: mockStores, isLoading: false } as any);
     vi.mocked(useMultiStoreDashboard).mockReturnValue({ data: mockKPIs, isLoading: false, refetch: vi.fn() } as any);
+    vi.mocked(useStoreSwitcher).mockReturnValue({ switchStore: mockSwitchStore } as any);
   });
 
   it('renderiza el título y los KPIs globales', () => {
@@ -79,13 +87,12 @@ describe('MultiStoreDashboardView', () => {
     expect(screen.getByRole('button', { name: /Activar Tienda 2/i })).toBeInTheDocument();
   });
 
-  it('dispara evento personalizado al activar una tienda', () => {
-    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+  it('llama a switchStore al activar una tienda', () => {
     render(<MultiStoreDashboardView />);
 
     fireEvent.click(screen.getByRole('button', { name: /Activar Tienda 2/i }));
 
-    expect(dispatchSpy).toHaveBeenCalled();
+    expect(mockSwitchStore).toHaveBeenCalledWith('store-2');
   });
 
   it('llama a refetch al hacer click en el botón de actualizar', () => {

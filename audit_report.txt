@@ -1,0 +1,454 @@
+
+📄 20240325000000_harden_audit_triggers.sql
+  🟠 Line 11: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 22: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 35: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 49: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 63: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 88: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 129: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 141: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 153: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 210: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 219: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20240725_add_paginated_stock_ledger.sql
+  🟠 Line 1: Function 'get_product_stock_ledger_paginated' missing 'SET search_path'.
+  🔴 Line 20: Function 'get_product_stock_ledger_paginated' potentially bypasses RLS without validation.
+
+📄 20240801_create_inventory_adjustments.sql
+  🟠 Line 7: Function 'get_current_user_store_id' missing 'SET search_path'.
+
+📄 20240801_create_process_inventory_adjustment_function.sql
+  🟠 Line 45: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 50: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 59: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 73: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 106: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 25: Function 'process_inventory_adjustment' missing 'SET search_path'.
+  🔴 Line 33: Function 'process_inventory_adjustment' potentially bypasses RLS without validation.
+
+📄 20260112_ensure_audit_rls.sql
+  🔴 Line 36: Permissive USING (true) policy detected. This allows access to all rows.
+  🔴 Line 39: Permissive USING (true) policy detected. This allows access to all rows.
+  🔴 Line 42: Permissive USING (true) policy detected. This allows access to all rows.
+  🟠 Line 52: Function 'register_reception_wrapper' missing 'SET search_path'.
+  🔴 Line 56: Function 'register_reception_wrapper' potentially bypasses RLS without validation.
+
+📄 20260112_register_reception.sql
+  🟠 Line 43: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 54: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 58: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 62: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 20: Function 'register_reception' missing 'SET search_path'.
+
+📄 20260112_register_stock_movement.sql
+  🟠 Line 37: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 44: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 19: Function 'register_stock_movement' missing 'SET search_path'.
+  🔴 Line 30: Function 'register_stock_movement' potentially bypasses RLS without validation.
+
+📄 20260113_consolidate_stock_source.sql
+  🟠 Line 46: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 53: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 9: Function 'sync_products_stock_current' missing 'SET search_path'.
+  🔴 Line 10: Function 'sync_products_stock_current' potentially bypasses RLS without validation.
+
+📄 20260113_strengthen_rls.sql
+  🔴 Line 33: Permissive USING (true) policy detected. This allows access to all rows.
+  🔴 Line 38: Permissive USING (true) policy detected. This allows access to all rows.
+  🔴 Line 43: Permissive USING (true) policy detected. This allows access to all rows.
+
+📄 20260114_create_sale_rpc.sql
+  🟠 Line 25: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 50: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 6: Function 'create_sale' missing 'SET search_path'.
+  🔴 Line 19: Function 'create_sale' potentially bypasses RLS without validation.
+
+📄 20260115_fix_inventory_immutability.sql
+  🟠 Line 17: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 67: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 104: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 129: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 189: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 217: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 7: Function 'fn_sync_inventory_on_movement' missing 'SET search_path'.
+  🔴 Line 11: Function 'fn_sync_inventory_on_movement' potentially bypasses RLS without validation.
+  🟠 Line 34: Function 'register_stock_movement' missing 'SET search_path'.
+  🔴 Line 47: Function 'register_stock_movement' potentially bypasses RLS without validation.
+  🟠 Line 85: Function 'create_sale' missing 'SET search_path'.
+  🔴 Line 98: Function 'create_sale' potentially bypasses RLS without validation.
+  🟠 Line 165: Function 'register_reception' missing 'SET search_path'.
+  🟠 Line 254: Function 'cancel_reception' missing 'SET search_path'.
+  🟠 Line 292: Function 'deduct_stock' missing 'SET search_path'.
+
+📄 20260116_fix_audit_logs_permissions.sql
+  🔴 Line 25: Permissive USING (true) policy detected. This allows access to all rows.
+
+📄 20260117_fix_receipts_profiles_relationship.sql
+  🟠 Line 6: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260118_multi_store_audit.sql
+  🟠 Line 8: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 21: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 46: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 55: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260118_multi_store_base.sql
+  🟠 Line 54: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260118_multi_store_logic.sql
+  🟠 Line 90: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260118_multi_store_managed_ops.sql
+  🟠 Line 15: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 52: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 64: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 68: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 4: Function 'managed_create_store' missing 'SET search_path'.
+  🟠 Line 26: Function 'managed_create_user' missing 'SET search_path'.
+
+📄 20260118_multi_store_rls.sql
+  🟠 Line 4: Function 'current_user_store_id' missing 'SET search_path'.
+  🟠 Line 14: Function 'get_current_user_store_id' missing 'SET search_path'.
+  🔴 Line 18: Function 'get_current_user_store_id' potentially bypasses RLS without validation.
+  🟠 Line 24: Function 'has_store_access' missing 'SET search_path'.
+  🟠 Line 39: Function 'has_role' missing 'SET search_path'.
+  🟠 Line 57: Function 'has_any_role' missing 'SET search_path'.
+
+📄 20260120_enterprise_multi_store.sql
+  🟠 Line 27: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 79: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 134: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 148: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 153: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 157: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 59: Function 'manage_user_memberships' missing 'SET search_path'.
+  🟠 Line 102: Function 'managed_create_user' missing 'SET search_path'.
+
+📄 20260124_product_management_enhancements.sql
+  🟠 Line 230: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 250: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260126_final_rls_fix.sql
+  🟠 Line 111: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 117: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 8: Function 'get_my_role' missing 'SET search_path'.
+  🟠 Line 20: Function 'is_store_manager' missing 'SET search_path'.
+
+📄 20260126_fix_managed_create_user.sql
+  🟠 Line 63: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 76: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 80: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 84: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 7: Function 'managed_create_user' missing 'SET search_path'.
+
+📄 20260126_harden_profiles_rls.sql
+  🟠 Line 9: Function 'is_admin' missing 'SET search_path'.
+
+📄 20260126_unify_membership_logic.sql
+  🟠 Line 31: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 37: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260127_canonical_stock_movement.sql
+  🟠 Line 45: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 111: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 136: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 195: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 223: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 438: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 443: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 452: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 466: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 20: Function 'register_stock_movement' missing 'SET search_path'.
+  🟠 Line 87: Function 'create_sale' missing 'SET search_path'.
+  🟠 Line 171: Function 'register_reception' missing 'SET search_path'.
+  🟠 Line 259: Function 'deduct_stock' missing 'SET search_path'.
+  🟠 Line 279: Function 'cancel_reception' missing 'SET search_path'.
+  🟠 Line 316: Function 'process_stock_adjustment' missing 'SET search_path'.
+  🟠 Line 355: Function 'process_initial_stock' missing 'SET search_path'.
+  🟠 Line 398: Function 'record_sale_movement' missing 'SET search_path'.
+  🟠 Line 418: Function 'process_inventory_adjustment' missing 'SET search_path'.
+
+📄 20260127_enhance_audit_logs.sql
+  🟠 Line 18: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 32: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 53: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 63: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 74: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 130: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 150: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 13: Function 'audit_profile_changes' missing 'SET search_path'.
+  🔴 Line 391: Function 'get_audit_logs' potentially bypasses RLS without validation.
+
+📄 20260128_final_hardening_schema.sql
+  🟠 Line 113: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 138: Policy applied to 'public' role. Use 'authenticated' instead.
+  🔴 Line 41: Function 'get_audit_logs' potentially bypasses RLS without validation.
+  🟠 Line 89: Function 'create_sale' missing 'SET search_path'.
+
+📄 20260128_fix_unit_cost_precision.sql
+  🟠 Line 35: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 97: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 121: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 178: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 205: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 259: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 263: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 271: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 282: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 11: Function 'register_stock_movement' missing 'SET search_path'.
+  🟠 Line 75: Function 'create_sale' missing 'SET search_path'.
+  🟠 Line 155: Function 'register_reception' missing 'SET search_path'.
+  🟠 Line 240: Function 'process_inventory_adjustment' missing 'SET search_path'.
+
+📄 20260209_fix_critical_rls_issues.sql
+  🟠 Line 165: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260211_create_transfers.sql
+  🟠 Line 109: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 116: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 70: Function 'get_transferable_stores' missing 'SET search_path'.
+  🔴 Line 74: Function 'get_transferable_stores' potentially bypasses RLS without validation.
+  🟠 Line 94: Function 'create_transfer' missing 'SET search_path'.
+  🟠 Line 125: Function 'confirm_transfer' missing 'SET search_path'.
+
+📄 20260212_fix_has_role_overload.sql
+  🟠 Line 8: Function 'has_role' missing 'SET search_path'.
+
+📄 20260213_cash_closures_hardening.sql
+  🟠 Line 84: Function 'get_sales_since_last_closure' missing 'SET search_path'.
+  🔴 Line 90: Function 'get_sales_since_last_closure' potentially bypasses RLS without validation.
+
+📄 20260213_fix_cash_closure_rpc.sql
+  🟠 Line 8: Function 'get_sales_since_last_closure' missing 'SET search_path'.
+  🔴 Line 14: Function 'get_sales_since_last_closure' potentially bypasses RLS without validation.
+
+📄 20260214_fix_transfers_logic.sql
+  🟠 Line 38: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 45: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 23: Function 'create_transfer' missing 'SET search_path'.
+  🟠 Line 54: Function 'confirm_transfer' missing 'SET search_path'.
+
+📄 20260215_comprehensive_audit_logging.sql
+  🟠 Line 13: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 24: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 37: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 51: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 65: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 94: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 106: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 121: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 150: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 201: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 226: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 257: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 354: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 395: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 402: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 407: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 532: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 8: Function 'audit_profile_changes' missing 'SET search_path'.
+  🟠 Line 377: Function 'create_transfer' missing 'SET search_path'.
+  🟠 Line 425: Function 'confirm_transfer' missing 'SET search_path'.
+
+📄 20260215_fix_audit_product_trigger.sql
+  🟠 Line 12: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 24: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 39: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260215_fix_sale_price_error.sql
+  🟠 Line 45: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260223_fix_rls_recursion.sql
+  🟠 Line 9: Function 'is_user_creator' missing 'SET search_path'.
+  🟠 Line 21: Function 'is_managed_user' missing 'SET search_path'.
+
+📄 20260223_harden_user_management.sql
+  🟠 Line 66: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 8: Function 'get_users_for_encargado' missing 'SET search_path'.
+  🟠 Line 25: Function 'manage_user_memberships' missing 'SET search_path'.
+
+📄 20260223_unify_and_cleanup_memberships.sql
+  🟠 Line 50: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 10: Function 'manage_user_memberships' missing 'SET search_path'.
+
+📄 20260224_improve_visibility.sql
+  🔴 Line 13: Permissive USING (true) policy detected. This allows access to all rows.
+
+📄 20260225_create_rss_module.sql
+  🔴 Line 31: Permissive USING (true) policy detected. This allows access to all rows.
+  🔴 Line 42: Permissive USING (true) policy detected. This allows access to all rows.
+  🟠 Line 50: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 54: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260227_fix_rpc_structures.sql
+  🔴 Line 34: Function 'get_product_stock_ledger_paginated' potentially bypasses RLS without validation.
+
+📄 20260228_fix_sales_since_last_closure_fallback.sql
+  🟠 Line 9: Function 'get_sales_since_last_closure' missing 'SET search_path'.
+  🔴 Line 15: Function 'get_sales_since_last_closure' potentially bypasses RLS without validation.
+
+📄 20260228_implement_taxes.sql
+  🟠 Line 27: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 66: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 95: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 126: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 183: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 37: Function 'create_sale' missing 'SET search_path'.
+  🟠 Line 146: Function 'update_transaction_taxes' missing 'SET search_path'.
+
+📄 20260302_0002_create_roles_table.sql
+  🟠 Line 16: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260302_0004_update_managed_create_rpc.sql
+  🟠 Line 48: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 74: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 78: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 83: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 6: Function 'managed_create_user' missing 'SET search_path'.
+
+📄 20260302_0005_audit_role_changes.sql
+  🟠 Line 10: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 13: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 16: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 6: Function 'audit_role_changes' missing 'SET search_path'.
+
+📄 20260302_0006_fix_hierarchy_and_triggers.sql
+  🟠 Line 73: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 103: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 107: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 117: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 147: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 157: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 4: Function 'can_create_user_with_role' missing 'SET search_path'.
+  🔴 Line 7: Function 'can_create_user_with_role' potentially bypasses RLS without validation.
+  🟠 Line 31: Function 'managed_create_user' missing 'SET search_path'.
+  🔴 Line 41: Function 'managed_create_user' potentially bypasses RLS without validation.
+  🟠 Line 134: Function 'on_auth_user_created' missing 'SET search_path'.
+  🔴 Line 135: Function 'on_auth_user_created' potentially bypasses RLS without validation.
+
+📄 20260302_0007_fix_admin_management.sql
+  🟠 Line 15: Function 'is_admin' missing 'SET search_path'.
+
+📄 20260303_fix_store_audit_and_enable_management.sql
+  🟠 Line 13: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 25: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 37: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 20260304_harden_sale_stock_logic.sql
+  🟠 Line 60: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 100: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 168: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 190: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 39: Function 'register_stock_movement' missing 'SET search_path'.
+  🟠 Line 82: Function 'fn_sync_inventory_on_movement' missing 'SET search_path'.
+  🔴 Line 86: Function 'fn_sync_inventory_on_movement' potentially bypasses RLS without validation.
+  🟠 Line 115: Function 'create_sale' missing 'SET search_path'.
+
+📄 20260305_harden_create_sale_and_inventory.sql
+  🟠 Line 32: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 124: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 147: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 11: Function 'fn_sync_inventory_on_movement' missing 'SET search_path'.
+  🔴 Line 15: Function 'fn_sync_inventory_on_movement' potentially bypasses RLS without validation.
+  🟠 Line 56: Function 'create_sale' missing 'SET search_path'.
+
+📄 20260305_harden_inventory_final.sql
+  🟠 Line 44: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 20: Function 'fn_sync_inventory_on_movement' missing 'SET search_path'.
+  🔴 Line 24: Function 'fn_sync_inventory_on_movement' potentially bypasses RLS without validation.
+
+📄 20260307_safe_delete_user.sql
+  🟠 Line 8: Function 'can_safely_delete_user' missing 'SET search_path'.
+  🟠 Line 44: Function 'managed_delete_user' missing 'SET search_path'.
+
+📄 20260317_fix_safe_delete_user.sql
+  🟠 Line 11: Function 'can_safely_delete_user' missing 'SET search_path'.
+  🟠 Line 45: Function 'managed_delete_user' missing 'SET search_path'.
+
+📄 20260318_harden_audit_logging.sql
+  🟠 Line 11: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 45: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 7: Function 'fn_audit_transaction_voiding' missing 'SET search_path'.
+  🟠 Line 42: Function 'fn_audit_stock_reception' missing 'SET search_path'.
+
+📄 20260320_fix_audit_v2_hallazgos.sql
+  🟠 Line 133: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 145: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 218: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 230: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 11: Function 'update_product_wac' missing 'SET search_path'.
+  🔴 Line 12: Function 'update_product_wac' potentially bypasses RLS without validation.
+  🟠 Line 332: Function 'confirm_transfer' missing 'SET search_path'.
+
+📄 20260324_total_remediation.sql
+  🔴 Line 142: Permissive USING (true) policy detected. This allows access to all rows.
+  🟠 Line 82: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 163: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 221: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 233: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 254: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 346: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 382: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 388: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 393: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 464: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 479: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 499: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 30: Function 'has_store_access' missing 'SET search_path'.
+  🟠 Line 144: Function 'log_audit_event' missing 'SET search_path'.
+  🟠 Line 357: Function 'create_transfer' missing 'SET search_path'.
+  🟠 Line 404: Function 'create_sale' missing 'SET search_path'.
+
+📄 20260325_add_store_id_to_templates.sql
+  🟠 Line 16: Function 'is_admin' missing 'SET search_path'.
+
+📄 20260326_multi_tenant_hardening.sql
+  🟠 Line 85: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 105: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 119: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 121: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 160: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 174: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 179: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 186: Function 'confirm_transfer' missing 'SET search_path'.
+
+📄 20260527094858_harden_tenant_isolation_products_stores_tenants.sql
+  🟠 Line 424: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 476: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 DEMO_RESET_SCRIPT.sql
+  🟠 Line 82: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 90: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 95: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 103: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 105: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 111: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 113: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 119: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 121: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 127: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 132: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 136: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 DEMO_RESET_SCRIPT_V2.sql
+  🟠 Line 121: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 128: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 142: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 145: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 153: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 156: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 164: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 167: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 175: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 178: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 186: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 194: Policy applied to 'public' role. Use 'authenticated' instead.
+
+📄 DEMO_RESET_SCRIPT_V3.sql
+  🟠 Line 22: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 40: Policy applied to 'public' role. Use 'authenticated' instead.
+  🟠 Line 50: Policy applied to 'public' role. Use 'authenticated' instead.
+
+❌ FOUND 35 CRITICAL SECURITY ISSUES.
