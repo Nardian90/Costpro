@@ -17,13 +17,13 @@ vi.mock('@/lib/observability', () => ({
 vi.mock('@/lib/auth-middleware', () => ({
   withRole: vi.fn().mockImplementation((role, handler) => {
     return async (req: any, context: any) => {
-       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [] }, token: 'token' };
+       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [], activeStoreId: 's1' }, token: 'token' };
        return handler(req, mockSession);
     };
   }),
   withAuth: vi.fn().mockImplementation((handler) => {
     return async (req: any, context: any) => {
-       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [] }, token: 'token' };
+       const mockSession = { user: { id: 'u1', role: 'admin', roles: ['admin'], memberships: [], activeStoreId: 's1' }, token: 'token' };
        return handler(req, mockSession);
     };
   }),

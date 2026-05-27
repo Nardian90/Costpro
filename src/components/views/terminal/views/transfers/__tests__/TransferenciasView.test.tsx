@@ -72,6 +72,10 @@ describe('TransferenciasView', () => {
             isLoading: false,
             error: null,
         } as any);
+        vi.mocked(transfersApi.useCancelTransfer).mockReturnValue({
+            mutateAsync: vi.fn(),
+            isPending: false,
+        } as any);
         vi.mocked(transfersApi.useConfirmTransfer).mockReturnValue({
             mutateAsync: vi.fn(),
             isPending: false,

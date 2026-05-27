@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabaseClient';
 import { ReportDefinition, ReportRun, ReportType } from '@/types';
 
@@ -125,13 +124,11 @@ export const reportService = {
         const { data: invData, error: invError } = await supabase.rpc('get_paginated_products', {
           p_store_id: store_id,
           p_limit: 10000,
-          p_offset: 0
+          p_offset: 0,
+          p_category: filters?.category || null
         });
         if (invError) throw invError;
         data = (invData || []) as ReportRow[];
-        if (filters?.category) {
-            data = data.filter((p) => p.category === filters.category);
-        }
         break;
       }
 
@@ -149,11 +146,13 @@ export const reportService = {
       }
 
       case 'purchases': {
-        let query = supabase.from('receipts').select('*');
-        if (store_id) query = query.eq('store_id', store_id);
-        if (from) query = query.gte('created_at', from);
-        if (to) query = query.lte('created_at', to);
-        const { data: purchaseData, error: purchaseError } = await query.order('created_at', { ascending: false }).limit(1000);
+        const { data: purchaseData, error: purchaseError } = await supabase.from('receipts')
+          .select('*')
+          .eq('store_id', store_id)
+          .gte('created_at', from || '1970-01-01')
+          .lte('created_at', to || '2100-01-01')
+          .order('created_at', { ascending: false })
+          .limit(1000);
         if (purchaseError) throw purchaseError;
         data = (purchaseData || []) as ReportRow[];
         break;
@@ -172,64 +171,61 @@ export const reportService = {
       }
 
       case 'profit': {
-        const { data: profitData, error: profitError } = await supabase.rpc('get_transactions', {
+        const { data: profitData, error: profitError } = await supabase.rpc('get_profit_report', {
           p_store_id: store_id,
           p_date_from: fromDate,
           p_date_to: toDate,
           p_limit: 10000
         });
         if (profitError) throw profitError;
-        // NOTE: Profit calculation requires a join with cost data (pending Supabase RPC).
-        // Currently returns raw transaction data. Columns `profit` and `margin_percentage`
-        // will be empty until a dedicated RPC is created.
         data = (profitData || []) as ReportRow[];
         break;
       }
 
       case 'daily_income': {
-        const { data: incomeData, error: incomeError } = await supabase.rpc('get_transactions', {
+        const { data: incomeData, error: incomeError } = await supabase.rpc('get_daily_income_aggregated', {
           p_store_id: store_id,
           p_date_from: fromDate,
-          p_date_to: toDate,
-          p_limit: 10000
+          p_date_to: toDate
         });
         if (incomeError) throw incomeError;
-        // NOTE: This grouping should be done in a Supabase RPC for performance.
-        // Pending: create `get_daily_income_aggregated` RPC.
-        const transactions = (incomeData || []) as ReportRow[];
-        const groupedIncome = transactions.reduce<Record<string, number>>((acc, curr) => {
-            const dateStr = String(curr.created_at).split('T')[0];
-            if (!acc[dateStr]) acc[dateStr] = 0;
-            acc[dateStr] += Number(curr.total_amount || 0);
-            return acc;
-        }, {});
-        data = Object.keys(groupedIncome).map(date => ({
-            date,
-            total_income: groupedIncome[date]
-        } as ReportRow)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+        data = (incomeData || []) as ReportRow[];
         break;
       }
 
       case 'daily_expenses': {
-        let expQuery = supabase.from('receipts').select('*');
-        if (store_id) expQuery = expQuery.eq('store_id', store_id);
-        if (from) expQuery = expQuery.gte('created_at', from);
-        if (to) expQuery = expQuery.lte('created_at', to);
-        const { data: expData, error: expError } = await expQuery.order('created_at', { ascending: false }).limit(1000);
+        const { data: expData, error: expError } = await supabase.rpc('get_daily_expenses_aggregated', {
+          p_store_id: store_id,
+          p_date_from: from || null,
+          p_date_to: to || null
+        });
         if (expError) throw expError;
-        // NOTE: This grouping should be done in a Supabase RPC for performance.
-        // Pending: create `get_daily_expenses_aggregated` RPC.
-        const receipts = (expData || []) as ReportRow[];
-        const groupedExp = receipts.reduce<Record<string, number>>((acc, curr) => {
-            const dateStr = String(curr.created_at).split('T')[0];
-            if (!acc[dateStr]) acc[dateStr] = 0;
-            acc[dateStr] += Number(curr.total_cost || 0);
-            return acc;
-        }, {});
-        data = Object.keys(groupedExp).map(date => ({
-            date,
-            total_expenses: groupedExp[date]
-        } as ReportRow)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+        data = (expData || []) as ReportRow[];
+        break;
+      }
+
+      case 'transfer': {
+        const { data: transferData, error: transferError } = await supabase.rpc('get_transfers', {
+          p_store_id: store_id,
+          p_date_from: fromDate,
+          p_date_to: toDate,
+          p_status: null,
+          p_limit: 1000
+        });
+        if (transferError) throw transferError;
+        data = (transferData || []) as ReportRow[];
+        break;
+      }
+
+      case 'cash': {
+        const { data: cashData, error: cashError } = await supabase.rpc('get_cash_closures', {
+          p_store_id: store_id,
+          p_date_from: from || null,
+          p_date_to: to || null,
+          p_limit: 1000
+        });
+        if (cashError) throw cashError;
+        data = (cashData || []) as ReportRow[];
         break;
       }
 

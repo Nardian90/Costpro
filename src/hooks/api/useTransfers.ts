@@ -135,3 +135,27 @@ export function useConfirmTransfer() {
     },
   });
 }
+
+export function useCancelTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ transferId, userId }: { transferId: string; userId: string }) =>
+      transferService.cancelTransfer(transferId, userId),
+    onSuccess: async (_data, variables) => {
+      const { user } = useAuthStore.getState();
+      const transfer = queryClient.getQueryData<Transfer>(
+        ['transfers', 'details', variables.transferId]
+      );
+      if (user?.id) {
+        await auditService.logTransferCancelled({
+          userId: user.id,
+          transferId: variables.transferId,
+          storeId: transfer?.origin_store_id || user.activeStoreId || '',
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['transfers'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+  });
+}

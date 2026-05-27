@@ -65,7 +65,7 @@ export const aiChatSchema = z.object({
 
 // ─── Reports ─────────────────────────────────────────────────────────────────
 export const reportsGenerateSchema = z.object({
-  type: z.enum(['cost-sheet', 'inventory', 'sales', 'transfer', 'cash', 'profit', 'kardex', 'purchases', 'audit']),
+  type: z.enum(['cost_sheet', 'inventory', 'sales', 'transfer', 'cash', 'profit', 'kardex', 'purchases', 'audit', 'daily_income', 'daily_expenses']),
   format: z.enum(['a4', 'letter', 'legal']).optional().default('a4'),
   orientation: z.enum(['portrait', 'landscape']).optional().default('portrait'),
   data: z.record(z.string(), z.unknown()).optional(),
