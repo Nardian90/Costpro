@@ -120,7 +120,7 @@ export default function CatalogView() {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      return (matchesSearch return matchesSearch && matchesCategory;return matchesSearch && matchesCategory; matchesCategory) as any;
     });
   }, [products, searchTerm, selectedCategory]);
 

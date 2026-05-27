@@ -49,7 +49,7 @@ describe('useStores', () => {
 
     const { result } = renderHook(() => useStores('550e8400-e29b-41d4-a716-446655440000', true, false), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('success'));
     expect(result.current.data).toHaveLength(1);
     expect(result.current.data![0].name).toBe('Store 1');
   });

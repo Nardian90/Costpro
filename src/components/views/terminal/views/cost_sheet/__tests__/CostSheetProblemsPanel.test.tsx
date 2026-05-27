@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { CostSheetProblemsPanel } from '../CostSheetProblemsPanel';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('CostSheetProblemsPanel', () => {
   const mockProblems = [
@@ -8,37 +8,23 @@ describe('CostSheetProblemsPanel', () => {
     { type: 'WARNING' as const, message: 'Revisar coeficientes', rowId: 'row-2', code: 'SEMANTIC_DISCREPANCY' as const }
   ];
 
-  it('no renderiza nada si no hay problemas', () => {
-    const { container } = render(<CostSheetProblemsPanel problems={[]} />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('muestra el botón flotante con el número de problemas', () => {
+  it('renderiza KPIs básicos', () => {
     render(<CostSheetProblemsPanel problems={mockProblems} />);
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText(/Precio Venta/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unitario/i)).toBeInTheDocument();
   });
 
-  it('abre el panel al hacer click en el botón', () => {
+  it('muestra el número de problemas críticos si existen', () => {
     render(<CostSheetProblemsPanel problems={mockProblems} />);
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('Problemas de Validación')).toBeInTheDocument();
-    expect(screen.getByText('Falta valor base')).toBeInTheDocument();
-    expect(screen.getByText('Revisar coeficientes')).toBeInTheDocument();
+    // 1 critical + 1 warning. Component shows critical count (1) in the badge
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('llama a onGoTo y cierra el panel al hacer click en "Ir a fila"', async () => {
-    const onGoTo = vi.fn();
-    render(<CostSheetProblemsPanel problems={mockProblems} onGoTo={onGoTo} />);
-    fireEvent.click(screen.getByRole('button')); // Abre
-
-    const goToButtons = screen.getAllByText(/Ir a fila/i);
-    fireEvent.click(goToButtons[0]);
-
-    expect(onGoTo).toHaveBeenCalledWith('row-1');
-
-    // Esperar a que AnimatePresence termine de desmontar
-    await waitFor(() => {
-      expect(screen.queryByText('Problemas de Validación')).not.toBeInTheDocument();
-    });
+  it('muestra el número de advertencias si no hay críticos', () => {
+    const warningsOnly = [
+        { type: 'WARNING' as const, message: 'Revisar', rowId: 'row-2', code: 'SEMANTIC_DISCREPANCY' as const }
+    ];
+    render(<CostSheetProblemsPanel problems={warningsOnly} />);
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 });

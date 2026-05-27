@@ -157,7 +157,7 @@ export const CreateProductModal = () => {
         store_id: user.activeStoreId
       });
 
-      const productId = result?.id;
+      const productId = (result as any)?.id;
       if (!productId) throw new Error('No se recibió ID del producto creado');
 
       // 2. Create variants in parallel
@@ -242,7 +242,7 @@ export const CreateProductModal = () => {
                 </button>
                 <div className="absolute bottom-2 left-2 flex gap-2">
                   <span className="px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-semibold">
-                    Original: {(selectedImage.size / 1024).toFixed(0)} KB
+                    Original: {((selectedImage?.size || 0) / 1024).toFixed(0)} KB
                   </span>
                   {compressedSize && (
                     <span className="px-2 py-1 bg-green-600/80 rounded-lg text-[10px] text-white font-semibold">

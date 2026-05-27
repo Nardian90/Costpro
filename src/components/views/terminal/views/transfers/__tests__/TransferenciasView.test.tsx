@@ -85,6 +85,6 @@ describe('TransferenciasView', () => {
 
     it('renderiza transferencias enviadas por defecto', async () => {
         render(<TransferenciasView />, { wrapper });
-        expect(await screen.findByText(/PENDIENTE/i)).toBeInTheDocument();
+        expect((await screen.findAllByText(/PENDIENTE/i)).length).toBeGreaterThan(0);
     });
 });

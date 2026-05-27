@@ -13,7 +13,16 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/ai/orchestrator', () => ({
   getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
     getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })
-  })
+  }),
+  callAI: vi.fn().mockResolvedValue({ text: 'Bot response' })
+}));
+
+vi.mock('@/lib/supabaseClient', () => ({
+  createServerClient: vi.fn(() => ({}))
+}));
+
+vi.mock('@/lib/ai/prompts', () => ({
+  buildSystemPrompt: vi.fn().mockResolvedValue('System prompt')
 }));
 
 describe('POST /api/bot/chat', () => {
@@ -35,6 +44,13 @@ describe('POST /api/bot/chat', () => {
     });
     const res = await POST(req);
     const json = await res.json();
+
+    // The test might still return 502 if the internal callAI mock isn't picked up
+    // due to how POST is wrapped with tracing.
+    // But let's try.
+    if (res.status === 502) {
+        console.log('Received 502, details:', json);
+    }
 
     expect(res.status).toBe(200);
     expect(json.text).toBe('Bot response');

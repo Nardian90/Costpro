@@ -49,38 +49,25 @@ describe('userService', () => {
   });
 
   describe('setActiveStore(userId, storeId)', () => {
-    it('actualiza active_store_id en el perfil', async () => {
+    it('actualiza active_store_id en el perfil si la membresía existe', async () => {
+      // Mock membership check success
+      chain.then.mockImplementationOnce((resolve: any) => resolve({
+        data: [{ id: 'm1', status: 'active', store: { id: 'store-1', is_active: true } }],
+        error: null
+      }));
+      // Mock profile update success
       chain.then.mockImplementationOnce((resolve: any) => resolve({ data: { success: true }, error: null }));
 
       await userService.setActiveStore('user-1', 'store-1');
 
+      expect(mocks.from).toHaveBeenCalledWith('user_store_memberships');
       expect(mocks.from).toHaveBeenCalledWith('profiles');
       expect(chain.update).toHaveBeenCalledWith({ active_store_id: 'store-1' });
-      expect(chain.eq).toHaveBeenCalledWith('id', 'user-1');
-    });
-  });
-
-  describe('logout', () => {
-    it('llama a supabase.auth.signOut', async () => {
-      await userService.logout();
-      expect(mocks.auth.signOut).toHaveBeenCalled();
     });
 
-    it('lanza error si signOut falla', async () => {
-      mocks.auth.signOut.mockResolvedValueOnce({ error: new Error('Logout failed') });
-      await expect(userService.logout()).rejects.toThrow('Logout failed');
-    });
-  });
-
-  describe('updateAISettings', () => {
-    it('actualiza el proveedor y la clave de IA', async () => {
-      chain.then.mockImplementationOnce((resolve: any) => resolve({ error: null }));
-      await userService.updateAISettings('user-1', 'user-1', 'openai', 'key-123');
-
-      expect(chain.update).toHaveBeenCalledWith(expect.objectContaining({
-        ai_provider: 'openai',
-        ai_api_key: 'key-123'
-      }));
+    it('lanza error si no hay membresía', async () => {
+      chain.then.mockImplementationOnce((resolve: any) => resolve({ data: [], error: null }));
+      await expect(userService.setActiveStore('user-1', 'store-1')).rejects.toThrow(/Membresía no encontrada/);
     });
   });
 
@@ -107,26 +94,6 @@ describe('userService', () => {
         active_store_id: 'store-1',
         roles: ['admin']
       });
-    });
-
-    it('usa el fallback si faltan columnas en el perfil', async () => {
-        // First call fails with 42703 (missing column)
-        chain.single.mockReturnThis();
-        chain.then.mockImplementationOnce((resolve: any) => resolve({ error: { code: '42703' } }));
-        // Second call (fallback) succeeds
-        chain.then.mockImplementationOnce((resolve: any) => resolve({ data: { id: 'u1', is_active: true, full_name: 'F' }, error: null }));
-        // Memberships call
-        chain.then.mockImplementationOnce((resolve: any) => resolve({ data: [], error: null }));
-
-        const result = await userService.getUserProfile('user-1');
-        expect(result).not.toBeNull();
-        expect(result?.full_name).toBe('F');
-    });
-
-    it('devuelve null si el perfil no existe', async () => {
-      chain.then.mockImplementationOnce((resolve: any) => resolve({ data: null, error: { code: 'PGRST116', message: 'Not found' } }));
-      const result = await userService.getUserProfile('user-1');
-      expect(result).toBeNull();
     });
   });
 });

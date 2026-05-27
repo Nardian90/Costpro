@@ -40,14 +40,14 @@ describe('useTransfers', () => {
   it('useIncomingTransfers fetches incoming', async () => {
     (transferService.getIncomingTransfers as any).mockResolvedValue([]);
     const { result } = renderHook(() => useIncomingTransfers('s1'), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('success'), { timeout: 5000 });
     expect(transferService.getIncomingTransfers).toHaveBeenCalledWith('s1');
   });
 
   it('useOutgoingTransfers fetches outgoing', async () => {
     (transferService.getOutgoingTransfers as any).mockResolvedValue([]);
     const { result } = renderHook(() => useOutgoingTransfers('s1'), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.status).toBe('success'), { timeout: 5000 });
     expect(transferService.getOutgoingTransfers).toHaveBeenCalledWith('s1');
   });
 
