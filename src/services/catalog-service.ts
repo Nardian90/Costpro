@@ -94,7 +94,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
     // Auto-fit column widths based on header + data content
     const colWidths: { wch: number }[] = Object.keys(rows[0] || {}).map((key) => {
       const maxDataLen = rows.reduce(
-        (max, row) => Math.max(max, String((row as Record<string, unknown>)[key] ?? '').length),
+        (max, row) => Math.max(max, String((row as any)[key] ?? '').length),
         key.length
       );
       return { wch: Math.min(Math.max(maxDataLen + 2, 12), 40) };

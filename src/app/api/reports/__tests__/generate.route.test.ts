@@ -67,7 +67,8 @@ vi.mock('@/lib/supabaseClient', () => {
     }
   };
   return {
-    getSupabaseAuthClient: vi.fn().mockReturnValue(mock)
+    getSupabaseAuthClient: vi.fn().mockReturnValue(mock),
+    createServerClient: vi.fn().mockReturnValue(mock)
   };
 });
 
@@ -117,6 +118,10 @@ describe('POST /api/reports/generate', () => {
     const res = await POST(req);
     const json = await res.json();
 
+    if (res.status !== 200) {
+        console.error('Report generation failed:', json);
+    }
+
     expect(res.status).toBe(200);
     expect(json.success).toBe(true);
     expect(json.url).toBe('http://pdf');
@@ -127,7 +132,7 @@ describe('POST /api/reports/generate', () => {
       method: 'POST',
       headers: { 'Authorization': 'Bearer valid-token' },
       body: JSON.stringify({
-        type: 'cost-sheet',
+        type: 'cost_sheet',
         data: {
           header: { name: 'Test Pizza', code: 'P01', date: '2025-01-01', unit: 'U', quantity: 1, currency: 'CUP', category: 'Food' },
           sections: []
@@ -138,6 +143,10 @@ describe('POST /api/reports/generate', () => {
     });
     const res = await POST(req);
     const json = await res.json();
+
+    if (res.status !== 200) {
+        console.error('Cost sheet generation failed:', json);
+    }
 
     expect(res.status).toBe(200);
     expect(json.success).toBe(true);
