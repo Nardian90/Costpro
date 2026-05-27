@@ -41,14 +41,14 @@ describe('useTransfers', () => {
     (transferService.getIncomingTransfers as any).mockResolvedValue([]);
     const { result } = renderHook(() => useIncomingTransfers('s1'), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isSuccess || result.current.isLoading).toBe(true));
-    expect(transferService.getIncomingTransfers).toHaveBeenCalledWith('s1');
+    expect(transferService.getIncomingTransfers).toHaveBeenCalledWith('s1', expect.any(Object));
   });
 
   it('useOutgoingTransfers fetches outgoing', async () => {
     (transferService.getOutgoingTransfers as any).mockResolvedValue([]);
     const { result } = renderHook(() => useOutgoingTransfers('s1'), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isSuccess || result.current.isLoading).toBe(true));
-    expect(transferService.getOutgoingTransfers).toHaveBeenCalledWith('s1');
+    expect(transferService.getOutgoingTransfers).toHaveBeenCalledWith('s1', expect.any(Object));
   });
 
   it('useCreateTransfer calls transferService.createTransfer', async () => {

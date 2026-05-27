@@ -146,7 +146,7 @@ export interface Store {
 // Producto
 // ============================================
 
-export type BarcodeType = 'EAN13' | 'UPC' | 'CODE128' | 'SKU' | 'auto';
+export type BarcodeType = 'EAN13' | 'UPC' | 'CODE128' | 'SKU' | 'auto' | (string & {});
 
 export interface Product {
   id: string;
