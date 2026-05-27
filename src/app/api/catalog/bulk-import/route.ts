@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logInfo, logError } from '@/lib/observability/logger';
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let client: ReturnType<typeof createClient>;
+    let client: SupabaseClient;
     let usingServiceRole = false;
 
     if (serviceRoleKey) {
@@ -105,9 +105,10 @@ export async function POST(req: NextRequest) {
     // ── Step 5: Upsert products ───────────────────────────────
     console.log(`[${route}] Upserting ${products.length} products...`);
 
-    let upsertResult = await client
-      .from('products')
-      .upsert(products, { onConflict: 'sku,store_id' });
+    // Use explicit any cast for the array to avoid 'any[]' to 'never[]' assignment error
+    let upsertResult = await (client
+      .from('products') as any)
+      .upsert(products as any, { onConflict: 'sku,store_id' });
 
     // If column mismatch, retry without optional columns
     if (upsertResult.error) {
@@ -120,9 +121,9 @@ export async function POST(req: NextRequest) {
         const minimalProducts = products.map(
           ({ barcode, barcode_type, min_stock, supplier, ...rest }: any) => rest
         );
-        upsertResult = await client
-          .from('products')
-          .upsert(minimalProducts, { onConflict: 'sku,store_id' });
+        upsertResult = await (client
+          .from('products') as any)
+          .upsert(minimalProducts as any, { onConflict: 'sku,store_id' });
       }
     }
 
@@ -177,7 +178,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: products.length,
-      inserted: upsertResult.data?.length ?? products.length,
+      inserted: (upsertResult as any).data ? ((upsertResult as any).data as any[]).length : products.length,
     });
   } catch (error: any) {
     const duration = Date.now() - startTime;
