@@ -21,6 +21,9 @@ interface StructuredLogEntry {
   context: string;
   traceId?: string;
   spanId?: string;
+  tenantId?: string;
+  storeId?: string;
+  userId?: string;
   data?: Record<string, unknown>;
   error?: {
     name: string;
@@ -48,7 +51,8 @@ function formatConsole(entry: StructuredLogEntry): string {
   const ts = entry.timestamp.slice(11, 23); // HH:MM:SS.mmm
   const ctx = `[${entry.context}]`;
   const traceCtx = entry.traceId ? ` trace=${entry.traceId.slice(0, 8)}` : '';
-  return `${color}${entry.level.toUpperCase()}${RESET} ${ts} ${ctx}${traceCtx} ${entry.message}`;
+  const tenantCtx = entry.tenantId ? ` tenant=${entry.tenantId.slice(0, 8)}` : '';
+  return `${color}${entry.level.toUpperCase()}${RESET} ${ts} ${ctx}${traceCtx}${tenantCtx} ${entry.message}`;
 }
 
 /**
@@ -65,6 +69,13 @@ function emitLog(level: LogLevel, context: string, message: string, data?: Recor
     traceId,
     spanId,
   };
+
+  // Extract security context from data if present
+  if (data) {
+    if (data.tenantId) entry.tenantId = String(data.tenantId);
+    if (data.storeId) entry.storeId = String(data.storeId);
+    if (data.userId) entry.userId = String(data.userId);
+  }
 
   if (data && Object.keys(data).length > 0) {
     entry.data = data;
@@ -113,6 +124,14 @@ export function logWarn(context: string, message: string, data?: Record<string, 
  */
 export function logError(context: string, message: string, error?: unknown): void {
   emitLog('error', context, message, undefined, error);
+}
+
+/**
+ * Log a security-specific event with mandatory context.
+ */
+export function logSecurity(context: string, message: string, securityContext: { tenantId: string; userId?: string; storeId?: string; isBreachAttempt?: boolean }): void {
+  const level = securityContext.isBreachAttempt ? 'error' : 'info';
+  emitLog(level, `SECURITY:${context}`, message, { ...securityContext });
 }
 
 /**
