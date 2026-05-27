@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useState, useMemo, useSyncExternalStore } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Play, Save, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
+import { FileText, Download, Play, Save, AlertTriangle, FileSpreadsheet, History, Info, Construction } from 'lucide-react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { toast } from 'sonner';
@@ -15,11 +15,43 @@ import { AuditLogsModal } from './AuditLogsModal';
 import { ReportType, ReportDefinition } from '@/types';
 import { COLUMN_LABELS } from '@/contracts/reports';
 
-const noopSubscribe = () => () => {};
+/**
+ * Report types that are fully implemented on the server-side API route.
+ * Types NOT in this list will show a warning banner and the "Generate" button
+ * will require explicit confirmation.
+ */
+const API_IMPLEMENTED_TYPES: string[] = [
+  'sales',
+  'inventory',
+  'profit',
+  'purchases',
+  'cost_sheet',
+];
+
+/**
+ * Report types that are NOT implemented in the API (return empty data).
+ * These are available for client-side preview and Excel export but will
+ * generate empty/placeholder PDFs.
+ */
+const API_PLACEHOLDER_TYPES: Record<string, string> = {
+  kardex: 'Kardex — El generador PDF devuelve datos vacios. La vista previa y exportacion Excel funcionan correctamente.',
+  audit: 'Auditoria — El generador PDF devuelve datos vacios. La vista previa y exportacion Excel funcionan correctamente.',
+};
+
+/** Performance warnings per report type (records threshold) */
+const PERF_WARNINGS: Record<string, { threshold: number; seconds: number }> = {
+  sales: { threshold: 10000, seconds: 30 },
+  profit: { threshold: 10000, seconds: 30 },
+  inventory: { threshold: 10000, seconds: 20 },
+  daily_income: { threshold: 10000, seconds: 30 },
+  daily_expenses: { threshold: 1000, seconds: 15 },
+  audit: { threshold: 10000, seconds: 25 },
+  kardex: { threshold: 1000, seconds: 10 },
+  purchases: { threshold: 1000, seconds: 15 },
+};
 
 export default function ReportsView() {
   const { user } = useAuthStore();
-  const clientTodayISO = useSyncExternalStore(noopSubscribe, () => new Date().toISOString().split('T')[0], () => '');
   const [isGenerating, setIsGenerating] = useState(false);
   const [config, setConfig] = useState<Partial<ReportDefinition>>({
     name: 'Nuevo Reporte',
@@ -36,6 +68,16 @@ export default function ReportsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+
+  /** Check if current report type has a placeholder implementation in the API */
+  const isPlaceholderType = config.type ? config.type in API_PLACEHOLDER_TYPES : false;
+  const placeholderMessage = config.type ? API_PLACEHOLDER_TYPES[config.type] : null;
+
+  /** Check if date range is invalid */
+  const isInvalidDateRange = !!(config.date_range?.from && config.date_range?.to && config.date_range.from > config.date_range.to);
+
+  /** Get dynamic performance warning for current type */
+  const perfWarning = config.type ? PERF_WARNINGS[config.type] : null;
 
   async function handleSave() {
     if (!user?.activeStoreId) {
@@ -65,9 +107,18 @@ export default function ReportsView() {
       return;
     }
 
+    if (isInvalidDateRange) {
+      toast.error('Corrija el rango de fechas: "Desde" no puede ser posterior a "Hasta"');
+      return;
+    }
+
     if (config.type === 'kardex' && !config.filters?.product_id) {
       toast.error('Debe seleccionar un producto para generar el reporte de Kardex');
       return;
+    }
+
+    if (isPlaceholderType && placeholderMessage) {
+      toast.warning(placeholderMessage, { duration: 6000 });
     }
 
     setIsGenerating(true);
@@ -104,8 +155,18 @@ export default function ReportsView() {
       return;
     }
 
+    if (isInvalidDateRange) {
+      toast.error('Corrija el rango de fechas: "Desde" no puede ser posterior a "Hasta"');
+      return;
+    }
+
     if (config.type === 'kardex' && !config.filters?.product_id) {
       toast.error('Debe seleccionar un producto para generar el reporte de Kardex');
+      return;
+    }
+
+    if (!config.columns || config.columns.length === 0) {
+      toast.error('Seleccione al menos una columna para exportar');
       return;
     }
 
@@ -128,7 +189,7 @@ export default function ReportsView() {
 
       await exportToExcel(
         data,
-        config.columns || [],
+        config.columns,
         COLUMN_LABELS,
         config.name || `Reporte_${config.type}_${new Date().toISOString().split('T')[0]}`
       );
@@ -161,7 +222,7 @@ export default function ReportsView() {
     },
     {
         id: 'audit',
-        label: 'Auditoría',
+        label: 'Auditoria',
         icon: History,
         onClick: () => setIsAuditModalOpen(true),
         variant: 'outline' as const,
@@ -176,7 +237,7 @@ export default function ReportsView() {
         variant: 'primary' as const,
         className: 'font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20'
     }
-  ], [isSaving, isExportingExcel, isGenerating]);
+  ], [isSaving, isExportingExcel, isGenerating, isPlaceholderType, placeholderMessage, isInvalidDateRange]);
 
   return (
     <div className="space-y-6">
@@ -184,9 +245,9 @@ export default function ReportsView() {
         <div className="hidden md:block">
           <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tight text-primary flex items-center gap-3">
             <FileText className="w-8 h-8" />
-            Configuración de Reportes
+            Configuracion de Reportes
           </h1>
-          <p className="text-muted-foreground font-medium">Diseña y genera documentos profesionales para auditoría y gestión.</p>
+          <p className="text-muted-foreground font-medium">Disena y genera documentos profesionales para auditoria y gestion.</p>
         </div>
         <div className="w-full md:w-auto">
            <ActionMenu actions={actions} sticky={false} className="shadow-none bg-transparent" />
@@ -199,20 +260,51 @@ export default function ReportsView() {
         storeId={config.store_id || user?.activeStoreId}
       />
 
+      {/* Placeholder implementation warning */}
+      {isPlaceholderType && placeholderMessage && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex gap-3 items-start animate-in fade-in slide-in-from-top-2 duration-500">
+          <Construction className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-xs font-black uppercase text-amber-500 tracking-widest">Implementacion Parcial</p>
+            <p className="text-xs font-medium text-amber-500/80 leading-relaxed">
+              {placeholderMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-4">
           <ReportConfigPanel config={config} setConfig={setConfig} />
 
-          <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 flex gap-3 items-start animate-in fade-in slide-in-from-left-4 duration-500">
-             <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-             <div className="space-y-1">
-                <p className="text-xs font-black uppercase text-warning tracking-widest">Aviso de Rendimiento</p>
-                <p className="text-xs font-medium text-warning/80 leading-relaxed">
-                   Reportes con más de 10,000 registros pueden tardar hasta 30 segundos en procesarse.
-                   Se recomienda filtrar por periodos más cortos para mayor agilidad.
-                </p>
-             </div>
-          </div>
+          {/* Dynamic performance warning */}
+          {perfWarning && (
+            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 flex gap-3 items-start animate-in fade-in slide-in-from-left-4 duration-500">
+               <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+               <div className="space-y-1">
+                  <p className="text-xs font-black uppercase text-warning tracking-widest">Aviso de Rendimiento</p>
+                  <p className="text-xs font-medium text-warning/80 leading-relaxed">
+                     Reportes de tipo <span className="font-bold uppercase">{config.type}</span> con mas de {perfWarning.threshold.toLocaleString()} registros
+                     pueden tardar hasta {perfWarning.seconds} segundos en procesarse.
+                     Se recomienda filtrar por periodos mas cortos para mayor agilidad.
+                  </p>
+               </div>
+            </div>
+          )}
+
+          {/* Fallback warning for types without perf info */}
+          {!perfWarning && (
+            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 flex gap-3 items-start animate-in fade-in slide-in-from-left-4 duration-500">
+               <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+               <div className="space-y-1">
+                  <p className="text-xs font-black uppercase text-warning tracking-widest">Aviso de Rendimiento</p>
+                  <p className="text-xs font-medium text-warning/80 leading-relaxed">
+                     Reportes con mas de 10,000 registros pueden tardar hasta 30 segundos en procesarse.
+                     Se recomienda filtrar por periodos mas cortos para mayor agilidad.
+                  </p>
+               </div>
+            </div>
+          )}
         </div>
         <div className="lg:col-span-2">
           <ReportPreview config={config} />

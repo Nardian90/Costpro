@@ -42,16 +42,22 @@ describe('TransferenciasView', () => {
         } as any);
 
         vi.mocked(transfersApi.useIncomingTransfers).mockReturnValue({
-            data: [],
+            data: { pages: [{ transfers: [], total: 0 }], pageParams: [1] },
             isLoading: false,
             error: null,
             refetch: vi.fn(),
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
         } as any);
         vi.mocked(transfersApi.useOutgoingTransfers).mockReturnValue({
-            data: [mockTransfer],
+            data: { pages: [{ transfers: [mockTransfer], total: 1 }], pageParams: [1] },
             isLoading: false,
             error: null,
             refetch: vi.fn(),
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
         } as any);
         vi.mocked(transfersApi.useTransferableStores).mockReturnValue({
             data: [],

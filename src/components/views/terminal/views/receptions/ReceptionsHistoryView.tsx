@@ -10,6 +10,7 @@ import {
   Copy,
   Pencil,
   Trash2,
+  Download,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -46,6 +47,7 @@ export default function ReceptionsHistoryView() {
     handleDuplicate,
     isInverting,
     handleExportCSV,
+    handleExportAllExcel,
     receiptItems,
     loadingDetails,
     // FM-06 additions
@@ -61,7 +63,18 @@ export default function ReceptionsHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary"> Recepciones </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary"> Recepciones </h2>
+          <button
+            type="button"
+            onClick={handleExportAllExcel}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+            aria-label="Exportar todas las recepciones a Excel"
+          >
+            <Download className="w-4 h-4" />
+            Exportar Excel
+          </button>
+        </div>
 
         <QueryInspector />
 

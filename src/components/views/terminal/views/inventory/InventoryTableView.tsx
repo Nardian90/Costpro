@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import type { Product } from '@/types';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen } from 'lucide-react';
+import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
+
+type SortKey = 'name' | 'stock' | 'price' | 'cost';
+type SortDir = 'asc' | 'desc';
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -89,6 +92,40 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
 ProductRow.displayName = "ProductRow";
 
 export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex }: InventoryTableViewProps) {
+    const [sortKey, setSortKey] = useState<SortKey>('name');
+    const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+    const sortedProducts = useMemo(() => {
+        const arr = [...products];
+        arr.sort((a, b) => {
+            let cmp = 0;
+            switch (sortKey) {
+                case 'name': cmp = a.name.localeCompare(b.name); break;
+                case 'stock': cmp = (a.stock_current ?? 0) - (b.stock_current ?? 0); break;
+                case 'price': cmp = (a.price ?? 0) - (b.price ?? 0); break;
+                case 'cost': cmp = (a.cost_price ?? 0) - (b.cost_price ?? 0); break;
+            }
+            return sortDir === 'asc' ? cmp : -cmp;
+        });
+        return arr;
+    }, [products, sortKey, sortDir]);
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortKey(key);
+            setSortDir('asc');
+        }
+    };
+
+    const SortIcon = ({ col }: { col: SortKey }) => {
+        if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+        return sortDir === 'asc'
+            ? <ArrowUp className="w-3 h-3 text-primary" />
+            : <ArrowDown className="w-3 h-3 text-primary" />;
+    };
+
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLTableRowElement) => {
         if (isLoading) return;
@@ -101,28 +138,33 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
         if (node) observer.current.observe(node);
     }, [isLoading, hasMore, loadMore]);
 
+    // Disconnect observer on unmount to prevent memory leaks
+    useEffect(() => {
+        return () => { observer.current?.disconnect(); };
+    }, []);
+
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
             <table className="w-full min-w-[1024px] grid-table-inventory" aria-label="Tabla de productos del inventario">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-xs font-bold">
-                        <th className="p-4 pl-[76px]">Producto</th>
+                        <th className="p-4 pl-[76px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" /></button></th>
                         <th className="p-4">SKU</th>
-                        <th className="p-4 text-right">Stock</th>
-                        <th className="p-4 text-right">Precio</th>
-                        <th className="p-4 text-right">Costo</th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" /></button></th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" /></button></th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" /></button></th>
                         <th className="p-4 text-center">Estado</th>
                         <th className="p-4 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map((product, index) => (
+                    {sortedProducts.map((product, index) => (
                         <ProductRow
                             key={product.id}
                             product={product}
                             onAdjust={onAdjust}
                             onViewKardex={onViewKardex}
-                            ref={index === products.length - 1 ? lastElementRef : null}
+                            ref={index === sortedProducts.length - 1 ? lastElementRef : null}
                         />
                     ))}
                      {isLoading && (

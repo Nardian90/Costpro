@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
@@ -139,28 +139,77 @@ export function useReceptionsHistoryView() {
     });
   };
 
-  const handleExportCSV = (receipt: Receipt, items: ReceiptItem[]) => {
-    // Implementación básica de exportación CSV
-    const headers = ['Producto', 'SKU', 'Cantidad', 'Costo Unitario', 'Subtotal'];
-    const rows = items.map(item => [
-      item.products?.name || '',
-      item.products?.sku || '',
-      item.quantity,
-      item.unit_cost,
-      item.quantity * item.unit_cost
-    ]);
+  // Export single reception to Excel
+  const handleExportCSV = async (receipt: Receipt, items: ReceiptItem[]) => {
+    if (items.length === 0) {
+      toast.error('No hay items para exportar');
+      return;
+    }
+    try {
+      const toastId = toast.loading('Preparando Excel...');
+      const XLSX = await import('xlsx');
+      const data = items.map(item => ({
+        'Producto': item.products?.name || '',
+        'SKU': item.products?.sku || '',
+        'Cantidad': item.quantity,
+        'Costo Unitario': Number(item.unit_cost.toFixed(2)),
+        'Subtotal': Number((item.quantity * item.unit_cost).toFixed(2)),
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      worksheet['!cols'] = [{ wch: 35 }, { wch: 18 }, { wch: 12 }, { wch: 16 }, { wch: 16 }];
 
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `recepcion_${receipt.id.split('-')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos');
+
+      // Add receipt metadata sheet
+      const meta = [
+        { 'Campo': 'ID', 'Valor': receipt.id.split('-')[0] },
+        { 'Campo': 'Fecha', 'Valor': receipt.reception_date || receipt.created_at ? new Date(receipt.reception_date || receipt.created_at || '').toLocaleDateString('es-AR') : '' },
+        { 'Campo': 'Proveedor', 'Valor': receipt.supplier || 'N/A' },
+        { 'Campo': 'Factura', 'Valor': receipt.reference_doc || 'N/A' },
+        { 'Campo': 'Estado', 'Valor': receipt.status === 'active' ? 'Confirmada' : receipt.status === 'voided' ? 'Anulada' : receipt.status === 'pending' ? 'Pendiente' : 'Parcial' },
+        { 'Campo': 'Total Costo', 'Valor': Number(receipt.total_cost.toFixed(2)) },
+      ];
+      const metaSheet = XLSX.utils.json_to_sheet(meta);
+      metaSheet['!cols'] = [{ wch: 20 }, { wch: 35 }];
+      XLSX.utils.book_append_sheet(workbook, metaSheet, 'Info');
+
+      XLSX.writeFile(workbook, `recepcion_${receipt.id.split('-')[0]}.xlsx`);
+      toast.success('Recepción exportada a Excel', { id: toastId });
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      toast.error('Error al exportar a Excel');
+    }
   };
+
+  // Export full receptions list to Excel
+  const handleExportAllExcel = useCallback(async () => {
+    if (receptions.length === 0) {
+      toast.error('No hay recepciones para exportar');
+      return;
+    }
+    try {
+      const toastId = toast.loading('Preparando Excel de recepciones...');
+      const XLSX = await import('xlsx');
+      const data = receptions.map(r => ({
+        'ID': r.id.split('-')[0],
+        'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-AR') : '',
+        'Proveedor': r.supplier || '',
+        'Factura': r.reference_doc || '',
+        'Estado': r.status === 'active' ? 'Confirmada' : r.status === 'voided' ? 'Anulada' : r.status === 'pending' ? 'Pendiente' : 'Parcial',
+        'Total Costo': Number(r.total_cost.toFixed(2)),
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      worksheet['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 25 }, { wch: 18 }, { wch: 14 }, { wch: 16 }];
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Recepciones');
+      XLSX.writeFile(workbook, `recepciones-${Date.now()}.xlsx`);
+      toast.success('Recepciones exportadas a Excel', { id: toastId });
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      toast.error('Error al exportar a Excel');
+    }
+  }, [receptions]);
 
   return {
     // State
@@ -201,6 +250,7 @@ export function useReceptionsHistoryView() {
     handleInvert,
     handleDuplicate,
     handleExportCSV,
+    handleExportAllExcel,
     isInverting: invertDocumentMutation.isPending
   };
 }

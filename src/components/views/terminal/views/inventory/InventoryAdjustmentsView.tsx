@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { History, ArrowUpRight, ArrowDownRight, ArrowUpDown, Calendar, RefreshCcw, Search } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { History, ArrowUpRight, ArrowDownRight, RefreshCcw } from 'lucide-react';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -22,24 +22,26 @@ export default function InventoryAdjustmentsView() {
     toast.success('Historial de ajustes actualizado.');
   };
 
-  const adjustments = (movementsData || []).filter(mov => {
-    // Filtramos por 'INVERSION' en el documento de referencia o en el tipo de movimiento
-    // Agregamos una comprobación más amplia para asegurar que los registros aparezcan
-    const refDoc = mov.reference_doc?.toUpperCase() || '';
-    const movType = mov.movement_type?.toUpperCase() || '';
+  const adjustments = useMemo(() => {
+    const allMovements = movementsData?.pages?.flatMap(page => page.items) || [];
+    return allMovements.filter(mov => {
+      // Filtramos por 'INVERSION' en el documento de referencia o en el tipo de movimiento
+      const refDoc = mov.reference_doc?.toUpperCase() || '';
+      const movType = mov.movement_type?.toUpperCase() || '';
 
-    const isInversion = refDoc.includes('INVERSION') || movType.includes('INVERSION');
+      const isInversion = refDoc.includes('INVERSION') || movType.includes('INVERSION');
 
-    if (!isInversion) return false;
+      if (!isInversion) return false;
 
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    const productName = mov.product?.name?.toLowerCase() || '';
-    const productSku = mov.product?.sku?.toLowerCase() || '';
-    const refDocLower = refDoc.toLowerCase();
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      const productName = mov.product?.name?.toLowerCase() || '';
+      const productSku = mov.product?.sku?.toLowerCase() || '';
+      const refDocLower = refDoc.toLowerCase();
 
-    return productName.includes(term) || productSku.includes(term) || refDocLower.includes(term);
-  });
+      return productName.includes(term) || productSku.includes(term) || refDocLower.includes(term);
+    });
+  }, [movementsData, searchTerm]);
 
   return (
     <div className="space-y-6">

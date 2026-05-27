@@ -39,7 +39,8 @@ describe('transferService', () => {
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
-      then: vi.fn((resolve) => resolve({ data: null, error: null })),
+      range: vi.fn().mockReturnThis(),
+      then: vi.fn((resolve) => resolve({ data: null, error: null, count: 0 })),
     };
 
     mocks.from.mockReturnValue(chain);
@@ -48,20 +49,22 @@ describe('transferService', () => {
   describe('getIncomingTransfers(storeId)', () => {
     it('filtra por destination_store_id correctamente', async () => {
       const mockTransfers = [{ id: VALID_UUID_1, destination_store_id: 's-1' }];
-      chain.then.mockImplementationOnce((resolve: any) => resolve({ data: mockTransfers, error: null }));
+      chain.then.mockImplementationOnce((resolve: any) => resolve({ data: mockTransfers, error: null, count: 1 }));
 
       const result = await transferService.getIncomingTransfers('s-1');
 
       expect(mocks.from).toHaveBeenCalledWith('transfers');
       expect(chain.eq).toHaveBeenCalledWith('destination_store_id', 's-1');
-      expect(result).toEqual(mockTransfers);
+      expect(result.transfers).toEqual(mockTransfers);
+      expect(result.total).toBe(1);
     });
   });
 
   describe('getOutgoingTransfers', () => {
-      it('filtra por origin_store_id', async () => {
+      it('filtra por origin_store_id y retorna estructura paginada', async () => {
           await transferService.getOutgoingTransfers('s-1');
           expect(chain.eq).toHaveBeenCalledWith('origin_store_id', 's-1');
+          expect(chain.range).toHaveBeenCalledWith(0, 19);
       });
   });
 

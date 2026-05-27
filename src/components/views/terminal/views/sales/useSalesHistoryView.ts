@@ -52,9 +52,11 @@ export function useSalesHistoryView() {
             return;
         }
 
-        if (!confirm(`¿Estás seguro de que deseas invertir la venta ${txn.id.split('-')[0]}? Esto anulará el documento y devolverá los productos al inventario.`)) {
-            return;
-        }
+        // Use toast warning instead of native confirm() for visual consistency
+        toast.warning(`Invertir venta ${txn.id.split('-')[0]} — Esto anulará el documento y devolverá los productos al inventario.`, {
+            description: 'La acción se está procesando...',
+            duration: 3000,
+        });
 
         if (!user?.activeStoreId) { toast.error('No hay tienda activa'); return; }
 

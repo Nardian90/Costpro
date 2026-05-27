@@ -35,6 +35,14 @@ export default function InventoryAdjustmentModal({
   const [reason, setReason] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Reset state when product changes
+  useEffect(() => {
+    setAjusteUnidades(0);
+    setAjusteValorUnitario('');
+    setReason('');
+    setIsProcessing(false);
+  }, [product.id]);
+
   // Valores iniciales
   const stockActual = product.stock_current || 0;
   const costoPromedioActual = product.cost_average || product.cost_price || 0;

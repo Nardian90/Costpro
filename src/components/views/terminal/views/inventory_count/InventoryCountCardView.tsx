@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Product, ProductVariant } from '@/types';
 import { cn } from '@/lib/utils';
-import { Package, Minus, Plus } from 'lucide-react';
+import { Package, Minus, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExtendedProduct } from './useInventoryCount';
 
@@ -12,13 +11,19 @@ interface InventoryCountCardProps {
   countedQuantities: { [key: string]: number };
   onQuantityChange: (productId: string, quantity: number) => void;
   loading: boolean;
+  onRemoveProduct?: (productId: string) => void;
+  samplePercentage?: number;
+  showRemoveButton?: boolean;
 }
 
 export default function InventoryCountCard({
   products,
   countedQuantities,
   onQuantityChange,
-  loading
+  loading,
+  onRemoveProduct,
+  samplePercentage = 100,
+  showRemoveButton = false,
 }: InventoryCountCardProps) {
   if (loading) {
     return (
@@ -57,7 +62,7 @@ export default function InventoryCountCard({
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex-1 min-w-0">
                     <h3 className="font-black text-sm uppercase tracking-tight leading-tight line-clamp-2">
                       {product.name}
                     </h3>
@@ -65,12 +70,24 @@ export default function InventoryCountCard({
                       {product.sku || 'SIN SKU'} • {product.category || 'GENERAL'}
                     </p>
                   </div>
-                  <div className={cn(
-                    "px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter",
-                    diff === 0 ? "bg-muted/10 text-muted-foreground/50" :
-                    diff > 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-                  )}>
-                    {diff === 0 ? 'Sin cambios' : diff > 0 ? `+${diff}` : diff}
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className={cn(
+                      "px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter",
+                      diff === 0 ? "bg-muted/10 text-muted-foreground/50" :
+                      diff > 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                    )}>
+                      {diff === 0 ? 'Sin cambios' : diff > 0 ? `+${diff}` : diff}
+                    </span>
+                    {showRemoveButton && onRemoveProduct && (
+                      <button
+                        onClick={() => onRemoveProduct(product.id)}
+                        className="p-1.5 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"
+                        aria-label={`Quitar ${product.name} del conteo`}
+                        title="Quitar del conteo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -83,6 +100,18 @@ export default function InventoryCountCard({
                     <p className="text-xs font-black uppercase text-primary tracking-widest mb-1">Stock Físico</p>
                     <p className="text-xl font-black text-primary">{counted}</p>
                   </div>
+                </div>
+
+                {/* Sample percentage badge */}
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
+                    samplePercentage >= 80 ? "bg-success/10 text-success" :
+                    samplePercentage >= 50 ? "bg-amber-500/10 text-amber-600" :
+                    "bg-danger/10 text-danger"
+                  )}>
+                    Muestra: {samplePercentage}%
+                  </span>
                 </div>
               </div>
 
