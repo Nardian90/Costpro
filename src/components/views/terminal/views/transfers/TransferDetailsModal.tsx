@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { BaseModal } from '@/components/modals/BaseModal';
-import { StateRenderer } from '@/components/ui/state-renderer';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { StateRenderer } from '@/components/ui/StateRenderer';
 import { useTransferDetails, useConfirmTransfer, useCancelTransfer } from '@/hooks/api/useTransfers';
 import { useAuthStore } from '@/store';
 import {
@@ -102,7 +102,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
     <>
       <BaseModal
         open={!!transferId}
-        onOpenChange={(open) => !open && onClose()}
+        onOpenChange={(open: boolean) => !open && onClose()}
         title={
           transfer ? (
             <div className="flex justify-between items-center w-full">

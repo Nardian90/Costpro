@@ -541,6 +541,7 @@ export interface ReportDefinition {
     to: string;
   };
   columns: string[];
+  format?: "a4" | "letter" | "legal";
   layout: any;
   created_by: string;
   store_id: string;
