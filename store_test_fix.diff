@@ -1,0 +1,11 @@
+<<<<<<< SEARCH
+    const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address', {
+        is_active: false,
+        tenant_id: 'malicious-tenant' as any // Esto debería ser filtrado
+    });
+=======
+    const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address', {
+        is_active: false,
+        ...({ tenant_id: 'malicious-tenant' } as any) // Esto debería ser filtrado
+    });
+>>>>>>> REPLACE

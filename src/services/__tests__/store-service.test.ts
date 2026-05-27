@@ -81,7 +81,7 @@ describe('storeService', () => {
 
     const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address', {
         is_active: false,
-        tenant_id: 'malicious-tenant' as any // Esto debería ser filtrado
+        ...({ tenant_id: 'malicious-tenant' } as any) // Esto debería ser filtrado
     });
 
     expect(result).toEqual(mockData);
