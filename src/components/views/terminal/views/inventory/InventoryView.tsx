@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
+import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3 } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 import InventoryCardView from './InventoryCardView';
@@ -57,7 +57,19 @@ export default function InventoryView() {
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Debounce search to avoid excessive API calls
+    useEffect(() => {
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+        return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+    }, [searchTerm]);
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [stockFilter, setStockFilter] = useState<'all' | 'normal' | 'low' | 'out'>('all');
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
     const [showABC, setShowABC] = useState(false);
@@ -78,7 +90,7 @@ export default function InventoryView() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useInventory(user?.activeStoreId, searchTerm, selectedCategory, PAGE_LIMIT);
+    } = useInventory(user?.activeStoreId, debouncedSearch, selectedCategory, PAGE_LIMIT);
 
     const products = useMemo(() => {
         const rawProducts = data?.pages.flatMap(page => page.products) || [];
@@ -88,6 +100,17 @@ export default function InventoryView() {
             (!p.store_id || uuidRegex.test(p.store_id))
         );
     }, [data]);
+
+    const filteredProducts = useMemo(() => {
+        if (stockFilter === 'all') return products;
+        return products.filter(p => {
+            const stock = p.stock_current ?? 0;
+            const min = p.min_stock ?? 0;
+            if (stockFilter === 'out') return stock <= 0;
+            if (stockFilter === 'low') return stock > 0 && min > 0 && stock <= min;
+            return stock > 0 && (min <= 0 || stock > min);
+        });
+    }, [products, stockFilter]);
 
     const stockAlerts = useStockAlerts(products);
 
@@ -109,36 +132,32 @@ export default function InventoryView() {
         }
     };
 
-    const handleExportCSV = useCallback(() => {
+    const handleExportExcel = useCallback(async () => {
         if (products.length === 0) {
             toast.error('No hay productos para exportar');
             return;
         }
-
-        const headers = ['SKU', 'Nombre', 'Stock Actual', 'Costo Promedio', 'Valor Total', 'Categoría'];
-        const rows = products.map(p => [
-            p.sku || '',
-            p.name || '',
-            p.stock_current?.toString() || '0',
-            p.cost_average?.toFixed(2) || '0.00',
-            ((p.stock_current || 0) * (p.cost_average || 0)).toFixed(2),
-            p.category || ''
-        ]);
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(r => r.join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `inventario-${user?.activeStoreId || 'export'}-${Date.now()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Inventario exportado a CSV');
+        try {
+            const toastId = toast.loading('Preparando Excel...');
+            const XLSX = await import('xlsx');
+            const data = products.map(p => ({
+                'SKU': p.sku || '',
+                'Nombre': p.name || '',
+                'Stock Actual': p.stock_current || 0,
+                'Costo Promedio': Number((p.cost_average || 0).toFixed(2)),
+                'Valor Total': Number(((p.stock_current || 0) * (p.cost_average || 0)).toFixed(2)),
+                'Categoría': p.category || '',
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            worksheet['!cols'] = [{ wch: 15 }, { wch: 35 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 20 }];
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
+            XLSX.writeFile(workbook, `inventario-${user?.activeStoreId || 'export'}-${Date.now()}.xlsx`);
+            toast.success('Inventario exportado a Excel', { id: toastId });
+        } catch (error) {
+            console.error('Error al exportar Excel:', error);
+            toast.error('Error al exportar a Excel');
+        }
     }, [products, user?.activeStoreId]);
 
     const actions: Action[] = [
@@ -158,10 +177,10 @@ export default function InventoryView() {
             ariaLabel: currentView === 'inventory' ? "Ir a registrar nueva recepción de mercancía" : "Volver al listado de inventario"
         },
         {
-            id: 'export-csv',
-            label: 'Exportar CSV',
-            icon: Download,
-            onClick: handleExportCSV,
+            id: 'export-excel',
+            label: 'Exportar Excel',
+            icon: FileSpreadsheet,
+            onClick: handleExportExcel,
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },
@@ -174,9 +193,6 @@ export default function InventoryView() {
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },
     ];
-
-
-
 
     const handleAdjustProduct = useCallback((product: Product) => {
         setAdjustingProduct(product);
@@ -215,7 +231,7 @@ export default function InventoryView() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-[clamp(1.25rem,4vw,1.5rem)] font-bold border-l-4 border-primary pl-4 hidden sm:block">
+                <h2 className="text-[clamp(1.25rem,4vw,1.5rem)] font-bold border-l-4 border-primary pl-4">
                     Gestión de Inventario
                 </h2>
                 {!isMobile && (
@@ -247,13 +263,38 @@ export default function InventoryView() {
                     selectedCategory={selectedCategory}
                     onCategoryChange={handleCategoryChange}
                 />
+
+                {/* Stock status filter */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {([
+                        { key: 'all', label: 'Todos' },
+                        { key: 'normal', label: 'Normal' },
+                        { key: 'low', label: 'Stock Bajo' },
+                        { key: 'out', label: 'Agotados' },
+                    ] as const).map(opt => (
+                        <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setStockFilter(opt.key)}
+                            className={cn(
+                                'px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95',
+                                stockFilter === opt.key
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className={cn(isPending && "opacity-50 transition-opacity")} role="list" aria-label="Lista de productos del inventario">
                 <StateRenderer
                     isLoading={isLoading}
                     error={error as Error | null}
-                    data={products}
+                    data={filteredProducts}
                     emptyComponent={<EmptyInventoryComponent />}
                     loadingComponent={<InventoryLoadingSkeleton layoutMode={layoutMode} />}
                 >
@@ -312,8 +353,8 @@ export default function InventoryView() {
                 <StockAlertsPanel
                     alerts={stockAlerts}
                     onReceive={(product) => {
-                    setPreselectedProduct(product);
-                    setCurrentView('reception');
+                        setPreselectedProduct(product);
+                        setCurrentView('reception');
                     }}
                 />
             )}

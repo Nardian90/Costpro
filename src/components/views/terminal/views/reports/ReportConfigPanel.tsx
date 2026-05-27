@@ -8,10 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ReportType, ReportDefinition } from '@/types';
-import { useProducts, useSuspenseProducts } from '@/hooks/api/useProducts';
+import { useProducts } from '@/hooks/api/useProducts';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
-import { Search, Package, Check, ChevronsUpDown, Filter, Store as StoreIcon, Tag } from 'lucide-react';
+import { Search, Package, Check, ChevronsUpDown, Filter, Store as StoreIcon, Tag, AlertCircle } from 'lucide-react';
 import { COLUMN_LABELS } from '@/contracts/reports';
 import { cn } from '@/lib/utils';
 import {
@@ -234,23 +234,31 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
       <div className="space-y-4">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Periodo</h3>
+        {config.date_range?.from && config.date_range?.to && config.date_range.from > config.date_range.to && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
+            <p className="text-xs font-bold text-destructive uppercase tracking-widest">La fecha "Desde" no puede ser posterior a "Hasta"</p>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Desde</Label>
             <Input
               type="date"
-              value={config.date_range?.from}
-              onChange={(e) => setConfig({ ...config, date_range: { ...config.date_range!, from: e.target.value } })}
+              value={config.date_range?.from ?? ''}
+              onChange={(e) => setConfig({ ...config, date_range: { from: e.target.value, to: config.date_range?.to ?? '' } })}
               className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
+              max={config.date_range?.to || undefined}
             />
           </div>
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Hasta</Label>
             <Input
               type="date"
-              value={config.date_range?.to}
-              onChange={(e) => setConfig({ ...config, date_range: { ...config.date_range!, to: e.target.value } })}
+              value={config.date_range?.to ?? ''}
+              onChange={(e) => setConfig({ ...config, date_range: { from: config.date_range?.from ?? '', to: e.target.value } })}
               className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
+              min={config.date_range?.from || undefined}
             />
           </div>
         </div>

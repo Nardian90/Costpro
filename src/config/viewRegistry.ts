@@ -37,6 +37,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["process_sale", "scan_product"]
   },
   {
+    id: "sales_catalog",
+    route: "/terminal?view=sales_catalog",
+    description: "Catálogo de Ventas: tabla previsualizada de venta tipo Excel con precios, descuentos, formas de pago y selección de unidad de medida por producto.",
+    actions: ["bulk_sale", "set_prices", "set_discounts", "set_payments"]
+  },
+  {
     id: "sales",
     route: "/terminal?view=sales",
     description: "Historial y listado de ventas realizadas.",

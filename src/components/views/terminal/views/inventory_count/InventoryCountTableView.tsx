@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Product, ProductVariant } from '@/types';
 import { cn } from '@/lib/utils';
-import { Package } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Package, Trash2 } from 'lucide-react';
 import { ExtendedProduct } from './useInventoryCount';
 
 interface InventoryCountTableViewProps {
@@ -12,13 +10,19 @@ interface InventoryCountTableViewProps {
   countedQuantities: { [key: string]: number };
   onQuantityChange: (productId: string, quantity: number) => void;
   loading: boolean;
+  onRemoveProduct?: (productId: string) => void;
+  samplePercentage?: number;
+  showRemoveButton?: boolean;
 }
 
 export default function InventoryCountTableView({
   products,
   countedQuantities,
   onQuantityChange,
-  loading
+  loading,
+  onRemoveProduct,
+  samplePercentage = 100,
+  showRemoveButton = false,
 }: InventoryCountTableViewProps) {
   return (
     <div className="overflow-x-auto table-to-cards force-table rounded-2xl shadow-xl border border-white/5 overflow-hidden">
@@ -29,12 +33,14 @@ export default function InventoryCountTableView({
             <th className="p-4 text-right">Stock Teórico</th>
             <th className="p-4 text-center">Stock Físico (Contado)</th>
             <th className="p-4 text-right">Desviación</th>
+            <th className="p-4 text-center">% Muestra</th>
+            {showRemoveButton && <th className="p-4 text-center w-12"></th>}
           </tr>
         </thead>
         <tbody className="bg-background/30 backdrop-blur-sm">
           {loading ? (
             <tr aria-label="Cargando catálogo">
-              <td colSpan={4} className="p-20 text-center">
+              <td colSpan={showRemoveButton ? 6 : 5} className="p-20 text-center">
                 <div className="flex flex-col items-center justify-center gap-4">
                   <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                   <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
@@ -43,7 +49,7 @@ export default function InventoryCountTableView({
             </tr>
           ) : products.length === 0 ? (
             <tr>
-              <td colSpan={4} className="p-20 text-center">
+              <td colSpan={showRemoveButton ? 6 : 5} className="p-20 text-center">
                 <Package className="w-16 h-16 mx-auto mb-4 opacity-5" />
                 <p className="font-black uppercase text-muted-foreground text-sm tracking-widest">No se encontraron productos</p>
               </td>
@@ -80,6 +86,28 @@ export default function InventoryCountTableView({
                       {diff > 0 ? `+${diff}` : diff}
                     </span>
                   </td>
+                  <td data-label="% Muestra" className="p-4 text-center">
+                    <span className={cn(
+                      "text-xs font-black uppercase tracking-widest px-2 py-1 rounded-full",
+                      samplePercentage >= 80 ? "bg-success/10 text-success" :
+                      samplePercentage >= 50 ? "bg-amber-500/10 text-amber-600" :
+                      "bg-danger/10 text-danger"
+                    )}>
+                      {samplePercentage}%
+                    </span>
+                  </td>
+                  {showRemoveButton && onRemoveProduct && (
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onRemoveProduct(product.id); }}
+                        className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors"
+                        aria-label={`Quitar ${product.name} del conteo`}
+                        title="Quitar del conteo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               );
             })

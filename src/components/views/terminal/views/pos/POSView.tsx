@@ -390,7 +390,7 @@ export default function POSView() {
       clearCart();
       toast.success('Venta completada con éxito');
     } catch (err: any) {
-      toast.error('Error al procesar la venta');
+      toast.error('Error al procesar la venta: ' + (err?.message || 'Error desconocido'));
     }
   };
 

@@ -1,6 +1,3 @@
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
-
 // Detecta si Upstash está configurado
 const isUpstashConfigured =
   !!process.env.UPSTASH_REDIS_REST_URL &&
@@ -8,21 +5,30 @@ const isUpstashConfigured =
 
 // FIX-BUG-SEC-007: Cache of Upstash limiters keyed by `${maxRequests}_${windowSec}`
 // so that caller-supplied params are honored instead of using a single fixed limiter.
-const upstashLimiterCache = new Map<string, Ratelimit>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const upstashLimiterCache = new Map<string, any>();
 
-function getUpstashLimiter(maxRequests: number, windowSec: number): Ratelimit | null {
+async function getUpstashLimiter(maxRequests: number, windowSec: number) {
   if (!isUpstashConfigured) return null;
 
   const key = `${maxRequests}_${windowSec}`;
   let limiter = upstashLimiterCache.get(key);
   if (!limiter) {
-    limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(maxRequests, `${windowSec} s`),
-      analytics: false,
-      prefix: 'costpro_rl',
-    });
-    upstashLimiterCache.set(key, limiter);
+    try {
+      const { Ratelimit } = await import('@upstash/ratelimit');
+      const { Redis } = await import('@upstash/redis');
+
+      limiter = new Ratelimit({
+        redis: Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(maxRequests, `${windowSec} s`),
+        analytics: false,
+        prefix: 'costpro_rl',
+      });
+      upstashLimiterCache.set(key, limiter);
+    } catch {
+      // Paquetes no instalados — fallback a memoria
+      return null;
+    }
   }
   return limiter;
 }
@@ -63,7 +69,7 @@ export async function rateLimit(
 
   // Producción: Upstash Redis (distribuido, persiste entre invocaciones serverless)
   // FIX-BUG-SEC-007: Look up/create limiter based on caller params instead of using a single fixed instance
-  const upstashLimiter = getUpstashLimiter(maxRequests, windowSec);
+  const upstashLimiter = await getUpstashLimiter(maxRequests, windowSec);
   if (upstashLimiter) {
     const { success, remaining, reset } = await upstashLimiter.limit(identifier);
     return {

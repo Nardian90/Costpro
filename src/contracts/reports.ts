@@ -27,8 +27,6 @@ export const COLUMN_LABELS: Record<string, string> = {
   profit: 'Utilidad',
   margin_percentage: '% Margen',
   date: 'Fecha',
-  income: 'Ingreso',
-  expenses: 'Gasto/Costo',
   total_income: 'Total Ingresos',
   total_expenses: 'Total Gastos/Costos'
 };

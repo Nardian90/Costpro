@@ -80,7 +80,7 @@ export function ReceptionDetailsModal({
                 aria-label="Exportar recepción como archivo CSV"
               >
                 <Download className="w-4 h-4" aria-hidden="true" />
-                Exportar CSV
+                Exportar Excel
               </button>
             )}
           </div>

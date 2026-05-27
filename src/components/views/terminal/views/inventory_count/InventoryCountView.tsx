@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Check,
   X,
@@ -9,6 +9,12 @@ import {
   ClipboardList,
   LayoutGrid,
   List,
+  Download,
+  Upload,
+  Plus,
+  Trash2,
+  RotateCcw,
+  BarChart3,
 } from 'lucide-react';
 import ActionMenu from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
@@ -40,9 +46,41 @@ export default function InventoryCountView() {
     isAdjustmentValid,
     handleQuantityChange,
     handleInitialSubmit,
-    handleFinalSubmit
+    handleFinalSubmit,
+    allProducts,
+    samplePercentage,
+    addToCount,
+    removeFromCount,
+    resetCountToAll,
+    countedProductIds,
+    handleExportExcel,
+    handleImportExcel,
+    fileInputRef,
   } = useInventoryCount();
   const modalRef = useFocusTrap(isModalOpen);
+
+  // Products currently NOT in the count (available to add)
+  const productsNotInCount = useMemo(() => {
+    if (countedProductIds.size === 0) return []; // All products already in count
+    return allProducts.filter(p => !countedProductIds.has(p.id));
+  }, [allProducts, countedProductIds]);
+
+  // Products not in the count that match the search term (for the "add" dropdown)
+  const productsToAddDropdown = useMemo(() => {
+    if (!searchTerm.trim() || countedProductIds.size === 0) return [];
+    const term = searchTerm.toLowerCase();
+    return productsNotInCount.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      (p.sku && p.sku.toLowerCase().includes(term)) ||
+      (p.category && p.category.toLowerCase().includes(term))
+    ).slice(0, 6);
+  }, [searchTerm, productsNotInCount, countedProductIds.size]);
+
+  const handleAddProduct = (productId: string) => {
+    addToCount(productId);
+  };
+
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -57,7 +95,12 @@ export default function InventoryCountView() {
           <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
             <ClipboardList className="w-7 h-7 text-primary" />
           </div>
-          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Auditoría de Stock </h2>
+          <div>
+            <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Auditoría de Stock </h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
+              {samplePercentage}% de la muestra ({countedProductIds.size === 0 ? allProducts.length : countedProductIds.size} de {allProducts.length} productos)
+            </p>
+          </div>
         </div>
         {!isMobile && (
           <ActionMenu
@@ -70,6 +113,8 @@ export default function InventoryCountView() {
                 variant: 'outline',
                 className: 'hidden sm:flex'
               },
+              { id: 'reset-count', label: 'Conteo Total', icon: RotateCcw, onClick: resetCountToAll, variant: 'outline', className: 'hidden sm:flex' },
+              { id: 'export', label: 'Exportar Excel', icon: Download, onClick: handleExportExcel, variant: 'outline' },
               { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
             ]}
             className="sm:w-auto"
@@ -79,7 +124,119 @@ export default function InventoryCountView() {
 
       <QueryInspector />
 
-      <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
+            </div>
+            {countedProductIds.size > 0 && productsNotInCount.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAddDropdown(prev => !prev)}
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap"
+                aria-label="Agregar producto al conteo"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Agregar
+              </button>
+            )}
+          </div>
+          {/* Dropdown: add product to count */}
+          {showAddDropdown && (
+            <div className="absolute top-full left-0 w-full mt-1 neu-card z-50 shadow-2xl">
+              <div className="p-2 border-b border-white/5 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                  Agregar al conteo ({productsNotInCount.length} disponibles)
+                </span>
+                <button onClick={() => setShowAddDropdown(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {productsToAddDropdown.length > 0 ? (
+                  productsToAddDropdown.map((p) => (
+                    <div
+                      key={p.id}
+                      role="option"
+                      tabIndex={0}
+                      aria-label={`Agregar ${p.name} al conteo`}
+                      onClick={() => handleAddProduct(p.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddProduct(p.id)}
+                      className="p-3 hover:bg-primary/10 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-0 transition-colors"
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold truncate">{p.name}</span>
+                        <span className="text-xs text-muted-foreground font-mono uppercase">
+                          {p.sku || 'SIN SKU'} &middot; Stock: {p.stock_current}
+                        </span>
+                      </div>
+                      <Plus className="w-4 h-4 text-primary shrink-0 ml-2" aria-hidden="true" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      {searchTerm.trim()
+                        ? `No hay productos fuera del conteo que coincidan con "${searchTerm}"`
+                        : 'Todos los productos ya están en el conteo'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleImportExcel}
+            className="hidden"
+            ref={fileInputRef}
+            aria-label="Importar conteo desde Excel"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+            aria-label="Importar conteo desde archivo Excel"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Importar Excel
+          </button>
+        </div>
+      </div>
+
+      {/* Sample indicator bar */}
+      <div className="neu-card !p-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Muestra</span>
+          <span className="text-sm font-black text-primary">{samplePercentage}%</span>
+          <span className="text-xs text-muted-foreground">({countedProductIds.size === 0 ? allProducts.length : countedProductIds.size} / {allProducts.length} productos)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-500",
+                samplePercentage >= 80 ? "bg-success" : samplePercentage >= 50 ? "bg-amber-500" : "bg-danger"
+              )}
+              style={{ width: `${Math.min(100, samplePercentage)}%` }}
+            />
+          </div>
+          {countedProductIds.size > 0 && (
+            <button
+              onClick={resetCountToAll}
+              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+              title="Restablecer conteo a todos los productos"
+            >
+              <RotateCcw className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="relative min-h-[400px]">
         <AnimatePresence mode="wait">
@@ -96,6 +253,9 @@ export default function InventoryCountView() {
                 countedQuantities={countedQuantities}
                 onQuantityChange={handleQuantityChange}
                 loading={loading}
+                onRemoveProduct={removeFromCount}
+                samplePercentage={samplePercentage}
+                showRemoveButton
               />
             </motion.div>
           ) : (
@@ -111,6 +271,9 @@ export default function InventoryCountView() {
                 countedQuantities={countedQuantities}
                 onQuantityChange={handleQuantityChange}
                 loading={loading}
+                onRemoveProduct={removeFromCount}
+                samplePercentage={samplePercentage}
+                showRemoveButton
               />
             </motion.div>
           )}
@@ -127,6 +290,8 @@ export default function InventoryCountView() {
               onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
               variant: 'outline',
             },
+            { id: 'reset-count', label: 'Conteo Total', icon: RotateCcw, onClick: resetCountToAll, variant: 'outline' },
+            { id: 'export', label: 'Exportar Excel', icon: Download, onClick: handleExportExcel, variant: 'outline' },
             { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
           ]}
           position="bottom"

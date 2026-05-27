@@ -1,27 +1,49 @@
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { transferService } from '@/services/transfer-service';
+import { useMutation, useQueryClient, useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { transferService, TransfersPage } from '@/services/transfer-service';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 import { getCleanStoreId } from './base';
 import { auditService } from '@/services/audit-service';
 import { useAuthStore } from '@/store';
-import { toast } from 'sonner';
+import { TransferStatus, Transfer } from '@/types';
 
-export function useIncomingTransfers(storeId?: string | null) {
+const PAGE_SIZE = 20;
+
+export function useIncomingTransfers(storeId?: string | null, status?: TransferStatus | null) {
   const cleanStoreId = getCleanStoreId(storeId);
 
-  return useQuery({
-    queryKey: ['transfers', 'incoming', cleanStoreId],
-    queryFn: () => transferService.getIncomingTransfers(cleanStoreId!),
+  return useInfiniteQuery({
+    queryKey: ['transfers', 'incoming', cleanStoreId, status ?? 'ALL'],
+    queryFn: ({ pageParam = 1 }) =>
+      transferService.getIncomingTransfers(cleanStoreId!, {
+        page: pageParam,
+        pageSize: PAGE_SIZE,
+        status: status || undefined,
+      }),
+    getNextPageParam: (lastPage: TransfersPage, allPages: TransfersPage[], lastPageParam: number) => {
+      const totalLoaded = allPages.reduce((sum, p) => sum + p.transfers.length, 0);
+      return totalLoaded < lastPage.total ? lastPageParam + 1 : undefined;
+    },
+    initialPageParam: 1,
     enabled: !!cleanStoreId,
   });
 }
 
-export function useOutgoingTransfers(storeId?: string | null) {
+export function useOutgoingTransfers(storeId?: string | null, status?: TransferStatus | null) {
   const cleanStoreId = getCleanStoreId(storeId);
 
-  return useQuery({
-    queryKey: ['transfers', 'outgoing', cleanStoreId],
-    queryFn: () => transferService.getOutgoingTransfers(cleanStoreId!),
+  return useInfiniteQuery({
+    queryKey: ['transfers', 'outgoing', cleanStoreId, status ?? 'ALL'],
+    queryFn: ({ pageParam = 1 }) =>
+      transferService.getOutgoingTransfers(cleanStoreId!, {
+        page: pageParam,
+        pageSize: PAGE_SIZE,
+        status: status || undefined,
+      }),
+    getNextPageParam: (lastPage: TransfersPage, allPages: TransfersPage[], lastPageParam: number) => {
+      const totalLoaded = allPages.reduce((sum, p) => sum + p.transfers.length, 0);
+      return totalLoaded < lastPage.total ? lastPageParam + 1 : undefined;
+    },
+    initialPageParam: 1,
     enabled: !!cleanStoreId,
   });
 }
@@ -49,30 +71,34 @@ export function useCreateTransfer() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (params: any) => {
+    mutationFn: async (params: {
+      origin_store_id: string;
+      destination_store_id: string;
+      items: { product_id: string; quantity: number; unit_cost: number }[];
+      notes?: string;
+    }) => {
       if (!navigator.onLine) {
         return await addToQueue('transfer', 'CREATE', params);
       }
       return transferService.createTransfer(params);
     },
-    onSuccess: async (data: any, variables: any) => {
-      // Audit log — fire and forget
+    onSuccess: async (data, variables) => {
       const { user } = useAuthStore.getState();
       if (user?.id) {
         await auditService.logTransferCreated({
           userId: user.id,
-          transferId: data?.id || data?.transfer_id || '',
+          transferId: data?.id || (data as { transfer_id?: string })?.transfer_id || '',
           originStoreId: variables.origin_store_id,
           destinationStoreId: variables.destination_store_id,
-          items: (variables.items || []).map((i: any) => ({
+          items: (variables.items || []).map((i) => ({
             productId: i.product_id,
             quantity: i.quantity,
-            unitCost: i.unit_cost || 0
-          }))
+            unitCost: i.unit_cost || 0,
+          })),
         });
       }
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
-      toast.success('Transferencia creada');
+      // FIX-LOG-008: Toast duplicado eliminado — se maneja únicamente en CreateTransferModal.handleCreate
     },
   });
 }
@@ -80,12 +106,11 @@ export function useCreateTransfer() {
 export function useConfirmTransfer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ transferId, userId }: { transferId: string, userId: string }) =>
+    mutationFn: ({ transferId, userId }: { transferId: string; userId: string }) =>
       transferService.confirmTransfer(transferId, userId),
-    onSuccess: async (data: any, variables: any) => {
+    onSuccess: async (_data, variables) => {
       const { user } = useAuthStore.getState();
-      // Obtener detalles de la transferencia del cache para el audit
-      const transfer = queryClient.getQueryData<any>(
+      const transfer = queryClient.getQueryData<Transfer>(
         ['transfers', 'details', variables.transferId]
       );
 
@@ -95,18 +120,18 @@ export function useConfirmTransfer() {
           transferId: variables.transferId,
           originStoreId: transfer?.origin_store_id || '',
           destinationStoreId: transfer?.destination_store_id || '',
-          items: (transfer?.items || []).map((i: any) => ({
+          items: (transfer?.items || []).map((i) => ({
             productId: i.product_id,
             quantity: i.quantity,
-            unitCost: i.unit_cost || 0
-          }))
+            unitCost: i.unit_cost || 0,
+          })),
         });
       }
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
-      toast.success('Transferencia confirmada');
+      // FIX-LOG-009: Toast duplicado eliminado — se maneja únicamente en TransferDetailsModal.handleConfirm
     },
   });
 }

@@ -86,6 +86,7 @@ const WikiView = dynamic(() => import('@/components/views/terminal/views/wiki/Wi
 const HealthView = dynamic(() => import('@/components/views/health/HealthView'), { ssr: false });
 const ReceptionsHistoryView = dynamic(() => import('@/components/views/terminal/views/receptions/ReceptionsHistoryView'), { ssr: false });
 const ProductLabelGenerator = dynamic(() => import('@/components/views/terminal/views/labels/ProductLabelGenerator'), { ssr: false });
+const SalesCatalogView = dynamic(() => import('@/components/views/terminal/views/pos/SalesCatalogView'), { ssr: false });
 
 const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
@@ -226,6 +227,7 @@ export default function TerminalShell() {
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Pick3 Intelligence"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
+        case 'sales_catalog': return <ViewErrorBoundary viewName="Catálogo de Ventas"><SalesCatalogView /></ViewErrorBoundary>;
         case 'sales': return <ViewErrorBoundary viewName="Ventas"><SalesHistoryView /></ViewErrorBoundary>;
         case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
         case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
