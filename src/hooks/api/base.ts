@@ -18,7 +18,7 @@ export async function withLogging<T>(
   params: Record<string, unknown>,
   rpcCall: () => PromiseLike<{ data: T | null; error: any }>,
   view?: string
-): Promise<T> {
+): Promise<T | null> {
   logger.info('DATABASE', `RPC_CALL_START: ${rpcName}`, params);
 
   // Update last query for admin inspector
@@ -35,7 +35,7 @@ export async function withLogging<T>(
       throw error;
     }
     logger.info('DATABASE', `RPC_CALL_SUCCESS: ${rpcName}`, params);
-    return data as T;
+    return data;
   } catch (error) {
     logger.error('DATABASE', `RPC_CALL_FAILED: ${rpcName}`, {
       ...params,
@@ -51,7 +51,7 @@ export async function withTableLogging<T>(
   tableName: string,
   query: () => PromiseLike<{ data: T | null; error: any }>,
   view?: string
-): Promise<T> {
+): Promise<T | null> {
   const params = { operation, tableName };
   logger.info('DATABASE', `TABLE_OP_START: ${tableName}`, params);
 
@@ -75,7 +75,7 @@ export async function withTableLogging<T>(
       throw error;
     }
     logger.info('DATABASE', `TABLE_OP_SUCCESS: ${tableName}`, params);
-    return data as T;
+    return data;
   } catch (error) {
     logger.error('DATABASE', `TABLE_OP_FAILED: ${tableName}`, {
       ...params,
