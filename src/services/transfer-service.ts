@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { uuidRegex } from '@/validation/schemas';
 import { supabase } from '@/lib/supabaseClient';
 import { Transfer, Store, TransferItem, TransferStatus } from '@/types';
 import { validateRPCResponse, validateRPCArrayResponse } from '@/lib/rpc-validator';
@@ -137,14 +139,14 @@ export const transferService = {
   // --- Stubs: funcionalidades pendientes de cablear con Supabase ---
   // Descomentar e implementar cuando la RPC correspondiente exista en Supabase.
 
-  // async cancelTransfer(transferId: string, userId: string) {
-  //   const params = z.object({
-  //     p_transfer_id: z.string().regex(uuidRegex),
-  //     p_user_id: z.string().regex(uuidRegex),
-  //   }).parse({ p_transfer_id: transferId, p_user_id: userId });
-  //   const { data, error } = await supabase.rpc('cancel_transfer', params);
-  //   if (error) throw error;
-  //   if (data?.status === 'error') throw new Error(data.message || 'Error al cancelar');
-  //   return data;
-  // },
+  async cancelTransfer(transferId: string, userId: string) {
+    const params = z.object({
+      p_transfer_id: z.string().regex(uuidRegex),
+      p_user_id: z.string().regex(uuidRegex),
+    }).parse({ p_transfer_id: transferId, p_user_id: userId });
+    const { data, error } = await supabase.rpc('cancel_transfer', params);
+    if (error) throw error;
+    if (data?.status === 'error') throw new Error(data.message || 'Error al cancelar');
+    return data;
+  },
 };
