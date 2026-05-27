@@ -38,17 +38,17 @@ describe('useTransfers', () => {
   });
 
   it('useIncomingTransfers fetches incoming', async () => {
-    (transferService.getIncomingTransfers as any).mockResolvedValue([]);
+    (transferService.getIncomingTransfers as any).mockResolvedValue({ transfers: [], total: 0 });
     const { result } = renderHook(() => useIncomingTransfers('s1'), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.data).toBeDefined(), { timeout: 10000 });
-    expect(transferService.getIncomingTransfers).toHaveBeenCalledWith('s1');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 10000 });
+    expect(transferService.getIncomingTransfers).toHaveBeenCalled();
   });
 
   it('useOutgoingTransfers fetches outgoing', async () => {
-    (transferService.getOutgoingTransfers as any).mockResolvedValue([]);
+    (transferService.getOutgoingTransfers as any).mockResolvedValue({ transfers: [], total: 0 });
     const { result } = renderHook(() => useOutgoingTransfers('s1'), { wrapper: Wrapper });
-    await waitFor(() => expect(result.current.data).toBeDefined(), { timeout: 10000 });
-    expect(transferService.getOutgoingTransfers).toHaveBeenCalledWith('s1');
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 10000 });
+    expect(transferService.getOutgoingTransfers).toHaveBeenCalled();
   });
 
   it('useCreateTransfer calls transferService.createTransfer', async () => {

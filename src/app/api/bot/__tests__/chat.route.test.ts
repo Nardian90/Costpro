@@ -13,7 +13,13 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('z-ai-web-dev-sdk', () => ({
   default: {
     create: vi.fn().mockResolvedValue({
-      getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' }),
+      chat: {
+        completions: {
+          create: vi.fn().mockResolvedValue({
+            choices: [{ message: { content: 'Bot response' } }]
+          })
+        }
+      },
       getResponseStream: vi.fn().mockResolvedValue(new ReadableStream())
     })
   }

@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       count: products.length,
-      inserted: ((upsertResult.data as any[])?.length) ?? products.length,
+      inserted: ((upsertResult.data as any)?.length) ?? products.length,
     });
   } catch (error: any) {
     const duration = Date.now() - startTime;

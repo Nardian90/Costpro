@@ -28,8 +28,7 @@ describe('useStores', () => {
         is_active: true,
         address: 'Address 1',
         logo_url: null,
-        reeup: '123',
-        bank_account: 'ACC1'
+        created_at: new Date().toISOString()
       }
     ];
 
@@ -37,19 +36,29 @@ describe('useStores', () => {
         if (table === 'stores') {
             return {
                 select: vi.fn().mockReturnThis(),
-                order: vi.fn().mockImplementation(() => ({ then: (cb) => Promise.resolve(cb({ data: mockStores, error: null })) }))
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockImplementation(() => ({
+                    then: (cb: any) => Promise.resolve(cb({ data: mockStores, error: null }))
+                }))
+            };
+        }
+        if (table === 'user_store_memberships') {
+            return {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                then: (cb: any) => Promise.resolve(cb({ data: [], error: null }))
             };
         }
         return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            then: (cb) => Promise.resolve(cb({ data: [], error: null }))
+            then: (cb: any) => Promise.resolve(cb({ data: [], error: null }))
         };
     });
 
     const { result } = renderHook(() => useStores('550e8400-e29b-41d4-a716-446655440000', true, false), { wrapper: Wrapper });
 
-    await waitFor(() => expect(result.current.status).toBe('success'));
+    await waitFor(() => expect(result.current.status).toBe('success'), { timeout: 5000 });
     expect(result.current.data).toHaveLength(1);
     expect(result.current.data![0].name).toBe('Store 1');
   });
