@@ -71,9 +71,9 @@ export const storeService = {
     const whitelistedData: Partial<Store> = {};
     if (additionalData) {
       if (additionalData.is_active !== undefined) whitelistedData.is_active = additionalData.is_active;
-      if (additionalData.phone !== undefined) whitelistedData.phone = additionalData.phone;
-      if (additionalData.email !== undefined) whitelistedData.email = additionalData.email;
-      if (additionalData.settings !== undefined) whitelistedData.settings = additionalData.settings;
+      if (additionalData.logo_url !== undefined) whitelistedData.logo_url = additionalData.logo_url;
+      if (additionalData.reeup !== undefined) whitelistedData.reeup = additionalData.reeup;
+      if (additionalData.bank_account !== undefined) whitelistedData.bank_account = additionalData.bank_account;
     }
 
     const { data, error } = await supabase
