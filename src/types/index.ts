@@ -529,7 +529,7 @@ export interface SalesKPIs {
     total_card: number;
 }
 
-export type ReportType = 'sales' | 'profit' | 'inventory' | 'kardex' | 'purchases' | 'audit' | 'cost_sheet' | 'daily_income' | 'daily_expenses';
+export type ReportType = 'sales' | 'profit' | 'inventory' | 'kardex' | 'purchases' | 'audit' | 'cost_sheet' | 'daily_income' | 'daily_expenses' | 'transfer' | 'cash';
 
 export interface ReportDefinition {
   id: string;

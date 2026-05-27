@@ -1,4 +1,3 @@
-
 export const COLUMN_LABELS: Record<string, string> = {
   id: 'ID',
   created_at: 'Fecha',
@@ -28,5 +27,14 @@ export const COLUMN_LABELS: Record<string, string> = {
   margin_percentage: '% Margen',
   date: 'Fecha',
   total_income: 'Total Ingresos',
-  total_expenses: 'Total Gastos/Costos'
+  total_expenses: 'Total Gastos/Costos',
+  origin_store_name: 'Origen',
+  destination_store_name: 'Destino',
+  creator_name: 'Creado por',
+  declared_cash: 'Efectivo Decl.',
+  declared_vouchers: 'Vales/Transf.',
+  system_total: 'Total Sist.',
+  difference: 'Diferencia',
+  operator_name: 'Operador',
+  closed_at: 'Cierre'
 };

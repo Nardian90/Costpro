@@ -1,9 +1,8 @@
-// src/components/views/terminal/views/transfers/TransferDetailsModal.tsx
-'use client';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { BaseModal } from '@/components/modals/BaseModal';
+import { StateRenderer } from '@/components/ui/state-renderer';
+import { useTransferDetails, useConfirmTransfer, useCancelTransfer } from '@/hooks/api/useTransfers';
 import { useAuthStore } from '@/store';
-import { BaseModal } from '@/components/ui/BaseModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,9 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useTransferDetails, useConfirmTransfer } from '@/hooks/api/useTransfers';
-import { StateRenderer } from '@/components/ui/StateRenderer';
+} from "@/components/ui/alert-dialog";
 import { CheckCircle2, Clock, Package, Building, User, Calendar, XCircle, FileDown } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,7 +53,10 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
   const { user } = useAuthStore();
   const { data: transfer, isLoading, error } = useTransferDetails(transferId);
   const confirmMutation = useConfirmTransfer();
+  const cancelMutation = useCancelTransfer();
+
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const handleConfirm = async () => {
     if (!transferId || !user) return;
@@ -73,8 +73,30 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
     }
   };
 
+  const handleCancel = async () => {
+    if (!transferId || !user) return;
+
+    setShowCancelDialog(false);
+    const toastId = toast.loading('Cancelando transferencia...');
+    try {
+      await cancelMutation.mutateAsync({ transferId, userId: user.id });
+      toast.success('Transferencia cancelada con éxito', { id: toastId });
+      onClose();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al cancelar la transferencia';
+      toast.error(message, { id: toastId });
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (!transferId) return;
+    window.open(`/api/transfers/${transferId}/export-pdf`, '_blank');
+  };
+
   const isIncoming = transfer?.destination_store_id === user?.activeStoreId;
+  const isOutgoing = transfer?.origin_store_id === user?.activeStoreId;
   const canConfirm = isIncoming && transfer?.status === 'PENDIENTE';
+  const canCancel = (isOutgoing || user?.role === 'admin' || user?.role === 'manager') && transfer?.status === 'PENDIENTE';
 
   return (
     <>
@@ -98,14 +120,14 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
         maxWidth="sm:max-w-3xl"
         footer={
           <div className="flex flex-col sm:flex-row justify-between gap-3 w-full">
-            {/* Acciones secundarias (pendientes de cablear con Supabase) */}
             <div className="flex gap-2 flex-wrap">
               {transfer?.status === 'PENDIENTE' && (
                 <button
                   type="button"
-                  disabled
-                  title="Funcionalidad pendiente: requiere implementar RPC cancel_transfer en Supabase"
-                  className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest opacity-50 cursor-not-allowed flex items-center gap-2 text-rose-500"
+                  onClick={() => setShowCancelDialog(true)}
+                  disabled={cancelMutation.isPending}
+                  className={`neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2 text-rose-500 ${!canCancel && 'opacity-50 cursor-not-allowed'}`}
+                  title={!canCancel ? "No tienes permisos para cancelar esta transferencia" : ""}
                 >
                   <XCircle className="w-4 h-4" />
                   Cancelar Transferencia
@@ -113,15 +135,13 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
               )}
               <button
                 type="button"
-                disabled
-                title="Funcionalidad pendiente: requiere implementar servicio de exportación PDF"
-                className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest opacity-50 cursor-not-allowed flex items-center gap-2"
+                onClick={handleExportPdf}
+                className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2"
               >
                 <FileDown className="w-4 h-4" />
                 Exportar PDF
               </button>
             </div>
-            {/* Acciones principales */}
             <div className="flex gap-3">
               <button
                 type="button"
@@ -230,6 +250,24 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
             <AlertDialogCancel disabled={confirmMutation.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm} disabled={confirmMutation.isPending}>
               {confirmMutation.isPending ? 'Procesando...' : 'Sí, confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación antes de cancelar */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar transferencia?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción marcará la transferencia como CANCELADA. Esta operación no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>Volver</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancel} disabled={cancelMutation.isPending} className="bg-rose-600 hover:bg-rose-700">
+              {cancelMutation.isPending ? 'Cancelando...' : 'Sí, cancelar transferencia'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
