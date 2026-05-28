@@ -6,7 +6,7 @@ export const managedCreateUserSchema = z.object({
   p_password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
   p_full_name: z.string().min(1, 'Nombre requerido'),
   p_role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo', 'superadmin']),
-  p_store_id: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid('store_id inválido').nullable().optional()),
+  p_store_id: z.string().uuid('store_id inválido').nullable().optional(),
   p_memberships: z.array(z.any()).optional(),
   p_max_stores: z.number().int().optional(),
   p_max_users: z.number().int().optional(),
@@ -30,7 +30,7 @@ export const resetPasswordSchema = z.object({
 // ─── Inventory ────────────────────────────────────────────────────────────────
 export const inventoryAdjustSchema = z.object({
   productId: z.string().uuid('productId inválido'),
-  storeId: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid('storeId inválido').optional().nullable()),
+  storeId: z.string().uuid('storeId inválido'),
   quantity: z.number().int().min(-9999).max(99999),
   movementType: z.enum(['add', 'subtract', 'set']),
   version: z.number().int().positive('version debe ser positivo'),
@@ -38,7 +38,7 @@ export const inventoryAdjustSchema = z.object({
 });
 
 export const inventoryAdjustmentsSchema = z.object({
-  storeId: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid('storeId inválido').optional().nullable()),
+  storeId: z.string().uuid('storeId inválido'),
   items: z.array(z.object({
     product_id: z.string().uuid(),
     quantity: z.number().int(),
@@ -50,18 +50,14 @@ export const inventoryAdjustmentsSchema = z.object({
 // ─── Cost sheets ─────────────────────────────────────────────────────────────
 export const costSheetSaveSchema = z.object({
   updateData: z.record(z.string(), z.unknown()),
-  currentData: z.record(z.string(), z.unknown()).optional().nullable(),
+  currentData: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const aiChatSchema = z.object({
   messages: z.array(z.object({
-    role: z.preprocess((val) => {
-      const s = String(val).toLowerCase();
-      if (s === 'model' || s === 'assistant') return 'assistant';
-      return s;
-    }, z.string().default('user')),
-    content: z.preprocess((val) => (val === null || val === undefined ? '' : String(val)), z.string().default('')),
-  }).passthrough()).min(1).max(50).optional().nullable().default([]),
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string().max(8000),
+  })).min(1).max(50),
   aiProvider: z.string().min(1).max(50).optional(),
   sheetData: z.record(z.string(), z.unknown()).optional().nullable(),
   aiApiKey: z.string().optional(),
@@ -75,10 +71,10 @@ export const reportsGenerateSchema = z.object({
   data: z.record(z.string(), z.unknown()).optional(),
   from: z.string().optional(),
   to: z.string().optional(),
-  store_id: z.preprocess((val) => (val === '' ? null : val), z.string().uuid().optional().nullable()),
+  store_id: z.string().uuid().optional().nullable(),
   columns: z.array(z.string()).optional(),
   name: z.string().optional(),
-  definition_id: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable()),
+  definition_id: z.string().uuid().optional(),
   calculatedValues: z.record(z.string(), z.any()).optional(),
   calculatedAnnexes: z.array(z.any()).optional(),
   options: z.record(z.string(), z.unknown()).optional(),
@@ -108,45 +104,37 @@ export const logsSchema = z.object({
 
 // ─── Bot ────────────────────────────────────────────────────────────────────
 export const botMessageSchema = z.object({
-  role: z.preprocess((val) => {
-    const s = String(val).toLowerCase();
-    if (s === 'model' || s === 'assistant') return 'assistant';
-    return s;
-  }, z.string().default('user')),
-  content: z.preprocess((val) => (val === null || val === undefined ? '' : String(val)), z.string().default('')),
-  tool_calls: z.array(z.record(z.string(), z.unknown())).optional().nullable(),
-  tool_call_id: z.string().optional().nullable(),
-  name: z.string().optional().nullable(),
+  role: z.enum(['user', 'assistant', 'system', 'tool']),
+  content: z.string(),
+  tool_calls: z.array(z.record(z.string(), z.unknown())).optional(),
+  tool_call_id: z.string().optional(),
+  name: z.string().optional(),
   imageData: z.object({
     mimeType: z.string(),
     data: z.string(),
   }).nullable().optional(),
-}).passthrough();
+});
 
 export const botChatSchema = z.object({
   message: z.string().min(1).max(4000).optional(),
-  messages: z.array(botMessageSchema).optional().nullable().default([]),
-  conversationId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? undefined : val), z.string().uuid().optional().nullable()),
+  messages: z.array(botMessageSchema).optional(),
+  conversationId: z.string().uuid().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   aiProvider: z.string().optional(),
   aiApiKey: z.string().optional(),
   model: z.string().optional(),
-  storeId: z.preprocess((val) => (val === '' || val === 'null' || val === 'undefined' ? null : val), z.string().uuid().optional().nullable()),
+  storeId: z.string().uuid().nullable().optional(),
   temperature: z.number().min(0).max(1).optional(),
   stream: z.boolean().optional(),
 });
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
 export function zodError(errors: z.ZodError) {
-  const firstError = errors.issues[0];
-  const path = firstError ? (Array.isArray(firstError.path) ? firstError.path.join('.') : 'root') : 'unknown';
-  const message = firstError ? firstError.message : 'Unknown validation error';
-  const detail = `${path}: ${message}`;
   return {
     ok: false,
-    error: `Validation failed: ${detail}`,
+    error: 'Validation failed',
     details: errors.issues.map(e => ({
-      path: Array.isArray(e.path) ? e.path.join('.') : 'root',
+      path: e.path.join('.'),
       message: e.message,
     })),
   };
