@@ -1,49 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Package, AlertTriangle, Percent, DollarSign, ArrowUpDown, Eye, EyeOff, Store } from 'lucide-react';
+import { Package, AlertTriangle, Percent, DollarSign, Eye, EyeOff } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, PaymentMethod } from '@/types';
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
-import { PAYMENT_METHODS } from './useSalesCatalog';
-
-// ── Sortable Header ───────────────────────────────────────────
-
-interface SortableHeaderProps {
-  label: string;
-  sortKey: string;
-  sortConfig: SortConfig;
-  onSort: (key: string) => void;
-  className?: string;
-  children?: React.ReactNode;
-}
-
-const SortableHeader = ({ label, sortKey, sortConfig, onSort, className, children }: SortableHeaderProps) => (
-  <th
-    className={cn(
-      className,
-      'p-3 cursor-pointer select-none hover:text-foreground transition-colors whitespace-nowrap',
-    )}
-    onClick={() => onSort(sortKey)}
-  >
-    <div className="flex items-center gap-1 justify-center">
-      {children || label}
-      <ArrowUpDown
-        className={cn(
-          'w-3 h-3',
-          sortConfig?.key === sortKey ? 'text-primary' : 'text-muted-foreground/40',
-        )}
-      />
-      {sortConfig?.key === sortKey && (
-        <span className="text-primary text-[10px] font-black">
-          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-        </span>
-      )}
-    </div>
-  </th>
-);
-
-// ── Props ─────────────────────────────────────────────────────
+import { PAYMENT_METHODS, calcSubtotal } from './useSalesCatalog';
 
 interface SalesCatalogTableProps {
   products: Product[];
@@ -52,22 +14,20 @@ interface SalesCatalogTableProps {
   onSort: (key: string) => void;
   showMixedColumns: boolean;
   handlers: {
-    handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: any) => void;
+    handleSetQuantity: (product: Product, val: number) => void;
+    handleSelectVariant: (product: Product, variantId: string | null) => void;
     handleSetDiscountType: (product: Product) => void;
-    handleSetDiscountValue: (product: Product, value: number) => void;
+    handleSetDiscountValue: (product: Product, val: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
     handleSetCashPaid: (product: Product, val: number) => void;
     handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => void;
+    updateRow: (productId: string, updater: (r: SalesCatalogRow) => SalesCatalogRow) => void;
   };
   hasDiscrepancy: (row: SalesCatalogRow) => boolean;
   calcSubtotal: (row: SalesCatalogRow) => number;
-  onToggleVisible?: (productId: string, visible: boolean) => void;
-  togglingVisibleId?: string | null;
+  onToggleVisible: (productId: string, visible: boolean) => void;
+  togglingVisibleId: string | null;
 }
-
-// ── Component ─────────────────────────────────────────────────
 
 export default function SalesCatalogTable({
   products,
@@ -93,115 +53,79 @@ export default function SalesCatalogTable({
   } = handlers;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border shadow-sm">
-      <table className="w-full text-sm" role="grid">
-        <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur-md">
-          <tr className="text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
-            {/* Sticky first column */}
-            <th
-              className="p-3 text-left sticky left-0 bg-muted/80 z-30 min-w-[200px] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.05)]"
-              onClick={() => onSort('name')}
-            >
-              <div className="flex items-center gap-1 cursor-pointer select-none hover:text-foreground transition-colors">
-                Producto
-                <ArrowUpDown
-                  className={cn(
-                    'w-3 h-3',
-                    sortConfig?.key === 'name' ? 'text-primary' : 'text-muted-foreground/40',
-                  )}
-                />
-                {sortConfig?.key === 'name' && (
-                  <span className="text-primary text-[10px] font-black">
-                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </div>
+    <div className="overflow-x-auto rounded-3xl border-2 border-border shadow-2xl bg-card">
+      <table className="w-full text-left border-collapse min-w-[1000px]">
+        <thead>
+          <tr className="bg-muted/50 border-b border-border">
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center w-12">Ojo</th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('name')}>
+              Producto {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
             </th>
-
-            <SortableHeader label="Stock" sortKey="stock" sortConfig={sortConfig} onSort={onSort} className="text-center min-w-[80px]" />
-            <SortableHeader label="Costo" sortKey="cost" sortConfig={sortConfig} onSort={onSort} className="text-right min-w-[90px]" />
-            <th className="p-3 text-center min-w-[100px]">Unidad Medida</th>
-            <SortableHeader label="Precio Venta" sortKey="price" sortConfig={sortConfig} onSort={onSort} className="text-right min-w-[100px]" />
-            <th className="p-3 text-center min-w-[110px]">Cantidad</th>
-            <th className="p-3 text-center min-w-[100px]">Descuento</th>
-            <th className="p-3 text-center min-w-[100px]">Forma Pago</th>
-
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center" onClick={() => onSort('stock')}>
+              Stock {sortConfig?.key === 'stock' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+            </th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-right" onClick={() => onSort('cost')}>
+              Costo {sortConfig?.key === 'cost' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+            </th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center">UM / Pack</th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-right" onClick={() => onSort('price')}>
+              Precio {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+            </th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center">Cant.</th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center">Dcto.</th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-center">Pago</th>
             {showMixedColumns && (
               <>
-                <th className="p-3 text-right min-w-[100px]">
-                  <span className="text-emerald-600">Efectivo</span>
-                </th>
-                <th className="p-3 text-right min-w-[100px]">
-                  <span className="text-blue-600">Transfer.</span>
-                </th>
+                <th className="p-3 text-[10px] font-black uppercase text-emerald-600 tracking-widest text-right">Efectivo</th>
+                <th className="p-3 text-[10px] font-black uppercase text-blue-600 tracking-widest text-right">Transf.</th>
               </>
             )}
-
-            <th className="p-3 text-right min-w-[110px]">Valor Venta</th>
+            <th className="p-3 text-[10px] font-black uppercase text-muted-foreground tracking-widest text-right">Total</th>
           </tr>
         </thead>
-
         <tbody>
           {products.map((product) => {
             const row = getOrCreateRow(product);
             const subtotal = calcSubtotal(row);
             const discrepancy = hasDiscrepancy(row);
-            const isActive = row.quantity > 0;
+            const isVisible = product.visible_en_tienda !== false;
 
             return (
               <tr
                 key={product.id}
                 className={cn(
                   'border-b border-border/50 transition-colors',
-                  isActive ? 'bg-primary/5' : 'hover:bg-muted/20',
-                  discrepancy && 'bg-destructive/5',
+                  row.quantity > 0 ? 'bg-primary/5' : 'hover:bg-muted/30',
                 )}
               >
-                {/* Product Name — Sticky first column */}
-                <td className="p-3 sticky left-0 bg-inherit z-20 min-w-[200px] shadow-[2px_0_4px_-1px_rgba(0,0,0,0.05)]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden">
-                      {product.public_image_url || product.image_url ? (
-                        <img
-                          src={(product.public_image_url || product.image_url) || undefined}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <Package className="w-4 h-4 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-xs truncate max-w-[180px]">{product.name}</p>
-                      {product.sku && (
-                        <p className="text-[10px] text-muted-foreground font-mono">{product.sku}</p>
-                      )}
-                    </div>
-                    {/* Tienda visibility toggle */}
-                    {onToggleVisible && (
-                      <button
-                        type="button"
-                        onClick={() => onToggleVisible(product.id, !product.visible_en_tienda)}
-                        disabled={togglingVisibleId === product.id}
-                        className={cn(
-                          'shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 disabled:opacity-50',
-                          product.visible_en_tienda
-                            ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                            : 'bg-muted text-muted-foreground/40 hover:bg-muted/80 hover:text-muted-foreground'
-                        )}
-                        title={product.visible_en_tienda ? 'Visible en tienda — Clic para ocultar' : 'Oculto en tienda — Clic para mostrar'}
-                        aria-label={product.visible_en_tienda ? 'Ocultar de tienda pública' : 'Mostrar en tienda pública'}
-                      >
-                        {togglingVisibleId === product.id ? (
-                          <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : product.visible_en_tienda ? (
-                          <Eye className="w-3.5 h-3.5" />
-                        ) : (
-                          <EyeOff className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+                {/* Visibility Toggle */}
+                <td className="p-3 text-center">
+                  <button
+                    onClick={() => onToggleVisible(product.id, !isVisible)}
+                    disabled={togglingVisibleId === product.id}
+                    className={cn(
+                      "p-1.5 rounded-lg transition-all active:scale-90",
+                      isVisible
+                        ? "text-primary hover:bg-primary/10"
+                        : "text-muted-foreground/40 hover:bg-muted"
                     )}
+                    aria-label={isVisible ? "Ocultar de tienda" : "Mostrar en tienda"}
+                  >
+                    {togglingVisibleId === product.id ? (
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent animate-spin rounded-full" />
+                    ) : isVisible ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </td>
+
+                {/* Name & SKU */}
+                <td className="p-3 min-w-[200px]">
+                  <div className="flex flex-col">
+                    <span className="font-black text-sm truncate uppercase tracking-tight">{product.name}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{product.sku || 'S/N'}</span>
                   </div>
                 </td>
 
@@ -233,8 +157,8 @@ export default function SalesCatalogTable({
                     onChange={(e) => {
                       if (e.target.value === '__base__') handleSelectVariant(product, null);
                       else {
-                        const variant = product.product_variants?.find((v: any) => v.id === e.target.value);
-                        if (variant) handleSelectVariant(product, variant);
+                        const variantId = e.target.value;
+                        handleSelectVariant(product, variantId);
                       }
                     }}
                     className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
