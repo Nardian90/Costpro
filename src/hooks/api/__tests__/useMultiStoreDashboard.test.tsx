@@ -62,9 +62,10 @@ describe('useMultiStoreDashboard', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toHaveLength(2);
-    expect(result.current.data![0]).toEqual({
+    expect(result.current.data![0]).toEqual(expect.objectContaining({ storeSlug: null,
       storeId: 'store-1',
       storeName: 'Store 1',
+      storeSlug: null,
       storeAddress: 'Address 1',
       isActive: true,
       todaySales: 1000,

@@ -15,6 +15,8 @@ function PaymentBadge({ method }: { method: PaymentMethod }) {
     transfer: { label: 'Transf.', cls: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
     card: { label: 'Tarjeta', cls: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
     mixed: { label: 'Mixto', cls: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+    other: { label: 'Otro', cls: 'bg-slate-500/10 text-slate-600 border-slate-500/20' },
+    wallet: { label: 'Billetera', cls: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
   };
   const c = config[method];
   return (

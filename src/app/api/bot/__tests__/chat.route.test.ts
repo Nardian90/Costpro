@@ -10,10 +10,19 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
-vi.mock('@/lib/ai/orchestrator', () => ({
-  getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
-    getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })
-  })
+// Mock z-ai-web-dev-sdk to prevent 502/500 errors in tests
+vi.mock('z-ai-web-dev-sdk', () => ({
+  default: {
+    create: vi.fn().mockResolvedValue({
+      chat: {
+        completions: {
+          create: vi.fn().mockResolvedValue({
+            choices: [{ message: { content: 'Bot response' } }]
+          })
+        }
+      }
+    })
+  }
 }));
 
 describe('POST /api/bot/chat', () => {

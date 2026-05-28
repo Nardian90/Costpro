@@ -53,20 +53,15 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 lowStockCount: rpcData.low_stock_count ?? 0,
                 pendingTransfersOut: rpcData.pending_transfers_out ?? 0,
                 pendingReceptions: rpcData.pending_receptions ?? 0,
+                visibleProducts: rpcData.visible_products ?? 0,
               };
             }
 
             // Fallback: queries individuales en paralelo
-            const [salesResult, transfersResult, visibleResult] = await Promise.all([
-              supabase
-                .from('products')
-                .select('id', { count: 'exact' })
-                .eq('store_id', store.id)
-                .eq('visible_en_tienda', true)
-                .eq('is_active', true),
+            const [transactionsResult, transfersResult, productsResult] = await Promise.all([
               supabase
                 .from('transactions')
-                .select('id, total_amount', { count: 'exact' })
+                .select('id, total_amount')
                 .eq('store_id', store.id)
                 .gte('created_at', `${today}T00:00:00`)
                 .lte('created_at', `${today}T23:59:59`),
@@ -74,11 +69,17 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 .from('transfers')
                 .select('id', { count: 'exact' })
                 .eq('origin_store_id', store.id)
-                .eq('status', 'PENDIENTE')
-            ],);
+                .eq('status', 'PENDIENTE'),
+              supabase
+                .from('products')
+                .select('id', { count: 'exact' })
+                .eq('store_id', store.id)
+                .eq('visible_en_tienda', true)
+                .eq('is_active', true)
+            ]);
 
-            const todayTxns = salesResult.data || [];
-            const todaySalesSum = todayTxns.reduce((s: number, t: any) => s + (t.total_amount || 0), 0);
+            const txns = transactionsResult.data || [];
+            const todaySalesSum = txns.reduce((s: number, t: any) => s + (t.total_amount || 0), 0);
 
             return {
               storeId: store.id,
@@ -87,11 +88,11 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
               storeAddress: store.address ?? undefined,
               isActive: store.id === activeStoreId,
               todaySales: todaySalesSum,
-              todayTransactions: salesResult.count || 0,
+              todayTransactions: txns.length,
               lowStockCount: 0, // Requiere RPC — mostrar N/A en UI
               pendingTransfersOut: transfersResult.count || 0,
               pendingReceptions: 0,
-              visibleProducts: visibleResult.count || 0,
+              visibleProducts: productsResult.count || 0,
             };
           } catch (err) {
             logger.error('DATABASE', 'MULTI_STORE_KPI_FAILED', { storeId: store.id, err });
