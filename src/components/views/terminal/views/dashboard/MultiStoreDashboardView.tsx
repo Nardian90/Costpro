@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw } from 'lucide-react';
+import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -88,22 +88,43 @@ function StoreKPICard({ kpi, onActivate }: StoreKPICardProps) {
           isNA={false}
         />
         <MetricMini
-          label="Transf. pend."
-          value={kpi.pendingTransfersOut}
-          alert={kpi.pendingTransfersOut > 0}
+          label="En vitrina"
+          value={kpi.visibleProducts}
+          isNA={kpi.visibleProducts === 0 && !kpi.storeSlug}
         />
       </div>
 
       {/* Acción */}
-      {!kpi.isActive && (
-        <button
-          onClick={() => onActivate(kpi.storeId)}
-          aria-label={`Activar ${kpi.storeName} como tienda de trabajo`}
-          className="w-full py-2 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors"
-        >
-          Activar tienda
-        </button>
-      )}
+      <div className="flex items-center gap-2">
+        {kpi.storeSlug && (() => {
+          const cleanSlug = kpi.storeSlug.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+          return (
+          <a
+            href={`/tienda/${cleanSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
+            aria-label={`Visitar tienda pública de ${kpi.storeName}`}
+            title="Visitar tienda pública"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Visitar
+          </a>
+          );
+        })()}
+        {!kpi.isActive && (
+          <button
+            onClick={() => onActivate(kpi.storeId)}
+            aria-label={`Activar ${kpi.storeName} como tienda de trabajo`}
+            className={cn(
+              'flex-1 py-2 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors',
+              kpi.storeSlug && 'flex-initial'
+            )}
+          >
+            Activar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

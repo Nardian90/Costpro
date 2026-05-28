@@ -8,12 +8,14 @@ import type { Store } from '@/types';
 export interface StoreKPI {
   storeId: string;
   storeName: string;
+  storeSlug?: string | null;
   storeAddress?: string;
   todaySales: number;
   todayTransactions: number;
   lowStockCount: number;
   pendingTransfersOut: number;
   pendingReceptions: number;
+  visibleProducts: number;
   isActive: boolean;
 }
 
@@ -43,6 +45,7 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
               return {
                 storeId: store.id,
                 storeName: store.name,
+                storeSlug: store.slug ?? null,
                 storeAddress: store.address ?? undefined,
                 isActive: store.id === activeStoreId,
                 todaySales: rpcData.today_sales ?? 0,
@@ -54,7 +57,13 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
             }
 
             // Fallback: queries individuales en paralelo
-            const [salesResult, transfersResult] = await Promise.all([
+            const [salesResult, transfersResult, visibleResult] = await Promise.all([
+              supabase
+                .from('products')
+                .select('id', { count: 'exact' })
+                .eq('store_id', store.id)
+                .eq('visible_en_tienda', true)
+                .eq('is_active', true),
               supabase
                 .from('transactions')
                 .select('id, total_amount', { count: 'exact' })
@@ -66,7 +75,7 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 .select('id', { count: 'exact' })
                 .eq('origin_store_id', store.id)
                 .eq('status', 'PENDIENTE')
-            ]);
+            ],);
 
             const todayTxns = salesResult.data || [];
             const todaySalesSum = todayTxns.reduce((s: number, t: any) => s + (t.total_amount || 0), 0);
@@ -74,6 +83,7 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
             return {
               storeId: store.id,
               storeName: store.name,
+              storeSlug: store.slug ?? null,
               storeAddress: store.address ?? undefined,
               isActive: store.id === activeStoreId,
               todaySales: todaySalesSum,
@@ -81,12 +91,14 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
               lowStockCount: 0, // Requiere RPC — mostrar N/A en UI
               pendingTransfersOut: transfersResult.count || 0,
               pendingReceptions: 0,
+              visibleProducts: visibleResult.count || 0,
             };
           } catch (err) {
             logger.error('DATABASE', 'MULTI_STORE_KPI_FAILED', { storeId: store.id, err });
             return {
               storeId: store.id,
               storeName: store.name,
+              storeSlug: store.slug ?? null,
               storeAddress: store.address ?? undefined,
               isActive: store.id === activeStoreId,
               todaySales: 0,
@@ -94,6 +106,7 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
               lowStockCount: 0,
               pendingTransfersOut: 0,
               pendingReceptions: 0,
+              visibleProducts: 0,
             };
           }
         })
@@ -105,9 +118,11 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
           : {
               storeId: stores[i].id,
               storeName: stores[i].name,
+              storeSlug: stores[i].slug ?? null,
               isActive: stores[i].id === activeStoreId,
               todaySales: 0, todayTransactions: 0,
               lowStockCount: 0, pendingTransfersOut: 0, pendingReceptions: 0,
+              visibleProducts: 0,
             }
       );
     },

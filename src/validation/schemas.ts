@@ -68,10 +68,14 @@ export const storeSchema = z.object({
   id: z.string(),
   name: z.string(),
   address: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
   logo_url: z.string().nullable().optional(),
   reeup: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
+  slug: z.string().nullable().optional(),
+  plantilla: z.enum(['construccion', 'minimalista', 'moderna', 'clasica']).nullable().optional(),
   created_at: z.string().optional(),
 });
 
@@ -159,6 +163,13 @@ export const productSchema = z.object({
     }, z.boolean().optional())
     .default(true),
   has_movements: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(false),
+  visible_en_tienda: z
     .preprocess((val) => {
       if (val === undefined || val === null) return undefined;
       if (typeof val === "string") return val === "true";

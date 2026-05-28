@@ -2,11 +2,18 @@ import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { Store } from '@/types';
 
+// QUAL-001: Single source of truth for store mutation roles
+const STORE_MUTATION_ROLES = ['admin', 'manager', 'encargado'] as const;
+
 export const storeService = {
-  async getStores() {
+  /**
+   * @deprecated Use useStores() hook instead — this method is kept only for
+   * server-side contexts where hooks are unavailable.
+   */
+  async getStores(): Promise<Store[]> {
     const { data, error } = await supabase
       .from('stores')
-      .select('*')
+      .select('id, name, address, logo_url, reeup, bank_account, phone, email, is_active, slug, plantilla, created_at')
       .eq('is_active', true)
       .order('name');
 
@@ -18,8 +25,15 @@ export const storeService = {
     return data as Store[];
   },
 
-  async createStore(userRole: string, name: string, address: string, createdBy?: string, maxStoresLimit?: number) {
-    if (!['admin', 'manager', 'encargado'].includes(userRole)) {
+  async createStore(
+    userRole: string,
+    name: string,
+    address: string,
+    createdBy?: string,
+    maxStoresLimit?: number,
+    additionalData?: Partial<Store>
+  ): Promise<Store> {
+    if (!STORE_MUTATION_ROLES.includes(userRole as typeof STORE_MUTATION_ROLES[number])) {
       throw new Error('No tienes permisos para realizar esta operación');
     }
     logger.info('DATABASE', 'CREATE_STORE', { name, address, createdBy });
@@ -42,13 +56,26 @@ export const storeService = {
       }
     }
 
+    // Whitelist extra fields for create (same as updateStore)
+    const whitelistedData: Partial<Store> = {};
+    if (additionalData) {
+      if (additionalData.logo_url !== undefined && additionalData.logo_url !== '') whitelistedData.logo_url = additionalData.logo_url;
+      if (additionalData.reeup !== undefined && additionalData.reeup !== '') whitelistedData.reeup = additionalData.reeup;
+      if (additionalData.bank_account !== undefined && additionalData.bank_account !== '') whitelistedData.bank_account = additionalData.bank_account;
+      if (additionalData.phone !== undefined && additionalData.phone !== '') whitelistedData.phone = additionalData.phone;
+      if (additionalData.email !== undefined && additionalData.email !== '') whitelistedData.email = additionalData.email;
+      if (additionalData.slug !== undefined && additionalData.slug !== '') whitelistedData.slug = additionalData.slug;
+      if (additionalData.plantilla !== undefined) whitelistedData.plantilla = additionalData.plantilla;
+    }
+
     const { data, error } = await supabase
       .from('stores')
       .insert({
         name,
         address,
         created_by: createdBy,
-        is_active: true
+        is_active: true,
+        ...whitelistedData
       })
       .select()
       .single();
@@ -61,8 +88,14 @@ export const storeService = {
     return data as Store;
   },
 
-  async updateStore(userRole: string, storeId: string, name: string, address: string, additionalData?: Partial<Store>) {
-    if (!['admin', 'manager', 'encargado'].includes(userRole)) {
+  async updateStore(
+    userRole: string,
+    storeId: string,
+    name: string,
+    address: string,
+    additionalData?: Partial<Store>
+  ): Promise<Store> {
+    if (!STORE_MUTATION_ROLES.includes(userRole as typeof STORE_MUTATION_ROLES[number])) {
       throw new Error('No tienes permisos para realizar esta operación');
     }
     logger.info('DATABASE', 'UPDATE_STORE', { storeId, name, address });
@@ -74,6 +107,10 @@ export const storeService = {
       if (additionalData.logo_url !== undefined) whitelistedData.logo_url = additionalData.logo_url;
       if (additionalData.reeup !== undefined) whitelistedData.reeup = additionalData.reeup;
       if (additionalData.bank_account !== undefined) whitelistedData.bank_account = additionalData.bank_account;
+      if (additionalData.phone !== undefined) whitelistedData.phone = additionalData.phone;
+      if (additionalData.email !== undefined) whitelistedData.email = additionalData.email;
+      if (additionalData.slug !== undefined) whitelistedData.slug = additionalData.slug;
+      if (additionalData.plantilla !== undefined) whitelistedData.plantilla = additionalData.plantilla;
     }
 
     const { data, error } = await supabase
@@ -91,13 +128,13 @@ export const storeService = {
     return data as Store;
   },
 
-  async deleteStore(userRole: string, storeId: string) {
-    if (!['admin', 'manager', 'encargado'].includes(userRole)) {
+  async deleteStore(userRole: string, storeId: string): Promise<void> {
+    if (!STORE_MUTATION_ROLES.includes(userRole as typeof STORE_MUTATION_ROLES[number])) {
       throw new Error('No tienes permisos para realizar esta operación');
     }
     logger.info('DATABASE', 'DELETE_STORE (SOFT)', { storeId });
 
-    // FIX HIGH-003: Warn about dependent data before soft-delete
+    // FIX HIGH-003: Warn about dependent data before soft-delete (silent count check)
     try {
       const [txResult, ccResult, trResult] = await Promise.all([
         supabase.from('sales').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
@@ -108,9 +145,12 @@ export const storeService = {
       const ccCount = ccResult.count ?? 0;
       const trCount = trResult.count ?? 0;
       if (txCount > 0 || ccCount > 0 || trCount > 0) {
-        console.warn(
-          `[deleteStore] Store ${storeId} has dependent data — transactions: ${txCount}, cash_closures: ${ccCount}, transfers: ${trCount}. Proceeding with soft-delete as admin requested.`
-        );
+        logger.warn('DATABASE', 'DELETE_STORE_DEPENDENT_DATA', {
+          storeId,
+          transactions: txCount,
+          cashClosures: ccCount,
+          transfers: trCount,
+        });
       }
     } catch (warnErr) {
       logger.warn('DATABASE', 'DELETE_STORE_DEPENDENCY_CHECK_FAILED', { storeId, error: warnErr });
@@ -129,27 +169,24 @@ export const storeService = {
 
     // FIX MEDIUM-007: Clean up references — revoke memberships and clear active_store_id
     try {
-      // Revoke all memberships for this store
       await supabase
         .from('user_store_memberships')
         .update({ status: 'revoked' })
         .eq('store_id', storeId);
 
-      // Clear active_store_id for users who had this store as active
       await supabase
         .from('profiles')
         .update({ active_store_id: null })
         .eq('active_store_id', storeId);
 
       logger.info('DATABASE', 'SOFT_DELETE_CLEANUP_COMPLETED', { storeId });
-    } catch (cleanupError: any) {
+    } catch (cleanupError: unknown) {
       logger.error('DATABASE', 'SOFT_DELETE_CLEANUP_FAILED', { storeId, error: cleanupError });
-      // Non-blocking: store is already deactivated
     }
   },
 
-  async resetStore(userRole: string, storeId: string) {
-    if (!['admin', 'manager', 'encargado'].includes(userRole)) {
+  async resetStore(userRole: string, storeId: string): Promise<void> {
+    if (!STORE_MUTATION_ROLES.includes(userRole as typeof STORE_MUTATION_ROLES[number])) {
       throw new Error('No tienes permisos para realizar esta operación');
     }
     logger.info('DATABASE', 'RESET_STORE_INITIATED', { storeId });
@@ -163,13 +200,12 @@ export const storeService = {
         .eq('status', 'active');
 
       if (activeSessions && activeSessions.length > 0) {
-        // Insert store notification records for all active members
-        const notifications = activeSessions.map((m: any) => ({
+        const notifications = activeSessions.map((m: { user_id: string }) => ({
           user_id: m.user_id,
           store_id: storeId,
           type: 'store_reset_warning',
           title: 'Reinicio de Tienda Programado',
-          message: `La tienda está siendo reiniciada. Todos los datos de ventas, inventario y movimientos serán eliminados. Por favor guarda tu trabajo y recarga la página.`,
+          message: 'La tienda está siendo reiniciada. Todos los datos de ventas, inventario y movimientos serán eliminados. Por favor guarda tu trabajo y recarga la página.',
           is_read: false,
         }));
 
@@ -179,19 +215,17 @@ export const storeService = {
 
         if (notifError) {
           logger.warn('DATABASE', 'RESET_NOTIFICATION_FAILED', { storeId, error: notifError });
-          // Non-blocking: proceed with reset even if notifications fail
         } else {
           logger.info('DATABASE', 'RESET_NOTIFICATIONS_SENT', { storeId, count: activeSessions.length });
         }
       }
-    } catch (notifErr: any) {
+    } catch (notifErr: unknown) {
       logger.warn('DATABASE', 'RESET_NOTIFICATION_EXCEPTION', { storeId, error: notifErr });
-      // Non-blocking: proceed with reset
     }
 
-    // FIX-BUG-SEC-008: Await audit log insert to catch failures instead of fire-and-forget
+    // Audit log: reset initiated
     try {
-      const { error: auditError } = await supabase.from('audit_logs').insert({
+      await supabase.from('audit_logs').insert({
         action: 'store_reset_initiated',
         table_name: 'stores',
         record_id: storeId,
@@ -201,12 +235,11 @@ export const storeService = {
           warning: 'Full store data reset initiated by admin — all historical data will be deleted'
         }
       });
-      if (auditError) logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_FAILED', { storeId, error: auditError });
-    } catch (auditErr) {
-      logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_EXCEPTION', { storeId, error: auditErr });
+    } catch (auditErr: unknown) {
+      logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_FAILED', { storeId, error: auditErr });
     }
 
-    // Ejecutar el reset
+    // Ejecutar el reset via RPC
     const { error } = await supabase.rpc('reset_store_data', {
       target_store_id: storeId
     });
@@ -216,18 +249,42 @@ export const storeService = {
       throw error;
     }
 
-    // FIX-BUG-SEC-008: Await audit log insert to catch failures instead of fire-and-forget
+    // Audit log: reset completed
     try {
-      const { error: auditError } = await supabase.from('audit_logs').insert({
+      await supabase.from('audit_logs').insert({
         action: 'store_reset_completed',
         table_name: 'stores',
         record_id: storeId,
         store_id: storeId,
         metadata: { completed_at: new Date().toISOString() }
       });
-      if (auditError) logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId, error: auditError });
-    } catch (auditErr) {
-      logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_EXCEPTION', { storeId, error: auditErr });
+    } catch (auditErr: unknown) {
+      logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId, error: auditErr });
     }
-  }
+  },
+
+  async updateStorefront(userRole: string, storeId: string, data: { slug?: string; plantilla?: string }): Promise<Store> {
+    if (!STORE_MUTATION_ROLES.includes(userRole as typeof STORE_MUTATION_ROLES[number])) {
+      throw new Error('No tienes permisos para realizar esta operación');
+    }
+    logger.info('DATABASE', 'UPDATE_STOREFRONT', { storeId, ...data });
+
+    const updateData: Record<string, any> = {};
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.plantilla !== undefined) updateData.plantilla = data.plantilla;
+
+    const { data: store, error } = await supabase
+      .from('stores')
+      .update(updateData)
+      .eq('id', storeId)
+      .select('id, name, slug, plantilla, logo_url')
+      .single();
+
+    if (error) {
+      logger.error('DATABASE', 'UPDATE_STOREFRONT_FAILED', { storeId, error });
+      throw error;
+    }
+
+    return store as Store;
+  },
 };

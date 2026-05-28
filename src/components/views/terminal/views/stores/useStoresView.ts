@@ -40,7 +40,12 @@ export function useStoresView() {
     );
 
     const filteredStores = useMemo(() => {
-        return storesData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        if (!searchTerm.trim()) return storesData;
+        const term = searchTerm.toLowerCase().trim();
+        return storesData.filter(s =>
+            s.name.toLowerCase().includes(term) ||
+            (s.address && s.address.toLowerCase().includes(term))
+        );
     }, [storesData, searchTerm]);
 
     // Internal execution function
@@ -84,11 +89,23 @@ export function useStoresView() {
                 await storeService.updateStore(user?.role || '', selectedStore.id, data.name || '', data.address || '', {
                     reeup: data.reeup,
                     bank_account: data.bank_account,
-                    logo_url: data.logo_url
+                    phone: data.phone,
+                    email: data.email,
+                    logo_url: data.logo_url,
+                    slug: data.slug,
+                    plantilla: data.plantilla
                 });
                 toast.success('Tienda actualizada');
             } else if (mode === 'create') {
-                await storeService.createStore(user?.role || '', data.name || '', data.address || '', user?.id);
+                await storeService.createStore(user?.role || '', data.name || '', data.address || '', user?.id, undefined, {
+                    reeup: data.reeup,
+                    bank_account: data.bank_account,
+                    phone: data.phone,
+                    email: data.email,
+                    logo_url: data.logo_url,
+                    slug: data.slug,
+                    plantilla: data.plantilla
+                });
                 toast.success('Tienda creada exitosamente');
             } else if (mode === 'delete' && selectedStore) {
                 await storeService.deleteStore(user?.role || '', selectedStore.id);

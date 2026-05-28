@@ -3,7 +3,7 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import type { Product } from '@/types';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -17,9 +17,11 @@ interface InventoryTableViewProps {
     isLoading: boolean;
     onAdjust?: (product: Product) => void;
     onViewKardex?: (product: Product) => void;
+    onToggleVisible?: (product: Product, visible: boolean) => void;
+    isTogglingVisible?: string | null;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void }>(({ product, onAdjust, onViewKardex }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null }>(({ product, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible }, ref) => {
     const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
@@ -67,6 +69,29 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     {isLowStock ? 'Stock Bajo' : 'Normal'}
                 </span>
             </td>
+            <td className="p-4 text-center" data-label="Tienda" aria-label="Visibilidad en tienda">
+                <button
+                    type="button"
+                    onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
+                    disabled={isTogglingVisible === product.id}
+                    className={cn(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 disabled:opacity-50',
+                        product.visible_en_tienda
+                            ? 'bg-primary/10 border-primary/20 text-primary'
+                            : 'bg-muted border-border text-muted-foreground hover:bg-muted/80',
+                    )}
+                    title={product.visible_en_tienda ? 'Visible en tienda pública — Clic para ocultar' : 'Oculto en tienda pública — Clic para mostrar'}
+                >
+                    {isTogglingVisible === product.id ? (
+                        <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : product.visible_en_tienda ? (
+                        <Eye className="w-3 h-3" />
+                    ) : (
+                        <EyeOff className="w-3 h-3" />
+                    )}
+                    <span className="hidden sm:inline">{product.visible_en_tienda ? 'Visible' : 'Oculto'}</span>
+                </button>
+            </td>
             <td className="p-4" data-label="Acciones" aria-label="Acciones del producto">
                 <div className="flex justify-center gap-1">
                     <button
@@ -91,7 +116,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
 });
 ProductRow.displayName = "ProductRow";
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible }: InventoryTableViewProps) {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
@@ -154,6 +179,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <th className="p-4 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" /></button></th>
                         <th className="p-4 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" /></button></th>
                         <th className="p-4 text-center">Estado</th>
+                        <th className="p-4 text-center" title="¿Se muestra en la tienda pública?"><span className="inline-flex items-center gap-1"><Store className="w-3 h-3" /> Tienda</span></th>
                         <th className="p-4 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -164,12 +190,14 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                             product={product}
                             onAdjust={onAdjust}
                             onViewKardex={onViewKardex}
+                            onToggleVisible={onToggleVisible}
+                            isTogglingVisible={isTogglingVisible}
                             ref={index === sortedProducts.length - 1 ? lastElementRef : null}
                         />
                     ))}
                      {isLoading && (
                         <tr aria-label="Cargando productos">
-                            <td colSpan={7} className="p-8 text-center">
+                            <td colSpan={8} className="p-8 text-center">
                                 <div className="flex justify-center py-4">
                                     <CostProLoader size={120} text="CARGANDO" subtext="Buscando existencias..." />
                                 </div>
@@ -178,7 +206,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                     )}
                     {!isLoading && products.length === 0 && (
                         <tr>
-                            <td colSpan={7} className="p-20 text-center text-muted-foreground">
+                            <td colSpan={8} className="p-20 text-center text-muted-foreground">
                                 <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
                                 <p className="text-lg font-medium uppercase tracking-widest">No se encontraron productos.</p>
                             </td>

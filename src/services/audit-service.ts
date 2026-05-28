@@ -143,4 +143,35 @@ export const auditService = {
     });
     if (error) console.error('[AuditService] logReceptionVoided failed:', error);
   },
+
+  async logReceptionCreated(params: {
+    userId: string;
+    receiptId: string;
+    storeId: string;
+    supplier: string;
+    invoiceNumber: string;
+    itemCount: number;
+    totalCost: number;
+    autoCreatedSkus: string[];
+    priceUpdatedSkus: string[];
+  }): Promise<void> {
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: params.userId,
+      action: 'reception_created',
+      table_name: 'receipts',
+      record_id: params.receiptId,
+      store_id: params.storeId,
+      metadata: {
+        receipt_id: params.receiptId,
+        supplier: params.supplier,
+        invoice_number: params.invoiceNumber,
+        items_count: params.itemCount,
+        total_cost: params.totalCost,
+        auto_created_products: params.autoCreatedSkus,
+        price_updated_products: params.priceUpdatedSkus,
+        created_at: new Date().toISOString()
+      }
+    });
+    if (error) console.error('[AuditService] logReceptionCreated failed:', error);
+  },
 };

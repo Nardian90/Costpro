@@ -249,6 +249,12 @@ export const ProductCard: React.FC<any> = ({
                 Inactivo
               </div>
             )}
+            {/* UX-01: Incomplete product badge */}
+            {product.is_complete === false && (
+              <div className="bg-amber-500 text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20">
+                Incompleto
+              </div>
+            )}
             {product.price < (product.cost_price || 0) && (
               <div className="bg-danger text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
                 ALERTA: Margen Negativo
