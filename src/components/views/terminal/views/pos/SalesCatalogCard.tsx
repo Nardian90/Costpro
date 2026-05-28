@@ -36,7 +36,7 @@ interface SalesCatalogCardProps {
   isActive: boolean;
   handlers: {
     handleSetQuantity: (product: Product, val: number) => void;
-    handleSelectVariant: (product: Product, variantId: string) => void;
+    handleSelectVariant: (product: Product, variantId: string | null) => void;
     handleSetDiscountType: (product: Product) => void;
     handleSetDiscountValue: (product: Product, val: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
@@ -48,7 +48,7 @@ interface SalesCatalogCardProps {
 
 // ── Component ──────────────────────────────────────────────────
 
-export function SalesCatalogCard({ product, row, isActive, handlers }: SalesCatalogCardProps) {
+export default function SalesCatalogCard({ product, row, isActive, handlers }: SalesCatalogCardProps) {
   const {
     handleSetQuantity,
     handleSelectVariant,
@@ -98,6 +98,17 @@ export function SalesCatalogCard({ product, row, isActive, handlers }: SalesCata
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">Presentación</label>
           <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => handleSelectVariant(product, null)}
+              className={cn(
+                'px-2 py-1 text-[10px] font-bold rounded-lg border transition-all active:scale-95',
+                !row.selectedVariantId
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 border-border/50 text-muted-foreground hover:border-border',
+              )}
+            >
+              Base
+            </button>
             {product.product_variants.map((v) => (
               <button
                 key={v.id}
