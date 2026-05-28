@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient';
+import { useQueryClient } from '@tanstack/react-query';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
@@ -53,6 +55,7 @@ export default function InventoryView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
     const [isPending, startTransition] = useTransition();
+    const queryClient = useQueryClient();
 
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
@@ -74,6 +77,10 @@ export default function InventoryView() {
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
     const [showABC, setShowABC] = useState(false);
     const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(null);
+    const [togglingVisibleId, setTogglingVisibleId] = useState<string | null>(null);
+    const [bulkToggling, setBulkToggling] = useState(false);
+    // Local visibility overrides: survives React Query refetches that don't include visible_en_tienda
+    const [visibilityOverrides, setVisibilityOverrides] = useState<Record<string, boolean>>({});
 
     const { mutateAsync: adjustStock } = useAdjustStock();
 
@@ -94,12 +101,20 @@ export default function InventoryView() {
 
     const products = useMemo(() => {
         const rawProducts = data?.pages.flatMap(page => page.products) || [];
-        return rawProducts.filter(p =>
-            p.id &&
-            uuidRegex.test(p.id) &&
-            (!p.store_id || uuidRegex.test(p.store_id))
-        );
-    }, [data]);
+        return rawProducts
+            .filter(p =>
+                p.id &&
+                uuidRegex.test(p.id) &&
+                (!p.store_id || uuidRegex.test(p.store_id))
+            )
+            .map(p => ({
+                ...p,
+                // Merge local override so toggles survive RPC refetches
+                visible_en_tienda: p.id in visibilityOverrides
+                    ? visibilityOverrides[p.id]
+                    : p.visible_en_tienda,
+            }));
+    }, [data, visibilityOverrides]);
 
     const filteredProducts = useMemo(() => {
         if (stockFilter === 'all') return products;
@@ -198,6 +213,88 @@ export default function InventoryView() {
         setAdjustingProduct(product);
     }, []);
 
+    const handleToggleVisible = useCallback(async (product: Product, visible: boolean) => {
+        // Optimistic: flip immediately via local state
+        setVisibilityOverrides(prev => ({ ...prev, [product.id]: visible }));
+        setTogglingVisibleId(product.id);
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ visible_en_tienda: visible })
+                .eq('id', product.id);
+
+            if (error) {
+                // Revert on error
+                setVisibilityOverrides(prev => {
+                    const next = { ...prev };
+                    delete next[product.id];
+                    return next;
+                });
+                throw error;
+            }
+
+            // Do NOT invalidate inventory query — the RPC doesn't return visible_en_tienda
+            // and would overwrite our optimistic state with .default(false)
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+
+            toast.success(visible
+                ? `${product.name} ahora es visible en la tienda pública`
+                : `${product.name} ya no se muestra en la tienda pública`
+            );
+        } catch (err: any) {
+            toast.error('Error al actualizar visibilidad: ' + (err?.message || ''));
+        } finally {
+            setTogglingVisibleId(null);
+        }
+    }, []);
+
+    // Bulk visibility toggle
+    const handleBulkVisibility = useCallback(async (visible: boolean) => {
+        const targets = filteredProducts;
+        if (targets.length === 0) {
+            toast.info('No hay productos en la vista actual para aplicar el cambio.');
+            return;
+        }
+
+        setBulkToggling(true);
+        const targetIds = targets.map(p => p.id);
+
+        // Optimistic: apply to all filtered products via local state
+        const newOverrides: Record<string, boolean> = {};
+        targetIds.forEach(id => { newOverrides[id] = visible; });
+        setVisibilityOverrides(prev => ({ ...prev, ...newOverrides }));
+
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ visible_en_tienda: visible })
+                .in('id', targetIds);
+
+            if (error) {
+                // Revert all on error
+                setVisibilityOverrides(prev => {
+                    const next = { ...prev };
+                    targetIds.forEach(id => delete next[id]);
+                    return next;
+                });
+                throw error;
+            }
+
+            // Do NOT invalidate inventory query
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+
+            toast.success(
+                visible
+                    ? `${targets.length} producto(s) ahora visible(s) en la tienda pública`
+                    : `${targets.length} producto(s) ocultado(s) de la tienda pública`
+            );
+        } catch (err: any) {
+            toast.error('Error masivo al actualizar visibilidad: ' + (err?.message || ''));
+        } finally {
+            setBulkToggling(false);
+        }
+    }, [filteredProducts]);
+
     const handleConfirmAdjustment = async (adjustmentData: {
         quantityDelta: number;
         unitCostAdjustment: number | null;
@@ -267,6 +364,38 @@ export default function InventoryView() {
                 {/* Stock status filter */}
                 <div className="flex items-center gap-2 flex-wrap">
                     <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {/* Bulk store visibility actions */}
+                    <button
+                        type="button"
+                        onClick={() => handleBulkVisibility(true)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20"
+                        title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
+                    >
+                        {bulkToggling ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Eye className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">Tienda</span>
+                        <CheckCircle2 className="w-3 h-3" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleBulkVisibility(false)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20"
+                        title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}
+                    >
+                        {bulkToggling ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <EyeOff className="w-3 h-3" />
+                        )}
+                        <span className="hidden sm:inline">Tienda</span>
+                        <X className="w-3 h-3" />
+                    </button>
+                    <span className="w-px h-4 bg-border mx-1" />
                     {([
                         { key: 'all', label: 'Todos' },
                         { key: 'normal', label: 'Normal' },
@@ -315,6 +444,8 @@ export default function InventoryView() {
                                 isLoading={isFetchingNextPage}
                                 onAdjust={handleAdjustProduct}
                                 onViewKardex={setKardexProduct}
+                                onToggleVisible={handleToggleVisible}
+                                isTogglingVisible={togglingVisibleId}
                             />
                         )
                     )}

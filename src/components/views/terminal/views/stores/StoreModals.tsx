@@ -6,7 +6,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Store } from '@/types';
+import { Store, StoreTemplate } from '@/types';
 import { StoreFormMode } from './useStoresView';
 import { AlertTriangle, Upload, X, ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
@@ -31,11 +31,17 @@ export function StoreModals({
 }: StoreModalsProps) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
+    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [reeup, setReeup] = useState('');
     const [bankAccount, setBankAccount] = useState('');
     const [logoUrl, setLogoUrl] = useState('');
+    const [slug, setSlug] = useState('');
+    const [plantilla, setPlantilla] = useState<StoreTemplate>('construccion');
     const [isUploading, setIsUploading] = useState(false);
     const [resetConfirmInput, setResetConfirmInput] = useState('');
+    const [slugChecking, setSlugChecking] = useState(false);
+    const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
 
     const isResetConfirmed = resetConfirmInput === selectedStore?.name;
 
@@ -43,24 +49,39 @@ export function StoreModals({
         if (selectedStore && mode === 'edit') {
             setName(selectedStore.name);
             setAddress(selectedStore.address || '');
+            setPhone(selectedStore.phone || '');
+            setEmail(selectedStore.email || '');
             setReeup(selectedStore.reeup || '');
             setBankAccount(selectedStore.bank_account || '');
             setLogoUrl(selectedStore.logo_url || '');
+            setSlug(selectedStore.slug || '');
+            setPlantilla(selectedStore.plantilla || 'construccion');
         } else {
             setName('');
             setAddress('');
+            setPhone('');
+            setEmail('');
             setReeup('');
             setBankAccount('');
             setLogoUrl('');
+            setSlug('');
+            setPlantilla('construccion');
         }
         setResetConfirmInput('');
+        setSlugAvailable(null);
     }, [selectedStore, mode, isOpen]);
+
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validations
+        // SEC-001: Block SVG to prevent XSS via embedded scripts
+        if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+            toast.error('No se permiten archivos SVG por seguridad');
+            return;
+        }
         if (!file.type.startsWith('image/')) {
             toast.error('Solo se permiten archivos de imagen');
             return;
@@ -70,9 +91,14 @@ export function StoreModals({
             return;
         }
 
+        const fileExt = (file.name.split('.').pop() || '').toLowerCase();
+        if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+            toast.error(`Formato no permitido. Use: ${ALLOWED_EXTENSIONS.join(', ')}`);
+            return;
+        }
+
         setIsUploading(true);
         try {
-            const fileExt = file.name.split('.').pop();
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
             const filePath = `store-logos/${fileName}`;
 
@@ -88,8 +114,7 @@ export function StoreModals({
 
             setLogoUrl(publicUrl);
             toast.success('Logo subido correctamente');
-        } catch (error: any) {
-            console.error('Error uploading logo:', error);
+        } catch {
             toast.error('Error al subir el logo');
         } finally {
             setIsUploading(false);
@@ -103,14 +128,75 @@ export function StoreModals({
           toast.error('El nombre debe tener al menos 2 caracteres');
           return;
         }
+        // VAL-001: REEUP must be exactly 11 numeric digits if provided
+        if (reeup && !/^\d{11}$/.test(reeup.trim())) {
+          toast.error('El Código REEUP debe tener exactamente 11 dígitos numéricos');
+          return;
+        }
+        // VAL-002: Bank account basic format validation if provided
+        if (bankAccount && bankAccount.trim().length < 4) {
+          toast.error('La cuenta bancaria debe tener al menos 4 caracteres');
+          return;
+        }
+        // VAL-003: Email format validation if provided
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+          toast.error('El correo electrónico no tiene un formato válido');
+          return;
+        }
+        // Slug uniqueness validation
+        if (slug.trim() && slugAvailable === false) {
+            toast.error('Este link ya está en uso por otra tienda. Elige otro.');
+            return;
+        }
         onSubmit(mode, {
-            name,
-            address,
-            reeup,
-            bank_account: bankAccount,
-            logo_url: logoUrl
+            name: name.trim(),
+            address: address.trim() || null,
+            phone: phone.trim() || null,
+            email: email.trim() || null,
+            reeup: reeup.trim() || null,
+            bank_account: bankAccount.trim() || null,
+            logo_url: logoUrl || null,
+            slug: slug.trim() || null,
+            plantilla: plantilla || null,
         });
     };
+
+    // Check slug availability (debounced)
+    const checkSlugAvailability = async (value: string) => {
+        if (!value || value.length < 2) {
+            setSlugAvailable(null);
+            return;
+        }
+        // Skip check if editing and slug hasn't changed
+        if (mode === 'edit' && selectedStore?.slug === value) {
+            setSlugAvailable(true);
+            return;
+        }
+        setSlugChecking(true);
+        try {
+            const { data, error } = await supabase
+                .from('stores')
+                .select('id')
+                .eq('slug', value)
+                .limit(1);
+            if (error) throw error;
+            setSlugAvailable(!data || data.length === 0);
+        } catch {
+            setSlugAvailable(null);
+        } finally {
+            setSlugChecking(false);
+        }
+    };
+
+    // Debounce slug check
+    useEffect(() => {
+        if (!slug || slug.length < 2) {
+            setSlugAvailable(null);
+            return;
+        }
+        const timer = setTimeout(() => checkSlugAvailability(slug), 500);
+        return () => clearTimeout(timer);
+    }, [slug]);
 
     if (!mode) return null;
 
@@ -201,8 +287,8 @@ export function StoreModals({
                             type="text"
                             value={resetConfirmInput}
                             onChange={e => setResetConfirmInput(e.target.value)}
-                            placeholder={selectedStore?.name || ''}
-                            aria-label={`Escribe ${selectedStore?.name || ''} para confirmar el reinicio`}
+                            placeholder="Escribe el nombre de la tienda para confirmar"
+                            aria-label="Escribe el nombre de la tienda para confirmar el reinicio"
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:ring-1 focus:ring-destructive outline-none"
                             autoComplete="off"
                         />
@@ -242,6 +328,7 @@ export function StoreModals({
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
                             placeholder="Nombre de la sucursal"
                             required
+                            maxLength={100}
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
@@ -254,6 +341,35 @@ export function StoreModals({
                             onChange={(e) => setAddress(e.target.value)}
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
                             placeholder="Calle, Ciudad, Estado"
+                            maxLength={200}
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="phone" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Teléfono
+                        </Label>
+                        <Input
+                            id="phone"
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="+53 XXXX XXXX"
+                            maxLength={20}
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="email" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Correo Electrónico
+                        </Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="tienda@ejemplo.com"
+                            maxLength={150}
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
@@ -265,7 +381,8 @@ export function StoreModals({
                             value={reeup}
                             onChange={(e) => setReeup(e.target.value)}
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
-                            placeholder="50004478172"
+                            placeholder="XXXXXXXXXXX"
+                            maxLength={11}
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
@@ -277,8 +394,62 @@ export function StoreModals({
                             value={bankAccount}
                             onChange={(e) => setBankAccount(e.target.value)}
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
-                            placeholder="0664-6340-0042-1716"
+                            placeholder="XXXX-XXXX-XXXX-XXXX"
+                            maxLength={30}
                         />
+                    </div>
+                    {/* Vitrina Pública - Slug */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                      <Label htmlFor="slug" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        Link Tienda
+                      </Label>
+                      <div className="sm:col-span-3 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground font-mono shrink-0">/tienda/</span>
+                          <Input
+                            id="slug"
+                            value={slug}
+                            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, ''))}
+                            className="h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold font-mono"
+                            placeholder="mi_tienda"
+                            maxLength={60}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {slugChecking && (
+                            <span className="w-3 h-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                          )}
+                          {slugAvailable === true && (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-green-600">Disponible</span>
+                          )}
+                          {slugAvailable === false && (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-destructive">No disponible</span>
+                          )}
+                        </div>
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-wider">
+                          Solo letras, números y guiones. Se usa para el link público.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Plantilla de Vitrina */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                      <Label className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        Plantilla
+                      </Label>
+                      <div className="sm:col-span-3">
+                        <select
+                          value={plantilla}
+                          onChange={(e) => setPlantilla(e.target.value as StoreTemplate)}
+                          className="w-full h-11 px-3 rounded-lg border border-primary/10 bg-muted/20 text-sm font-bold focus:border-primary/30 focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                          aria-label="Seleccionar plantilla de la vitrina"
+                        >
+                          <option value="construccion">Construcción</option>
+                          <option value="minimalista">Minimalista</option>
+                          <option value="moderna">Moderna</option>
+                          <option value="clasica">Clásica</option>
+                        </select>
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
                         <Label className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70 pt-3">

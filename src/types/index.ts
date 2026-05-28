@@ -131,14 +131,20 @@ export interface UserStoreMembership {
   store?: Store | null;
 }
 
+export type StoreTemplate = 'construccion' | 'minimalista' | 'moderna' | 'clasica';
+
 export interface Store {
   id: string;
   name: string;
   address?: string | null;
+  phone?: string | null;
+  email?: string | null;
   logo_url?: string | null;
   reeup?: string | null;
   bank_account?: string | null;
   is_active?: boolean;
+  slug?: string | null;
+  plantilla?: StoreTemplate | null;
   created_at?: string;
 }
 
@@ -169,7 +175,9 @@ export interface Product {
   store_id?: string | null;
   public_image_url?: string | null;
   is_active?: boolean;
+  is_complete?: boolean;
   has_movements?: boolean;
+  visible_en_tienda?: boolean;
   product_variants?: ProductVariant[] | null;
 }
 

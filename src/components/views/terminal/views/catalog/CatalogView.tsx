@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabaseClient';
 import {
   Search, Plus, Edit, Trash2, Download, Upload,
   FileSpreadsheet, AlertCircle, CheckCircle2, X, Loader2,
-  FileDown, FileUp, Table2, LayoutGrid, Copy, Power, RotateCcw, ChevronDown, CheckSquare, Square
+  FileDown, FileUp, Table2, LayoutGrid, Copy, Power, RotateCcw, ChevronDown, CheckSquare, Square,
+  AlertTriangle, Filter
 } from 'lucide-react';
 import {
   ProductCard, CategoryChips, ViewSwitcher, IconButton,
@@ -55,6 +56,8 @@ export default function CatalogView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
+  // UX-01: Filter for incomplete products
+  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
 
   // Edit modal state
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -115,14 +118,20 @@ export default function CatalogView() {
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  // UX-01: Count incomplete products
+  const incompleteCount = useMemo(() => {
+    return products.filter(p => p.is_complete === false).length;
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      const matchesIncomplete = !showIncompleteOnly || p.is_complete === false;
+      return matchesSearch && matchesCategory && matchesIncomplete;
     });
-  }, [products, searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory, showIncompleteOnly]);
 
   // --- Excel Export ---
   const handleExportExcel = useCallback(async () => {
@@ -403,6 +412,23 @@ export default function CatalogView() {
               {totalCount} producto{totalCount !== 1 ? 's' : ''}
             </span>
           )}
+          {/* UX-01: Incomplete products badge + filter */}
+          {incompleteCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowIncompleteOnly(prev => !prev)}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black transition-all border',
+                showIncompleteOnly
+                  ? 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+                  : 'bg-amber-500/5 text-amber-600/70 border-amber-500/15 hover:bg-amber-500/10'
+              )}
+              title={showIncompleteOnly ? 'Mostrar todos los productos' : 'Filtrar productos incompletos'}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {incompleteCount} incompleto{incompleteCount !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Export Excel */}
@@ -440,6 +466,42 @@ export default function CatalogView() {
           onCategoryChange={setSelectedCategory}
         />
       </div>
+
+      {/* UX-01: Active filter indicator */}
+      {showIncompleteOnly && incompleteCount > 0 && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+          <div className="flex items-center gap-2 text-xs">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-amber-600">Mostrando {filteredProducts.length} producto(s) incompleto(s)</span>
+            <span className="text-muted-foreground">— No tienen precio de venta asignado y no aparecen en el punto de venta</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowIncompleteOnly(false)}
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+          >
+            <X className="w-3 h-3" /> Limpiar filtro
+          </button>
+        </div>
+      )}
+
+      {/* UX-01: Active filter indicator */}
+      {showIncompleteOnly && incompleteCount > 0 && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+          <div className="flex items-center gap-2 text-xs">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <span className="font-bold text-amber-600">Mostrando {filteredProducts.length} producto(s) incompleto(s)</span>
+            <span className="text-muted-foreground">— No tienen precio de venta y no aparecen en el POS</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowIncompleteOnly(false)}
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+          >
+            <X className="w-3 h-3" /> Limpiar filtro
+          </button>
+        </div>
+      )}
 
       {/* Product Grid / Table */}
       <StateRenderer
@@ -485,7 +547,14 @@ export default function CatalogView() {
                           {selectedIds.has(product.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground/30" />}
                         </button>
                       </td>
-                      <td className="px-6 py-4 font-bold">{product.name}</td>
+                      <td className="px-6 py-4 font-bold">
+                        <div className="flex items-center gap-2">
+                          {product.name}
+                          {product.is_complete === false && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20 shrink-0">Incompleto</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-xs font-mono">{product.sku}</td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">{product.category || '—'}</td>
                       <td className="px-6 py-4 text-right text-muted-foreground">{product.cost_price || 0}</td>

@@ -15,7 +15,7 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
       if (!isAdmin && (!userId || userId.length < 5)) return [];
 
       try {
-          const storeColumns = 'id, name, address, logo_url, is_active, created_at';
+          const storeColumns = 'id, name, address, phone, email, logo_url, reeup, bank_account, is_active, slug, plantilla, created_at';
 
           // FIX CRITICAL-002: Only fetch active stores
           const storesData = await withTableLogging('select', 'stores', () =>

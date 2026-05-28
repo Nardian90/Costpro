@@ -142,6 +142,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
       { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', allowedRoles: ['admin', 'manager', 'encargado'] },
+      { id: 'reports', label: 'Generador de Reportes', type: 'item', icon: BarChart4, ariaLabel: 'Diseñar y generar reportes profesionales', allowedRoles: ['admin', 'manager'] },
       {
         id: 'punto_venta',
         label: 'Punto de Venta',
@@ -149,7 +150,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         ariaLabel: 'Gestión de ventas y caja',
         children: [
           { id: 'pos', label: 'Terminal de Venta', type: 'item', icon: ShoppingCart, ariaLabel: 'Realizar ventas', allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'] },
-          { id: 'sales_catalog', label: 'Catálogo de Ventas', type: 'item', icon: FileSpreadsheet, ariaLabel: 'Tabla de ventas previsualizada', allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'], isNew: true },
+          { id: 'sales_catalog', label: 'Tabla IPV', type: 'item', icon: Table2, ariaLabel: 'Tabla interactiva de punto de venta', allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'], isNew: true },
           { id: 'sales', label: 'Historial de Ventas', type: 'item', icon: Receipt, ariaLabel: 'Consultar ventas', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'cash', label: 'Arqueo de Caja', type: 'item', icon: DollarSign, ariaLabel: 'Gestión de efectivo', allowedRoles: ['admin', 'manager', 'encargado'] }
         ]
@@ -179,7 +180,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'inventory_count', label: 'Auditoría Conteo', type: 'item', icon: ClipboardList, ariaLabel: 'Realizar inventario físico', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] }
         ]
       },
-      { id: 'reports', label: 'Generador de Reportes', type: 'item', icon: FileText, ariaLabel: 'Diseñar y generar reportes profesionales', allowedRoles: ['admin', 'manager'] }
     ]
   },
   {
