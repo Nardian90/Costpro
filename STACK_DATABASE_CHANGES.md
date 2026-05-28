@@ -22,3 +22,4 @@
 
 ## Verificación
 Las columnas han sido creadas exitosamente y los slugs iniciales se generaron para las tiendas existentes.
+- **Nota:** Los slugs generados automáticamente han sido corregidos para reemplazar espacios por guiones bajos (`_`).
