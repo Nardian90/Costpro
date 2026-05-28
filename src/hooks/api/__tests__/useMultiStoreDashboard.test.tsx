@@ -36,8 +36,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('useMultiStoreDashboard', () => {
   const mockStores = [
-    { id: 'store-1', name: 'Store 1', address: 'Address 1', is_active: true, created_at: '' },
-    { id: 'store-2', name: 'Store 2', address: 'Address 2', is_active: true, created_at: '' }
+    { id: 'store-1', name: 'Store 1', address: 'Address 1', slug: 'store-1-slug', is_active: true, created_at: '' },
+    { id: 'store-2', name: 'Store 2', address: 'Address 2', slug: 'store-2-slug', is_active: true, created_at: '' }
   ] as any[];
 
   beforeEach(() => {
@@ -52,7 +52,8 @@ describe('useMultiStoreDashboard', () => {
         today_transactions: 10,
         low_stock_count: 5,
         pending_transfers_out: 2,
-        pending_receptions: 1
+        pending_receptions: 1,
+        visible_products: 42
       },
       error: null
     });
@@ -62,17 +63,18 @@ describe('useMultiStoreDashboard', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toHaveLength(2);
-    expect(result.current.data![0]).toEqual(expect.objectContaining({ storeSlug: null,
+    expect(result.current.data![0]).toEqual({
       storeId: 'store-1',
       storeName: 'Store 1',
-      storeSlug: null,
+      storeSlug: 'store-1-slug',
       storeAddress: 'Address 1',
       isActive: true,
       todaySales: 1000,
       todayTransactions: 10,
       lowStockCount: 5,
       pendingTransfersOut: 2,
-      pendingReceptions: 1
+      pendingReceptions: 1,
+      visibleProducts: 42
     });
   });
 
@@ -89,5 +91,6 @@ describe('useMultiStoreDashboard', () => {
     expect(result.current.data).toHaveLength(2);
     expect(fromSpy).toHaveBeenCalledWith('transactions');
     expect(fromSpy).toHaveBeenCalledWith('transfers');
+    expect(fromSpy).toHaveBeenCalledWith('products');
   });
 });

@@ -19,6 +19,8 @@ function PaymentBadge({ method }: { method: PaymentMethod }) {
     wallet: { label: 'Billetera', cls: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
   };
   const c = config[method];
+  if (!c) return null;
+
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase border', c.cls)}>
       {c.label}
@@ -31,33 +33,22 @@ function PaymentBadge({ method }: { method: PaymentMethod }) {
 interface SalesCatalogCardProps {
   product: Product;
   row: SalesCatalogRow;
-  subtotal: number;
   isActive: boolean;
-  discrepancy: boolean;
   handlers: {
-    handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: any) => void;
+    handleSetQuantity: (product: Product, val: number) => void;
+    handleSelectVariant: (product: Product, variantId: string) => void;
     handleSetDiscountType: (product: Product) => void;
-    handleSetDiscountValue: (product: Product, value: number) => void;
+    handleSetDiscountValue: (product: Product, val: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
     handleSetCashPaid: (product: Product, val: number) => void;
     handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => void;
+    updateRow: (productId: string, updater: (r: SalesCatalogRow) => SalesCatalogRow) => void;
   };
-  calcSubtotal: (row: SalesCatalogRow) => number;
 }
 
-// ── Component ─────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────
 
-export default function SalesCatalogCard({
-  product,
-  row,
-  subtotal,
-  isActive,
-  discrepancy,
-  handlers,
-  calcSubtotal,
-}: SalesCatalogCardProps) {
+export function SalesCatalogCard({ product, row, isActive, handlers }: SalesCatalogCardProps) {
   const {
     handleSetQuantity,
     handleSelectVariant,
@@ -69,91 +60,78 @@ export default function SalesCatalogCard({
     updateRow,
   } = handlers;
 
+  const subtotal = row.price * row.quantity;
+  const discrepancy = Math.abs((row.cashPaid || 0) + (row.transferPaid || 0) - subtotal) > 0.01 && row.paymentMethod === 'mixed';
+
   return (
     <div
       className={cn(
-        'rounded-2xl border-2 transition-all p-4 flex flex-col gap-3 overflow-hidden min-w-0',
+        'group relative flex flex-col gap-4 p-4 rounded-3xl transition-all duration-300 border-2',
         isActive
-          ? 'border-primary/30 bg-primary/5 shadow-lg shadow-primary/5'
-          : 'border-border bg-card hover:border-primary/20 hover:shadow-md',
-        discrepancy && 'border-destructive/40',
+          ? 'bg-card border-primary shadow-xl shadow-primary/10 scale-[1.02] z-10'
+          : 'bg-card/40 border-border/50 hover:border-border grayscale-[0.5] opacity-80',
       )}
     >
-      {/* Product header */}
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
-          {product.public_image_url || product.image_url ? (
-            <img
-              src={(product.public_image_url || product.image_url) || undefined}
-              alt={product.name}
-              className="w-full h-full object-cover rounded-xl"
-              loading="lazy"
-            />
-          ) : (
-            <Package className="w-5 h-5 text-muted-foreground/50" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold text-sm truncate">{product.name}</p>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {product.sku && (
-              <span className="text-[10px] text-muted-foreground font-mono">{product.sku}</span>
-            )}
-            <span
-              className={cn(
-                'inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black',
-                (product.stock_current ?? 0) > 10
-                  ? 'bg-primary/10 text-primary'
-                  : (product.stock_current ?? 0) > 0
-                    ? 'bg-amber-500/10 text-amber-600'
-                    : 'bg-destructive/10 text-destructive',
-              )}
-            >
+      {/* Header: Name & SKU */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-black text-base leading-tight truncate mb-1" title={product.name}>
+            {product.name}
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest bg-muted px-1.5 py-0.5 rounded">
+              {product.sku || 'SIN SKU'}
+            </span>
+            <span className={cn(
+              'text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider',
+              (product.stock_current ?? 0) > 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'
+            )}>
               Stock: {product.stock_current ?? 0}
             </span>
           </div>
         </div>
+        <Package className={cn('w-5 h-5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground/40')} />
       </div>
 
-      {/* Unit of measure */}
-      <div>
-        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Unidad</label>
-        <select
-          value={row.selectedVariantId || '__base__'}
-          onChange={(e) => {
-            if (e.target.value === '__base__') {
-              handleSelectVariant(product, null);
-            } else {
-              const variant = product.product_variants?.find((v: any) => v.id === e.target.value);
-              if (variant) handleSelectVariant(product, variant);
-            }
-          }}
-          className="w-full max-w-full min-w-0 px-3 py-2 rounded-lg border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
-          aria-label={`Unidad de medida para ${product.name}`}
-        >
-          <option value="__base__">{product.unit_of_measure || 'ud'} (base)</option>
-          {product.product_variants?.map((v: any) => (
-            <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor})</option>
-          ))}
-        </select>
-      </div>
+      {/* Variants (if any) */}
+      {product.product_variants && product.product_variants.length > 0 && (
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">Presentación</label>
+          <div className="flex flex-wrap gap-1.5">
+            {product.product_variants.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => handleSelectVariant(product, v.id)}
+                className={cn(
+                  'px-2 py-1 text-[10px] font-bold rounded-lg border transition-all active:scale-95',
+                  row.selectedVariantId === v.id
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted/50 border-border/50 text-muted-foreground hover:border-border',
+                )}
+              >
+                {v.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Price row */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Pricing Inputs */}
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Precio Venta</label>
+          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Precio</label>
           <input
             type="number"
             min="0"
             step="0.01"
-            value={row.price || ''}
+            value={row.price}
             onChange={(e) => {
               const val = Number(e.target.value);
               updateRow(product.id, (r) => ({
                 ...r,
                 price: val,
-                cashPaid: r.paymentMethod === 'cash' ? calcSubtotal({ ...r, price: val }) : r.cashPaid,
-                transferPaid: r.paymentMethod === 'transfer' ? calcSubtotal({ ...r, price: val }) : r.transferPaid,
+                cashPaid: r.paymentMethod === 'cash' ? val * r.quantity : r.cashPaid,
+                transferPaid: r.paymentMethod === 'transfer' ? val * r.quantity : r.transferPaid,
               }));
             }}
             className="w-full min-w-0 text-right px-2 py-2 rounded-lg border border-border/50 bg-background text-sm font-black text-primary focus:ring-1 focus:ring-primary outline-none"
@@ -291,7 +269,7 @@ export default function SalesCatalogCard({
       <div className="flex items-center justify-between pt-2 border-t border-border/50">
         <PaymentBadge method={row.paymentMethod} />
         <span className={cn('font-black text-base', isActive ? 'text-primary' : 'text-muted-foreground')}>
-          {formatCurrency(subtotal)}
+          {formatCurrency(row.price * row.quantity)}
         </span>
       </div>
     </div>
