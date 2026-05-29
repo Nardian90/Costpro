@@ -13,16 +13,22 @@ export interface SystemHealthLog {
   priority: 'low' | 'medium' | 'high';
 }
 
+/**
+ * Logs a system health event using a secure RPC function.
+ * This prevents direct insertion to the system_health_logs table,
+ * ensuring payload integrity and proper access control.
+ */
 export async function logSystemHealth(supabase: SupabaseClient, log: SystemHealthLog) {
+  // Use RPC instead of direct insert for enhanced security
   const { data, error } = await supabase
-    .from('system_health_logs')
-    .insert([log])
-    .select();
+    .rpc('fn_log_system_health', { p_payload: log });
 
   if (error) {
-    console.error('Error logging system health:', error);
+    console.error('Error logging system health via RPC:', error);
     throw error;
   }
+
+  // The RPC returns the new log UUID
   return data;
 }
 

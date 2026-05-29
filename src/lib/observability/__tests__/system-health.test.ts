@@ -2,11 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { logSystemHealth, getSystemHealthLogs } from '../system-health';
 
 describe('System Health Logging', () => {
-  it('should call supabase insert with correct data', async () => {
-    const mockSelect = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
-    const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
-    const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
-    const mockSupabase = { from: mockFrom } as any;
+  it('should call supabase rpc with correct data', async () => {
+    const mockRpc = vi.fn().mockResolvedValue({ data: 'new-uuid', error: null });
+    const mockSupabase = { rpc: mockRpc } as any;
 
     const log = {
       view_name: 'test-view',
@@ -15,10 +13,10 @@ describe('System Health Logging', () => {
       priority: 'low' as const
     };
 
-    await logSystemHealth(mockSupabase, log);
+    const result = await logSystemHealth(mockSupabase, log);
 
-    expect(mockFrom).toHaveBeenCalledWith('system_health_logs');
-    expect(mockInsert).toHaveBeenCalledWith([log]);
+    expect(mockRpc).toHaveBeenCalledWith('fn_log_system_health', { p_payload: log });
+    expect(result).toBe('new-uuid');
   });
 
   it('should call supabase select with correct params', async () => {
