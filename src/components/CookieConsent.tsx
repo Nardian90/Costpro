@@ -7,29 +7,18 @@ import { saveConsent, clearConsent, shouldShowConsentBanner, type ConsentPrefere
 
 /**
  * GDPR-compliant cookie consent banner.
- * Appears on first visit, stores user preferences in localStorage.
- *
- * WCAG 2.2 — Focus management: Banner is a dialog with trap.
- * GDPR Art. 7(3) — Consent must be as easy to withdraw as to give.
- *
- * Communicates with other parts of the app via custom events:
- * - Dispatches 'cookie-consent-updated' after saving preferences
- * - Listens for 'reopen-cookie-consent' to re-show the banner
  */
 
 const CONSENT_REOPEN_EVENT = 'reopen-cookie-consent';
 const CONSENT_UPDATED_EVENT = 'cookie-consent-updated';
 
 export function CookieConsent() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return shouldShowConsentBanner();
-  });
+  // FIX-BUG-RCT-003: Initialize with false to avoid hydration mismatch,
+  // then check on mount.
+  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [preferences, setPreferences] = useState<Omit<ConsentPreferences, 'timestamp' | 'version'>>({
     essential: true,
     analytics: false,
@@ -38,8 +27,12 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
+    setMounted(true);
+    setVisible(shouldShowConsentBanner());
+    setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
     // Respect prefers-reduced-motion
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce');
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mq.addEventListener('change', handler);
 
@@ -89,14 +82,7 @@ export function CookieConsent() {
     notifyUpdated();
   };
 
-  const handleWithdraw = () => {
-    clearConsent();
-    setVisible(true);
-    setShowDetails(false);
-    notifyUpdated();
-  };
-
-  if (!visible) {
+  if (!mounted || !visible) {
     return null;
   }
 
@@ -111,7 +97,6 @@ export function CookieConsent() {
     >
       <div className="max-w-4xl mx-auto bg-card border border-border rounded-xl shadow-2xl shadow-black/10 p-6 sm:p-8 backdrop-blur-xl bg-card/95">
         {!showDetails ? (
-          /* Simple consent view */
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-start gap-3 flex-1">
               <Shield className="w-6 h-6 text-green-500 mt-0.5 shrink-0" aria-hidden="true" />
@@ -157,7 +142,6 @@ export function CookieConsent() {
             </div>
           </div>
         ) : (
-          /* Detailed preferences view */
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -174,31 +158,24 @@ export function CookieConsent() {
             </div>
 
             <div className="space-y-4">
-              {/* Essential — always on */}
               <CookieCategoryRow
                 name="Esenciales"
                 description="Necesarias para el funcionamiento básico de la aplicación (autenticación, sesiones)."
                 checked={true}
                 disabled={true}
               />
-
-              {/* Analytics */}
               <CookieCategoryRow
                 name="Analíticas"
                 description="Nos ayudan a entender cómo utilizas la aplicación para mejorarla."
                 checked={preferences.analytics}
                 onChange={(checked) => setPreferences(prev => ({ ...prev, analytics: checked }))}
               />
-
-              {/* Functional */}
               <CookieCategoryRow
                 name="Funcionales"
                 description="Recuerdan tus preferencias como el tema oscuro/claro y el idioma."
                 checked={preferences.functional}
                 onChange={(checked) => setPreferences(prev => ({ ...prev, functional: checked }))}
               />
-
-              {/* Marketing */}
               <CookieCategoryRow
                 name="Marketing"
                 description="Utilizadas para mostrarte publicidad relevante. Solo con tu consentimiento."
@@ -208,19 +185,10 @@ export function CookieConsent() {
             </div>
 
             <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRejectOptional}
-                className="text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={handleRejectOptional} className="text-xs">
                 Solo esenciales
               </Button>
-              <Button
-                size="sm"
-                onClick={handleSavePreferences}
-                className="text-xs"
-              >
+              <Button size="sm" onClick={handleSavePreferences} className="text-xs">
                 Guardar preferencias
               </Button>
             </div>
@@ -231,7 +199,6 @@ export function CookieConsent() {
   );
 }
 
-/* ── Sub-component ── */
 function CookieCategoryRow({
   name,
   description,

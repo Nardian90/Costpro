@@ -323,7 +323,7 @@ export default function LandingPage() {
       </div>
 
       {/* ─── HERO SECTION (left panel with dark background) ─── */}
-      <HeroSection
+      <main id="main-content"><HeroSection
         heroInView={heroInView}
         showMobileNav={showMobileNav}
         leftPanelRef={leftPanelRef}
@@ -375,7 +375,7 @@ export default function LandingPage() {
 
         {/* ── FINAL CTA ── */}
         <FinalCTASection onOpenDemo={() => setShowDemoModal(true)} />
-      </HeroSection>
+      </HeroSection></main>
 
       {/* ─── FOOTER ─── */}
       <FooterSection
