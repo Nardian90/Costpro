@@ -32,7 +32,7 @@ test.describe('Landing Page', () => {
     await expect(primaryCTA).toBeVisible({ timeout: 10000 });
 
     // Secondary CTA "Ver Demo" should also be present
-    const demoCTA = page.getByRole('button', { name: /ver demostración/i });
+    const demoCTA = page.getByTestId('hero-demo-button');
     await expect(demoCTA).toBeVisible();
   });
 
