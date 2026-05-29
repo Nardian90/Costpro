@@ -21,15 +21,10 @@ const CONSENT_REOPEN_EVENT = 'reopen-cookie-consent';
 const CONSENT_UPDATED_EVENT = 'cookie-consent-updated';
 
 export function CookieConsent() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return shouldShowConsentBanner();
-  });
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [preferences, setPreferences] = useState<Omit<ConsentPreferences, 'timestamp' | 'version'>>({
     essential: true,
     analytics: false,
@@ -38,6 +33,9 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
+    setMounted(true);
+    setVisible(shouldShowConsentBanner());
+    setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     // Respect prefers-reduced-motion
     const mq = window.matchMedia('(prefers-reduced-motion: reduce');
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
@@ -96,7 +94,7 @@ export function CookieConsent() {
     notifyUpdated();
   };
 
-  if (!visible) {
+  if (!mounted || !visible) {
     return null;
   }
 
