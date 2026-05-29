@@ -78,7 +78,7 @@ describe('InventoryView', () => {
     it('renderiza la lista de inventario', async () => {
         render(<InventoryView />, { wrapper });
         await waitFor(() => {
-          expect(screen.getByText('Stock Item')).toBeInTheDocument();
+          expect(screen.getAllByText('Stock Item')[0]).toBeInTheDocument();
         });
     });
 });

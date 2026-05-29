@@ -499,7 +499,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
     setImportStep('upload');
     setClassifiedRows([]);
     // Simulate file selection on the hidden input
-    const fakeEvent = { target: { files: [file], value: '' } } as React.ChangeEvent<HTMLInputElement>;
+    const fakeEvent = { target: { files: [file], value: '' } } as unknown as unknown as unknown as React.ChangeEvent<HTMLInputElement>;
     await handleImportFileSelect(fakeEvent);
   }, [handleImportFileSelect]);
 
@@ -676,9 +676,9 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
       // FIX-05: Audit log
       try {
         await auditService.logReceptionCreated({
-          userId: user.id,
+          userId: user?.id,
           receiptId: receiptId as string,
-          storeId: user.activeStoreId,
+          storeId: user?.activeStoreId,
           supplier: supplier.trim(),
           invoiceNumber: invoiceNumber.trim(),
           itemCount: finalItems.length,

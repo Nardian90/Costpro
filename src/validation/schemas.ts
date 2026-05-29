@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-// ============================================
-// Enums and Basics
-// ============================================
-
 export const userRoleSchema = z.enum([
   "admin",
   "encargado",
@@ -60,9 +56,7 @@ export const transactionStatusSchema = z.enum([
   "voided",
 ]);
 
-// ============================================
 // Entities
-// ============================================
 
 export const storeSchema = z.object({
   id: z.string(),
@@ -156,6 +150,13 @@ export const productSchema = z.object({
   store_id: optionalResilientUuid,
   public_image_url: z.string().nullable().optional(),
   is_active: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(true),
+  is_complete: z
     .preprocess((val) => {
       if (val === undefined || val === null) return undefined;
       if (typeof val === "string") return val === "true";
@@ -332,9 +333,7 @@ export type AuditLog = z.infer<typeof auditLogSchema> & {
   } | null;
 };
 
-// ============================================
 // RPC Params and Responses
-// ============================================
 
 export const getProductsForPosResponseSchema = productSchema.extend({
   product_variants: z.array(productVariantSchema).nullable(),
@@ -512,9 +511,7 @@ export const manageUserMembershipsParamsSchema = z.object({
 });
 
 
-// ============================================
 // Scenarios
-// ============================================
 
 export const scenarioIdSchema = z.enum(['v1', 'v2', 'v3']);
 export const scenarioColorSchema = z.enum(['blue', 'violet', 'amber']);
@@ -541,9 +538,7 @@ export const scenarioConfigSchema = z.object({
   comparisonBaseId: scenarioIdSchema,
 });
 
-// ============================================
 // Cost Sheet
-// ============================================
 
 export const costSheetHeaderSchema = z
   .object({
@@ -634,9 +629,7 @@ export const costSheetDataSchema = z
     scenarios: z.array(costSheetScenarioSchema).optional(),
   });
 
-// ============================================
 // Import Schemas
-// ============================================
 
 export const catalogImportRowSchema = z
   .object({
@@ -722,9 +715,7 @@ export const transferWithDetailsSchema = transferSchema.extend({
     .optional(),
 });
 
-// ============================================
 // Sync Schemas
-// ============================================
 
 export const syncOperationTypeSchema = z.enum(["CREATE", "UPDATE", "DELETE"]);
 
@@ -765,9 +756,7 @@ export const syncBatchResponseSchema = z.object({
   results: z.array(syncResultItemSchema),
 });
 
-// ============================================
 // Report Schemas
-// ============================================
 
 export const reportTypeSchema = z.enum([
   "sales",
@@ -807,9 +796,7 @@ export const reportRunSchema = z.object({
   store_id: z.string().regex(uuidRegex).optional(),
 });
 
-// ============================================
 // RPC Parameter Schemas (Hardened Contracts)
-// ============================================
 
 export const managedDeleteProductParamsSchema = z.object({
   p_product_id: z.string().regex(uuidRegex),

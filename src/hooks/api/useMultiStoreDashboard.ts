@@ -53,17 +53,12 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 lowStockCount: rpcData.low_stock_count ?? 0,
                 pendingTransfersOut: rpcData.pending_transfers_out ?? 0,
                 pendingReceptions: rpcData.pending_receptions ?? 0,
+                visibleProducts: rpcData.visible_products ?? 0,
               };
             }
 
             // Fallback: queries individuales en paralelo
             const [salesResult, transfersResult, visibleResult] = await Promise.all([
-              supabase
-                .from('products')
-                .select('id', { count: 'exact' })
-                .eq('store_id', store.id)
-                .eq('visible_en_tienda', true)
-                .eq('is_active', true),
               supabase
                 .from('transactions')
                 .select('id, total_amount', { count: 'exact' })
@@ -74,7 +69,13 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 .from('transfers')
                 .select('id', { count: 'exact' })
                 .eq('origin_store_id', store.id)
-                .eq('status', 'PENDIENTE')
+                .eq('status', 'PENDIENTE'),
+              supabase
+                .from('products')
+                .select('id', { count: 'exact' })
+                .eq('store_id', store.id)
+                .eq('visible_en_tienda', true)
+                .eq('is_active', true)
             ],);
 
             const todayTxns = salesResult.data || [];

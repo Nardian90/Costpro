@@ -143,6 +143,7 @@ export interface Store {
   reeup?: string | null;
   bank_account?: string | null;
   is_active?: boolean;
+  is_complete?: boolean;
   slug?: string | null;
   plantilla?: StoreTemplate | null;
   created_at?: string;
@@ -175,6 +176,7 @@ export interface Product {
   store_id?: string | null;
   public_image_url?: string | null;
   is_active?: boolean;
+  is_complete?: boolean;
   is_complete?: boolean;
   has_movements?: boolean;
   visible_en_tienda?: boolean;

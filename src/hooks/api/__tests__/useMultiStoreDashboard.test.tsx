@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMultiStoreDashboard } from '../useMultiStoreDashboard';
 import { supabase } from '@/lib/supabaseClient';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
@@ -11,9 +11,15 @@ vi.mock('@/lib/supabaseClient', () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              gte: vi.fn(() => ({
+                lte: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
+              }))
+            }))
+          })),
           gte: vi.fn(() => ({
-            lte: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null })),
-            eq: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
+            lte: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
           })),
           eq: vi.fn(() => Promise.resolve({ data: [], count: 0, error: null }))
         }))
@@ -36,13 +42,13 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('useMultiStoreDashboard', () => {
   const mockStores = [
-    { id: 'store-1', name: 'Store 1', address: 'Address 1', is_active: true, created_at: '' },
-    { id: 'store-2', name: 'Store 2', address: 'Address 2', is_active: true, created_at: '' }
-  ] as any[];
+    { id: 'store-1', name: 'Store 1', address: 'Address 1', slug: 'slug-1' },
+    { id: 'store-2', name: 'Store 2', address: 'Address 2', slug: 'slug-2' }
+  ] as any;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     queryClient.clear();
+    vi.clearAllMocks();
   });
 
   it('should fetch KPIs using RPC when available', async () => {
@@ -52,7 +58,8 @@ describe('useMultiStoreDashboard', () => {
         today_transactions: 10,
         low_stock_count: 5,
         pending_transfers_out: 2,
-        pending_receptions: 1
+        pending_receptions: 1,
+        visible_products: 42
       },
       error: null
     });
@@ -65,20 +72,21 @@ describe('useMultiStoreDashboard', () => {
     expect(result.current.data![0]).toEqual({
       storeId: 'store-1',
       storeName: 'Store 1',
+      storeSlug: 'slug-1',
       storeAddress: 'Address 1',
       isActive: true,
       todaySales: 1000,
       todayTransactions: 10,
       lowStockCount: 5,
       pendingTransfersOut: 2,
-      pendingReceptions: 1
+      pendingReceptions: 1,
+      visibleProducts: 42
     });
   });
 
   it('should fallback to individual queries if RPC fails', async () => {
     (supabase.rpc as any).mockResolvedValue({ data: null, error: { message: 'Not found' } });
 
-    // Mock for transactions
     const fromSpy = vi.spyOn(supabase, 'from');
 
     const { result } = renderHook(() => useMultiStoreDashboard(mockStores, 'store-1'), { wrapper });
@@ -86,6 +94,7 @@ describe('useMultiStoreDashboard', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data).toHaveLength(2);
+    expect(fromSpy).toHaveBeenCalledWith('products');
     expect(fromSpy).toHaveBeenCalledWith('transactions');
     expect(fromSpy).toHaveBeenCalledWith('transfers');
   });

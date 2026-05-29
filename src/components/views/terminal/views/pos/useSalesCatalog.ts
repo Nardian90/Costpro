@@ -462,6 +462,7 @@ export function useSalesCatalog() {
     handleExportExcel,
     handleExportPDF,
     handleClearAll,
+    updateRow,
 
     // Utilities
     hasDiscrepancy,

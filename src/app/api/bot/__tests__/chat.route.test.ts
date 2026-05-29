@@ -10,10 +10,19 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
-vi.mock('@/lib/ai/orchestrator', () => ({
-  getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
-    getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })
-  })
+// Mock the Z-AI SDK
+vi.mock('z-ai-web-dev-sdk', () => ({
+  default: {
+    create: vi.fn().mockResolvedValue({
+      chat: {
+        completions: {
+          create: vi.fn().mockResolvedValue({
+            choices: [{ message: { content: 'Bot response' } }]
+          })
+        }
+      }
+    })
+  }
 }));
 
 describe('POST /api/bot/chat', () => {
@@ -31,7 +40,11 @@ describe('POST /api/bot/chat', () => {
 
     const req = new NextRequest('http://localhost/api/bot/chat', {
       method: 'POST',
-      body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hi' }],
+        aiProvider: 'z-ai',
+        storeId: 'store-1'
+      })
     });
     const res = await POST(req);
     const json = await res.json();
