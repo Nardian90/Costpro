@@ -81,7 +81,7 @@ export default function FinalCTASection({ onOpenDemo }: FinalCTASectionProps) {
           >
             <span className="inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Ver demo primero
+              Ver demostración ahora
             </span>
           </Button>
         </motion.div>
