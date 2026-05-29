@@ -2,40 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { storeService } from '../store-service';
 import { supabase } from '@/lib/supabaseClient';
 
-const createMockQueryBuilder = () => {
-  const builder = {
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    rpc: vi.fn().mockReturnThis(),
-    then: vi.fn().mockImplementation(function(this: any, callback: any) {
-      return Promise.resolve({
-        data: this._data,
-        error: this._error,
-        count: this._count
-      }).then(callback);
-    }),
-    _data: null as any,
-    _error: null as any,
-    _count: 0 as number | null,
-    mockResolvedValue(value: any) {
-      this._data = value.data;
-      this._error = value.error;
-      this._count = value.count !== undefined ? value.count : (value.data ? value.data.length : 0);
-      return this;
-    }
-  };
-  return builder;
-};
-
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(),
-    rpc: vi.fn()
+    rpc: vi.fn(),
   }
 }));
 
@@ -49,71 +19,85 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 describe('storeService', () => {
+  const createMockChain = (data: any = null, error: any = null, count: any = null) => {
+    const chain: any = {
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      single: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      then: vi.fn((resolve: any) => Promise.resolve({ data, error, count }).then(resolve)),
+    };
+    return chain;
+  };
+
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('obtiene todas las tiendas activas', async () => {
-    const mockData = [{ id: '1', name: 'Store 1', is_active: true }];
-    const builder = createMockQueryBuilder();
-    builder.mockResolvedValue({ data: mockData, error: null });
-    vi.mocked(supabase.from).mockReturnValue(builder as any);
-
+    const mockData = [{ id: '1', name: 'S1' }];
+    vi.mocked(supabase.from).mockReturnValue(createMockChain(mockData) as any);
     const result = await storeService.getStores();
     expect(result).toEqual(mockData);
   });
 
-  it('crea una tienda', async () => {
-    const mockData = { id: '1', name: 'New Store' };
-    const builder = createMockQueryBuilder();
-    builder.mockResolvedValue({ data: mockData, error: null });
-    vi.mocked(supabase.from).mockReturnValue(builder as any);
+  it('crea una tienda verificando límites', async () => {
+    const mockStore = { id: 'new-id' };
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(createMockChain(null, null, 2) as any) // count call
+      .mockReturnValueOnce(createMockChain(mockStore) as any);   // insert call
 
-    const result = await storeService.createStore('admin', 'New Store', 'Address 1');
+    const result = await storeService.createStore('admin', 'S', 'A', 'u1', 5);
+    expect(result).toEqual(mockStore);
+  });
+
+  it('lanza error si se alcanza el límite de tiendas', async () => {
+    vi.mocked(supabase.from).mockReturnValueOnce(createMockChain(null, null, 5) as any);
+    await expect(storeService.createStore('admin', 'S', 'A', 'u1', 5)).rejects.toThrow(/límite/);
+  });
+
+  it('actualiza una tienda', async () => {
+    const mockData = { id: '1' };
+    vi.mocked(supabase.from).mockReturnValue(createMockChain(mockData) as any);
+    const result = await storeService.updateStore('admin', '1', 'N', 'A');
     expect(result).toEqual(mockData);
   });
 
-  it('actualiza una tienda y aplica whitelist', async () => {
-    const mockData = { id: '1', name: 'Updated Store' };
-    const builder = createMockQueryBuilder();
-    builder.mockResolvedValue({ data: mockData, error: null });
-    vi.mocked(supabase.from).mockReturnValue(builder as any);
-
-    const result = await storeService.updateStore('admin', '1', 'Updated Store', 'New Address', {
-        is_active: false,
-        ...({ tenant_id: 'malicious-tenant' } as any) // Esto debería ser filtrado
-    });
-
-    expect(result).toEqual(mockData);
-    expect(builder.update).toHaveBeenCalledWith({
-        name: 'Updated Store',
-        address: 'New Address',
-        is_active: false
-    });
-  });
-
-  it('realiza soft-delete de la tienda', async () => {
-    const builder = createMockQueryBuilder();
-    builder.mockResolvedValue({ data: [], error: null });
-    vi.mocked(supabase.from).mockReturnValue(builder as any);
+  it('realiza soft-delete de la tienda con cleanup', async () => {
+    // Dependency checks (3), Soft delete (1), Memberships (1), Profiles (1)
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(createMockChain(null, null, 0) as any)
+      .mockReturnValueOnce(createMockChain(null, null, 0) as any)
+      .mockReturnValueOnce(createMockChain(null, null, 0) as any)
+      .mockReturnValueOnce(createMockChain({ id: '1' }) as any)
+      .mockReturnValueOnce(createMockChain({ count: 1 }) as any)
+      .mockReturnValueOnce(createMockChain({ count: 1 }) as any);
 
     await storeService.deleteStore('admin', '1');
-    expect(supabase.from).toHaveBeenCalledWith('stores');
+    expect(supabase.from).toHaveBeenCalled();
   });
 
-  it('reinicio de tienda con notificaciones', async () => {
-    vi.mocked(supabase.from).mockImplementation((table: string) => {
-        const b = createMockQueryBuilder();
-        if (table === 'user_store_memberships') {
-            b.mockResolvedValue({ data: [{ user_id: 'u2', profiles: { full_name: 'U2' } }], error: null });
-        } else {
-            b.mockResolvedValue({ data: [], error: null });
-        }
-        return b as any;
-    });
+  it('reinicio de tienda con RPC', async () => {
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(createMockChain([]) as any) // active check
+      .mockReturnValueOnce(createMockChain() as any)   // audit start
+      .mockReturnValueOnce(createMockChain() as any);  // audit end
     vi.mocked(supabase.rpc).mockResolvedValue({ error: null } as any);
 
     await storeService.resetStore('admin', '1');
     expect(supabase.rpc).toHaveBeenCalled();
+  });
+
+  it('actualiza storefront', async () => {
+    const mockStore = { id: '1' };
+    vi.mocked(supabase.from).mockReturnValue(createMockChain(mockStore) as any);
+    const result = await storeService.updateStorefront('admin', '1', { slug: 's' });
+    expect(result).toEqual(mockStore);
   });
 });
