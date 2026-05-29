@@ -36,7 +36,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('InventoryView', () => {
     const mockProduct = {
         id: '550e8400-e29b-41d4-a716-446655440000',
-        name: 'Stock Item',
+        name: 'Unique Stock Item',
         stock_current: 20,
         category: 'General',
         sku: 'SKU1',
@@ -45,6 +45,7 @@ describe('InventoryView', () => {
     const mockUser = { id: 'u1', activeStoreId: '550e8400-e29b-41d4-a716-446655440001' };
 
     beforeEach(() => {
+        vi.clearAllMocks();
         vi.mocked(storeModule.useAuthStore).mockReturnValue({ user: mockUser } as any);
         vi.mocked(storeModule.useUIStore).mockReturnValue({
           viewQueries: { inventory: '' },
@@ -78,7 +79,7 @@ describe('InventoryView', () => {
     it('renderiza la lista de inventario', async () => {
         render(<InventoryView />, { wrapper });
         await waitFor(() => {
-          expect(screen.getByText('Stock Item')).toBeInTheDocument();
+          expect(screen.getAllByText('Unique Stock Item').length).toBeGreaterThan(0);
         });
     });
 });

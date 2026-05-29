@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { POST } from '../chat/route';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
@@ -10,13 +10,26 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
-vi.mock('@/lib/ai/orchestrator', () => ({
-  getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
-    getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })
-  })
+// Mock z-ai-web-dev-sdk to prevent 502 errors from missing config
+vi.mock('z-ai-web-dev-sdk', () => ({
+  default: {
+    create: vi.fn().mockResolvedValue({
+      chat: {
+        completions: {
+          create: vi.fn().mockResolvedValue({
+            choices: [{ message: { content: 'Bot response', tool_calls: [] } }]
+          })
+        }
+      }
+    })
+  }
 }));
 
 describe('POST /api/bot/chat', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('retorna 401 sin sesión', async () => {
     const { getServerSession } = await import('@/lib/auth');
     vi.mocked(getServerSession).mockResolvedValueOnce(null);
@@ -31,7 +44,10 @@ describe('POST /api/bot/chat', () => {
 
     const req = new NextRequest('http://localhost/api/bot/chat', {
       method: 'POST',
-      body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hi' }],
+        aiProvider: 'gemini'
+      })
     });
     const res = await POST(req);
     const json = await res.json();

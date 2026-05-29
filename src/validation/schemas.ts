@@ -176,6 +176,7 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(false),
+  is_complete: z.preprocess((val) => { if (val === undefined || val === null) return undefined; if (typeof val === "string") return val === "true"; return val; }, z.boolean().optional()).default(true),
 });
 
 export const productVariantSchema = z.object({
