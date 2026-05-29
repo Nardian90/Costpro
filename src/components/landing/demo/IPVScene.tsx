@@ -160,7 +160,7 @@ export default function IPVScene({ elapsed }: IPVSceneProps) {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5 space-y-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold text-white/60">Últimos cobros — Restaurante El Sabor</span>
+                  <span className="text-[10px] font-semibold text-white/60">Últimos cobros — Cadenal de Hoteles Varadero</span>
                   {elapsed >= 16.5 && (
                     <motion.span initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                       className="text-[9px] font-medium bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded cursor-default">

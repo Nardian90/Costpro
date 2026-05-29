@@ -10,10 +10,57 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn()
 }));
 
-vi.mock('@/lib/ai/orchestrator', () => ({
-  getLLMProviderWithUserKey: vi.fn().mockResolvedValue({
-    getResponse: vi.fn().mockResolvedValue({ text: 'Bot response' })
-  })
+// Mock z-ai-web-dev-sdk which the route now uses directly
+const mockCreate = vi.fn().mockResolvedValue({
+  chat: {
+    completions: {
+      create: vi.fn().mockResolvedValue({
+        choices: [{
+          message: {
+            content: 'Bot response',
+            tool_calls: undefined,
+          },
+        }],
+      }),
+    },
+  },
+});
+
+vi.mock('z-ai-web-dev-sdk', () => ({
+  default: {
+    create: mockCreate,
+  },
+}));
+
+// Mock other modules that the route imports
+vi.mock('@/lib/observability', () => ({
+  withTracing: (handler: any) => handler,
+}));
+
+vi.mock('@/config/viewRegistry', () => ({
+  getViewDetails: () => null,
+}));
+
+vi.mock('@/lib/ai/tools/registry', () => ({
+  executeTool: vi.fn(),
+}));
+
+vi.mock('@/lib/ai/tools/definitions', () => ({
+  TOOLS: [],
+}));
+
+vi.mock('@/lib/supabaseClient', () => ({
+  createServerClient: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      }),
+    }),
+  }),
 }));
 
 describe('POST /api/bot/chat', () => {
@@ -27,7 +74,7 @@ describe('POST /api/bot/chat', () => {
 
   it('retorna respuesta del bot', async () => {
     const { getServerSession } = await import('@/lib/auth');
-    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'u1' } } as any);
+    vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'u1', name: 'Test' } } as any);
 
     const req = new NextRequest('http://localhost/api/bot/chat', {
       method: 'POST',

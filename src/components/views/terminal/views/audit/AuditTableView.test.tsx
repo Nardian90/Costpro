@@ -2,6 +2,21 @@ import { render, screen } from '@testing-library/react';
 import AuditTableView from './AuditTableView';
 import { vi, describe, it, expect } from 'vitest';
 
+// Mock useVirtualizer to work in jsdom (no actual scrolling)
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (options: any) => ({
+    getVirtualItems: () =>
+      Array.from({ length: options.count }, (_, i) => ({
+        index: i,
+        key: i,
+        start: i * 64,
+        size: 64,
+      })),
+    getTotalSize: () => options.count * 64,
+    measureElement: vi.fn(),
+  }),
+}));
+
 describe('AuditTableView', () => {
   const mockLogs = [
     {

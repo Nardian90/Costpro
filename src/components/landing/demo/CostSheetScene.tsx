@@ -30,9 +30,9 @@ const pillColor = (type: string) =>
   : 'bg-amber-500/10 text-amber-400';
 
 export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
-  const productName = typingText(elapsed, 0.5, 'Pan Francés Premium', 65);
-  const presentation = typingText(elapsed, 3.2, '1 kg', 80);
-  const tab = elapsed >= 23 ? 'labor' : elapsed >= 4.5 ? 'ingredients' : null;
+  const productName = typingText(elapsed, 0.5, 'Cerveza Importada (caja x 24 und.)', 65);
+  const presentation = typingText(elapsed, 3.2, '1 caja', 70);
+  const tab = elapsed >= 23 ? 'gastos' : elapsed >= 4.5 ? 'ingredients' : null;
 
   // Which cell has the green active-border
   let active: { r: number; f: string } | null = null;
@@ -76,8 +76,8 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
     ...l, visible: elapsed >= (ev(`labor-row-${i}`)?.time ?? 99), total: l.hours * l.rate * l.count,
   }));
 
-  const subMP = countUp(elapsed, 21, 3.92), subLab = countUp(elapsed, 26, 862.4, 1);
-  const costo = countUp(elapsed, 29, 4.78, 0.8), precio = countUp(elapsed, 30, 12, 0.8);
+  const subMP = countUp(elapsed, 21, 2716), subLab = countUp(elapsed, 26, 4400, 1);
+  const costo = countUp(elapsed, 29, 7116, 0.8), precio = countUp(elapsed, 30, 8500, 0.8);
 
   const pills = EV.filter((e) => e.action === 'micro-validate' && elapsed >= e.time)
     .map((e) => ({ type: e.payload.type as string, text: e.payload.text as string }));
@@ -113,9 +113,9 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
           {/* Tabs */}
           {tab && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1 bg-white/[0.03] rounded-md p-0.5">
-              {(['ingredients', 'labor'] as const).map((k) => (
+              {(['ingredients', 'gastos'] as const).map((k) => (
                 <div key={k} className={`px-2.5 py-1 text-[10px] font-medium rounded transition-colors duration-300 ${tab === k ? 'bg-green-500/20 text-green-400' : 'text-white/25'}`}>
-                  {k === 'ingredients' ? 'Materias Primas' : 'Mano de Obra'}
+                  {k === 'ingredients' ? 'Insumos' : 'Gastos Generales'}
                 </div>
               ))}
             </motion.div>
@@ -160,7 +160,7 @@ export default function CostSheetScene({ elapsed }: CostSheetSceneProps) {
               </motion.div>
             )}
 
-            {tab === 'labor' && (
+            {tab === 'gastos' && (
               <motion.div key="lab" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} transition={{ duration: 0.3 }}>
                 <table className="w-full text-[11px]">
                   <thead><tr className="text-white/25 text-[10px]">

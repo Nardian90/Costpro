@@ -14,9 +14,6 @@
 // User Contracts
 export * from './user';
 
-// Product Contracts
-export * from './product';
-
 // Inventory Contracts
 export * from './inventory';
 

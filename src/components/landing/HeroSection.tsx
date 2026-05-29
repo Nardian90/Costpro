@@ -222,7 +222,7 @@ export interface HeroSectionProps {
   showMobileNav: boolean;
   leftPanelRef: React.RefObject<HTMLDivElement | null>;
   heroRef: React.RefObject<HTMLDivElement | null>;
-  animatedStatsRef: React.RefObject<HTMLDivElement | null>;
+  animatedStatsRef?: React.RefObject<HTMLDivElement | null>;
   setShowLoginModal: (v: boolean) => void;
   setShowMobileNav: (v: boolean) => void;
   setShowCommandPalette?: (v: boolean) => void;
@@ -232,6 +232,7 @@ export interface HeroSectionProps {
   socialProofPopup?: React.ReactNode;
   showPromo?: boolean;
   handleDismissPromo?: () => void;
+  onOpenDemo?: () => void;
 }
 
 export default function HeroSection({
@@ -249,6 +250,7 @@ export default function HeroSection({
   socialProofPopup,
   showPromo,
   handleDismissPromo,
+  onOpenDemo,
 }: HeroSectionProps) {
   const [searchFocused, setSearchFocused] = React.useState(false);
 
@@ -265,9 +267,9 @@ export default function HeroSection({
   const handleSearchBlur = () => setSearchFocused(false);
 
   const navLinks = [
-    { label: 'Inicio', href: '#hero' },
-    { label: 'Costos', href: '#features' },
-    { label: 'Plantillas', href: '#pricing' },
+    { label: 'Cómo funciona', href: '#como-funciona' },
+    { label: 'Funciones', href: '#features' },
+    { label: 'Precios', href: '#precios' },
     { label: 'FAQ', href: '#faq' },
   ];
 
@@ -348,7 +350,7 @@ export default function HeroSection({
               <div className="absolute inset-0 promo-shimmer" />
               <div className="relative flex items-center justify-center px-4 h-8 gap-2">
                 <span className="text-xs font-bold text-white tracking-wide">
-                  Lanzamiento v5.8 — Motor de costos con IA integrada
+                  Fichas de costo automáticas · Resolución 148/2023 · Gratis para empezar
                 </span>
                 <button
                   onClick={handleDismissPromo}
@@ -395,6 +397,14 @@ export default function HeroSection({
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            {/* Ver Demo button */}
+            <button
+              onClick={onOpenDemo}
+              className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+              <span>Ver demo</span>
+            </button>
             {/* Login CTA */}
             <button
               onClick={() => setShowLoginModal(true)}
@@ -443,6 +453,13 @@ export default function HeroSection({
                     {link.label}
                   </a>
                 ))}
+                <button
+                  onClick={() => { onOpenDemo?.(); setShowMobileNav(false); }}
+                  className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all flex items-center gap-2"
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                  Ver demo
+                </button>
                 <div className="h-px bg-white/[0.08] my-2" />
                 <button
                   onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }}
@@ -478,7 +495,7 @@ export default function HeroSection({
           >
             <p className="text-base sm:text-lg text-white/50 leading-relaxed" /* FIX-ACC-013 */>
               <TypewriterText
-                text="Gestiona costos, inventario y ventas — todo en una plataforma."
+                text="Fichas de costo oficiales · Res. 148/2023 · Gratis para empezar."
                 start={heroInView}
                 className="text-base sm:text-lg text-white/50 leading-relaxed"
               />
@@ -522,14 +539,12 @@ export default function HeroSection({
 
             {/* Secondary CTA — "Ver Demo" */}
             <button aria-label="Ver demo de CostPro"
-              onClick={() => {
-                if (setLoginDefaultTab) setLoginDefaultTab('login');
-                setShowLoginModal(true);
-              }}
-              className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300"
-              style={{ minWidth: '140px' }}
+              onClick={onOpenDemo}
+              className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300 flex items-center gap-2"
+              style={{ minWidth: '180px' }}
             >
-              Ver Demo
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+              Ver cómo funciona
             </button>
           </motion.div>
 
@@ -540,7 +555,7 @@ export default function HeroSection({
             transition={{ delay: 1.0, duration: 0.5 }}
             className="mt-3 text-[11px] text-white/20"
           >
-            Sin tarjeta de crédito · Configuración en 2 minutos · Cancela cuando quieras
+            Crea fichas de costo sin límite · Exporta hasta 3 PDF al día · Gratis para siempre
           </motion.p>
 
           {/* Search bar — centered */}
@@ -571,26 +586,7 @@ export default function HeroSection({
             </div>
           </motion.div>
 
-          {/* Subtle announcement */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 0.6 }}
-            className="mt-6 flex items-center gap-3"
-          >
-            <button
-              className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all duration-200"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#22c55e]/60 group-hover:text-[#22c55e] transition-colors" />
-              <span className="text-[12px] text-white/30 group-hover:text-white/50 transition-colors">Novedades v5.8</span>
-              <ArrowRight className="w-3 h-3 text-white/15 group-hover:text-white/30 group-hover:translate-x-0.5 transition-all" />
-            </button>
-            <span className="text-white/10 text-[11px]">·</span>
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-[#22c55e]/40" />
-              <span className="text-[12px] text-white/25">Encriptación end-to-end</span>
-            </div>
-          </motion.div>
+
         </div>
 
         {/* ── Scroll indicator ── */}

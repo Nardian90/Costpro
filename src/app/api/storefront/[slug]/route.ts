@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabaseClient';
+import { getProductImageUrl } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -35,7 +36,7 @@ export async function GET(
     // Fetch visible products for this store
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, sku, price, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, conversion_factor)')
+      .select('id, name, description, sku, price, precio_empresa, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, precio_empresa, conversion_factor)')
       .eq('store_id', store.id)
       .eq('visible_en_tienda', true)
       .eq('is_active', true)
@@ -43,13 +44,19 @@ export async function GET(
 
     if (productsError) {
       console.error('Error fetching products:', productsError);
-      // Return store even if products fail
       return NextResponse.json({ store, products: [] });
     }
 
+    // Resolve image URLs to full Supabase public URLs
+    const productList = (products || []).map(p => ({
+      ...p,
+      image_url: p.image_url ? getProductImageUrl(p.image_url) : null,
+      public_image_url: p.public_image_url ? getProductImageUrl(p.public_image_url) : null,
+    }));
+
     return NextResponse.json({
       store,
-      products: products || [],
+      products: productList,
     });
   } catch (error) {
     console.error('Storefront API error:', error);

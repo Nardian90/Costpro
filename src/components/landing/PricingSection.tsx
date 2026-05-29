@@ -1,273 +1,177 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Minus, Sparkles, Calculator, ChevronDown, TrendingDown, MessageCircle, Phone, UserRound } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Check, Minus, Sparkles, MessageCircle } from 'lucide-react';
 import { pricingPlans, comparisonRows } from './data';
-import { ConfettiBurst } from './animations';
 
-export interface PricingSectionProps {
+interface PricingSectionProps {
   pricingInView: boolean;
   pricingRef: React.RefObject<HTMLDivElement | null>;
-  setShowContactModal: (v: boolean) => void;
-}
-
-function PricingCalculator({ visible }: { visible: boolean }) {
-  const [products, setProducts] = useState(100);
-  const [branches, setBranches] = useState(2);
-
-  // Cost calculation: manual tracking base cost per product + per branch
-  const manualCost = (products * 2.5 + branches * 50).toFixed(0);
-  const costProCost = Math.max(0, 29 + Math.floor((products - 100) / 500) * 15 + (branches - 1) * 10).toFixed(0);
-  const savings = Math.max(0, 100 - (Number(costProCost) / Number(manualCost)) * 100).toFixed(0);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-      className="overflow-hidden"
-    >
-      <div className="rounded-xl bg-gradient-to-br from-[#22c55e]/[0.06] via-transparent to-teal-500/[0.04] border border-[#22c55e]/15 p-4 mt-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Calculator className="w-4 h-4 text-[#22c55e]" />
-          <span className="text-xs font-bold text-white/90">Calculadora de ahorro</span>
-        </div>
-
-        <div className="space-y-4">
-          {/* Products slider */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="savings-products" className="text-[11px] font-medium text-white/60">Número de productos</label>
-              <span className="text-[11px] font-bold text-[#22c55e] tabular-nums">{products}</span>
-            </div>
-            <input
-              id="savings-products"
-              type="range"
-              min={1}
-              max={1000}
-              value={products}
-              onChange={(e) => setProducts(Number(e.target.value))}
-              className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.08] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#22c55e] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-[#22c55e]/30 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/20"
-              aria-label="Número de productos"
-            />
-          </div>
-
-          {/* Branches slider */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label htmlFor="savings-branches" className="text-[11px] font-medium text-white/60">Sucursales</label>
-              <span className="text-[11px] font-bold text-[#22c55e] tabular-nums">{branches}</span>
-            </div>
-            <input
-              id="savings-branches"
-              type="range"
-              min={1}
-              max={10}
-              value={branches}
-              onChange={(e) => setBranches(Number(e.target.value))}
-              className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.08] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#22c55e] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-[#22c55e]/30 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/20"
-              aria-label="Número de sucursales"
-            />
-          </div>
-        </div>
-
-        {/* Result card */}
-        <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-[#22c55e]/15 to-emerald-500/10 border border-[#22c55e]/20">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">Manual</p>
-              <p className="text-sm font-extrabold text-white/60 tabular-nums">CUP ${Number(manualCost).toLocaleString()}</p>
-              <p className="text-[9px] text-white/30">/mes</p>
-            </div>
-            <div>
-              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-0.5">CostPro</p>
-              <p className="text-sm font-extrabold text-[#22c55e] tabular-nums">CUP ${Number(costProCost).toLocaleString()}</p>
-              <p className="text-[9px] text-white/30">/mes</p>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              <div className="w-10 h-10 rounded-full bg-[#22c55e]/20 flex items-center justify-center mb-0.5">
-                <TrendingDown className="w-4 h-4 text-[#22c55e]" />
-              </div>
-              <p className="text-lg font-extrabold text-[#22c55e] tabular-nums">-{savings}%</p>
-              <p className="text-[9px] text-[#22c55e]/60 font-semibold">de ahorro</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+  onSignup?: () => void;
 }
 
 export default function PricingSection({
   pricingInView,
   pricingRef,
-  setShowContactModal,
+  onSignup,
 }: PricingSectionProps) {
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [confettiActive, setConfettiActive] = useState(false);
-  const confettiTriggered = useRef(false);
-
-  // Trigger confetti once when pricing comes into view
-  useEffect(() => {
-    if (pricingInView && !confettiTriggered.current) {
-      confettiTriggered.current = true;
-      // Small delay for visual effect
-      const timer = setTimeout(() => {
-        setConfettiActive(true);
-        setTimeout(() => setConfettiActive(false), 1200);
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [pricingInView]);
-
   return (
-    <div ref={pricingRef} id="pricing-section" className="relative">
-      <ConfettiBurst active={confettiActive} />
-      <motion.div className="max-w-2xl mx-auto w-full">
+    <div ref={pricingRef} id="precios" className="relative">
+      <div className="max-w-5xl mx-auto w-full">
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={pricingInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-center mb-6"
+          className="text-center mb-8"
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-white font-[family-name:var(--font-space-grotesk)] section-heading-accent">
+          <h2 className="text-xl sm:text-2xl font-bold text-white font-[family-name:var(--font-space-grotesk)]">
             Planes para cada negocio
           </h2>
           <p className="mt-2 text-sm text-white/50">
             Comienza gratis y escala cuando estés listo
           </p>
-
-          {/* Savings Calculator Toggle */}
-          <button
-            onClick={() => setShowCalculator(!showCalculator)}
-            className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] font-semibold text-white/50 hover:text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]/20 transition-all duration-200"
-            aria-expanded={showCalculator}
-            aria-controls="pricing-calculator"
-          >
-            <Calculator className="w-3 h-3" />
-            <span>Calculadora de ahorro</span>
-            <motion.span
-              animate={{ rotate: showCalculator ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown className="w-3 h-3" />
-            </motion.span>
-          </button>
         </motion.div>
 
-        {/* Pricing Calculator */}
-        <AnimatePresence>
-          {showCalculator && <PricingCalculator visible={pricingInView} />}
-        </AnimatePresence>
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {pricingPlans.map((plan, i) => {
+            const isGratis = plan.name === 'Gratis';
+            const isMultitienda = plan.name === 'Multitienda';
+            const isPopular = plan.popular;
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {pricingPlans.map((plan, i) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={pricingInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              className={`relative p-5 rounded-xl backdrop-blur-md transition-all duration-300 group pricing-card-hover pricing-shimmer ${
-                plan.popular
-                  ? 'bg-white/[0.08] border-2 border-[#22c55e]/40 shadow-[0_0_40px_rgba(34,197,94,0.15),0_0_80px_rgba(34,197,94,0.08)] animate-border-rotate pricing-popular-hover pricing-popular-border -translate-y-2 shimmer-border border-gradient-animate'
-                  : plan.name === 'Premium'
-                    ? 'enterprise-gold-border'
-                    : 'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] hover:border-[#22c55e]/20'
-              } hover:-translate-y-[4px] hover:shadow-[0_16px_48px_rgba(34,197,94,0.18)] hover:backdrop-blur-lg`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r from-[#22c55e] to-emerald-400 text-[10px] font-bold text-white uppercase tracking-[0.15em] shadow-lg shadow-[#22c55e]/40 popular-badge-glow ribbon-wobble badge-shine">
-                  <Sparkles className="w-3 h-3" />
-                  <span>POPULAR</span>
-                  <Sparkles className="w-3 h-3" />
-                </div>
-              )}
-              <h3 className="text-sm font-bold text-white">{plan.name}</h3>
-              <div className="mt-2 flex items-baseline gap-1">
-                {plan.name === 'Premium' ? (
-                  <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">Custom</span>
-                ) : plan.priceMonthly === 0 ? (
-                  <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">Gratis</span>
-                ) : (
-                  <div className="flex items-baseline gap-1.5">
-                    <motion.span
-                      className={`text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] ${plan.popular ? 'text-[#22c55e]' : 'text-white'} price-glow-animate`}
-                    >
-                      CUP ${plan.priceMonthly.toLocaleString()}
-                    </motion.span>
-                  </div>
-                )}
-                {plan.period && plan.priceMonthly > 0 && (
-                  <span className="text-xs text-white/40">/{plan.period.replace('/', '')}</span>
-                )}
-              </div>
-              <p className="mt-1 text-[11px] text-white/40">{plan.desc}</p>
-              <ul className="mt-4 space-y-2">
-                {plan.features.slice(0, 4).map((feat) => (
-                  <li key={feat} className="flex items-start gap-2 text-xs text-white/60">
-                    <Check className="w-3.5 h-3.5 text-[#22c55e] shrink-0 mt-0.5" />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan.name === 'Premium' && (
-                <div className="mt-3 space-y-1.5">
-                  {[
-                    { icon: <MessageCircle className="w-2.5 h-2.5" />, text: 'WhatsApp' },
-                    { icon: <Phone className="w-2.5 h-2.5" />, text: 'Teléfono' },
-                    { icon: <UserRound className="w-2.5 h-2.5" />, text: 'Presencial' },
-                  ].map((badge) => (
-                    <span key={badge.text} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/15 text-[9px] font-semibold text-[#22c55e]/80 mr-1">
-                      {badge.icon}
-                      {badge.text}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  if (plan.name === 'Premium') {
-                    setShowContactModal(true);
-                  }
-                }}
-                className={`mt-4 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 relative overflow-hidden glow-pulse-interactive ${
-                  plan.popular
-                    ? 'bg-[#22c55e] text-white hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20'
-                    : plan.name === 'Premium'
-                      ? 'bg-gradient-to-r from-amber-500/90 to-yellow-500/90 text-white border border-amber-400/40 hover:from-amber-500 hover:to-yellow-500 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] enterprise-cta-pulse'
-                      : 'bg-white/[0.08] text-white border border-white/10 hover:bg-white/[0.12]'
+            return (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={pricingInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className={`relative p-6 rounded-xl backdrop-blur-md transition-all duration-300 group ${
+                  isPopular
+                    ? 'bg-white/[0.08] border-2 border-[#22c55e]/40 shadow-[0_0_40px_rgba(34,197,94,0.15),0_0_80px_rgba(34,197,94,0.08)] -translate-y-2 hover:-translate-y-[4px] hover:shadow-[0_16px_48px_rgba(34,197,94,0.18)]'
+                    : isMultitienda
+                      ? 'enterprise-gold-border bg-white/[0.06] border-2 border-amber-400/30 hover:border-amber-400/50 hover:-translate-y-[4px] hover:shadow-[0_16px_48px_rgba(245,158,11,0.12)]'
+                      : 'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] hover:border-[#22c55e]/20 hover:-translate-y-[4px]'
                 }`}
               >
-                {plan.name === 'Premium' && (
-                  <span className="absolute -top-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg bg-gradient-to-r from-amber-400 to-yellow-400 text-[7px] font-bold text-white shadow-lg">
-                    <Sparkles className="w-2 h-2" />
-                    Custom
-                  </span>
+                {/* Popular Badge */}
+                {isPopular && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r from-[#22c55e] to-emerald-400 text-[10px] font-bold text-white uppercase tracking-[0.15em] shadow-lg shadow-[#22c55e]/40">
+                    <Sparkles className="w-3 h-3" />
+                    <span>RECOMENDADO</span>
+                    <Sparkles className="w-3 h-3" />
+                  </div>
                 )}
-                {plan.cta}
-              </button>
-            </motion.div>
-          ))}
+
+                {/* Plan Name */}
+                <h3 className="text-sm font-bold text-white">{plan.name}</h3>
+
+                {/* Price */}
+                <div className="mt-3 flex items-baseline gap-1">
+                  {isGratis ? (
+                    <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">
+                      Siempre gratis
+                    </span>
+                  ) : (
+                    <span className="text-2xl font-extrabold font-[family-name:var(--font-space-grotesk)] text-white">
+                      A convenir
+                    </span>
+                  )}
+                </div>
+
+                {/* Note for Gratis */}
+                {isGratis && (
+                  <p className="mt-1 text-[11px] text-white/30">
+                    Sin tarjeta · Sin fecha de expiración
+                  </p>
+                )}
+
+                {/* Description */}
+                {!isGratis && (
+                  <p className="mt-1 text-[11px] text-white/40">{plan.desc}</p>
+                )}
+
+                {/* Features */}
+                <ul className="mt-5 space-y-2.5">
+                  {plan.features.map((feat) => (
+                    <li key={feat} className="flex items-start gap-2 text-xs text-white/60">
+                      <Check className="w-3.5 h-3.5 text-[#22c55e] shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button */}
+                {plan.ctaType === 'signup' ? (
+                  <button
+                    onClick={onSignup}
+                    className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#22c55e] to-emerald-400 text-white hover:from-[#16a34a] hover:to-emerald-500 shadow-lg shadow-[#22c55e]/20 transition-all duration-300"
+                  >
+                    {plan.cta}
+                  </button>
+                ) : (
+                  <>
+                    <a
+                      href="https://wa.me/5353183215"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 inline-flex items-center justify-center gap-2 ${
+                        isMultitienda
+                          ? 'border-2 border-amber-400/40 text-amber-300 hover:bg-amber-400/10 hover:border-amber-400/60'
+                          : 'border border-white/10 text-white hover:bg-white/[0.08]'
+                      } bg-transparent`}
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      {plan.cta}
+                    </a>
+                    <p className="mt-2 text-[10px] text-white/30 text-center">
+                      Respondemos en menos de 24h · Lunes a sábado
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
-      </motion.div>
+
+        {/* Bottom CTA for unsure users */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={pricingInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-8 text-center"
+        >
+          <p className="text-sm text-white/50">
+            ¿No sabes qué plan necesitas?{' '}
+            <a
+              href="https://wa.me/5353183215"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#22c55e] hover:text-[#22c55e]/80 underline underline-offset-2 transition-colors"
+            >
+              Cuéntanos cómo es tu negocio
+            </a>
+          </p>
+        </motion.div>
+      </div>
 
       {/* Pricing Comparison Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={pricingInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6 }}
+        className="mt-10"
       >
-        <div className="mt-6 max-w-2xl mx-auto w-full">
+        <div className="max-w-4xl mx-auto w-full">
           <div className="overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm">
             <table className="w-full text-[10px] sm:text-[11px]">
               <thead>
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left py-2.5 px-3 text-white/50 font-medium">Función</th>
                   <th className="py-2.5 px-2 text-white/40 font-medium text-center">Gratis</th>
-                  <th className="py-2.5 px-2 text-[#22c55e] font-bold text-center bg-[#22c55e]/[0.06]">Pro ✓</th>
-                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Premium</th>
+                  <th className="py-2.5 px-2 text-[#22c55e] font-bold text-center bg-[#22c55e]/[0.06]">Fichas Pro ✓</th>
+                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Multitienda</th>
                 </tr>
               </thead>
               <tbody>

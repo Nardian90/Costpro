@@ -60,6 +60,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                 </div>
             </td>
             <td className="p-4 text-right font-bold text-primary" data-label="Precio">{formatCurrency(product.price || 0)}</td>
+            <td className="p-4 text-right font-bold text-amber-600" data-label="Empresa">{product.precio_empresa ? formatCurrency(product.precio_empresa) : '—'}</td>
             <td className="p-4 text-right text-muted-foreground" data-label="Costo">{formatCurrency(product.cost_price || 0)}</td>
             <td className="p-4 text-center" data-label="Estado">
                 <span className={cn(
@@ -177,6 +178,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <th className="p-4">SKU</th>
                         <th className="p-4 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" /></button></th>
                         <th className="p-4 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" /></button></th>
+                        <th className="p-4 text-right">Empresa</th>
                         <th className="p-4 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" /></button></th>
                         <th className="p-4 text-center">Estado</th>
                         <th className="p-4 text-center" title="¿Se muestra en la tienda pública?"><span className="inline-flex items-center gap-1"><Store className="w-3 h-3" /> Tienda</span></th>
@@ -197,7 +199,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                     ))}
                      {isLoading && (
                         <tr aria-label="Cargando productos">
-                            <td colSpan={8} className="p-8 text-center">
+                            <td colSpan={9} className="p-8 text-center">
                                 <div className="flex justify-center py-4">
                                     <CostProLoader size={120} text="CARGANDO" subtext="Buscando existencias..." />
                                 </div>
@@ -206,7 +208,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                     )}
                     {!isLoading && products.length === 0 && (
                         <tr>
-                            <td colSpan={8} className="p-20 text-center text-muted-foreground">
+                            <td colSpan={9} className="p-20 text-center text-muted-foreground">
                                 <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
                                 <p className="text-lg font-medium uppercase tracking-widest">No se encontraron productos.</p>
                             </td>

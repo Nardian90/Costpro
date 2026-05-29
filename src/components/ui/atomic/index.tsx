@@ -21,7 +21,8 @@ import {
   List,
   X
 } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, getProductImageUrl, resolveProductImage as utilsResolveProductImage } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Helper component for horizontal scroll
 const HorizontalScroll: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
@@ -30,9 +31,10 @@ const HorizontalScroll: React.FC<{ children: React.ReactNode; className?: string
   </div>
 );
 
-// Helper for product images
+// Helper for product images — resolves Supabase storage paths to full URLs
 export const ProductImage: React.FC<{ src?: string; alt?: string; name?: string; className?: string; forceShow?: boolean; width?: number; height?: number }> = ({ src, alt, name, className, forceShow, width = 64, height = 64 }) => {
-  if (src) return <Image src={src} alt={alt || name || 'Product image'} width={width} height={height} className={cn("object-cover", className)} unoptimized />;
+  const resolvedSrc = src ? getProductImageUrl(src) : null;
+  if (resolvedSrc) return <Image src={resolvedSrc} alt={alt || name || 'Product image'} width={width} height={height} className={cn("object-cover", className)} unoptimized />;
   if (forceShow) return <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}><Package className="w-1/3 h-1/3 opacity-20" /></div>;
   return (
     <div className={cn("bg-muted flex items-center justify-center text-muted-foreground", className)}>
@@ -41,7 +43,9 @@ export const ProductImage: React.FC<{ src?: string; alt?: string; name?: string;
   );
 };
 
-const resolveProductImage = (product: any) => product.public_image_url || product.image_url;
+// Use canonical resolveProductImage from utils (image_url first, then public_image_url)
+// Convert null → undefined to satisfy ProductImage src prop type
+const resolveProductImage = (product: any) => utilsResolveProductImage(product) ?? undefined;
 
 export interface PrimaryButtonProps {
   label?: string;
@@ -83,22 +87,50 @@ export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Ico
   </button>
 );
 
-export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: string; title?: string; className?: string; variant?: 'ghost' | 'outline' | 'primary' }> = ({ icon: Icon, onClick, label, title, className, variant = 'ghost' }) => (
-  <button
-    onClick={onClick}
-    aria-label={label || title}
-    title={title}
-    className={cn(
-      "p-2 rounded-lg transition-all active:scale-90",
-      variant === 'ghost' && "hover:bg-muted text-muted-foreground hover:text-foreground",
-      variant === 'outline' && "border border-border hover:bg-muted text-muted-foreground hover:text-foreground",
-      variant === 'primary' && "bg-primary text-foreground shadow-lg shadow-primary/20",
-      className
-    )}
-  >
-    <Icon className="w-4 h-4" />
-  </button>
-);
+/**
+ * IconButton — Accessible button with automatic Radix UI Tooltip on hover.
+ *
+ * WCAG 2.1 / WAI-ARIA compliance:
+ * - `aria-label` for screen readers (always set from label or title)
+ * - Native `title` attribute as fallback for environments without JS
+ * - Radix Tooltip for visual hover feedback (WAI-ARIA tooltip pattern)
+ * - Tooltip auto-hides on mobile (touch devices) to avoid interference
+ *
+ * ISO 9241-171: Tooltips provide contextual help describing the action.
+ */
+export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: string; title?: string; className?: string; variant?: 'ghost' | 'outline' | 'primary'; tooltipSide?: 'top' | 'bottom' | 'left' | 'right' }> = ({ icon: Icon, onClick, label, title, className, variant = 'ghost', tooltipSide = 'top' }) => {
+  const displayLabel = label || title;
+  const buttonElement = (
+    <button
+      onClick={onClick}
+      aria-label={displayLabel}
+      title={displayLabel}
+      className={cn(
+        "p-2 rounded-lg transition-all active:scale-90",
+        variant === 'ghost' && "hover:bg-muted text-muted-foreground hover:text-foreground",
+        variant === 'outline' && "border border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+        variant === 'primary' && "bg-primary text-foreground shadow-lg shadow-primary/20",
+        className
+      )}
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  );
+
+  // If no label/title, render plain button without tooltip wrapper
+  if (!displayLabel) return buttonElement;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {buttonElement}
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide} sideOffset={6}>
+        <span className="text-xs font-bold">{displayLabel}</span>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 export const SearchInput: React.FC<any> = ({ value, onChange, placeholder, ariaLabel, className, ...props }) => (
   <div className={cn("relative group", className)}>

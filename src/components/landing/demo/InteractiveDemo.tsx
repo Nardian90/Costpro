@@ -250,7 +250,7 @@ export default function InteractiveDemo() {
       {/* Subtitle */}
       <p className="text-white/30 text-[11px] flex items-center gap-2 mb-5">
         <User className="w-3 h-3" />
-        <span>María, panadería en CDMX</span>
+        <span>Liannis, comercializadora en Cuba</span>
         <span className="text-white/15">|</span>
         <span>{formatTime(totalDemoDuration)}</span>
         <span className="text-white/15">|</span>
@@ -302,7 +302,7 @@ export default function InteractiveDemo() {
                 <div className="w-full max-w-2xl rounded-xl border border-green-500/10 bg-[#111827]/60 transform scale-75">
                   <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5">
                     <div className="w-2 h-2 rounded-full bg-green-500/40" />
-                    <span className="text-[10px] text-white/20">CostPro — Ficha de Costo</span>
+                    <span className="text-[10px] text-white/20">CostPro — Ficha de Costo · Res. 148/2023</span>
                   </div>
                   <div className="p-3 space-y-2">
                     <div className="h-3 w-40 bg-white/5 rounded" />

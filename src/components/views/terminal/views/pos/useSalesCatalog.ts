@@ -446,6 +446,7 @@ export function useSalesCatalog() {
 
     // Row helpers
     getOrCreateRow,
+    updateRow,
 
     // Handlers
     handleSetQuantity,

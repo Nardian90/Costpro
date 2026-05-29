@@ -26,7 +26,7 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, getProductImageUrl } from '@/lib/utils';
 
 // ── Shared Types ─────────────────────────────────────────────────
 
@@ -36,6 +36,7 @@ export interface StorefrontProduct {
   description: string | null;
   sku: string | null;
   price: number;
+  precio_empresa: number | null;
   image_url: string | null;
   public_image_url: string | null;
   category: string | null;
@@ -46,6 +47,7 @@ export interface StorefrontProduct {
     name: string;
     sku: string | null;
     price: number;
+    precio_empresa: number | null;
     conversion_factor: number;
   }[] | null;
 }
@@ -95,8 +97,10 @@ function useProductFilter(products: StorefrontProduct[]) {
   const totalProducts = products.length;
   const totalWithStock = products.filter((p) => (p.stock_current ?? 0) > 0).length;
 
-  const productImage = useCallback((p: StorefrontProduct) =>
-    p.public_image_url || p.image_url, []);
+  const productImage = useCallback((p: StorefrontProduct) => {
+    const raw = p.image_url || p.public_image_url;
+    return raw ? getProductImageUrl(raw) : null;
+  }, []);
 
   const clearFilters = useCallback(() => {
     setSearchTerm('');
@@ -124,8 +128,10 @@ function ProductDetailModal({
   onClose: () => void;
   storePhone?: string | null;
 }) {
-  const imageUrl = product.public_image_url || product.image_url;
-  const inStock = (product.stock_current ?? 0) > 0;
+  const imageUrlRaw = product.image_url || product.public_image_url;
+  const imageUrl = imageUrlRaw ? getProductImageUrl(imageUrlRaw) : null;
+  const stockQty = product.stock_current ?? 0;
+  const inStock = stockQty > 0;
   const productText = encodeURIComponent(
     `Hola, estoy interesado/a en: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''} — Precio: ${formatCurrency(product.price)}`
   );
@@ -169,27 +175,42 @@ function ProductDetailModal({
           )}
           {product.product_variants && product.product_variants.length > 0 && (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Variantes</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Presentaciones</p>
+              <div className="space-y-1.5">
                 {product.product_variants.map((v) => (
-                  <span key={v.id} className="px-3 py-1.5 rounded-lg bg-stone-100 text-xs font-bold text-stone-700 border border-stone-200">
-                    {v.name} — {formatCurrency(v.price)}
-                  </span>
+                  <div key={v.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
+                    <div>
+                      <span className="text-xs font-bold text-stone-700">{v.name}</span>
+                      <span className="text-[10px] text-stone-400 ml-1">(x{v.conversion_factor})</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-stone-900">{formatCurrency(v.price)}</span>
+                      {v.precio_empresa != null && v.precio_empresa > 0 && (
+                        <span className="text-[10px] font-bold text-amber-600 ml-2">Emp: {formatCurrency(v.precio_empresa)}</span>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
           <div className="flex items-end justify-between pt-4 border-t border-stone-100">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Precio</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Precio Minorista</p>
               <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price)}</p>
+              {product.precio_empresa != null && product.precio_empresa > 0 && (
+                <div className="mt-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">Precio Empresa</p>
+                  <p className="text-lg font-black text-amber-700">{formatCurrency(product.precio_empresa)}</p>
+                </div>
+              )}
               <span className="text-xs text-stone-400">{product.unit_of_measure || 'ud'}</span>
             </div>
             <span className={cn(
               'px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest',
               inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
             )}>
-              {inStock ? 'Disponible' : 'Agotado'}
+              {inStock ? `Disponible (${stockQty})` : 'Agotado'}
             </span>
           </div>
           {whatsappUrl && (
@@ -741,9 +762,36 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
 
 // ── Construccion Card (Grid view) ──────────────────────────────
 
+function StockBadge({ quantity }: { quantity: number }) {
+  const inStock = quantity > 0;
+  return (
+    <span className={cn(
+      'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest backdrop-blur-md flex items-center gap-1.5',
+      inStock ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
+    )}>
+      <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-200' : 'bg-red-200')} />
+      {inStock ? `${quantity} disponibles` : 'Agotado'}
+    </span>
+  );
+}
+
+function StockPill({ quantity }: { quantity: number }) {
+  const inStock = quantity > 0;
+  return (
+    <div className={cn(
+      'ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md',
+      inStock ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'
+    )}>
+      <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-500' : 'bg-red-500')} />
+      {inStock ? `${quantity} en stock` : 'Agotado'}
+    </div>
+  );
+}
+
 function ConstruccionCard({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
   const [expanded, setExpanded] = useState(false);
-  const inStock = (product.stock_current ?? 0) > 0;
+  const stockQty = product.stock_current ?? 0;
+  const inStock = stockQty > 0;
 
   return (
     <div className={cn(
@@ -773,13 +821,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
             {product.category}
           </span>
         )}
-        <span className={cn(
-          'absolute bottom-3 right-3 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest backdrop-blur-md flex items-center gap-1',
-          inStock ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
-        )}>
-          <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-200' : 'bg-red-200')} />
-          {inStock ? 'En stock' : 'Agotado'}
-        </span>
+        <StockBadge quantity={stockQty} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       </div>
       <div className="flex-1 p-4 flex flex-col gap-1.5">
@@ -811,6 +853,12 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">Precio</p>
             <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+            {product.precio_empresa != null && product.precio_empresa > 0 && (
+              <div className="mt-0.5">
+                <span className="text-[8px] font-black uppercase tracking-widest text-amber-600">Emp</span>
+                <span className="text-xs font-bold text-amber-700 ml-1">{formatCurrency(product.precio_empresa)}</span>
+              </div>
+            )}
           </div>
           <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || 'ud'}</span>
         </div>
@@ -822,7 +870,8 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
 // ── Construccion List Item (Table/List view) ────────────────────
 
 function ConstruccionListItem({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
-  const inStock = (product.stock_current ?? 0) > 0;
+  const stockQty = product.stock_current ?? 0;
+  const inStock = stockQty > 0;
 
   return (
     <div
@@ -859,6 +908,9 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
           </div>
           <div className="text-right shrink-0">
             <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+            {product.precio_empresa != null && product.precio_empresa > 0 && (
+              <p className="text-[10px] font-bold text-amber-600">Emp: {formatCurrency(product.precio_empresa)}</p>
+            )}
             <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || 'ud'}</span>
           </div>
         </div>
@@ -875,13 +927,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
               ))}
             </div>
           )}
-          <div className={cn(
-            'ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md',
-            inStock ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'
-          )}>
-            <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-500' : 'bg-red-500')} />
-            {inStock ? 'Disponible' : 'Agotado'}
-          </div>
+          <StockPill quantity={stockQty} />
         </div>
       </div>
     </div>

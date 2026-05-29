@@ -118,11 +118,16 @@ export default async function TiendaPublicPage({ params }: PageProps) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, description, sku, price, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, conversion_factor)')
+    .select('id, name, description, sku, price, precio_empresa, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, precio_empresa, conversion_factor)')
     .eq('store_id', store.id)
     .eq('visible_en_tienda', true)
     .eq('is_active', true)
     .order('name');
+
+  // NOTE: stock_current is the authoritative source for the public storefront.
+  // The server client uses the anon key, which cannot read stock_movements (RLS).
+  // If stock_current is stale, run the recompute SQL (provided separately).
+  const productList = products || [];
 
   const storeUrl = `${SITE_URL}/tienda/${cleanSlug}`;
 
@@ -145,7 +150,7 @@ export default async function TiendaPublicPage({ params }: PageProps) {
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
       name: `Catálogo de ${store.name}`,
-      itemListElement: (products || []).slice(0, 50).map((product, index) => ({
+      itemListElement: (productList).slice(0, 50).map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -177,7 +182,7 @@ export default async function TiendaPublicPage({ params }: PageProps) {
       />
       <StorefrontPage
         store={store}
-        products={products || []}
+        products={productList}
       />
     </>
   );

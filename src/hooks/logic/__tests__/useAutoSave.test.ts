@@ -16,6 +16,8 @@ describe('useAutoSave', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    // Clear localStorage to prevent stale data across tests
+    localStorage.clear();
     mockStoreData = { id: 'sheet-1', sections: [], header: { name: 'Test' } };
   });
 
