@@ -88,14 +88,18 @@ export const CreateProductModal = () => {
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
 
-    // Preview compression result
+    // Pre-compress and cache result to avoid double compression on save
     try {
       const compressed = await compressImage(file);
       const savings = ((1 - compressed.size / file.size) * 100).toFixed(0);
+      // Store the compressed file directly — reuse on save (no double compression)
+      setSelectedImage(compressed);
       setCompressedSize(compressed.size);
       toast.success(`Imagen optimizada: ${(file.size / 1024).toFixed(0)} KB → ${(compressed.size / 1024).toFixed(0)} KB (${savings}% reducción)`);
-    } catch {
-      toast.warning('No se pudo pre-visualizar la compresión. Se intentará al guardar.');
+    } catch (err: any) {
+      // Keep original if compression fails validation (e.g., too small dimensions)
+      setSelectedImage(file);
+      toast.warning(err?.message || 'No se pudo optimizar la imagen. Se guardará tal cual.');
     }
   }, [imagePreview]);
 
@@ -132,8 +136,28 @@ export const CreateProductModal = () => {
   };
 
   const handleCreate = async () => {
-    if (!form.name || !form.sku) {
-      toast.error('El nombre y el SKU son obligatorios');
+    if (!form.name?.trim()) {
+      toast.error('El nombre es obligatorio');
+      return;
+    }
+    if (form.name.length > 150) {
+      toast.error('El nombre no debe superar los 150 caracteres');
+      return;
+    }
+    if (!form.sku?.trim()) {
+      toast.error('El SKU es obligatorio');
+      return;
+    }
+    if (form.sku.length > 50) {
+      toast.error('El SKU no debe superar los 50 caracteres');
+      return;
+    }
+    if (form.price < 0) {
+      toast.error('El precio no puede ser negativo');
+      return;
+    }
+    if (form.cost_price < 0) {
+      toast.error('El costo no puede ser negativo');
       return;
     }
     if (!user?.activeStoreId) {
@@ -178,12 +202,11 @@ export const CreateProductModal = () => {
         await Promise.all(variantPromises);
       }
 
-      // 3. Upload image (compressed)
+      // 3. Upload image (already compressed during selection — no double compression)
       if (selectedImage) {
         setIsUploadingImage(true);
         try {
-          const compressed = await compressImage(selectedImage);
-          await catalogService.uploadProductImage(productId, compressed);
+          await catalogService.uploadProductImage(productId, selectedImage);
           const vCount = validVariants.length > 0 ? ` con ${validVariants.length} variante(s)` : '';
           toast.success(`Producto creado con imagen${vCount}`);
         } catch (imgError: any) {
@@ -277,7 +300,7 @@ export const CreateProductModal = () => {
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" aria-hidden="true" />
             <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleGallerySelect} className="hidden" aria-hidden="true" />
             <p className="text-[10px] text-muted-foreground italic ml-1">
-              Se optimiza automáticamente a WebP (máx. 1024px, &lt; 200 KB). Acepta hasta 10 MB.
+              Máx. 10 MB. Se optimiza automáticamente a WebP (máx. 1024px, &lt; 200 KB, mín. 100×100px).
             </p>
           </div>
 

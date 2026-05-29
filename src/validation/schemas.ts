@@ -46,6 +46,7 @@ export const paymentMethodSchema = z.enum([
   "transfer",
   "wallet",
   "other",
+  "mixed",
 ]);
 
 export const discountTypeSchema = z.enum(["fixed", "percentage"]);
@@ -143,6 +144,7 @@ export const productSchema = z.object({
   barcode: z.string().nullable().optional(),
   barcode_type: z.string().nullable().optional(),
   price: z.coerce.number().min(0).optional().default(0),
+  precio_empresa: z.coerce.number().nullable().optional().default(null),
   cost_price: z.coerce.number().min(0).optional().default(0),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
@@ -162,13 +164,9 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(true),
-  has_movements: z
-    .preprocess((val) => {
-      if (val === undefined || val === null) return undefined;
-      if (typeof val === "string") return val === "true";
-      return val;
-    }, z.boolean().optional())
-    .default(false),
+  // Virtual field: not a DB column, derived from stock_movements existence.
+  // Always defaults to false when not returned by RPC. Used to gate delete/toggle actions.
+  has_movements: z.boolean().optional().default(false),
   visible_en_tienda: z
     .preprocess((val) => {
       if (val === undefined || val === null) return undefined;
@@ -184,6 +182,7 @@ export const productVariantSchema = z.object({
   name: z.string(),
   sku: z.string().nullable().optional(),
   price: z.coerce.number().min(0).optional().default(0),
+  precio_empresa: z.coerce.number().nullable().optional().default(null),
   conversion_factor: z.coerce.number().min(0).optional().default(1),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
@@ -360,6 +359,7 @@ export const transactionItemSchema = z.object({
 
 export const paginatedProductSchema = productSchema.extend({
   total_count: z.number().optional(),
+  is_complete: z.boolean().optional().default(true),
 });
 
 export const dashboardKpiResponseSchema = z.object({

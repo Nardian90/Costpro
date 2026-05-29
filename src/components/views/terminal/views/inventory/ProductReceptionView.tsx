@@ -499,7 +499,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
     setImportStep('upload');
     setClassifiedRows([]);
     // Simulate file selection on the hidden input
-    const fakeEvent = { target: { files: [file], value: '' } } as React.ChangeEvent<HTMLInputElement>;
+    const fakeEvent = { target: { files: [file], value: '' } } as unknown as React.ChangeEvent<HTMLInputElement>;
     await handleImportFileSelect(fakeEvent);
   }, [handleImportFileSelect]);
 
@@ -589,7 +589,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
   // ──────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
-    if (!user?.activeStoreId) { toast.error('No hay una tienda activa'); return; }
+    if (!user?.activeStoreId || !user?.id) { toast.error('No hay una tienda activa o sesión válida'); return; }
     if (!supplier.trim()) { toast.error('El nombre del proveedor es obligatorio'); return; }
     if (!invoiceNumber.trim()) { toast.error('El numero de factura es obligatorio'); return; }
     if (items.length === 0) { toast.error('Agrega al menos un producto'); return; }
@@ -651,7 +651,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
 
       // Call register_reception RPC
       const receiptId = await registerReception.mutateAsync({
-        p_store_id: user.activeStoreId,
+        p_store_id: user!.activeStoreId,
         p_supplier: supplier.trim(),
         p_reception_date: new Date().toISOString(),
         p_invoice_number: invoiceNumber.trim(),
@@ -676,9 +676,9 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
       // FIX-05: Audit log
       try {
         await auditService.logReceptionCreated({
-          userId: user.id,
+          userId: user!.id,
           receiptId: receiptId as string,
-          storeId: user.activeStoreId,
+          storeId: user!.activeStoreId,
           supplier: supplier.trim(),
           invoiceNumber: invoiceNumber.trim(),
           itemCount: finalItems.length,

@@ -162,6 +162,7 @@ export interface Product {
   barcode?: string | null;
   barcode_type?: BarcodeType | null;
   price: number;
+  precio_empresa?: number | null;
   cost_price: number;
   image_url?: string | null;
   category?: string | null;
@@ -187,6 +188,7 @@ export interface ProductVariant {
   name: string;
   sku?: string | null;
   price: number;
+  precio_empresa?: number | null;
   conversion_factor: number;
   created_at?: string;
   updated_at?: string;

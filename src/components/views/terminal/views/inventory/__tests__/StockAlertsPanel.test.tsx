@@ -1,6 +1,34 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import StockAlertsPanel from '../StockAlertsPanel';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock framer-motion to immediately render/unmount children
+vi.mock('framer-motion', () => ({
+  motion: new Proxy({}, {
+    get: (_target, prop) => {
+      return (props: any) => {
+        const { initial, animate, exit, transition, whileHover, whileTap, variants, layout, ...rest } = props;
+        const Tag = typeof prop === 'string' ? prop : 'div';
+        // Filter out framer-motion-only props
+        const htmlProps: Record<string, any> = {};
+        for (const [key, val] of Object.entries(rest)) {
+          if (typeof val !== 'undefined') htmlProps[key] = val;
+        }
+        return require('react').createElement(Tag, htmlProps);
+      };
+    },
+  }),
+  AnimatePresence: ({ children }: any) => children,
+}));
+
+vi.mock('@/hooks/ui/useReducedMotion', () => ({
+  useReducedMotion: () => false,
+  motionSafe: (_prefers: boolean, variants: any) => variants,
+}));
+
+vi.mock('@/hooks/ui/useFocusTrap', () => ({
+  useFocusTrap: () => vi.fn(),
+}));
 
 describe('StockAlertsPanel', () => {
   const mockAlerts = [

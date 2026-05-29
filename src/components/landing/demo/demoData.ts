@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    Demo Data — Interactive Demo "CostPro en 2 minutos"
 
-   Hilo conductor: María, dueña de panadería en CDMX
+   Hilo conductor: María, dueña de panadería en Cuba
    Escena 1 → Crea ficha de costo
    Escena 2 → Analiza sus ingresos (IPV insight engine)
    Escena 3 → Controla sus 2 sucursales (multi-tienda ejecutivo)
@@ -26,76 +26,74 @@ export interface DemoEvent {
   payload: Record<string, unknown>;
 }
 
-/* ─── Escena 1: Ficha de Costo (Pan Francés Premium) ─── */
+/* ─── Escena 1: Ficha de Costo (Cerveza Importada) ─── */
 
 export const costSheetIngredients = [
-  { id: 1, name: 'Harina de trigo', unit: 'kg', qty: 0.45, price: 1.20 },
-  { id: 2, name: 'Levadura seca', unit: 'g', qty: 8, price: 0.06 },
-  { id: 3, name: 'Azúcar blanca', unit: 'g', qty: 30, price: 0.03 },
-  { id: 4, name: 'Mantequilla', unit: 'g', qty: 25, price: 0.08 },
+  { id: 1, name: 'Cerveza importada', unit: 'caja', qty: 1, price: 2400 },
+  { id: 2, name: 'Flete y transporte', unit: 'viaje', qty: 1, price: 180 },
+  { id: 3, name: 'Salario almacenista', unit: 'mes', qty: 1, price: 94 },
+  { id: 4, name: 'Arrendamiento prorrateado', unit: 'mes', qty: 1, price: 42 },
 ];
 
 export const costSheetLabor = [
-  { id: 1, role: 'Panadero Maestro', hours: 176, rate: 2.50, count: 1 },
-  { id: 2, role: 'Ayudante', hours: 176, rate: 1.20, count: 2 },
+  { id: 1, role: 'Vendedor', hours: 176, rate: 25.00, count: 1 },
 ];
 
 export const costSheetEvents: DemoEvent[] = [
   // Header typing
   { time: 0, action: 'fade-in', payload: { target: 'header' } },
-  { time: 0.5, action: 'type', payload: { target: 'product-name', text: 'Pan Francés Premium', speed: 65 } },
-  { time: 3.2, action: 'type', payload: { target: 'presentation', text: '1 kg', speed: 80 } },
+  { time: 0.5, action: 'type', payload: { target: 'product-name', text: 'Cerveza Importada (caja x 24 und.)', speed: 65 } },
+  { time: 3.2, action: 'type', payload: { target: 'presentation', text: '1 caja', speed: 70 } },
 
   // Switch to simplified annex 1
-  { time: 4.5, action: 'tab-switch', payload: { tab: 'materias-primas' } },
+  { time: 4.5, action: 'tab-switch', payload: { tab: 'insumos' } },
 
-  // Row 1: Harina — user types, autocomplete appears
-  { time: 5.5, action: 'type', payload: { target: 'input-name-0', text: 'Har', speed: 100 } },
-  { time: 6.2, action: 'autocomplete', payload: { row: 0, suggestion: 'Harina de trigo' } },
-  { time: 7.0, action: 'type', payload: { target: 'input-qty-0', text: '0.45', speed: 90 } },
-  { time: 7.8, action: 'type', payload: { target: 'input-price-0', text: '1.20', speed: 85 } },
-  { time: 8.5, action: 'count-up', payload: { target: 'total-0', value: 0.54 } },
+  // Row 1: Cerveza importada — user types, autocomplete appears
+  { time: 5.5, action: 'type', payload: { target: 'input-name-0', text: 'Cer', speed: 100 } },
+  { time: 6.2, action: 'autocomplete', payload: { row: 0, suggestion: 'Cerveza importada' } },
+  { time: 7.0, action: 'type', payload: { target: 'input-qty-0', text: '1', speed: 90 } },
+  { time: 7.8, action: 'type', payload: { target: 'input-price-0', text: '2400', speed: 85 } },
+  { time: 8.5, action: 'count-up', payload: { target: 'total-0', value: 2400 } },
 
-  // Row 2: Levadura
-  { time: 9.5, action: 'type', payload: { target: 'input-name-1', text: 'Lev', speed: 100 } },
-  { time: 10.2, action: 'autocomplete', payload: { row: 1, suggestion: 'Levadura seca' } },
-  { time: 11.0, action: 'type', payload: { target: 'input-qty-1', text: '8', speed: 80 } },
-  { time: 11.6, action: 'type', payload: { target: 'input-price-1', text: '0.06', speed: 90 } },
-  { time: 12.3, action: 'count-up', payload: { target: 'total-1', value: 0.48 } },
+  // Row 2: Flete y transporte
+  { time: 9.5, action: 'type', payload: { target: 'input-name-1', text: 'Flet', speed: 100 } },
+  { time: 10.2, action: 'autocomplete', payload: { row: 1, suggestion: 'Flete y transporte' } },
+  { time: 11.0, action: 'type', payload: { target: 'input-qty-1', text: '1', speed: 80 } },
+  { time: 11.6, action: 'type', payload: { target: 'input-price-1', text: '180', speed: 90 } },
+  { time: 12.3, action: 'count-up', payload: { target: 'total-1', value: 180 } },
 
-  // Row 3: Azúcar
-  { time: 13.2, action: 'type', payload: { target: 'input-name-2', text: 'Azúc', speed: 100 } },
-  { time: 13.9, action: 'autocomplete', payload: { row: 2, suggestion: 'Azúcar blanca' } },
-  { time: 14.6, action: 'type', payload: { target: 'input-qty-2', text: '30', speed: 75 } },
-  { time: 15.1, action: 'type', payload: { target: 'input-price-2', text: '0.03', speed: 85 } },
-  { time: 15.8, action: 'count-up', payload: { target: 'total-2', value: 0.90 } },
+  // Row 3: Salario almacenista
+  { time: 13.2, action: 'type', payload: { target: 'input-name-2', text: 'Salar', speed: 100 } },
+  { time: 13.9, action: 'autocomplete', payload: { row: 2, suggestion: 'Salario almacenista' } },
+  { time: 14.6, action: 'type', payload: { target: 'input-qty-2', text: '1', speed: 75 } },
+  { time: 15.1, action: 'type', payload: { target: 'input-price-2', text: '94', speed: 85 } },
+  { time: 15.8, action: 'count-up', payload: { target: 'total-2', value: 94 } },
 
-  // Row 4: Mantequilla + micro-validation
-  { time: 16.5, action: 'type', payload: { target: 'input-name-3', text: 'Mant', speed: 95 } },
-  { time: 17.2, action: 'autocomplete', payload: { row: 3, suggestion: 'Mantequilla' } },
-  { time: 17.9, action: 'type', payload: { target: 'input-qty-3', text: '25', speed: 70 } },
-  { time: 18.3, action: 'type', payload: { target: 'input-price-3', text: '0.08', speed: 80 } },
-  { time: 19.0, action: 'count-up', payload: { target: 'total-3', value: 2.00 } },
-  { time: 19.8, action: 'micro-validate', payload: { type: 'good', text: 'Buen margen en materias primas', row: 3 } },
+  // Row 4: Arrendamiento prorrateado
+  { time: 16.5, action: 'type', payload: { target: 'input-name-3', text: 'Arren', speed: 95 } },
+  { time: 17.2, action: 'autocomplete', payload: { row: 3, suggestion: 'Arrendamiento prorrateado' } },
+  { time: 17.9, action: 'type', payload: { target: 'input-qty-3', text: '1', speed: 70 } },
+  { time: 18.3, action: 'type', payload: { target: 'input-price-3', text: '42', speed: 80 } },
+  { time: 19.0, action: 'count-up', payload: { target: 'total-3', value: 42 } },
+  { time: 19.8, action: 'micro-validate', payload: { type: 'good', text: 'Insumos registrados correctamente', row: 3 } },
 
-  // Subtotal Materias Primas
-  { time: 21, action: 'count-up', payload: { target: 'subtotal-mp', value: 3.92 } },
-  { time: 22, action: 'micro-validate', payload: { type: 'tip', text: 'Costo unitario por kg: $3.92' } },
+  // Subtotal Insumos
+  { time: 21, action: 'count-up', payload: { target: 'subtotal-mp', value: 2716 } },
+  { time: 22, action: 'micro-validate', payload: { type: 'tip', text: 'Costo por caja: $2,716' } },
 
-  // Transition to Mano de Obra (simplified)
-  { time: 23, action: 'tab-switch', payload: { tab: 'mano-de-obra' } },
+  // Transition to Gastos Generales (simplified)
+  { time: 23, action: 'tab-switch', payload: { tab: 'gastos-generales' } },
 
-  // Labor rows (pre-filled quickly — user sees result)
+  // Labor row (pre-filled quickly — user sees result)
   { time: 24, action: 'fade-in', payload: { target: 'labor-row-0' } },
-  { time: 25, action: 'fade-in', payload: { target: 'labor-row-1' } },
-  { time: 26, action: 'count-up', payload: { target: 'subtotal-labor', value: 862.40 } },
-  { time: 27, action: 'micro-validate', payload: { type: 'info', text: 'Distribuido en 1,000 unidades → $0.86/pan' } },
+  { time: 26, action: 'count-up', payload: { target: 'subtotal-labor', value: 4400 } },
+  { time: 27, action: 'micro-validate', payload: { type: 'info', text: 'Incluye Seg. Social (14%) + Imp. Trabajo (5%)' } },
 
   // Ficha completa — resumen
   { time: 28.5, action: 'fade-in', payload: { target: 'summary-card' } },
-  { time: 29, action: 'count-up', payload: { target: 'costo-unitario', value: 4.78 } },
-  { time: 30, action: 'count-up', payload: { target: 'precio-venta', value: 12.00 } },
-  { time: 31, action: 'micro-validate', payload: { type: 'good', text: 'Margen del 60% — saludable' } },
+  { time: 29, action: 'count-up', payload: { target: 'costo-unitario', value: 7116 } },
+  { time: 30, action: 'count-up', payload: { target: 'precio-venta', value: 8500 } },
+  { time: 31, action: 'micro-validate', payload: { type: 'good', text: 'Precio según Res. 148/2023 — listo para usar' } },
 
   // End scene
   { time: 33, action: 'fade-in', payload: { target: 'success-badge' } },
@@ -112,19 +110,19 @@ export const ipvKpis = {
 };
 
 export const ipvTopClients = [
-  { name: 'Restaurante El Sabor', amount: 21480, share: 45, risk: 'high' },
-  { name: 'Café La Habana', amount: 6120, share: 13, risk: 'low' },
-  { name: 'Hotel Caribe', amount: 5890, share: 12, risk: 'low' },
-  { name: 'Panadería Dulce', amount: 4350, share: 9, risk: 'low' },
-  { name: 'SuperMarket Max', amount: 3780, share: 8, risk: 'low' },
+  { name: 'Cadenal de Hoteles Varadero', amount: 21480, share: 45, risk: 'high' },
+  { name: 'Restaurante La Terraza', amount: 6120, share: 13, risk: 'low' },
+  { name: 'Hotel Playa Azul', amount: 5890, share: 12, risk: 'low' },
+  { name: 'Cafetería Habana Vieja', amount: 4350, share: 9, risk: 'low' },
+  { name: 'Tienda de Artesanías', amount: 3780, share: 8, risk: 'low' },
 ];
 
 export const ipvRecentTransactions = [
-  { client: 'Restaurante El Sabor', date: '15 Abr', amount: 1240, status: 'conciliada' as const },
-  { client: 'Restaurante El Sabor', date: '12 Abr', amount: 980, status: 'conciliada' as const },
-  { client: 'Restaurante El Sabor', date: '08 Abr', amount: 2100, status: 'parcial' as const },
-  { client: 'Café La Habana', date: '10 Abr', amount: 1560, status: 'conciliada' as const },
-  { client: 'Hotel Caribe', date: '09 Abr', amount: 890, status: 'conciliada' as const },
+  { client: 'Cadenal de Hoteles Varadero', date: '15 May', amount: 1240, status: 'conciliada' as const },
+  { client: 'Cadenal de Hoteles Varadero', date: '12 May', amount: 980, status: 'conciliada' as const },
+  { client: 'Cadenal de Hoteles Varadero', date: '08 May', amount: 2100, status: 'parcial' as const },
+  { client: 'Restaurante La Terraza', date: '10 May', amount: 1560, status: 'conciliada' as const },
+  { client: 'Hotel Playa Azul', date: '09 May', amount: 890, status: 'conciliada' as const },
 ];
 
 export const ipvEvents: DemoEvent[] = [
@@ -186,7 +184,7 @@ export const ipvEvents: DemoEvent[] = [
 
 export const storeKpis = [
   {
-    name: 'Sucursal Centro',
+    name: 'Tienda Centro Habana',
     ventasHoy: 1240,
     ventasAyer: 1180,
     tickets: 87,
@@ -195,7 +193,7 @@ export const storeKpis = [
     status: 'healthy' as const,
   },
   {
-    name: 'Sucursal Norte',
+    name: 'Tienda Varadero',
     ventasHoy: 890,
     ventasAyer: 1270,
     tickets: 52,
@@ -221,7 +219,7 @@ export const multiStoreEvents: DemoEvent[] = [
   { time: 5, action: 'alert', payload: {
     target: 'store-alert',
     severity: 'medium',
-    title: 'Sucursal Norte',
+    title: 'Tienda Varadero',
     text: 'Vendiendo 30% menos que ayer a esta hora',
   } },
 
@@ -235,18 +233,18 @@ export const multiStoreEvents: DemoEvent[] = [
   { time: 10.5, action: 'fade-in', payload: { target: 'detail-row-0' } },
   { time: 11.2, action: 'fade-in', payload: { target: 'detail-row-1' } },
   { time: 11.9, action: 'fade-in', payload: { target: 'detail-row-2' } },
-  { time: 12.5, action: 'micro-validate', payload: { type: 'info', text: 'Panadería principal: stock bajo en Croissant — podrían perder ventas' } },
+  { time: 12.5, action: 'micro-validate', payload: { type: 'info', text: 'Tienda Varadero: stock bajo en Ron Havana Club — podrían perder ventas' } },
 
   // Action: restock alert
   { time: 13.5, action: 'click', payload: { target: 'btn-restock' } },
   { time: 14, action: 'fade-in', payload: { target: 'toast-restock' } },
-  { time: 14.5, action: 'micro-validate', payload: { type: 'good', text: 'Alerta de reposición enviada a Sucursal Norte' } },
+  { time: 14.5, action: 'micro-validate', payload: { type: 'good', text: 'Alerta de reposición enviada a Tienda Varadero' } },
 
   // Comparative overview
   { time: 16, action: 'transition', payload: { target: 'compare-view' } },
   { time: 16.5, action: 'fade-in', payload: { target: 'compare-chart' } },
   { time: 17, action: 'count-up', payload: { target: 'total-consolidado', value: 2130, prefix: '$' } },
-  { time: 18, action: 'micro-validate', payload: { type: 'good', text: '$2,130 consolidado entre ambas sucursales' } },
+  { time: 18, action: 'micro-validate', payload: { type: 'good', text: '$2,130 consolidado entre ambas tiendas' } },
 
   // End
   { time: 19.5, action: 'fade-in', payload: { target: 'store-summary' } },
@@ -268,7 +266,7 @@ export const scenes: SceneConfig[] = [
   {
     id: 'cost-sheet',
     title: 'Ficha de Costo',
-    subtitle: 'María crea su primera ficha en minutos',
+    subtitle: 'Liannis crea su primera ficha en minutos',
     duration: 36,
     events: costSheetEvents,
     icon: 'FileText',
@@ -284,7 +282,7 @@ export const scenes: SceneConfig[] = [
   {
     id: 'multi-store',
     title: 'Multi-Tienda',
-    subtitle: 'Controla tus sucursales en tiempo real',
+    subtitle: 'Monitorea tus tiendas en tiempo real',
     duration: 22,
     events: multiStoreEvents,
     icon: 'Store',

@@ -72,21 +72,19 @@ export default function CommandPalette({
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [previouslyFocused, setPreviouslyFocused] = useState<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Reset state when palette opens (React-sanctioned pattern for syncing state from props)
-  if (isOpen !== prevIsOpen) {
-    setPrevIsOpen(isOpen);
+  // Sync state when palette opens/closes via effect (not during render)
+  useEffect(() => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
       setPreviouslyFocused(document.activeElement as HTMLElement);
     }
-  }
+  }, [isOpen]);
 
   const commands: CommandItem[] = useMemo(
     () => [
@@ -174,10 +172,16 @@ export default function CommandPalette({
     [filtered, safeSelectedIndex, executeCommand, onClose],
   );
 
-  // Restore focus on close
+  // Restore focus on close — but skip readOnly inputs (palette triggers)
+  // to prevent the palette from immediately reopening via onFocus.
   useEffect(() => {
     if (!isOpen && previouslyFocused) {
-      previouslyFocused.focus();
+      const isTrigger =
+        previouslyFocused instanceof HTMLInputElement &&
+        previouslyFocused.readOnly;
+      if (!isTrigger) {
+        previouslyFocused.focus();
+      }
     }
   }, [isOpen, previouslyFocused]);
 

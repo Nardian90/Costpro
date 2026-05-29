@@ -148,7 +148,7 @@ export default async function RootLayout({
                   <MotionPreferencesProvider>
                     <SyncProvider>
                       <GlobalSessionManager />
-                      <main id="main-content" suppressHydrationWarning>{children}</main>
+                      <div id="root" suppressHydrationWarning>{children}</div>
                       <Toaster position="top-right" richColors />
                       <ServiceWorkerRegister />
                       <CookieConsent />

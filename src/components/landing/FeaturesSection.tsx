@@ -2,25 +2,38 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Eye } from 'lucide-react';
 import { fadeUp } from './animations';
 import { features, integrationPartners } from './data';
 
-export interface FeaturesSectionProps {
+interface FeaturesSectionProps {
   featuresInView: boolean;
   featuresRef: React.RefObject<HTMLDivElement | null>;
-  setShowDemoModal: (v: boolean) => void;
 }
 
 export default function FeaturesSection({
   featuresInView,
   featuresRef,
-  setShowDemoModal,
 }: FeaturesSectionProps) {
   return (
     <>
       {/* ── FEATURES SECTION ── */}
       <div ref={featuresRef} id="features">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <h2 className="text-xl sm:text-2xl font-bold text-white text-center">
+            Todo lo que necesitas para saber cuánto te cuesta y cuánto te queda
+          </h2>
+          <p className="text-sm text-white/50 text-center mt-2 max-w-xl mx-auto">
+            CostPro calcula cada componente de tu ficha de costo según la norma oficial — con tus datos reales, no con estimaciones.
+          </p>
+        </motion.div>
+
+        {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
           {features.map((feature, i) => (
             <motion.div
@@ -36,16 +49,6 @@ export default function FeaturesSection({
               </div>
               <h3 className="text-sm font-semibold text-white/90 mb-1">{feature.title}</h3>
               <p className="text-xs text-white/40 leading-relaxed">{feature.desc}</p>
-              <button
-                onClick={() => {
-                  const el = document.querySelector('[aria-label="Ver demo de CostPro"]');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }}
-                className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[10px] font-medium text-white/40 hover:text-[#22c55e] hover:bg-[#22c55e]/10 hover:border-[#22c55e]/20 transition-all duration-200"
-              >
-                <Eye className="w-3 h-3" />
-                <span>Vista rápida</span>
-              </button>
             </motion.div>
           ))}
         </div>
@@ -53,21 +56,6 @@ export default function FeaturesSection({
 
       {/* Integration Partners */}
       <div className="mt-12 max-w-2xl mx-auto w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="text-center mb-4"
-        >
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-[11px] uppercase tracking-[0.15em] font-semibold text-white/25"
-          >
-            Integraciones disponibles
-          </motion.p>
-        </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={featuresInView ? { opacity: 1, y: 0 } : {}}
@@ -88,8 +76,6 @@ export default function FeaturesSection({
           ))}
         </motion.div>
       </div>
-
-
     </>
   );
 }

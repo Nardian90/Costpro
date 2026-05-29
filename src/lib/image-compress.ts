@@ -4,13 +4,17 @@
  *
  * Standards applied:
  * - Max dimension: 1024px (WooCommerce standard; Shopify uses 2048px)
- * - Target file size: < 200 KB (e-commerce best practice)
+ * - Target file size: < 200 KB (e-commerce best practice per Google Lighthouse)
  * - Output format: WebP with JPEG fallback (30% smaller than JPEG)
- * - Quality: Iterative reduction from 0.80 → 0.60
+ * - Quality: Iterative reduction from 0.80 → 0.55
  * - Progressive JPEG when WebP not supported
  * - EXIF metadata stripped (via Canvas redraw)
+ * - Min dimension: 100px (prevents blurry thumbnails — ISO 9241-171 usability)
  *
- * Reference: Google Web.dev "Optimize Images" guidelines
+ * References:
+ * - Google Web.dev "Optimize Images" guidelines
+ * - WCAG 2.1 SC 1.4.5 (Images of Text)
+ * - ISO 9241-171 (Ergonomics — Guidance on software accessibility)
  */
 
 export interface CompressOptions {
@@ -18,6 +22,8 @@ export interface CompressOptions {
   maxWidth: number;
   /** Maximum height in pixels (default: 1024) */
   maxHeight: number;
+  /** Minimum dimension in pixels — rejects smaller images (default: 100) */
+  minDimension: number;
   /** Initial quality for WebP/JPEG (0.0 - 1.0, default: 0.80) */
   quality: number;
   /** Target file size in KB (default: 200) */
@@ -26,13 +32,14 @@ export interface CompressOptions {
   minQuality: number;
   /** Quality step per iteration (default: 0.10) */
   qualityStep: number;
-  /** Skip files smaller than this (KB) (default: 200) */
+  /** Skip files smaller than this (KB) ONLY if dimensions also fit (default: 200) */
   skipBelowKB: number;
 }
 
 export const DEFAULT_OPTIONS: CompressOptions = {
   maxWidth: 1024,
   maxHeight: 1024,
+  minDimension: 100,
   quality: 0.80,
   targetSizeKB: 200,
   minQuality: 0.55,
@@ -109,8 +116,8 @@ function compressToBlob(
  *
  * @param file - Input image file (any format)
  * @param options - Compression options (uses defaults if not provided)
- * @returns Compressed File with WebP (.webp) or JPEG (.jpg) extension
- * @throws Error if image cannot be loaded or compression fails
+ * @returns Object with compressed File and metadata (original/compressed dimensions & sizes)
+ * @throws Error if image cannot be loaded, dimensions too small, or compression fails
  */
 export async function compressImage(
   file: File,
@@ -118,24 +125,41 @@ export async function compressImage(
 ): Promise<File> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
-  // Skip small files
-  if (file.size / 1024 < opts.skipBelowKB) {
+  // Load image to inspect actual dimensions
+  const img = await loadImage(file);
+  const naturalW = img.naturalWidth;
+  const naturalH = img.naturalHeight;
+
+  // Validate minimum dimensions (ISO 9241-171: images too small are unusable)
+  if (naturalW < opts.minDimension || naturalH < opts.minDimension) {
+    URL.revokeObjectURL(img.src);
+    throw new Error(
+      `La imagen es demasiado pequeña (${naturalW}×${naturalH}px). ` +
+      `Se requiere un mínimo de ${opts.minDimension}×${opts.minDimension}px para una buena presentación.`
+    );
+  }
+
+  // Skip small files ONLY if dimensions already fit within bounds
+  // (prevents uploading 4000×3000px images that happen to be < 200KB)
+  if (
+    file.size / 1024 < opts.skipBelowKB &&
+    naturalW <= opts.maxWidth &&
+    naturalH <= opts.maxHeight
+  ) {
+    URL.revokeObjectURL(img.src);
     return file;
   }
 
-  const img = await loadImage(file);
-  const { width, height } = fitDimensions(
-    img.naturalWidth,
-    img.naturalHeight,
-    opts.maxWidth,
-    opts.maxHeight,
-  );
+  const { width, height } = fitDimensions(naturalW, naturalH, opts.maxWidth, opts.maxHeight);
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas 2D context not available');
+  if (!ctx) {
+    URL.revokeObjectURL(img.src);
+    throw new Error('Canvas 2D context not available');
+  }
 
   // Draw image (this strips EXIF metadata)
   ctx.drawImage(img, 0, 0, width, height);
@@ -193,14 +217,23 @@ export async function compressImage(
 
 /**
  * Quick validation for image files.
- * @returns true if the file is a valid image under the size limit.
+ * Checks file type, size limit, and optionally minimum dimensions.
+ *
+ * @returns Error message string if invalid, or null if valid.
  */
-export function validateImageFile(file: File, maxMB: number = 10): string | null {
+export function validateImageFile(
+  file: File,
+  maxMB: number = 10,
+  minDimension: number = 100,
+): string | null {
   if (!file.type.startsWith('image/')) {
     return 'Solo se permiten archivos de imagen (JPG, PNG, WebP)';
   }
   if (file.size > maxMB * 1024 * 1024) {
     return `La imagen no debe superar los ${maxMB} MB`;
+  }
+  if (file.size === 0) {
+    return 'El archivo de imagen está vacío';
   }
   return null;
 }

@@ -10,13 +10,15 @@ import { PAYMENT_METHODS } from './useSalesCatalog';
 // ── Payment Badge ─────────────────────────────────────────────
 
 function PaymentBadge({ method }: { method: PaymentMethod }) {
-  const config: Record<PaymentMethod, { label: string; cls: string }> = {
+  const config: Partial<Record<PaymentMethod, { label: string; cls: string }>> = {
     cash: { label: 'Efectivo', cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
     transfer: { label: 'Transf.', cls: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
     card: { label: 'Tarjeta', cls: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
     mixed: { label: 'Mixto', cls: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+    wallet: { label: 'Billetera', cls: 'bg-sky-500/10 text-sky-600 border-sky-500/20' },
+    other: { label: 'Otro', cls: 'bg-gray-500/10 text-gray-600 border-gray-500/20' },
   };
-  const c = config[method];
+  const c = config[method] || { label: method, cls: 'bg-muted text-muted-foreground border-border' };
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase border', c.cls)}>
       {c.label}

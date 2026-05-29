@@ -53,6 +53,7 @@ export function useMultiStoreDashboard(stores: Store[], activeStoreId?: string) 
                 lowStockCount: rpcData.low_stock_count ?? 0,
                 pendingTransfersOut: rpcData.pending_transfers_out ?? 0,
                 pendingReceptions: rpcData.pending_receptions ?? 0,
+                visibleProducts: rpcData.visible_products ?? 0,
               };
             }
 

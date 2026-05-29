@@ -61,7 +61,7 @@ export async function setupTracing(): Promise<void> {
     });
 
     sdk = new NodeSDK({ resource, spanProcessors: exporters, instrumentations });
-    sdk.start();
+    sdk?.start();
 
     console.log(`[Tracing] OpenTelemetry initialized — service=${SERVICE_NAME} v${SERVICE_VERSION}, endpoint=${OTEL_ENDPOINT}`);
   } catch (err) {

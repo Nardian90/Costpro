@@ -21,6 +21,21 @@ vi.mock('@/hooks/api/useAuditLogs', () => ({
   }
 }));
 
+// Mock useVirtualizer to work in jsdom (no actual scrolling)
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (options: any) => ({
+    getVirtualItems: () =>
+      Array.from({ length: options.count }, (_, i) => ({
+        index: i,
+        key: i,
+        start: i * 52,
+        size: 52,
+      })),
+    getTotalSize: () => options.count * 52,
+    measureElement: vi.fn(),
+  }),
+}));
+
 // Mock de StateRenderer
 vi.mock('@/components/ui/StateRenderer', () => ({
   StateRenderer: ({ children, data, isLoading }: any) => {
