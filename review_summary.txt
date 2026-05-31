@@ -1,0 +1,9 @@
+Resumen de cambios:
+1. Implementación de src/lib/ai/provider.ts: Sistema de fallback dual GLM (Z.ai) -> Gemini directo con errores descriptivos.
+2. Refactorización de src/app/api/bot/chat/route.ts: Integración del nuevo proveedor, aumento de timeout a 60s, configuración de runtime nodejs.
+3. Corrección de BUG-01 y BUG-02 en ChatBot.tsx: Soporte para el rol 'model' en tipos y filtros de historial.
+4. Corrección de BUG-03 y BUG-06 en validation/api-schemas.ts: Campo 'stream' añadido y límite de caracteres en contenido.
+5. Corrección de BUG-05 en bot-service.ts: Robustez en el parseo de argumentos de herramientas (JSON.parse with try/catch).
+6. Ajustes de despliegue: next.config.ts (standalone removido, external packages), package.json (build simplificado), vercel.json (maxDuration).
+7. Documentación: VERCEL_ENV_SETUP.md para configuración en producción.
+8. Mantenimiento de tipos: Actualización de MessageRole en types.ts y corrección de schemas en otras rutas relacionadas.
