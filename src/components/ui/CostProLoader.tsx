@@ -13,22 +13,9 @@ interface CostProLoaderProps {
   fullScreen?: boolean;
 }
 
-/* ── Splash timing (fullScreen only) ── */
-const SPLASH_FIRST_MS = 1800;   // First visit: line + logo + hold
-const SPLASH_RETURN_MS = 600;   // Returning visitor: quick flash
+const SPLASH_FIRST_MS = 1800;
+const SPLASH_RETURN_MS = 600;
 
-/**
- * CostProLoader — Netflix-Line Style Loader
- *
- * fullScreen (splash):
- *   1. Green line expands from center outward (Netflix N-style)
- *   2. "CostPro" fades in once line reaches full width
- *   3. Brief hold → fade out → dispatch dismiss event
- *
- * inline (loading states):
- *   Compact green dot pulse + optional shimmer subtext.
- *   Minimal, blends with any background.
- */
 export const CostProLoader: React.FC<CostProLoaderProps> = ({
   text,
   subtext,
@@ -39,11 +26,9 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
 }) => {
   const id = React.useId().replace(/:/g, '');
 
-  /* ── Splash state (fullScreen only) ── */
-  // FIX-BUG-RCT-003: Use useSyncExternalStore to read localStorage without hydration mismatch
   const isReturning = useSyncExternalStore(
     () => () => {},
-    () => !!localStorage.getItem('costpro-visited'),
+    () => typeof window !== 'undefined' ? !!localStorage.getItem('costpro-visited') : false,
     () => false
   );
   const [phase, setPhase] = useState<'line' | 'logo' | 'hold' | 'out'>(
@@ -54,12 +39,10 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   );
   const [dismissed, setDismissed] = useState(false);
 
-  // FIX-BUG-RCT-003: Derive effective phase — skip 'line' when returning visitor detected client-side
   const effectivePhase = (phase === 'line' && isReturning) ? 'logo' : phase;
 
-  // Mark first visit in localStorage (client-side only)
   useEffect(() => {
-    if (fullScreen && !localStorage.getItem('costpro-visited')) {
+    if (fullScreen && typeof window !== 'undefined' && !localStorage.getItem('costpro-visited')) {
       localStorage.setItem('costpro-visited', 'true');
     }
   }, [fullScreen]);
@@ -72,19 +55,15 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     }, 500);
   }, []);
 
-  /* ── Splash timeline ── */
   useEffect(() => {
     if (!fullScreen || dismissed) return;
 
     let timers: ReturnType<typeof setTimeout>[] = [];
-
     const totalMs = isReturning ? SPLASH_RETURN_MS : SPLASH_FIRST_MS;
 
     if (isReturning) {
-      // Returning: skip line animation, go straight to logo (already set via effectivePhase)
       timers.push(setTimeout(dismiss, totalMs));
     } else {
-      // First visit: line (0-800ms) → logo (800-1200ms) → hold (1200-1800ms) → out
       timers.push(setTimeout(() => setPhase('logo'), 800));
       timers.push(setTimeout(() => setPhase('hold'), 1200));
       timers.push(setTimeout(dismiss, totalMs));
@@ -93,117 +72,54 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
     return () => timers.forEach(clearTimeout);
   }, [fullScreen, dismissed, dismiss, isReturning]);
 
-  if (dismissed && !fullScreen) return null;
-  if (dismissed && fullScreen) return null;
+  if (dismissed) return null;
 
-  /* ══════════════════════════════════════════════════════
-     FULLSCREEN SPLASH — Netflix Line Style
-     ══════════════════════════════════════════════════════ */
-  if (fullScreen) {
-    return (
-      <div
-        className={cn(
-          'min-h-screen w-full flex flex-col items-center justify-center overflow-hidden relative',
-          phase === 'out' ? 'opacity-0 transition-opacity duration-500' : '',
-          className,
-        )}
-        style={{ backgroundColor: '#000' }}
-      >
-        {/* safe: static CSS keyframe animations using React.useId(), no user input */}
-        <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `
-          /* ── Netflix Line: expand from center (scaleX — GPU accelerated) ── */
-          @keyframes cp-line-expand-${id} {
-            0% { transform: scaleX(0); opacity: 0; }
-            6% { opacity: 1; }
-            100% { transform: scaleX(1); opacity: 1; }
-          }
-          .cp-splash-line-${id} {
-            transform-origin: center;
-            animation: cp-line-expand-${id} 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            box-shadow: 0 0 14px rgba(34,197,94,0.35), 0 0 40px rgba(34,197,94,0.12);
-          }
-
-          /* ── Logo reveal ── */
-          @keyframes cp-logo-reveal-${id} {
-            0% { opacity: 0; transform: translateY(8px) scale(0.98); filter: blur(4px); }
-            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-          }
-          .cp-splash-logo-${id} {
-            animation: cp-logo-reveal-${id} 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-          }
-
-          /* ── Line subtle glow (Netflix style — breathing) ── */
-          @keyframes cp-line-glow-${id} {
-            0%, 100% { box-shadow: 0 0 10px rgba(34,197,94,0.25), 0 0 30px rgba(34,197,94,0.08); }
-            50% { box-shadow: 0 0 18px rgba(34,197,94,0.45), 0 0 50px rgba(34,197,94,0.15); }
-          }
-          .cp-line-glow-${id} {
-            animation: cp-line-glow-${id} 2s ease-in-out infinite;
-          }
-
-          /* ── Subtle vignette (barely perceptible ambient glow) ── */
-          @keyframes cp-vignette-${id} {
-            0% { opacity: 0; }
-            100% { opacity: 0.04; }
-          }
-          .cp-vignette-${id} {
-            animation: cp-vignette-${id} 1s ease-out forwards;
-          }
-        `}} />
-
-        {/* Very subtle center glow — barely perceptible */}
-        <div className={`cp-vignette-${id} absolute inset-0 pointer-events-none`}
-          style={{
-            background: 'radial-gradient(ellipse at center, var(--primary) 0%, transparent 50%)',
-            opacity: 0,
-          }}
-        />
-
-        {/* Center content */}
-        <div className="relative z-10 flex flex-col items-center gap-8">
-          {/* Logo text — always in DOM so it reserves space; invisible during line phase */}
-          <div
-            className={cn(
-              effectivePhase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
-            )}
-            style={{ transition: 'opacity 0.15s ease' }}
-          >
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-none"
-              style={{
-                fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
-                fontWeight: 900,
-                color: '#fff',
-              }}
-            >
-              Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
-            </h1>
-          </div>
-
-          {/* Green line — 300px wide × 5px tall, animation via scaleX */}
-          <div className="flex items-center justify-center">
-            <div
-              className={cn(
-                'h-[5px] w-[300px] rounded-full',
-                effectivePhase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
-              )}
-              style={{
-                backgroundColor: 'var(--primary)',
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ══════════════════════════════════════════════════════
-     INLINE MODE — Compact Loader
-     ══════════════════════════════════════════════════════ */
-  return (
-    <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
-      {/* safe: static CSS keyframe animations using React.useId(), no user input */}
+  const content = (
+    <>
       <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `
+        @keyframes cp-line-expand-${id} {
+          0% { transform: scaleX(0); opacity: 0; }
+          6% { opacity: 1; }
+          100% { transform: scaleX(1); opacity: 1; }
+        }
+        .cp-splash-line-${id} {
+          transform-origin: center;
+          animation: cp-line-expand-${id} 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          box-shadow: 0 0 14px rgba(34,197,94,0.35), 0 0 40px rgba(34,197,94,0.12);
+        }
+
+        @keyframes cp-logo-reveal-${id} {
+          0% { opacity: 0; transform: translateY(8px) scale(0.98); filter: blur(4px); }
+          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        .cp-splash-logo-${id} {
+          animation: cp-logo-reveal-${id} 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes cp-line-glow-${id} {
+          0%, 100% { box-shadow: 0 0 10px rgba(34,197,94,0.25), 0 0 30px rgba(34,197,94,0.08); }
+          50% { box-shadow: 0 0 18px rgba(34,197,94,0.45), 0 0 50px rgba(34,197,94,0.15); }
+        }
+        .cp-line-glow-${id} {
+          animation: cp-line-glow-${id} 2s ease-in-out infinite;
+        }
+
+        @keyframes cp-vignette-${id} {
+          0% { opacity: 0; }
+          100% { opacity: 0.04; }
+        }
+        .cp-vignette-${id} {
+          animation: cp-vignette-${id} 1s ease-out forwards;
+        }
+
+        @keyframes cp-fade-in-${id} {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
+        .cp-fade-in-${id} {
+          animation: cp-fade-in-${id} 0.8s ease-out forwards;
+        }
+
         @keyframes cp-dot-pulse-${id} {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.85); }
@@ -235,36 +151,109 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
         }
       `}} />
 
-      {/* Mini green dot + expanding line */}
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div
-            className={`cp-dot-${id} w-2 h-2 rounded-full`}
-            style={{ backgroundColor: 'var(--primary)' }}
+      {fullScreen ? (
+        <div
+          className={cn(
+            'min-h-screen w-full flex flex-col items-center justify-center overflow-hidden relative',
+            phase === 'out' ? 'opacity-0 transition-opacity duration-500' : '',
+            className,
+          )}
+          style={{ backgroundColor: '#000' }}
+          data-testid="splash-loader"
+        >
+          <div className={`cp-vignette-${id} absolute inset-0 pointer-events-none`}
+            style={{
+              background: 'radial-gradient(ellipse at center, var(--primary) 0%, transparent 50%)',
+              opacity: 0,
+            }}
           />
-          <div
-            className={`cp-line-draw-${id} h-[2px] rounded-full`}
-            style={{ backgroundColor: 'var(--primary)' }}
-          />
+
+          <div className="relative z-10 flex flex-col items-center gap-8">
+            <div
+              className={cn(
+                effectivePhase === 'line' ? 'opacity-0' : `opacity-100 cp-splash-logo-${id}`,
+              )}
+              style={{ transition: 'opacity 0.15s ease' }}
+            >
+              <h1
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-none"
+                style={{
+                  fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
+                  fontWeight: 900,
+                  color: '#fff',
+                }}
+              >
+                Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
+              </h1>
+            </div>
+
+            <div className="flex flex-col items-center gap-6">
+              <div
+                className={cn(
+                  'h-[5px] w-[300px] rounded-full',
+                  effectivePhase === 'line' ? `cp-splash-line-${id}` : `cp-line-glow-${id}`,
+                )}
+                style={{
+                  backgroundColor: 'var(--primary)',
+                }}
+              />
+
+              <div className={cn(
+                "flex flex-col items-center gap-2 transition-opacity duration-500",
+                effectivePhase === 'line' ? 'opacity-0' : 'opacity-100 cp-fade-in-${id}'
+              )}>
+                {showText && text && (
+                  <p className="text-white/60 text-xs uppercase tracking-[0.4em] font-medium">
+                    {text}
+                  </p>
+                )}
+                {showSubtext && subtext && (
+                  <p className="text-white/20 text-[10px] uppercase tracking-[0.2em]">
+                    {subtext}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div
+                className={`cp-dot-${id} w-2 h-2 rounded-full`}
+                style={{ backgroundColor: 'var(--primary)' }}
+              />
+              <div
+                className={`cp-line-draw-${id} h-[2px] rounded-full`}
+                style={{ backgroundColor: 'var(--primary)' }}
+              />
+            </div>
 
-        {/* Optional text */}
-        {showText && text && (
-          <p
-            className="text-[10px] uppercase tracking-[0.3em] font-bold"
-            style={{ color: 'var(--muted-foreground)', fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}
-          >
-            {text}
-          </p>
-        )}
+            {showText && text && (
+              <p
+                className="text-[10px] uppercase tracking-[0.3em] font-bold"
+                style={{ color: 'var(--muted-foreground)', fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}
+              >
+                {text}
+              </p>
+            )}
 
-        {/* Optional shimmer subtext */}
-        {showSubtext && subtext && (
-          <span className={`cp-shimmer-${id} text-[9px] uppercase tracking-[0.25em] font-semibold`}>
-            {subtext}
-          </span>
-        )}
-      </div>
-    </div>
+            {showSubtext && subtext && (
+              <span className={`cp-shimmer-${id} text-[9px] uppercase tracking-[0.25em] font-semibold`}>
+                {subtext}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
+
+  // Always wrap in <main id="main-content"> if it's the primary content (splash or main app content)
+  if (fullScreen) {
+    return <main id="main-content">{content}</main>;
+  }
+
+  return content;
 };

@@ -403,7 +403,7 @@ export default function HeroSection({
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
             >
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              <span>Ver demo</span>
+              <span>Ver demo interactiva de CostPro</span>
             </button>
             {/* Login CTA */}
             <button
@@ -458,7 +458,7 @@ export default function HeroSection({
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all flex items-center gap-2"
                 >
                   <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-                  Ver demo
+                  Ver demo interactiva de CostPro
                 </button>
                 <div className="h-px bg-white/[0.08] my-2" />
                 <button
@@ -538,13 +538,13 @@ export default function HeroSection({
             </button>
 
             {/* Secondary CTA — "Ver Demo" */}
-            <button aria-label="Ver demo de CostPro"
+            <button data-testid="hero-demo-button" aria-label="Ver demostración completa"
               onClick={onOpenDemo}
               className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300 flex items-center gap-2"
               style={{ minWidth: '180px' }}
             >
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              Ver cómo funciona
+              Ver demostración completa
             </button>
           </motion.div>
 
