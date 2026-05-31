@@ -5,7 +5,6 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   typescript: {
     ignoreBuildErrors: false, // FIX-INF-017
   },
@@ -16,6 +15,8 @@ const nextConfig: NextConfig = {
     '@opentelemetry/sdk-node',
     '@opentelemetry/auto-instrumentations-node',
     '@opentelemetry/exporter-trace-otlp-http',
+    '@google/generative-ai',
+    'z-ai-web-dev-sdk',
   ],
   images: {
     remotePatterns: [
