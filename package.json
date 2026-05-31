@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
+    "build": "prisma generate && next build",
+    "start": "next start",
     "audit": "npm audit --audit-level=high",
     "lint": "eslint .",
     "lint:a11y": "eslint src/ --ext .tsx,.ts --rule 'jsx-a11y/alt-text: error' --max-warnings 999",
