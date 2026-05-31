@@ -14,7 +14,7 @@ import ReactMarkdown from 'react-markdown';
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 interface Message {
   id?: string;
-  role: 'user' | 'assistant' | 'system' | 'tool';
+  role: 'user' | 'assistant' | 'system' | 'tool' | 'model';
   content: string;
   tool_calls?: any[];
   imageData?: { mimeType: string; data: string } | null;
@@ -425,7 +425,7 @@ export function ChatBot() {
       const currentConvo = conversations.find(c => c.id === convoId);
       const allMessages = [...(currentConvo?.messages || []), userMessage];
       const apiMessages = allMessages
-        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .filter(m => m.role === 'user' || m.role === 'assistant' || m.role === 'model')
         .slice(-30); // Increased context window
 
       const headers: Record<string, string> = {

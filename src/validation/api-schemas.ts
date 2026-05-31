@@ -55,7 +55,7 @@ export const costSheetSaveSchema = z.object({
 
 export const aiChatSchema = z.object({
   messages: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
+    role: z.enum(['user', 'assistant', 'system', 'model']),
     content: z.string().max(8000),
   })).min(1).max(50),
   aiProvider: z.string().min(1).max(50).optional(),
@@ -104,8 +104,8 @@ export const logsSchema = z.object({
 
 // ─── Bot ────────────────────────────────────────────────────────────────────
 export const botMessageSchema = z.object({
-  role: z.enum(['user', 'assistant', 'system', 'tool']),
-  content: z.string(),
+  role: z.enum(['user', 'assistant', 'system', 'tool', 'model']),
+  content: z.string().max(32000),
   tool_calls: z.array(z.record(z.string(), z.unknown())).optional(),
   tool_call_id: z.string().optional(),
   name: z.string().optional(),
@@ -125,7 +125,7 @@ export const botChatSchema = z.object({
   model: z.string().optional(),
   storeId: z.string().nullable().optional(),
   temperature: z.number().min(0).max(1).optional(),
-  stream: z.boolean().optional(),
+  stream: z.boolean().optional().default(false),
 });
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
