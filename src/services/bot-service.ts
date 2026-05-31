@@ -166,7 +166,13 @@ Reglas: ${lightQuery ? 'Eres un asistente amable. No uses tools para saludos.' :
 
         const result = await executeTool(
           toolCall.function.name,
-          JSON.parse(toolCall.function.arguments),
+          /* BUG-05 FIX */ (() => {
+            try { return JSON.parse(toolCall.function.arguments); }
+            catch (e) {
+              console.error('[BotService] JSON.parse failed:', e, toolCall.function.arguments);
+              return {};
+            }
+          })(),
           { supabase, userId, userRole, storeId }
         );
 

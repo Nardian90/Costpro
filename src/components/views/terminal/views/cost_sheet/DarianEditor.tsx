@@ -17,7 +17,7 @@ interface AnnexPreviewItem {
 }
 
 interface Message {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'model';
     content: string;
     updateData?: Record<string, unknown>;
     hasSaved?: boolean;
