@@ -68,7 +68,7 @@ window.scrollTo = () => {};
 // ─── Suppress console noise from component under test ──────────────────────
 const noop = () => {};
 ['log', 'warn', 'error', 'info'].forEach((method) => {
-  const original = console[method];
+  const original = (console as any)[method];
   // We keep the original but let tests override if needed
   // No-op by default to reduce noise in test output
 });

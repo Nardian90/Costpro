@@ -6,8 +6,8 @@
 
 # Test info
 
-- Name: arena-fc-verification.spec.ts >> Arena FC - Verify visual and logic fixes
-- Location: e2e/arena-fc-verification.spec.ts:3:5
+- Name: landing-page.spec.ts >> Landing Page >> should display main navigation
+- Location: e2e/landing-page.spec.ts:12:7
 
 # Error details
 
