@@ -56,7 +56,7 @@ describe('POST /api/bot/chat', () => {
     expect(res.status).toBe(401);
   });
 
-  it('retorna respuesta del bot', async () => {
+  it('retorna respuesta del bot en formato SSE', async () => {
     const { getServerSession } = await import('@/lib/auth');
     vi.mocked(getServerSession).mockResolvedValueOnce({ user: { id: 'u1', name: 'Test' } } as any);
 
@@ -65,9 +65,13 @@ describe('POST /api/bot/chat', () => {
       body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
     });
     const res = await POST(req);
-    const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.text).toBe('Bot response');
+    expect(res.headers.get('Content-Type')).toBe('text/event-stream');
+
+    const text = await res.text();
+    expect(text).toContain('data: {"text":"Bot response","provider":"glm"}');
+    expect(text).toContain('data: {"metadata":{"provider":"glm","actions":[]},"done":true}');
+    expect(text).toContain('data: [DONE]');
   });
 });

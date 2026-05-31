@@ -51,13 +51,47 @@ async function callGLM(
   }
 
   try {
-    const { default: ZAI } = await import('z-ai-web-dev-sdk');
+    // Leer la API real del SDK antes de instanciar
+    // El SDK z-ai-web-dev-sdk v0.0.17 puede exportar de dos formas:
+    // Forma A: export default class ZAI { constructor(config) }
+    // Forma B: export { ZAI } — named export
+    // El código actual intenta ZAI.create() que no existe en ninguna forma
+
+    let ZAIModule: any;
+    try {
+      ZAIModule = await import('z-ai-web-dev-sdk');
+    } catch {
+      throw {
+        provider: 'glm' as AIProviderName,
+        code: 'SDK_IMPORT_ERROR',
+        message: 'No se pudo importar z-ai-web-dev-sdk. Usando Gemini como fallback.',
+        isKeyMissing: false,
+        isNetworkError: false,
+        isRateLimit: false,
+      } as AIProviderError;
+    }
+
+    // Resolver el constructor — soportar export default y named export
+    const ZAIConstructor = ZAIModule.default ?? ZAIModule.ZAI ?? ZAIModule;
+
+    if (typeof ZAIConstructor !== 'function') {
+      throw {
+        provider: 'glm' as AIProviderName,
+        code: 'SDK_INVALID_EXPORT',
+        message: `z-ai-web-dev-sdk no exporta un constructor válido. ` +
+          `Exports encontrados: ${Object.keys(ZAIModule).join(', ')}. ` +
+          'Usando Gemini como fallback.',
+        isKeyMissing: false,
+        isNetworkError: false,
+        isRateLimit: false,
+      } as AIProviderError;
+    }
 
     if (!process.env.ZAI_API_KEY && process.env.GLM_API_KEY) {
       process.env.ZAI_API_KEY = process.env.GLM_API_KEY;
     }
 
-    const client = await ZAI.create();
+    const client = new ZAIConstructor({ apiKey });
 
     const response = await client.chat.completions.create({
       model: process.env.GLM_MODEL ?? 'glm-4-flash',
@@ -175,10 +209,21 @@ async function callGemini(
       systemInstruction: systemPrompt,
     });
 
-    const history = messages.slice(0, -1).map(m => ({
-      role: (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }));
+    // Gemini solo acepta role 'user' | 'model' en el history de startChat()
+    // Filtrar mensajes system — ya están en systemInstruction del modelo
+    // Filtrar mensajes vacíos — Gemini rechaza content vacío
+    const history = messages.slice(0, -1)
+      .filter(m => m.role !== 'system' && m.content.trim().length > 0)
+      .map(m => ({
+        role: (m.role === 'assistant' || m.role === 'model') ? 'model' as const : 'user' as const,
+        parts: [{ text: m.content }],
+      }));
+
+    // Gemini requiere que el history empiece con 'user' si no está vacío
+    // Si el primer mensaje es 'model', eliminarlo para evitar error
+    if (history.length > 0 && history[0].role === 'model') {
+      history.shift();
+    }
 
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage) throw new Error('No hay mensajes para enviar');
