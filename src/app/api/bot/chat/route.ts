@@ -134,15 +134,43 @@ async function botChatHandler(req: NextRequest) {
         throw new Error('La IA no devolvió ninguna respuesta');
       }
 
-      return NextResponse.json({
-        text: result.text,
-        message: result.text, // For compatibility
-        provider: result.provider,
-        metadata: {
-          provider: result.provider,
-          actions: result.actions ?? [],
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          try {
+            // Chunk 1: el texto completo de la respuesta
+            const textChunk = JSON.stringify({
+              text: result.text,
+              provider: result.provider,
+            });
+            controller.enqueue(encoder.encode(`data: ${textChunk}\n\n`));
+
+            // Chunk 2: metadata con actions
+            const metaChunk = JSON.stringify({
+              metadata: {
+                provider: result.provider,
+                actions: result.actions ?? [],
+              },
+              done: true,
+            });
+            controller.enqueue(encoder.encode(`data: ${metaChunk}\n\n`));
+
+            // Señal de fin de stream
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+          } catch (e) {
+            controller.error(e);
+          }
         },
-        timestamp: new Date().toISOString()
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
       });
 
     } catch (aiError: any) {
