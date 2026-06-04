@@ -512,7 +512,7 @@ export default function HeroSection({
             {/* Primary CTA — "Comenzar Gratis" */}
             <button
               onClick={() => {
-                if (setLoginDefaultTab) setLoginDefaultTab('register');
+                if (setLoginDefaultTab) setLoginDefaultTab('login');
                 setShowLoginModal(true);
               }}
               className="group relative px-8 py-3.5 rounded-2xl font-bold text-sm tracking-tight text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, ChevronUp } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -12,12 +11,12 @@ interface StickyCartSummaryProps {
   className?: string;
 }
 
-export const StickyCartSummary: React.FC<StickyCartSummaryProps> = ({
+export const StickyCartSummary = ({
   itemCount,
   total,
   onClick,
   className
-}) => {
+}: StickyCartSummaryProps) => {
   if (itemCount === 0) return null;
 
   return (

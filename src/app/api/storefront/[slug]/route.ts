@@ -47,9 +47,29 @@ export async function GET(
       return NextResponse.json({ store, products: [] });
     }
 
-    // Resolve image URLs to full Supabase public URLs
+    // Fetch accurate stock from RPC (computed from stock_movements in real-time)
+    let stockMap = new Map<string, number>();
+    try {
+      const { data: rpcProducts } = await supabase.rpc('get_paginated_products', {
+        p_limit: 1000,
+        p_offset: 0,
+        p_store_id: store.id,
+        p_search_term: '',
+        p_category: ''
+      });
+      for (const rp of (rpcProducts || [])) {
+        if (rp.id && rp.stock_current !== undefined) {
+          stockMap.set(rp.id, rp.stock_current);
+        }
+      }
+    } catch (e) {
+      console.warn('[Storefront API] RPC stock fetch failed, using products.stock_current:', e);
+    }
+
+    // Resolve image URLs to full Supabase public URLs and overlay accurate stock from RPC
     const productList = (products || []).map(p => ({
       ...p,
+      stock_current: stockMap.get(p.id) ?? p.stock_current ?? 0,
       image_url: p.image_url ? getProductImageUrl(p.image_url) : null,
       public_image_url: p.public_image_url ? getProductImageUrl(p.public_image_url) : null,
     }));

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Product, PaymentMethod } from '@/types';
+import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import SalesCatalogCard from './SalesCatalogCard';
 
@@ -10,16 +10,17 @@ interface SalesCatalogCardGridProps {
   getOrCreateRow: (product: Product) => SalesCatalogRow;
   handlers: {
     handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: any) => void;
+    handleSelectVariant: (product: Product, variant: ProductVariant | null) => void;
     handleSetDiscountType: (product: Product) => void;
     handleSetDiscountValue: (product: Product, value: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
     handleSetCashPaid: (product: Product, val: number) => void;
     handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => void;
+    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow, fallbackProduct?: Product) => void;
   };
   hasDiscrepancy: (row: SalesCatalogRow) => boolean;
   calcSubtotal: (row: SalesCatalogRow) => number;
+  isReadOnly?: boolean;
 }
 
 export default function SalesCatalogCardGrid({
@@ -28,6 +29,7 @@ export default function SalesCatalogCardGrid({
   handlers,
   hasDiscrepancy,
   calcSubtotal,
+  isReadOnly = false,
 }: SalesCatalogCardGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -47,6 +49,7 @@ export default function SalesCatalogCardGrid({
             discrepancy={discrepancy}
             handlers={handlers}
             calcSubtotal={calcSubtotal}
+            isReadOnly={isReadOnly}
           />
         );
       })}

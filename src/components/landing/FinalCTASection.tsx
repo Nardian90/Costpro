@@ -7,9 +7,10 @@ import { MessageCircle } from "lucide-react";
 
 interface FinalCTASectionProps {
   onOpenDemo?: () => void;
+  onSignup?: () => void;
 }
 
-export default function FinalCTASection({ onOpenDemo }: FinalCTASectionProps) {
+export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectionProps) {
   const prefersReduced = useReducedMotion();
   const noAnim = prefersReduced;
 
@@ -63,14 +64,13 @@ export default function FinalCTASection({ onOpenDemo }: FinalCTASectionProps) {
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
           {/* Primary CTA */}
-          <a href="/signup">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white font-medium hover:from-[#16a34a] hover:to-[#15803d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8"
-            >
-              Crear mi cuenta gratis
-            </Button>
-          </a>
+          <Button
+            size="lg"
+            onClick={onSignup}
+            className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white font-medium hover:from-[#16a34a] hover:to-[#15803d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8"
+          >
+            Crear mi cuenta gratis
+          </Button>
 
           {/* Secondary CTA */}
           <Button

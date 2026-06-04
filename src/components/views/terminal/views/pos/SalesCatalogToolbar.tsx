@@ -17,6 +17,7 @@ interface SalesCatalogToolbarProps {
   loadedCount: number;
   sortConfig: SortConfig;
   onClearSort: () => void;
+  disabled?: boolean;
 }
 
 const STOCK_FILTER_OPTIONS: { value: StockFilter; label: string }[] = [
@@ -37,9 +38,13 @@ export default function SalesCatalogToolbar({
   loadedCount,
   sortConfig,
   onClearSort,
+  disabled = false,
 }: SalesCatalogToolbarProps) {
   return (
-    <div className="space-y-3 sm:space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-4 px-4 shadow-xl">
+    <div className={cn(
+      'space-y-3 sm:space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-4 px-4 shadow-xl',
+      disabled && 'opacity-60 pointer-events-none'
+    )}>
       {/* Search */}
       <div className="flex items-center gap-2">
         <div className="flex-1">

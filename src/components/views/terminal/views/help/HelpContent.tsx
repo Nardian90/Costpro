@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Component, type ReactNode, type ErrorInfo } from 'react';
 import HelpSectionRenderer from './HelpSectionRenderer';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,6 +18,8 @@ import {
   ArrowUp,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
+  ChevronRight,
   Calculator,
   ShoppingCart,
   BarChart3,
@@ -32,12 +34,16 @@ interface HelpContentProps {
   searchQuery: string;
   searchResults: any[];
   glossary?: Record<string, string>;
+  breadcrumbs: { label: string; path: string | null }[];
+  adjacentDocs: { prev: { path: string; title: string } | null; next: { path: string; title: string } | null };
   onSelectResult: (path: string) => void;
   onClearSearch: () => void;
   onSearch: (q: string) => void;
+  onNavigate: (path: string) => void;
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; bg: string }> = {
+  'getting-started': { icon: BookOpen, label: 'Para Empezar', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   iso: { icon: BookOpen, label: 'Manual de Usuario', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   tutorial: { icon: Play, label: 'Tutorial', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
   'how-to': { icon: Wrench, label: 'Guía Práctica', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
@@ -75,15 +81,47 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
+// ── Local Error Boundary (prevents global crash from markdown rendering) ──
+class HelpRenderBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  state = { hasError: false, error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-6">
+          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-500" />
+          </div>
+          <h3 className="text-sm font-bold mb-1">Error al renderizar documento</h3>
+          <p className="text-xs text-muted-foreground/60 mb-4 max-w-md text-center">El documento contiene formato no compatible. Se mostrará como texto plano.</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-bold text-primary hover:bg-primary/15 transition-colors"
+          >Reintentar</button>
+          <pre className="mt-6 max-w-lg max-h-64 overflow-auto text-[10px] font-mono text-muted-foreground/40 bg-muted/30 rounded-lg p-4 whitespace-pre-wrap break-words">
+            {this.state.error?.message?.slice(0, 300)}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function HelpContent({
   doc,
   loading,
   searchQuery,
   searchResults,
   glossary,
+  breadcrumbs,
+  adjacentDocs,
   onSelectResult,
   onClearSearch,
   onSearch,
+  onNavigate,
 }: HelpContentProps) {
   // ── Loading State ──
   if (loading) {
@@ -204,6 +242,31 @@ export default function HelpContent({
   // ── Document View ──
   return (
     <div className="p-6 md:p-10 xl:p-14 space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+      {/* ── Breadcrumbs ── */}
+      {breadcrumbs.length > 0 && (
+        <nav className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/60 overflow-x-auto">
+          {breadcrumbs.map((crumb, idx) => (
+            <React.Fragment key={idx}>
+              {idx > 0 && <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />}
+              {crumb.path && idx < breadcrumbs.length - 1 ? (
+                <button
+                  onClick={() => onNavigate(crumb.path!)}
+                  className="hover:text-primary transition-colors truncate max-w-[160px]"
+                >
+                  {crumb.label}
+                </button>
+              ) : (
+                <span className={cn(
+                  idx === breadcrumbs.length - 1 ? 'text-foreground font-bold' : 'truncate max-w-[160px]'
+                )}>
+                  {crumb.label}
+                </span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      )}
+
       {/* Document Hero Header */}
       <div className="relative pb-10 border-b border-border/30">
         {/* Background gradient */}
@@ -231,18 +294,21 @@ export default function HelpContent({
           </h1>
 
           {/* Description pill */}
-          <p className="text-sm font-medium text-muted-foreground max-w-2xl leading-relaxed">
-            {doc.type === 'iso' && 'Sección del manual oficial de usuario de CostPro. Documentación funcional certificada.'}
-            {doc.type === 'tutorial' && 'Tutorial paso a paso para dominar las funcionalidades del sistema.'}
-            {doc.type === 'how-to' && 'Guía práctica con instrucciones detalladas para operaciones específicas.'}
-            {doc.type === 'reference' && 'Referencia técnica completa de la API y configuración del sistema.'}
-            {doc.type === 'explanation' && 'Explicación en profundidad de los conceptos y arquitectura del sistema.'}
+          <p className="text-[14px] font-medium text-muted-foreground max-w-2xl leading-[1.8] text-justify hyphens-auto">
+            {doc.type === 'iso' && 'Sección del manual oficial de usuario de CostPro. Documentación funcional certificada según los estándares internacionales ISO/IEC 26514 para sistemas de ayuda en línea, garantizando accesibilidad, claridad y completitud en cada apartado.'}
+            {doc.type === 'tutorial' && 'Tutorial paso a paso diseñado para guiar al usuario de forma progresiva a través de las funcionalidades del sistema, desde los conceptos fundamentales hasta las operaciones avanzadas, con explicaciones detalladas y ejemplos prácticos.'}
+            {doc.type === 'how-to' && 'Guía práctica con instrucciones detalladas y específicas para ejecutar operaciones concretas dentro del sistema, organizadas de forma secuencial para facilitar su seguimiento y aplicación inmediata en el entorno de trabajo.'}
+            {doc.type === 'reference' && 'Referencia técnica completa que documenta la API, parámetros de configuración, estructuras de datos y especificaciones del sistema, servida como fuente autorizada de consulta para desarrolladores y administradores.'}
+            {doc.type === 'explanation' && 'Explicación en profundidad de los conceptos, arquitectura y principios de diseño del sistema, proporcionando el contexto técnico necesario para comprender el funcionamiento interno y las decisiones de implementación.'}
           </p>
 
           {/* Quick actions */}
           <div className="flex items-center gap-2 pt-2">
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              aria-label="Volver al inicio del documento"
+              onClick={() => {
+                (window as any).__helpScrollToTop?.();
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-muted/40 border border-border/30 hover:bg-muted/60 transition-colors"
             >
               <ArrowUp className="w-3 h-3" />
@@ -252,8 +318,40 @@ export default function HelpContent({
         </div>
       </div>
 
-      {/* Main Content */}
-      <HelpSectionRenderer content={doc.content} glossary={glossary} />
+      {/* ── Adjacent Documents Navigation (Prev / Next) ── */}
+      {(adjacentDocs.prev || adjacentDocs.next) && (
+        <div className="flex items-center justify-between gap-4 pt-6 border-t border-border/20">
+          {adjacentDocs.prev ? (
+            <button
+              onClick={() => onNavigate(adjacentDocs.prev!.path)}
+              className="group flex-1 text-left p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <ArrowLeft className="w-3.5 h-3.5 text-primary/60 group-hover:text-primary transition-colors" />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Anterior</span>
+              </div>
+              <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors truncate block">{adjacentDocs.prev.title}</span>
+            </button>
+          ) : <div />}
+          {adjacentDocs.next ? (
+            <button
+              onClick={() => onNavigate(adjacentDocs.next!.path)}
+              className="group flex-1 text-right p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
+            >
+              <div className="flex items-center justify-end gap-2 mb-1">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Siguiente</span>
+                <ArrowRight className="w-3.5 h-3.5 text-primary/60 group-hover:text-primary transition-colors" />
+            </div>
+              <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors truncate block">{adjacentDocs.next.title}</span>
+            </button>
+          ) : <div />}
+        </div>
+      )}
+
+      {/* Main Content — wrapped in local error boundary */}
+      <HelpRenderBoundary>
+        <HelpSectionRenderer content={doc.content} glossary={glossary} />
+      </HelpRenderBoundary>
 
       {/* Bottom navigation */}
       <div className="pt-8 flex items-center justify-between border-t border-dashed border-border/30">
@@ -262,7 +360,8 @@ export default function HelpContent({
           CostPro · Documentation System · ISO/IEC 26514
         </div>
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Volver arriba del documento"
+          onClick={() => { (window as any).__helpScrollToTop?.(); }}
           className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors"
         >
           Volver arriba

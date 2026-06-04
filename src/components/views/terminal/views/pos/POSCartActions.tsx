@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { CostProLoader } from "@/components/ui/CostProLoader";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/atomic";
-import { POSCartDiscount } from "./POSCartDiscountModal";
+import { POSCartDiscountModal } from "./POSCartDiscountModal";
 import type { POSCartActionsProps } from "./POSCart.types";
 
 export const POSCartActions = ({
@@ -137,7 +137,7 @@ export const POSCartActions = ({
           </div>
 
           {/* Discount Selection */}
-          <POSCartDiscount discount={discount} setDiscount={setDiscount} />
+          <POSCartDiscountModal discount={discount} setDiscount={setDiscount} />
         </motion.div>
       )}
     </AnimatePresence>

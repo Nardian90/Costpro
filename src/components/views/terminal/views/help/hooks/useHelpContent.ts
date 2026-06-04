@@ -7,7 +7,7 @@ export interface HelpDoc {
   path: string;
   title: string;
   content: string;
-  type: 'tutorial' | 'how-to' | 'reference' | 'explanation' | 'iso';
+  type: 'getting-started' | 'tutorial' | 'how-to' | 'reference';
 }
 
 export interface TocItem {
@@ -16,18 +16,26 @@ export interface TocItem {
   text: string;
 }
 
-interface FileEntry {
-  filename: string;
+export interface AdjacentDoc {
+  path: string;
   title: string;
 }
 
+export interface SectionEntry {
+  id: string;
+  dir: string;
+  label: string;
+  icon: string;
+  files: { filename: string; title: string }[];
+}
+
 export interface HelpStructure {
-  iso_manual: FileEntry[];
-  docs: {
-    tutorials: FileEntry[];
-    howTo: FileEntry[];
-    reference: FileEntry[];
-    explanation: FileEntry[];
+  sections: SectionEntry[];
+  compliance: {
+    id: string;
+    label: string;
+    icon: string;
+    files: { filename: string; title: string }[];
   };
   user_help: boolean;
 }
@@ -48,6 +56,11 @@ export const useHelpContent = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [glossary, setGlossary] = useState<Record<string, string>>({});
   const [isReadingMode, setIsReadingMode] = useState(false);
+  const [breadcrumbs, setBreadcrumbs] = useState<{ label: string; path: string | null }[]>([]);
+  const [adjacentDocs, setAdjacentDocs] = useState<{ prev: AdjacentDoc | null; next: AdjacentDoc | null }>({
+    prev: null,
+    next: null,
+  });
 
   const fetchStructure = useCallback(async () => {
     try {
@@ -63,18 +76,17 @@ export const useHelpContent = () => {
 
   const fetchGlossary = useCallback(async () => {
     try {
-      const res = await fetch('/api/help-docs?path=iso_manual/glosario.md');
-      if (!res.ok) return; // Silent fail if glossary not found
+      const res = await fetch('/api/help-docs?path=help/01-empezar/glosario.md');
+      if (!res.ok) return;
       const data = await res.json();
       const content = data.content || '';
-
       const lines = content.split('\n');
       const terms: Record<string, string> = {};
 
       lines.forEach((line: string) => {
         const match = line.match(/^\*\*(.*?)\*\*:(.*)/);
         if (match) {
-            terms[match[1].toLowerCase()] = match[2].trim();
+          terms[match[1].toLowerCase()] = match[2].trim();
         }
       });
       setGlossary(terms);
@@ -88,16 +100,61 @@ export const useHelpContent = () => {
     const lines = content.split('\n');
     const items: TocItem[] = [];
     lines.forEach(line => {
-      const match = line.match(/^(#{1,3})\s+(.*)/);
+      const match = line.match(/^(#{2,3})\s+(.*)/);
       if (match) {
         const level = match[1].length;
         const text = match[2].trim();
-        const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+        const id = text.toLowerCase().replace(/[^\w\s-áéíóúñü]/g, '').replace(/\s+/g, '-');
         items.push({ id, level, text });
       }
     });
     setToc(items);
   };
+
+  // Get section info for a given path
+  const getSectionInfo = useCallback((docPath: string) => {
+    if (!structure) return null;
+    const allSections = [...structure.sections, ...(structure.compliance.files.length > 0 ? [structure.compliance as SectionEntry] : [])];
+    for (const sec of allSections) {
+      const found = sec.files.find(f => `${sec.dir}/${f.filename}` === docPath);
+      if (found) return { section: sec, file: found };
+    }
+    return null;
+  }, [structure]);
+
+  // Build breadcrumbs from path
+  const buildBreadcrumbs = useCallback((docPath: string) => {
+    const crumbs: { label: string; path: string | null }[] = [
+      { label: 'Centro de Ayuda', path: null },
+    ];
+
+    const info = getSectionInfo(docPath);
+    if (info) {
+      crumbs.push({ label: info.section.label, path: null });
+      crumbs.push({ label: info.file.title, path: docPath });
+    }
+
+    setBreadcrumbs(crumbs);
+  }, [getSectionInfo]);
+
+  // Build adjacent docs (prev/next)
+  const buildAdjacentDocs = useCallback((docPath: string) => {
+    if (!structure) return;
+    const allSections = [...structure.sections, ...(structure.compliance.files.length > 0 ? [structure.compliance as SectionEntry] : [])];
+    let allFiles: { path: string; title: string }[] = [];
+
+    for (const sec of allSections) {
+      for (const f of sec.files) {
+        allFiles.push({ path: `${sec.dir}/${f.filename}`, title: f.title });
+      }
+    }
+
+    const idx = allFiles.findIndex(f => f.path === docPath);
+    setAdjacentDocs({
+      prev: idx > 0 ? allFiles[idx - 1] : null,
+      next: idx >= 0 && idx < allFiles.length - 1 ? allFiles[idx + 1] : null,
+    });
+  }, [structure]);
 
   const loadDocument = useCallback(async (path: string) => {
     setLoading(true);
@@ -108,30 +165,33 @@ export const useHelpContent = () => {
 
       if (!data.content) throw new Error('Document content is empty');
 
-      let type: HelpDoc['type'] = 'iso';
-      if (path.includes('tutorials')) type = 'tutorial';
-      else if (path.includes('how-to')) type = 'how-to';
-      else if (path.includes('reference')) type = 'reference';
-      else if (path.includes('explanation')) type = 'explanation';
+      let type: HelpDoc['type'] = 'getting-started';
+      if (path.includes('02-gestion')) type = 'tutorial';
+      else if (path.includes('03-inventario')) type = 'how-to';
+      else if (path.includes('04-configuracion')) type = 'how-to';
+      else if (path.includes('05-referencia')) type = 'reference';
+      else if (path.includes('compliance')) type = 'reference';
 
       const title = data.content.split('\n')[0].replace(/^#+\s+/, '') || path;
 
       const doc: HelpDoc = {
         path,
         title,
-        content: data.content,
+        content: typeof data.content === 'string' ? data.content : JSON.stringify(data.content ?? ''),
         type
       };
 
       setCurrentDoc(doc);
       generateToc(data.content);
+      buildBreadcrumbs(path);
+      buildAdjacentDocs(path);
     } catch (err) {
       console.error('Error loading document:', err);
       toast.error('No se pudo cargar el documento');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [buildBreadcrumbs, buildAdjacentDocs]);
 
   useEffect(() => {
     fetchStructure();
@@ -170,6 +230,8 @@ export const useHelpContent = () => {
     searchResults,
     glossary,
     isReadingMode,
-    setIsReadingMode
+    setIsReadingMode,
+    breadcrumbs,
+    adjacentDocs,
   };
 };

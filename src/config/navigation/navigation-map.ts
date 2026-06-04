@@ -65,9 +65,6 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },
   'tool-export-pdf':  { type: 'module', view: 'cost-sheets', tab: 'tool-export-pdf' },
-  'res-help':         { type: 'module', view: 'cost-sheets', tab: 'res-help' },
-  'res-system-help':  { type: 'module', view: 'cost-sheets', tab: 'res-system-help' },
-  'res-academy':      { type: 'module', view: 'cost-sheets', tab: 'res-academy' },
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -88,6 +85,7 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   reception_list:        { type: 'direct', view: 'reception_list' },
   transferencias:        { type: 'direct', view: 'transferencias' },
   inventory_count:       { type: 'direct', view: 'inventory_count' },
+  labels:                { type: 'direct', view: 'labels' },
   stores:                { type: 'direct', view: 'stores' },
   users:                 { type: 'direct', view: 'users' },
   roles:                 { type: 'direct', view: 'roles' },
@@ -284,9 +282,6 @@ export function getBreadcrumbForView(
       'tool-save': { tab: 'tool-save' },
       'tool-export-excel': { tab: 'tool-export-excel' },
       'tool-export-pdf': { tab: 'tool-export-pdf' },
-      'res-help': { tab: 'res-help' },
-      'res-system-help': { tab: 'res-system-help' },
-      'res-academy': { tab: 'res-academy' },
     };
     for (const [id, route] of Object.entries(COSTOS_ROUTES)) {
       if (route.tab === activeCostSection) {

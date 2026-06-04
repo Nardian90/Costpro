@@ -14,6 +14,7 @@ vi.mock('framer-motion', () => ({
         for (const [key, val] of Object.entries(rest)) {
           if (typeof val !== 'undefined') htmlProps[key] = val;
         }
+// eslint-disable-next-line @typescript-eslint/no-require-imports
         return require('react').createElement(Tag, htmlProps);
       };
     },

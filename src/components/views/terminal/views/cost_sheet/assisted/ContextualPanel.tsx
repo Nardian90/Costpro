@@ -185,7 +185,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
     }
 
     return null;
-  }, [node, data, calculatedValues, calculatedHeader]);
+  }, [node, data, calculatedValues, calculatedHeader, calculatedAnnexes]);
 
   // Get phase label for badge
   const phaseLabels: Record<string, string> = {

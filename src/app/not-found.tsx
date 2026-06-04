@@ -10,22 +10,22 @@ import { useTranslations } from 'next-intl';
 /*  Random fun greetings for the 404 page                            */
 /* ------------------------------------------------------------------ */
 const GREETINGS = [
-  'Hola!!!',
-  'Venga, te toca',
-  '¿Qué tal?',
-  '¡Dale!',
   '¡Vamos!',
-  'Aquí estamos',
-  'Tu momento, ¡actúa!',
-  'Nada por aquí...',
-  '¡Bienvenido!',
-  '¿Buscabas algo?',
-  'Ups, ruta perdida',
-  '¡Sigue intentando!',
-  'Nadie está aquí... o sí',
-  '¿Y ahora qué?',
-  'La página se escapó',
-  '404: creatividad al máximo',
+  '¡Dale!',
+  '¡Hola!',
+  '¡Arrancamos!',
+  '¡Siempre adelante!',
+  'Listo',
+  '¡Genial!',
+  '¡Vamos con todo!',
+  '¡A ganar!',
+  '¡Éxito!',
+  '¡Bravo!',
+  '¡Positivo!',
+  '¡Súper!',
+  '¡Arranca!',
+  '¡Levanta!',
+  '¡Boom!',
 ];
 
 function useRandomGreeting(): string {

@@ -134,9 +134,7 @@ export const POSCartSummary = ({
           Total Final
         </span>
         <span className="text-[clamp(1.25rem,5vw,1.5rem)] font-black text-primary tracking-tighter leading-none">
-          {formatCurrency(
-            Math.max(0, getSubtotal() - getDiscountAmount()),
-          )}
+          {formatCurrency(getTotal())}
         </span>
       </div>
     </div>

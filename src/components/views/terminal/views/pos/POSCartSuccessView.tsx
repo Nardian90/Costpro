@@ -7,18 +7,24 @@ import {
   FileText,
   Send,
   RefreshCw,
-  QrCode,
+  ExternalLink,
   Image as ImageIcon,
 } from "lucide-react";
 import { PrimaryButton } from "@/components/ui/atomic";
-import type { SuccessViewProps } from "./POSCart.types";
+import { SaleQRCode } from "./SaleQRCode";
+import type { LastSale, POSCartSuccessViewProps } from "./POSCart.types";
 
-export const SuccessView = ({
+interface EnhancedSuccessViewProps extends POSCartSuccessViewProps {
+  lastSale?: LastSale;
+}
+
+export const POSCartSuccessView = ({
   onGeneratePDF,
   onShareWhatsApp,
   onExportAsImage,
   onClearLastSale,
-}: SuccessViewProps) => (
+  lastSale,
+}: EnhancedSuccessViewProps) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -43,6 +49,32 @@ export const SuccessView = ({
         La transacción ha sido registrada exitosamente
       </p>
     </div>
+
+    {/* Sale verification QR code */}
+    {lastSale && (
+      <div className="w-full p-6 rounded-3xl border-2 border-border bg-card/50 shadow-lg flex flex-col items-center gap-4">
+        <SaleQRCode saleId={lastSale.id} size={140} />
+        <div className="text-center space-y-1">
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            ID: {lastSale.id.substring(0, 8)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Escanea para verificar la venta
+          </p>
+        </div>
+        <a
+          href={typeof window !== "undefined"
+            ? `${window.location.origin}/verify-sale/${lastSale.id}`
+            : "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/20 transition-colors"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          Verificar Venta
+        </a>
+      </div>
+    )}
 
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
       <button
@@ -88,13 +120,6 @@ export const SuccessView = ({
           Alta Calidad
         </div>
       </button>
-    </div>
-
-    <div className="w-full p-6 rounded-3xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center gap-4">
-      <QrCode className="w-16 h-16 opacity-20" />
-      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-        Código de seguimiento disponible
-      </p>
     </div>
 
     <PrimaryButton

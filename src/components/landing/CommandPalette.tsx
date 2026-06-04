@@ -72,7 +72,7 @@ export default function CommandPalette({
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [previouslyFocused, setPreviouslyFocused] = useState<HTMLElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -80,9 +80,11 @@ export default function CommandPalette({
   // Sync state when palette opens/closes via effect (not during render)
   useEffect(() => {
     if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setPreviouslyFocused(document.activeElement as HTMLElement);
+      requestAnimationFrame(() => {
+        setQuery('');
+        setSelectedIndex(0);
+        previouslyFocusedRef.current = document.activeElement as HTMLElement;
+      });
     }
   }, [isOpen]);
 
@@ -175,15 +177,15 @@ export default function CommandPalette({
   // Restore focus on close — but skip readOnly inputs (palette triggers)
   // to prevent the palette from immediately reopening via onFocus.
   useEffect(() => {
-    if (!isOpen && previouslyFocused) {
+    if (!isOpen && previouslyFocusedRef.current) {
       const isTrigger =
-        previouslyFocused instanceof HTMLInputElement &&
-        previouslyFocused.readOnly;
+        previouslyFocusedRef.current instanceof HTMLInputElement &&
+        previouslyFocusedRef.current.readOnly;
       if (!isTrigger) {
-        previouslyFocused.focus();
+        previouslyFocusedRef.current.focus();
       }
     }
-  }, [isOpen, previouslyFocused]);
+  }, [isOpen]);
 
   // Scroll selected item into view
   useEffect(() => {
