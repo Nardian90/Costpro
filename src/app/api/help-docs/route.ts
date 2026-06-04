@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
-import { getServerSession } from '@/lib/auth'; // FIX-SEC-002
 import fs from 'fs';
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
 const KNOWLEDGE_BASE = path.join(/*turbopackIgnore: true*/process.cwd(), 'knowledge');
+
+// Section metadata mapping
+const SECTION_META: Record<string, { label: string; icon: string }> = {
+  '01-empezar': { label: 'Para Empezar', icon: 'Rocket' },
+  '02-gestion': { label: 'Gestión', icon: 'Calculator' },
+  '03-inventario': { label: 'Inventario', icon: 'Package' },
+  '04-configuracion': { label: 'Configuración', icon: 'Settings' },
+  '05-referencia': { label: 'Referencia', icon: 'Terminal' },
+};
 
 interface SearchResult {
   path: string;
@@ -21,26 +28,105 @@ interface FileEntry {
   title: string;
 }
 
-async function getHandler(request: NextRequest) {
-  // FIX-SEC-002: Add authentication check
-  const session = await getServerSession(request);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+interface SectionEntry {
+  id: string;
+  dir: string;
+  label: string;
+  icon: string;
+  files: FileEntry[];
+}
 
-  const clientId = session.user.id;
-  const { allowed } = await rateLimit(clientId);
-  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+interface HelpResponse {
+  sections: SectionEntry[];
+  compliance: { id: string; label: string; icon: string; files: FileEntry[] };
+  user_help: boolean;
+}
+
+// Helper: read first heading from a markdown file to use as title
+function extractTitle(filePath: string): string {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const firstLine = content.split('\n')[0];
+    const match = firstLine.match(/^#+\s+(.+)/);
+    return match ? match[1].trim() : path.basename(filePath, '.md').replace(/[-_]/g, ' ');
+  } catch {
+    return path.basename(filePath, '.md').replace(/[-_]/g, ' ');
+  }
+}
+
+function buildStructure(): HelpResponse {
+  const helpDir = path.join(KNOWLEDGE_BASE, 'help');
+
+  // Scan numbered section directories
+  const dirs = fs.existsSync(helpDir)
+    ? fs.readdirSync(helpDir)
+        .filter(f => {
+          const fullPath = path.join(helpDir, f);
+          return fs.statSync(fullPath).isDirectory() && /^\d{2}-/.test(f);
+        })
+        .sort()
+    : [];
+
+  const sections: SectionEntry[] = dirs.map(dirName => {
+    const dirPath = path.join(helpDir, dirName);
+    const meta = SECTION_META[dirName] || { label: dirName, icon: 'FileText' };
+    const files = fs.readdirSync(dirPath)
+      .filter(f => f.endsWith('.md'))
+      .sort()
+      .map(f => ({
+        filename: f,
+        title: extractTitle(path.join(dirPath, f)),
+      }));
+
+    return {
+      id: dirName.replace(/^\d{2}-/, ''),
+      dir: `help/${dirName}`,
+      label: meta.label,
+      icon: meta.icon,
+      files,
+    };
+  });
+
+  // Scan compliance directory
+  const complianceDir = path.join(helpDir, 'compliance');
+  const complianceFiles = fs.existsSync(complianceDir)
+    ? fs.readdirSync(complianceDir)
+        .filter(f => f.endsWith('.md'))
+        .sort()
+        .map(f => ({
+          filename: f,
+          title: extractTitle(path.join(complianceDir, f)),
+        }))
+    : [];
+
+  const compliance = {
+    id: 'compliance',
+    label: 'Cumplimiento Normativo',
+    icon: 'Shield',
+    files: complianceFiles,
+  };
+
+  const user_help = fs.existsSync(path.join(helpDir, 'user_help.json'));
+
+  return { sections, compliance, user_help };
+}
+
+async function getHandler(request: NextRequest) {
+  // Help docs are public knowledge files — no auth required
 
   const { searchParams } = new URL(request.url);
   const filePath = searchParams.get('path');
   const searchQuery = searchParams.get('search');
 
   try {
+    // ── Search ──
     if (searchQuery && searchQuery.length >= 3) {
       const results: SearchResult[] = [];
       const query = searchQuery.toLowerCase();
+      const helpDir = path.join(KNOWLEDGE_BASE, 'help');
 
       const walk = (dir: string, depth = 0, maxDepth = 10) => {
-        if (depth >= maxDepth) return [];
+        if (depth >= maxDepth) return;
         const files = fs.readdirSync(dir);
         files.forEach(file => {
           const fullPath = path.join(dir, file);
@@ -52,76 +138,39 @@ async function getHandler(request: NextRequest) {
             if (content.toLowerCase().includes(query)) {
               const relativePath = path.relative(KNOWLEDGE_BASE, fullPath);
               const title = content.split('\n')[0].replace(/^#+\s+/, '') || file;
-
-              // Simple excerpt generation
               const index = content.toLowerCase().indexOf(query);
               const start = Math.max(0, index - 40);
               const end = Math.min(content.length, index + query.length + 80);
               const excerpt = (start > 0 ? '...' : '') + content.substring(start, end).replace(/\n/g, ' ') + (end < content.length ? '...' : '');
 
-              let type = 'iso';
-              if (relativePath.includes('tutorials')) type = 'tutorial';
-              else if (relativePath.includes('how-to')) type = 'how-to';
-              else if (relativePath.includes('reference')) type = 'reference';
-              else if (relativePath.includes('explanation')) type = 'explanation';
+              let type = 'getting-started';
+              if (relativePath.includes('02-gestion')) type = 'tutorial';
+              else if (relativePath.includes('03-inventario')) type = 'how-to';
+              else if (relativePath.includes('04-configuracion')) type = 'how-to';
+              else if (relativePath.includes('05-referencia')) type = 'reference';
+              else if (relativePath.includes('compliance')) type = 'reference';
 
-              results.push({
-                path: relativePath,
-                title,
-                excerpt,
-                type
-              });
+              results.push({ path: relativePath, title, excerpt, type });
             }
           }
         });
       };
 
-      walk(KNOWLEDGE_BASE);
-      return NextResponse.json({ results: results.slice(0, 10) }); // Limit to top 10 results
+      walk(helpDir);
+      return NextResponse.json({ results: results.slice(0, 10) });
     }
 
+    // ── Structure listing ──
     if (!filePath) {
-      // Helper: read first heading from a markdown file to use as title
-      const extractTitle = (dir: string, filename: string): string => {
-        try {
-          const content = fs.readFileSync(path.join(dir, filename), 'utf8');
-          const firstLine = content.split('\n')[0];
-          const match = firstLine.match(/^#+\s+(.+)/);
-          return match ? match[1].trim() : filename.replace('.md', '').replace(/[-_]/g, ' ');
-        } catch {
-          return filename.replace('.md', '').replace(/[-_]/g, ' ');
-        }
-      };
-
-      // List all relevant files for the help system with proper titles
-      const isoDir = path.join(KNOWLEDGE_BASE, 'iso_manual');
-      const tutorialsDir = path.join(KNOWLEDGE_BASE, 'docs/tutorials');
-      const howToDir = path.join(KNOWLEDGE_BASE, 'docs/how-to');
-      const refDir = path.join(KNOWLEDGE_BASE, 'docs/reference');
-      const explDir = path.join(KNOWLEDGE_BASE, 'docs/explanation');
-
-      const toFileEntries = (dir: string, files: string[]): FileEntry[] =>
-        files.map(f => ({ filename: f, title: extractTitle(dir, f) }));
-
-      const structure = {
-        iso_manual: fs.existsSync(isoDir) ? toFileEntries(isoDir, fs.readdirSync(isoDir).filter(f => f.endsWith('.md')).sort()) : [],
-        docs: {
-          tutorials: fs.existsSync(tutorialsDir) ? toFileEntries(tutorialsDir, fs.readdirSync(tutorialsDir).filter(f => f.endsWith('.md')).sort()) : [],
-          howTo: fs.existsSync(howToDir) ? toFileEntries(howToDir, fs.readdirSync(howToDir).filter(f => f.endsWith('.md')).sort()) : [],
-          reference: fs.existsSync(refDir) ? toFileEntries(refDir, fs.readdirSync(refDir).filter(f => f.endsWith('.md')).sort()) : [],
-          explanation: fs.existsSync(explDir) ? toFileEntries(explDir, fs.readdirSync(explDir).filter(f => f.endsWith('.md')).sort()) : [],
-        },
-        user_help: fs.existsSync(path.join(KNOWLEDGE_BASE, 'user_help.json'))
-      };
-      return NextResponse.json(structure);
+      return NextResponse.json(buildStructure());
     }
 
-    // Safety check: prevent path traversal
+    // ── Single file ──
     const safePath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
     const fullPath = path.join(KNOWLEDGE_BASE, safePath);
 
     if (!fullPath.startsWith(KNOWLEDGE_BASE)) {
-       return NextResponse.json({ error: 'Unauthorized path' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized path' }, { status: 403 });
     }
 
     if (!fs.existsSync(fullPath)) {
@@ -130,17 +179,16 @@ async function getHandler(request: NextRequest) {
 
     const stats = fs.statSync(fullPath);
     if (stats.isDirectory()) {
-        return NextResponse.json({ error: 'Path is a directory' }, { status: 400 });
+      return NextResponse.json({ error: 'Path is a directory' }, { status: 400 });
     }
 
     const content = fs.readFileSync(fullPath, 'utf8');
 
     if (fullPath.endsWith('.json')) {
-        return NextResponse.json(JSON.parse(content));
+      return NextResponse.json(JSON.parse(content));
     }
 
     return NextResponse.json({ content });
-
   } catch (error) {
     console.error('Error in help-docs API:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

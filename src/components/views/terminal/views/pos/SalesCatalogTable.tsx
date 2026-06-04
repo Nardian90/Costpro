@@ -3,7 +3,7 @@
 import React from 'react';
 import { Package, AlertTriangle, Percent, DollarSign, ArrowUpDown, Eye, EyeOff, Store } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Product, PaymentMethod } from '@/types';
+import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
 
@@ -53,18 +53,19 @@ interface SalesCatalogTableProps {
   showMixedColumns: boolean;
   handlers: {
     handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: any) => void;
+    handleSelectVariant: (product: Product, variant: ProductVariant | null) => void;
     handleSetDiscountType: (product: Product) => void;
     handleSetDiscountValue: (product: Product, value: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
     handleSetCashPaid: (product: Product, val: number) => void;
     handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => void;
+    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow, fallbackProduct?: Product) => void;
   };
   hasDiscrepancy: (row: SalesCatalogRow) => boolean;
   calcSubtotal: (row: SalesCatalogRow) => number;
   onToggleVisible?: (productId: string, visible: boolean) => void;
   togglingVisibleId?: string | null;
+  isReadOnly?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────
@@ -80,7 +81,9 @@ export default function SalesCatalogTable({
   calcSubtotal,
   onToggleVisible,
   togglingVisibleId,
+  isReadOnly = false,
 }: SalesCatalogTableProps) {
+  const ro = isReadOnly;
   const {
     handleSetQuantity,
     handleSelectVariant,
@@ -233,16 +236,17 @@ export default function SalesCatalogTable({
                     onChange={(e) => {
                       if (e.target.value === '__base__') handleSelectVariant(product, null);
                       else {
-                        const variant = product.product_variants?.find((v: any) => v.id === e.target.value);
+                        const variant = product.product_variants?.find((v) => v.id === e.target.value);
                         if (variant) handleSelectVariant(product, variant);
                       }
                     }}
-                    className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                    disabled={ro}
+                    className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                     aria-label={`Unidad de medida para ${product.name}`}
                   >
                     <option value="__base__">{product.unit_of_measure || 'ud'} (base)</option>
-                    {product.product_variants?.map((v: any) => (
-                      <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor})</option>
+                    {product.product_variants?.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor || 1})</option>
                     ))}
                   </select>
                 </td>
@@ -261,9 +265,10 @@ export default function SalesCatalogTable({
                         price: val,
                         cashPaid: r.paymentMethod === 'cash' ? calcSubtotal({ ...r, price: val }) : r.cashPaid,
                         transferPaid: r.paymentMethod === 'transfer' ? calcSubtotal({ ...r, price: val }) : r.transferPaid,
-                      }));
+                      }), product);
                     }}
-                    className="w-full text-right px-2 py-1.5 rounded-lg border border-border/50 bg-background text-xs font-black text-primary focus:ring-1 focus:ring-primary outline-none"
+                    disabled={ro}
+                    className="w-full text-right px-2 py-1.5 rounded-lg border border-border/50 bg-background text-xs font-black text-primary focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                     aria-label={`Precio de venta para ${product.name}`}
                     placeholder="0.00"
                   />
@@ -275,8 +280,8 @@ export default function SalesCatalogTable({
                     <button
                       type="button"
                       onClick={() => handleSetQuantity(product, row.quantity - 1)}
-                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-xs transition-all active:scale-90 border border-border/50"
-                      disabled={row.quantity <= 0}
+                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-xs transition-all active:scale-90 border border-border/50 disabled:opacity-30"
+                      disabled={ro || row.quantity <= 0}
                       aria-label={`Reducir cantidad de ${product.name}`}
                     >
                       -
@@ -286,13 +291,15 @@ export default function SalesCatalogTable({
                       min="0"
                       value={row.quantity || ''}
                       onChange={(e) => handleSetQuantity(product, Number(e.target.value))}
-                      className="w-12 text-center px-1 py-1 rounded-lg border border-border/50 bg-background text-xs font-black focus:ring-1 focus:ring-primary outline-none"
+                      disabled={ro}
+                      className="w-12 text-center px-1 py-1 rounded-lg border border-border/50 bg-background text-xs font-black focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label={`Cantidad de ${product.name}`}
                     />
                     <button
                       type="button"
                       onClick={() => handleSetQuantity(product, row.quantity + 1)}
-                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-xs transition-all active:scale-90 border border-border/50"
+                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-xs transition-all active:scale-90 border border-border/50 disabled:opacity-30"
+                      disabled={ro}
                       aria-label={`Aumentar cantidad de ${product.name}`}
                     >
                       +
@@ -306,7 +313,8 @@ export default function SalesCatalogTable({
                     <button
                       type="button"
                       onClick={() => handleSetDiscountType(product)}
-                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-all border border-border/50"
+                      className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-all border border-border/50 disabled:opacity-30"
+                      disabled={ro}
                       aria-label={`Cambiar tipo de descuento para ${product.name}`}
                       title={row.discountType === 'percentage' ? 'Porcentaje' : 'Monto fijo'}
                     >
@@ -322,7 +330,8 @@ export default function SalesCatalogTable({
                       step="0.01"
                       value={row.discountValue || ''}
                       onChange={(e) => handleSetDiscountValue(product, Number(e.target.value))}
-                      className="w-14 text-center px-1 py-1 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none"
+                      disabled={ro}
+                      className="w-14 text-center px-1 py-1 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label={`Valor de descuento para ${product.name}`}
                       placeholder="0"
                     />
@@ -334,7 +343,8 @@ export default function SalesCatalogTable({
                   <select
                     value={row.paymentMethod}
                     onChange={(e) => handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
-                    className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                    disabled={ro}
+                    className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                     aria-label={`Forma de pago para ${product.name}`}
                   >
                     {PAYMENT_METHODS.map((pm) => (
@@ -353,7 +363,8 @@ export default function SalesCatalogTable({
                         step="0.01"
                         value={row.cashPaid || 0}
                         onChange={(e) => handleSetCashPaid(product, Number(e.target.value))}
-                        className="w-full text-right px-2 py-1.5 rounded-lg border border-emerald-500/20 bg-background text-[11px] font-bold text-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none"
+                        disabled={ro}
+                        className="w-full text-right px-2 py-1.5 rounded-lg border border-emerald-500/20 bg-background text-[11px] font-bold text-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                         aria-label={`Efectivo pagado para ${product.name}`}
                       />
                     ) : (
@@ -374,7 +385,8 @@ export default function SalesCatalogTable({
                         step="0.01"
                         value={row.transferPaid || 0}
                         onChange={(e) => handleSetTransferPaid(product, Number(e.target.value))}
-                        className="w-full text-right px-2 py-1.5 rounded-lg border border-blue-500/20 bg-background text-[11px] font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 outline-none"
+                        disabled={ro}
+                        className="w-full text-right px-2 py-1.5 rounded-lg border border-blue-500/20 bg-background text-[11px] font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                         aria-label={`Transferencia pagada para ${product.name}`}
                       />
                     ) : (

@@ -1,19 +1,23 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
-import { Share2, MousePointer2, Info, Maximize2, Layers } from 'lucide-react';
+import { Share2, ZoomIn, ZoomOut, RotateCcw, Eye, EyeOff, Layers, Crosshair, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface Node extends d3.SimulationNodeDatum {
+interface Node {
   id: string;
   label: string;
   type?: string;
   layer?: string;
+  group?: string;
   fan_in?: number;
+  fan_out?: number;
+  x: number;
+  y: number;
 }
 
-interface Link extends d3.SimulationLinkDatum<Node> {
+interface Link {
   source: string | Node;
   target: string | Node;
 }
@@ -21,293 +25,515 @@ interface Link extends d3.SimulationLinkDatum<Node> {
 interface GraphViewerProps {
   data: {
     nodes: Node[];
-    links: Link[];
+    links?: Link[];
+    edges?: Link[];
   };
   title: string;
 }
 
+const LAYER_COLORS: Record<string, { stroke: string; glow: string; bg: string }> = {
+  'Application':       { stroke: '#3fff8b', glow: 'rgba(63,255,139,0.25)', bg: 'rgba(63,255,139,0.06)' },
+  'Business Logic':    { stroke: '#fbbf24', glow: 'rgba(251,191,36,0.25)', bg: 'rgba(251,191,36,0.06)' },
+  'UI Components':     { stroke: '#c084fc', glow: 'rgba(192,132,252,0.25)', bg: 'rgba(192,132,252,0.06)' },
+  'Services':          { stroke: '#60a5fa', glow: 'rgba(96,165,250,0.25)', bg: 'rgba(96,165,250,0.06)' },
+  'Hooks':             { stroke: '#22d3ee', glow: 'rgba(34,211,238,0.25)', bg: 'rgba(34,211,238,0.06)' },
+  'Types':             { stroke: '#f472b6', glow: 'rgba(244,114,182,0.25)', bg: 'rgba(244,114,182,0.06)' },
+  'Infrastructure':    { stroke: '#818cf8', glow: 'rgba(129,140,248,0.25)', bg: 'rgba(129,140,248,0.06)' },
+  'State Management':  { stroke: '#f87171', glow: 'rgba(248,113,113,0.25)', bg: 'rgba(248,113,113,0.06)' },
+  'State':             { stroke: '#f87171', glow: 'rgba(248,113,113,0.25)', bg: 'rgba(248,113,113,0.06)' },
+  'workflow':          { stroke: '#fb923c', glow: 'rgba(251,146,60,0.3)', bg: 'rgba(251,146,60,0.08)' },
+  'component':         { stroke: '#94a3b8', glow: 'rgba(148,163,184,0.15)', bg: 'rgba(148,163,184,0.04)' },
+  'Components':        { stroke: '#c084fc', glow: 'rgba(192,132,252,0.15)', bg: 'rgba(192,132,252,0.04)' },
+  'service':           { stroke: '#60a5fa', glow: 'rgba(96,165,250,0.25)', bg: 'rgba(96,165,250,0.06)' },
+  'model':             { stroke: '#3fff8b', glow: 'rgba(63,255,139,0.25)', bg: 'rgba(63,255,139,0.06)' },
+  'hook':              { stroke: '#22d3ee', glow: 'rgba(34,211,238,0.25)', bg: 'rgba(34,211,238,0.06)' },
+  'Views':             { stroke: '#c084fc', glow: 'rgba(192,132,252,0.25)', bg: 'rgba(192,132,252,0.06)' },
+};
+
+const DEFAULT_COLOR = { stroke: '#64748b', glow: 'rgba(100,116,139,0.12)', bg: 'rgba(100,116,139,0.04)' };
+const getColor = (layer?: string) => LAYER_COLORS[layer || ''] || DEFAULT_COLOR;
+
+// ─── Derive layer from node path ─────────────────────────────────────────
+function deriveLayer(node: { id: string; group?: string; layer?: string }): string {
+  if (node.layer) return node.layer;
+  if (node.group) return node.group;
+
+  const id = node.id.toLowerCase();
+  if (id.includes('services/') || id.includes('/api/') || id.includes('service')) return 'Services';
+  if (id.includes('hooks/') || id.includes('hook')) return 'Hooks';
+  if (id.includes('/app/') && id.includes('page')) return 'Views';
+  if (id.includes('store') || id.includes('state')) return 'State';
+  return 'Components';
+}
+
+// ─── Static Layout Engine ──────────────────────────────────────────────────
+function computeStaticLayout(
+  rawNodes: Node[],
+  rawLinks: Link[],
+  width: number,
+  height: number
+): { nodes: Node[]; links: Link[] } {
+  // Cap to avoid performance issues with 400+ nodes
+  const MAX_NODES = 200;
+  const MAX_LINKS = 400;
+
+  const nodes = rawNodes.slice(0, MAX_NODES).map(n => ({
+    ...n,
+    layer: deriveLayer(n),
+  }));
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const links = rawLinks
+    .filter(l => {
+      const sId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
+      const tId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
+      return nodeIds.has(sId) && nodeIds.has(tId);
+    })
+    .slice(0, MAX_LINKS);
+
+  // Group by layer
+  const layers: Record<string, Node[]> = {};
+  for (const n of nodes) {
+    const l = n.layer || 'Unknown';
+    if (!layers[l]) layers[l] = [];
+    layers[l].push(n);
+  }
+
+  const layerNames = Object.keys(layers).sort();
+  const numLayers = layerNames.length;
+  const layerSpacing = width / (numLayers + 1);
+  const padding = 50;
+
+  // Position nodes in columns per layer, stacked vertically
+  for (let li = 0; li < numLayers; li++) {
+    const layerNodes = layers[layerNames[li]];
+    const cx = layerSpacing * (li + 1);
+    const usableHeight = height - padding * 2;
+    const nodeSpacing = Math.min(usableHeight / (layerNodes.length + 1), 28);
+
+    const totalH = nodeSpacing * (layerNodes.length - 1);
+    const startY = (height - totalH) / 2;
+
+    for (let ni = 0; ni < layerNodes.length; ni++) {
+      layerNodes[ni].x = cx + (Math.random() - 0.5) * 12;
+      layerNodes[ni].y = startY + ni * nodeSpacing;
+    }
+  }
+
+  return { nodes, links };
+}
+
 export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const stats = { nodes: data?.nodes?.length || 0, links: data?.links?.length || 0 };
+  const [showLabels, setShowLabels] = useState(true);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [showLegend, setShowLegend] = useState(true);
 
-  useEffect(() => {
-    if (!svgRef.current || !data || !data.nodes || data.nodes.length === 0) return;
+  const graphData = useMemo(() => ({
+    nodes: data?.nodes || [],
+    links: data?.links || data?.edges || [],
+  }), [data]);
 
+  // Layer stats
+  const layerStats = useMemo(() => {
+    const dist: Record<string, number> = {};
+    for (const n of graphData.nodes) {
+      const l = deriveLayer(n);
+      dist[l] = (dist[l] || 0) + 1;
+    }
+    return Object.entries(dist).sort((a, b) => b[1] - a[1]);
+  }, [graphData.nodes]);
+
+  // Stats for display
+  const stats = useMemo(() => {
+    const filtered = activeFilter
+      ? graphData.nodes.filter(n => deriveLayer(n) === activeFilter)
+      : graphData.nodes;
+    const filteredIds = new Set(filtered.map(n => n.id));
+    const filteredLinks = graphData.links.filter(l => {
+      const sId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
+      const tId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
+      return filteredIds.has(sId) && filteredIds.has(tId);
+    });
+    return {
+      nodes: filtered.length,
+      links: filteredLinks.length,
+      totalNodes: graphData.nodes.length,
+      totalLinks: graphData.links.length,
+      capped: graphData.nodes.length > 200,
+    };
+  }, [graphData, activeFilter]);
+
+  // Selected node neighbors
+  const selectedNodeNeighbors = useMemo(() => {
+    if (!selectedNode) return new Set<string>();
+    const neighbors = new Set<string>();
+    neighbors.add(selectedNode.id);
+    for (const l of graphData.links) {
+      const sId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
+      const tId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
+      if (sId === selectedNode.id) neighbors.add(tId);
+      if (tId === selectedNode.id) neighbors.add(sId);
+    }
+    return neighbors;
+  }, [selectedNode, graphData.links]);
+
+  // Selected node dependency counts
+  const selectedNodeDeps = useMemo(() => {
+    if (!selectedNode) return { in: 0, out: 0 };
+    let i = 0, o = 0;
+    for (const l of graphData.links) {
+      const sId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
+      const tId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
+      if (sId === selectedNode.id) o++;
+      if (tId === selectedNode.id) i++;
+    }
+    return { in: i, out: o };
+  }, [selectedNode, graphData.links]);
+
+  // Reset view
+  const resetView = useCallback(() => {
+    if (!svgRef.current) return;
+    d3.select(svgRef.current).transition().duration(600).call(
+      (svgRef.current as any).__zoom.transform, d3.zoomIdentity
+    );
+    setZoomLevel(1);
+    setSelectedNode(null);
+  }, []);
+
+  // Fit all nodes to view
+  const fitToView = useCallback(() => {
+    if (!svgRef.current || !layoutCache.current) return;
+    const svg = d3.select(svgRef.current);
     const width = svgRef.current.parentElement?.clientWidth || 800;
     const height = svgRef.current.parentElement?.clientHeight || 600;
+    const { nodes } = layoutCache.current;
 
-    const svg = d3.select(svgRef.current)
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('width', '100%')
-      .attr('height', '100%');
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of nodes) {
+      if (n.x < minX) minX = n.x;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.y > maxY) maxY = n.y;
+    }
 
+    const padding = 80;
+    const dataW = (maxX - minX) || 1;
+    const dataH = (maxY - minY) || 1;
+    const scale = Math.min((width - padding * 2) / dataW, (height - padding * 2) / dataH, 3);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    svg.transition().duration(600).call(
+      (svgRef.current as any).__zoom.transform,
+      d3.zoomIdentity.translate(width / 2, height / 2).scale(scale).translate(-cx, -cy)
+    );
+  }, []);
+
+  // ─── Static SVG Render ────────────────────────────────────────────────────
+  const layoutCache = useRef<{ nodes: Node[]; links: Link[] } | null>(null);
+
+  useEffect(() => {
+    if (!svgRef.current || graphData.nodes.length === 0) return;
+
+    const container = svgRef.current.parentElement;
+    const width = container?.clientWidth || 800;
+    const height = container?.clientHeight || 600;
+
+    const svg = d3.select(svgRef.current).attr('viewBox', `0 0 ${width} ${height}`);
     svg.selectAll('*').remove();
 
-    // Defs for arrows
-    svg.append('defs').append('marker')
-      .attr('id', 'arrowhead')
-      .attr('viewBox', '-0 -5 10 10')
-      .attr('refX', 20)
-      .attr('refY', 0)
-      .attr('orient', 'auto')
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('xoverflow', 'visible')
-      .append('svg:path')
-      .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-      .attr('fill', 'hsl(var(--primary))')
-      .style('stroke', 'none');
+    // Defs: glow filter
+    const defs = svg.append('defs');
+    const filter = defs.append('filter').attr('id', 'node-glow').attr('x', '-100%').attr('y', '-100%').attr('width', '300%').attr('height', '300%');
+    filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
+    filter.append('feMerge').html('<feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/>');
 
-    const g = svg.append('g');
+    // Subtle grid dots
+    const gridGroup = svg.append('g').attr('class', 'grid-dots').attr('opacity', 0.08);
+    for (let x = 0; x < width; x += 40) {
+      for (let y = 0; y < height; y += 40) {
+        gridGroup.append('circle').attr('cx', x).attr('cy', y).attr('r', 0.4).attr('fill', 'currentColor');
+      }
+    }
 
-    // Zoom behavior
+    // Compute static layout
+    const { nodes: layoutNodes, links: layoutLinks } = computeStaticLayout(graphData.nodes, graphData.links, width, height);
+    layoutCache.current = { nodes: layoutNodes, links: layoutLinks };
+
+    // Apply filter if active
+    const visibleNodes = activeFilter
+      ? layoutNodes.filter(n => deriveLayer(n) === activeFilter)
+      : layoutNodes;
+    const visibleIds = new Set(visibleNodes.map(n => n.id));
+    const visibleLinks = layoutLinks.filter(l => {
+      const sId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
+      const tId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
+      return visibleIds.has(sId) && visibleIds.has(tId);
+    });
+
+    const g = svg.append('g').attr('class', 'graph-layer');
+
+    // Zoom behavior (pan & zoom only, no simulation)
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
+      .scaleExtent([0.05, 10])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
+        setZoomLevel(event.transform.k);
       });
-
     svg.call(zoom);
+    (svgRef.current as any).__zoom = zoom;
 
-    const nodes: Node[] = data.nodes.map(d => ({ ...d }));
-    const links: Link[] = data.links.map(d => ({ ...d }));
+    // ── Draw Links ──
+    const linkGroup = g.append('g').attr('class', 'links');
+    linkGroup.selectAll('line')
+      .data(visibleLinks).join('line')
+      .attr('x1', (d: any) => {
+        const src = visibleNodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
+        return src ? src.x : 0;
+      })
+      .attr('y1', (d: any) => {
+        const src = visibleNodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
+        return src ? src.y : 0;
+      })
+      .attr('x2', (d: any) => {
+        const tgt = visibleNodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
+        return tgt ? tgt.x : 0;
+      })
+      .attr('y2', (d: any) => {
+        const tgt = visibleNodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
+        return tgt ? tgt.y : 0;
+      })
+      .attr('stroke', 'currentColor')
+      .attr('stroke-opacity', 0.06)
+      .attr('stroke-width', 0.5);
 
-    const simulation = d3.forceSimulation<Node>(nodes)
-      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(120))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius(40))
-      .force('x', d3.forceX(width / 2).strength(0.05))
-      .force('y', d3.forceY(height / 2).strength(0.05));
-
-    const link = g.append('g')
-      .selectAll('line')
-      .data(links)
-      .join('line')
-      .attr('stroke', 'hsl(var(--primary))')
-      .attr('stroke-opacity', 0.15)
-      .attr('stroke-width', 1.5)
-      .attr('marker-end', 'url(#arrowhead)');
-
-    const node = g.append('g')
-      .selectAll('g')
-      .data(nodes)
-      .join('g')
+    // ── Draw Nodes ──
+    const nodeGroup = g.append('g').attr('class', 'nodes');
+    nodeGroup.selectAll('g')
+      .data(visibleNodes).join('g')
+      .attr('transform', (d: Node) => `translate(${d.x},${d.y})`)
       .attr('cursor', 'pointer')
+      .attr('class', 'node-g')
       .on('click', (event, d) => {
-        setSelectedNode(d);
-        highlightDependencies(d);
         event.stopPropagation();
-      })
-      .call(d3.drag<SVGGElement, Node>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended) as any);
+        setSelectedNode(prev => prev?.id === d.id ? null : d);
+      });
 
-    // Node Background
-    node.append('circle')
-      .attr('r', d => (d.fan_in || 1) > 10 ? 12 : 8)
-      .attr('fill', 'hsl(var(--background))')
-      .attr('stroke', d => {
-        if (d.layer === 'Application' || d.type === 'ACTION') return '#3fff8b';
-        if (d.layer === 'UI Components' || d.type === 'VIEW') return '#aa8aff';
-        if (d.layer === 'Services' || d.type === 'SERVICE') return '#0d6cf2';
-        return 'hsl(var(--muted-foreground))';
-      })
-      .attr('stroke-width', 3)
-      .attr('class', 'node-circle shadow-lg shadow-primary/20');
+    // Outer glow
+    nodeGroup.selectAll('g.node-g').insert('circle', ':first-child')
+      .attr('r', 5)
+      .attr('fill', (d: Node) => getColor(deriveLayer(d)).bg)
+      .attr('stroke', 'none');
 
-    // Node Glow/Indicator
-    node.append('circle')
-      .attr('r', d => (d.fan_in || 1) > 10 ? 4 : 2)
-      .attr('fill', d => {
-        if (d.layer === 'Application') return '#3fff8b';
-        if (d.layer === 'UI Components') return '#aa8aff';
-        if (d.layer === 'Services') return '#0d6cf2';
-        return 'hsl(var(--muted-foreground))';
-      })
-      .attr('opacity', 0.8);
+    // Inner core
+    nodeGroup.selectAll('g.node-g')
+      .append('circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', 1.8)
+      .attr('fill', (d: Node) => getColor(deriveLayer(d)).stroke)
+      .attr('filter', 'url(#node-glow)');
 
-    const labels = g.append('g')
-      .selectAll('text')
-      .data(nodes)
-      .join('text')
-      .text(d => d.label)
-      .attr('font-size', '9px')
-      .attr('font-weight', '900')
-      .attr('fill', 'hsl(var(--muted-foreground))')
-      .attr('dx', 16)
-      .attr('dy', 4)
+    // ── Draw Labels ──
+    const labelGroup = g.append('g').attr('class', 'labels');
+    labelGroup.selectAll('text')
+      .data(visibleNodes).join('text')
+      .text((d: Node) => {
+        const label = d.label || d.id;
+        // Show only last path segment for long IDs
+        if (label.includes('/') || label.includes('\\')) {
+          const parts = label.split(/[/\\]/);
+          return parts[parts.length - 1];
+        }
+        return label;
+      })
+      .attr('x', (d: Node) => d.x + 8)
+      .attr('y', (d: Node) => d.y + 2)
+      .attr('font-size', zoomLevel > 1.5 ? '5px' : '4px')
+      .attr('font-weight', '500')
+      .attr('fill', 'currentColor')
+      .attr('fill-opacity', 0.3)
       .attr('pointer-events', 'none')
-      .attr('font-family', 'Manrope')
-      .attr('opacity', d => (d.fan_in || 0) > 3 ? 1 : 0.4);
+      .style('display', showLabels ? 'block' : 'none');
 
-    simulation.on('tick', () => {
-      link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
+    // Click background to deselect
+    svg.on('click', () => setSelectedNode(null));
+  }, [graphData, showLabels, activeFilter]);
 
-      node
-        .attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+  // ─── Highlight on selection ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+    const hasSel = !!selectedNode;
 
-      labels
-        .attr('x', (d: any) => d.x)
-        .attr('y', (d: any) => d.y);
-    });
-
-    svg.on('click', () => {
-      setSelectedNode(null);
-      resetHighlight();
-    });
-
-    function highlightDependencies(d: Node) {
-      const neighbors = new Set<string>();
-      neighbors.add(d.id);
-
-      links.forEach(l => {
-        const sourceId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
-        const targetId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
-
-        if (sourceId === d.id) neighbors.add(targetId);
-        if (targetId === d.id) neighbors.add(sourceId);
+    svg.select('.nodes').selectAll('g')
+      .transition().duration(200)
+      .attr('opacity', (d: any) => {
+        if (!hasSel) return 1;
+        return selectedNodeNeighbors.has(d.id) ? 1 : 0.04;
       });
 
-      node.style('opacity', n => neighbors.has(n.id) ? 1 : 0.15);
-      link.style('stroke-opacity', l => {
-        const sourceId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
-        const targetId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
-        return (sourceId === d.id || targetId === d.id) ? 0.8 : 0.05;
-      }).style('stroke-width', l => {
-        const sourceId = typeof l.source === 'string' ? l.source : (l.source as Node).id;
-        const targetId = typeof l.target === 'string' ? l.target : (l.target as Node).id;
-        return (sourceId === d.id || targetId === d.id) ? 3 : 1.5;
+    svg.select('.links').selectAll('line')
+      .transition().duration(200)
+      .attr('stroke-opacity', (d: any) => {
+        if (!hasSel) return 0.06;
+        const sId = typeof d.source === 'string' ? d.source : (d.source as any).id;
+        const tId = typeof d.target === 'string' ? d.target : (d.target as any).id;
+        return (sId === selectedNode!.id || tId === selectedNode!.id) ? 0.7 : 0.01;
+      })
+      .attr('stroke-width', (d: any) => {
+        if (!hasSel) return 0.5;
+        const sId = typeof d.source === 'string' ? d.source : (d.source as any).id;
+        const tId = typeof d.target === 'string' ? d.target : (d.target as any).id;
+        return (sId === selectedNode!.id || tId === selectedNode!.id) ? 1.5 : 0.3;
       });
-      labels.style('opacity', n => neighbors.has(n.id) ? 1 : 0.1);
-    }
 
-    function resetHighlight() {
-      node.style('opacity', 1);
-      link.style('stroke-opacity', 0.15).style('stroke-width', 1.5);
-      labels.style('opacity', d => (d.fan_in || 0) > 3 ? 1 : 0.4);
-    }
+    svg.select('.labels').selectAll('text')
+      .transition().duration(200)
+      .attr('fill-opacity', (d: any) => {
+        if (!hasSel) return 0.3;
+        return selectedNodeNeighbors.has(d.id) ? 0.8 : 0.02;
+      });
+  }, [selectedNode, selectedNodeNeighbors]);
 
-    function dragstarted(event: any) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event: any) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event: any) {
-      if (!event.active) simulation.alphaTarget(0);
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-
-    return () => {
-      simulation.stop();
-    };
-  }, [data]);
+  // ─── Empty state ────────────────────────────────────────────────────────
+  if (graphData.nodes.length === 0) {
+    return (
+      <div className="rounded-[32px] bg-card border border-border/50 p-10 h-[500px] flex items-center justify-center shadow-2xl">
+        <div className="text-center space-y-4">
+          <Share2 className="w-12 h-12 text-muted-foreground/20 mx-auto" />
+          <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">Sin datos de grafo disponibles</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-[40px] bg-card border border-border/50 p-10 h-[750px] flex flex-col shadow-2xl relative overflow-hidden group/main">
-      <div className="flex items-center justify-between mb-10 relative z-10">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner group-hover/main:rotate-12 transition-transform duration-500">
-            <Share2 className="w-8 h-8 text-primary" />
+    <div className="rounded-[32px] bg-[#080810] border border-white/[0.06] h-[750px] flex flex-col shadow-2xl relative overflow-hidden">
+      {/* ── Header bar ── */}
+      <div className="px-6 py-4 border-b border-white/[0.06] bg-white/[0.02] flex items-center justify-between relative z-10 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0">
+            <Share2 className="w-5 h-5 text-purple-400/80" />
           </div>
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tighter italic leading-none mb-1">{title}</h2>
-            <div className="flex items-center gap-2">
-               <MousePointer2 className="w-3 h-3 text-muted-foreground" />
-               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic opacity-60">Interactivo: Haz clic en un nodo para ver dependencias</p>
-            </div>
+            <h2 className="text-xs font-black uppercase tracking-wider text-white/80 leading-none mb-0.5">{title}</h2>
+            <p className="text-[8px] font-bold text-white/25 uppercase tracking-widest">
+              {stats.nodes}{activeFilter ? ` filtrados` : ''} nodos · {stats.links} enlaces
+              {stats.capped && <span className="ml-2 text-amber-400/50">(top 200 de {stats.totalNodes})</span>}
+            </p>
           </div>
         </div>
-        <div className="flex gap-4">
-           <div className="px-6 py-2 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center">
-              <span className="text-sm font-black italic text-emerald-500">{stats.nodes}</span>
-              <span className="text-[7px] font-black uppercase tracking-widest text-emerald-500 opacity-60">Nodos</span>
-           </div>
-           <div className="px-6 py-2 bg-primary/10 rounded-2xl border border-primary/20 flex flex-col items-center justify-center">
-              <span className="text-sm font-black italic text-primary">{stats.links}</span>
-              <span className="text-[7px] font-black uppercase tracking-widest text-primary opacity-60">Enlaces</span>
-           </div>
-           <button disabled title="Próximamente" aria-label="Maximizar gráfico" className="w-12 h-12 rounded-2xl bg-muted/30 border border-border/50 flex items-center justify-center opacity-50 cursor-not-allowed">
-              <Maximize2 className="w-5 h-5 text-muted-foreground" />
-           </button>
+
+        {/* ── Controls ── */}
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setShowLabels(!showLabels)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title={showLabels ? 'Ocultar etiquetas' : 'Mostrar etiquetas'}>
+            {showLabels ? <Eye className="w-3 h-3 text-white/40" /> : <EyeOff className="w-3 h-3 text-white/40" />}
+          </button>
+          <button onClick={() => setShowLegend(!showLegend)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Capas">
+            <Layers className="w-3 h-3 text-white/40" />
+          </button>
+          <div className="w-px h-5 bg-white/[0.06]" />
+          <div className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[8px] font-mono font-bold text-white/30 min-w-[40px] text-center">
+            {Math.round(zoomLevel * 100)}%
+          </div>
+          <button onClick={() => { svgRef.current && d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 1.8); }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom +">
+            <ZoomIn className="w-3 h-3 text-white/40" />
+          </button>
+          <button onClick={() => { svgRef.current && d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 0.55); }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom -">
+            <ZoomOut className="w-3 h-3 text-white/40" />
+          </button>
+          <button onClick={fitToView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Ajustar a vista">
+            <Maximize2 className="w-3 h-3 text-white/40" />
+          </button>
+          <button onClick={resetView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Restablecer">
+            <RotateCcw className="w-3 h-3 text-white/40" />
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-muted/10 border border-border/30 rounded-[48px] relative overflow-hidden group cursor-crosshair shadow-inner">
-         <svg ref={svgRef} className="w-full h-full" />
+      {/* ── Graph Area ── */}
+      <div className="flex-1 relative overflow-hidden" ref={containerRef}>
+        <svg ref={svgRef} className="w-full h-full cursor-crosshair" style={{ background: 'radial-gradient(ellipse at center, #0d0d1a 0%, #080810 70%, #050508 100%)' }} />
 
-         {/* Legend Overlay */}
-         <div className="absolute top-10 right-10 p-8 rounded-[32px] bg-background/60 backdrop-blur-xl border border-white/20 shadow-2xl space-y-6">
-            <div className="flex items-center gap-3">
-               <Layers className="w-4 h-4 text-primary" />
-               <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Tipología</h4>
+        {/* ── Layer filter legend ── */}
+        {showLegend && (
+          <div className="absolute top-3 left-3 p-3 rounded-xl bg-black/60 backdrop-blur-xl border border-white/[0.08] shadow-2xl w-[180px]">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <Layers className="w-2.5 h-2.5 text-purple-400/60" />
+                <span className="text-[7px] font-black uppercase tracking-widest text-white/40">Capas</span>
+              </div>
+              <button onClick={() => setActiveFilter(null)} className={cn("text-[6px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded", !activeFilter ? "bg-white/10 text-white/60" : "text-white/20 hover:text-white/40")}>Todas</button>
             </div>
-            <div className="space-y-4">
-               {[
-                  { color: '#3fff8b', label: 'Aplicación / Acción', desc: 'Lógica de negocio núcleo' },
-                  { color: '#aa8aff', label: 'Interfaz / Vista', desc: 'Componentes UI y flujo visual' },
-                  { color: '#0d6cf2', label: 'Servicios / Infra', desc: 'Persistencia y APIs externas' },
-                  { color: 'hsl(var(--muted-foreground))', label: 'Desconocido', desc: 'Artefactos sin capa definida' }
-               ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                     <div className="w-2 h-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: item.color }} />
-                     <div>
-                        <div className="text-[9px] font-black uppercase tracking-tight leading-none mb-1">{item.label}</div>
-                        <div className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{item.desc}</div>
-                     </div>
-                  </div>
-               ))}
+            <div className="space-y-1">
+              {layerStats.map(([layer, count]) => {
+                const c = getColor(layer);
+                const isActive = activeFilter === layer;
+                return (
+                  <button key={layer} onClick={() => setActiveFilter(isActive ? null : layer)}
+                    className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left",
+                      isActive ? "bg-white/[0.08] border border-white/[0.12]" : "hover:bg-white/[0.03] border border-transparent"
+                    )}>
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.stroke, boxShadow: isActive ? `0 0 8px ${c.stroke}` : 'none' }} />
+                    <span className="text-[7px] font-bold uppercase tracking-wider text-white/50 truncate flex-1">{layer}</span>
+                    <span className={cn("text-[7px] font-mono font-bold", isActive ? "text-white/60" : "text-white/20")}>{count}</span>
+                  </button>
+                );
+              })}
             </div>
-         </div>
+          </div>
+        )}
 
-         {/* Info/Detail Overlay */}
-         {selectedNode ? (
-            <div className="absolute bottom-4 left-4 p-4 sm:p-8 rounded-[24px] sm:rounded-[40px] bg-primary text-primary-foreground shadow-2xl w-[200px] sm:w-[300px] graph-info-card animate-in slide-in-from-left-4 duration-500">
-               <div className="flex items-start justify-between mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                     <Info className="w-6 h-6 text-white" />
-                  </div>
-                  <button onClick={() => setSelectedNode(null)} className="text-[8px] font-black uppercase tracking-widest opacity-60 hover:opacity-100">Cerrar</button>
-               </div>
-               <h3 className="text-xl font-black uppercase tracking-tighter leading-tight mb-2 italic">{selectedNode.label}</h3>
-               <div className="flex items-center gap-2 mb-6">
-                  <div className="px-3 py-1 bg-white/10 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/20">
-                     {selectedNode.layer || 'SISTEMA'}
-                  </div>
-                  <div className="px-3 py-1 bg-white/10 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/20">
-                     {selectedNode.type || 'ARTEFACTO'}
-                  </div>
-               </div>
-               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                  <div className="flex justify-between items-center">
-                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Criticidad</span>
-                     <span className="text-xs font-black italic">{(selectedNode.fan_in || 0) > 10 ? 'ALTA' : 'MEDIA'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Dependencias</span>
-                     <span className="text-xs font-black italic">{selectedNode.fan_in || 0} Entrantes</span>
-                  </div>
-               </div>
+        {/* ── Crosshair ── */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+          <Crosshair className="w-6 h-6 text-white" />
+        </div>
+
+        {/* ── Selected node detail panel ── */}
+        {selectedNode && (
+          <div className="absolute bottom-3 left-3 p-4 rounded-xl bg-black/80 backdrop-blur-xl border border-white/[0.08] shadow-2xl w-[260px] animate-in slide-in-from-left-4 duration-300">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getColor(deriveLayer(selectedNode)).stroke, boxShadow: `0 0 10px ${getColor(deriveLayer(selectedNode)).stroke}` }} />
+                <h3 className="text-[10px] font-black uppercase tracking-tight leading-tight truncate text-white/90">{selectedNode.label}</h3>
+              </div>
+              <button onClick={() => setSelectedNode(null)} className="text-[7px] font-bold uppercase text-white/20 hover:text-white/50 ml-1 shrink-0">✕</button>
             </div>
-         ) : (
-            <div className="absolute bottom-10 left-10 p-6 rounded-3xl bg-background/40 backdrop-blur-md border border-border/50 text-muted-foreground opacity-60 flex items-center gap-3">
-               <MousePointer2 className="w-4 h-4" />
-               <span className="text-[9px] font-black uppercase tracking-[0.2em]">Selecciona un componente para inspeccionar</span>
+            <div className="space-y-1.5 mb-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[7px] font-bold uppercase tracking-widest text-white/25">Capa</span>
+                <span className="text-[8px] font-bold uppercase text-white/50">{deriveLayer(selectedNode)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[7px] font-bold uppercase tracking-widest text-white/25">Grupo</span>
+                <span className="text-[8px] font-bold uppercase text-white/50">{selectedNode.group || '—'}</span>
+              </div>
             </div>
-         )}
+            <div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.06] grid grid-cols-2 gap-2">
+              <div className="text-center">
+                <div className="text-xs font-black text-blue-400">{selectedNodeDeps.in}</div>
+                <div className="text-[6px] font-bold uppercase tracking-widest text-white/25">Dependencias</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs font-black text-emerald-400">{selectedNodeDeps.out}</div>
+                <div className="text-[6px] font-bold uppercase tracking-widest text-white/25">Dependientes</div>
+              </div>
+            </div>
+            <div className="mt-1.5 text-[6px] font-mono text-white/15 truncate">{selectedNode.id}</div>
+          </div>
+        )}
+
+        {/* ── Status hint ── */}
+        {!selectedNode && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur border border-white/[0.06]">
+            <Crosshair className="w-2.5 h-2.5 text-white/20" />
+            <span className="text-[7px] font-bold uppercase tracking-widest text-white/20">Grafo estático · Clic para inspeccionar nodo</span>
+          </div>
+        )}
       </div>
     </div>
   );

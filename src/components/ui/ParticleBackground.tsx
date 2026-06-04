@@ -5,22 +5,22 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 
 /* ── Random background greetings ── */
 const BG_GREETINGS = [
-  'Hola!!!',
-  'Venga, te toca',
-  '¿Qué tal?',
-  '¡Dale!',
   '¡Vamos!',
-  'Aquí estamos',
-  'Tu momento, ¡actúa!',
-  'Nada por aquí...',
-  '¡Bienvenido!',
-  '¿Buscabas algo?',
-  'Ups, ruta perdida',
-  '¡Sigue intentando!',
-  'Nadie está aquí... o sí',
-  '¿Y ahora qué?',
-  'La página se escapó',
-  'Creatividad al máximo',
+  '¡Dale!',
+  '¡Hola!',
+  '¡Arrancamos!',
+  '¡Siempre adelante!',
+  'Listo',
+  '¡Genial!',
+  '¡Vamos con todo!',
+  '¡A ganar!',
+  '¡Éxito!',
+  '¡Bravo!',
+  '¡Positivo!',
+  '¡Súper!',
+  '¡Arranca!',
+  '¡Levanta!',
+  '¡Boom!',
 ];
 
 interface Particle {

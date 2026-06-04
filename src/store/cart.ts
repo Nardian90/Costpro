@@ -1,8 +1,21 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { produce } from "immer";
-import { toast } from "sonner";
-import type { Product, ProductVariant } from "@/types";
+import type { Product, ProductVariant, TaxConfiguration } from "@/types";
+
+// ── Notification callback (injected by UI layer) ────────────────
+let _onCartNotification: ((type: "warning" | "error", message: string) => void) | null = null;
+
+/** Inject a notification handler to decouple toasts from the store */
+export function setCartNotificationHandler(
+  handler: (type: "warning" | "error", message: string) => void,
+) {
+  _onCartNotification = handler;
+}
+
+function notify(type: "warning" | "error", message: string) {
+  _onCartNotification?.(type, message);
+}
 
 export interface CartItem {
   product_id: string;
@@ -22,11 +35,11 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   discount: { type: "percentage" | "fixed"; value: number } | null;
-  appliedTaxes: any[];
+  appliedTaxes: TaxConfiguration[];
   sessionUserId: string | null;
   lastUpdated: number;
 
-  addItem: (product: any, variant?: ProductVariant) => void;
+  addItem: (productInput: Product | Partial<CartItem>, variant?: ProductVariant) => void;
   removeItem: (productId: string, variantId: string | null) => void;
   updateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
   updateItemDiscount: (
@@ -43,7 +56,7 @@ interface CartState {
   ) => void;
   prorateGlobalPayment: (totalCash: number, totalTransfer: number) => void;
   setDiscount: (discount: { type: "percentage" | "fixed"; value: number } | null) => void;
-  toggleTax: (tax: any) => void;
+  toggleTax: (tax: TaxConfiguration) => void;
   getSubtotal: () => number;
   getDiscountAmount: () => number;
   getTaxAmount: () => number;
@@ -90,10 +103,9 @@ export const useCartStore = create<CartState>()(
 
             if (existing) {
               const conversionFactor = variant?.conversion_factor || 1;
-              // Stock is in base units; variant quantity must be multiplied by conversion_factor
-              const maxVariantQty = Math.floor((product?.stock_current ?? product?.stock ?? 999999) / conversionFactor);
+              const maxVariantQty = Math.floor((product?.stock_current ?? 999999) / conversionFactor);
               if (existing.quantity + incomingQuantity > maxVariantQty) {
-                toast.warning(`Stock insuficiente para ${product?.name || 'producto'}. Máx: ${maxVariantQty} ${variant?.name || 'uds'}`);
+                notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;
               }
               existing.quantity += incomingQuantity;
@@ -102,32 +114,17 @@ export const useCartStore = create<CartState>()(
               existing.transfer_paid = 0;
             } else {
               const conversionFactor = variant?.conversion_factor || 1;
-              const stock = product?.stock_current ?? product?.stock ?? 999999;
+              const stock = product?.stock_current ?? 999999;
               const maxVariantQty = Math.floor(stock / conversionFactor);
               if (maxVariantQty <= 0) {
-                toast.error(`Producto ${product?.name || 'producto'} sin existencias.`);
+                notify("error", `Producto ${product?.name || "producto"} sin existencias.`);
                 return;
               }
 
-              // Handle weird test spreading: { ...mockCartItem, quantity: 40 }
-              // mockCartItem has subtotal: 200, quantity: 2.
-              // If we use subtotal/quantity we get 200/40 = 5. WRONG.
-              // We should prefer 'price' or 'price_base' if they exist.
               let price = product?.price ?? productInput.price ?? productInput.price_base;
 
               if (!price && productInput.subtotal && productInput.quantity) {
-                  // Fallback for tests that only provide subtotal and quantity
-                  // If quantity in input is 40 but subtotal is still 200, it's likely a merged object.
-                  // Usually subtotal = price * quantity.
-                  // If we don't have price, and we are in a test environment,
-                  // we might need to look at how the mock was constructed.
-                  price = productInput.subtotal / productInput.quantity;
-
-                  // SPECIAL CASE: if subtotal=200 and quantity=40, it's likely the test intended
-                  // to keep the price from the original mockCartItem (price=100).
-                  if (productInput.subtotal === 200 && productInput.quantity === 40) {
-                      price = 100;
-                  }
+                price = productInput.subtotal / productInput.quantity;
               }
               price = price ?? 0;
 
@@ -173,12 +170,10 @@ export const useCartStore = create<CartState>()(
             );
             if (item) {
               const conversionFactor = item.variant?.conversion_factor || 1;
-              const stockInBaseUnits = item.product?.stock_current ?? (item.product as any)?.stock ?? 999999;
+              const stockInBaseUnits = item.product?.stock_current ?? 999999;
               const maxVariantQty = Math.floor(stockInBaseUnits / conversionFactor);
               if (quantity > maxVariantQty) {
-                toast.warning(
-                  `Stock máximo para ${item.product?.name || 'producto'} es ${maxVariantQty} ${item.variant?.name || 'uds'}.`,
-                );
+                notify("warning", `Stock máximo para ${item.product?.name || "producto"} es ${maxVariantQty} ${item.variant?.name || "uds"}.`);
                 item.quantity = maxVariantQty;
               } else if (quantity > 0) {
                 item.quantity = quantity;
@@ -231,10 +226,7 @@ export const useCartStore = create<CartState>()(
       prorateGlobalPayment: (totalCash, totalTransfer) =>
         set(
           produce((state: CartState) => {
-            const subtotal = state.items.reduce(
-              (acc, item) => acc + item.subtotal,
-              0,
-            );
+            const subtotal = state.items.reduce((acc, item) => acc + item.subtotal, 0);
             if (subtotal <= 0) return;
 
             let remainingCash = totalCash;
@@ -301,10 +293,7 @@ export const useCartStore = create<CartState>()(
         const tax = appliedTaxes.reduce((totalTax, tax) => {
           let taxValue = 0;
           if (tax.type === "percentage") {
-            const taxableAmount = Math.max(
-              0,
-              baseAmount - (tax.min_exempt || 0),
-            );
+            const taxableAmount = Math.max(0, baseAmount - (tax.min_exempt || 0));
             taxValue = (taxableAmount * tax.value) / 100;
           } else {
             taxValue = tax.value;

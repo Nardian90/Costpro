@@ -9,14 +9,13 @@ import {
 import ProductImage from "@/components/ui/ProductImage";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/ui/useMobile";
-import { useTaxes } from "@/hooks/api/useTaxes";
 import { useAuthStore } from "@/store";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { SecondaryButton } from "@/components/ui/atomic";
 import { POSCartItem } from "./POSCartItem";
 import { POSCartSummary } from "./POSCartSummary";
 import { POSCartActions } from "./POSCartActions";
-import { SuccessView } from "./POSCartSuccessView";
+import { POSCartSuccessView } from "./POSCartSuccessView";
 import { usePOSCartExports } from "./usePOSCartExports";
 import type { POSCartProps } from "./POSCart.types";
 import type { PaymentMethod } from "@/types";
@@ -44,7 +43,6 @@ export const POSCart = ({
   prorateGlobalPayment,
 }: POSCartProps) => {
   const { user } = useAuthStore();
-  const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("cash");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -139,11 +137,12 @@ export const POSCart = ({
         {/* Body */}
         <div className="flex-1 flex flex-col overflow-hidden -mt-4 sm:-mt-6 rounded-t-2xl sm:rounded-t-3xl bg-card relative z-10">
           {lastSale ? (
-            <SuccessView
+            <POSCartSuccessView
               onGeneratePDF={generatePDF}
               onShareWhatsApp={shareWhatsApp}
               onExportAsImage={exportAsImage}
               onClearLastSale={onClearLastSale}
+              lastSale={lastSale ?? undefined}
             />
           ) : items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-start pt-12 p-6 text-center space-y-4">

@@ -1,470 +1,212 @@
 'use client';
 
-import React, { useState, useMemo, useTransition, useCallback } from 'react';
-import { useShallow } from 'zustand/react/shallow';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   ShoppingCart,
-  Search,
-  Plus,
-  X,
   Trash2,
   QrCode,
-  AlertTriangle,
-  Tag,
-  Package
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
-import { useCartStore } from '@/store/cart';
-import { Product } from '@/types';
+import { useCartStore, setCartNotificationHandler } from '@/store/cart';
+import { Product, ProductVariant, PaymentMethod } from '@/types';
+import { auditService } from '@/services/audit-service';
+import { toast } from 'sonner';
+import { AnimatePresence } from 'framer-motion';
 import SearchBar from '@/components/ui/SearchBar';
 import { CategoryChips, ProductCard, ViewSwitcher } from '@/components/ui/atomic';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
-import { POSCart } from './POSCart';
-import { StickyCartSummary } from './StickyCartSummary';
-import { BaseModal } from '@/components/ui/BaseModal';
-import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import POSTableView from './POSTableView';
+import ActionMenu from '@/components/ui/ActionMenu';
+import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 import { Portal } from '@/components/ui/Portal';
 import { QueryInspector } from '@/components/ui/QueryInspector';
-import { useCreateSale } from '@/hooks/api/useTransactions';
-import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
-// PriceSelectorModal: Shows product variants AND base unit option for multi-unit selling
-// Per international standards: product can be sold by base unit OR any defined variant (box, pack, etc.)
-const PriceSelectorModal = ({ isOpen, onClose, product, onSelect }: {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onSelect: (variant: any) => void;
-}) => {
-  if (!isOpen || !product) return null;
-  const variants = product.product_variants || [];
+// POS sub-components
+import { POSCart } from './POSCart';
+import { StickyCartSummary } from './StickyCartSummary';
+import { POSModals } from './POSModals';
+import POSTableView from './POSTableView';
+import PriceSelectorModal from './PriceSelectorModal';
+import BarcodeScanner from './BarcodeScanner';
+import EmptyProducts from './EmptyProducts';
+import POSLoadingSkeleton from './POSLoadingSkeleton';
 
-  const handleSelectBase = () => {
-    // Passing null signals "base unit" — POSView.onAddToCart handles this
-    onSelect(null);
-  };
-
-  const handleSelectVariant = (variant: any) => {
-    onSelect(variant);
-  };
-
-  return (
-    <BaseModal
-      open={isOpen}
-      onOpenChange={(open) => { if (!open) onClose(); }}
-      title={
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Seleccionar Modalidad de Venta</span>
-          <span className="text-lg font-black uppercase truncate">{product.name}</span>
-        </div>
-      }
-      description={`Stock: ${product.stock_current ?? 0} ${product.unit_of_measure || 'uds'}`}
-      maxWidth="sm:max-w-md"
-    >
-      <div className="py-4 space-y-2">
-        {/* Base Unit Option — always available */}
-        <button
-          type="button"
-          onClick={handleSelectBase}
-          className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 active:scale-[0.99] transition-all text-left"
-          aria-label={`Unidad Base — ${formatCurrency(product.price)}`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-              <Tag className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-black text-sm">Unidad Base</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                1 {product.unit_of_measure || 'ud'} — Precio estándar
-              </p>
-            </div>
-          </div>
-          <span className="font-black text-sm text-primary ml-4 whitespace-nowrap">
-            {formatCurrency(product.price)}
-          </span>
-        </button>
-
-        {/* Variant Options */}
-        {variants.map((variant) => (
-          <button
-            key={variant.id}
-            type="button"
-            onClick={() => handleSelectVariant(variant)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 active:scale-[0.99] transition-all text-left"
-            aria-label={`${variant.name} — ${formatCurrency(variant.price)}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                <Package className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-black text-sm truncate">{variant.name}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                  1 {variant.name} = x{variant.conversion_factor || 1} {product.unit_of_measure || 'uds'}
-                </p>
-                {variant.sku && (
-                  <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">SKU: {variant.sku}</p>
-                )}
-              </div>
-            </div>
-            <span className="font-black text-sm text-primary ml-4 whitespace-nowrap">
-              {formatCurrency(variant.price)}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-2.5 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors"
-        >
-          Cancelar
-        </button>
-      </div>
-    </BaseModal>
-  );
-};
-
-// BarcodeScanner: Simple SKU input dialog for typing/pasting barcodes
-const BarcodeScanner = ({ isOpen, onClose, onScan }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onScan: (value: string) => void;
-}) => {
-  const [inputValue, setInputValue] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = inputValue.trim();
-    if (trimmed) {
-      onScan(trimmed);
-      setInputValue('');
-      onClose();
-    }
-  };
-
-  return (
-    <BaseModal
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          setInputValue('');
-          onClose();
-        }
-      }}
-      title={
-        <div className="flex items-center gap-2">
-          <QrCode className="w-5 h-5" /> Escanear / Buscar SKU
-        </div>
-      }
-      description="Ingresa o pega un código de barras o SKU para buscar el producto"
-      maxWidth="sm:max-w-md"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="barcode-input" className="sr-only">Código de barras o SKU</label>
-          <input
-            id="barcode-input"
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ej: 7501234567890"
-            autoFocus
-            autoComplete="off"
-            aria-label="Código de barras o SKU"
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground text-sm font-medium placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={!inputValue.trim()}
-          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Buscar Producto
-        </button>
-      </form>
-    </BaseModal>
-  );
-};
-
-const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
-  <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-2xl bg-muted/5">
-    <Search className="w-12 h-12 mx-auto mb-4 opacity-10" />
-    <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">No se encontraron productos</p>
-    {onClearSearch && (
-      <button
-        type="button"
-        onClick={onClearSearch}
-        className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline"
-        aria-label="Limpiar búsqueda de productos"
-      >
-        Limpiar búsqueda
-      </button>
-    )}
-  </div>
-);
-
-const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => (
-  <div className={cn(layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3")} aria-hidden="true">
-    {[...Array(8)].map((_, i) => (
-      <Skeleton key={i} className={cn("rounded-2xl", layoutMode === 'grid' ? "h-64" : "h-16")} />
-    ))}
-  </div>
-);
+// Extracted hooks
+import { usePOSCheckout } from './usePOSCheckout';
+import { usePOSProductFilters } from './usePOSProductFilters';
 
 export default function POSView() {
   const { user } = useAuthStore();
   const isMobile = useIsMobile();
-  const [isPending, startTransition] = useTransition();
 
-  // States
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // Wire up cart notifications (decoupled from store via callback)
+  React.useEffect(() => {
+    setCartNotificationHandler((type, message) => {
+      type === "warning" ? toast.warning(message) : toast.error(message);
+    });
+    return () => setCartNotificationHandler(() => {});
+  }, []);
+
+  // ── Extracted hooks ─────────────────────────────────────────
+  const {
+    startCheckout,
+    confirmUnpricedCheckout,
+    isProcessingSale,
+    showPriceWarning,
+    setShowPriceWarning,
+    lastSale,
+    setLastSale,
+  } = usePOSCheckout();
+
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
+  const products = (productsData || []) as Product[];
+
+  const {
+    isPending,
+    searchTerm,
+    setSearchTerm,
+    selectedCategory,
+    handleCategoryChange,
+    categories,
+    filteredProducts,
+  } = usePOSProductFilters({ products });
+
+  // ── Local UI state ─────────────────────────────────────────
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const [showCart, setShowCart] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
-  const [showPriceWarning, setShowPriceWarning] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [lastSale, setLastSale] = useState<any>(null);
 
-  // FIX: Use useShallow to avoid re-renders on unrelated store changes
+  // ── Cart store (shallow) ────────────────────────────────────
   const {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
+    items, addItem, removeItem, updateQuantity, clearCart,
+    getSubtotal, getDiscountAmount, getTotal,
+    discount, setDiscount,
+    updateItemDiscount, updateItemPayment, prorateGlobalPayment,
     getItemCount,
-    getSubtotal,
-    getDiscountAmount,
-    getTaxAmount,
-    getTotal,
-    discount,
-    setDiscount,
-    appliedTaxes,
-    toggleTax,
-    updateItemDiscount,
-    updateItemPayment,
-    prorateGlobalPayment
   } = useCartStore(useShallow(state => ({
-    items: state.items,
-    addItem: state.addItem,
-    removeItem: state.removeItem,
-    updateQuantity: state.updateQuantity,
-    clearCart: state.clearCart,
-    getItemCount: state.getItemCount,
+    items: state.items, addItem: state.addItem, removeItem: state.removeItem,
+    updateQuantity: state.updateQuantity, clearCart: state.clearCart,
     getSubtotal: state.getSubtotal,
-    getDiscountAmount: state.getDiscountAmount,
-    getTaxAmount: state.getTaxAmount,
-    getTotal: state.getTotal,
-    discount: state.discount,
-    setDiscount: state.setDiscount,
-    appliedTaxes: state.appliedTaxes,
-    toggleTax: state.toggleTax,
+    getDiscountAmount: state.getDiscountAmount, getTotal: state.getTotal,
+    discount: state.discount, setDiscount: state.setDiscount,
     updateItemDiscount: state.updateItemDiscount,
     updateItemPayment: state.updateItemPayment,
     prorateGlobalPayment: state.prorateGlobalPayment,
+    getItemCount: state.getItemCount,
   })));
 
-  // API
-  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
-  const { mutateAsync: createSale, isPending: isProcessingSale } = useCreateSale();
+  // ── Cart handlers ───────────────────────────────────────────
+  const handleCloseCart = useCallback(() => setShowCart(false), []);
 
-  const products = (productsData || []) as Product[];
-  const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category).filter(Boolean));
-    return Array.from(cats) as string[];
-  }, [products]);
+  const handleClearLastSale = useCallback(() => {
+    setLastSale(null);
+    handleCloseCart();
+  }, [setLastSale, handleCloseCart]);
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, searchTerm, selectedCategory]);
-
-  const handleCategoryChange = (val: string) => {
-    startTransition(() => {
-      setSelectedCategory(val);
-    });
-  };
-
+  // ── Add to cart with stock validation & price<cost audit ────
   const onAddToCart = (product: Product) => {
+    if ((product.stock_current ?? 0) <= 0) {
+      toast.error(`${product.name} no tiene stock disponible`);
+      return;
+    }
+    const price = product.price || 0;
+    const cost = product.cost_price || product.cost_average || 0;
+    if (cost > 0 && price < cost) {
+      toast.warning(`Atención: ${product.name} tiene precio (${formatCurrency(price)}) inferior al costo (${formatCurrency(cost)})`, { duration: 5000 });
+      if (user) auditService.logSaleBelowCost(user.id, product.id, user.activeStoreId!, price, cost);
+    }
     if (product.product_variants && product.product_variants.length > 0) {
       setSelectedProductForVariants(product);
     } else {
-        addItem({
-            product_id: product.id,
-            variant_id: null,
-            variant: null,
-            price: product.price,
-            cost: product.cost_price || 0,
-            quantity: 1,
-            product: product,
-            subtotal: product.price
-        });
-        toast.success(`${product.name} añadido`);
+      addItem({
+        product_id: product.id, variant_id: null, variant: null,
+        price: product.price, cost: product.cost_price || 0,
+        quantity: 1, product, subtotal: product.price,
+      });
+      toast.success(`${product.name} añadido`);
     }
   };
 
-  const handleAddItem = (product: Product, variant: any) => {
+  const handleAddItem = (product: Product, variant: ProductVariant | null) => {
+    if (!variant && (product.stock_current ?? 0) <= 0) {
+      toast.error(`${product.name} no tiene stock disponible`);
+      return;
+    }
+    if (variant && (product.stock_current ?? 0) < (variant.conversion_factor || 1)) {
+      toast.error(`${product.name} no tiene stock suficiente para ${variant.name}`);
+      return;
+    }
     if (!variant) {
-      // Base unit selected from PriceSelectorModal
       addItem({
-        product_id: product.id,
-        variant_id: null,
-        variant: null,
-        price: product.price,
-        cost: product.cost_price || 0,
-        quantity: 1,
-        product: product,
-        subtotal: product.price
+        product_id: product.id, variant_id: null, variant: null,
+        price: product.price, cost: product.cost_price || 0,
+        quantity: 1, product, subtotal: product.price,
       });
       toast.success(`${product.name} (unidad base) añadido`);
     } else {
-      // Variant selected — cost adjusts by conversion_factor per international standards
       const conversionFactor = variant.conversion_factor || 1;
+      const variantPrice = variant.price || 0;
+      const variantCost = (product.cost_price || 0) * conversionFactor;
+      if (variantCost > 0 && variantPrice < variantCost) {
+        toast.warning(`Atención: ${product.name} (${variant.name}) precio < costo ajustado`, { duration: 5000 });
+        if (user) auditService.logSaleBelowCost(user.id, product.id, user.activeStoreId!, variantPrice, variantCost);
+      }
       addItem({
-        product_id: product.id,
-        variant_id: variant.id,
-        variant: variant,
-        price: variant.price,
-        cost: (product.cost_price || 0) * conversionFactor,
-        quantity: 1,
-        product: product,
-        subtotal: variant.price
+        product_id: product.id, variant_id: variant.id, variant,
+        price: variant.price, cost: (product.cost_price || 0) * conversionFactor,
+        quantity: 1, product, subtotal: variant.price,
       });
       toast.success(`${product.name} (${variant.name}, x${conversionFactor}) añadido`);
     }
   };
 
-  const startCheckout = async () => {
-    const hasUnpriced = items.some(item => (item.price || 0) <= 0);
-    if (hasUnpriced) {
-      setShowPriceWarning(true);
-      return;
-    }
-    await processCheckout();
+  // ── Barcode scan (SKU exact → name fuzzy) ──────────────────
+  const handleScan = (query: string) => {
+    const product = products.find(p => p.sku === query);
+    if (product) { onAddToCart(product); return; }
+    const nameMatch = products.find(p => p.name.toLowerCase().includes(query.toLowerCase()));
+    if (nameMatch) { onAddToCart(nameMatch); return; }
+    toast.error(`Producto con "${query}" no encontrado`);
   };
 
-  const confirmUnpricedCheckout = async () => {
-    setShowPriceWarning(false);
-    await processCheckout();
-  };
-
-  const processCheckout = async () => {
-    if (!user?.activeStoreId || !user?.id) return;
-    try {
-      const saleId = await createSale({
-        p_store_id: user.activeStoreId,
-        p_seller_id: user.id,
-        p_payment_method: 'mixed',
-        p_total_amount: getTotal(),
-        p_subtotal: getSubtotal(),
-        p_discount_type: discount?.type || 'fixed',
-        p_discount_value: getDiscountAmount(),
-        p_items: items.map(i => ({
-          product_id: i.product_id,
-          variant_id: i.variant_id!,
-          quantity: i.quantity,
-          price: i.price,
-          cost: i.cost,
-          cash_paid: i.cash_paid,
-          transfer_paid: i.transfer_paid
-        }))
-      });
-      setLastSale({ id: saleId });
-      clearCart();
-      toast.success('Venta completada con éxito');
-    } catch (err: any) {
-      toast.error('Error al procesar la venta: ' + (err?.message || 'Error desconocido'));
-    }
-  };
-
-  const handleScan = (sku: string) => {
-    const product = products.find(p => p.sku === sku);
-    if (product) {
-      onAddToCart(product);
-    } else {
-      toast.error(`Producto con SKU ${sku} no encontrado`);
-    }
-  };
-
-  // FIX-RCT-129: Extract shared close handler to useCallback
-  const handleCloseCart = useCallback(() => setShowCart(false), []);
-
-  const handleClearCart = () => {
-    clearCart();
-    setShowClearConfirm(false);
-    toast.success('Carrito vaciado');
-  };
-
+  // ── Derived values ──────────────────────────────────────────
   const cartCount = getItemCount();
   const cartTotal = getTotal();
 
-  const cartButton = (
-    <ActionMenu
-      actions={[
-        {
-          id: 'cart',
-          label: isMobile ? `(${cartCount})` : `Caja (${cartCount})`,
-          icon: ShoppingCart,
-          onClick: () => setShowCart(!showCart),
-          variant: cartCount > 0 ? 'primary' : 'outline',
-          active: showCart
-        }
-      ]}
-      className="w-auto"
-      position="top"
-    />
-  );
+  // ── POSCart shared props (DRY — single definition) ──────────
+  const posCartProps = useMemo(() => ({
+    items,
+    onRemoveItem: removeItem,
+    onUpdateQuantity: updateQuantity,
+    onClearCart: clearCart,
+    getSubtotal,
+    getDiscountAmount,
+    getTotal,
+    discount,
+    setDiscount,
+    updateItemDiscount,
+    updateItemPayment,
+    prorateGlobalPayment,
+    isProcessing: isProcessingSale,
+    onCheckout: startCheckout,
+    onClose: handleCloseCart,
+    lastSale,
+    isMobile,
+    onClearLastSale: handleClearLastSale,
+  }), [
+    items, removeItem, updateQuantity, getSubtotal, getDiscountAmount,
+    getTotal, discount, setDiscount, updateItemDiscount, updateItemPayment,
+    prorateGlobalPayment, isProcessingSale, startCheckout, handleCloseCart,
+    lastSale, isMobile, handleClearLastSale,
+  ]);
 
-  const mobileActions: SpeedDialAction[] = [
-    {
-      id: 'view-cart',
-      label: `Caja (${cartCount})`,
-      icon: ShoppingCart,
-      onClick: () => setShowCart(true),
-      category: 'Acción',
-      variant: cartCount > 0 ? 'success' : 'primary'
-    },
-    {
-      id: 'scan',
-      label: 'Escanear SKU',
-      icon: QrCode,
-      onClick: () => setShowScanner(true),
-      category: 'Acción'
-    },
-    {
-      id: 'clear-cart',
-      label: 'Anular Carrito',
-      icon: Trash2,
-      onClick: () => {
-        if (cartCount > 0) {
-          setShowClearConfirm(true);
-        }
-      },
-      category: 'Edición',
-      variant: 'destructive'
-    }
-  ];
-
+  // ── Render ─────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      {/* Aria-live region for cart status updates */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" role="status">
         {cartCount > 0
           ? `Carrito actualizado: ${cartCount} productos, total ${formatCurrency(cartTotal)}`
@@ -476,7 +218,18 @@ export default function POSView() {
           <h2 className="text-[clamp(1.875rem,6vw,3rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <div className="flex items-center gap-2">
             <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
-            {cartButton}
+            <ActionMenu
+              actions={[{
+                id: 'cart',
+                label: isMobile ? `(${cartCount})` : `Caja (${cartCount})`,
+                icon: ShoppingCart,
+                onClick: () => setShowCart(!showCart),
+                variant: cartCount > 0 ? 'primary' : 'outline',
+                active: showCart,
+              }]}
+              className="w-auto"
+              position="top"
+            />
           </div>
         </div>
       </div>
@@ -487,146 +240,18 @@ export default function POSView() {
         <AnimatePresence>
           {(showCart || lastSale) && (
             isMobile ? (
-              <Portal>
-                <POSCart
-                  items={items as any}
-                  onRemoveItem={removeItem}
-                  onUpdateQuantity={updateQuantity}
-                  onClearCart={() => setShowClearConfirm(true)}
-                  getSubtotal={getSubtotal}
-                  getDiscountAmount={getDiscountAmount}
-                  getTaxAmount={getTaxAmount}
-                  getTotal={getTotal}
-                  discount={discount}
-                  setDiscount={setDiscount}
-                  appliedTaxes={appliedTaxes}
-                  toggleTax={toggleTax}
-                  updateItemDiscount={updateItemDiscount}
-                  updateItemPayment={updateItemPayment}
-                  prorateGlobalPayment={prorateGlobalPayment}
-                  isProcessing={isProcessingSale}
-                  onCheckout={startCheckout as any}
-                  onClose={handleCloseCart}
-                  lastSale={lastSale}
-                  isMobile={isMobile}
-                  onClearLastSale={() => {
-                    setLastSale(null);
-                    handleCloseCart();
-                  }}
-                />
-              </Portal>
+              <Portal><POSCart {...posCartProps} /></Portal>
             ) : (
-              <POSCart
-                items={items as any}
-                onRemoveItem={removeItem}
-                onUpdateQuantity={updateQuantity}
-                onClearCart={() => setShowClearConfirm(true)}
-                getSubtotal={getSubtotal}
-                getDiscountAmount={getDiscountAmount}
-                getTaxAmount={getTaxAmount}
-                getTotal={getTotal}
-                discount={discount}
-                setDiscount={setDiscount}
-                appliedTaxes={appliedTaxes}
-                toggleTax={toggleTax}
-                  updateItemDiscount={updateItemDiscount}
-                  updateItemPayment={updateItemPayment}
-                  prorateGlobalPayment={prorateGlobalPayment}
-                isProcessing={isProcessingSale}
-                onCheckout={startCheckout as any}
-                onClose={handleCloseCart}
-                lastSale={lastSale}
-                isMobile={isMobile}
-                onClearLastSale={() => {
-                  setLastSale(null);
-                  handleCloseCart();
-                }}
-              />
+              <POSCart {...posCartProps} />
             )
           )}
         </AnimatePresence>
 
-        {/* Modal de Advertencia de Precio */}
-        <BaseModal
-          open={showPriceWarning}
-          onOpenChange={setShowPriceWarning}
-          title={
-            <div className="text-amber-500 flex items-center gap-2">
-               <AlertTriangle className="w-5 h-5" /> Advertencia de Precio
-            </div>
-          }
-          maxWidth="sm:max-w-md"
-          footer={
-            <>
-              <button
-                type="button"
-                onClick={() => setShowPriceWarning(false)}
-                className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={confirmUnpricedCheckout}
-                className="flex-1 py-2.5 rounded-xl bg-amber-500 text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
-              >
-                Confirmar Facturación
-              </button>
-            </>
-          }
-        >
-            <div className="py-6 text-center space-y-4">
-              <p className="font-bold text-foreground">
-                Uno o más productos en el carrito no tienen un precio asignado (Precio 0 o Nulo).
-              </p>
-              <div className="neu-card !p-4 bg-amber-500/10 border-amber-500/20">
-                 <p className="text-sm font-medium text-amber-700 leading-relaxed">
-                   ¿Desea continuar con la facturación bajo su responsabilidad?
-                 </p>
-              </div>
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
-                Esta acción quedará registrada en la auditoría del sistema.
-              </p>
-            </div>
-        </BaseModal>
-
-        {/* Modal de Confirmación de Limpieza de Carrito */}
-        <BaseModal
-          open={showClearConfirm}
-          onOpenChange={setShowClearConfirm}
-          title="Vaciar Carrito"
-          maxWidth="sm:max-w-md"
-          footer={
-            <>
-              <button
-                type="button"
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
-              >
-                No, volver
-              </button>
-              <button
-                type="button"
-                onClick={handleClearCart}
-                className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-destructive/20 active:scale-95 transition-all"
-              >
-                Sí, vaciar
-              </button>
-            </>
-          }
-        >
-          <div className="py-6 text-center space-y-4">
-            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-8 h-8" />
-            </div>
-            <p className="font-bold text-foreground">
-              ¿Estás seguro de que deseas vaciar el carrito?
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Esta acción no se puede deshacer y todos los productos seleccionados se eliminarán.
-            </p>
-          </div>
-        </BaseModal>
+        <POSModals
+          showPriceWarning={showPriceWarning}
+          onPriceWarningChange={setShowPriceWarning}
+          onConfirmUnpriced={confirmUnpricedCheckout}
+        />
 
         <div className="flex-1 w-full space-y-4 sm:space-y-6 lg:order-first">
           <div className="space-y-3 sm:space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-4 px-4 shadow-xl">
@@ -646,7 +271,6 @@ export default function POSView() {
                 />
               </div>
             </div>
-
             <CategoryChips
               categories={categories}
               selectedCategory={selectedCategory}
@@ -665,11 +289,7 @@ export default function POSView() {
               isLoading={isLoadingProducts}
               error={productsError as Error}
               data={filteredProducts}
-              emptyComponent={
-                <EmptyProductsComponent
-                  onClearSearch={searchTerm ? () => setSearchTerm('') : undefined}
-                />
-              }
+              emptyComponent={<EmptyProducts onClearSearch={searchTerm ? () => setSearchTerm('') : undefined} />}
               loadingComponent={<POSLoadingSkeleton layoutMode={posLayoutMode} />}
             >
               {(data) => (
@@ -677,11 +297,7 @@ export default function POSView() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     {data.map(product => (
                       <div key={product.id} role="option" aria-selected={false} aria-label={`${product.name} — ${formatCurrency(product.price)}`}>
-                        <ProductCard
-                          product={product}
-                          onClick={onAddToCart}
-                          variant="pos"
-                        />
+                        <ProductCard product={product} onClick={onAddToCart} variant="pos" />
                       </div>
                     ))}
                   </div>
@@ -698,7 +314,7 @@ export default function POSView() {
         isOpen={!!selectedProductForVariants}
         onClose={() => setSelectedProductForVariants(null)}
         product={selectedProductForVariants}
-        onSelect={(variant: any) => {
+        onSelect={(variant: ProductVariant | null) => {
           if (selectedProductForVariants) {
             handleAddItem(selectedProductForVariants, variant);
             setSelectedProductForVariants(null);
@@ -710,17 +326,37 @@ export default function POSView() {
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onScan={handleScan}
+        products={products}
       />
 
-      <SpeedDial actions={mobileActions} />
+      <SpeedDial actions={[
+        {
+          id: 'view-cart',
+          label: `Caja (${cartCount})`,
+          icon: ShoppingCart,
+          onClick: () => setShowCart(true),
+          category: 'Acción',
+          variant: cartCount > 0 ? 'success' : 'primary',
+        },
+        {
+          id: 'scan',
+          label: 'Escanear SKU',
+          icon: QrCode,
+          onClick: () => setShowScanner(true),
+          category: 'Acción',
+        },
+        {
+          id: 'clear-cart',
+          label: 'Anular Carrito',
+          icon: Trash2,
+          onClick: () => { if (cartCount > 0) { clearCart(); toast.success('Carrito anulado'); } },
+          category: 'Edición',
+          variant: 'destructive',
+        },
+      ] as SpeedDialAction[]} />
 
-      {/* Resumen pegajoso para móviles */}
       {isMobile && cartCount > 0 && !showCart && (
-        <StickyCartSummary
-          itemCount={cartCount}
-          total={cartTotal}
-          onClick={() => setShowCart(true)}
-        />
+        <StickyCartSummary itemCount={cartCount} total={cartTotal} onClick={() => setShowCart(true)} />
       )}
     </div>
   );

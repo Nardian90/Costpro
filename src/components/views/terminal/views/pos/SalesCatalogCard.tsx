@@ -3,7 +3,7 @@
 import React from 'react';
 import { Package, AlertTriangle, Percent, DollarSign } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Product, PaymentMethod } from '@/types';
+import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
 
@@ -36,15 +36,16 @@ interface SalesCatalogCardProps {
   discrepancy: boolean;
   handlers: {
     handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: any) => void;
+    handleSelectVariant: (product: Product, variant: ProductVariant | null) => void;
     handleSetDiscountType: (product: Product) => void;
     handleSetDiscountValue: (product: Product, value: number) => void;
     handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
     handleSetCashPaid: (product: Product, val: number) => void;
     handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => void;
+    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow, fallbackProduct?: Product) => void;
   };
   calcSubtotal: (row: SalesCatalogRow) => number;
+  isReadOnly?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export default function SalesCatalogCard({
   discrepancy,
   handlers,
   calcSubtotal,
+  isReadOnly = false,
 }: SalesCatalogCardProps) {
   const {
     handleSetQuantity,
@@ -68,6 +70,7 @@ export default function SalesCatalogCard({
     handleSetTransferPaid,
     updateRow,
   } = handlers;
+  const ro = isReadOnly;
 
   return (
     <div
@@ -124,16 +127,17 @@ export default function SalesCatalogCard({
             if (e.target.value === '__base__') {
               handleSelectVariant(product, null);
             } else {
-              const variant = product.product_variants?.find((v: any) => v.id === e.target.value);
+              const variant = product.product_variants?.find((v) => v.id === e.target.value);
               if (variant) handleSelectVariant(product, variant);
             }
           }}
-          className="w-full max-w-full min-w-0 px-3 py-2 rounded-lg border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+          className="w-full max-w-full min-w-0 px-3 py-2 rounded-lg border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+          disabled={ro}
           aria-label={`Unidad de medida para ${product.name}`}
         >
           <option value="__base__">{product.unit_of_measure || 'ud'} (base)</option>
-          {product.product_variants?.map((v: any) => (
-            <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor})</option>
+          {product.product_variants?.map((v) => (
+            <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor || 1})</option>
           ))}
         </select>
       </div>
@@ -154,9 +158,10 @@ export default function SalesCatalogCard({
                 price: val,
                 cashPaid: r.paymentMethod === 'cash' ? calcSubtotal({ ...r, price: val }) : r.cashPaid,
                 transferPaid: r.paymentMethod === 'transfer' ? calcSubtotal({ ...r, price: val }) : r.transferPaid,
-              }));
+              }), product);
             }}
-            className="w-full min-w-0 text-right px-2 py-2 rounded-lg border border-border/50 bg-background text-sm font-black text-primary focus:ring-1 focus:ring-primary outline-none"
+            className="w-full min-w-0 text-right px-2 py-2 rounded-lg border border-border/50 bg-background text-sm font-black text-primary focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+            disabled={ro}
             aria-label={`Precio de venta para ${product.name}`}
             placeholder="0.00"
           />
@@ -177,7 +182,7 @@ export default function SalesCatalogCard({
             type="button"
             onClick={() => handleSetQuantity(product, row.quantity - 1)}
             className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-lg font-bold transition-all active:scale-90 border border-border/50 disabled:opacity-30 shrink-0"
-            disabled={row.quantity <= 0}
+            disabled={ro || row.quantity <= 0}
             aria-label={`Reducir cantidad de ${product.name}`}
           >
             -
@@ -187,13 +192,15 @@ export default function SalesCatalogCard({
             min="0"
             value={row.quantity || ''}
             onChange={(e) => handleSetQuantity(product, Number(e.target.value))}
-            className="flex-1 min-w-0 text-center px-2 py-2 rounded-xl border border-border/50 bg-background text-lg font-black focus:ring-1 focus:ring-primary outline-none"
+            className="flex-1 min-w-0 text-center px-2 py-2 rounded-xl border border-border/50 bg-background text-lg font-black focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+            disabled={ro}
             aria-label={`Cantidad de ${product.name}`}
           />
           <button
             type="button"
             onClick={() => handleSetQuantity(product, row.quantity + 1)}
-            className="w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-lg font-bold text-primary transition-all active:scale-90 border border-primary/20 shrink-0"
+            className="w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-lg font-bold text-primary transition-all active:scale-90 border border-primary/20 shrink-0 disabled:opacity-30"
+            disabled={ro}
             aria-label={`Aumentar cantidad de ${product.name}`}
           >
             +
@@ -209,11 +216,12 @@ export default function SalesCatalogCard({
             type="button"
             onClick={() => handleSetDiscountType(product)}
             className={cn(
-              'w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0',
+              'w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 disabled:opacity-30',
               row.discountType === 'percentage'
                 ? 'bg-primary/10 border-primary/20 text-primary'
                 : 'bg-muted/50 border-border/50 text-muted-foreground',
             )}
+            disabled={ro}
             aria-label={`Cambiar tipo de descuento para ${product.name}`}
             title={row.discountType === 'percentage' ? 'Porcentaje' : 'Monto fijo'}
           >
@@ -229,7 +237,8 @@ export default function SalesCatalogCard({
             step="0.01"
             value={row.discountValue || ''}
             onChange={(e) => handleSetDiscountValue(product, Number(e.target.value))}
-            className="flex-1 min-w-0 px-2 py-2 rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+            className="flex-1 min-w-0 px-2 py-2 rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+            disabled={ro}
             aria-label={`Valor de descuento para ${product.name}`}
             placeholder="0"
           />
@@ -242,7 +251,8 @@ export default function SalesCatalogCard({
         <select
           value={row.paymentMethod}
           onChange={(e) => handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
-          className="w-full max-w-full min-w-0 px-3 py-2 rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+          className="w-full max-w-full min-w-0 px-3 py-2 rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+          disabled={ro}
           aria-label={`Forma de pago para ${product.name}`}
         >
           {PAYMENT_METHODS.map((pm) => (
@@ -262,7 +272,8 @@ export default function SalesCatalogCard({
               step="0.01"
               value={row.cashPaid || 0}
               onChange={(e) => handleSetCashPaid(product, Number(e.target.value))}
-              className="w-full min-w-0 text-right px-2 py-1.5 rounded-lg border border-emerald-500/20 bg-background text-xs font-bold text-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none"
+              className="w-full min-w-0 text-right px-2 py-1.5 rounded-lg border border-emerald-500/20 bg-background text-xs font-bold text-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={ro}
               aria-label={`Efectivo pagado para ${product.name}`}
             />
           </div>
@@ -274,7 +285,8 @@ export default function SalesCatalogCard({
               step="0.01"
               value={row.transferPaid || 0}
               onChange={(e) => handleSetTransferPaid(product, Number(e.target.value))}
-              className="w-full min-w-0 text-right px-2 py-1.5 rounded-lg border border-blue-500/20 bg-background text-xs font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full min-w-0 text-right px-2 py-1.5 rounded-lg border border-blue-500/20 bg-background text-xs font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={ro}
               aria-label={`Transferencia pagada para ${product.name}`}
             />
           </div>

@@ -117,6 +117,13 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
 });
 ProductRow.displayName = "ProductRow";
 
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+    return sortDir === 'asc'
+        ? <ArrowUp className="w-3 h-3 text-primary" />
+        : <ArrowDown className="w-3 h-3 text-primary" />;
+}
+
 export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible }: InventoryTableViewProps) {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -145,13 +152,6 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
         }
     };
 
-    const SortIcon = ({ col }: { col: SortKey }) => {
-        if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
-        return sortDir === 'asc'
-            ? <ArrowUp className="w-3 h-3 text-primary" />
-            : <ArrowDown className="w-3 h-3 text-primary" />;
-    };
-
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLTableRowElement) => {
         if (isLoading) return;
@@ -174,12 +174,12 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
             <table className="w-full min-w-[1024px] grid-table-inventory" aria-label="Tabla de productos del inventario">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-xs font-bold">
-                        <th className="p-4 pl-[76px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" /></button></th>
+                        <th className="p-4 pl-[76px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-4">SKU</th>
-                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" /></button></th>
-                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" /></button></th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-4 text-right">Empresa</th>
-                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" /></button></th>
+                        <th className="p-4 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-4 text-center">Estado</th>
                         <th className="p-4 text-center" title="¿Se muestra en la tienda pública?"><span className="inline-flex items-center gap-1"><Store className="w-3 h-3" /> Tienda</span></th>
                         <th className="p-4 text-center">Acciones</th>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
 import { Cookie, Settings, X, Shield } from 'lucide-react';
 import { saveConsent, clearConsent, shouldShowConsentBanner, type ConsentPreferences } from '@/lib/consent';
@@ -11,14 +11,21 @@ import { saveConsent, clearConsent, shouldShowConsentBanner, type ConsentPrefere
 
 const CONSENT_REOPEN_EVENT = 'reopen-cookie-consent';
 const CONSENT_UPDATED_EVENT = 'cookie-consent-updated';
+const CONSENT_INIT_EVENT = 'init-cookie-consent';
+
+const subscribeMotion = (callback: () => void) => {
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  mq.addEventListener('change', callback);
+  return () => mq.removeEventListener('change', callback);
+};
+const getMotionSnapshot = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function CookieConsent() {
   // FIX-BUG-RCT-003: Initialize with false to avoid hydration mismatch,
   // then check on mount.
   const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const prefersReducedMotion = useSyncExternalStore(subscribeMotion, getMotionSnapshot, () => false);
   const [preferences, setPreferences] = useState<Omit<ConsentPreferences, 'timestamp' | 'version'>>({
     essential: true,
     analytics: false,
@@ -27,24 +34,18 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
-    setMounted(true);
-    setVisible(shouldShowConsentBanner());
-    setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-    // Respect prefers-reduced-motion
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-
-    // Listen for external requests to reopen the consent banner
+    const checkHandler = () => {
+      setVisible(shouldShowConsentBanner());
+    };
     const reopenHandler = () => {
       setVisible(true);
       setShowDetails(false);
     };
+    window.addEventListener(CONSENT_INIT_EVENT, checkHandler);
     window.addEventListener(CONSENT_REOPEN_EVENT, reopenHandler);
-
+    window.dispatchEvent(new Event(CONSENT_INIT_EVENT));
     return () => {
-      mq.removeEventListener('change', handler);
+      window.removeEventListener(CONSENT_INIT_EVENT, checkHandler);
       window.removeEventListener(CONSENT_REOPEN_EVENT, reopenHandler);
     };
   }, []);
@@ -82,7 +83,7 @@ export function CookieConsent() {
     notifyUpdated();
   };
 
-  if (!mounted || !visible) {
+  if (!visible) {
     return null;
   }
 

@@ -121,6 +121,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["start_lesson", "view_progress"]
   },
   {
+    id: "wiki",
+    route: "/terminal?view=wiki",
+    description: "Wiki de contabilidad con términos, definiciones y conceptos del área financiera y tributaria.",
+    actions: ["search_terms", "view_article", "bookmark_entry"]
+  },
+  {
     id: "audit",
     route: "/terminal?view=audit",
     description: "Logs de auditoría y rastreo de acciones de usuarios en el sistema.",

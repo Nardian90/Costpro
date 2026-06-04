@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
@@ -15,11 +15,10 @@ import {
   Info,
   CheckCircle2,
   Lightbulb,
-  AlertCircle,
   XCircle,
-  ChevronRight,
   Copy,
   ArrowRight,
+  BookA,
 } from 'lucide-react';
 
 interface HelpSectionRendererProps {
@@ -27,45 +26,292 @@ interface HelpSectionRendererProps {
   glossary?: Record<string, string>;
 }
 
-/**
- * Detects blockquote type from the text content.
- * Supports: tip, warning, important, note, info, danger
- */
+// ── Callout Detection ──────────────────────────────────────────────────────
+
 function detectCallout(text: string): { type: string; label: string; icon: React.ElementType; color: string } | null {
   const lower = text.trimStart().toLowerCase();
-  if (lower.startsWith('**tip:**') || lower.startsWith('**💡 tip:**')) {
+  if (lower.startsWith('**tip:**') || lower.startsWith('**💡 tip:**') || lower.startsWith('**consejo:**')) {
     return { type: 'tip', label: 'Consejo', icon: Lightbulb, color: 'text-amber-600 dark:text-amber-400 border-amber-500/30 bg-amber-500/5' };
   }
   if (lower.startsWith('**importante:**') || lower.startsWith('**⚠️ importante:**') || lower.startsWith('**⚠ importante:**')) {
     return { type: 'important', label: 'Importante', icon: AlertTriangle, color: 'text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/5' };
   }
-  if (lower.startsWith('**nota:**') || lower.startsWith('**ℹ️ nota:**')) {
+  if (lower.startsWith('**nota:**') || lower.startsWith('**ℹ️ nota:**') || lower.startsWith('**note:**')) {
     return { type: 'note', label: 'Nota', icon: Info, color: 'text-blue-600 dark:text-blue-400 border-blue-500/30 bg-blue-500/5' };
   }
   if (lower.startsWith('**danger:**') || lower.startsWith('**❌ danger:**') || lower.startsWith('**🚫 danger:**')) {
     return { type: 'danger', label: 'Peligro', icon: XCircle, color: 'text-red-600 dark:text-red-400 border-red-500/30 bg-red-500/5' };
   }
-  if (lower.startsWith('**success:**') || lower.startsWith('**✅ success:**') || lower.startsWith('**check:**')) {
+  if (lower.startsWith('**success:**') || lower.startsWith('**✅ success:**') || lower.startsWith('**check:**') || lower.startsWith('**check:**')) {
     return { type: 'success', label: 'Completado', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/5' };
   }
   return null;
 }
 
-/**
- * Clean the callout prefix from blockquote text
- */
-function cleanCalloutText(text: string): string {
-  return text
-    .replace(/^\*\*(?:💡|⚠️|⚠|ℹ️|❌|🚫|✅)\s*/i, '**')
-    .replace(/^\*\*Tip:\*\*\s*/i, '')
-    .replace(/^\*\*Importante:\*\*\s*/i, '')
-    .replace(/^\*\*Nota:\*\*\s*/i, '')
-    .replace(/^\*\*Danger:\*\*\s*/i, '')
-    .replace(/^\*\*Success:\*\*\s*/i, '')
-    .replace(/^\*\*Check:\*\*\s*/i, '');
+// ── Glossary Detector ───────────────────────────────────────────────────────
+
+interface GlossaryEntry {
+  term: string;
+  definition: string;
 }
 
+interface GlossarySection {
+  heading: string;
+  entries: GlossaryEntry[];
+}
+
+/**
+ * Detects if the content is a glossary (has 3+ entries matching **Term**: definition pattern).
+ * Supports ### Section headings to group entries thematically.
+ */
+function parseGlossary(content: string): {
+  isGlossary: boolean;
+  sections: GlossarySection[];
+  preContent: string;
+  postContent: string;
+  totalEntries: number;
+} {
+  const lines = content.split('\n');
+  const sections: GlossarySection[] = [];
+  let preContent = '';
+  let postContent = '';
+  let inGlossary = false;
+  let glossaryStarted = false;
+  let glossaryEnded = false;
+  const preLines: string[] = [];
+  const postLines: string[] = [];
+  let currentSection: GlossarySection = { heading: '', entries: [] };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip title (h1) and blank lines before glossary entries
+    if (!glossaryStarted && (trimmed === '' || /^#{1,2}\s/.test(trimmed))) {
+      preLines.push(line);
+      continue;
+    }
+
+    // Detect ### Section headings within glossary
+    const sectionMatch = trimmed.match(/^###\s+(.+)/);
+    if (sectionMatch && (glossaryStarted || !glossaryEnded)) {
+      if (currentSection.entries.length > 0 || currentSection.heading) {
+        sections.push({ ...currentSection });
+      }
+      currentSection = { heading: sectionMatch[1].trim(), entries: [] };
+      if (!glossaryStarted) {
+        glossaryStarted = true;
+        inGlossary = true;
+      }
+      continue;
+    }
+
+    // Detect glossary entry **Term**: Definition
+    const match = trimmed.match(/^\*\*(.+?)\*\*:\s*(.+)/);
+    if (match && !glossaryEnded) {
+      if (!glossaryStarted) {
+        glossaryStarted = true;
+        inGlossary = true;
+      }
+      if (inGlossary) {
+        currentSection.entries.push({ term: match[1].trim(), definition: match[2].trim() });
+        continue;
+      }
+    }
+
+    // If we were in glossary and hit a non-entry, non-blank, non-section line, glossary ended
+    if (inGlossary && !match && !sectionMatch && trimmed !== '' && !trimmed.startsWith('>') && !trimmed.startsWith('---')) {
+      inGlossary = false;
+      glossaryEnded = true;
+      postLines.push(line);
+      continue;
+    }
+
+    if (inGlossary && trimmed === '') continue;
+    if (glossaryEnded) postLines.push(line);
+    else preLines.push(line);
+  }
+
+  // Push last section
+  if (currentSection.entries.length > 0 || currentSection.heading) {
+    sections.push(currentSection);
+  }
+
+  preContent = preLines.join('\n').trim();
+  postContent = postLines.join('\n').trim();
+
+  const totalEntries = sections.reduce((sum, s) => sum + s.entries.length, 0);
+
+  return {
+    isGlossary: totalEntries >= 3,
+    sections,
+    preContent,
+    postContent,
+    totalEntries,
+  };
+}
+
+// ── Glossary Card Component ──────────────────────────────────────────────────
+
+function GlossaryCard({ entry, index, glossaryTooltip }: { entry: GlossaryEntry; index: number; glossaryTooltip: (text: string) => React.ReactNode }) {
+  const isEven = index % 2 === 0;
+
+  return (
+    <div className={cn(
+      "group relative rounded-xl p-5 transition-all duration-200",
+      "hover:shadow-md hover:border-primary/20",
+      isEven
+        ? "bg-muted/20 border border-border/30"
+        : "bg-background border border-border/20"
+    )}>
+      {/* Accent bar */}
+      <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors" />
+
+      <dt className="flex items-start gap-2 mb-2">
+        <BookA className="w-4 h-4 text-primary/60 mt-0.5 shrink-0" />
+        <h4 className="text-sm font-bold tracking-tight text-foreground">
+          {entry.term}
+        </h4>
+      </dt>
+      <dd className="text-[13px] leading-[1.8] font-medium text-muted-foreground pl-6 text-justify hyphens-auto">
+        {glossaryTooltip(entry.definition)}
+      </dd>
+    </div>
+  );
+}
+
+// ── TOC Detector ──────────────────────────────────────────────────────────
+
+/**
+ * Detects a TOC section: ## Contenido / ## Tabla de Contenido / ## Índice
+ * followed by only link list items `- [text](#anchor)`.
+ * Returns { isToc, preContent, tocContent, postContent }
+ */
+function parseTocSection(content: string) {
+  const lines = content.split('\n');
+  const tocHeadings = /^(##+)\s+(contenido|tabla de contenido|índice|table of contents|index)/i;
+
+  let tocStartIdx = -1;
+  let tocEndIdx = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (tocStartIdx === -1 && tocHeadings.test(lines[i].trim())) {
+      tocStartIdx = i;
+      continue;
+    }
+    if (tocStartIdx !== -1) {
+      const trimmed = lines[i].trim();
+      // End of TOC: next heading, blank line followed by non-list, or non-list content
+      if (/^#{1,2}\s+(?!\[-)/.test(trimmed) && !trimmed.startsWith('- ')) {
+        tocEndIdx = i;
+        break;
+      }
+      if (trimmed !== '' && !trimmed.startsWith('- ') && !trimmed.startsWith('  - ')) {
+        tocEndIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (tocStartIdx === -1) return { isToc: false, preContent: content, tocContent: '', postContent: '' };
+  if (tocEndIdx === -1) tocEndIdx = lines.length;
+
+  return {
+    isToc: true,
+    preContent: lines.slice(0, tocStartIdx).join('\n').trim(),
+    tocContent: lines.slice(tocStartIdx, tocEndIdx).join('\n').trim(),
+    postContent: lines.slice(tocEndIdx).join('\n').trim(),
+  };
+}
+
+// ── Styled TOC Component ────────────────────────────────────────────────────
+
+function StyledTableOfContents({ markdown }: { markdown: string }) {
+  const lines = markdown.split('\n');
+  const items: { text: string; href: string; depth: number }[] = [];
+
+  for (const line of lines) {
+    // Match `- [text](#anchor)` at depth 0 or 2 spaces (sub-items)
+    const match = line.match(/^(- |  - )\[(.+?)\]\((.+?)\)/);
+    if (match) {
+      const depth = line.startsWith('  -') ? 1 : 0;
+      items.push({ text: match[2].trim(), href: match[3], depth });
+    }
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="my-10 rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 to-primary/2 overflow-hidden">
+      {/* TOC Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-primary/10 bg-primary/5">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center">
+          <Lightbulb className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary">Índice</h3>
+          <p className="text-[10px] font-medium text-muted-foreground/60 mt-0.5">Navega por las secciones de este documento</p>
+        </div>
+        <div className="ml-auto px-2.5 py-1 rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+          {items.length} secciones
+        </div>
+      </div>
+
+      {/* TOC Items */}
+      <div className="px-4 py-4">
+        <div className="space-y-0.5">
+          {items.map((item, idx) => (
+            <a
+              key={`${item.href}-${idx}`}
+              href={`#${item.href}`}
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById(item.href);
+                if (el) {
+                  // Find the scrollable main container
+                  const scrollMain = el.closest('main.overflow-y-auto');
+                  if (scrollMain) {
+                    const mainRect = scrollMain.getBoundingClientRect();
+                    const elRect = el.getBoundingClientRect();
+                    const offset = elRect.top - mainRect.top + scrollMain.scrollTop - 80;
+                    scrollMain.scrollTo({ top: offset, behavior: 'smooth' });
+                  } else {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }
+              }}
+              className={cn(
+                'group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-primary/8',
+                item.depth === 0
+                  ? 'text-foreground font-semibold'
+                  : 'text-muted-foreground font-medium pl-10',
+              )}
+            >
+              {item.depth === 0 && (
+                <div className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors shrink-0" />
+              )}
+              {item.depth === 1 && (
+                <div className="w-1 h-1 rounded-full bg-muted-foreground/30 group-hover:bg-primary/60 transition-colors shrink-0" />
+              )}
+              <span className="truncate flex-1 group-hover:text-primary transition-colors">{item.text}</span>
+              <ArrowRight className="w-3 h-3 text-primary/0 group-hover:text-primary/60 transition-all -translate-x-1 group-hover:translate-x-0 shrink-0" />
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ───────────────────────────────────────────────────────────
+
 export default function HelpSectionRenderer({ content, glossary }: HelpSectionRendererProps) {
+  // ── Defensive: ensure content is always a string ──
+  const safeContent = typeof content === 'string' ? content : (content != null ? String(content) : '');
+
+  // Detect if content is a glossary with thematic sections
+  const parsed = useMemo(() => parseGlossary(safeContent), [safeContent]);
+  const tocParsed = useMemo(() => parseTocSection(safeContent), [safeContent]);
 
   const renderTextWithGlossary = (text: string) => {
     if (!glossary || Object.keys(glossary).length === 0) return text;
@@ -107,49 +353,226 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
     return <>{result}</>;
   };
 
+  // ── Glossary Renderer (with thematic sections) ──
+  if (parsed.isGlossary) {
+    const headerContent = parsed.preContent ? (
+      <div className="mb-8">
+        <ReactMarkdown
+          components={{
+            h1: ({ node, ...props }) => (
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight text-foreground mb-4 pb-6 border-b border-border/30" {...props} />
+            ),
+            p: ({ node, ...props }) => (
+              <p className="text-[14px] leading-[1.8] font-medium text-muted-foreground mb-6 text-justify hyphens-auto" {...props} />
+            ),
+          }}
+        >
+          {sanitizeHtml(parsed.preContent)}
+        </ReactMarkdown>
+      </div>
+    ) : null;
+
+    const hasSections = parsed.sections.some(s => s.heading);
+    let globalIndex = 0;
+
+    return (
+      <article className="max-w-none">
+        {headerContent}
+
+        {/* Glossary stats */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="px-3 py-1.5 rounded-lg bg-primary/8 border border-primary/15 text-[10px] font-bold uppercase tracking-widest text-primary">
+            {parsed.totalEntries} terminos
+          </div>
+          {hasSections && (
+            <div className="px-3 py-1.5 rounded-lg bg-muted/30 border border-border/30 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {parsed.sections.filter(s => s.heading).length} secciones
+            </div>
+          )}
+          <div className="h-px flex-1 bg-border/20" />
+        </div>
+
+        {/* Glossary sections */}
+        {parsed.sections.map((section, si) => (
+          <div key={section.heading || `section-${si}`} className={cn(si > 0 && 'mt-10')}>
+            {section.heading && (
+              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-border/20">
+                <div className="w-2 h-2 rounded-full bg-primary/50" />
+                <h3 className="text-sm font-black uppercase tracking-[0.15em] text-foreground">{section.heading}</h3>
+                <div className="ml-auto px-2 py-0.5 rounded text-[9px] font-bold text-muted-foreground/50 bg-muted/30">
+                  {section.entries.length}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {section.entries.map((entry) => {
+                const idx = globalIndex++;
+                return (
+                  <GlossaryCard
+                    key={entry.term}
+                    entry={entry}
+                    index={idx}
+                    glossaryTooltip={renderTextWithGlossary}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Render any post-content as regular markdown */}
+        {parsed.postContent && (
+          <div className="mt-10 pt-8 border-t border-border/30">
+            <ReactMarkdown
+              components={{
+                p: ({ node, ...props }) => (
+                  <p className="text-[14px] leading-[1.8] font-medium text-muted-foreground text-justify hyphens-auto mb-6" {...props} />
+                ),
+                blockquote: ({ node, children, ...props }: any) => {
+                  const textContent = React.Children.toArray(children)
+                    .map(c => typeof c === 'string' ? c : '')
+                    .join('');
+                  const callout = detectCallout(textContent);
+                  if (callout) {
+                    const IconComp = callout.icon;
+                    return (
+                      <div className={cn("mt-6 rounded-xl border-l-4 px-6 py-4", callout.color)} {...props}>
+                        <div className="flex items-start gap-3">
+                          <IconComp className="w-4 h-4 mt-0.5 shrink-0" />
+                          <div className="flex-1 text-[14px] font-medium leading-[1.8] italic text-foreground/80 text-justify">
+                            {children}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <blockquote className="border-l-4 border-primary/30 bg-primary/3 rounded-r-xl px-6 py-5 not-italic" {...props}>
+                      <div className="text-[14px] font-medium leading-[1.8] italic text-muted-foreground/80 text-justify">{children}</div>
+                    </blockquote>
+                  );
+                },
+              }}
+            >
+              {sanitizeHtml(parsed.postContent)}
+            </ReactMarkdown>
+          </div>
+        )}
+      </article>
+    );
+  }
+
+  // ── Standard Markdown Renderer (possibly with extracted TOC) ──
+  const mainContent = tocParsed.isToc
+    ? (typeof tocParsed.postContent === 'string' ? tocParsed.postContent : '')
+    : safeContent;
+
   return (
-    <article className="prose prose-sm dark:prose-invert max-w-none
-      prose-headings:font-black prose-headings:tracking-tight
-      prose-h1:text-3xl md:prose-h1:text-4xl prose-h1:mb-10 prose-h1:border-b prose-h1:border-border/30 prose-h1:pb-6
-      prose-h2:text-xl md:prose-h2:text-2xl prose-h2:mt-14 prose-h2:mb-6 prose-h2:pt-6 prose-h2:border-t prose-h2:border-dashed prose-h2:border-border/40
-      prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-4 prose-h3:font-bold
-      prose-p:text-sm prose-p:leading-[1.85] prose-p:font-medium prose-p:text-muted-foreground
-      prose-strong:text-foreground prose-strong:font-bold
-      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-      prose-code:text-xs prose-code:font-bold prose-code:text-primary
-      prose-pre:rounded-xl prose-pre:border prose-pre:border-border/40 prose-pre:shadow-sm
-    ">
+    <article className="max-w-none">
       <ReactMarkdown
         components={{
+          // ── HEADINGS ──────────────────────────────────────────────────
           h1: ({ node, ...props }) => {
             const text = props.children?.toString().toLowerCase().replace(/[^\w\s-áéíóúñü]/g, '').replace(/\s+/g, '-') || '';
-            return <h1 id={text} {...props} />;
+            return (
+              <h1
+                id={text}
+                className="text-3xl md:text-4xl font-black tracking-tight leading-tight text-foreground mb-8 pb-6 border-b border-border/30 scroll-mt-4"
+                {...props}
+              />
+            );
           },
           h2: ({ node, ...props }) => {
             const text = props.children?.toString().toLowerCase().replace(/[^\w\s-áéíóúñü]/g, '').replace(/\s+/g, '-') || '';
             return (
-              <h2 id={text} className="group flex items-center gap-3" {...props}>
-                <div className="w-1 h-6 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors shrink-0" />
-                <span>{props.children}</span>
+              <h2
+                id={text}
+                className="group flex items-center gap-3 text-xl md:text-2xl font-black tracking-tight text-foreground mt-14 mb-8 pt-6 border-t border-dashed border-border/40 scroll-mt-4"
+                {...props}
+              >
+                <div className="w-1 h-7 rounded-full bg-primary/25 group-hover:bg-primary/50 transition-colors shrink-0" />
+                <span className="leading-tight">{props.children}</span>
               </h2>
             );
           },
           h3: ({ node, ...props }) => {
             const text = props.children?.toString().toLowerCase().replace(/[^\w\s-áéíóúñü]/g, '').replace(/\s+/g, '-') || '';
-            return <h3 id={text} {...props} />;
+            return (
+              <h3
+                id={text}
+                className="group flex items-center gap-2 text-lg font-bold tracking-tight text-foreground mt-10 mb-5 scroll-mt-4"
+                {...props}
+              >
+                <div className="w-0.5 h-5 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors shrink-0" />
+                <span className="leading-tight">{props.children}</span>
+              </h3>
+            );
           },
+          h4: ({ node, ...props }) => {
+            const text = props.children?.toString().toLowerCase().replace(/[^\w\s-áéíóúñü]/g, '').replace(/\s+/g, '-') || '';
+            return (
+              <h4
+                id={text}
+                className="group flex items-center gap-2 text-base font-semibold tracking-tight text-foreground mt-8 mb-4 scroll-mt-4"
+                {...props}
+              >
+                <div className="w-0.5 h-4 rounded-full bg-primary/15 group-hover:bg-primary/30 transition-colors shrink-0" />
+                <span className="leading-tight">{props.children}</span>
+              </h4>
+            );
+          },
+
+          // ── PARAGRAPHS — Professional documentation style ─────────────
+          p: ({ node, children, ...props }) => {
+            const processedChildren = React.Children.map(children, child => {
+              if (typeof child === 'string') {
+                return renderTextWithGlossary(child);
+              }
+              return child;
+            });
+            return (
+              <p
+                className="text-[14px] leading-[1.8] font-medium text-muted-foreground mb-6 text-justify hyphens-auto indent-0"
+                {...props}
+              >
+                {processedChildren}
+              </p>
+            );
+          },
+
+          // ── STRONG / EMPHASIS ──────────────────────────────────────────
+          strong: ({ node, ...props }) => (
+            <strong className="font-bold text-foreground" {...props} />
+          ),
+          em: ({ node, ...props }) => (
+            <em className="italic text-foreground/90" {...props} />
+          ),
+
+          // ── TABLES ───────────────────────────────────────────────────
           table: ({ node, ...props }) => (
             <div className="overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm">
               <table className="w-full text-left" {...props} />
             </div>
           ),
           thead: ({ node, ...props }) => (
-            <thead className="bg-muted/40 border-b border-border/40 uppercase text-[9px] font-black tracking-widest text-muted-foreground" {...props} />
+            <thead
+              className="bg-muted/50 border-b-2 border-border/50 uppercase text-[9px] font-black tracking-widest text-muted-foreground"
+              {...props}
+            />
           ),
-          th: ({ node, ...props }) => <th className="px-5 py-3.5 font-black" {...props} />,
-          td: ({ node, ...props }) => <td className="px-5 py-3 border-b border-border/20 text-xs font-medium" {...props} />,
+          th: ({ node, ...props }) => <th className="px-5 py-3.5 font-black text-xs text-foreground" {...props} />,
+          td: ({ node, children, ...props }: any) => (
+            <td
+              className="px-5 py-4 border-b border-border/15 text-[13px] font-medium leading-[1.8] text-muted-foreground even:bg-muted/15 text-justify hyphens-auto"
+              {...props}
+            >
+              {children}
+            </td>
+          ),
+
+          // ── BLOCKQUOTES / CALLOUTS ────────────────────────────────────
           blockquote: ({ node, children, ...props }: any) => {
-            // Get text content to detect callout type
             const textContent = React.Children.toArray(children)
               .map(c => typeof c === 'string' ? c : '')
               .join('');
@@ -159,12 +582,12 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
               const IconComp = callout.icon;
               return (
                 <div className={cn(
-                  "my-8 rounded-xl border-l-4 px-6 py-4",
+                  "my-8 rounded-xl border-l-4 px-6 py-5 shadow-sm",
                   callout.color
                 )} {...props}>
                   <div className="flex items-start gap-3">
                     <IconComp className="w-4 h-4 mt-0.5 shrink-0" />
-                    <div className="flex-1 text-sm font-medium leading-relaxed italic text-foreground/80">
+                    <div className="flex-1 text-[14px] font-medium leading-[1.8] italic text-foreground/80 text-justify hyphens-auto">
                       {children}
                     </div>
                   </div>
@@ -173,17 +596,22 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
             }
 
             return (
-              <blockquote className="border-l-4 border-primary/30 bg-primary/3 rounded-r-xl px-6 py-5 my-8 not-italic" {...props}>
-                <div className="text-sm font-medium leading-relaxed italic text-muted-foreground/80">
+              <blockquote className="border-l-4 border-primary/30 bg-primary/3 rounded-r-xl px-6 py-5 my-8 not-italic shadow-sm" {...props}>
+                <div className="text-[14px] font-medium leading-[1.8] italic text-muted-foreground/80 text-justify hyphens-auto">
                   {children}
                 </div>
               </blockquote>
             );
           },
+
+          // ── CODE ─────────────────────────────────────────────────────
           code: ({ node, inline, className, children, ...props }: any) => {
             if (inline || !className) {
               return (
-                <code className="px-1.5 py-0.5 rounded-md bg-muted/60 border border-border/30 font-bold text-xs text-primary" {...props}>
+                <code
+                  className="px-1.5 py-0.5 rounded-md bg-muted/60 border border-border/30 font-bold text-xs text-primary"
+                  {...props}
+                >
                   {children}
                 </code>
               );
@@ -196,10 +624,11 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           },
           pre: ({ node, children, ...props }) => (
             <div className="relative group my-8">
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <button
-                  onClick={() => {
-                    const codeEl = document.querySelector('.prose pre code');
+                  onClick={(e) => {
+                    const container = (e.currentTarget as HTMLElement).closest('pre');
+                    const codeEl = container?.querySelector('code');
                     if (codeEl) navigator.clipboard.writeText(codeEl.textContent || '');
                   }}
                   className="w-7 h-7 rounded-md bg-muted/80 border border-border/50 flex items-center justify-center hover:bg-muted transition-colors"
@@ -207,48 +636,73 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
                   <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
               </div>
-              <pre className="rounded-xl bg-muted/50 border border-border/40 p-5 overflow-x-auto shadow-sm" {...props}>
+              <pre
+                className="rounded-xl bg-muted/50 border border-border/40 p-5 overflow-x-auto shadow-sm text-xs leading-[1.8]"
+                {...props}
+              >
                 {children}
               </pre>
             </div>
           ),
+
+          // ── LISTS — Professional item rendering with justify ─────────
           ul: ({ node, ...props }) => (
-            <ul className="space-y-3 my-6 list-none pl-0" {...props} />
+            <ul className="space-y-3 my-8 list-none pl-0" {...props} />
           ),
           ol: ({ node, ...props }) => (
-            <ol className="space-y-3 my-6 list-none pl-0" {...props} />
+            <ol className="space-y-3 my-8 list-none pl-0" {...props} />
           ),
-          li: ({ node, children, ...props }: any) => {
-            const isOrdered = node?.position?.start?.line !== undefined;
+          li: ({ node, index, children, ...props }: any) => {
+            const isOrdered = node?.parent?.type === 'list' && node?.parent?.ordered;
             return (
               <li className="flex items-start gap-3" {...props}>
-                <div className="mt-1.5 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
-                <span className="text-sm font-medium leading-[1.85] text-muted-foreground">{children}</span>
+                {isOrdered ? (
+                  <span className="mt-1 w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-black text-primary shrink-0">
+                    {(index ?? 0) + 1}
+                  </span>
+                ) : (
+                  <div className="mt-2 w-2 h-2 rounded-full bg-primary/40 shrink-0" />
+                )}
+                {/* Use div (block-level) so text-justify works correctly */}
+                <div className="flex-1 text-[14px] font-medium leading-[1.8] text-muted-foreground text-justify hyphens-auto">
+                  {children}
+                </div>
               </li>
             );
           },
-          p: ({ node, children, ...props }) => {
-            const processedChildren = React.Children.map(children, child => {
-              if (typeof child === 'string') {
-                return renderTextWithGlossary(child);
-              }
-              return child;
-            });
-            return <p {...props}>{processedChildren}</p>;
-          },
+
+          // ── HORIZONTAL RULE ──────────────────────────────────────────
           hr: ({ node, ...props }) => (
-            <hr className="my-10 border-border/20" {...props} />
+            <hr className="my-12 border-border/20" {...props} />
           ),
+
+          // ── LINKS ───────────────────────────────────────────────────
           a: ({ node, children, ...props }) => (
-            <a className="text-primary font-semibold hover:underline inline-flex items-center gap-1 transition-colors" {...props}>
+            <a
+              className="text-primary font-semibold hover:underline inline-flex items-center gap-1 transition-colors"
+              {...props}
+            >
               {children}
               <ArrowRight className="w-3 h-3" />
             </a>
           ),
+
+          // ── IMAGES ────────────────────────────────────────────────────
+          img: ({ node, ...props }) => (
+            <figure className="my-8">
+              <img
+                className="rounded-xl border border-border/40 shadow-sm max-w-full"
+                {...props}
+                alt={props.alt || ''}
+              />
+            </figure>
+          ),
         }}
       >
-        {sanitizeHtml(content)}
+        {sanitizeHtml(String(mainContent ?? ''))}
       </ReactMarkdown>
+
+      {/* TOC section extracted and removed from content — available via sidebar */}
     </article>
   );
 }

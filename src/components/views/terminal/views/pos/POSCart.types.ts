@@ -1,4 +1,5 @@
 import { PaymentMethod, TaxConfiguration } from "@/types";
+import { CartItem } from "@/store/cart";
 
 // ── Cart Item ──────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ export interface LastSale {
 // ── Main POSCart Props ─────────────────────────────────────
 
 export interface POSCartProps {
-  items: PosCartItem[];
+  items: CartItem[];
   onRemoveItem: (productId: string, variantId: string | null) => void;
   onUpdateQuantity: (
     productId: string,
@@ -66,12 +67,13 @@ export interface POSCartProps {
   onClearCart: () => void;
   getSubtotal: () => number;
   getDiscountAmount: () => number;
-  getTaxAmount: () => number;
+  getTaxAmount?: () => number;
   getTotal: () => number;
   discount: CartDiscount;
   setDiscount: (discount: CartDiscount) => void;
-  appliedTaxes: TaxConfiguration[];
-  toggleTax: (tax: TaxConfiguration) => void;
+  // Note: appliedTaxes & toggleTax are reserved for future tax integration
+  appliedTaxes?: TaxConfiguration[];
+  toggleTax?: (tax: TaxConfiguration) => void;
   isProcessing: boolean;
   isMobile?: boolean;
   onCheckout: (
@@ -79,7 +81,7 @@ export interface POSCartProps {
     discount?: CartDiscount,
   ) => Promise<void>;
   onClose: () => void;
-  lastSale?: LastSale;
+  lastSale?: LastSale | null;
   onClearLastSale?: () => void;
   updateItemDiscount?: (
     productId: string,
@@ -99,7 +101,7 @@ export interface POSCartProps {
 // ── Sub-component Props ────────────────────────────────────
 
 export interface POSCartItemProps {
-  item: PosCartItem;
+  item: CartItem;
   isEasyReading: boolean;
   onUpdateQuantity: (
     productId: string,
@@ -123,7 +125,7 @@ export interface POSCartItemProps {
 }
 
 export interface POSCartSummaryProps {
-  items: PosCartItem[];
+  items: CartItem[];
   getSubtotal: () => number;
   getDiscountAmount: () => number;
   getTotal: () => number;
@@ -158,7 +160,7 @@ export interface POSCartDiscountProps {
   setDiscount: (discount: CartDiscount) => void;
 }
 
-export interface SuccessViewProps {
+export interface POSCartSuccessViewProps {
   onGeneratePDF: () => void;
   onShareWhatsApp: () => void;
   onExportAsImage: () => void;

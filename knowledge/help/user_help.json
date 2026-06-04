@@ -1,0 +1,80 @@
+[
+  {
+    "feature": "Fichas de Costo",
+    "descripcion_usuario": "Gestión completa de fichas de costo con motor de cálculo avanzado, 6 métodos de cálculo, fórmulas con ref() y vh(), anexos, auditoría automática y exportación a PDF/Excel.",
+    "acciones": ["Crear ficha desde plantilla", "Configurar secciones y filas", "Usar fórmulas de referencia", "Ejecutar Solver (Goal Seek)", "Validar con auditoría", "Exportar a PDF/JSON/Excel"],
+    "resultados": ["Ficha de costo completa y validada", "Archivo PDF profesional", "Hoja Excel con datos estructurados"]
+  },
+  {
+    "feature": "Catálogo de Productos",
+    "descripcion_usuario": "Administración del catálogo maestro de productos con códigos SKU, precios de venta, precios de costo, control de stock actual, gestión de variantes y generación de código de barras.",
+    "acciones": ["Crear producto con campos obligatorios", "Editar precios y datos", "Generar código de barras", "Filtrar por categoría y búsqueda", "Importar/Exportar catálogo masivo"],
+    "resultados": ["Producto registrado en el sistema", "Código de barras generado", "Catálogo exportado en Excel"]
+  },
+  {
+    "feature": "Inventario y Stock",
+    "descripcion_usuario": "Control de inventario en tiempo real con indicadores de color (verde/amarillo/rojo), alertas de mínimo, historial de movimientos (kardex), recepciones de proveedor y ajustes documentados con 7 causas de auditoría.",
+    "acciones": ["Monitorear stock actual", "Registrar recepción de proveedor", "Crear ajuste de inventario", "Consultar historial kardex", "Configurar alertas de mínimo"],
+    "resultados": ["Stock actualizado en tiempo real", "Historial de movimientos registrado", "Alertas de bajo stock activas"]
+  },
+  {
+    "feature": "Punto de Venta (POS)",
+    "descripcion_usuario": "Terminal de ventas con búsqueda de productos por nombre o código de barras, carrito interactivo con descuentos, 4 métodos de pago (efectivo, tarjeta, mixto, transferencia), cálculo automático de cambio, generación de recibo con código QR y actualización de inventario post-venta.",
+    "acciones": ["Agregar productos al carrito", "Aplicar descuentos", "Procesar pago", "Generar recibo", "Consultar historial de ventas", "Realizar arqueo de caja"],
+    "resultados": ["Venta registrada", "Recibo generado", "Stock actualizado automáticamente", "Historial de ventas disponible"]
+  },
+  {
+    "feature": "Catálogo de Ventas (Tablas IPV)",
+    "descripcion_usuario": "Vista especializada que muestra todos los productos disponibles para la venta con precios indexados según tablas IPV, filtros avanzados por categoría y stock, vista de tabla y cuadrícula visual, resumen de totales y procesamiento de ventas directas desde el catálogo con modal de checkout.",
+    "acciones": ["Consultar productos con precios indexados", "Filtrar por categoría y stock", "Alternar vista tabla/cuadrícula", "Procesar venta directa desde el catálogo", "Ver resumen de totales del inventario"],
+    "resultados": ["Consulta visual del portafolio completo", "Venta procesada desde el catálogo", "Comparación de precios entre productos"]
+  },
+  {
+    "feature": "Exportación de Catálogos",
+    "descripcion_usuario": "Motor de generación de catálogos profesionales en 4 plantillas: WhatsApp (JPG grilla de 12), Instagram (JPG diapositivas por producto), Lista de Precios (PDF tabla B2B) y Catálogo Elegante (PDF con portada profesional). Incluye 8 colores de marca, 6 avatares promocionales y personalización de datos corporativos.",
+    "acciones": ["Seleccionar plantilla (WhatsApp/Instagram/PDF/Elegante)", "Elegir color de marca", "Seleccionar avatar promocional", "Filtrar productos a incluir", "Generar y descargar archivo"],
+    "resultados": ["Catálogo JPG para WhatsApp", "Carrusel JPG para Instagram", "Lista de precios PDF para B2B", "Catálogo elegante PDF con portada"]
+  },
+  {
+    "feature": "Etiquetas de Producto",
+    "descripcion_usuario": "Generador de etiquetas de código de barras en formato PDF con hasta 4 etiquetas por página. Soporta formatos EAN-13 y Code 128, con personalización de nombre, precio y código del producto para impresión física.",
+    "acciones": ["Seleccionar productos para etiquetar", "Elegir formato de código de barras", "Generar PDF con etiquetas", "Imprimir en papel carta"],
+    "resultados": ["PDF con hasta 4 etiquetas por página", "Código de barras EAN-13 o Code 128", "Etiquetas listas para impresión"]
+  },
+  {
+    "feature": "Transferencias entre Tiendas",
+    "descripcion_usuario": "Sistema de transferencias de inventario entre tiendas con flujo de 2 pasos (creación en origen, confirmación en destino), manejo de discrepancias y generación de reporte PDF con código QR de verificación.",
+    "acciones": ["Crear transferencia desde tienda origen", "Confirmar recepción en tienda destino", "Registrar discrepancias", "Generar reporte PDF con QR"],
+    "resultados": ["Transferencia completada", "Stock actualizado en ambas tiendas", "Reporte PDF generado"]
+  },
+  {
+    "feature": "IPV Conciliación Bancaria",
+    "descripcion_usuario": "Motor de inteligencia financiera para conciliación bancaria con flujo SOP de 6 pasos: ingesta de extractos, catálogo de transacciones, reglas de matching configurables, conciliación manual, simulación de escenarios, y reportes de auditoría con balance de comprobación pivot y exportación MVT.",
+    "acciones": ["Importar extractos bancarios (BANDEC, CSV)", "Configurar reglas de matching y tolerancias", "Revisar conciliación automática", "Conciliar manualmente transacciones pendientes", "Simular escenarios de cierre", "Generar reporte de auditoría y exportar MVT"],
+    "resultados": ["Extractos conciliados con alta tasa automática", "Transacciones pendientes identificadas", "Balance pivot cuadrado", "Archivo MVT para sistema contable"]
+  },
+  {
+    "feature": "Multi-Tienda",
+    "descripcion_usuario": "Gestión de múltiples tiendas con aislamiento completo de datos (inventario, ventas, reportes), selector de tienda activa, administración centralizada de usuarios y roles, y dashboard consolidado.",
+    "acciones": ["Crear nueva tienda", "Cambiar tienda activa", "Ver dashboard consolidado", "Administrar usuarios por tienda"],
+    "resultados": ["Tienda registrada", "Datos aislados por tienda", "Dashboard multi-tienda consolidado"]
+  },
+  {
+    "feature": "Dashboard OCC",
+    "descripcion_usuario": "Centro de Operaciones (Operations Command Center) con KPIs en tiempo real, fichas de costo recientes, acciones rápidas y vista ejecutiva con métricas de rendimiento del negocio.",
+    "acciones": ["Visualizar KPIs principales", "Acceder a fichas recientes", "Usar acciones rápidas", "Cambiar a vista ejecutiva"],
+    "resultados": ["Vista panorámica del negocio", "Acceso rápido a funciones clave"]
+  },
+  {
+    "feature": "Usuarios y Roles",
+    "descripcion_usuario": "Sistema de autenticación con 6 niveles de roles jerárquicos acumulativos (admin, manager, encargado, clerk, almacén, usuario), permisos granulares por módulo, gestión de estados y auditoría de accesos.",
+    "acciones": ["Crear usuario", "Asignar rol", "Habilitar/deshabilitar cuenta", "Restablecer contraseña", "Consultar auditoría de accesos"],
+    "resultados": ["Usuario registrado con rol asignado", "Permisos configurados", "Auditoría de accesos disponible"]
+  },
+  {
+    "feature": "Asistente IA (Darian)",
+    "descripcion_usuario": "Asistente inteligente integrado con capacidades de chat multimodal, análisis de imágenes, búsqueda web y herramientas de productividad. Responde preguntas sobre el sistema, genera contenido y ejecuta acciones automatizadas.",
+    "acciones": ["Enviar mensaje de texto", "Adjuntar imagen para análisis", "Solicitar búsqueda web", "Usar herramientas de productividad"],
+    "resultados": ["Respuesta inteligente generada", "Análisis de imagen completado", "Acciones automatizadas ejecutadas"]
+  }
+]

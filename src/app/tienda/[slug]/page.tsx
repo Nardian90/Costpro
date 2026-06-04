@@ -124,10 +124,30 @@ export default async function TiendaPublicPage({ params }: PageProps) {
     .eq('is_active', true)
     .order('name');
 
-  // NOTE: stock_current is the authoritative source for the public storefront.
-  // The server client uses the anon key, which cannot read stock_movements (RLS).
-  // If stock_current is stale, run the recompute SQL (provided separately).
-  const productList = products || [];
+  // Fetch accurate stock from RPC (computed from stock_movements in real-time)
+  // The products.stock_current field can be stale; the RPC recalculates from movements.
+  let stockMap = new Map<string, number>();
+  try {
+    const { data: rpcProducts } = await supabase.rpc('get_paginated_products', {
+      p_limit: 1000,
+      p_offset: 0,
+      p_store_id: store.id,
+      p_search_term: '',
+      p_category: ''
+    });
+    for (const rp of (rpcProducts || [])) {
+      if (rp.id && rp.stock_current !== undefined) {
+        stockMap.set(rp.id, rp.stock_current);
+      }
+    }
+  } catch (e) {
+    console.warn('[Tienda] RPC stock fetch failed, using products.stock_current:', e);
+  }
+
+  const productList = (products || []).map(p => ({
+    ...p,
+    stock_current: stockMap.get(p.id) ?? p.stock_current ?? 0,
+  }));
 
   const storeUrl = `${SITE_URL}/tienda/${cleanSlug}`;
 

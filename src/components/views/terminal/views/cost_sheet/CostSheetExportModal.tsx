@@ -200,7 +200,9 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
   // Sync persisted logo from store header into local options on mount / when modal opens
   useEffect(() => {
     if (isOpen) {
-      setOptions(prev => ({ ...prev, logo: data.header.logo }));
+      requestAnimationFrame(() => {
+        setOptions(prev => ({ ...prev, logo: data.header.logo }));
+      });
     }
   }, [isOpen, data.header.logo]);
 

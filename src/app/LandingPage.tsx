@@ -25,8 +25,9 @@ import type { FooterLinkId } from '@/components/landing/FooterSection';
 import FooterModals from '@/components/landing/FooterModals';
 import FloatingElements from '@/components/landing/FloatingElements';
 import {
-  ShortcutsModal, DemoModal, ContactModal, LoginModal,
+  ShortcutsModal, ContactModal, LoginModal,
 } from '@/components/landing/Modals';
+import InteractiveDemoModal from '@/components/landing/InteractiveDemoModal';
 import CommandPalette from '@/components/landing/CommandPalette';
 
 /* ── Landing / Login Split Screen ── */
@@ -59,7 +60,6 @@ export default function LandingPage() {
   const [featuresInView, setFeaturesInView] = useState(false);
   const [footerInView, setFooterInView] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
-  const [demoSlideIndex, setDemoSlideIndex] = useState(0);
   const [showBackToFeatures, setShowBackToFeatures] = useState(false);
   const [sectionProgress, setSectionProgress] = useState(0);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -239,14 +239,7 @@ export default function LandingPage() {
     sectionRefs[idx]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [sectionRefs]);
 
-  // Demo modal auto-advance
-  useEffect(() => {
-    if (!showDemoModal) return;
-    const interval = setInterval(() => {
-      setDemoSlideIndex((prev) => (prev + 1) % 3);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [showDemoModal]);
+  // Demo modal uses InteractiveDemo (self-contained playback)
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -374,7 +367,13 @@ export default function LandingPage() {
         <SectionDivider />
 
         {/* ── FINAL CTA ── */}
-        <FinalCTASection onOpenDemo={() => setShowDemoModal(true)} />
+        <FinalCTASection
+          onOpenDemo={() => setShowDemoModal(true)}
+          onSignup={() => {
+            setLoginDefaultTab('register');
+            setShowLoginModal(true);
+          }}
+        />
       </HeroSection></main>
 
       {/* ─── FOOTER ─── */}
@@ -415,11 +414,9 @@ export default function LandingPage() {
         shortcutsSearch={shortcutsSearch}
         setShortcutsSearch={setShortcutsSearch}
       />
-      <DemoModal
+      <InteractiveDemoModal
         showDemoModal={showDemoModal}
         setShowDemoModal={setShowDemoModal}
-        demoSlideIndex={demoSlideIndex}
-        setDemoSlideIndex={setDemoSlideIndex}
       />
       <ContactModal
         showContactModal={showContactModal}

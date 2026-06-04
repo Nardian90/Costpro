@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { Product } from '@/types';
 import { resolveProductImage, formatCurrency } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
@@ -11,7 +10,7 @@ interface POSTableViewProps {
   onAddToCart: (product: Product) => void;
 }
 
-const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) => {
+export default function POSTableView({ products, onAddToCart }: POSTableViewProps) {
   return (
     <div className="table-scroll-wrapper overflow-x-auto">
       <table className="data-table sticky-column-1 w-full text-sm">
@@ -59,6 +58,4 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
       </table>
     </div>
   );
-};
-
-export default POSTableView;
+}

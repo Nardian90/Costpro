@@ -98,6 +98,8 @@ export function ChatBot() {
   // Multi-conversation state (F1-04)
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  // Ref to track active conversation ID synchronously (avoids stale state in async handlers)
+  const activeConvoIdRef = useRef<string | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -144,11 +146,11 @@ export function ChatBot() {
 
     if (saved.length > 0) {
       setConversations(saved);
-      if (savedActiveId && saved.find(c => c.id === savedActiveId)) {
-        setActiveConversationId(savedActiveId);
-      } else {
-        setActiveConversationId(saved[0].id);
-      }
+      const restoredId = (savedActiveId && saved.find(c => c.id === savedActiveId))
+        ? savedActiveId
+        : saved[0].id;
+      setActiveConversationId(restoredId);
+      activeConvoIdRef.current = restoredId;
     } else {
       // Migrate legacy single-conversation messages
       try {
@@ -160,6 +162,7 @@ export function ChatBot() {
             newConvo.messages = parsed;
             setConversations([newConvo]);
             setActiveConversationId(newConvo.id);
+            activeConvoIdRef.current = newConvo.id;
             localStorage.removeItem('darian_chat_messages');
             debouncedSave(CONVERSATIONS_KEY, [newConvo]);
           }
@@ -237,6 +240,7 @@ export function ChatBot() {
     const newConvo = createConversation();
     setConversations(prev => [newConvo, ...prev]);
     setActiveConversationId(newConvo.id);
+    activeConvoIdRef.current = newConvo.id;
     setAttachedImage(null);
     setIsSidebarOpen(false);
     inputRef.current?.focus();
@@ -244,6 +248,7 @@ export function ChatBot() {
 
   const switchConversation = useCallback((id: string) => {
     setActiveConversationId(id);
+    activeConvoIdRef.current = id;
     setAttachedImage(null);
     setIsSidebarOpen(false);
     inputRef.current?.focus();
@@ -256,10 +261,12 @@ export function ChatBot() {
       if (updated.length === 0) {
         const newConvo = createConversation();
         setActiveConversationId(newConvo.id);
+        activeConvoIdRef.current = newConvo.id;
         return [newConvo];
       }
-      if (activeConversationId === id) {
+      if (activeConvoIdRef.current === id) {
         setActiveConversationId(updated[0].id);
+        activeConvoIdRef.current = updated[0].id;
       }
       return updated;
     });
@@ -354,7 +361,7 @@ export function ChatBot() {
     }
   };
 
-  const addErrorMessage = (content: string) => {
+  const addErrorMessage = (content: string, targetConvoId?: string) => {
     const errorMsg: Message = {
       role: 'assistant',
       content,
@@ -363,9 +370,10 @@ export function ChatBot() {
       timestamp: Date.now()
     };
 
-    if (activeConversationId) {
+    const convoTarget = targetConvoId || activeConvoIdRef.current;
+    if (convoTarget) {
       setConversations(prev =>
-        prev.map(c => c.id === activeConversationId ? { ...c, messages: [...c.messages, errorMsg], updatedAt: Date.now() } : c)
+        prev.map(c => c.id === convoTarget ? { ...c, messages: [...c.messages, errorMsg], updatedAt: Date.now() } : c)
       );
     }
   };
@@ -377,12 +385,15 @@ export function ChatBot() {
     if (isLoading) return;
 
     // Ensure we have an active conversation
-    let convoId = activeConversationId;
+    let convoId = activeConvoIdRef.current || activeConversationId;
     if (!convoId) {
       const newConvo = createConversation(undefined, textToSend);
       setConversations(prev => [newConvo, ...prev]);
       setActiveConversationId(newConvo.id);
+      activeConvoIdRef.current = newConvo.id;
       convoId = newConvo.id;
+    } else {
+      activeConvoIdRef.current = convoId;
     }
 
     const userMessage: Message = {
@@ -421,12 +432,15 @@ export function ChatBot() {
     setAbortController(controller);
 
     try {
-      // Get current messages for API call
+      // Build messages for API call.
+      // Note: conversations state from closure may be stale (pre-userMessage),
+      // but userMessage is always appended below. This is safe because
+      // isLoading prevents concurrent requests.
       const currentConvo = conversations.find(c => c.id === convoId);
       const allMessages = [...(currentConvo?.messages || []), userMessage];
       const apiMessages = allMessages
         .filter(m => m.role === 'user' || m.role === 'assistant' || m.role === 'model')
-        .slice(-30); // Increased context window
+        .slice(-30); // Context window
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -539,20 +553,20 @@ export function ChatBot() {
     } catch (error: any) {
       if (error.name === 'AbortError') {
         logger.info('DATABASE', '[CHAT]_REQUEST_CANCELLED_BY_USER');
-        addErrorMessage('Solicitud cancelada.');
+        addErrorMessage('Solicitud cancelada.', convoId);
         return;
       }
 
       const errorMsg = error.message || '';
 
       if (errorMsg.includes('Cuota') || errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
-        addErrorMessage('**Cuota agotada.** Espera un momento o cambia tu API Key en los ajustes.');
+        addErrorMessage('**Cuota agotada.** Espera un momento o cambia tu API Key en los ajustes.', convoId);
       } else if (errorMsg.includes('inválida') || errorMsg.includes('401') || errorMsg.includes('PERMISSION_DENIED')) {
-        addErrorMessage('**API Key inválida o expirada.** Verifica tu clave en los ajustes.');
+        addErrorMessage('**API Key inválida o expirada.** Verifica tu clave en los ajustes.', convoId);
       } else if (errorMsg.includes('Timeout')) {
-        addErrorMessage('**Tiempo de espera agotado.** La respuesta tardó demasiado. Intenta de nuevo.');
+        addErrorMessage('**Tiempo de espera agotado.** La respuesta tardó demasiado. Intenta de nuevo.', convoId);
       } else {
-        addErrorMessage(errorMsg);
+        addErrorMessage(errorMsg, convoId);
       }
     } finally {
       setIsLoading(false);

@@ -1,16 +1,21 @@
 /**
- * Structured JSON logger with OpenTelemetry trace correlation.
+ * Structured JSON logger — OpenTelemetry tracing DISABLED.
  *
- * Supplements the existing src/lib/logger.ts — this module is specifically for
- * the observability stack, providing traceId/spanId context in every log entry.
- *
- * Log levels: debug, info, warn, error
- * Output format: JSON with ISO 8601 timestamps
- * Trace correlation: automatically extracts traceId/spanId from active span context
+ * This module provides structured logging without OTel trace correlation.
+ * All trace-related fields (traceId, spanId) will be omitted from logs.
  */
 
-import { trace, SpanStatusCode } from '@opentelemetry/api';
-import { getTraceContext } from './tracing-core';
+// No-op getTraceContext (OTel disabled)
+function getTraceContext(): { traceId?: string; spanId?: string } {
+  return {};
+}
+
+// Local SpanStatusCode (OTel disabled)
+const SpanStatusCode = {
+  UNSET: 0,
+  OK: 1,
+  ERROR: 2,
+};
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 

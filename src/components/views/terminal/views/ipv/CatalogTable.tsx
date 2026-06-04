@@ -454,7 +454,7 @@ export function CatalogTable() {
             const { data, error } = await supabase.rpc('get_products_for_pos', { p_store_id: stores[0].id, p_search_term: '', p_category: '' });
             if (error) throw new Error(`Error del servidor: ${error.message}`);
             const systemProducts = (data || []).map((p: any) => ({
-                cod: p.sku || p.id, descripcion: p.name, um: 'UNIDADES', es_paquete: false, contenido_paquete: 1, precio_cents: p.price || 0, prioridad_algoritmo: 3, activo: true, stock_inicial_manual: Math.round(p.stock_quantity || 0), created_at: new Date().toISOString()
+                cod: p.sku || p.id, descripcion: p.name, um: 'UNIDADES', es_paquete: false, contenido_paquete: 1, precio_cents: Math.round((p.price || 0) * 100), prioridad_algoritmo: 3, activo: true, stock_inicial_manual: Math.round(p.stock_quantity || 0), created_at: new Date().toISOString()
             }));
             await db.products.bulkPut(systemProducts);
             toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });

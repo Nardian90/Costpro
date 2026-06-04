@@ -1,7 +1,7 @@
-import autoTable from 'jspdf-autotable';
 "use client";
 
 import { useCallback } from "react";
+import autoTable from 'jspdf-autotable';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
@@ -9,17 +9,51 @@ import { formatCurrency } from "@/lib/utils";
 import type { LastSale } from "./POSCart.types";
 
 interface UsePOSCartExportsOptions {
-  lastSale?: LastSale;
+  lastSale?: LastSale | null;
 }
 
-export const usePOSCartExports = ({ lastSale }: UsePOSCartExportsOptions) => {
+/** Resolve the current CSS --primary color to RGB for PDF rendering */
+function resolvePrimaryColor(): [number, number, number] {
+  if (typeof window === "undefined") return [21, 128, 61]; // green-700 fallback
+  try {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue("--primary").trim();
+    if (!raw) return [21, 128, 61];
+    // Parse hex: #RRGGBB
+    if (raw.startsWith("#") && raw.length === 7) {
+      const r = parseInt(raw.slice(1, 3), 16);
+      const g = parseInt(raw.slice(3, 5), 16);
+      const b = parseInt(raw.slice(5, 7), 16);
+      return [r, g, b];
+    }
+    // Fallback for rgb(r, g, b) or named colors — use canvas trick
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = raw;
+      const computed = ctx.fillStyle; // browser normalizes to #rrggbb
+      if (computed.startsWith("#") && computed.length === 7) {
+        return [
+          parseInt(computed.slice(1, 3), 16),
+          parseInt(computed.slice(3, 5), 16),
+          parseInt(computed.slice(5, 7), 16),
+        ];
+      }
+    }
+  } catch {
+    // ignore parsing errors
+  }
+  return [21, 128, 61];
+}
+
+export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
   const generatePDF = useCallback(async () => {
     if (!lastSale) return;
     const doc = await createPDFDocument();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const primary = resolvePrimaryColor();
 
-    // Header
-    doc.setFillColor(0, 150, 136);
+    // Header — dynamic primary color
+    doc.setFillColor(primary[0], primary[1], primary[2]);
     doc.rect(0, 0, pageWidth, 40, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
@@ -49,12 +83,13 @@ export const usePOSCartExports = ({ lastSale }: UsePOSCartExportsOptions) => {
         formatCurrency(item.subtotal),
       ]),
       theme: "striped",
-      headStyles: { fillColor: [0, 150, 136] },
+      headStyles: { fillColor: primary },
       margin: { left: 20, right: 20 },
     });
 
-    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } })
-      .lastAutoTable.finalY + 10;
+    // jspdf-autotable attaches lastAutoTable to the doc instance
+    const lastAutoTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
+    const finalY = (lastAutoTable?.finalY ?? 90) + 10;
 
     // Totals
     doc.setFontSize(12);
@@ -108,9 +143,9 @@ export const usePOSCartExports = ({ lastSale }: UsePOSCartExportsOptions) => {
         (item: LastSale["items"][number]) =>
           `${item.product.name} x${item.quantity} - ${formatCurrency(item.subtotal)}`,
       )
-      .join("%0A");
-    const message = `¡Hola!%0ADetalle de Venta:%0A${itemsList}%0A%0ATotal: ${formatCurrency(lastSale.total)}%0AMétodo: ${lastSale.paymentMethod === "cash" ? "Efectivo" : "Transferencia"}%0A%0AGracias por su preferencia.`;
-    window.open(`https://wa.me/?text=${message}`, "_blank");
+      .join("\n");
+    const message = `¡Hola!\nDetalle de Venta:\n${itemsList}\n\nTotal: ${formatCurrency(lastSale.total)}\nMétodo: ${lastSale.paymentMethod === "cash" ? "Efectivo" : "Transferencia"}\n\nGracias por su preferencia.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   }, [lastSale]);
 
   const exportAsImage = useCallback(async () => {
@@ -135,4 +170,4 @@ export const usePOSCartExports = ({ lastSale }: UsePOSCartExportsOptions) => {
   }, [lastSale]);
 
   return { generatePDF, shareWhatsApp, exportAsImage };
-};
+}

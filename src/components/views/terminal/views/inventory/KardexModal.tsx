@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BookOpen, X, Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { formatDate, formatCurrency } from '@/lib/utils';
@@ -48,10 +48,13 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
 
   // Reset page when modal opens or product changes
   const prevProductId = React.useRef<string | null>(null);
-  if (isOpen && product?.id && prevProductId.current !== product.id) {
-    prevProductId.current = product.id;
-    setPage(1);
-  }
+
+  useEffect(() => {
+    if (isOpen && product?.id && prevProductId.current !== product.id) {
+      prevProductId.current = product.id;
+      requestAnimationFrame(() => setPage(1));
+    }
+  }, [isOpen, product?.id]);
 
   // Export CSV
   const handleExport = () => {

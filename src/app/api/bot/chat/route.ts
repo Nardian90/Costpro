@@ -7,7 +7,7 @@ import { executeTool } from '@/lib/ai/tools/registry';
 import { TOOLS } from '@/lib/ai/tools/definitions';
 import { createServerClient } from '@/lib/supabaseClient';
 import { buildSystemPrompt } from '@/lib/ai/prompts/system-prompt-builder';
-import { callAI, type AIMessage } from '@/lib/ai/provider';
+import { callAI, callAIStream, type AIMessage, type AIProviderName } from '@/lib/ai/provider';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -28,35 +28,129 @@ interface ChatMessage {
 // ─── AGENT LOOP (Handles reasoning and tools) ───────────────────────────────
 const MAX_TOOL_ITERATIONS = 3;
 
+/**
+ * Converts ChatMessage[] to AIMessage[] for the provider,
+ * preserving imageData on the last user message.
+ */
+function toAIMessages(chatMessages: ChatMessage[]): AIMessage[] {
+  return chatMessages.map((m, i) => {
+    const isLast = i === chatMessages.length - 1;
+    return {
+      role: m.role as any,
+      content: m.content,
+      ...(isLast && m.imageData ? { imageData: m.imageData } : {}),
+    };
+  });
+}
+
 async function runAgentLoop(
   initialMessages: ChatMessage[],
-  options: { temperature?: number; maxTokens?: number; systemPrompt?: string },
-  toolContext: { supabase: any; userId: string; userRole: string; storeId: string }
+  options: { temperature?: number; model?: string; systemPrompt?: string; stream?: boolean },
+  toolContext: { supabase: any; userId: string; userRole: string; storeId: string },
+  signal?: AbortSignal
 ): Promise<{ text: string; actions: any[]; provider: string }> {
   let messages = [...initialMessages];
   const allActions: any[] = [];
-  let lastProvider = 'unknown';
+  let lastProvider: AIProviderName = 'glm';
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    // Current callAI in provider.ts doesn't support tools yet, but we'll adapt it
-    // For now, we use it for text responses and fallback.
-    // If we need tool support in callAI, we should add it.
-    // The prompt says: "Reemplazar la llamada directa al SDK por el nuevo callAI con fallback"
+    const aiMessages = toAIMessages(messages);
 
-    const aiMessages: AIMessage[] = messages.map(m => ({
-      role: m.role as any,
-      content: m.content
-    }));
+    // Use streaming for the first iteration (user sees real-time output),
+    // non-streaming for tool iterations (we need the full response to parse tools)
+    if (iteration === 0 && options.stream) {
+      // Streaming is handled directly by the route — agent loop returns early
+      // and the route pipes the stream. Tool iterations only happen if the AI
+      // explicitly requests tool calls, which we detect post-stream.
+      // For simplicity, we use streaming only for the final output.
+      const result = await callAI(aiMessages, options.systemPrompt || '', {
+        model: options.model,
+        temperature: options.temperature,
+      });
+      lastProvider = result.provider;
+      return { text: result.text, actions: allActions, provider: lastProvider };
+    }
 
-    const result = await callAI(aiMessages, options.systemPrompt || '');
+    const result = await callAI(aiMessages, options.systemPrompt || '', {
+      model: options.model,
+      temperature: options.temperature,
+    });
     lastProvider = result.provider;
 
-    // TODO: If we want to support tools via callAI, provider.ts needs to handle tool_calls.
-    // Given the prompt constraints, we'll focus on the dual fallback for text first.
-    return { text: result.text, actions: allActions, provider: lastProvider };
+    const text = result.text;
+
+    // Check if the AI wants to call a tool
+    // Tool calls are detected by parsing structured JSON in the response
+    const toolCalls = parseToolCalls(text);
+
+    if (toolCalls.length === 0) {
+      // No tools requested — return the text as-is
+      return { text: text.replace(/\[TOOL_RESULT\][\s\S]*$/, '').trim(), actions: allActions, provider: lastProvider };
+    }
+
+    // Execute each tool call
+    for (const toolCall of toolCalls) {
+      console.log(`[Agent] Iteration ${iteration + 1}: Executing tool "${toolCall.name}"`, toolCall.args);
+      const toolResult = await executeTool(toolCall.name, toolCall.args, toolContext);
+
+      allActions.push({
+        type: 'tool_call',
+        name: toolCall.name,
+        args: toolCall.args,
+        result: toolResult,
+      });
+
+      // Append tool call and result to messages for the next iteration
+      messages.push({
+        role: 'assistant',
+        content: JSON.stringify({ tool_call: toolCall }),
+      });
+      messages.push({
+        role: 'tool',
+        name: toolCall.name,
+        content: JSON.stringify(toolResult),
+      });
+    }
   }
 
-  return { text: 'Procesé la solicitud.', actions: allActions, provider: lastProvider };
+  return { text: 'Procesé la solicitud con múltiples herramientas.', actions: allActions, provider: lastProvider };
+}
+
+/**
+ * Parse structured tool calls from AI response text.
+ * Supports format: ```json\n{ "tool": "name", "args": {...} }\n```
+ * Or: [TOOL_CALL] {"tool": "name", "args": {...}}
+ */
+function parseToolCalls(text: string): Array<{ name: string; args: any }> {
+  const calls: Array<{ name: string; args: any }> = [];
+
+  // Pattern 1: [TOOL_CALL] JSON
+  const toolCallPattern = /\[TOOL_CALL\]\s*(\{[\s\S]*?\})/g;
+  let match;
+  while ((match = toolCallPattern.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (parsed.tool && typeof parsed.tool === 'string') {
+        calls.push({ name: parsed.tool, args: parsed.args || {} });
+      }
+    } catch { /* skip malformed JSON */ }
+  }
+
+  // Pattern 2: ```json blocks with tool field
+  const jsonBlockPattern = /```(?:json)?\s*(\{[\s\S]*?"tool"\s*:\s*"[\s\S]*?\})\s*```/g;
+  while ((match = jsonBlockPattern.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (parsed.tool && typeof parsed.tool === 'string') {
+        // Avoid duplicates
+        if (!calls.some(c => c.name === parsed.tool && JSON.stringify(c.args) === JSON.stringify(parsed.args || {}))) {
+          calls.push({ name: parsed.tool, args: parsed.args || {} });
+        }
+      }
+    } catch { /* skip malformed JSON */ }
+  }
+
+  return calls;
 }
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
@@ -82,14 +176,13 @@ async function botChatHandler(req: NextRequest) {
         errors: parsed.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
-          received: (e as any).received,
         })),
         receivedFields: Object.keys(body ?? {}),
       });
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
 
-    const { messages, aiProvider: clientAiProvider, storeId, context: botContext } = parsed.data;
+    const { messages, storeId, context: botContext } = parsed.data;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
@@ -98,7 +191,10 @@ async function botChatHandler(req: NextRequest) {
     try {
       const currentView = (botContext?.currentView as string) || undefined;
       const uiMode = (botContext?.uiMode as string) || undefined;
-      const temperature = typeof body.temperature === 'number' ? Math.max(0, Math.min(1, body.temperature)) : 0.4;
+      // Use Zod-parsed values instead of raw body to avoid validation bypass
+      const temperature = parsed.data.temperature ?? 0.4;
+      const model = parsed.data.model || undefined;
+      const useStream = parsed.data.stream !== false;
 
       const supabaseClient = createServerClient();
       const systemPrompt = await buildSystemPrompt({
@@ -125,9 +221,107 @@ async function botChatHandler(req: NextRequest) {
       const userId = session.user?.id || 'anonymous';
       const toolContext = { supabase: supabaseClient, userId, userRole, storeId: storeId || '' };
 
-      const aiOptions = { temperature, maxTokens: 4096, systemPrompt };
+      // ── Streaming response ──
+      if (useStream) {
+        try {
+          const aiMessages = toAIMessages(chatMessages);
+          const { stream, provider, model: usedModel } = await callAIStream(aiMessages, systemPrompt, {
+            model,
+            temperature,
+          });
 
-      // Using the agent loop which now uses callAI with fallback
+          // Stream tokens to client in real-time while collecting text for tool detection
+          const encoder = new TextEncoder();
+          const decoder = new TextDecoder();
+          const transformedStream = new ReadableStream({
+            async start(controller) {
+              try {
+                const reader = stream.getReader();
+                let fullText = '';
+
+                // Phase 1: Stream tokens in real-time + collect text for tool detection
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  // Immediately forward to client (real-time streaming)
+                  controller.enqueue(value);
+
+                  // Extract text from chunk for tool-call detection
+                  const chunkText = decoder.decode(value, { stream: true });
+                  const lines = chunkText.split('\n');
+                  for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const payload = line.slice(6).trim();
+                    if (payload === '[DONE]') continue;
+                    try {
+                      const parsed = JSON.parse(payload);
+                      if (parsed.text) fullText += parsed.text;
+                    } catch { /* skip */ }
+                  }
+                }
+
+                // Phase 2: Check for tool calls in the full response
+                const toolCalls = parseToolCalls(fullText);
+                const allActions: any[] = [];
+
+                if (toolCalls.length > 0) {
+                  // Execute tools and send follow-up
+                  let followMessages = [...chatMessages, { role: 'assistant' as const, content: fullText }];
+
+                  for (const toolCall of toolCalls) {
+                    console.log(`[BotChat] Streaming+Tools: Executing "${toolCall.name}"`);
+                    const toolResult = await executeTool(toolCall.name, toolCall.args, toolContext);
+                    allActions.push({ type: 'tool_call', name: toolCall.name, args: toolCall.args, result: toolResult });
+
+                    followMessages.push({ role: 'assistant' as const, content: JSON.stringify({ tool_call: toolCall }) });
+                    followMessages.push({ role: 'tool' as const, name: toolCall.name, content: JSON.stringify(toolResult) });
+                  }
+
+                  // Get AI follow-up after tool execution
+                  const followAIMessages = toAIMessages(followMessages);
+                  const followResult = await callAI(followAIMessages, systemPrompt, { model, temperature });
+
+                  if (followResult.text) {
+                    // Stream the follow-up text as a continuation
+                    const followChunk = JSON.stringify({ text: '\n\n' + followResult.text });
+                    controller.enqueue(encoder.encode(`data: ${followChunk}\n\n`));
+                  }
+                }
+
+                // Send final metadata
+                const metaChunk = JSON.stringify({
+                  metadata: {
+                    provider,
+                    model: usedModel,
+                    actions: allActions,
+                  },
+                  done: true,
+                });
+                controller.enqueue(encoder.encode(`data: ${metaChunk}\n\n`));
+                controller.close();
+              } catch (err) {
+                controller.error(err);
+              }
+            },
+          });
+
+          return new Response(transformedStream, {
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache, no-transform',
+              'Connection': 'keep-alive',
+              'X-Accel-Buffering': 'no',
+            },
+          });
+        } catch (streamError: any) {
+          // If streaming fails, fall back to non-streaming
+          console.warn('[BotChat] Streaming failed, falling back to non-streaming:', streamError.message);
+        }
+      }
+
+      // ── Non-streaming fallback ──
+      const aiOptions = { temperature, model, systemPrompt, stream: false };
       const result = await runAgentLoop(chatMessages, aiOptions, toolContext);
 
       if (!result.text) {
@@ -138,14 +332,12 @@ async function botChatHandler(req: NextRequest) {
       const stream = new ReadableStream({
         start(controller) {
           try {
-            // Chunk 1: el texto completo de la respuesta
             const textChunk = JSON.stringify({
               text: result.text,
               provider: result.provider,
             });
             controller.enqueue(encoder.encode(`data: ${textChunk}\n\n`));
 
-            // Chunk 2: metadata con actions
             const metaChunk = JSON.stringify({
               metadata: {
                 provider: result.provider,
@@ -155,7 +347,6 @@ async function botChatHandler(req: NextRequest) {
             });
             controller.enqueue(encoder.encode(`data: ${metaChunk}\n\n`));
 
-            // Señal de fin de stream
             controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
           } catch (e) {
@@ -180,7 +371,7 @@ async function botChatHandler(req: NextRequest) {
         {
           error: 'El servicio AI no está disponible',
           detail: message,
-          hint: 'Ver VERCEL_ENV_SETUP.md para configurar las claves de API',
+          hint: 'Verifica las variables de entorno (ZAI_API_KEY, GOOGLE_API_KEY) o que /etc/.z-ai-config exista',
         },
         { status: 503 }
       );

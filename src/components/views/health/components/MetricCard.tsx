@@ -8,9 +8,10 @@ interface MetricCardProps {
   subtitle: string;
   icon: LucideIcon;
   color?: 'primary' | 'success' | 'warning' | 'destructive' | 'blue';
+  progress?: number;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon: Icon, color = 'primary' }) => {
+export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, icon: Icon, color = 'primary', progress = 85 }) => {
   const colorMap = {
     primary: 'bg-primary/10 text-primary border-primary/20',
     success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -18,6 +19,16 @@ export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, 
     destructive: 'bg-destructive/10 text-destructive border-destructive/20',
     blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   };
+
+  const barColorMap = {
+    primary: 'bg-primary',
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    destructive: 'bg-destructive',
+    blue: 'bg-blue-500',
+  };
+
+  const clampedProgress = Math.max(0, Math.min(100, progress));
 
   return (
     <div className="p-8 rounded-[40px] bg-card border border-border/50 shadow-sm hover:shadow-2xl hover:border-primary/30 transition-all duration-500 group relative overflow-hidden">
@@ -34,7 +45,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({ title, value, subtitle, 
       </div>
 
       <div className="w-full h-1 bg-muted/20 rounded-full overflow-hidden mb-3">
-         <div className={cn("h-full rounded-full transition-all duration-1000", color === 'primary' ? 'bg-primary' : color === 'success' ? 'bg-emerald-500' : 'bg-blue-500')} style={{ width: '85%' }} />
+         <div className={cn("h-full rounded-full transition-all duration-1000", barColorMap[color])} style={{ width: `${clampedProgress}%` }} />
       </div>
 
       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-60 leading-tight">

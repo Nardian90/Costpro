@@ -70,6 +70,17 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string; bg: strin
     },
 };
 
+/* Inline component: badge shown when current formula matches the standard */
+function FormulaMatchBadge({ matches }: { matches: boolean | null | undefined }) {
+    if (!matches) return null;
+    return (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold shrink-0">
+            <Check className="w-3 h-3" />
+            Correcta según estándar
+        </div>
+    );
+}
+
 interface ErrorDetailModalProps {
     error: ValidationError | null;
     currentRow: CostSheetRow | null;
@@ -96,35 +107,9 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
     const [editedVhFormula, setEditedVhFormula] = useState<string>(() => currentRow?.vhFormula ?? '');
     const [activeTab, setActiveTab] = useState<string>('total');
 
-    /* ── Guard: if no error selected, render closed Dialog shell only ── */
-    if (!error) {
-        return (
-            <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-                <DialogContent className="rounded-[2rem] sm:max-w-2xl backdrop-blur-xl bg-background/95 border-border/50 shadow-2xl shadow-black/10">
-                    <DialogHeader>
-                        <DialogTitle>No hay elemento seleccionado</DialogTitle>
-                        <DialogDescription>Seleccione un elemento de la lista de auditoría para ver sus detalles.</DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={onClose} className="rounded-xl text-xs font-bold h-9 px-4">
-                            <X className="w-3.5 h-3.5 mr-1.5" />
-                            Cerrar
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        );
-    }
-
-    const severity = SEVERITY_STYLES[error.type] ?? SEVERITY_STYLES.INFO;
-    const errorCodeConfig = ERROR_CODE_CONFIG[error.code] || { icon: AlertOctagon, label: error.code, color: 'text-muted-foreground bg-muted' };
-
+    /* Derived values needed by hooks */
     const hasSuggestedTotal = suggestedRow && suggestedRow.totalFormula && suggestedRow.totalFormula.trim() !== '';
     const hasSuggestedVh = suggestedRow && suggestedRow.vhFormula && suggestedRow.vhFormula.trim() !== '';
-
-    /* Check if formulas match the standard (current == suggested) */
-    const totalFormulaMatches = !!(hasSuggestedTotal && suggestedRow && editedTotalFormula.trim() === suggestedRow.totalFormula?.trim());
-    const vhFormulaMatches = !!(hasSuggestedVh && suggestedRow && editedVhFormula.trim() === suggestedRow.vhFormula?.trim());
 
     /* Derive hasChanges without state or effects */
     const hasChanges = useMemo(() => {
@@ -132,7 +117,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
             || editedVhFormula !== (currentRow?.vhFormula ?? '');
     }, [editedTotalFormula, editedVhFormula, currentRow]);
 
-    /* ── Handlers ── */
+    /* ── Handlers — all hooks before conditional return ── */
     const handleApplySuggestedTotal = useCallback(() => {
         if (!hasSuggestedTotal || !suggestedRow) return;
         setEditedTotalFormula(suggestedRow.totalFormula ?? '');
@@ -185,6 +170,33 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
         }
     }, [rowPath, currentRow, editedTotalFormula, editedVhFormula, updateValue, onClose]);
 
+    /* ── Guard: if no error selected, render closed Dialog shell only ── */
+    if (!error) {
+        return (
+            <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+                <DialogContent className="rounded-[2rem] sm:max-w-2xl backdrop-blur-xl bg-background/95 border-border/50 shadow-2xl shadow-black/10">
+                    <DialogHeader>
+                        <DialogTitle>No hay elemento seleccionado</DialogTitle>
+                        <DialogDescription>Seleccione un elemento de la lista de auditoría para ver sus detalles.</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={onClose} className="rounded-xl text-xs font-bold h-9 px-4">
+                            <X className="w-3.5 h-3.5 mr-1.5" />
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    const severity = SEVERITY_STYLES[error.type] ?? SEVERITY_STYLES.INFO;
+    const errorCodeConfig = ERROR_CODE_CONFIG[error.code] || { icon: AlertOctagon, label: error.code, color: 'text-muted-foreground bg-muted' };
+
+    /* Check if formulas match the standard (current == suggested) */
+    const totalFormulaMatches = !!(hasSuggestedTotal && suggestedRow && editedTotalFormula.trim() === suggestedRow.totalFormula?.trim());
+    const vhFormulaMatches = !!(hasSuggestedVh && suggestedRow && editedVhFormula.trim() === suggestedRow.vhFormula?.trim());
+
     /* Determine title based on severity type */
     const detailTitle = error.type === 'INFO'
         ? `Información — Fila ${error.rowId}`
@@ -198,15 +210,6 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
 
     const ErrorIcon = errorCodeConfig ? errorCodeConfig.icon : AlertOctagon;
     const SeverityIcon = severity.icon;
-
-    /* Inline component: badge shown when current formula matches the standard */
-    const FormulaMatchBadge = ({ matches }: { matches: boolean | null | undefined }) =>
-        matches ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold shrink-0">
-                <Check className="w-3 h-3" />
-                Correcta según estándar
-            </div>
-        ) : null;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>

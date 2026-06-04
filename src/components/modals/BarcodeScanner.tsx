@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { SecondaryButton } from '@/components/ui/atomic';
-import { X, Camera, RefreshCw } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -12,11 +12,16 @@ interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
 }
 
-export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
+/**
+ * Camera-based barcode/QR scanner for mobile POS.
+ * Scans product barcodes via the device camera and adds them to the cart.
+ * Requires html5-qrcode (installed). Ready for future integration into the POS mobile flow.
+ */
+export const BarcodeScanner = ({
   isOpen,
   onClose,
   onScan
-}) => {
+}: BarcodeScannerProps) => {
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -60,8 +65,8 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             }
           );
           setIsInitializing(false);
-        } catch (err: any) {
-          setError(err.message || "No se pudo acceder a la cámara");
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : "No se pudo acceder a la cámara");
           setIsInitializing(false);
         }
       };

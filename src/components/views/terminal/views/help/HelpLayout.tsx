@@ -6,7 +6,6 @@ import {
   BookOpen,
   LifeBuoy,
   Columns,
-  ChevronRight,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -23,11 +22,13 @@ interface HelpLayoutProps {
   sidebar: ReactNode;
   children: ReactNode;
   isReadingMode?: boolean;
+  scrollProgress: number;
+  onMainScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
-export default function HelpLayout({ sidebar, children, isReadingMode }: HelpLayoutProps) {
+export default function HelpLayout({ sidebar, children, isReadingMode, scrollProgress, onMainScroll }: HelpLayoutProps) {
   return (
-    <div className="flex flex-col bg-background text-foreground -m-4 sm:-m-8 lg:-m-12 min-h-screen w-[calc(100%+2rem)] sm:w-[calc(100%+4rem)] lg:w-[calc(100%+6rem)]">
+    <div className="flex flex-col bg-background text-foreground min-h-[calc(100vh-56px)] w-full">
       {/* ── Enterprise Header ── */}
       <header className="relative overflow-hidden border-b border-border/50 shrink-0">
         {/* Gradient background */}
@@ -55,6 +56,12 @@ export default function HelpLayout({ sidebar, children, isReadingMode }: HelpLay
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Scroll progress % indicator */}
+            {scrollProgress > 0 && (
+              <Badge variant="outline" className="text-[10px] font-black tabular-nums px-2 py-0.5 bg-primary/5 border-primary/20 text-primary">
+                {Math.round(scrollProgress)}% leído
+              </Badge>
+            )}
             <Badge variant="outline" className="text-[9px] font-bold tracking-wider px-2.5 py-1 bg-muted/50 border-border/50 hidden md:inline-flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-amber-500" />
               ISO/IEC 26514
@@ -64,29 +71,38 @@ export default function HelpLayout({ sidebar, children, isReadingMode }: HelpLay
       </header>
 
       {/* ── Desktop: Two-column layout ── */}
-      <div className="hidden lg:flex flex-1 overflow-hidden relative min-h-[calc(100vh-200px)]">
+      <div className="hidden lg:flex flex-1 overflow-hidden relative">
         {/* Document Sidebar */}
         <aside className={cn(
-          "w-[300px] xl:w-[320px] border-r border-border/30 bg-card/30 backdrop-blur-sm flex flex-col overflow-y-auto transition-all duration-500 shrink-0",
-          isReadingMode ? "-ml-[320px] opacity-0 w-0" : "opacity-100"
+          "w-[300px] xl:w-[320px] min-w-0 border-r border-border/30 bg-card/30 backdrop-blur-sm flex flex-col transition-all duration-500 shrink-0",
+          isReadingMode ? "-ml-[320px] opacity-0 w-0 min-w-0 overflow-hidden border-r-0" : "opacity-100"
         )}>
           {/* Sidebar inner header */}
-          <div className="px-5 pt-6 pb-3">
+          <div className="px-5 pt-6 pb-3 shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <BookOpen className="w-3.5 h-3.5 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Biblioteca</span>
             </div>
             <p className="text-[11px] font-medium text-muted-foreground">Navega por los módulos y secciones del sistema</p>
           </div>
-          <div className="border-t border-border/30 mx-5 mb-2" />
+          <div className="border-t border-border/30 mx-5 mb-2 shrink-0" />
           {sidebar}
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto scroll-smooth">
+        <main data-help-scroll className="flex-1 min-w-0 overflow-y-auto scroll-smooth" onScroll={onMainScroll}>
+          {/* Reading progress bar — sticky inside scroll container */}
+          <div className="sticky top-0 z-20">
+            <div className="h-[3px] bg-border/10 relative overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 via-primary to-primary/60 transition-[width] duration-150 ease-out"
+                style={{ width: `${scrollProgress}%`, opacity: scrollProgress > 0 ? 1 : 0 }}
+              />
+            </div>
+          </div>
           <div className={cn(
             "mx-auto px-8 md:px-14 xl:px-20 py-10 md:py-14 animate-in fade-in duration-500 transition-all",
-            isReadingMode ? "max-w-5xl py-14" : "max-w-4xl xl:max-w-5xl"
+            isReadingMode ? "max-w-5xl py-14" : "max-w-5xl xl:max-w-6xl"
           )}>
             <div className={cn(
               "bg-card/60 backdrop-blur-md shadow-sm border border-border/40 rounded-2xl min-h-[65vh] relative transition-all",
@@ -146,9 +162,18 @@ export default function HelpLayout({ sidebar, children, isReadingMode }: HelpLay
           </SheetContent>
         </Sheet>
 
-        <main className="overflow-y-auto scroll-smooth pb-24">
-          <div className="mx-auto px-4 py-6 animate-in fade-in duration-500">
-            <div className="bg-card/60 backdrop-blur-sm shadow-sm border border-border/40 rounded-2xl min-h-[50vh] p-5 relative">
+        <main data-help-scroll className="overflow-y-auto scroll-smooth pb-24" onScroll={onMainScroll}>
+          {/* Reading progress bar — sticky inside scroll container */}
+          <div className="sticky top-0 z-20">
+            <div className="h-[3px] bg-border/10 relative overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 via-primary to-primary/60 transition-[width] duration-150 ease-out"
+                style={{ width: `${scrollProgress}%`, opacity: scrollProgress > 0 ? 1 : 0 }}
+              />
+            </div>
+          </div>
+          <div className="mx-auto px-4 md:px-6 py-6 animate-in fade-in duration-500">
+            <div className="bg-card/60 backdrop-blur-sm shadow-sm border border-border/40 rounded-2xl min-h-[50vh] p-4 md:p-6 relative">
               {children}
             </div>
           </div>

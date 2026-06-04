@@ -39,7 +39,7 @@ export const calcSubtotal = (row: SalesCatalogRow): number => {
   return Math.max(0, (row.price - row.discountValue) * row.quantity);
 };
 
-export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: any }[] = [
+export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: null }[] = [
   { value: 'cash', label: 'Efectivo', icon: null },
   { value: 'transfer', label: 'Transf.', icon: null },
   { value: 'card', label: 'Tarjeta', icon: null },
@@ -108,12 +108,16 @@ export function useSalesCatalog() {
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [confirmedSaleId, setConfirmedSaleId] = useState<string | null>(null);
 
   const { data: productsData, isLoading, error } = useProducts(user?.activeStoreId);
   const { mutateAsync: createSale } = useCreateSale();
   const clearCart = useCartStore((s) => s.clearCart);
 
   const products = (productsData || []) as Product[];
+
+  // After sale confirmation, only show rows with movements
+  const isReadOnly = confirmedSaleId !== null;
 
   // ── Filtered & sorted products ──
   const filteredProducts = useMemo(() => {
@@ -128,21 +132,22 @@ export function useSalesCatalog() {
       return matchSearch && matchStock;
     });
 
+    // Sort (applied before movement filter so read-only view is also sorted)
+    const sorted = sortConfig
+      ? [...filtered].sort((a, b) => compareFn(a, b, sortConfig))
+      : filtered;
+
     // Movement filter: only products that have a row with quantity > 0
-    if (stockFilter === 'with_movements') {
-      return filtered.filter((p) => {
+    // In read-only mode (after sale confirmed), always show only items with movements
+    if (isReadOnly || stockFilter === 'with_movements') {
+      return sorted.filter((p) => {
         const row = rows.get(p.id);
         return row && row.quantity > 0;
       });
     }
 
-    // Sort
-    if (sortConfig) {
-      return [...filtered].sort((a, b) => compareFn(a, b, sortConfig));
-    }
-
-    return filtered;
-  }, [products, searchTerm, stockFilter, rows, sortConfig]);
+    return sorted;
+  }, [products, searchTerm, stockFilter, rows, sortConfig, isReadOnly]);
 
   const showMixedColumns = useMemo(() => hasAnyMixedPayment(rows), [rows]);
 
@@ -171,10 +176,25 @@ export function useSalesCatalog() {
   );
 
   const updateRow = useCallback(
-    (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow) => {
+    (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow, fallbackProduct?: Product) => {
       setRows((prev) => {
         const next = new Map(prev);
-        const existing = next.get(productId);
+        let existing = next.get(productId);
+        if (!existing && fallbackProduct) {
+          existing = {
+            product: fallbackProduct,
+            selectedVariantId: null,
+            selectedVariant: null,
+            quantity: 0,
+            price: fallbackProduct.price || 0,
+            cost: fallbackProduct.cost_price || 0,
+            discountType: null,
+            discountValue: 0,
+            paymentMethod: 'cash',
+            cashPaid: 0,
+            transferPaid: 0,
+          };
+        }
         if (existing) {
           next.set(productId, updater(existing));
         }
@@ -197,14 +217,13 @@ export function useSalesCatalog() {
 
   // ── Handlers ──
   const handleSetQuantity = (product: Product, qty: number) => {
-    const row = getOrCreateRow(product);
-    const convFactor = row.selectedVariant?.conversion_factor || 1;
-    const maxQty = Math.floor((product.stock_current ?? 999999) / convFactor);
-    const clampedQty = Math.max(0, Math.min(qty, maxQty));
     updateRow(product.id, (r) => {
+      const convFactor = r.selectedVariant?.conversion_factor || 1;
+      const maxQty = Math.floor((product.stock_current ?? 999999) / convFactor);
+      const clampedQty = Math.max(0, Math.min(qty, maxQty));
       const updated = { ...r, quantity: clampedQty };
       return autoAssignPayment(updated);
-    });
+    }, product);
   };
 
   const handleSelectVariant = (product: Product, variant: ProductVariant | null) => {
@@ -227,39 +246,36 @@ export function useSalesCatalog() {
   };
 
   const handleSetDiscountType = (product: Product) => {
-    const row = getOrCreateRow(product);
-    const newType: 'percentage' | 'fixed' = row.discountType === 'percentage' ? 'fixed' : 'percentage';
     updateRow(product.id, (r) => {
+      const newType: 'percentage' | 'fixed' = r.discountType === 'percentage' ? 'fixed' : 'percentage';
       const updated: SalesCatalogRow = { ...r, discountType: newType };
       return autoAssignPayment(updated);
-    });
+    }, product);
   };
 
   const handleSetDiscountValue = (product: Product, value: number) => {
     updateRow(product.id, (r) => {
       const updated = { ...r, discountValue: value };
       return autoAssignPayment(updated);
-    });
+    }, product);
   };
 
   const handleSetPaymentMethod = (product: Product, method: PaymentMethod) => {
-    updateRow(product.id, (r) => autoAssignPayment({ ...r, paymentMethod: method }));
+    updateRow(product.id, (r) => autoAssignPayment({ ...r, paymentMethod: method }), product);
   };
 
   const handleSetCashPaid = (product: Product, val: number) => {
-    const row = getOrCreateRow(product);
     updateRow(product.id, (r) => {
       const sub = calcSubtotal(r);
       return { ...r, cashPaid: val, transferPaid: Math.max(0, sub - val) };
-    });
+    }, product);
   };
 
   const handleSetTransferPaid = (product: Product, val: number) => {
-    const row = getOrCreateRow(product);
     updateRow(product.id, (r) => {
       const sub = calcSubtotal(r);
       return { ...r, cashPaid: Math.max(0, sub - val), transferPaid: val };
-    });
+    }, product);
   };
 
   // ── Totals ──
@@ -295,10 +311,31 @@ export function useSalesCatalog() {
     setSortConfig(null);
   }, []);
 
+  // ── Discrepancy check ──
+  const hasAnyDiscrepancy = useMemo(() => {
+    return activeRows.some((r) => hasDiscrepancy(r));
+  }, [activeRows]);
+
+  // ── Derived payment method ──
+  const derivedPaymentMethod = useMemo((): PaymentMethod => {
+    const methods = new Set(activeRows.map((r) => r.paymentMethod));
+    if (methods.size === 0) return 'cash';
+    if (methods.size === 1) return activeRows[0].paymentMethod;
+    return 'mixed';
+  }, [activeRows]);
+
   // ── Checkout ──
   const handleCheckout = async () => {
+    if (isReadOnly) {
+      toast.error('Esta venta ya fue confirmada. Usa "Nuevo" para iniciar una nueva IPV.');
+      return;
+    }
     if (activeRows.length === 0) {
       toast.error('No hay productos seleccionados para vender');
+      return;
+    }
+    if (hasAnyDiscrepancy) {
+      toast.error('Hay discrepancias en los pagos. Verifica que el efectivo + transferencia sea igual al subtotal en cada producto.');
       return;
     }
     setShowCheckoutConfirm(true);
@@ -331,14 +368,14 @@ export function useSalesCatalog() {
       const saleId = await createSale({
         p_store_id: user.activeStoreId,
         p_seller_id: user.id,
-        p_payment_method: 'mixed',
+        p_payment_method: derivedPaymentMethod,
         p_total_amount: totals.subtotal,
         p_subtotal: totals.subtotal,
         p_discount_type: 'fixed',
         p_discount_value: 0,
         p_items: activeRows.map((r) => ({
           product_id: r.product.id,
-          variant_id: r.selectedVariantId!,
+          variant_id: r.selectedVariantId ?? null,
           quantity: r.quantity,
           price: r.price,
           cost: r.cost,
@@ -348,11 +385,11 @@ export function useSalesCatalog() {
       });
 
       clearCart();
-      setRows(new Map());
+      setConfirmedSaleId(saleId as string);
       setShowCheckoutConfirm(false);
       toast.success(`Venta completada — ${saleId}`);
-    } catch (err: any) {
-      toast.error('Error al procesar la venta: ' + (err?.message || ''));
+    } catch (err: unknown) {
+      toast.error('Error al procesar la venta: ' + (err instanceof Error ? err.message : ''));
     } finally {
       setIsProcessing(false);
     }
@@ -360,6 +397,8 @@ export function useSalesCatalog() {
 
   // ── Export Excel ──
   const handleExportExcel = useCallback(() => {
+    const title = confirmedSaleId ? 'IPV CONFIRMADO' : 'IPV en proceso';
+    const filename = confirmedSaleId ? `ipv-confirmado-${Date.now()}.xlsx` : `ipv-en-proceso-${Date.now()}.xlsx`;
     const data = activeRows.map((row) => ({
       Producto: row.product.name,
       SKU: row.product.sku || '',
@@ -381,16 +420,18 @@ export function useSalesCatalog() {
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Tabla IPV');
-    XLSX.writeFile(wb, `tabla-ipv-${Date.now()}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, title);
+    XLSX.writeFile(wb, filename);
     toast.success('Excel exportado correctamente');
-  }, [activeRows]);
+  }, [activeRows, confirmedSaleId]);
 
   // ── Export PDF ──
   const handleExportPDF = useCallback(() => {
+    const title = confirmedSaleId ? 'IPV CONFIRMADO' : 'IPV en proceso';
+    const filename = confirmedSaleId ? `ipv-confirmado-${Date.now()}.pdf` : `ipv-en-proceso-${Date.now()}.pdf`;
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(16);
-    doc.text('Tabla IPV - Reporte de Ventas', 14, 20);
+    doc.text(title, 14, 20);
     doc.setFontSize(10);
     doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 28);
 
@@ -411,15 +452,30 @@ export function useSalesCatalog() {
       styles: { fontSize: 8 },
     });
 
-    doc.save(`tabla-ipv-${Date.now()}.pdf`);
+    if (confirmedSaleId) {
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`ID de Venta: ${confirmedSaleId}`, 14, 34);
+    }
+    doc.save(filename);
     toast.success('PDF exportado correctamente');
-  }, [activeRows]);
+  }, [activeRows, confirmedSaleId]);
 
   // ── Clear all ──
   const handleClearAll = () => {
     setRows(new Map());
     toast.success('Tabla IPV limpiada');
   };
+
+  // ── New IPV (reset after confirmed sale) ──
+  const handleNewIPV = useCallback(() => {
+    setRows(new Map());
+    setConfirmedSaleId(null);
+    setSearchTerm('');
+    setStockFilter('all');
+    setSortConfig(null);
+    toast.success('Nueva IPV iniciada');
+  }, []);
 
   return {
     // State
@@ -434,6 +490,8 @@ export function useSalesCatalog() {
     showCheckoutConfirm,
     setShowCheckoutConfirm,
     isProcessing,
+    isReadOnly,
+    confirmedSaleId,
 
     // Data
     products,
@@ -463,9 +521,12 @@ export function useSalesCatalog() {
     handleExportExcel,
     handleExportPDF,
     handleClearAll,
+    handleNewIPV,
 
     // Utilities
     hasDiscrepancy,
     calcSubtotal,
+    hasAnyDiscrepancy,
+    derivedPaymentMethod,
   };
 }

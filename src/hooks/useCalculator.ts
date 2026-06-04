@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Parser } from 'expr-eval';
 
 /* ─────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export function useCalculator() {
     // BF-08: don't erase a previous result
     if (lastResult !== null) return;
     setDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
-  }, [lastResult, handleClear]);
+  }, [display, lastResult, handleClear]);
 
   /* ── Percent (%) — BF-09 ─────────────────────────── */
   const handlePercent = useCallback(() => {
@@ -156,10 +156,12 @@ export function useCalculator() {
     handleNumber, handleOperator, handleCalculate,
     handleClear, handleBackspace, handlePercent, handleToggleSign,
   });
-  handlersRef.current = {
-    handleNumber, handleOperator, handleCalculate,
-    handleClear, handleBackspace, handlePercent, handleToggleSign,
-  };
+  useEffect(() => {
+    handlersRef.current = {
+      handleNumber, handleOperator, handleCalculate,
+      handleClear, handleBackspace, handlePercent, handleToggleSign,
+    };
+  }, [handleNumber, handleOperator, handleCalculate, handleClear, handleBackspace, handlePercent, handleToggleSign]);
 
   return {
     display,

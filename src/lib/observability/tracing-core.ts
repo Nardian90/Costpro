@@ -1,88 +1,93 @@
 /**
- * Lightweight OpenTelemetry tracing operations using only @opentelemetry/api.
+ * No-op tracing module — OpenTelemetry DISABLED.
  *
- * This module is safe to import anywhere (including Turbopack dev) because
- * @opentelemetry/api is a lightweight, runtime-agnostic API with no Node.js deps.
+ * All functions are no-ops that return safe empty/fallback values.
+ * This module was originally backed by @opentelemetry/api but has been
+ * disabled because the OTel SDK is not installed in this environment.
  *
- * The heavy SDK setup (NodeSDK, exporters, auto-instrumentations) lives in
- * tracing.ts and is only loaded when OTEL_ENABLED=true or in production.
+ * Replace with real OTel implementation if SDK packages are added.
  */
 
-import { trace, SpanStatusCode, SpanKind, type Span, type Tracer } from '@opentelemetry/api';
-
-const SERVICE_NAME = 'costpro-enterprise';
-const SERVICE_VERSION = process.env.npm_package_version || '0.2.0';
-
-/**
- * Get the application tracer. Always returns a valid tracer
- * (no-op if SDK wasn't initialized).
- */
-export function getTracer(): Tracer {
-  return trace.getTracer(SERVICE_NAME, SERVICE_VERSION);
+// No-op types
+export interface NoOpSpan {
+  setAttribute(key: string, value: unknown): this;
+  setAttributes(attrs: Record<string, unknown>): this;
+  setStatus(status: { code: number; message?: string }): this;
+  recordException(exception: Error): this;
+  addEvent(name: string, attributes?: Record<string, unknown>): this;
+  end(): void;
+  isRecording(): boolean;
+  spanContext(): { traceId: string; spanId: string };
 }
 
-/**
- * Start a new span with the given name and optional attributes/kind.
- */
-export function startSpan(
-  name: string,
-  options?: { attributes?: Record<string, string>; kind?: SpanKind }
-): Span {
-  const t = getTracer();
-  return t.startSpan(name, {
-    kind: options?.kind ?? SpanKind.INTERNAL,
-    attributes: options?.attributes,
-  });
+export interface NoOpTracer {
+  startSpan(name: string, options?: Record<string, unknown>): NoOpSpan;
+  startActiveSpan(name: string, options: Record<string, unknown>, fn: (span: NoOpSpan) => Promise<unknown>): Promise<unknown>;
 }
 
-/**
- * Wrap an async function with an active span that is automatically ended
- * when the function completes (success or error).
- */
+const noOpSpan: NoOpSpan = {
+  setAttribute() { return this; },
+  setAttributes() { return this; },
+  setStatus() { return this; },
+  recordException() { return this; },
+  addEvent() { return this; },
+  end() {},
+  isRecording() { return false; },
+  spanContext() { return { traceId: '', spanId: '' }; },
+};
+
+const noOpTracer: NoOpTracer = {
+  startSpan() { return noOpSpan; },
+  startActiveSpan(_name: string, _opts: Record<string, unknown>, fn: (span: NoOpSpan) => Promise<unknown>) {
+    return fn(noOpSpan);
+  },
+};
+
+/** No-op SpanStatusCode values (matching OTel API constants) */
+export const SpanStatusCode = {
+  UNSET: 0,
+  OK: 1,
+  ERROR: 2,
+};
+
+/** No-op SpanKind values (matching OTel API constants) */
+export const SpanKind = {
+  INTERNAL: 0,
+  SERVER: 1,
+  CLIENT: 2,
+  PRODUCER: 3,
+  CONSUMER: 4,
+};
+
+/** No-op trace object */
+export const trace = {
+  getTracer() { return noOpTracer; },
+  getActiveSpan() { return undefined; },
+};
+
+/** Always returns the no-op tracer */
+export function getTracer(): NoOpTracer {
+  return noOpTracer;
+}
+
+/** Returns a no-op span */
+export function startSpan(_name: string, _options?: Record<string, unknown>): NoOpSpan {
+  return noOpSpan;
+}
+
+/** Wraps fn with a no-op span — just calls fn directly */
 export async function withActiveSpan<T>(
-  name: string,
-  fn: (span: Span) => Promise<T>,
-  options?: { attributes?: Record<string, string> }
+  _name: string,
+  fn: (span: NoOpSpan) => Promise<T>,
+  _options?: Record<string, unknown>
 ): Promise<T> {
-  const t = getTracer();
-  return t.startActiveSpan(name, { attributes: options?.attributes }, async (span) => {
-    try {
-      const result = await fn(span);
-      span.setStatus({ code: SpanStatusCode.OK });
-      return result;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message });
-      span.recordException(error instanceof Error ? error : new Error(message));
-      throw error;
-    } finally {
-      span.end();
-    }
-  });
+  return fn(noOpSpan);
 }
 
-/**
- * Extract traceId and spanId from the current active span context.
- * Returns empty object if no active span.
- */
+/** Returns empty trace context */
 export function getTraceContext(): { traceId?: string; spanId?: string } {
-  try {
-    const activeSpan = trace.getActiveSpan();
-    if (activeSpan) {
-      const spanContext = activeSpan.spanContext();
-      if (spanContext && spanContext.traceId && spanContext.spanId) {
-        return {
-          traceId: spanContext.traceId,
-          spanId: spanContext.spanId,
-        };
-      }
-    }
-  } catch {
-    // Not in a span context — that's fine
-  }
   return {};
 }
 
-// Re-export commonly used OTel API symbols
-export { trace, SpanStatusCode, SpanKind };
-export type { Span, Tracer };
+export type Span = NoOpSpan;
+export type Tracer = NoOpTracer;
