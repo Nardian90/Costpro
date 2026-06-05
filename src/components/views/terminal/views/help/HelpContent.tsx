@@ -23,6 +23,7 @@ import {
   Calculator,
   ShoppingCart,
   BarChart3,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
@@ -83,7 +84,7 @@ function TypeBadge({ type }: { type: string }) {
 
 // ── Local Error Boundary (prevents global crash from markdown rendering) ──
 class HelpRenderBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
-  state = { hasError: false, error: null };
+  state = { hasError: false, error: null as Error | null };
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
@@ -226,7 +227,8 @@ export default function HelpContent({
             { icon: BookOpen, label: 'Manual', desc: 'Introducción y guía' },
             { icon: Calculator, label: 'Costos', desc: 'Fichas y fórmulas' },
             { icon: ShoppingCart, label: 'Ventas', desc: 'POS e inventario' },
-            { icon: BarChart3, label: 'IPV', desc: 'Precios y variaciones' },
+            { icon: BarChart3,
+  AlertTriangle, label: 'IPV', desc: 'Precios y variaciones' },
           ].map((item) => (
             <div key={item.label} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border/30 hover:bg-muted/50 transition-colors cursor-default">
               <item.icon className="w-4 h-4 text-muted-foreground/50" />

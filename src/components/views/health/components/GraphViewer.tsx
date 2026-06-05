@@ -325,7 +325,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
     // Outer glow
     nodeGroup.selectAll('g.node-g').insert('circle', ':first-child')
       .attr('r', 5)
-      .attr('fill', (d: Node) => getColor(deriveLayer(d)).bg)
+      .attr('fill', (d: any) => getColor(deriveLayer(d)).bg)
       .attr('stroke', 'none');
 
     // Inner core
@@ -334,7 +334,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', 1.8)
-      .attr('fill', (d: Node) => getColor(deriveLayer(d)).stroke)
+      .attr('fill', (d: any) => getColor(deriveLayer(d)).stroke)
       .attr('filter', 'url(#node-glow)');
 
     // ── Draw Labels ──

@@ -42,7 +42,7 @@ describe('Flujo de venta completo (integración)', () => {
     vi.mocked(transactionsHooks.useCreateSale).mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue('sale-123'),
       isPending: false
-    } as ReturnType<typeof transactionsHooks.useCreateSale>);
+    } as any);
   });
 
   it('flujo happy path: agregar producto -> procesar venta -> carrito limpio', async () => {

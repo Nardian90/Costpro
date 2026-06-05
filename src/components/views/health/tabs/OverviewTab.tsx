@@ -21,10 +21,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ data }) => {
   const totalComponents = projMetrics?.totalComponents ?? metrics.total_components ?? 0;
   const viewsCount = projMetrics?.viewsCount ?? 0;
   const layerCount = projMetrics?.layerCount ?? 0;
-  const totalLinks = projMetrics?.totalLinks ?? metrics.total_links ?? 0;
+  const totalLinks = (projMetrics as any)?.totalLinks ?? metrics.total_links ?? 0;
   const instability = projMetrics?.instability ?? 0;
-  const avgFanIn = projMetrics?.avgFanIn ?? 0;
-  const avgFanOut = projMetrics?.avgFanOut ?? 0;
+  const avgFanIn = (projMetrics as any)?.avgFanIn ?? 0;
+  const avgFanOut = (projMetrics as any)?.avgFanOut ?? 0;
 
   const getStatusColor = (score: number) => {
     if (score >= 75) return 'success';
