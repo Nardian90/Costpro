@@ -100,7 +100,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
     }
   }, [selectedDoc]);
 
-  const docContent = fetchedContent ?? currentDoc?.content ?? null;
+  const docContent = fetchedContent ?? (currentDoc as any)?.content ?? null;
   const isGallery = !selectedDoc || selectedDoc === 'user_help';
 
   return (

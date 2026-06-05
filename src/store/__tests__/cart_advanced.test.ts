@@ -78,10 +78,10 @@ describe('Cart Store - Advanced Features', () => {
         store.addItem({
             product_id: p.id,
             variant_id: null,
-            product: { ...mockProduct, id: p.id, name: p.name, price_base: p.price, stock_current: 10 } as any,
+            product: { ...mockProduct, id: p.id, name: p.name, price: p.price, stock_current: 10 } as any,
             variant: null,
             quantity: 1,
-            price_base: p.price,
+            price: p.price,
             cost: 20,
             discount_type: null,
             discount_value: 0,
