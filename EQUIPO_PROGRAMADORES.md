@@ -71,3 +71,15 @@ Se detectó que las funciones RPC que alimentan al POS y a la vista de Inventari
 - `get_products_for_pos`: Se redefinió la tabla de retorno para incluir tipos `NUMERIC` en los campos de stock y precio.
 - `get_paginated_products`: Se actualizó la firma y la tabla de retorno. Nota: El orden de los parámetros cambió para poner `p_store_id` primero como obligatorio.
 - `deduct_stock`: El parámetro `p_quantity` cambió de `INTEGER` a `NUMERIC`.
+
+
+### 6. Limpieza Selectiva y Nueva Función register_reception
+Se realizó una limpieza selectiva de datos para la tienda **VITALLCONS PUERTO PADRE** (`2271948c-3f10-4cb9-bba3-39b5ef6c9ab6`) para eliminar registros de recepción y movimientos procesados erróneamente como enteros.
+
+**Nueva Función RPC:**
+- `register_reception`: Esta función permite registrar recepciones de mercancía.
+  - **Soporte Decimal:** Acepta `quantity` y `unit_cost` como `NUMERIC`.
+  - **Integridad:** Vincula automáticamente los movimientos de stock (`purchase`) con el ID de la recepción.
+  - **Seguridad:** Ejecuta chequeos de `has_store_access` y `auth.uid()`.
+
+**Nota de Seguridad:** Se evitó el uso de `TRUNCATE` para no afectar a otras tiendas operativas en el sistema multi-tenant.
