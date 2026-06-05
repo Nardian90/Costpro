@@ -388,7 +388,7 @@ export function useInventoryCount() {
             const variant = product.product_variants?.find(v => v.id === dec.variantId);
             addItem({
               product_id: product.id, variant_id: dec.variantId, product: product,
-              variant: (variant || null) as Record<string, unknown> | null,
+              variant: (variant || null) as any,
               quantity: dec.quantity,
               price: variant ? variant.price : product.price,
               cost: product.cost_price,

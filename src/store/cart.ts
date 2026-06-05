@@ -91,9 +91,9 @@ export const useCartStore = create<CartState>()(
       addItem: (productInput, variant) =>
         set(
           produce((state: CartState) => {
-            const product = productInput.product || (productInput.id ? productInput : null);
-            const productId = product?.id || productInput.product_id;
-            const incomingQuantity = productInput.quantity || 1;
+            const product = (productInput as any).product || ((productInput as any).id ? productInput : null) as Product | null;
+            const productId = product?.id || (productInput as any).product_id;
+            const incomingQuantity = (productInput as any).quantity || 1;
 
             if (!productId) return;
 
@@ -121,14 +121,14 @@ export const useCartStore = create<CartState>()(
                 return;
               }
 
-              let price = product?.price ?? productInput.price ?? productInput.price_base;
+              let price = product?.price ?? (productInput as any).price ?? (productInput as any).price_base;
 
-              if (!price && productInput.subtotal && productInput.quantity) {
-                price = productInput.subtotal / productInput.quantity;
+              if (!price && (productInput as any).subtotal && (productInput as any).quantity) {
+                price = (productInput as any).subtotal / (productInput as any).quantity;
               }
               price = price ?? 0;
 
-              const cost = product?.cost_price ?? product?.cost_average ?? productInput.cost ?? 0;
+              const cost = product?.cost_price ?? product?.cost_average ?? (productInput as any).cost ?? 0;
               const newItem: CartItem = {
                 product_id: productId,
                 variant_id: variant?.id || null,
@@ -138,8 +138,8 @@ export const useCartStore = create<CartState>()(
                 price,
                 cost,
                 subtotal: 0,
-                discount_type: productInput.discount_type || null,
-                discount_value: productInput.discount_value || 0,
+                discount_type: (productInput as any).discount_type || null,
+                discount_value: (productInput as any).discount_value || 0,
                 cash_paid: 0,
                 transfer_paid: 0,
               };
@@ -199,8 +199,8 @@ export const useCartStore = create<CartState>()(
               (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
-              item.discount_type = type;
-              item.discount_value = value;
+              (item as any).discount_type = type;
+              (item as any).discount_value = value;
               item.subtotal = calculateItemSubtotal(item);
               item.cash_paid = item.subtotal;
               item.transfer_paid = 0;
