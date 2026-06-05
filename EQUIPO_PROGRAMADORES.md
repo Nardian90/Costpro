@@ -83,3 +83,15 @@ Se realizó una limpieza selectiva de datos para la tienda **VITALLCONS PUERTO P
   - **Seguridad:** Ejecuta chequeos de `has_store_access` y `auth.uid()`.
 
 **Nota de Seguridad:** Se evitó el uso de `TRUNCATE` para no afectar a otras tiendas operativas en el sistema multi-tenant.
+
+### 7. Endurecimiento de Seguridad (P0, P1) y CI Gate
+Se han implementado medidas críticas de seguridad para proteger los datos sensibles y asegurar el aislamiento multi-tenant.
+
+**Mejoras de Seguridad:**
+- **P0: Encriptación de API Keys:** La tabla `ai_api_keys` ahora almacena las llaves en formato `BYTEA` (encriptado con PGP). Se han creado las funciones `save_ai_api_key` y `get_ai_api_key` para manejar estas llaves de forma segura. **No se deben guardar llaves en texto plano.**
+- **P1: Hardening de Funciones SD:** Se agregó `SET search_path = public, pg_temp` a las funciones `sync_product_has_movements` y `sync_product_stock` para prevenir ataques de secuestro de búsqueda.
+- **P1: RLS en Product Variants:** Se definieron políticas de escritura (`INSERT/UPDATE/DELETE`) para `product_variants` basadas en el acceso del usuario a la tienda del producto padre.
+
+**CI/CD Guardrail:**
+- El script `supabase/scripts/ci-security-gate.sh` ahora es **BLOQUEANTE**. Si se detectan patrones peligrosos en las migraciones SQL (como `USING(true)` o funciones `SECURITY DEFINER` sin `search_path`), el pipeline de CI fallará.
+- Se recomienda correr `./supabase/scripts/ci-security-gate.sh` localmente antes de hacer push.

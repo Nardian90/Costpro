@@ -25,6 +25,9 @@ jobs:
       - name: TypeScript type check
         run: bunx tsc --noEmit
 
+      - name: Run CI Security Gate
+        run: chmod +x supabase/scripts/ci-security-gate.sh && ./supabase/scripts/ci-security-gate.sh
+
       - name: Run unit tests
         run: bun run test --reporter=verbose
         env:

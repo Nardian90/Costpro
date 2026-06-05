@@ -18,7 +18,7 @@ cat audit_report.txt
 
 if grep -q "CRITICAL" audit_report.txt; then
     echo -e "${RED}❌ BLOCKED: Critical security risks found in migrations.${NC}"
-    # exit 1
+    exit 1
 fi
 
 # 2. RUN ISOLATION TESTS
