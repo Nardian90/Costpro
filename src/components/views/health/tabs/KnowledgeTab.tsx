@@ -335,7 +335,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                       </button>
                     </div>
                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {workflows.map(w => (
+                      {workflows.map((w: any) => (
                         <div key={w.id} className="p-4 rounded-xl bg-muted/10 border border-border/30 hover:border-orange-500/20 transition-all group">
                           <div className="flex items-center gap-2 mb-2">
                             <div className="w-2 h-2 rounded-full bg-orange-500/60" />

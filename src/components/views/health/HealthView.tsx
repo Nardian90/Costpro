@@ -36,7 +36,7 @@ function ErrorScreen({ error, onRetry }: { error: string | null; onRetry: () => 
 
   const errorCategory = isAuthError ? 'auth' : isServerError ? 'server' : isNetworkError ? 'network' : 'unknown';
 
-  const categoryConfig = {
+  const categoryConfig: Record<string, { title: string; description: string; color: "amber" | "destructive" }> = {
     auth: {
       title: 'Acceso Restringido',
       description: 'Se requiere una sesión activa con rol de administrador para acceder al Centro de Inteligencia. Verifique que haya iniciado sesión correctamente.',
@@ -60,7 +60,7 @@ function ErrorScreen({ error, onRetry }: { error: string | null; onRetry: () => 
   };
 
   const config = categoryConfig[errorCategory];
-  const colorClasses = {
+  const colorClasses: Record<"amber" | "destructive", string> = {
     amber: 'bg-amber-500/10 border-amber-500/20 text-amber-500',
     destructive: 'bg-destructive/10 border-destructive/20 text-destructive',
   };

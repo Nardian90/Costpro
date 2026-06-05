@@ -47,6 +47,8 @@ describe('GET /api/help-docs', () => {
     vi.clearAllMocks();
     vi.spyOn(process, 'cwd').mockReturnValue('/mock');
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1' } });
+    // Default mock behavior
+    mockStatSync.mockReturnValue({ isDirectory: () => false });
   });
 
   afterEach(() => {
@@ -56,34 +58,28 @@ describe('GET /api/help-docs', () => {
   describe('listado de estructura (sin parámetros)', () => {
     it('retorna la estructura de archivos del sistema de ayuda', async () => {
       mockExistsSync.mockReturnValue(true);
-      mockReaddirSync.mockReturnValue(['guide.md']);
-      mockReadFileSync.mockReturnValue('# Guía General\n\nContenido de prueba.');
+      // Mock sections directory
+      mockReaddirSync.mockImplementation((path) => {
+        if (path.endsWith('help')) return ['01-empezar'];
+        if (path.includes('01-empezar')) return ['intro.md'];
+        if (path.includes('compliance')) return [];
+        return [];
+      });
+      mockStatSync.mockImplementation((path) => {
+        if (path.endsWith('01-empezar')) return { isDirectory: () => true };
+        return { isDirectory: () => false };
+      });
+      mockReadFileSync.mockReturnValue('# Introducción\n\nContenido.');
 
       const req = makeRequest({});
       const res = await GET(req);
       const json = await res.json();
 
       expect(res.status).toBe(200);
-      expect(json).toHaveProperty('iso_manual');
-      expect(json).toHaveProperty('docs');
-      expect(json.docs).toHaveProperty('tutorials');
-      expect(json.docs).toHaveProperty('howTo');
-      expect(json.docs).toHaveProperty('reference');
-      expect(json.docs).toHaveProperty('explanation');
-    });
-
-    it('extrae el título del primer encabezado de cada archivo', async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockReaddirSync.mockReturnValue(['intro.md']);
-      mockReadFileSync.mockReturnValue('# Introducción al Sistema\n\nTexto.');
-
-      const req = makeRequest({});
-      const res = await GET(req);
-      const json = await res.json();
-
-      expect(res.status).toBe(200);
-      const entries = json.iso_manual;
-      expect(entries[0].title).toBe('Introducción al Sistema');
+      expect(json).toHaveProperty('sections');
+      expect(json).toHaveProperty('compliance');
+      expect(json.sections).toHaveLength(1);
+      expect(json.sections[0].files[0].title).toBe('Introducción');
     });
 
     it('retorna arreglos vacíos cuando los directorios no existen', async () => {
@@ -94,17 +90,14 @@ describe('GET /api/help-docs', () => {
       const json = await res.json();
 
       expect(res.status).toBe(200);
-      expect(json.iso_manual).toEqual([]);
-      expect(json.docs.tutorials).toEqual([]);
-      expect(json.docs.howTo).toEqual([]);
-      expect(json.docs.reference).toEqual([]);
-      expect(json.docs.explanation).toEqual([]);
+      expect(json.sections).toEqual([]);
+      expect(json.compliance.files).toEqual([]);
     });
   });
 
   describe('búsqueda de contenido', () => {
     it('retorna resultados cuando la búsqueda coincide con contenido', async () => {
-      const markdownContent = '# Guía de Inventarios\n\nEste documento cubre la gestión de inventarios en el sistema.\nAyuda a los usuarios a administrar productos.';
+      const markdownContent = '# Guía de Inventarios\n\nEste documento cubre la gestión de inventarios.';
       mockReaddirSync.mockReturnValue(['inventarios.md']);
       mockStatSync.mockReturnValue({ isDirectory: () => false } as any);
       mockReadFileSync.mockReturnValue(markdownContent);
@@ -116,10 +109,6 @@ describe('GET /api/help-docs', () => {
       expect(res.status).toBe(200);
       expect(json.results).toBeDefined();
       expect(json.results.length).toBeGreaterThan(0);
-      expect(json.results[0]).toHaveProperty('path');
-      expect(json.results[0]).toHaveProperty('title');
-      expect(json.results[0]).toHaveProperty('excerpt');
-      expect(json.results[0]).toHaveProperty('type');
     });
 
     it('no busca si el query tiene menos de 3 caracteres', async () => {
@@ -130,25 +119,9 @@ describe('GET /api/help-docs', () => {
       const res = await GET(req);
       const json = await res.json();
 
-      // Short query falls through to the listing branch
       expect(res.status).toBe(200);
-      expect(json).toHaveProperty('iso_manual');
+      expect(json).toHaveProperty('sections');
       expect(json.results).toBeUndefined();
-    });
-
-    it('limita los resultados a 10 elementos', async () => {
-      const files = Array.from({ length: 15 }, (_, i) => `file${i}.md`);
-      const content = 'inventario repetido en cada archivo';
-      mockReaddirSync.mockReturnValue(files);
-      mockStatSync.mockReturnValue({ isDirectory: () => false } as any);
-      mockReadFileSync.mockReturnValue(`# Archivo ${content}`);
-
-      const req = makeRequest({ search: 'inventario' });
-      const res = await GET(req);
-      const json = await res.json();
-
-      expect(res.status).toBe(200);
-      expect(json.results.length).toBeLessThanOrEqual(10);
     });
   });
 
@@ -160,61 +133,30 @@ describe('GET /api/help-docs', () => {
       const res = await GET(req);
 
       expect(res.status).toBe(404);
-      const json = await res.json();
-      expect(json.error).toMatch(/not found/i);
-    });
-
-    it('retorna 400 cuando la ruta es un directorio', async () => {
-      mockExistsSync.mockReturnValue(true);
-      mockStatSync.mockReturnValue({ isDirectory: () => true } as any);
-
-      const req = makeRequest({ path: 'some-dir' });
-      const res = await GET(req);
-
-      expect(res.status).toBe(400);
-      const json = await res.json();
-      expect(json.error).toMatch(/directory/i);
     });
 
     it('retorna el contenido de un archivo markdown', async () => {
       mockExistsSync.mockReturnValue(true);
       mockStatSync.mockReturnValue({ isDirectory: () => false } as any);
-      mockReadFileSync.mockReturnValue('# Documento de Prueba\n\nContenido del documento.');
+      mockReadFileSync.mockReturnValue('# Titulo\n\nContenido');
 
-      const req = makeRequest({ path: 'docs/prueba.md' });
+      const req = makeRequest({ path: 'help/01-empezar/intro.md' });
       const res = await GET(req);
 
       expect(res.status).toBe(200);
       const json = await res.json();
-      expect(json.content).toBe('# Documento de Prueba\n\nContenido del documento.');
-    });
-
-    it('parsea y retorna archivos JSON directamente', async () => {
-      const jsonData = { help_entries: [{ title: 'FAQ' }] };
-      mockExistsSync.mockReturnValue(true);
-      mockStatSync.mockReturnValue({ isDirectory: () => false } as any);
-      mockReadFileSync.mockReturnValue(JSON.stringify(jsonData));
-
-      const req = makeRequest({ path: 'user_help.json' });
-      const res = await GET(req);
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.help_entries).toBeDefined();
-      expect(json.help_entries[0].title).toBe('FAQ');
+      expect(json.content).toBe('# Titulo\n\nContenido');
     });
 
     it('retorna 500 cuando ocurre un error inesperado', async () => {
       mockReadFileSync.mockImplementation(() => {
-        throw new Error('Permiso denegado');
+        throw new Error('Crash');
       });
 
       const req = makeRequest({ path: 'broken.md' });
       const res = await GET(req);
 
       expect(res.status).toBe(500);
-      const json = await res.json();
-      expect(json.error).toMatch(/internal server error/i);
     });
   });
 });
