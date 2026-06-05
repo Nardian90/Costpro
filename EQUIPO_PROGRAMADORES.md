@@ -63,3 +63,11 @@ AND (column_name ILIKE '%quantity%' OR column_name ILIKE '%stock%');
 
 ---
 *Documentación generada automáticamente por Jules (AI Engineer) tras la aplicación de mejoras en el esquema.*
+
+### 5. Corrección de Funciones RPC (get_products_for_pos, get_paginated_products)
+Se detectó que las funciones RPC que alimentan al POS y a la vista de Inventario no estaban sincronizadas con el cambio a `NUMERIC(12,4)`, lo que causaba errores de "structure of query does not match function result type".
+
+**Cambios en RPC:**
+- `get_products_for_pos`: Se redefinió la tabla de retorno para incluir tipos `NUMERIC` en los campos de stock y precio.
+- `get_paginated_products`: Se actualizó la firma y la tabla de retorno. Nota: El orden de los parámetros cambió para poner `p_store_id` primero como obligatorio.
+- `deduct_stock`: El parámetro `p_quantity` cambió de `INTEGER` a `NUMERIC`.
