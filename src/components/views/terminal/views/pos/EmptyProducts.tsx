@@ -19,7 +19,7 @@ export default function EmptyProducts({ onClearSearch }: EmptyProductsProps) {
         <button
           type="button"
           onClick={onClearSearch}
-          className="mt-4 text-xs font-black uppercase tracking-widest text-primary hover:underline"
+          className="mt-4 text-xs font-black uppercase tracking-widest text-primary px-4 py-3 rounded-xl border min-h-[44px] hover:bg-primary/10 transition-colors"
           aria-label="Limpiar búsqueda de productos"
         >
           Limpiar búsqueda

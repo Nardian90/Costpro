@@ -31,7 +31,7 @@ export const resetPasswordSchema = z.object({
 export const inventoryAdjustSchema = z.object({
   productId: z.string().uuid('productId inválido'),
   storeId: z.string().uuid('storeId inválido'),
-  quantity: z.number().int().min(-9999).max(99999),
+  quantity: z.number().min(-9999).max(99999),
   movementType: z.enum(['add', 'subtract', 'set']),
   version: z.number().int().positive('version debe ser positivo'),
   reason: z.string().max(500).optional(),
@@ -41,7 +41,7 @@ export const inventoryAdjustmentsSchema = z.object({
   storeId: z.string().uuid('storeId inválido'),
   items: z.array(z.object({
     product_id: z.string().uuid(),
-    quantity: z.number().int(),
+    quantity: z.number(),
     movement_type: z.enum(['add', 'subtract', 'set']).optional(),
     reason: z.string().max(500).optional(),
   })).min(1, 'Se requiere al menos un ítem'),

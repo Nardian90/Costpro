@@ -105,11 +105,11 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
         onOpenChange={(open: boolean) => !open && onClose()}
         title={
           transfer ? (
-            <div className="flex justify-between items-center w-full">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 w-full">
               <div className="flex items-center gap-3">
                 <Package className="w-6 h-6 text-primary" />
                 <div>
-                  <h3 className="text-xl font-black uppercase tracking-tight">Detalle de Transferencia</h3>
+                  <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight">Detalle de Transferencia</h3>
                   <p className="text-xs text-muted-foreground font-mono uppercase">ID: {transfer.id}</p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
               <button
                 type="button"
                 onClick={onClose}
-                className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+                className="neu-btn px-4 py-3 min-h-[44px] text-xs font-black uppercase tracking-widest"
               >
                 Cerrar
               </button>

@@ -141,7 +141,7 @@ export default function CashClosureView() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
+        <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
         <div className="w-full sm:w-auto">
           <ActionMenu
             actions={actions}
@@ -152,7 +152,7 @@ export default function CashClosureView() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="p-8 rounded-2xl border border-border bg-card shadow-sm space-y-8">
+        <div className="p-4 sm:p-8 rounded-2xl border border-border bg-card shadow-sm space-y-8">
           <div className="flex items-center gap-3">
              <div className="p-2 bg-primary/10 rounded-xl"><Edit className="w-5 h-5 text-primary" /></div>
              <h3 className="font-black text-lg uppercase tracking-widest">Declaración de Fondos</h3>
@@ -205,7 +205,7 @@ export default function CashClosureView() {
           </div>
         </div>
 
-        <div className="p-8 rounded-2xl border border-primary/20 bg-primary/5 shadow-sm space-y-8">
+        <div className="p-4 sm:p-8 rounded-2xl border border-primary/20 bg-primary/5 shadow-sm space-y-8">
           <div className="flex items-center gap-3">
              <div className="p-2 bg-primary/20 rounded-xl"><Layers className="w-5 h-5 text-primary" /></div>
              <h3 className="font-black text-lg uppercase tracking-widest">Balance del Sistema</h3>
@@ -231,13 +231,13 @@ export default function CashClosureView() {
         </div>
       </div>
 
-      <div className="p-8 rounded-2xl border border-border bg-card shadow-sm">
+      <div className="p-4 sm:p-8 rounded-2xl border border-border bg-card shadow-sm">
         <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3 mb-8">
           <History className="w-6 h-6 text-primary" />
           Registros de Cierre
         </h3>
 
-        <div className="table-scroll-wrapper rounded-xl border border-border">
+        <div className="table-scroll-wrapper overflow-x-auto rounded-xl border border-border">
           <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">

@@ -306,11 +306,11 @@ export default function ProductLabelGenerator() {
   }, [labelSlots, totalLabelCount, storeName]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-0">
       {/* ===== HEADER ===== */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Etiquetas de Producto</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Etiquetas de Producto</h2>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
             Genera etiquetas con codigo de barras para exhibicion — hasta 4 por hoja carta
           </p>
@@ -360,7 +360,7 @@ export default function ProductLabelGenerator() {
                       <button
                         onClick={() => updateQuantity(sp.product.id, -1)}
                         disabled={sp.quantity <= 1}
-                        className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
+                        className="w-11 h-11 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
                         aria-label="Reducir cantidad"
                       >
                         <Minus className="w-3 h-3" />
@@ -369,7 +369,7 @@ export default function ProductLabelGenerator() {
                       <button
                         onClick={() => updateQuantity(sp.product.id, 1)}
                         disabled={sp.quantity >= 4}
-                        className="w-6 h-6 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
+                        className="w-11 h-11 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
                         aria-label="Aumentar cantidad"
                       >
                         <Plus className="w-3 h-3" />
@@ -378,7 +378,7 @@ export default function ProductLabelGenerator() {
                   )}
                   <button
                     onClick={() => removeProduct(sp.product.id)}
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10"
+                    className="w-11 h-11 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10"
                     aria-label="Eliminar producto"
                   >
                     <Trash2 className="w-3 h-3" />

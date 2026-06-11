@@ -38,12 +38,16 @@ export default function OCCView() {
   const [recentActions, setRecentActions] = React.useState<Action[]>([]);
 
   React.useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('recent_actions') || '[]');
-    const actions = saved
-      .map((id: string) => userActions.find(a => a.id === id))
-      .filter(Boolean)
-      .slice(0, 3);
-    setRecentActions(actions);
+    try {
+      const saved = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+      const actions = saved
+        .map((id: string) => userActions.find(a => a.id === id))
+        .filter(Boolean)
+        .slice(0, 3);
+      setRecentActions(actions);
+    } catch {
+      // localStorage may be unavailable in some environments
+    }
   }, [userActions]);
 
   const criticalAlerts = useMemo(() =>
@@ -98,9 +102,13 @@ export default function OCCView() {
     }
 
     // Update recents
-    const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
-    const updated = [action.id, ...recent.filter((id: string) => id !== action.id)].slice(0, 5);
-    localStorage.setItem('recent_actions', JSON.stringify(updated));
+    try {
+      const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
+      const updated = [action.id, ...recent.filter((id: string) => id !== action.id)].slice(0, 5);
+      localStorage.setItem('recent_actions', JSON.stringify(updated));
+    } catch {
+      // localStorage may be unavailable in some environments
+    }
   };
 
   return (
@@ -111,7 +119,7 @@ export default function OCCView() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold font-display tracking-tight text-foreground">Centro de Comando Operativo</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-foreground">Centro de Comando Operativo</h1>
         </div>
         <p className="text-sm font-medium text-muted-foreground max-w-2xl">
             Bienvenido, <span className="text-foreground font-semibold">{user?.fullName}</span>. Tienes <span className="text-destructive font-semibold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
@@ -126,7 +134,7 @@ export default function OCCView() {
         >
           <Search className="w-5 h-5 text-muted-foreground mr-4" />
           <span className="flex-1 text-base font-medium text-muted-foreground/50">Buscar o ejecutar acción...</span>
-          <kbd className="px-3 py-1.5 bg-muted rounded-xl text-xs font-semibold border border-border/50 flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+          <kbd className="hidden sm:flex px-3 py-1.5 bg-muted rounded-xl text-xs font-semibold border border-border/50 items-center gap-2 text-muted-foreground uppercase tracking-wider">
             <Command className="w-3.5 h-3.5" /> K
           </kbd>
         </button>
@@ -186,7 +194,7 @@ export default function OCCView() {
                     <div className="text-xs font-semibold truncate">{action.label}</div>
                     <div className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Hace un momento</div>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 </button>
               )) : (
                 <div className="py-12 text-center">

@@ -392,11 +392,11 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
           : (name ? productByName.get(name.toLowerCase()) : null);
 
         if (!existing) {
-          classified.push({ sku: sku || `AUTO-${Date.now().toString(36).toUpperCase()}-${idx}`, name, quantity: Math.max(1, Math.round(quantity)), unitCost, unitOfMeasure, salePrice, status: 'new', existingProduct: null, errors: [] });
+          classified.push({ sku: sku || `AUTO-${Date.now().toString(36).toUpperCase()}-${idx}`, name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'new', existingProduct: null, errors: [] });
         } else if (salePrice !== null && salePrice > 0 && existing.price !== salePrice) {
-          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(1, Math.round(quantity)), unitCost, unitOfMeasure, salePrice, status: 'price_changed', existingProduct: existing, errors: [] });
+          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'price_changed', existingProduct: existing, errors: [] });
         } else {
-          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(1, Math.round(quantity)), unitCost, unitOfMeasure, salePrice, status: 'existing', existingProduct: existing, errors: [] });
+          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'existing', existingProduct: existing, errors: [] });
         }
       }
 
@@ -818,7 +818,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                       <div className="flex items-center gap-2 ml-6 mt-1">
                         <div className="flex items-center gap-1">
                           <label className="text-[10px] font-bold uppercase text-muted-foreground">Cant:</label>
-                          <input type="number" min="1" value={editQuantity} onChange={e => setEditQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus />
+                          <input type="number" min="0.0001" step="0.01" value={editQuantity} onChange={e => setEditQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus />
                         </div>
                         <div className="flex items-center gap-1">
                           <label className="text-[10px] font-bold uppercase text-muted-foreground">Costo:</label>
@@ -1163,7 +1163,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
               <div className="space-y-1.5">
                 <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
-                <input id="item-qty" type="number" min="1" value={newQuantity} onChange={e => setNewQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="neu-input w-full font-bold" />
+                <input id="item-qty" type="number" min="0.0001" step="0.01" value={newQuantity} onChange={e => setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">Costo Unit.</label>
@@ -1184,7 +1184,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                 <input type="text" value={manualName} onChange={e => setManualName(e.target.value)} className="neu-input w-full text-sm" placeholder="Nombre del producto nuevo" aria-label="Nombre del producto nuevo" />
                 <div className="grid grid-cols-3 gap-2">
                   <input type="text" value={manualSku} onChange={e => setManualSku(e.target.value)} className="neu-input w-full text-xs" placeholder="SKU (opcional)" aria-label="SKU del producto nuevo" />
-                  <input type="number" min="1" value={newQuantity} onChange={e => setNewQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="neu-input w-full text-xs" placeholder="Cantidad" aria-label="Cantidad" />
+                  <input type="number" min="0.0001" step="0.01" value={newQuantity} onChange={e => setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full text-xs" placeholder="Cantidad" aria-label="Cantidad" />
                   <input type="number" min="0" step="0.01" value={newUnitCost || ''} onChange={e => setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full text-xs" placeholder="Costo" aria-label="Costo unitario" />
                 </div>
               </div>

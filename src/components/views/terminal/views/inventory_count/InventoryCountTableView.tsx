@@ -71,7 +71,7 @@ export default function InventoryCountTableView({
                       <input
                         type="number"
                         value={counted}
-                        onChange={(e) => onQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                        onChange={(e) => onQuantityChange(product.id, parseFloat(e.target.value) || 0)}
                         aria-label={`Stock físico para ${product.name}`}
                         className="neu-input w-28 h-12 text-center font-black text-xl text-primary bg-primary/5 border-primary/20 transition-all focus:ring-4 focus:ring-primary/10"
                       />

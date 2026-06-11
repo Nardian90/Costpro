@@ -140,7 +140,7 @@ export const POSCartItem = ({
                     item.product.name,
                   )
                 }
-                className="p-1 hover:bg-muted rounded-full transition-colors"
+                className="min-w-[44px] min-h-[44px] p-2 hover:bg-muted rounded-full transition-colors"
                 aria-label={`Ver imagen de ${item.product.name}`}
               >
                 <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -183,7 +183,7 @@ export const POSCartItem = ({
       {/* Opciones Avanzadas (Descuento y Pago Mixto) */}
       <div className="mt-3 grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
         <div className="space-y-1">
-          <span className="text-[10px] font-black uppercase text-muted-foreground">
+          <span className="text-xs font-black uppercase text-muted-foreground">
             Descuento
           </span>
           <div className="flex gap-1">
@@ -199,7 +199,7 @@ export const POSCartItem = ({
                   item.discount_value,
                 )
               }
-              className="p-1.5 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
+              className="min-w-[44px] min-h-[44px] p-2.5 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
               aria-label={`Cambiar tipo de descuento a ${item.discount_type === "percentage" ? "monto fijo" : "porcentaje"} para ${item.product.name}`}
             >
               {item.discount_type === "percentage" ? (
@@ -219,14 +219,14 @@ export const POSCartItem = ({
                   Number(e.target.value),
                 )
               }
-              className="w-full bg-background border border-border/50 rounded-lg px-2 py-1 text-xs font-bold"
+              className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
               placeholder="0"
               aria-label={`Valor de descuento para ${item.product.name}`}
             />
           </div>
         </div>
         <div className="space-y-1">
-          <span className="text-[10px] font-black uppercase text-muted-foreground">
+          <span className="text-xs font-black uppercase text-muted-foreground">
             Pago Mixto
           </span>
           <div className="flex gap-1">
@@ -244,7 +244,7 @@ export const POSCartItem = ({
                     item.subtotal - val,
                   );
                 }}
-                className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-1 text-[10px] font-bold"
+                className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
                 aria-label={`Monto pagado en efectivo para ${item.product.name}`}
               />
             </div>
@@ -262,7 +262,7 @@ export const POSCartItem = ({
                     val,
                   );
                 }}
-                className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-1 text-[10px] font-bold"
+                className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
                 aria-label={`Monto pagado por transferencia para ${item.product.name}`}
               />
             </div>

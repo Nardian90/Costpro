@@ -107,7 +107,7 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
-        className="w-full flex items-center justify-between group"
+        className="w-full flex items-center justify-between group min-h-[44px]"
         aria-expanded={isOpen}
         aria-controls="inventory-kpis-content"
       >
@@ -157,7 +157,7 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
                 <div key={card.label} className={cn('p-3 rounded-xl border text-center', card.bg)}>
                   <card.icon className={cn('w-4 h-4 mx-auto mb-1.5', card.color)} />
                   <div className={cn('text-lg sm:text-xl font-black', card.color)}>{card.value}</div>
-                  <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">{card.label}</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">{card.label}</div>
                 </div>
               ))}
             </div>

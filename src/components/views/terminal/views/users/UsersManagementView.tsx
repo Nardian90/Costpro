@@ -34,8 +34,6 @@ export default function UsersManagementView() {
   } = useUsersView();
 
 
-
-
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
       admin: 'Administrador',
@@ -52,9 +50,9 @@ export default function UsersManagementView() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="space-y-1">
-            <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Usuarios</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Usuarios</h2>
             {limitReachedMessage && (
               <p className="text-xs font-bold text-destructive uppercase tracking-widest animate-pulse">
                 {limitReachedMessage}
@@ -89,9 +87,9 @@ export default function UsersManagementView() {
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                 <th className="p-4 text-left">Perfil</th>
                 <th className="p-4 text-left">Email</th>
-                <th className="p-4 text-left">Inscripción</th>
-                <th className="p-4 text-center">Días Activos</th>
-                <th className="p-4 text-left">Accesos Multi-Tienda</th>
+                <th className="p-4 text-left hidden sm:table-cell">Inscripción</th>
+                <th className="p-4 text-center hidden sm:table-cell">Días Activos</th>
+                <th className="p-4 text-left hidden sm:table-cell">Accesos Multi-Tienda</th>
                 <th className="p-4 text-center">Plan</th>
                 <th className="p-4 text-center">Estado</th>
                 <th className="p-4 text-center">Acciones</th>
@@ -109,10 +107,10 @@ export default function UsersManagementView() {
                      </div>
                   </td>
                   <td className="p-4 font-mono text-xs text-muted-foreground">{u.email}</td>
-                  <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                  <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
                   </td>
-                  <td className="p-4 text-center" aria-label="Días activos">
+                  <td className="p-4 text-center hidden sm:table-cell" aria-label="Días activos">
                     <div className="flex flex-col items-center">
                       <span className="text-xs font-black text-primary">
                         {(() => {
@@ -126,7 +124,7 @@ export default function UsersManagementView() {
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 hidden sm:table-cell">
                     <div className="flex flex-wrap gap-2">
                       {u.memberships?.map((m, idx) => (
                         <div key={idx} className="flex flex-col bg-muted/30 p-1.5 rounded-lg border border-border/50 min-w-[80px]">
@@ -137,7 +135,7 @@ export default function UsersManagementView() {
                           )}>
                             {getRoleLabel(m.role)}
                           </span>
-                          <span className="text-[7px] font-black text-muted-foreground uppercase mt-1 tracking-widest truncate max-w-[100px]">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase mt-1 tracking-widest truncate max-w-[100px]">
                             {m.store?.name || 'Tienda'}
                           </span>
                         </div>
@@ -191,14 +189,14 @@ export default function UsersManagementView() {
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() => handleEditUser(u)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleResetPassword(u.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
                       >
@@ -207,7 +205,7 @@ export default function UsersManagementView() {
                       <button
                         onClick={() => handleDeleteUser(u.id)}
                         disabled={u.id === user?.id}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Eliminar usuario"
                       >
                         <Trash2 className="w-4 h-4" />

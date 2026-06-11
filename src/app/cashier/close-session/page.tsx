@@ -56,7 +56,7 @@ export default function CloseSessionPage() {
   }, [token, user]);
 
   const handleQuantityChange = (productId: string, value: string) => {
-    const quantity = parseInt(value, 10);
+    const quantity = parseFloat(value);
     setCountedQuantities((prev) => ({
       ...prev,
       [productId]: isNaN(quantity) ? undefined : quantity,

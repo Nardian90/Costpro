@@ -59,13 +59,13 @@ export function ReceptionDetailsModal({
       description={isEditMode ? "Modifica los datos de cabecera de la recepción." : "Muestra el listado de productos y cantidades recibidas en esta operación."}
       maxWidth="sm:max-w-2xl"
       footer={
-        <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full">
           <div className="flex items-center gap-4">
             {!isEditMode && receipt?.status !== 'voided' && onVoidRequest && (
               <button
                 onClick={onVoidRequest}
                 disabled={isVoiding}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-destructive hover:underline disabled:opacity-50"
+                className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-destructive hover:underline disabled:opacity-50"
                 type="button"
                 aria-label="Anular recepción"
               >
@@ -75,7 +75,7 @@ export function ReceptionDetailsModal({
             {!isEditMode && (
               <button
                 onClick={onExport}
-                className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
                 type="button"
                 aria-label="Exportar recepción como archivo CSV"
               >

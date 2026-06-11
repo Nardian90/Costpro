@@ -217,20 +217,20 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
           {importPreview && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-center">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-primary/5 border border-primary/10 text-center">
                   <div className="text-2xl font-black text-primary">{importPreview.rows.length}</div>
                   <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
                     Válidos
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-danger/5 border border-danger/10 text-center">
+                <div className="p-2 sm:p-3 rounded-xl bg-danger/5 border border-danger/10 text-center">
                   <div className="text-2xl font-black text-danger">{importPreview.errors.length}</div>
                   <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
                     Errores
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-muted/50 border border-border text-center">
+                <div className="p-2 sm:p-3 rounded-xl bg-muted/50 border border-border text-center">
                   <div className="text-2xl font-black">{importPreview.totalCount}</div>
                   <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
                     Total filas
@@ -267,16 +267,16 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
                       Vista previa — {importPreview.rows.length} producto(s)
                     </span>
                   </div>
-                  <div className="max-h-60 overflow-y-auto">
+                  <div className="max-h-60 overflow-x-auto overflow-y-auto">
                     <Table className="text-xs">
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8">SKU</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8">Nombre</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8 text-right">Costo</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8 text-right">Precio</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8">Categoría</TableHead>
-                          <TableHead className="text-[9px] font-black uppercase tracking-widest h-8">Código de Barras</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8">SKU</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8">Nombre</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8 text-right">Costo</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8 text-right">Precio</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8">Categoría</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-widest h-8">Código de Barras</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

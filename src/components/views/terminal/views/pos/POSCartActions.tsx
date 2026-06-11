@@ -73,7 +73,7 @@ export const POSCartActions = ({
     <button
       type="button"
       onClick={() => onSetShowOptions(!showOptions)}
-      className="w-full flex items-center justify-center gap-2 py-1 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+      className="w-full flex items-center justify-center gap-2 py-1 min-h-[44px] text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
       aria-expanded={showOptions}
       aria-controls="pos-cart-options"
     >
@@ -102,7 +102,7 @@ export const POSCartActions = ({
               type="button"
               onClick={() => onSetSelectedPayment("cash")}
               className={cn(
-                "p-2 rounded-xl flex items-center justify-center gap-2 border-2 transition-all bg-background",
+                "p-3 min-h-[44px] rounded-xl flex items-center justify-center gap-2 border-2 transition-all bg-background",
                 selectedPayment === "cash"
                   ? "border-primary shadow-lg shadow-primary/10 text-primary"
                   : "border-border text-muted-foreground",
@@ -120,7 +120,7 @@ export const POSCartActions = ({
               type="button"
               onClick={() => onSetSelectedPayment("transfer")}
               className={cn(
-                "p-2 rounded-xl flex items-center justify-center gap-2 border-2 transition-all bg-background",
+                "p-3 min-h-[44px] rounded-xl flex items-center justify-center gap-2 border-2 transition-all bg-background",
                 selectedPayment === "transfer"
                   ? "border-primary shadow-lg shadow-primary/10 text-primary"
                   : "border-border text-muted-foreground",

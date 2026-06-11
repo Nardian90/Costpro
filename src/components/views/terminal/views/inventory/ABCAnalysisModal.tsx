@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { BarChart3, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Product } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
@@ -25,6 +26,7 @@ interface ABCItem {
 
 export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnalysisProps) {
   const [sortBy, setSortBy] = useState<'value' | 'stock'>('value');
+  const isMobile = useIsMobile();
 
   const analysis = useMemo(() => {
     if (products.length === 0) return { items: [], summary: { A: 0, B: 0, C: 0, totalValue: 0 } };
@@ -77,7 +79,7 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
           <span className="text-base">Análisis ABC</span>
         </div>
       }
-      maxWidth="sm:max-w-4xl"
+      maxWidth={isMobile ? undefined : 'sm:max-w-4xl'}
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex gap-2">
@@ -93,7 +95,7 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
     >
       <div className="space-y-4">
         {/* Summary */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
             <div className="text-2xl font-black text-green-600">{analysis.summary.A}</div>
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">A (80% valor)</div>
@@ -113,6 +115,7 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
         </div>
 
         {/* Table */}
+        <div className="overflow-x-auto">
         <div className="rounded-xl border border-border overflow-hidden max-h-[400px] overflow-y-auto">
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border sticky top-0">
@@ -156,6 +159,7 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </BaseModal>

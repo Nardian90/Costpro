@@ -61,7 +61,7 @@ export default function CatalogProductGrid({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-border overflow-hidden bg-card">
+          <div className="rounded-2xl border border-border overflow-hidden bg-card overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">
                 <tr>

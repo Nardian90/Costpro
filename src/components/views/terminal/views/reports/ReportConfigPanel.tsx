@@ -75,7 +75,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
   };
 
   return (
-    <Card className="p-6 rounded-3xl border-primary/10 bg-card/50 backdrop-blur-sm space-y-6">
+    <Card className="p-4 sm:p-6 rounded-3xl border-primary/10 bg-card/50 backdrop-blur-sm space-y-6">
       <div className="space-y-4">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Configuración Base</h3>
 
@@ -89,7 +89,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo de Reporte</Label>
             <Select value={config.type} onValueChange={(val) => handleTypeChange(val as ReportType)}>
@@ -178,7 +178,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Formato</Label>
             <Select
@@ -215,7 +215,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                     />
                     <Label
                         htmlFor={`col-${col}`}
-                        className="text-xs font-bold uppercase tracking-tight cursor-pointer select-none"
+                        className="text-xs font-bold uppercase tracking-tight cursor-pointer select-none break-words"
                     >
                         {COLUMN_LABELS[col] || col}
                     </Label>

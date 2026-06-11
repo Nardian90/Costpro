@@ -159,8 +159,9 @@ export default function InventoryAdjustmentModal({
                   <input
                     id="ajusteUnidades"
                     type="number"
+                    step="0.01"
                     value={ajusteUnidades}
-                    onChange={(e) => setAjusteUnidades(parseInt(e.target.value) || 0)}
+                    onChange={(e) => setAjusteUnidades(parseFloat(e.target.value) || 0)}
                     aria-label="Ajuste de unidades"
                     className="neu-input w-full !pl-14 !pr-4 font-black text-lg h-12"
                     placeholder="Ej: -5, 10..."
@@ -247,7 +248,7 @@ export default function InventoryAdjustmentModal({
                     aria-pressed={reason === r}
                     aria-label={`Motivo: ${r}`}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-bold uppercase border transition-all active:scale-95",
+                      "px-3 py-2.5 min-h-[40px] rounded-full text-xs font-bold uppercase border transition-all active:scale-95",
                       reason === r ? "bg-primary text-foreground border-primary" : "bg-muted text-muted-foreground border-border"
                     )}
                   >
@@ -344,7 +345,7 @@ export default function InventoryAdjustmentModal({
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent className="max-h-[92vh] border-none bg-background">
+        <DrawerContent className="max-h-[92dvh] border-none bg-background">
           <div className="overflow-hidden h-full">
             {ModalContent}
           </div>

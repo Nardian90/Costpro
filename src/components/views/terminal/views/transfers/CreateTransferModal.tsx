@@ -241,7 +241,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
 
         if (matchedProduct && !selectedItems.has(matchedProduct.id)) {
           const newItems = new Map(selectedItems);
-          newItems.set(matchedProduct.id, { product: matchedProduct, quantity: Math.max(1, Math.round(item.quantity)) });
+          newItems.set(matchedProduct.id, { product: matchedProduct, quantity: Math.max(0.0001, Number(item.quantity.toFixed(4))) });
           setSelectedItems(newItems);
           importedCount++;
         } else if (!matchedProduct) {
@@ -280,11 +280,11 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         }
         maxWidth="sm:max-w-4xl"
         footer={
-          <div className="flex justify-end gap-3 w-full">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
             <button
               type="button"
               onClick={onClose}
-              className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+              className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest w-full sm:w-auto"
               aria-label="Cancelar y cerrar formulario de transferencia"
             >
               Cancelar
@@ -294,7 +294,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
               onClick={handleCreate}
               disabled={hasStockErrors || createTransferMutation.isPending}
               aria-label="Enviar solicitud de transferencia"
-              className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+              className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 justify-center w-full sm:w-auto"
             >
               <Save className="w-4 h-4" aria-hidden="true" />
               {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
@@ -471,7 +471,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                             type="number"
                             value={quantity}
                             onChange={(e) =>
-                              updateQuantity(product.id, parseInt(e.target.value) || 0)
+                              updateQuantity(product.id, parseFloat(e.target.value) || 0)
                             }
                             aria-label={`Cantidad de ${product.name} para transferir. Disponible: ${stockCurrent}`}
                             className={cn(
@@ -495,7 +495,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                         type="button"
                         onClick={() => setItemToDelete(product.id)}
                         aria-label={`Quitar ${product.name} de la transferencia`}
-                        className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors mt-4"
+                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors mt-4"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>

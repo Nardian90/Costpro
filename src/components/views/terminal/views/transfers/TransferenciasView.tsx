@@ -406,7 +406,7 @@ export default function TransferenciasView() {
                           VER DETALLE
                         </p>
                       </div>
-                      <ArrowLeftRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowLeftRight className="w-5 h-5 text-muted-foreground hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity" />
                     </div>
                   </div>
                 ))}

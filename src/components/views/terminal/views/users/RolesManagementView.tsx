@@ -53,7 +53,7 @@ export default function RolesManagementView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Roles y Permisos</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Roles y Permisos</h2>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Gestión de Control de Acceso Basado en Roles (RBAC)
           </p>
@@ -79,7 +79,7 @@ export default function RolesManagementView() {
             <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
               <th className="p-4 text-left">Nombre del Rol</th>
               <th className="p-4 text-left">Vistas Permitidas</th>
-              <th className="p-4 text-center">Por Defecto</th>
+              <th className="p-4 text-center hidden sm:table-cell">Por Defecto</th>
               <th className="p-4 text-center">Acciones</th>
             </tr>
           </thead>
@@ -115,7 +115,7 @@ export default function RolesManagementView() {
                     )}
                   </div>
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center hidden sm:table-cell">
                   {role.is_default && (
                     <div className="flex justify-center">
                       <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -126,14 +126,14 @@ export default function RolesManagementView() {
                   <div className="flex justify-center gap-2">
                     <button
                       onClick={() => handleEdit(role)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                      className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                       aria-label="Editar rol"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(role.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
+                      className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
                       aria-label="Eliminar rol"
                     >
                       <Trash2 className="w-4 h-4" />

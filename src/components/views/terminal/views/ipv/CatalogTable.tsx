@@ -19,7 +19,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, CheckCircle2, Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Trash2, Search, Workflow,  HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Download, Upload, ArrowRight, CornerDownRight, FileSpreadsheet, ShoppingCart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatCurrencyCents } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -454,7 +454,7 @@ export function CatalogTable() {
             const { data, error } = await supabase.rpc('get_products_for_pos', { p_store_id: stores[0].id, p_search_term: '', p_category: '' });
             if (error) throw new Error(`Error del servidor: ${error.message}`);
             const systemProducts = (data || []).map((p: any) => ({
-                cod: p.sku || p.id, descripcion: p.name, um: 'UNIDADES', es_paquete: false, contenido_paquete: 1, precio_cents: Math.round((p.price || 0) * 100), prioridad_algoritmo: 3, activo: true, stock_inicial_manual: Math.round(p.stock_quantity || 0), created_at: new Date().toISOString()
+                cod: p.sku || p.id, descripcion: p.name, um: 'UNIDADES', es_paquete: false, contenido_paquete: 1, precio_cents: Math.round((p.price || 0) * 100), prioridad_algoritmo: 3, activo: true, stock_inicial_manual: Number((p.stock_quantity || 0).toFixed(4)), created_at: new Date().toISOString()
             }));
             await db.products.bulkPut(systemProducts);
             toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });
@@ -597,6 +597,387 @@ const handleExportCatalog = async () => {
     };
     reader.readAsArrayBuffer(file);
   };
+
+  // =====================
+  // EXPORTAR PLANTILLA DE VENTAS
+  // =====================
+  const handleExportSalesTemplate = async () => {
+    const XLSX = await createWorkbook();
+    if (!products || products.length === 0) {
+      toast.error('No hay productos en el catálogo para exportar');
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const exportData = products.map(p => {
+      const stats = inventoryStats[p.cod] || { initial: 0, entradas: 0, salidas: 0, sales: 0, final: 0 };
+      return {
+        'Código': p.cod,
+        'Descripción': p.descripcion,
+        'UM': p.um,
+        'Precio Venta': Number((p.precio_cents).toFixed(2)),
+        'Costo Unitario': Number(((p.costo_unitario_cents || 0)).toFixed(2)),
+        'Stock Actual': Number(stats.final.toFixed(4)),
+        'Cantidad Vendida': '',
+        'Precio Venta Real': '',
+        'Efectivo': '',
+        'Transferencia': '',
+        'Método Pago': '',
+        'Observaciones': ''
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Formato numérico para columnas de dinero
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      const cols = ['D', 'E', 'F', 'H', 'I', 'J']; // Precio Venta, Costo, Stock, Precio Real, Efectivo, Transferencia
+      for (const col of cols) {
+        const cell = ws[col + (R + 1)];
+        if (cell && cell.t === 'n') {
+          cell.z = col === 'F' ? '0.00' : '#,##0.00';
+        }
+      }
+    }
+
+    // Anchos de columna
+    ws['!cols'] = [
+      { wch: 14 }, // Código
+      { wch: 40 }, // Descripción
+      { wch: 10 }, // UM
+      { wch: 14 }, // Precio Venta
+      { wch: 14 }, // Costo
+      { wch: 12 }, // Stock Actual
+      { wch: 16 }, // Cantidad Vendida
+      { wch: 16 }, // Precio Venta Real
+      { wch: 14 }, // Efectivo
+      { wch: 14 }, // Transferencia
+      { wch: 14 }, // Método Pago
+      { wch: 30 }, // Observaciones
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+
+    // Hoja de instrucciones
+    const instructions = [
+      { 'CAMPO': 'Código', 'DESCRIPCIÓN': 'Identificador del producto (no modificar)', 'EJEMPLO': 'SKU-001' },
+      { 'CAMPO': 'Descripción', 'DESCRIPCIÓN': 'Nombre del producto (solo lectura)', 'EJEMPLO': 'Cerveza Cristal 330ml' },
+      { 'CAMPO': 'Cantidad Vendida', 'DESCRIPCIÓN': 'Cantidad de unidades vendidas (obligatorio si hubo venta)', 'EJEMPLO': '10' },
+      { 'CAMPO': 'Precio Venta Real', 'DESCRIPCIÓN': 'Precio al que se vendió realmente. Si está vacío se usa el precio del catálogo', 'EJEMPLO': '1.50' },
+      { 'CAMPO': 'Efectivo', 'DESCRIPCIÓN': 'Monto total cobrado en efectivo', 'EJEMPLO': '8.50' },
+      { 'CAMPO': 'Transferencia', 'DESCRIPCIÓN': 'Monto total cobrado por transferencia/QR', 'EJEMPLO': '6.50' },
+      { 'CAMPO': 'Método Pago', 'DESCRIPCIÓN': 'Se calcula automáticamente: EFECTIVO, TRANSFERENCIA o MIXTO', 'EJEMPLO': 'MIXTO' },
+      { 'CAMPO': 'Observaciones', 'DESCRIPCIÓN': 'Notas opcionales sobre la venta', 'EJEMPLO': 'Promoción de apertura' },
+      { 'CAMPO': 'REGLAS DE IMPORTACIÓN', 'DESCRIPCIÓN': '', 'EJEMPLO': '' },
+      { 'CAMPO': '1.', 'DESCRIPCIÓN': 'Los productos con "Cantidad Vendida" vacía o 0 se ignoran', 'EJEMPLO': '' },
+      { 'CAMPO': '2.', 'DESCRIPCIÓN': 'El código debe existir en el catálogo', 'EJEMPLO': '' },
+      { 'CAMPO': '3.', 'DESCRIPCIÓN': 'Si solo llena Efectivo → método = EFECTIVO', 'EJEMPLO': '' },
+      { 'CAMPO': '4.', 'DESCRIPCIÓN': 'Si solo llena Transferencia → método = TRANSFERENCIA', 'EJEMPLO': '' },
+      { 'CAMPO': '5.', 'DESCRIPCIÓN': 'Si llena ambos → método = MIXTO', 'EJEMPLO': '' },
+      { 'CAMPO': '6.', 'DESCRIPCIÓN': 'Si no llena ninguno → método = EFECTIVO (por defecto)', 'EJEMPLO': '' },
+      { 'CAMPO': '7.', 'DESCRIPCIÓN': 'Efectivo + Transferencia debe ser ≈ Cantidad × Precio Venta Real (tolerancia 5%)', 'EJEMPLO': '' },
+      { 'CAMPO': '8.', 'DESCRIPCIÓN': 'Si Precio Venta Real está vacío, se usa el precio del catálogo', 'EJEMPLO': '' },
+    ];
+    const wsInstr = XLSX.utils.json_to_sheet(instructions);
+    wsInstr['!cols'] = [{ wch: 22 }, { wch: 60 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsInstr, 'Instrucciones');
+
+    XLSX.writeFile(wb, `plantilla_ventas_ipv_${today}.xlsx`);
+    toast.success(`Plantilla exportada: ${products.length} productos`);
+  };
+
+  // =====================
+  // IMPORTAR VENTAS DESDE EXCEL
+  // =====================
+  const handleImportSales = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const XLSX = await createWorkbook();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]) as Record<string, any>[];
+
+        if (!rows || rows.length === 0) {
+          toast.error('El archivo está vacío');
+          return;
+        }
+
+        // Normalizar nombres de columnas (aceptar con o sin tildes, espacios extras, etc.)
+        const normalizeKey = (key: string) => key.trim().toLowerCase().replace(/\s+/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const firstRow = rows[0];
+        const keyMap = new Map<string, string>();
+        const expectedCols: Record<string, string[]> = {
+          cod: ['codigo', 'cod', 'code', 'sku'],
+          qty: ['cantidad vendida', 'cantidad vendidos', 'cantidad', 'qty', 'cant', 'cantidad vendida'],
+          precioReal: ['precio venta real', 'precio real', 'precio venta real', 'precio_real', 'pv real'],
+          efectivo: ['efectivo', 'cash', 'efect'],
+          transferencia: ['transferencia', 'transfer', 'transf'],
+          observaciones: ['observaciones', 'obs', 'notas', 'observacion']
+        };
+
+        for (const key of Object.keys(firstRow)) {
+          const norm = normalizeKey(key);
+          for (const [field, aliases] of Object.entries(expectedCols)) {
+            if (aliases.some(a => normalizeKey(a) === norm)) {
+              keyMap.set(field, key);
+            }
+          }
+        }
+
+        const codCol = keyMap.get('cod');
+        const qtyCol = keyMap.get('qty');
+        const precioRealCol = keyMap.get('precioReal');
+        const efectivoCol = keyMap.get('efectivo');
+        const transferCol = keyMap.get('transferencia');
+        const obsCol = keyMap.get('observaciones');
+
+        if (!codCol) {
+          toast.error('No se encontró la columna "Código". Verifique el formato del archivo.');
+          return;
+        }
+        if (!qtyCol) {
+          toast.error('No se encontró la columna "Cantidad Vendida". Verifique el formato del archivo.');
+          return;
+        }
+
+        // Validar productos y preparar datos
+        const productMap = new Map((products || []).map(p => [p.cod.trim().toLowerCase(), p]));
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toISOString();
+        const results = { valid: 0, skipped: 0, errors: [] as string[], warnings: [] as string[] };
+        const reconciliationLines: any[] = [];
+        const priceChanges: any[] = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const rawCod = String(row[codCol] || '').trim();
+          const rawQty = parseFloat(row[qtyCol]);
+
+          // Saltar filas sin cantidad
+          if (!rawCod || isNaN(rawQty) || rawQty === 0) continue;
+
+          const product = productMap.get(rawCod.trim().toLowerCase());
+          if (!product) {
+            results.errors.push(`Fila ${i + 2}: Código "${rawCod}" no existe en el catálogo`);
+            results.skipped++;
+            continue;
+          }
+
+          // Determinar precio de venta real
+          const rawPrecio = precioRealCol ? parseFloat(row[precioRealCol]) : NaN;
+          const precioVenta = isNaN(rawPrecio) || rawPrecio <= 0 ? product.precio_cents : rawPrecio;
+
+          // Validar precio
+          if (precioVenta <= 0) {
+            results.errors.push(`Fila ${i + 2}: "${rawCod}" - Precio de venta inválido (${precioVenta})`);
+            results.skipped++;
+            continue;
+          }
+
+          // Detectar cambio de precio
+          if (precioVenta !== product.precio_cents && Math.abs(precioVenta - product.precio_cents) > 0.005) {
+            results.warnings.push(`Fila ${i + 2}: "${rawCod}" precio cambiado de ${product.precio_cents.toFixed(2)} → ${precioVenta.toFixed(2)}`);
+            priceChanges.push({
+              id: crypto.randomUUID(),
+              product_cod: rawCod,
+              old_price_cents: product.precio_cents,
+              new_price_cents: precioVenta,
+              fecha: today,
+              created_at: now
+            });
+          }
+
+          // Determinar método de pago y montos
+          const rawEfectivo = efectivoCol ? parseFloat(row[efectivoCol]) : NaN;
+          const rawTransfer = transferCol ? parseFloat(row[transferCol]) : NaN;
+          const hasEfectivo = !isNaN(rawEfectivo) && rawEfectivo > 0;
+          const hasTransfer = !isNaN(rawTransfer) && rawTransfer > 0;
+
+          let metodoPago: string;
+          let efectivoCents = 0;
+          let transferCents = 0;
+
+          if (hasEfectivo && hasTransfer) {
+            metodoPago = 'MIXTO';
+            efectivoCents = rawEfectivo;
+            transferCents = rawTransfer;
+          } else if (hasEfectivo) {
+            metodoPago = 'EFECTIVO';
+            efectivoCents = rawEfectivo;
+          } else if (hasTransfer) {
+            metodoPago = 'TRANSFERENCIA';
+            transferCents = rawTransfer;
+          } else {
+            // Ninguno llenado → asumir efectivo por defecto
+            metodoPago = 'EFECTIVO';
+            efectivoCents = rawQty * precioVenta;
+          }
+
+          // Validar que efectivo + transferencia ≈ cantidad × precio (tolerancia 5%)
+          const totalPago = efectivoCents + transferCents;
+          const totalEsperado = rawQty * precioVenta;
+          if (totalPago > 0) {
+            const diffPercent = Math.abs(totalPago - totalEsperado) / totalEsperado;
+            if (diffPercent > 0.05) {
+              results.warnings.push(`Fila ${i + 2}: "${rawCod}" diferencia de pago: cobrado ${totalPago.toFixed(2)} vs esperado ${totalEsperado.toFixed(2)} (${(diffPercent * 100).toFixed(1)}%)`);
+            }
+          }
+
+          // Crear línea de conciliación
+          const totalAmount = rawQty * precioVenta;
+          const txRef = `VENTA-EXCEL-${today}-${rawCod}-${i}`;
+          const obs = obsCol ? String(row[obsCol] || '').trim() : '';
+
+          reconciliationLines.push({
+            id: crypto.randomUUID(),
+            transaction_ref: txRef,
+            fecha_operacion: today,
+            transfer_amount_cents: transferCents,
+            cash_amount_cents: efectivoCents,
+            total_amount_cents: totalAmount,
+            status: 'VALID',
+            payment_status: totalPago >= totalEsperado * 0.95 ? 'MATCHED' : 'PARTIAL',
+            product_cod: rawCod,
+            product_name: product.descripcion,
+            product_um: product.um,
+            cantidad: rawQty,
+            precio_unitario_cents: precioVenta,
+            origen_dato: 'MANUAL_USER',
+            source_type: efectivoCents > 0 && transferCents > 0 ? undefined : (transferCents > 0 ? 'BANK_TRANSFER' : 'REAL_CASH_GOAL'),
+            observaciones: obs ? `[EXCEL] ${obs} | Método: ${metodoPago}` : `[EXCEL] Método: ${metodoPago}`,
+            reconciliation_hash: crypto.randomUUID(),
+            sale_id: crypto.randomUUID(),
+            user_id: user?.id || 'system',
+            created_at: now
+          });
+
+          results.valid++;
+        }
+
+        if (results.valid === 0) {
+          toast.error('No se encontraron filas válidas para importar. Revise que "Cantidad Vendida" tenga valores mayores a 0.');
+          if (results.errors.length > 0) {
+            toast.error(`Errores: ${results.errors.slice(0, 5).join('; ')}`);
+          }
+          return;
+        }
+
+        // Confirmar importación
+        const errorSummary = results.errors.length > 0 ? `\n\n❌ ${results.errors.length} error(es):\n${results.errors.slice(0, 10).join('\n')}` : '';
+        const warningSummary = results.warnings.length > 0 ? `\n\n⚠️ ${results.warnings.length} advertencia(s):\n${results.warnings.slice(0, 10).join('\n')}` : '';
+
+        const confirmed = window.confirm(
+          `📊 Resumen de Importación de Ventas:\n\n` +
+          `✅ ${results.valid} ventas válidas\n` +
+          `⏭️ ${results.skipped} filas omitidas\n` +
+          `Total importe: ${reconciliationLines.reduce((s, l) => s + l.total_amount_cents, 0).toFixed(2)}\n` +
+          warningSummary + errorSummary +
+          `\n\n¿Confirmar importación?`
+        );
+
+        if (!confirmed) {
+          toast.info('Importación cancelada');
+          event.target.value = '';
+          return;
+        }
+
+        // Ejecutar importación
+        toast.loading('Importando ventas...', { id: 'sales-import' });
+
+        try {
+          // 1. Guardar líneas de conciliación
+          await db.reconciliation_lines.bulkAdd(reconciliationLines);
+
+          // 2. Guardar cambios de precio si los hay
+          if (priceChanges.length > 0) {
+            await db.product_price_changes.bulkAdd(priceChanges);
+            // Actualizar precios en el catálogo
+            for (const pc of priceChanges) {
+              await db.products.update(pc.product_cod, {
+                precio_base_cents: productMap.get(pc.product_cod.toLowerCase())?.precio_cents || productMap.get(pc.product_cod.toLowerCase())?.precio_base_cents,
+                precio_cents: pc.new_price_cents,
+                updated_at: now
+              });
+            }
+          }
+
+          // 3. Crear transacciones bancarias ficticias para las transferencias
+          const transferLines = reconciliationLines.filter(l => l.transfer_amount_cents > 0);
+          if (transferLines.length > 0) {
+            const bankTxns = transferLines.map(l => ({
+              id: crypto.randomUUID(),
+              fecha: today,
+              referencia_corta: l.transaction_ref.substring(0, 20),
+              referencia_origen: l.transaction_ref,
+              observaciones: l.observaciones || '',
+              importe_cents: l.transfer_amount_cents,
+              importe_venta_cents: l.transfer_amount_cents,
+              tipo: 'Cr' as const,
+              estado_conciliacion: 'COMPLETO' as const,
+              ipv_id: undefined,
+              created_at: now,
+              updated_at: now,
+              ingestion_hash: crypto.randomUUID()
+            }));
+            await db.bank_statements.bulkAdd(bankTxns);
+          }
+
+          // 4. Registrar log de matching
+          for (const line of reconciliationLines) {
+            await db.matching_logs.add({
+              id: crypto.randomUUID(),
+              transaction_ref: line.transaction_ref,
+              resultado_estado: 'COMPLETO',
+              sale_id: line.sale_id,
+              applied_rules: ['EXCEL_IMPORT'],
+              matching_confidence: 1.0,
+              reconciliation_lines_count: 1,
+              engine_version: 'EXCEL-IMPORT-1.0',
+              created_at: now
+            });
+          }
+
+          // 5. Registrar auditoría
+          await db.catalog_audit.add({
+            id: crypto.randomUUID(),
+            timestamp: now,
+            userId: user?.id || 'system',
+            action: 'IMPORT',
+            fileName: file.name,
+            summary: { added: results.valid, updated: priceChanges.length, deleted: 0, errors: results.errors.length }
+          });
+
+          toast.success(`${results.valid} ventas importadas correctamente (${reconciliationLines.reduce((s, l) => s + l.total_amount_cents, 0).toFixed(2)})`, { id: 'sales-import' });
+
+          if (results.warnings.length > 0) {
+            toast.warning(`${results.warnings.length} advertencias (revisar consola)`);
+            console.warn('[Importar Ventas] Advertencias:', results.warnings);
+          }
+          if (results.errors.length > 0) {
+            toast.error(`${results.errors.length} errores (revisar consola)`);
+            console.error('[Importar Ventas] Errores:', results.errors);
+          }
+
+        } catch (error) {
+          toast.error('Error al guardar las ventas: ' + (error instanceof Error ? error.message : String(error)), { id: 'sales-import' });
+        } finally {
+          event.target.value = '';
+        }
+
+      } catch (error) {
+        toast.error('Error al procesar el archivo Excel: ' + (error instanceof Error ? error.message : String(error)));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
 
@@ -606,10 +987,12 @@ const handleExportCatalog = async () => {
     { id: "intel", label: "Inteligencia", icon: Brain, onClick: handleRecalculateIntelligence, disabled: isSyncing, variant: "outline", className: "text-purple-500" },
     { id: "cleanup", label: "Saneamiento", icon: ShieldCheck, onClick: handleCleanupNegative, variant: "warning" },
     { id: "normalize", label: "Normalizar", icon: AlertTriangle, onClick: handleNormalizeNegatives, variant: "danger" },
-    { id: "export", label: "Exportar", icon: Download, onClick: handleExportCatalog },
-    { id: "import", label: "Importar", icon: Upload, onClick: () => document.getElementById("catalog-import-input")?.click() },
+    { id: "export-ventas", label: "Exportar Ventas", icon: ShoppingCart, onClick: handleExportSalesTemplate, variant: "outline", className: "text-emerald-600" },
+    { id: "import-ventas", label: "Importar Ventas", icon: FileSpreadsheet, onClick: () => document.getElementById("sales-import-input")?.click(), variant: "outline", className: "text-amber-600" },
+    { id: "export", label: "Exportar Catálogo", icon: Download, onClick: handleExportCatalog },
+    { id: "import", label: "Importar Catálogo", icon: Upload, onClick: () => document.getElementById("catalog-import-input")?.click() },
     { id: "clear", label: "Vaciar", icon: Trash2, onClick: clearCatalog, variant: "danger" }
-  ], [isSyncing, handleAddNew, syncWithSystemCatalog, handleRecalculateReportsChain, handleRecalculateIntelligence, handleCleanupNegative, handleNormalizeNegatives, handleExportCatalog, clearCatalog]);
+  ], [isSyncing, handleAddNew, syncWithSystemCatalog, handleRecalculateReportsChain, handleRecalculateIntelligence, handleCleanupNegative, handleNormalizeNegatives, handleExportSalesTemplate, handleExportCatalog, clearCatalog]);
 
   return (
     <>
@@ -643,6 +1026,7 @@ const handleExportCatalog = async () => {
                   <TooltipContent className="max-w-xs p-4 bg-popover text-popover-foreground border shadow-xl"><p className="font-bold text-primary mb-2">Ayuda de Columnas:</p><ul className="text-xs space-y-1 list-disc pl-4 uppercase font-bold"><li><strong>cod:</strong> Identificador único.</li><li><strong>Precio:</strong> Valor unitario en centavos.</li><li><strong>Prioridad:</strong> 1-5.</li><li><strong>Stock Inicial:</strong> Punto de partida.</li></ul></TooltipContent>
               </Tooltip>
               <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" aria-label="Importar catálogo desde archivo Excel" />
+              <input type="file" accept=".xlsx, .xls" onChange={handleImportSales} className="hidden" id="sales-import-input" aria-label="Importar ventas desde archivo Excel" />
           </div>
         </div>
         {layoutMode === 'table' ? (
