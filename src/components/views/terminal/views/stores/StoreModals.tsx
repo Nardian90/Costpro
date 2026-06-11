@@ -464,7 +464,7 @@ export function StoreModals({
                                             type="button"
                                             onClick={() => setLogoUrl('')}
                                             aria-label="Eliminar logo de tienda"
-                                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-foreground"
+                                            className="absolute inset-0 bg-black/50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center text-foreground"
                                         >
                                             <X className="w-5 h-5" aria-hidden="true" />
                                         </button>

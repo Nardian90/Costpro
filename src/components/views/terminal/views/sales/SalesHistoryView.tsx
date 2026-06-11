@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -43,6 +44,8 @@ export default function SalesHistoryView() {
     isInverting
   } = useSalesHistoryView();
 
+  const isMobile = useIsMobile();
+
   const allIds = transactions.map(t => t.id);
   const isAllSelected = allIds.length > 0 && selectedIds.size === allIds.length;
 
@@ -59,8 +62,9 @@ export default function SalesHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">Ventas</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase sm:block">Ventas</h2>
+          {isMobile && <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase">Ventas</h2>}
           {selectedIds.size > 0 && (
             <button
               onClick={() => setIsTaxModalOpen(true)}
@@ -84,7 +88,7 @@ export default function SalesHistoryView() {
                   id="sales-status"
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
+                  className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none min-h-[44px]"
                 >
                   <option value="">Todos</option>
                   <option value="completed">Completada</option>
@@ -102,31 +106,34 @@ export default function SalesHistoryView() {
           loadingComponent={<SalesLoadingSkeleton />}
         >
           {() => (
-            <div className="table-scroll-wrapper">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+              <div className="table-scroll-wrapper">
               {/* Sticky header table */}
               <table className="data-table sticky-column-1 w-full text-sm">
                 <thead className="sticky top-0 z-10 bg-background">
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-center w-10">
+                      <div className="inline-flex min-w-[44px] min-h-[44px] items-center justify-center">
                       <button
                         onClick={() => toggleAll(allIds)}
                         className="text-primary hover:scale-110 transition-transform"
                       >
                         {isAllSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                       </button>
+                      </div>
                     </th>
                     <th className="p-4 text-left">Ref</th>
                     <th className="p-4 text-left">Fecha</th>
-                    <th className="p-4 text-left priority-low">Método</th>
+                    <th className="p-4 text-left priority-low hidden sm:table-cell">Método</th>
                     <th className="p-4 text-right">Total</th>
-                    <th className="p-4 text-center priority-low">Estado</th>
+                    <th className="p-4 text-center priority-low hidden sm:table-cell">Estado</th>
                     <th className="p-4 text-center">Acciones</th>
                   </tr>
                 </thead>
               </table>
 
               {/* Virtualized body */}
-              <div ref={parentRef} className="overflow-auto" style={{ maxHeight: '500px' }}>
+              <div ref={parentRef} className="overflow-auto" style={{ maxHeight: 'calc(100vh - 350px)' }}>
                 <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const txn = transactions[virtualRow.index];
@@ -150,6 +157,7 @@ export default function SalesHistoryView() {
                                 selectedIds.has(txn.id) && "bg-primary/5"
                             )}>
                               <td className="p-4 text-center">
+                                <div className="inline-flex min-w-[44px] min-h-[44px] items-center justify-center">
                                 <button
                                   onClick={() => toggleSelection(txn.id)}
                                   className={cn(
@@ -159,13 +167,14 @@ export default function SalesHistoryView() {
                                 >
                                   {selectedIds.has(txn.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                                 </button>
+                                </div>
                               </td>
                               <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
                               <td className="p-4">
                                 <div className="font-bold text-xs">{formatDate(txn.created_at)}</div>
                                 <div className="text-xs text-muted-foreground">{formatTime(txn.created_at)}</div>
                               </td>
-                              <td className="p-4 priority-low">
+                              <td className="p-4 priority-low hidden sm:table-cell">
                                 <div className="flex items-center gap-2">
                                   {txn.payment_method === 'cash' ? <DollarSign className="w-3 h-3 text-green-500" /> : <CreditCard className="w-3 h-3 text-primary" />}
                                   <span className="text-xs font-bold uppercase">
@@ -176,7 +185,7 @@ export default function SalesHistoryView() {
                               <td className="p-4 text-right">
                                 <span className="text-base font-black">{formatCurrency(txn.total_amount)}</span>
                               </td>
-                              <td className="p-4 text-center priority-low">
+                              <td className="p-4 text-center priority-low hidden sm:table-cell">
                                 <span className={cn(
                                   "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
                                   txn.status === 'completed' ? "bg-green-500/10 text-green-600" :
@@ -226,6 +235,7 @@ export default function SalesHistoryView() {
                   })}
                 </div>
               </div>
+            </div>
             </div>
           )}
         </StateRenderer>

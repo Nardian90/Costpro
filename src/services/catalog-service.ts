@@ -246,7 +246,7 @@ export async function importCatalogFromExcel(
             unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
             cost_price: costPrice,
             price: price,
-            min_stock: parseInt(String(normalized.min_stock || 0), 10) || 0,
+            min_stock: parseFloat(String(normalized.min_stock || 0)) || 0,
             barcode,
             supplier: String(normalized.supplier || '').trim() || null,
             description: String(normalized.description || '').trim() || null,

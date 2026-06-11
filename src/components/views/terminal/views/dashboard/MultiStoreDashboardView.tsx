@@ -21,7 +21,7 @@ interface MetricMiniProps {
 function MetricMini({ label, value, alert = false, isNA = false }: MetricMiniProps) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-black uppercase text-muted-foreground">{label}</p>
       <p className={cn(
         'text-sm font-black',
         isNA ? 'text-muted-foreground' : alert ? 'text-destructive' : 'text-foreground'
@@ -103,7 +103,7 @@ function StoreKPICard({ kpi, onActivate }: StoreKPICardProps) {
             href={`/tienda/${cleanSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
+            className="flex-1 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
             aria-label={`Visitar tienda pública de ${kpi.storeName}`}
             title="Visitar tienda pública"
           >
@@ -117,7 +117,7 @@ function StoreKPICard({ kpi, onActivate }: StoreKPICardProps) {
             onClick={() => onActivate(kpi.storeId)}
             aria-label={`Activar ${kpi.storeName} como tienda de trabajo`}
             className={cn(
-              'flex-1 py-2 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors',
+              'flex-1 py-3 min-h-[44px] rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors',
               kpi.storeSlug && 'flex-initial'
             )}
           >
@@ -170,14 +170,14 @@ export default function MultiStoreDashboardView() {
         <button
           onClick={() => refetch()}
           aria-label="Actualizar datos del tablero"
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+          className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
         >
           <RefreshCcw className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
 
       {/* KPIs globales */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { label: 'Ventas totales hoy', value: formatCurrency(totalSalesToday), icon: TrendingUp },
           { label: 'Transacciones', value: totalTransactions, icon: ShoppingCart },

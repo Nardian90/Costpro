@@ -61,28 +61,31 @@ export default function CatalogHeader({
           </button>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Export Excel */}
         <SecondaryButton
-          label="Exportar Excel"
           icon={FileDown}
           onClick={onExport}
           className="gap-1.5"
-        />
+        >
+          <span className="hidden sm:inline">Exportar Excel</span>
+        </SecondaryButton>
         {/* Import Excel */}
         <SecondaryButton
-          label="Importar Excel"
           icon={FileUp}
           onClick={onImport}
           className="gap-1.5"
-        />
+        >
+          <span className="hidden sm:inline">Importar Excel</span>
+        </SecondaryButton>
         {/* Bulk Price Increment */}
         <SecondaryButton
-          label="Incremento de Precios"
           icon={TrendingUp}
           onClick={onBulkPrice}
           className="gap-1.5"
-        />
+        >
+          <span className="hidden sm:inline">Incremento de Precios</span>
+        </SecondaryButton>
         <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
         <ViewSwitcher currentView={layoutMode} onViewChange={onLayoutChange} />
         <IconButton icon={Plus} label="Nuevo Producto" onClick={onCreateProduct} variant="primary" />

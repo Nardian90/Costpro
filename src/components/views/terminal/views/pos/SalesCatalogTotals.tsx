@@ -27,13 +27,13 @@ export default function SalesCatalogTotals({
         showMixedColumns ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3',
       )}>
         <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+          <span className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
             Productos
           </span>
           <span className="text-lg font-black text-foreground">{activeRowsCount}</span>
         </div>
         <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">
+          <span className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
             Uds. Totales
           </span>
           <span className="text-lg font-black text-foreground">{itemCount}</span>
@@ -41,7 +41,7 @@ export default function SalesCatalogTotals({
         {showMixedColumns && (
           <>
             <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/20">
-              <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">
+              <span className="text-xs font-black uppercase text-emerald-600 tracking-widest block">
                 Efectivo
               </span>
               <span className="text-lg font-black text-emerald-600">
@@ -49,7 +49,7 @@ export default function SalesCatalogTotals({
               </span>
             </div>
             <div className="bg-blue-500/5 rounded-xl p-3 border border-blue-500/20">
-              <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest block">
+              <span className="text-xs font-black uppercase text-blue-600 tracking-widest block">
                 Transferencia
               </span>
               <span className="text-lg font-black text-blue-600">

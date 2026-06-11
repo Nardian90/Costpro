@@ -68,7 +68,7 @@ export default function SalesCatalogToolbar({
               type="button"
               onClick={() => onStockFilterChange(opt.value)}
               className={cn(
-                'px-3 h-9 rounded-lg text-xs font-black uppercase tracking-widest transition-all',
+                'px-3 h-11 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-widest transition-all',
                 stockFilter === opt.value
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -85,7 +85,7 @@ export default function SalesCatalogToolbar({
             type="button"
             onClick={() => onViewModeChange('table')}
             className={cn(
-              'p-2 rounded-lg transition-all',
+              'p-3 min-w-[44px] min-h-[44px] rounded-lg transition-all',
               viewMode === 'table'
                 ? 'bg-primary text-primary-foreground shadow-md'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -99,7 +99,7 @@ export default function SalesCatalogToolbar({
             type="button"
             onClick={() => onViewModeChange('card')}
             className={cn(
-              'p-2 rounded-lg transition-all',
+              'p-3 min-w-[44px] min-h-[44px] rounded-lg transition-all',
               viewMode === 'card'
                 ? 'bg-primary text-primary-foreground shadow-md'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -126,7 +126,7 @@ export default function SalesCatalogToolbar({
           <button
             type="button"
             onClick={onClearSort}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/80 border border-border/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-2.5 min-h-[44px] rounded-full bg-muted/80 border border-border/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             {sortConfig.direction === 'asc' ? (
               <ChevronUp className="w-3 h-3" />

@@ -25,7 +25,7 @@ export const POSCartSummary = ({
     {/* Pago Mixto Global (Prorrateo) */}
     <div className="px-4 py-3 bg-primary/5 rounded-2xl border border-primary/20 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase text-primary tracking-widest">
+        <span className="text-xs font-black uppercase text-primary tracking-widest">
           Pago Mixto Global
         </span>
         <div className="flex gap-2">
@@ -57,7 +57,7 @@ export const POSCartSummary = ({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label htmlFor="pos-cash-total" className="text-[10px] font-bold text-muted-foreground uppercase">
+          <label htmlFor="pos-cash-total" className="text-xs font-bold text-muted-foreground uppercase">
             Total Efectivo
           </label>
           <div className="relative">
@@ -81,7 +81,7 @@ export const POSCartSummary = ({
           </div>
         </div>
         <div className="space-y-1">
-          <label htmlFor="pos-transfer-total" className="text-[10px] font-bold text-muted-foreground uppercase">
+          <label htmlFor="pos-transfer-total" className="text-xs font-bold text-muted-foreground uppercase">
             Total Transf.
           </label>
           <div className="relative">

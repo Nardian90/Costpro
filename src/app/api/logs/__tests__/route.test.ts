@@ -11,6 +11,14 @@ vi.mock('@/lib/auth', () => ({
   getServerSession: mockGetServerSession,
 }));
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 29, resetAt: new Date() }),
+}));
+
+vi.mock('@/lib/observability', () => ({
+  withTracing: (handler: any) => handler,
+}));
+
 const makeRequest = (body: any) => {
   return new NextRequest('http://localhost/api/logs', { method: 'POST', body: JSON.stringify(body) });
 };

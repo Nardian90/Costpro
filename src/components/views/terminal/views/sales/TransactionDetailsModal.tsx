@@ -150,7 +150,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                         key={tax.id}
                         onClick={() => handleToggleTax(tax)}
                         className={cn(
-                          "w-full flex items-center justify-between p-2 rounded-lg border text-xs transition-all",
+                          "w-full flex items-center justify-between p-3 rounded-lg border text-xs transition-all",
                           appliedTaxes.some(t => t.id === tax.id)
                             ? "bg-primary/5 border-primary font-bold"
                             : "bg-background border-border text-muted-foreground"
@@ -158,7 +158,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                       >
                         <span className="uppercase truncate max-w-[150px]">{tax.name}</span>
                         <div className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center",
+                          "w-5 h-5 rounded border flex items-center justify-center",
                           appliedTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
                         )}>
                           {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-foreground" />}

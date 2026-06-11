@@ -99,7 +99,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
         bg-background text-slate-900 shadow-2xl mx-auto overflow-hidden transition-all duration-500
         ${orientation === 'portrait' ? 'aspect-[1/1.414] w-full max-w-[600px]' : 'aspect-[1.414/1] w-full'}
       `}>
-        <div className="p-12 h-full flex flex-col">
+        <div className="p-4 sm:p-8 lg:p-12 h-full flex flex-col">
           {/* Header */}
           <div className="border-b-2 border-slate-100 pb-8 flex justify-between items-start">
             <div>
@@ -130,7 +130,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
              )}
 
              <div className="w-full">
-                <div className="flex gap-4 border-b-2 border-slate-800 pb-4 mb-4">
+                <div className="flex gap-4 border-b-2 border-slate-800 pb-4 mb-4 overflow-x-auto">
                     {(config.columns || []).map(col => (
                         <div key={col} className="flex-1 min-w-[60px] text-xs font-black text-slate-800 uppercase tracking-widest truncate">
                             {COLUMN_LABELS[col] || col}

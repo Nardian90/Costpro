@@ -27,7 +27,7 @@ export const RecentCostSheets = () => {
                 <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-300">Fichas de Costo Recientes</h2>
                 <button
                     onClick={() => setCurrentView('cost-sheets')}
-                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
+                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1 min-h-[44px] px-2"
                 >
                     Ver Todas <ArrowRight className="w-3 h-3" />
                 </button>
@@ -42,6 +42,7 @@ export const RecentCostSheets = () => {
                         <motion.div
                             key={sheet.id}
                             whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.98 }}
                             onClick={() => handleSelect(sheet)}
                             className="p-5 rounded-[2rem] bg-card/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer group"
                         >
@@ -49,7 +50,7 @@ export const RecentCostSheets = () => {
                                 <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                                     {sheet.data?.metadata?.generatedBy === 'Darian AI' ? <Sparkles className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
                                 </div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     {formatDate(sheet.created_at)}
                                 </span>
                             </div>
@@ -63,11 +64,11 @@ export const RecentCostSheets = () => {
 
                             <div className="flex justify-between items-end pt-4 border-t border-border/10">
                                 <div>
-                                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</p>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</p>
                                     <p className="text-xs font-black">{formatCurrency(totalCost)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[8px] font-black text-primary uppercase tracking-widest">Precio Venta</p>
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Precio Venta</p>
                                     <p className="text-sm font-black text-primary">{formatCurrency(salePrice)}</p>
                                 </div>
                             </div>

@@ -75,13 +75,13 @@ export default function DashboardView() {
               onValueChange={(v) => v && setTimeRange(v as any)}
               className="bg-muted rounded-xl p-1 w-full sm:w-auto"
             >
-              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Día
               </ToggleGroupItem>
-              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Mes
               </ToggleGroupItem>
-              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Año
               </ToggleGroupItem>
             </ToggleGroup>
@@ -141,7 +141,7 @@ export default function DashboardView() {
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
-                    <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Costos</span>
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Costos</span>
                     <span className="text-sm font-bold font-display text-foreground">{formatCurrency(costs)}</span>
                   </div>
                   <div className="flex flex-col items-center">
@@ -224,7 +224,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
         {criticalProducts.length > 4 && (
           <button
             onClick={onViewInventory}
-            className="w-full py-2 text-xs font-semibold uppercase text-primary hover:underline mt-2"
+            className="w-full py-3 min-h-[44px] text-xs font-semibold uppercase text-primary hover:underline mt-2"
           >
             Ver todas las alertas ({criticalProducts.length})
           </button>

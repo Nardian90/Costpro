@@ -114,7 +114,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
     >
       <div className="space-y-4">
         {/* Current stock header */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-center">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Stock Actual</div>
             <div className="text-2xl font-black text-primary">{product.stock_current || 0}</div>
@@ -130,6 +130,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
         </div>
 
         {/* Kardex Table */}
+        <div className="overflow-x-auto">
         <div className="rounded-xl border border-border overflow-hidden">
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">
@@ -191,6 +192,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
             </tbody>
           </table>
         </div>
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -200,7 +202,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
               icon={ChevronLeft}
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="px-2"
+              className="px-2 min-w-[44px] min-h-[44px]"
             />
             <span className="flex items-center text-xs font-bold text-muted-foreground">
               {page} / {totalPages}
@@ -210,7 +212,7 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
               icon={ChevronRight}
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-2"
+              className="px-2 min-w-[44px] min-h-[44px]"
             />
           </div>
         )}

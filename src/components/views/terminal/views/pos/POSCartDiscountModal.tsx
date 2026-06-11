@@ -30,7 +30,7 @@ export const POSCartDiscountModal = ({
               })
             }
             className={cn(
-              "px-2 py-0.5 rounded-lg text-xs font-black uppercase transition-all",
+              "px-4 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase transition-all",
               isPercentage
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground",
@@ -47,7 +47,7 @@ export const POSCartDiscountModal = ({
               })
             }
             className={cn(
-              "px-2 py-0.5 rounded-lg text-xs font-black uppercase transition-all",
+              "px-4 py-2.5 min-h-[44px] rounded-lg text-xs font-black uppercase transition-all",
               !isPercentage
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground",
@@ -78,7 +78,7 @@ export const POSCartDiscountModal = ({
                 })
               }
               className={cn(
-                "flex-1 py-2 rounded-lg border font-black text-xs uppercase transition-all",
+                "flex-1 py-3 min-h-[44px] rounded-lg border font-black text-xs uppercase transition-all",
                 isActive
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border",
@@ -106,7 +106,7 @@ export const POSCartDiscountModal = ({
             })
           }
           aria-label="Valor del descuento"
-          className="w-full pl-7 p-2 rounded-xl border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+          className="w-full pl-7 p-2 min-h-[44px] rounded-xl border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
           placeholder={isPercentage ? "Ej: 10" : "Ej: 50.00"}
         />
       </div>

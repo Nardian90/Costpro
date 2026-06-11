@@ -76,7 +76,7 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
                 <button
                   onClick={() => setIsOpen(false)}
                   aria-label="Cerrar panel de alertas"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -122,7 +122,7 @@ export default function StockAlertsPanel({ alerts, onReceive }: StockAlertsPanel
                       <button
                         onClick={() => { onReceive(alert.product); setIsOpen(false); }}
                         aria-label={`Recibir mercancía para ${alert.product.name}`}
-                        className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline"
+                        className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline min-h-[44px] px-3"
                       >
                         Recibir <ArrowRight className="w-3 h-3" />
                       </button>

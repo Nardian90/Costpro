@@ -419,7 +419,7 @@ export const adjustStockInputSchema = z.object({
   productId: z.string().regex(uuidRegex),
   storeId: z.string().regex(uuidRegex),
   userId: z.string().regex(uuidRegex),
-  quantityDelta: z.number().int(),
+  quantityDelta: z.number(),
   unitCostAdjustment: z.number().nullable(),
   reason: z.string().min(1),
 });
@@ -436,7 +436,7 @@ export const performInventoryAdjustmentParamsSchema = z.object({
   p_product_id: resilientUuid,
   p_store_id: resilientUuid,
   p_user_id: resilientUuid,
-  p_quantity_delta: z.number().int(),
+  p_quantity_delta: z.number(),
   p_unit_cost_adjustment: z.number().nullable(),
   p_reason: z.string().min(1),
 });
@@ -659,8 +659,8 @@ export const receptionImportRowSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio"),
   quantity: z.coerce
     .number()
-    .int()
-    .positive("La cantidad debe ser un número entero positivo"),
+    .positive("La cantidad debe ser un número positivo (hasta 4 decimales)")
+    .refine(v => Number(v.toFixed(4)) === v, { message: 'Máximo 4 decimales permitidos' }),
   cost: z.coerce
     .number()
     .min(0, "El costo debe ser un número válido (mínimo 0)"),

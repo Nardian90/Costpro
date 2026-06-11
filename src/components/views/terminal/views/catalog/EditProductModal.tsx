@@ -113,7 +113,7 @@ export default function EditProductModal({
                 <button
                   type="button"
                   onClick={onRemoveImage}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-lg sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   aria-label="Eliminar imagen"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -188,7 +188,7 @@ export default function EditProductModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="edit-product-sku" className="text-xs font-black uppercase tracking-widest ml-1">SKU</label>
             <input
@@ -215,7 +215,7 @@ export default function EditProductModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="edit-product-um" className="text-xs font-black uppercase tracking-widest ml-1">Unidad de Medida</label>
             <input
@@ -242,7 +242,7 @@ export default function EditProductModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="edit-product-price" className="text-xs font-black uppercase tracking-widest ml-1">Precio Minorista</label>
             <input
@@ -310,7 +310,7 @@ export default function EditProductModal({
               </div>
 
               {editVariants.map((variant, index) => (
-                <div key={variant.id} className="grid grid-cols-4 gap-2 items-end">
+                <div key={variant.id} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-end">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">Nombre</label>
                     <input

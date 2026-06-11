@@ -63,7 +63,7 @@ export default function ReceptionsHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary"> Recepciones </h2>
           <button
             type="button"
@@ -137,8 +137,8 @@ export default function ReceptionsHistoryView() {
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-left">ID / Ref</th>
                     <th className="p-4 text-left">Fecha</th>
-                    <th className="p-4 text-left">Proveedor</th>
-                    <th className="p-4 text-left priority-low">Factura</th>
+                    <th className="p-4 text-left hidden sm:table-cell">Proveedor</th>
+                    <th className="p-4 text-left priority-low hidden sm:table-cell">Factura</th>
                     <th className="p-4 text-center priority-low">Estado</th>
                     <th className="p-4 text-right">Total Costo</th>
                     <th className="p-4 text-center">Acciones</th>
@@ -155,13 +155,13 @@ export default function ReceptionsHistoryView() {
                         </div>
                         <div className="text-xs text-muted-foreground ml-5">{formatTime(rec.created_at)}</div>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 hidden sm:table-cell">
                         <div className="flex items-center gap-2">
                            <Building2 className="w-3 h-3 text-muted-foreground" />
                            <span className="text-xs font-bold uppercase truncate max-w-[150px]">{rec.supplier || 'S/N'}</span>
                         </div>
                       </td>
-                      <td className="p-4 priority-low">
+                      <td className="p-4 priority-low hidden sm:table-cell">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3 h-3 text-muted-foreground" />
                           <span className="text-xs font-bold uppercase">{rec.reference_doc || 'S/N'}</span>

@@ -242,6 +242,12 @@ export default function ReportsView() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="md:hidden">
+          <h1 className="text-xl font-black uppercase tracking-tight text-primary flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Reportes
+          </h1>
+        </div>
         <div className="hidden md:block">
           <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tight text-primary flex items-center gap-3">
             <FileText className="w-8 h-8" />

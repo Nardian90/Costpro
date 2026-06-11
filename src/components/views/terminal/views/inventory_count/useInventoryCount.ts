@@ -317,7 +317,7 @@ export function useInventoryCount() {
         );
 
         if (matchedProduct) {
-          newQuantities[matchedProduct.id] = Math.max(0, Math.round(counted));
+          newQuantities[matchedProduct.id] = Math.max(0, Number(counted.toFixed(4)));
           if (!newCountedIds.has(matchedProduct.id)) {
             newCountedIds.add(matchedProduct.id);
           }

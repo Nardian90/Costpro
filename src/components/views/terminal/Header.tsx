@@ -71,7 +71,7 @@ export const Header = ({
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
   return (
-    <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full">
+    <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)]">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
           <button
@@ -164,7 +164,7 @@ export const Header = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
+                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
                 aria-label="Menú de usuario"
               >
                 {user?.fullName ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('') : '?'}

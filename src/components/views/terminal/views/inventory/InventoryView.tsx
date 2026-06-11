@@ -369,7 +369,7 @@ export default function InventoryView() {
                         type="button"
                         onClick={() => handleBulkVisibility(true)}
                         disabled={bulkToggling || filteredProducts.length === 0}
-                        className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20"
+                        className="ml-2 inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20"
                         title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
                     >
                         {bulkToggling ? (
@@ -384,7 +384,7 @@ export default function InventoryView() {
                         type="button"
                         onClick={() => handleBulkVisibility(false)}
                         disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20"
                         title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}
                     >
                         {bulkToggling ? (
@@ -407,7 +407,7 @@ export default function InventoryView() {
                             type="button"
                             onClick={() => setStockFilter(opt.key)}
                             className={cn(
-                                'px-3 py-1 rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95',
+                                'px-3 py-2.5 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95',
                                 stockFilter === opt.key
                                     ? 'bg-primary text-primary-foreground border-primary'
                                     : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
