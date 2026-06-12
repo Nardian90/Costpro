@@ -29,10 +29,14 @@ describe('calculatePriceEffectiveness', () => {
 
   it('should score high for round price with usage', () => {
     const product = makeProduct({ precio_cents: 100, cod: 'A' });
-    const lines: ReconciliationLine[] = [
-      { product_cod: 'A', precio_cents: 100, usage_count: 10 } as any,
-    ];
-    // Score: usage (10 * 4 = 40) + rounding (100%10=0 -> 40) + strategic (100 is strategic -> 20) = 100
+    // The implementation counts the number of lines where product_cod matches.
+    // Each line gives 4 points, max 40.
+    const lines: ReconciliationLine[] = Array(10).fill({ product_cod: 'A', precio_cents: 100 } as any);
+
+    // arithmeticScore: 100 % 10 == 0 -> 40
+    // strategicScore: 100 is strategic -> 20
+    // usageScore: 10 lines * 4 = 40
+    // Total: 40 + 20 + 40 = 100
     expect(calculatePriceEffectiveness(product, lines)).toBe(100);
   });
 });
