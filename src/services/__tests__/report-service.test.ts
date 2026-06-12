@@ -12,6 +12,7 @@ const createMockQueryBuilder = (config: { data?: any, error?: any, count?: numbe
     limit: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
     lte: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
     then: vi.fn().mockImplementation(function(this: any, callback: any) {
       const result = {
         data: config.data,

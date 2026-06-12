@@ -167,7 +167,7 @@ export const reportService = {
     store_id: string,
     limit?: number
   ): Promise<ReportRow[]> {
-    return await fetchRawData(supabase, {
+    const data = await fetchRawData(supabase, {
       type,
       storeId: store_id,
       from: date_range?.from,
@@ -175,6 +175,11 @@ export const reportService = {
       filters,
       limit
     }) as ReportRow[];
+
+    if (limit) {
+      return data.slice(0, limit);
+    }
+    return data;
   },
 
   /**
