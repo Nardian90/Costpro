@@ -8,7 +8,7 @@ import {
 import { Product, ReconciliationLine } from '@/lib/dexie';
 
 const makeProduct = (overrides: Partial<Product> = {}): Product => ({
-  cod: 'TEST',
+  cod: 'TEST_COD',
   descripcion: 'Producto Test',
   um: 'UNIDADES',
   es_paquete: false,
@@ -28,16 +28,26 @@ describe('calculatePriceEffectiveness', () => {
   });
 
   it('should score high for round price with usage', () => {
-    const product = makeProduct({ precio_cents: 100, cod: 'A' });
-    // The implementation counts the number of lines where product_cod matches.
-    // Each line gives 4 points, max 40.
-    const lines: ReconciliationLine[] = Array(10).fill({ product_cod: 'A', precio_cents: 100 } as any);
+    // 100 % 10 === 0 -> 40 pts
+    // 100 is strategic -> 20 pts
+    // 10 matching lines -> 10 * 4 = 40 pts
+    // Total = 100 pts
+    const product = makeProduct({ precio_cents: 100, cod: 'MATCH_ME' });
+    const lines: ReconciliationLine[] = [
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+      { product_cod: 'MATCH_ME' } as any,
+    ];
 
-    // arithmeticScore: 100 % 10 == 0 -> 40
-    // strategicScore: 100 is strategic -> 20
-    // usageScore: 10 lines * 4 = 40
-    // Total: 40 + 20 + 40 = 100
-    expect(calculatePriceEffectiveness(product, lines)).toBe(100);
+    const score = calculatePriceEffectiveness(product, lines);
+    expect(score).toBe(100);
   });
 });
 
