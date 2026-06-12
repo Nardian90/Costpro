@@ -85,7 +85,7 @@ export const ReportScheduleModal = ({
 }: ReportScheduleModalProps) => {
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchSchedules = useCallback(async () => {
@@ -103,7 +103,7 @@ export const ReportScheduleModal = ({
       setSchedules(withSchedule);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar programaciones';
-      setError(msg);
+      setError(new Error(msg));
     } finally {
       setIsLoading(false);
     }

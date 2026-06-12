@@ -1,40 +1,52 @@
-/**
- * useReportState — Centralized state management for the Generador de Reportes module.
- *
- * Replaces multiple useState calls in ReportsView.tsx with a single useReducer,
- * eliminating unnecessary re-renders when unrelated state changes occur.
- * All handlers are memoized with useCallback for stable references passed to children.
- *
- * Phase 3 items: 3.1 (useReducer), 3.2 (unified data access via reportService),
- * 3.6 (useCallback/useMemo for handlers and derived state).
- */
+'use client';
 
-import { useReducer, useCallback, useMemo, useRef } from 'react';
+import { useReducer, useCallback, useMemo, useEffect } from 'react';
 import { useAuthStore } from '@/store';
+import { ReportDefinition, ReportType } from '@/types';
 import { toast } from 'sonner';
-import type { ReportDefinition, ReportType } from '@/types';
-import { COLUMN_LABELS } from '@/contracts/reports';
 import { useReportValidation } from './useReportValidation';
+import { reportService, ReportRow, ReportDateRange, ReportFilters } from '@/services/report-service';
 
-// ── Types ──
+/** Initial configuration for a new report */
+const INITIAL_CONFIG: Partial<ReportDefinition> = {
+  name: 'Nuevo Reporte',
+  type: 'sales',
+  filters: {},
+  date_range: { from: '', to: '' },
+  columns: ['id', 'created_at', 'total_amount', 'payment_method', 'status'],
+  format: 'a4',
+  layout: {
+    showLogo: true,
+    showFooter: true,
+    compact: false,
+    fontSize: 10,
+  },
+};
 
-export interface ReportProgress {
-  percentage: number;
-  stage: string;
-}
-
-export interface ExportProgress {
-  fetched: number;
-  total: number;
-}
+/** Map of column technical names to human-readable labels */
+const COLUMN_LABELS: Record<string, string> = {
+  id: 'ID',
+  created_at: 'Fecha',
+  total_amount: 'Monto Total',
+  payment_method: 'Método Pago',
+  status: 'Estado',
+  customer_name: 'Cliente',
+  cashier_name: 'Cajero',
+  name: 'Nombre',
+  sku: 'SKU',
+  stock: 'Stock',
+  category: 'Categoría',
+  price: 'Precio',
+  cost: 'Costo',
+};
 
 interface ReportState {
   config: Partial<ReportDefinition>;
   isSaving: boolean;
   isGenerating: boolean;
-  generateProgress: ReportProgress;
+  generateProgress: { percentage: number; stage: string } | null;
   isExportingExcel: boolean;
-  exportProgress: ExportProgress | null;
+  exportProgress: { fetched: number; total: number } | null;
   isAuditModalOpen: boolean;
   isTemplatesModalOpen: boolean;
   isScheduleModalOpen: boolean;
@@ -46,33 +58,22 @@ type ReportAction =
   | { type: 'SET_CONFIG'; payload: Partial<ReportDefinition> }
   | { type: 'SET_SAVING'; payload: boolean }
   | { type: 'SET_GENERATING'; payload: boolean }
-  | { type: 'SET_GENERATE_PROGRESS'; payload: ReportProgress }
+  | { type: 'SET_GENERATE_PROGRESS'; payload: { percentage: number; stage: string } | null }
+  | { type: 'RESET_GENERATE' }
   | { type: 'SET_EXPORTING'; payload: boolean }
-  | { type: 'SET_EXPORT_PROGRESS'; payload: ExportProgress | null }
+  | { type: 'SET_EXPORT_PROGRESS'; payload: { fetched: number; total: number } | null }
+  | { type: 'RESET_EXPORT' }
   | { type: 'SET_AUDIT_MODAL'; payload: boolean }
   | { type: 'SET_TEMPLATES_MODAL'; payload: boolean }
   | { type: 'SET_SCHEDULE_MODAL'; payload: boolean }
   | { type: 'SET_HISTORY_MODAL'; payload: boolean }
-  | { type: 'SET_SHARE_MODAL'; payload: boolean }
-  | { type: 'RESET_GENERATE' }
-  | { type: 'RESET_EXPORT' };
-
-// ── Initial State ──
-
-const INITIAL_CONFIG: Partial<ReportDefinition> = {
-  name: 'Nuevo Reporte',
-  type: 'sales',
-  filters: {},
-  date_range: { from: '', to: '' },
-  columns: ['id', 'created_at', 'total_amount', 'status', 'payment_method'],
-  layout: { orientation: 'portrait', format: 'a4' },
-};
+  | { type: 'SET_SHARE_MODAL'; payload: boolean };
 
 const INITIAL_STATE: ReportState = {
   config: INITIAL_CONFIG,
   isSaving: false,
   isGenerating: false,
-  generateProgress: { percentage: 0, stage: '' },
+  generateProgress: null,
   isExportingExcel: false,
   exportProgress: null,
   isAuditModalOpen: false,
@@ -81,8 +82,6 @@ const INITIAL_STATE: ReportState = {
   isHistoryModalOpen: false,
   isShareModalOpen: false,
 };
-
-// ── Reducer ──
 
 function reportReducer(state: ReportState, action: ReportAction): ReportState {
   switch (action.type) {
@@ -94,10 +93,14 @@ function reportReducer(state: ReportState, action: ReportAction): ReportState {
       return { ...state, isGenerating: action.payload };
     case 'SET_GENERATE_PROGRESS':
       return { ...state, generateProgress: action.payload };
+    case 'RESET_GENERATE':
+      return { ...state, isGenerating: false, generateProgress: null };
     case 'SET_EXPORTING':
       return { ...state, isExportingExcel: action.payload };
     case 'SET_EXPORT_PROGRESS':
       return { ...state, exportProgress: action.payload };
+    case 'RESET_EXPORT':
+      return { ...state, isExportingExcel: false, exportProgress: null };
     case 'SET_AUDIT_MODAL':
       return { ...state, isAuditModalOpen: action.payload };
     case 'SET_TEMPLATES_MODAL':
@@ -108,49 +111,28 @@ function reportReducer(state: ReportState, action: ReportAction): ReportState {
       return { ...state, isHistoryModalOpen: action.payload };
     case 'SET_SHARE_MODAL':
       return { ...state, isShareModalOpen: action.payload };
-    case 'RESET_GENERATE':
-      return {
-        ...state,
-        isGenerating: false,
-        generateProgress: { percentage: 0, stage: '' },
-      };
-    case 'RESET_EXPORT':
-      return {
-        ...state,
-        isExportingExcel: false,
-        exportProgress: null,
-      };
     default:
       return state;
   }
 }
 
-// ── Hook ──
-
 export interface UseReportStateReturn {
-  // State
   config: Partial<ReportDefinition>;
   isSaving: boolean;
   isGenerating: boolean;
-  generateProgress: ReportProgress;
+  generateProgress: { percentage: number; stage: string } | null;
   isExportingExcel: boolean;
-  exportProgress: ExportProgress | null;
+  exportProgress: { fetched: number; total: number } | null;
   isAuditModalOpen: boolean;
   isTemplatesModalOpen: boolean;
   isScheduleModalOpen: boolean;
   isHistoryModalOpen: boolean;
   isShareModalOpen: boolean;
-
-  // Derived state (memoized)
   isPlaceholderType: boolean;
   placeholderMessage: string | null;
-
-  // Validation
-  validateConfig: (action: 'generate' | 'export') => string | null;
+  validateConfig: (mode?: 'preview' | 'generate' | 'export') => string | null;
   isInvalidDateRange: boolean;
-
-  // Actions (memoized)
-  setConfig: (config: Partial<ReportDefinition>) => void;
+  setConfig: (updates: Partial<ReportDefinition>) => void;
   loadTemplate: (template: ReportDefinition) => void;
   handleSave: () => Promise<void>;
   handleGenerate: () => Promise<void>;
@@ -201,12 +183,11 @@ export function useReportState(): UseReportStateReturn {
 
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
-      const { reportService } = await import('@/services/report-service');
       await reportService.saveDefinition({
         ...INITIAL_CONFIG,
         ...state.config,
-        store_id: user?.activeStoreId,
-        created_by: user?.id,
+        store_id: user?.activeStoreId || '',
+        created_by: user?.id || '',
       });
       toast.success('Plantilla guardada exitosamente');
     } catch (error: unknown) {
@@ -234,12 +215,11 @@ export function useReportState(): UseReportStateReturn {
     try {
       // Pre-check: count records before generating
       dispatch({ type: 'SET_GENERATE_PROGRESS', payload: { percentage: 5, stage: 'Contando registros...' } });
-      const { reportService } = await import('@/services/report-service');
       const previewCount = await reportService.fetchReportData(
         state.config.type as ReportType,
         state.config.filters,
-        state.config.date_range,
-        user?.activeStoreId,
+        state.config.date_range as ReportDateRange,
+        user?.activeStoreId || '',
         1
       );
 
@@ -261,11 +241,10 @@ export function useReportState(): UseReportStateReturn {
         });
       }, 1200);
 
-      // 3.2: Use reportService.generateReport instead of raw fetch
       const result = await reportService.generateReport(
         {
           ...state.config,
-          store_id: user?.activeStoreId,
+          store_id: user?.activeStoreId || '',
           name: state.config.name || `Reporte ${state.config.type}`,
         },
         useAuthStore.getState().token || ''
@@ -311,7 +290,7 @@ export function useReportState(): UseReportStateReturn {
     } finally {
       setTimeout(() => dispatch({ type: 'RESET_GENERATE' }), 1200);
     }
-  }, [validateConfig, isPlaceholderType, placeholderMessage, state.config, user?.activeStoreId]);
+  }, [validateConfig, isPlaceholderType, placeholderMessage, state.config, user?.activeStoreId, user?.id]);
 
   const handleExportExcel = useCallback(async () => {
     const err = validateConfig('export');
@@ -320,14 +299,13 @@ export function useReportState(): UseReportStateReturn {
     dispatch({ type: 'SET_EXPORTING', payload: true });
     dispatch({ type: 'SET_EXPORT_PROGRESS', payload: null });
     try {
-      const { reportService } = await import('@/services/report-service');
       const { exportToExcel } = await import('@/services/export-service');
 
       const data = await reportService.fetchReportDataPaginated(
         state.config.type as ReportType,
         state.config.filters,
-        state.config.date_range,
-        user?.activeStoreId,
+        state.config.date_range as ReportDateRange,
+        user?.activeStoreId || '',
         {
           chunkSize: 1000,
           onProgress: (fetched, total) => {
@@ -342,8 +320,8 @@ export function useReportState(): UseReportStateReturn {
       }
 
       await exportToExcel(
-        data,
-        state.config.columns,
+        data as any[],
+        state.config.columns || [],
         COLUMN_LABELS,
         state.config.name || `Reporte_${state.config.type}_${new Date().toISOString().split('T')[0]}`
       );

@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 
 export interface ReportValidationResult {
   /** Run all validations, returns null if OK or the error message */
-  validate: (action: 'generate' | 'export') => string | null;
+  validate: (action?: 'generate' | 'export' | 'preview') => string | null;
   /** Derived booleans for quick checks */
   hasStore: boolean;
   isInvalidDateRange: boolean;
@@ -44,7 +44,7 @@ export function useReportValidation(config: Partial<ReportDefinition>): ReportVa
     !config.columns || config.columns.length === 0;
 
   const validate = useMemo(() => {
-    return (action: 'generate' | 'export'): string | null => {
+    return (action?: 'generate' | 'export' | 'preview'): string | null => {
       if (!hasStore) {
         return 'Seleccione una tienda activa';
       }

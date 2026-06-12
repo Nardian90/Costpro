@@ -73,7 +73,7 @@ export const ReportTemplatesModal = ({
 }: ReportTemplatesModalProps) => {
   const [templates, setTemplates] = useState<ReportDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [search, setSearch] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -86,7 +86,7 @@ export const ReportTemplatesModal = ({
       setTemplates(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar plantillas';
-      setError(msg);
+      setError(new Error(msg));
     } finally {
       setIsLoading(false);
     }

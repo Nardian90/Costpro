@@ -30,7 +30,7 @@ import { TransactionTable } from '../TransactionTable';
 
 const mockTransactions = [
   {
-    referencia_origen: 'TX-001',
+    id: "test-id", created_at: "2025-01-01", ingestion_hash: "hash", referencia_corta: "TX", referencia_origen: 'TX-001',
     tipo: 'Cr',
     importe_cents: 10000,
     importe_venta_cents: 10000,
@@ -43,7 +43,7 @@ const mockTransactions = [
     excluido: false,
   },
   {
-    referencia_origen: 'TX-002',
+    id: "test-id", created_at: "2025-01-01", ingestion_hash: "hash", referencia_corta: "TX", referencia_origen: 'TX-002',
     tipo: 'Cr',
     importe_cents: 5000,
     importe_venta_cents: 5000,
@@ -56,7 +56,7 @@ const mockTransactions = [
     excluido: false,
   },
   {
-    referencia_origen: 'TX-003',
+    id: "test-id", created_at: "2025-01-01", ingestion_hash: "hash", referencia_corta: "TX", referencia_origen: 'TX-003',
     tipo: 'Db',
     importe_cents: 2000,
     importe_venta_cents: 2000,
@@ -69,7 +69,7 @@ const mockTransactions = [
     excluido: false,
   },
   {
-    referencia_origen: 'TX-004',
+    id: "test-id", created_at: "2025-01-01", ingestion_hash: "hash", referencia_corta: "TX", referencia_origen: 'TX-004',
     tipo: 'Cr',
     importe_cents: 3000,
     importe_venta_cents: 3000,
@@ -84,7 +84,7 @@ const mockTransactions = [
 ];
 
 const defaultProps = {
-  transactions: mockTransactions,
+  transactions: mockTransactions as any,
   kpiFilter: 'ALL' as const,
   txReconciliationTotals: { 'TX-001': 10000, 'TX-002': 3000 },
   onReconcile: vi.fn(),

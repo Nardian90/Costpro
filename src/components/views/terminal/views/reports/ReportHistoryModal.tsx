@@ -73,7 +73,7 @@ export const ReportHistoryModal = ({
 }: ReportHistoryModalProps) => {
   const [runs, setRuns] = useState<ReportRun[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
@@ -86,7 +86,7 @@ export const ReportHistoryModal = ({
       setRuns(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar historial';
-      setError(msg);
+      setError(new Error(msg));
     } finally {
       setIsLoading(false);
     }

@@ -47,14 +47,14 @@ describe('useReportValidation', () => {
   });
 
   it('detects missing kardex product', () => {
-    const cfg = { ...baseConfig, type: 'kardex', filters: {} };
+    const cfg = { ...baseConfig, type: "kardex" as any, filters: {} };
     const { result } = renderHook(() => useReportValidation(cfg));
     expect(result.current.validate('generate')).toContain('producto');
     expect(result.current.isMissingKardexProduct).toBe(true);
   });
 
   it('passes kardex with product_id', () => {
-    const cfg = { ...baseConfig, type: 'kardex', filters: { product_id: 'p1' } };
+    const cfg = { ...baseConfig, type: "kardex" as any, filters: { product_id: "p1" } };
     const { result } = renderHook(() => useReportValidation(cfg));
     expect(result.current.validate('generate')).toBeNull();
   });

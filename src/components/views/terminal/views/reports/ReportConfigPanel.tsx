@@ -1,17 +1,31 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuthStore } from '@/store';
+import { ReportDefinition, ReportType } from '@/types';
+import { ReportDateRange } from '@/services/report-service';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useStores } from '@/hooks/api/useStores';
-import { ReportDefinition, ReportType } from '@/types';
-import { COLUMN_LABELS } from '@/contracts/reports';
-import { Search } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Search, Info, AlertTriangle, CheckSquare, Square } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Button } from '@/components/ui/button';
+import { useReportValidation } from '@/hooks/ui/useReportValidation';
+import { differenceInDays, parseISO, isValid } from 'date-fns';
 
 interface ReportConfigPanelProps {
   config: Partial<ReportDefinition>;
@@ -32,7 +46,7 @@ const REPORT_TYPES = [
   { id: 'cash', label: 'Arqueo de Caja' },
 ];
 
-const ALL_COLUMNS: Record<ReportType, string[]> = {
+const ALL_COLUMNS: Record<string, string[]> = {
   sales: ['id', 'created_at', 'total_amount', 'status', 'payment_method', 'subtotal', 'discount_value'],
   profit: ['date', 'total_sales', 'total_cost', 'profit', 'margin_percentage'],
   inventory: ['id', 'name', 'sku', 'stock_current', 'price', 'cost_price', 'supplier'],
@@ -46,15 +60,62 @@ const ALL_COLUMNS: Record<ReportType, string[]> = {
   cash: ['id', 'created_at', 'operator_name', 'declared_cash', 'declared_vouchers', 'system_total', 'difference', 'status']
 };
 
+const COLUMN_LABELS: Record<string, string> = {
+  id: 'ID',
+  created_at: 'Fecha',
+  total_amount: 'Monto Total',
+  payment_method: 'Método Pago',
+  status: 'Estado',
+  customer_name: 'Cliente',
+  cashier_name: 'Cajero',
+  name: 'Nombre',
+  sku: 'SKU',
+  stock: 'Stock',
+  category: 'Categoría',
+  price: 'Precio',
+  cost: 'Costo',
+  total_sales: 'Total Ventas',
+  total_cost: 'Total Costo',
+  profit: 'Utilidad',
+  margin_percentage: 'Margen %',
+  stock_current: 'Stock Actual',
+  cost_price: 'Precio Costo',
+  supplier: 'Proveedor',
+  movement_type: 'Tipo Movimiento',
+  quantity_change: 'Cantidad',
+  balance_after: 'Saldo Final',
+  unit_cost: 'Costo Unitario',
+  reference_doc: 'Doc. Referencia',
+  notes: 'Notas',
+  action: 'Acción',
+  table_name: 'Tabla',
+  store_name: 'Tienda',
+  profile: 'Perfil',
+  code: 'Código',
+  date: 'Fecha',
+  total_income: 'Total Ingresos',
+  total_expenses: 'Total Gastos',
+  origin_store_name: 'Tienda Origen',
+  destination_store_name: 'Tienda Destino',
+  creator_name: 'Creador',
+  operator_name: 'Operador',
+  declared_cash: 'Efectivo Declarado',
+  declared_vouchers: 'Vales Declarados',
+  system_total: 'Total Sistema',
+  difference: 'Diferencia'
+};
+
 export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps) => {
   const { user } = useAuthStore();
   const [productSearch, setProductSearch] = useState('');
   const [isProductPopoverOpen, setIsProductPopoverOpen] = useState(false);
 
+  const { isInvalidDateRange } = useReportValidation(config);
+
   const isAdmin = user?.role === 'admin';
   const isEncargado = user?.role === 'encargado';
 
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts(
+  const { data: products = [] } = useProducts(
     config.store_id || user?.activeStoreId,
     productSearch
   );
@@ -73,6 +134,25 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
       setConfig({ ...config, columns: [...currentColumns, col] });
     }
   };
+
+  const selectAllColumns = () => {
+    setConfig({ ...config, columns: ALL_COLUMNS[config.type as ReportType] || [] });
+  };
+
+  const deselectAllColumns = () => {
+    setConfig({ ...config, columns: [] });
+  };
+
+  const dateFrom = config.date_range?.from;
+  const dateTo = config.date_range?.to;
+  let dayCount = 0;
+  if (dateFrom && dateTo) {
+    const from = parseISO(dateFrom);
+    const to = parseISO(dateTo);
+    if (isValid(from) && isValid(to)) {
+      dayCount = Math.abs(differenceInDays(to, from)) + 1;
+    }
+  }
 
   return (
     <Card className="p-4 sm:p-6 rounded-3xl border-primary/10 bg-card/50 backdrop-blur-sm space-y-6">
@@ -109,7 +189,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
           <div className="space-y-2">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tienda</Label>
             <Select
-              value={config.store_id || user?.activeStoreId}
+              value={config.store_id || user?.activeStoreId || ''}
               onValueChange={(val) => setConfig({ ...config, store_id: val })}
             >
               <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase tracking-widest">
@@ -125,6 +205,47 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
             </Select>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Desde</Label>
+            <Input
+              type="date"
+              value={config.date_range?.from}
+              onChange={(e) => setConfig({
+                ...config,
+                date_range: { ...config.date_range, from: e.target.value } as any
+              })}
+              className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Hasta</Label>
+            <Input
+              type="date"
+              value={config.date_range?.to}
+              onChange={(e) => setConfig({
+                ...config,
+                date_range: { ...config.date_range, to: e.target.value } as any
+              })}
+              className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
+            />
+          </div>
+        </div>
+
+        {isInvalidDateRange && (
+          <div className="flex items-center gap-2 text-destructive text-[10px] font-bold uppercase animate-pulse">
+            <AlertTriangle className="w-3 h-3" />
+            "Desde" no puede ser posterior a "Hasta"
+          </div>
+        )}
+
+        {!isInvalidDateRange && dayCount > 0 && (
+          <div className="flex items-center gap-2 text-primary/60 text-[10px] font-bold uppercase">
+            <Info className="w-3 h-3" />
+            {dayCount} días seleccionados
+          </div>
+        )}
 
         {config.type === 'kardex' && (
           <div className="space-y-2">
@@ -152,10 +273,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                   />
                 </div>
                 <div className="max-h-60 overflow-y-auto p-1">
-                  {isLoadingProducts ? (
-                    <div className="p-2 text-center text-xs text-muted-foreground">Cargando...</div>
-                  ) : (
-                    products.map((p: any) => (
+                    {products.map((p: any) => (
                       <Button
                         key={p.id}
                         variant="ghost"
@@ -170,8 +288,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                       >
                         {p.name} ({p.sku})
                       </Button>
-                    ))
-                  )}
+                    ))}
                 </div>
               </PopoverContent>
             </Popover>
@@ -200,8 +317,28 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
       <div className="space-y-4">
         <div className="flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Columnas</h3>
-            <span className="text-xs font-bold text-muted-foreground uppercase">
-                {config.columns?.length || 0} seleccionadas
+            <div className="flex gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectAllColumns}
+                    className="h-7 px-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10 rounded-lg"
+                >
+                    <CheckSquare className="w-3 h-3 mr-1" /> Todas
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={deselectAllColumns}
+                    className="h-7 px-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/10 rounded-lg"
+                >
+                    <Square className="w-3 h-3 mr-1" /> Deseleccionar
+                </Button>
+            </div>
+        </div>
+        <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                {config.columns?.length || 0}/{(ALL_COLUMNS[config.type as ReportType] || []).length}
             </span>
         </div>
         <div className="grid grid-cols-2 gap-y-3 gap-x-4 p-4 rounded-2xl bg-background/50 border border-primary/5">

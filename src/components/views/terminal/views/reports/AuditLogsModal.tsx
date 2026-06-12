@@ -11,7 +11,7 @@ import { useAuditLogs } from '@/hooks/api/useAuditLogs';
 import AuditTimeline from '../audit/AuditTimeline';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Shield, X, History } from 'lucide-react';
+import { History, X } from 'lucide-react';
 
 interface AuditLogsModalProps {
   isOpen: boolean;
@@ -34,10 +34,13 @@ const AuditLoadingSkeleton = () => (
 );
 
 export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps) => {
-  const { data, isLoading, error } = useAuditLogs({
+  const query = useAuditLogs({
     storeIds: storeId ? [storeId] : [],
     pageSize: 100
   });
+
+  // Handle potential undefined from hook (safety for tests/uninitialized state)
+  const { data, isLoading = false, error = null } = query || {};
 
   const logs = useMemo(() => data?.pages.flatMap(p => p.logs) ?? [], [data]);
 
