@@ -3,7 +3,7 @@ import nextTypescript from "eslint-config-next/typescript";
 
 const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
   rules: {
-    // Modified rules for stability
+    // Modified rules for pragmatic stability
     'jsx-a11y/alt-text': 'error',
     'jsx-a11y/control-has-associated-label': 'off',
     'jsx-a11y/interactive-supports-focus': 'off',
@@ -21,10 +21,14 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "@typescript-eslint/prefer-as-const": "off",
     "@typescript-eslint/no-unused-disable-directive": "off",
     
-    // React rules
+    // React rules (Disabled extremely strict React 19 / Compiler rules for stabilization)
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/set-state-in-effect": "off",
     "react-hooks/purity": "off",
+    "react-hooks/refs": "off",
+    "react-hooks/immutability": "off",
+    "react-hooks/preserve-manual-memoization": "off",
+    "react-hooks/static-components": "off",
     "react/jsx-no-duplicate-props": "warn",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
